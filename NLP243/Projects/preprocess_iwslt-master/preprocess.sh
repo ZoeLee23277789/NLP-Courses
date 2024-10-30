@@ -15,9 +15,20 @@ if [ $tgtlng != "es" -a $tgtlng != 'zh' -a $tgtlng != 'ja' ]; then
     echo "unknown target language"
 fi
 
-MAIN_PATH=$PWD
-TOOLS_PATH=$PWD/tools
-DATA_PATH=$PWD/data/${srclng}_${tgtlng}
+# MAIN_PATH=$PWD
+# TOOLS_PATH=$PWD/tools
+# DATA_PATH=$PWD/data/${srclng}_${tgtlng}
+# PARA_PATH=$DATA_PATH/para
+# PROC_PATH=$DATA_PATH/processed
+# mkdir -p $TOOLS_PATH
+# mkdir -p $DATA_PATH
+# mkdir -p $PARA_PATH
+# mkdir -p $PROC_PATH
+
+
+MAIN_PATH="C:/Users/USER/Downloads/NLP-Courses/NLP243/Projects/preprocess_iwslt-master"
+TOOLS_PATH="$MAIN_PATH/tools"
+DATA_PATH="$MAIN_PATH/data/${srclng}_${tgtlng}"
 PARA_PATH=$DATA_PATH/para
 PROC_PATH=$DATA_PATH/processed
 mkdir -p $TOOLS_PATH
