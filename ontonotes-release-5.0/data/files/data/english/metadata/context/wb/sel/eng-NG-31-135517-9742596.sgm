@@ -1,0 +1,258 @@
+<DOC>
+<DOCID> eng-NG-31-135517-9742596 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-20T19:49:00 </DATETIME>
+<BODY>
+<HEADLINE>
+How best to iterate arguments to a macro?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Grant Rettke&quot; &lt;gret...@acm.org&gt; </POSTER>
+<POSTDATE> 2007-10-20T19:49:00 </POSTDATE>
+I wanted a macro to declare class level properties and came up with
+the macro 'property'. Its applications looks like this:
+
+(define service-call%
+(class* object% ()
+(property customer-name customer-id call-type-code date-of-call-string)
+(super-new)))
+
+Working on this I wasn't sure whether to use variable arguments or
+ellipses to specify the pattern. I ended up using ellipses. Is it even
+possible to iterate using variable arguments?
+
+My question for everyone is in cases like this, what is the best way
+to iterate arguments when you are going to perform the same operation
+on each argument?
+
+Here is my solution:
+
+(define-syntax property
+(syntax-rules ()
+((_) (raise-syntax-error 'property &quot;Please provide at least one
+name&quot; '{property ?}))
+((_ name)
+(begin
+(define property-name null)
+(define/public name
+(case-lambda
+[() property-name]
+[(value) (set! property-name value)]))))
+((_ name names ...)
+(begin
+(property name)
+(property names ...)))))
+_________________________________________________
+For list-related administrative tasks:
+http://list.cs.brown.edu/mailman/listinfo/plt-scheme
+</POST>
+<POST>
+<POSTER> Chongkai Zhu &lt;c...@cs.utah.edu&gt; </POSTER>
+<POSTDATE> 2007-10-20T20:07:00 </POSTDATE>
+Your solution is OK.
+
+If you don't want to have recursive macro expanding, here's another
+solution:
+
+(define-syntax (property stx)
+(syntax-case stx ()
+((property)
+(raise-syntax-error 'property &quot;Please provide at least one name&quot;
+'{property ?}))
+((_ name ...)
+(with-syntax (((property-name ...)
+(generate-temporaries #'(name ...))))
+#'(begin
+(define property-name null) ...
+(define/public name
+(case-lambda
+[() property-name]
+[(value) (set! property-name value)]))
+...)))))
+
+Chongkai
+
+<QUOTE PREVIOUSPOST="
+Grant Rettke wrote:
+&gt; I wanted a macro to declare class level properties and came up with
+&gt; the macro 'property'. Its applications looks like this:
+
+&gt; (define service-call%
+&gt;   (class* object% ()
+&gt;     (property customer-name customer-id call-type-code date-of-call-string)
+&gt;     (super-new)))
+
+&gt; Working on this I wasn't sure whether to use variable arguments or
+&gt; ellipses to specify the pattern. I ended up using ellipses. Is it even
+&gt; possible to iterate using variable arguments?
+
+&gt; My question for everyone is in cases like this, what is the best way
+&gt; to iterate arguments when you are going to perform the same operation
+&gt; on each argument?
+
+&gt; Here is my solution:
+
+&gt; (define-syntax property
+&gt;   (syntax-rules ()
+&gt;     ((_) (raise-syntax-error 'property &quot;Please provide at least one
+&gt; name&quot; '{property ?}))
+&gt;     ((_ name)
+&gt;      (begin
+&gt;        (define property-name null)
+&gt;        (define/public name
+&gt;          (case-lambda
+&gt;            [() property-name]
+&gt;            [(value) (set! property-name value)]))))
+&gt;     ((_ name names ...)
+&gt;      (begin
+&gt;        (property name)
+&gt;        (property names ...)))))
+&gt; _________________________________________________
+&gt;   For list-related administrative tasks:
+&gt; http://list.cs.brown.edu/mailman/listinfo/plt-scheme
+">
+
+_________________________________________________
+For list-related administrative tasks:
+http://list.cs.brown.edu/mailman/listinfo/plt-scheme
+</POST>
+<POST>
+<POSTER> &quot;Grant Rettke&quot; &lt;gret...@acm.org&gt; </POSTER>
+<POSTDATE> 2007-10-20T20:41:00 </POSTDATE>
+On 10/20/07, Chongkai Zhu &lt;c ... @cs.utah.edu&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; If you don't want to have recursive macro expanding, here's another
+&gt; solution:
+">
+
+Why not?
+_________________________________________________
+For list-related administrative tasks:
+http://list.cs.brown.edu/mailman/listinfo/plt-scheme
+</POST>
+<POST>
+<POSTER> &quot;Grant Rettke&quot; &lt;gret...@acm.org&gt; </POSTER>
+<POSTDATE> 2007-10-20T20:53:00 </POSTDATE>
+On 10/20/07, Grant Rettke &lt;gret ... @acm.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; If you don't want to have recursive macro expanding, here's another
+&gt; &gt; solution:
+&gt; Why not?
+">
+
+Sorry that didn't come out quite right.
+
+What are the implications of recursive macro expansion?
+_________________________________________________
+For list-related administrative tasks:
+http://list.cs.brown.edu/mailman/listinfo/plt-scheme
+</POST>
+<POST>
+<POSTER> Chongkai Zhu &lt;c...@cs.utah.edu&gt; </POSTER>
+<POSTDATE> 2007-10-20T21:15:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Grant Rettke wrote:
+&gt; On 10/20/07, Grant Rettke &lt;gret ... @acm.org&gt; wrote:
+
+&gt;&gt;&gt; If you don't want to have recursive macro expanding, here's another
+&gt;&gt;&gt; solution:
+
+&gt; Sorry that didn't come out quite right.
+
+&gt; What are the implications of recursive macro expansion?
+">
+
+Recursive macro expansion means like in your definition of 'property',
+the expanded code still contains call to 'property', which needs to be
+expanded again.
+
+Implication? Other than a small overhead in compile time, none.
+
+Chongkai
+_________________________________________________
+For list-related administrative tasks:
+http://list.cs.brown.edu/mailman/listinfo/plt-scheme
+</POST>
+<POST>
+<POSTER> &quot;Grant Rettke&quot; &lt;gret...@acm.org&gt; </POSTER>
+<POSTDATE> 2007-10-21T21:18:00 </POSTDATE>
+On 10/20/07, Chongkai Zhu &lt;c ... @cs.utah.edu&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Your solution is OK.
+
+&gt; If you don't want to have recursive macro expanding, here's another solution:
+
+&gt; (define-syntax (property stx)
+&gt;   (syntax-case stx ()
+&gt;     ((property)
+&gt;      (raise-syntax-error 'property &quot;Please provide at least one name&quot;
+&gt; '{property ?}))
+&gt;     ((_ name ...)
+&gt;      (with-syntax (((property-name ...)
+&gt;                     (generate-temporaries #'(name ...))))
+&gt;        #'(begin
+&gt;            (define property-name null) ...
+&gt;            (define/public name
+&gt;              (case-lambda
+&gt;                [() property-name]
+&gt;                [(value) (set! property-name value)]))
+&gt;            ...)))))
+">
+
+In the recursive version I want to add checking that each argument is
+an identifier and the argument names are unique. What is the best way
+to go about this with the example you have provided?
+_________________________________________________
+For list-related administrative tasks:
+http://list.cs.brown.edu/mailman/listinfo/plt-scheme
+</POST>
+<POST>
+<POSTER> Chongkai Zhu &lt;c...@cs.utah.edu&gt; </POSTER>
+<POSTDATE> 2007-10-21T22:14:00 </POSTDATE>
+http://www.scheme.com/tspl3/syntax.html#./syntax:h3
+
+contains a &quot;definition of unnamed let uses bound-identifier=? to detect
+duplicate identifiers.&quot; Your case is similar.
+
+Chongkai
+
+<QUOTE PREVIOUSPOST="
+Grant Rettke wrote:
+&gt; On 10/20/07, Chongkai Zhu &lt;c ... @cs.utah.edu&gt; wrote:
+
+&gt;&gt; Your solution is OK.
+
+&gt;&gt; If you don't want to have recursive macro expanding, here's another solution:
+
+&gt;&gt; (define-syntax (property stx)
+&gt;&gt;   (syntax-case stx ()
+&gt;&gt;     ((property)
+&gt;&gt;      (raise-syntax-error 'property &quot;Please provide at least one name&quot;
+&gt;&gt; '{property ?}))
+&gt;&gt;     ((_ name ...)
+&gt;&gt;      (with-syntax (((property-name ...)
+&gt;&gt;                     (generate-temporaries #'(name ...))))
+&gt;&gt;        #'(begin
+&gt;&gt;            (define property-name null) ...
+&gt;&gt;            (define/public name
+&gt;&gt;              (case-lambda
+&gt;&gt;                [() property-name]
+&gt;&gt;                [(value) (set! property-name value)]))
+&gt;&gt;            ...)))))
+
+&gt; In the recursive version I want to add checking that each argument is
+&gt; an identifier and the argument names are unique. What is the best way
+&gt; to go about this with the example you have provided?
+">
+
+_________________________________________________
+For list-related administrative tasks:
+http://list.cs.brown.edu/mailman/listinfo/plt-scheme
+</POST>
+</TEXT>
+</BODY>
+</DOC>

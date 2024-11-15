@@ -1,0 +1,593 @@
+<DOC>
+<DOCID> eng-NG-31-126965-9175287 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-28T16:01:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Link in Title Attribute
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Blinky the Shark &lt;no.s...@box.invalid&gt; </POSTER>
+<POSTDATE> 2007-09-28T16:01:00 </POSTDATE>
+I'd say this was a weird one.  Someone in a not-HTML group (a browser
+group it was) this morning asked for a way to have the user that clicks
+on a link be sent to a URL in the anchor's title attribute rather than
+to the hreffed URL.
+
+Anyone ever heard of such?
+
+Yes, I have the thread set for &quot;watch&quot;.  I just thought it might be an
+interesting thing to look at here.
+
+--
+Blinky                                                   RLU 297263
+Killing all posts from Google Groups
+The Usenet Improvement Project moved to this site August 28th:
+http://improve-usenet.org
+</POST>
+<POST>
+<POSTER> &quot;Jukka K. Korpela&quot; &lt;jkorp...@cs.tut.fi&gt; </POSTER>
+<POSTDATE> 2007-09-28T16:35:00 </POSTDATE>
+Scripsit Blinky the Shark:
+
+<QUOTE PREVIOUSPOST="
+&gt; I'd say this was a weird one.  Someone in a not-HTML group (a browser
+&gt; group it was) this morning asked for a way to have the user that
+&gt; clicks on a link be sent to a URL in the anchor's title attribute
+&gt; rather than to the hreffed URL.
+">
+
+It's of course impossible in HTML. Playing with JavaScript, you could modify
+the href attribute value when the link is clicked on, or you could directly
+tell the browser to go to a specific address. User agents with JavaScript
+disabled or not in use would naturally keep using the original href
+attribute. Maybe this is the idea? Cheating indexing robots to think that
+the page links to page X when it in fact &quot;links&quot; to Y when JavaScript is
+enabled.
+
+<QUOTE PREVIOUSPOST="
+&gt; Anyone ever heard of such?
+">
+
+Not about that particular technical idea, but I've seen a lot of crap on the
+Web and many &quot;clever&quot; ideas of cheating, shooting oneself  on the foot and
+spitting at users.
+
+--
+Jukka K. Korpela (&quot;Yucca&quot;)
+http://www.cs.tut.fi/~jkorpela/
+</POST>
+<POST>
+<POSTER> &quot;Jonathan N. Little&quot; &lt;lws4...@centralva.net&gt; </POSTER>
+<POSTDATE> 2007-09-28T16:43:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Blinky the Shark wrote:
+&gt; I'd say this was a weird one.  Someone in a not-HTML group (a browser
+&gt; group it was) this morning asked for a way to have the user that clicks
+&gt; on a link be sent to a URL in the anchor's title attribute rather than
+&gt; to the hreffed URL.
+
+&gt; Anyone ever heard of such?
+
+&gt; Yes, I have the thread set for &quot;watch&quot;.  I just thought it might be an
+&gt; interesting thing to look at here.
+">
+
+It would be nasty eh? Well seems to work...I would say the JavaScript
+would go in external file to complete the deception. The link will of th
+thatway.html and not thisway.html, of course when JavaScript is enabled:
+
+&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.01//EN&quot;
+&quot; http://www.w3.org/TR/html4/strict.dtd &quot;&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;meta http-equiv=&quot;content-type&quot; content=&quot;text/html; charset=iso-8859-1&quot;&gt;
+&lt;meta http-equiv=&quot;content-language&quot; content=&quot;en-us&quot;&gt;
+&lt;title&gt;Deception&lt;/title&gt;
+
+&lt;script type=&quot;text/javascript&quot;&gt;
+
+function trick(e){
+var me;
+if(!e) var e=window.event;
+if(e.target) me=e.target;              // W3C
+else if(e.srcElement) me=e.srcElement; // MSIE
+if(me.nodeType == 3) me=me.parentNode; // Safari bug els with TEXT
+
+me.href=me.title;    // now do the switcheroo!
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+function initTrick(){
+var dalink=document.getElementById('fakeout');
+
+if(dalink.addEventListener){
+dalink.addEventListener('click', trick, false);
+}
+else if(dalink.attachEvent){  //MS IE support
+dalink.attachEvent('onclick', trick);
+}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+// attach event after page loads
+if( window.addEventListener ) {
+window.addEventListener('load',initTrick,false);    //legacy
+
+<QUOTE PREVIOUSPOST="
+} else if( document.addEventListener ) {
+">
+
+document.addEventListener('load',initTrick,false);  //proper
+
+<QUOTE PREVIOUSPOST="
+} else if( window.attachEvent ) {
+">
+
+window.attachEvent(&quot;onload&quot;, initTrick);            //IE only
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+&lt;/script&gt;
+
+&lt;/head&gt;
+&lt;body&gt;
+&lt;p&gt;Well, let's see here...
+&lt;a id=&quot;fakeout&quot; href=&quot;thisway.html&quot; title=&quot;thatway.html&quot;&gt;Fake This Way&lt;/a&gt;
+&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+
+--
+Take care,
+
+Jonathan
+-------------------
+LITTLE WORKS STUDIO
+http://www.LittleWorksStudio.com
+</POST>
+<POST>
+<POSTER> Blinky the Shark &lt;no.s...@box.invalid&gt; </POSTER>
+<POSTDATE> 2007-09-28T16:47:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jukka K. Korpela wrote:
+&gt; Scripsit Blinky the Shark:
+
+&gt;&gt; I'd say this was a weird one.  Someone in a not-HTML group (a browser
+&gt;&gt; group it was) this morning asked for a way to have the user that
+&gt;&gt; clicks on a link be sent to a URL in the anchor's title attribute
+&gt;&gt; rather than to the hreffed URL.
+
+&gt; It's of course impossible in HTML. Playing with JavaScript, you could modify
+&gt; the href attribute value when the link is clicked on, or you could directly
+&gt; tell the browser to go to a specific address. User agents with JavaScript
+&gt; disabled or not in use would naturally keep using the original href
+&gt; attribute. Maybe this is the idea? Cheating indexing robots to think that
+">
+
+If anything interesting appears from that poster, I'll report back in
+this thread.
+
+If anyone is interested that uses or is willing to set up
+news.mozilla.org, the query appeared in mozilla.support.firefox and the
+thread has the Subject header
+
+clickable title
+
+<QUOTE PREVIOUSPOST="
+&gt; the page links to page X when it in fact &quot;links&quot; to Y when JavaScript is
+&gt; enabled.
+&gt;&gt; Anyone ever heard of such?
+
+&gt; Not about that particular technical idea, but I've seen a lot of crap on the
+&gt; Web and many &quot;clever&quot; ideas of cheating, shooting oneself  on the foot and
+&gt; spitting at users.
+">
+
+I'd classify this along with those.  Naturally my first knee-jerk
+response was &quot;deception&quot;, but it doesn't seem very deceptive to have the
+user directed to a URL that he's likely to plainly see on hovering and
+which is just as visible in the anchor as is the href.
+
+--
+Blinky                                                   RLU 297263
+Killing all posts from Google Groups
+The Usenet Improvement Project moved to this site August 28th:
+http://improve-usenet.org
+</POST>
+<POST>
+<POSTER> Blinky the Shark &lt;no.s...@box.invalid&gt; </POSTER>
+<POSTDATE> 2007-09-28T17:04:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jonathan N. Little wrote:
+&gt; Blinky the Shark wrote:
+&gt;&gt; I'd say this was a weird one.  Someone in a not-HTML group (a browser
+&gt;&gt; group it was) this morning asked for a way to have the user that clicks
+&gt;&gt; on a link be sent to a URL in the anchor's title attribute rather than
+&gt;&gt; to the hreffed URL.
+
+&gt;&gt; Anyone ever heard of such?
+
+&gt;&gt; Yes, I have the thread set for &quot;watch&quot;.  I just thought it might be an
+&gt;&gt; interesting thing to look at here.
+
+&gt; It would be nasty eh? Well seems to work...I would say the JavaScript
+&gt; would go in external file to complete the deception. The link will of th
+&gt; thatway.html and not thisway.html, of course when JavaScript is enabled:
+">
+
+Remind me to make sure NoScript has your sites in its crosshairs.  ;)
+
+&lt;snip fiendish but creative code&gt;  :)
+
+--
+Blinky                                                   RLU 297263
+Killing all posts from Google Groups
+The Usenet Improvement Project - http://improve-usenet.org
+</POST>
+<POST>
+<POSTER> &quot;Jukka K. Korpela&quot; &lt;jkorp...@cs.tut.fi&gt; </POSTER>
+<POSTDATE> 2007-09-29T07:47:00 </POSTDATE>
+Scripsit Blinky the Shark:
+
+<QUOTE PREVIOUSPOST="
+&gt; I'd classify this along with those.  Naturally my first knee-jerk
+&gt; response was &quot;deception&quot;, but it doesn't seem very deceptive to have
+&gt; the user directed to a URL that he's likely to plainly see on
+&gt; hovering and which is just as visible in the anchor as is the href.
+">
+
+It might be intended to deceive search engines rather than users directly.
+But such deception, too, is ultimately aimed at deceiving people.
+
+I have to disagree with your note somewhat, though. The &quot;tooltip&quot; effect is
+not ubiquous, it is not required by any specification, etc. Neither is the
+&quot;status line&quot; effect (displaying the URL in the browser's status line on
+mouseover), but it's something that _has_ been meant for showing the URL,
+whereas the title attribute is not meant for that but for use as &quot;advisory
+title&quot;.
+
+The direct deception, whether intentional or not, arises from the fairly
+natural user behavior of looking at the status line to see the URL.
+
+--
+Jukka K. Korpela (&quot;Yucca&quot;)
+http://www.cs.tut.fi/~jkorpela/
+</POST>
+<POST>
+<POSTER> &quot;BigDaddyBS&quot; &lt;bidar...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-29T13:44:00 </POSTDATE>
+&quot;Blinky the Shark&quot; &lt;no.s ... @box.invalid&gt; wrote in message
+news:slrnffqr4p.ebs.no.spam@thurston.blinkynet.net ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Jonathan N. Little wrote:
+&gt;&gt; Blinky the Shark wrote:
+&gt;&gt;&gt; I'd say this was a weird one.  Someone in a not-HTML group (a browser
+&gt;&gt;&gt; group it was) this morning asked for a way to have the user that clicks
+&gt;&gt;&gt; on a link be sent to a URL in the anchor's title attribute rather than
+&gt;&gt;&gt; to the hreffed URL.
+
+&gt;&gt;&gt; Anyone ever heard of such?
+
+&gt;&gt;&gt; Yes, I have the thread set for &quot;watch&quot;.  I just thought it might be an
+&gt;&gt;&gt; interesting thing to look at here.
+
+&gt;&gt; It would be nasty eh? Well seems to work...I would say the JavaScript
+&gt;&gt; would go in external file to complete the deception. The link will of th
+&gt;&gt; thatway.html and not thisway.html, of course when JavaScript is enabled:
+
+&gt; Remind me to make sure NoScript has your sites in its crosshairs.  ;)
+
+&gt; &lt;snip fiendish but creative code&gt;  :)
+
+&gt; --
+&gt; Blinky                                                   RLU 297263
+&gt; Killing all posts from Google Groups
+&gt; The Usenet Improvement Project - http://improve-usenet.org
+">
+
+Weird? Yes. To fake out search engines? Possibly.
+
+But the way I see it, Jonathan, who posted the &quot;fiendish but creative code&quot;
+just gave phishers, scammers, and malware senders ANOTHER way to get people
+to go to sites where the sole purpose in life is to cheat the poor slobs who
+don't see the cheat.
+
+First thing I thought of when I read the above was something like the
+following:
+
+&quot;Use this link to change your Login info: Mobile Fun&quot; [underlying link:
+http:// 219.70.221.5/]
+
+which is one of the scam/malware emails that can be found at my page
+http://www.orangefrogproductions.com/ofp2s_malware_email_example_009-... .
+
+From my experience, those who try to hide to where a page links, are trying
+to pass viruses, spyware, porn, phishing pages, etc., not cheat the search
+engines. Yes, those of us &quot;in the know&quot; can rollover the link and see the
+underlying one, and the title, so if a link appears in that attribute that
+doesn't match, we can be forwarned. But &quot;Average Joe/Jane&quot; user don't
+realize the implications. (One of the reasons for my Scams info.)
+
+Please be careful the code you post. (This is one of the first times I've
+seen this type of questions and full code posted.) - You might just be
+giving the &quot;bad guys&quot; more ammo! (It's nice to know how its done, but why
+show THEM?)
+
+(Sorry if I come off like being on a &quot;high horse&quot;, but GEEZE!)
+
+--
+BigDaddyBS
+</POST>
+<POST>
+<POSTER> &quot;Jonathan N. Little&quot; &lt;lws4...@centralva.net&gt; </POSTER>
+<POSTDATE> 2007-09-29T14:44:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+BigDaddyBS wrote:
+&gt; But the way I see it, Jonathan, who posted the &quot;fiendish but creative code&quot;
+&gt; just gave phishers, scammers, and malware senders ANOTHER way to get people
+&gt; to go to sites where the sole purpose in life is to cheat the poor slobs who
+&gt; don't see the cheat.
+">
+
+Not really. My code was not that unique, nor creative. Most of the link
+scamming is found in emails. If you allow JavaScript to run in email
+and are dumb enough to click on links within emails, especially from
+unknown sources you deserve what you get!
+
+Of course it also helps to have client software that shows the status
+bar by default, has option to block JavaScript manipulation of the
+status bar. Punycodes those spoofed URLs...and last but not least a
+little common sense in Layer 8.
+
+<QUOTE PREVIOUSPOST="
+&gt; From my experience, those who try to hide to where a page links, are trying
+&gt; to pass viruses, spyware, porn, phishing pages, etc., not cheat the search
+&gt; engines. Yes, those of us &quot;in the know&quot; can rollover the link and see the
+&gt; underlying one, and the title, so if a link appears in that attribute that
+&gt; doesn't match, we can be forwarned. But &quot;Average Joe/Jane&quot; user don't
+&gt; realize the implications. (One of the reasons for my Scams info.)
+&gt; Please be careful the code you post. (This is one of the first times I've
+&gt; seen this type of questions and full code posted.) - You might just be
+&gt; giving the &quot;bad guys&quot; more ammo! (It's nice to know how its done, but why
+&gt; show THEM?)
+
+&gt; (Sorry if I come off like being on a &quot;high horse&quot;, but GEEZE!)
+">
+
+As I said pure discussion and not very unique. There are much more
+sophisticated was to misdirect a link.
+
+--
+Take care,
+
+Jonathan
+-------------------
+LITTLE WORKS STUDIO
+http://www.LittleWorksStudio.com
+</POST>
+<POST>
+<POSTER> &quot;BigDaddyBS&quot; &lt;bidar...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-29T17:05:00 </POSTDATE>
+&quot;Jonathan N. Little&quot; &lt;lws4 ... @centralva.net&gt; wrote in message
+news:bcad4$46fe9d18$40cba7bd$25838@NAXS.COM ...
+
+<QUOTE PREVIOUSPOST="
+&gt; BigDaddyBS wrote:
+
+&gt;&gt; But the way I see it, Jonathan, who posted the &quot;fiendish but creative
+&gt;&gt; code&quot; just gave phishers, scammers, and malware senders ANOTHER way to
+&gt;&gt; get people to go to sites where the sole purpose in life is to cheat the
+&gt;&gt; poor slobs who don't see the cheat.
+
+&gt; Not really. My code was not that unique, nor creative. Most of the link
+&gt; scamming is found in emails. If you allow JavaScript to run in email and
+&gt; are dumb enough to click on links within emails, especially from unknown
+&gt; sources you deserve what you get!
+">
+
+My point is that there are VERY many people who only know email and get to
+the internet BY clicking on links in them. Few of them know to (or HOW to)
+check each link, and many of them are scammed every day. Dumb doesn't enter
+into it. &quot;Inexperienced&quot; and &quot;naive&quot; do NOT equate to &quot;dumb&quot;. SHOULD they
+know better? Sure, but many don't, and don't know how to use search engines
+to find out about it. Should they have internet access if they are that
+naive? Of course. For some people, it's their only contact with the &quot;outside
+world&quot;. For example, my late grandmother, 91yo - died this year, kept in
+contact with her boys, her grandkids and great-grandkids via email and the
+occassional IM. And she had our family to tell her what to watch out for.
+But there are many who don't have that &quot;backup&quot; to help them. Why should
+they have to suffer the losses imposed by the &quot;bad guys&quot;? According to your
+statement, they deserve it. I disagree, wholeheartedly!
+
+<QUOTE PREVIOUSPOST="
+&gt; Of course it also helps to have client software that shows the status bar
+&gt; by default, has option to block JavaScript manipulation of the status bar.
+&gt; Punycodes those spoofed URLs...and last but not least a little common
+&gt; sense in Layer 8.
+">
+
+Whose common sense? Many people have tons of common sense, but don't know
+that much about computers (see above). And again, why should those without
+CCS (Computer Common Sense) be made to suffer?
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; From my experience, those who try to hide to where a page links, are
+&gt;&gt; trying to pass viruses, spyware, porn, phishing pages, etc., not cheat
+&gt;&gt; the search engines. Yes, those of us &quot;in the know&quot; can rollover the link
+&gt;&gt; and see the underlying one, and the title, so if a link appears in that
+&gt;&gt; attribute that doesn't match, we can be forwarned. But &quot;Average Joe/Jane&quot;
+&gt;&gt; user don't realize the implications. (One of the reasons for my Scams
+&gt;&gt; info.)
+
+&gt;&gt; Please be careful the code you post. (This is one of the first times I've
+&gt;&gt; seen this type of questions and full code posted.) - You might just be
+&gt;&gt; giving the &quot;bad guys&quot; more ammo! (It's nice to know how its done, but why
+&gt;&gt; show THEM?)
+
+&gt;&gt; (Sorry if I come off like being on a &quot;high horse&quot;, but GEEZE!)
+
+&gt; As I said pure discussion and not very unique. There are much more
+&gt; sophisticated was to misdirect a link.
+">
+
+My point there is - unique or not, unsophisticated or not - there are those
+HS and younger buttheads who will try anything (no matter who it hurts) for
+fun. Why should we TEACH them - give them complete code (as you did) to
+screw up other people's lives and computers, and actually EXPLAIN to them
+how to do it? Make them search harder, and possibly have to pull the pieces
+together themselves. You can qualify it as &quot;pure discussion&quot; if you like,
+but that means that someone could post full code for viruses, and get away
+with it by saying the same thing. (And I'm sure there are sites and
+newsgroups with ALL of that crap on them!) Why make it so easy to find?
+
+<QUOTE PREVIOUSPOST="
+&gt; --
+&gt; Take care,
+
+&gt; Jonathan
+&gt; -------------------
+&gt; LITTLE WORKS STUDIO
+&gt; http://www.LittleWorksStudio.com
+">
+
+Jonathan, your motives may have been pure. I'm not slamming you as a person
+(don't know you well enough! :-) ), just the posting of actual, full code to
+do nasty things, again, no matter how &quot;pure&quot; the original poster (other
+newsgroup) meant it.
+
+Ok... I think I've &quot;vented my spleen&quot;. All I'm saying is that we think about
+what we are posting, and what it could do to those &quot;dumb&quot; people. Huh?
+
+--
+bigdaddybs
+</POST>
+<POST>
+<POSTER> &quot;nice.guy.nige&quot; &lt;nigel_m...@deadspam.com&gt; </POSTER>
+<POSTDATE> 2007-09-30T19:41:00 </POSTDATE>
+While the city slept, Jonathan N. Little (lws4 ... @centralva.net) feverishly
+typed...
+
+<QUOTE PREVIOUSPOST="
+&gt; If you allow JavaScript to run in email and are dumb enough
+&gt; to click on links within emails, especially from unknown
+&gt; sources you deserve what you get!
+">
+
+I can't speak for current versions (because I don't have one), but I
+remember when Outlook Express (probably the most widely used email client on
+the planet) allowed javascript to be executed in emails / newsgroup messages
+out of the box. I found this out when some scrote posted a message to a
+newsgroup that contained &quot;while(1==1) { window.open; }&quot; in it... After I
+rebooted the PC I found out that OE uses the IE internet &quot;safety&quot; settings,
+and by default used the Trusted setting. Altering that setting was the only
+way to stop OE from executing Javascript - this option wasn't available in
+any of OE's own settings.
+
+So your comment that &quot;If you allow javascript to run in email ... you
+deserve what you get&quot; is not really fair because many people may be allowing
+javascript to run in emails without even knowing it.
+
+Cheers,
+Nige
+
+--
+Nigel Moss http://www.nigenet.org.uk
+Mail address will bounce. ni ... @DOG.nigenet.org.uk | Take the DOG. out!
+&quot;Your mother ate my dog!&quot;, &quot;Not all of him!&quot;
+</POST>
+<POST>
+<POSTER> &quot;Jonathan N. Little&quot; &lt;lws4...@centralva.net&gt; </POSTER>
+<POSTDATE> 2007-09-30T21:36:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+nice.guy.nige wrote:
+&gt; While the city slept, Jonathan N. Little (lws4 ... @centralva.net) feverishly
+&gt; typed...
+
+&gt;&gt; If you allow JavaScript to run in email and are dumb enough
+&gt;&gt; to click on links within emails, especially from unknown
+&gt;&gt; sources you deserve what you get!
+
+&gt; I can't speak for current versions (because I don't have one), but I
+&gt; remember when Outlook Express (probably the most widely used email client on
+&gt; the planet) allowed javascript to be executed in emails / newsgroup messages
+&gt; out of the box. I found this out when some scrote posted a message to a
+&gt; newsgroup that contained &quot;while(1==1) { window.open; }&quot; in it... After I
+&gt; rebooted the PC I found out that OE uses the IE internet &quot;safety&quot; settings,
+&gt; and by default used the Trusted setting. Altering that setting was the only
+&gt; way to stop OE from executing Javascript - this option wasn't available in
+&gt; any of OE's own settings.
+">
+
+I dumped that turkey back in the 90's! Maybe we should put up a banner,
+hirer a pilot and sky write, don't use OE for your email. Just about
+anything else would be better! I still have old Communicator 4.61 on for
+test and it has the ability to disable JavaScript in mail and
+newsgroups, although back in 99 it was a more naive time it was on by
+default!
+
+<QUOTE PREVIOUSPOST="
+&gt; So your comment that &quot;If you allow javascript to run in email ... you
+&gt; deserve what you get&quot; is not really fair because many people may be allowing
+&gt; javascript to run in emails without even knowing it.
+">
+
+Maybe they should learn. I love this new Public Service ad that they are
+running in the US lately showing a scruffy guy trying to pull the old
+fake check scam to a lady on a bus. In person it very obvious that it's
+bogus.. the ad tries to show that in an email it still stinks.
+
+--
+Take care,
+
+Jonathan
+-------------------
+LITTLE WORKS STUDIO
+http://www.LittleWorksStudio.com
+</POST>
+<POST>
+<POSTER> Blinky the Shark &lt;no.s...@box.invalid&gt; </POSTER>
+<POSTDATE> 2007-09-30T21:41:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+nice.guy.nige wrote:
+&gt; While the city slept, Jonathan N. Little (lws4 ... @centralva.net) feverishly
+&gt; typed...
+
+&gt;&gt; If you allow JavaScript to run in email and are dumb enough
+&gt;&gt; to click on links within emails, especially from unknown
+&gt;&gt; sources you deserve what you get!
+
+&gt; I can't speak for current versions (because I don't have one), but I
+&gt; remember when Outlook Express (probably the most widely used email client on
+&gt; the planet) allowed javascript to be executed in emails / newsgroup messages
+&gt; out of the box. I found this out when some scrote posted a message to a
+&gt; newsgroup that contained &quot;while(1==1) { window.open; }&quot; in it... After I
+&gt; rebooted the PC I found out that OE uses the IE internet &quot;safety&quot; settings,
+&gt; and by default used the Trusted setting. Altering that setting was the only
+&gt; way to stop OE from executing Javascript - this option wasn't available in
+&gt; any of OE's own settings.
+
+&gt; So your comment that &quot;If you allow javascript to run in email ... you
+&gt; deserve what you get&quot; is not really fair because many people may be allowing
+&gt; javascript to run in emails without even knowing it.
+">
+
+I have the fix for that statement, then.  &quot;If you use Outlook Express,
+you deserve what you get.&quot;  :)
+
+--
+Blinky                                                   RLU 297263
+Killing all posts from Google Groups
+The Usenet Improvement Project - http://improve-usenet.org
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,81 @@
+<DOC>
+<DOCID> eng-NG-31-135294-9651640 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2008-01-28T12:21:00 </DATETIME>
+<BODY>
+<HEADLINE>
+How to return some byte stream from a controller?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> jerryji &lt;jerryji1...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-28T12:21:00 </POSTDATE>
+Dear Pyloners,
+
+Greatly appreciated if someone can shed some light on how to return a
+byte stream from my controller.
+
+For example, I want /image/123 to return an image so that it could be
+referenced in another page as &lt;img src=&quot;/image/123&quot; alt=&quot;123&quot; /&gt;
+
+(similar discussion did appear before --
+http://groups.google.com/group/pylons-discuss/msg/f87e2754e6004cb9
+but doesn't seem to have an answer...)
+
+Many thanks in advance!
+
+Cheers,
+Jerry
+</POST>
+<POST>
+<POSTER> Dalius Dobravolskas &lt;dalius.dobravols...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-28T13:13:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+jerryji wrote:
+&gt; Dear Pyloners,
+
+&gt; Greatly appreciated if someone can shed some light on how to return a
+&gt; byte stream from my controller.
+
+&gt; For example, I want /image/123 to return an image so that it could be
+&gt; referenced in another page as &lt;img src=&quot;/image/123&quot; alt=&quot;123&quot; /&gt;
+
+&gt; (similar discussion did appear before --
+&gt; http://groups.google.com/group/pylons-discuss/msg/f87e2754e6004cb9
+&gt; but doesn't seem to have an answer...)
+">
+
+I use following:
+
+class JpegFileApp(DataApp):
+&quot;&quot;&quot; Jpeg file serving. &quot;&quot;&quot;
+
+def __init__(self, filename, content, **kwargs):
+self.filename = filename
+kwargs['content_type'] = 'image/jpeg'
+DataApp.__init__(self, content, None, **kwargs)
+self.content_disposition(filename=filename)
+
+def guess_type(self):
+return 'image/jpeg'
+...
+# Somewhere in your controller
+def cover(self, id):
+...
+app = JpegFileApp(id, image_bytes)
+return app(request.environ, self.start_response)
+
+Technically you can return image as string and set proper Content-type
+in response.headers. E.g:
+
+response.headers['Content-type'] = 'image/jpeg'
+return image_bytes
+
+but it was very slow for me. Not sure why.
+
+Regards,
+Dalius
+</POST>
+</TEXT>
+</BODY>
+</DOC>

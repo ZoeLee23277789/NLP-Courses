@@ -1,0 +1,533 @@
+<DOC>
+<DOCID> eng-NG-31-135458-9738972 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-12-20T14:00:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Attn root: forcedeth / eth0
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> buck &lt;b...@private.mil&gt; </POSTER>
+<POSTDATE> 2007-12-20T14:00:00 </POSTDATE>
+I am not able to follow what has happened since your new kernel build.
+
+Can you please use 2 or 3 threads - one for WiFi, another for eth0 and
+possibly another for other issues?
+
+Since it works the first time, I still maintain that something after
+the forcedeth module loads is causing your eth0 problem.  Please:
+1) modprobe -r forcedeth
+2) make sure the module is not loaded and that the only device
+ifconfig shows is lo
+3) insmod forcedeth
+4) report everything displayed or logged from having done #3
+
+5) Assuming success with 'insmod forcedeth', and with a static IP
+configured in rc.inet1.conf, run /etc/rc.d/rc.inet1
+6) Assuming success. down eth0 and modify rc.inet1.conf so that you
+DHCP an IP, then run /etc/rc.d/rc.inet1
+
+7) Report results
+--
+buck
+</POST>
+<POST>
+<POSTER> root &lt;NoEM...@home.org&gt; </POSTER>
+<POSTDATE> 2007-12-20T15:59:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+buck &lt;b ... @private.mil&gt; wrote:
+&gt; I am not able to follow what has happened since your new kernel build.
+
+&gt; Can you please use 2 or 3 threads - one for WiFi, another for eth0 and
+&gt; possibly another for other issues?
+">
+
+I'm sorry Buck, I will follow up this thread with
+the stuff pertaining to forcedeth.
+
+<QUOTE PREVIOUSPOST="
+&gt; Since it works the first time, I still maintain that something after
+&gt; the forcedeth module loads is causing your eth0 problem.  Please:
+">
+
+&quot;Working the first time&quot; means the first time after I boot
+a new installation and all during that first session. Never
+after.
+
+<QUOTE PREVIOUSPOST="
+&gt; 1) modprobe -r forcedeth
+">
+
+OK, done
+
+DMESG: ACPI: PCI interrupt for device 0000.00.0a.0- disabled
+
+I take this as a good sign, that forcedeth owned the
+interrupt before rmmod.
+
+<QUOTE PREVIOUSPOST="
+&gt; 2) make sure the module is not loaded and that the only device
+&gt; ifconfig shows is lo
+">
+
+Yes, ifconfig shows only lo, as it does all the time.
+
+<QUOTE PREVIOUSPOST="
+&gt; 3) insmod forcedeth
+">
+
+insmod reports: can't read 'forcedeth':No such file file or directory.
+Nothing sent to dmesg.
+
+So, I do modprobe forcedeth:
+
+DMESG:Several lines:
+forcedeth.c:reversed engineered.....
+ACPI:PCI Interrupt 0000:00.0.[A] -&gt; Link [LMAC] -&gt; GSI 21 (level,low) -&gt;IRQ 18
+PCI:Setting latency timer of devide 0000:00:0a to 64
+forcedeth: using HIGHDMA
+eth0:forcedeth.c:subsystem: 01025:0126 bound to 0000:00:0a.0
+
+<QUOTE PREVIOUSPOST="
+&gt; 4) report everything displayed or logged from having done #3
+
+&gt; 5) Assuming success with 'insmod forcedeth', and with a static IP
+&gt; configured in rc.inet1.conf, run /etc/rc.d/rc.inet1
+">
+
+I had to change rc.inet1.conf to fixed IP instead of DHCP.
+
+I did it by supplying an IPADDR[0], no netmask, and use DHCP=&quot;&quot;
+
+No success: after executing rc.inet1 I still get only lo
+for ifconfig.
+
+<QUOTE PREVIOUSPOST="
+&gt; 6) Assuming success. down eth0 and modify rc.inet1.conf so that you
+&gt; DHCP an IP, then run /etc/rc.d/rc.inet1
+">
+
+Needless to say, after restoring rc.inet1.conf and re-running
+rc.inet1 I still get only lo for ifconfig.
+
+<QUOTE PREVIOUSPOST="
+&gt; 7) Report results
+&gt; --
+&gt; buck
+">
+
+I know its heartbreaking and confounding Buck.
+
+You might have missed my mention that the Trinity
+rescue disk is able to bring up eth0. I had to type
+all the stuff in with the laptop sitting in my lap
+while I worked at the desktop. I think I got
+everything right, but the bottom line is no eth0.
+</POST>
+<POST>
+<POSTER> buck &lt;b...@private.mil&gt; </POSTER>
+<POSTDATE> 2007-12-20T19:30:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Thu, 20 Dec 2007 20:59:54 GMT, root &lt;NoEM ... @home.org&gt; wrote:
+&gt;buck &lt;b ... @private.mil&gt; wrote:
+&gt;&gt; I am not able to follow what has happened since your new kernel build.
+
+&gt;&gt; Can you please use 2 or 3 threads - one for WiFi, another for eth0 and
+&gt;&gt; possibly another for other issues?
+
+&gt;I'm sorry Buck, I will follow up this thread with
+&gt;the stuff pertaining to forcedeth.
+
+&gt;&gt; Since it works the first time, I still maintain that something after
+&gt;&gt; the forcedeth module loads is causing your eth0 problem.  Please:
+
+&gt;&quot;Working the first time&quot; means the first time after I boot
+&gt;a new installation and all during that first session. Never
+&gt;after.
+
+&gt;&gt; 1) modprobe -r forcedeth
+
+&gt;OK, done
+
+&gt;DMESG: ACPI: PCI interrupt for device 0000.00.0a.0- disabled
+
+&gt;I take this as a good sign, that forcedeth owned the
+&gt;interrupt before rmmod.
+
+&gt;&gt; 2) make sure the module is not loaded and that the only device
+&gt;&gt; ifconfig shows is lo
+
+&gt;Yes, ifconfig shows only lo, as it does all the time.
+
+&gt;&gt; 3) insmod forcedeth
+
+&gt;insmod reports: can't read 'forcedeth':No such file file or directory.
+&gt;Nothing sent to dmesg.
+">
+
+Yes, insmod is broken in SL 12.  Sorry.
+
+<QUOTE PREVIOUSPOST="
+&gt;So, I do modprobe forcedeth:
+
+&gt;DMESG:Several lines:
+&gt;forcedeth.c:reversed engineered.....
+&gt;ACPI:PCI Interrupt 0000:00.0.[A] -&gt; Link [LMAC] -&gt; GSI 21 (level,low) -&gt;IRQ 18
+&gt;PCI:Setting latency timer of devide 0000:00:0a to 64
+&gt;forcedeth: using HIGHDMA
+&gt;eth0:forcedeth.c:subsystem: 01025:0126 bound to 0000:00:0a.0
+">
+
+OK, now
+cat /proc/net/dev
+
+Is eth0 there?  It should be, with all zeros.  On my system with 2
+NICs where only eth0 is UP, I see lo and eth0 activity while eth1 has
+none.
+
+If eth0 is there, run
+ip link set eth0 up
+
+When I do that for eth1, it sets eth1 up with no IP, and dmesg is
+silent.  Your results should be the same if there really is an eth0
+device.
+
+You previously reported failure with the ip link command.  What I'm
+after with the /proc/net and the ip link is to see if a device is
+really there after modprobe -r and then modprobe.  It becomes
+increasingly likely that there's no eth0 device.
+
+<QUOTE PREVIOUSPOST="
+&gt;You might have missed my mention that the Trinity
+&gt;rescue disk is able to bring up eth0. I had to type
+&gt;all the stuff in with the laptop sitting in my lap
+&gt;while I worked at the desktop. I think I got
+&gt;everything right, but the bottom line is no eth0.
+">
+
+But the Trinity disk boots, which means it runs its own kernel and its
+own startup scripts.  Which means that it muddies the waters a lot
+less than a standard SL boot...  Probably so would Slax, the Live CD.
+
+And speaking of Slax, I'm beginning to wonder if it would not be more
+efficient for you to create a running SL on this computer by starting
+with that...
+
+In response to your question (in another thread) about what loads
+what, run
+man udev
+and
+man hald
+and read the top of rc.modules.  Essentially, udev is the likely
+reason for modules to load when you think they should not or the order
+of the load differs from what you expect.
+--
+buck
+</POST>
+<POST>
+<POSTER> Tom N &lt;t...@somewhere.invalid&gt; </POSTER>
+<POSTDATE> 2007-12-20T23:50:00 </POSTDATE>
+On 2007-12-20, root &lt;NoEM ... @home.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Yes, ifconfig shows only lo, as it does all the time.
+">
+
+This may be stupid, but I have just configured eth0 in
+preparation for clearwire, and ifconfig doesn't show anything
+but lo either.
+
+ifconfig -a does, though...
+
+eth0      Link encap:Ethernet  HWaddr 00:04:5A:5E:D0:06
+BROADCAST MULTICAST  MTU:1500  Metric:1
+RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+TX packets:0 errors:5 dropped:0 overruns:0 carrier:10
+collisions:0 txqueuelen:1000
+RX bytes:0 (0.0 b)  TX bytes:0 (0.0 b)
+Interrupt:9 Base address:0x4c00
+
+lo        Link encap:Local Loopback
+inet addr:127.0.0.1  Mask:255.0.0.0
+inet6 addr: ::1/128 Scope:Host
+UP LOOPBACK RUNNING  MTU:16436  Metric:1
+RX packets:6 errors:0 dropped:0 overruns:0 frame:0
+TX packets:6 errors:0 dropped:0 overruns:0 carrier:0
+collisions:0 txqueuelen:0
+RX bytes:412 (412.0 b)  TX bytes:412 (412.0 b)
+
+Drove me nuts for a while. Any chance you have made the same mistake?
+
+Not sure exactly how I made this happen. But when I determined on the
+web that I needed the tulip module and  put /sbin/modprobe tulip in /etc/rc.d/rc.modules,
+ran netconfig and chose dhcp, and rebooted, eth0 came up.
+
+The lack of a /dev/eth0 is really weird...
+
+Tom
+</POST>
+<POST>
+<POSTER> A Guy Called Tyketto &lt;tyke...@sbcglobal.net.invalid&gt; </POSTER>
+<POSTDATE> 2007-12-21T01:50:00 </POSTDATE>
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+Okay.. I've been following this a bit loosely, but I think I
+see a problem here. So let's start this at the beginning, and without
+the rc.d scripts YET.
+
+Could you try the following:
+
+1. modprobe -r forcedeth. This should drop your NIC, which should
+be eth0.
+
+2. modprobe forcedeth. It should come back as eth0. Output should
+be sent to the screen, or check dmesg. It should say eth0.
+
+3. ifconfig eth0 192.168.10.1 netmask 255.255.255.0. This should
+assign eth0 an static IP address. It should return nothing.
+
+4. ifconfig. You should see eth0 there.
+
+5. ping the above IP address. You should get responses back.
+
+If this works, do an 'ifconfig eth0 down', and put that same IP
+address and netmask into the IPADDR[0] and NETMASK[0] lines in
+/etc/rc.d/rc.inet1.conf, then run /etc/rc.d/rc.inet1. Ping the IP
+address again, and check to see if you get responses back. You should.
+
+If that works, then comment out the IPADDR and NETMASK lines,
+and set up for DHCP. Also, you may want to verify that forcedeth isn't
+on modprobe's blacklist. verify that by looking through
+/etc/modprobe.d/blacklist. It shouldn't be there, but check to make
+sure.
+
+I've used the forcedeth driver before and haven't had any
+problems at all.
+
+BL.
+- --
+Brad Littlejohn                         | Email:     tyke ... @sbcglobal.net
+Unix Systems Administrator,             |           tyke ... @ozemail.com.au
+Web + NewsMaster, BOFH.. Smeghead! :)   | http://www.wizard.com/~tyketto
+PGP: 1024D/E319F0BF 6980 AAD6 7329 E9E6 D569  F620 C819 199A E319 F0BF
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.7 (GNU/Linux)
+
+iD8DBQFHa2JFyBkZmuMZ8L8RAvMMAKDYE/8IgibhUcq0laGGPSUp4Rii3gCg9CYZ
+ma81jEc5FCWNOPiYC0YcwN8=
+=nPSV
+-----END PGP SIGNATURE-----
+</POST>
+<POST>
+<POSTER> Tom N &lt;t...@somewhere.invalid&gt; </POSTER>
+<POSTDATE> 2007-12-21T03:13:00 </POSTDATE>
+On 2007-12-21, A Guy Called Tyketto &lt;tyke ... @sbcglobal.net.invalid&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;    Okay.. I've been following this a bit loosely, but I think I
+&gt; see a problem here. So let's start this at the beginning, and without
+&gt; the rc.d scripts YET.
+
+&gt;    Could you try the following:
+
+&gt;    1. modprobe -r forcedeth. This should drop your NIC, which should
+&gt;    be eth0.
+
+&gt;    2. modprobe forcedeth. It should come back as eth0. Output should
+&gt;    be sent to the screen, or check dmesg. It should say eth0.
+
+&gt;    3. ifconfig eth0 192.168.10.1 netmask 255.255.255.0. This should
+&gt;    assign eth0 an static IP address. It should return nothing.
+
+&gt;    4. ifconfig. You should see eth0 there.
+
+&gt;    5. ping the above IP address. You should get responses back.
+">
+
+Well I'll be! Different module, but that worked.
+
+$ ifconfig
+
+eth0      Link encap:Ethernet  HWaddr 00:04:5A:5E:D0:06
+inet addr:192.168.10.1  Bcast:192.168.10.255  Mask:255.255.255.0
+UP BROADCAST MULTICAST  MTU:1500  Metric:1
+RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+TX packets:0 errors:5 dropped:0 overruns:0 carrier:10
+collisions:0 txqueuelen:1000
+RX bytes:0 (0.0 b)  TX bytes:0 (0.0 b)
+Interrupt:9 Base address:0x4c00
+
+$ ping -c 5 192.168.10.1
+PING 192.168.10.1 (192.168.10.1) 56(84) bytes of data.
+64 bytes from 192.168.10.1: icmp_seq=1 ttl=64 time=0.166 ms
+64 bytes from 192.168.10.1: icmp_seq=2 ttl=64 time=0.136 ms
+64 bytes from 192.168.10.1: icmp_seq=3 ttl=64 time=0.167 ms
+64 bytes from 192.168.10.1: icmp_seq=4 ttl=64 time=0.139 ms
+64 bytes from 192.168.10.1: icmp_seq=5 ttl=64 time=0.136 ms
+
+<QUOTE PREVIOUSPOST="
+&gt;    If this works, do an 'ifconfig eth0 down', and put that same IP
+&gt; address and netmask into the IPADDR[0] and NETMASK[0] lines in
+&gt; /etc/rc.d/rc.inet1.conf, then run /etc/rc.d/rc.inet1. Ping the IP
+&gt; address again, and check to see if you get responses back. You should.
+">
+
+Yep.
+
+<QUOTE PREVIOUSPOST="
+&gt;    If that works, then comment out the IPADDR and NETMASK lines,
+&gt; and set up for DHCP.
+">
+
+As near as I can tell, that just means putting the 'yes' in this line:
+
+USE_DHCP[0]=&quot;yes&quot;
+
+and running dhcpcd at boot.
+
+<QUOTE PREVIOUSPOST="
+&gt; Also, you may want to verify that forcedeth isn't
+&gt; on modprobe's blacklist. verify that by looking through
+&gt; /etc/modprobe.d/blacklist. It shouldn't be there, but check to make
+&gt; sure.
+
+&gt;    I've used the forcedeth driver before and haven't had any
+&gt; problems at all.
+">
+
+Thanks for laying this out so clearly.
+
+Tom
+</POST>
+<POST>
+<POSTER> root &lt;NoEM...@home.org&gt; </POSTER>
+<POSTDATE> 2007-12-21T16:46:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Tom N &lt;t ... @somewhere.invalid&gt; wrote:
+&gt; Not sure exactly how I made this happen. But when I determined on the
+&gt; web that I needed the tulip module and  put /sbin/modprobe tulip in /etc/rc.d/rc.modules,
+&gt; ran netconfig and chose dhcp, and rebooted, eth0 came up.
+
+&gt; The lack of a /dev/eth0 is really weird...
+
+&gt; Tom
+">
+
+You youngsters are spoiled today. Back in the old days we
+had to do all that stuff for *every* module. :)
+
+Glad you are up.
+</POST>
+<POST>
+<POSTER> root &lt;NoEM...@home.org&gt; </POSTER>
+<POSTDATE> 2007-12-21T16:47:00 </POSTDATE>
+A Guy Called Tyketto &lt;tyke ... @sbcglobal.net.invalid&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; -----BEGIN PGP SIGNED MESSAGE-----
+&gt; Hash: SHA1
+
+&gt;    Okay.. I've been following this a bit loosely, but I think I
+&gt; see a problem here. So let's start this at the beginning, and without
+&gt; the rc.d scripts YET.
+
+&gt;    Could you try the following:
+
+&gt;    1. modprobe -r forcedeth. This should drop your NIC, which should
+&gt;    be eth0.
+
+&gt;    2. modprobe forcedeth. It should come back as eth0. Output should
+&gt;    be sent to the screen, or check dmesg. It should say eth0.
+
+&gt;    3. ifconfig eth0 192.168.10.1 netmask 255.255.255.0. This should
+&gt;    assign eth0 an static IP address. It should return nothing.
+
+&gt;    4. ifconfig. You should see eth0 there.
+
+&gt;    5. ping the above IP address. You should get responses back.
+
+&gt;    If this works, do an 'ifconfig eth0 down', and put that same IP
+&gt; address and netmask into the IPADDR[0] and NETMASK[0] lines in
+&gt; /etc/rc.d/rc.inet1.conf, then run /etc/rc.d/rc.inet1. Ping the IP
+&gt; address again, and check to see if you get responses back. You should.
+
+&gt;    If that works, then comment out the IPADDR and NETMASK lines,
+&gt; and set up for DHCP. Also, you may want to verify that forcedeth isn't
+&gt; on modprobe's blacklist. verify that by looking through
+&gt; /etc/modprobe.d/blacklist. It shouldn't be there, but check to make
+&gt; sure.
+
+&gt;    I've used the forcedeth driver before and haven't had any
+&gt; problems at all.
+
+&gt;                                                    BL.
+&gt; - --
+&gt; Brad Littlejohn                         | Email:     tyke ... @sbcglobal.net
+&gt; Unix Systems Administrator,             |           tyke ... @ozemail.com.au
+&gt; Web + NewsMaster, BOFH.. Smeghead! :)   | http://www.wizard.com/~tyketto
+&gt;   PGP: 1024D/E319F0BF 6980 AAD6 7329 E9E6 D569  F620 C819 199A E319 F0BF
+
+&gt; -----BEGIN PGP SIGNATURE-----
+&gt; Version: GnuPG v1.4.7 (GNU/Linux)
+
+&gt; iD8DBQFHa2JFyBkZmuMZ8L8RAvMMAKDYE/8IgibhUcq0laGGPSUp4Rii3gCg9CYZ
+&gt; ma81jEc5FCWNOPiYC0YcwN8=
+&gt; =nPSV
+&gt; -----END PGP SIGNATURE-----
+">
+
+I reported in a different thread that forcedeth was working
+all along. It just brought up the wired connection as
+eth7 which wasn't shown by ifconfig. I found it when
+I got wireless running and use iwconfig.
+</POST>
+<POST>
+<POSTER> Tom N &lt;t...@somewhere.invalid&gt; </POSTER>
+<POSTDATE> 2007-12-21T17:34:00 </POSTDATE>
+On 2007-12-21, root &lt;NoEM ... @home.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Tom N &lt;t ... @somewhere.invalid&gt; wrote:
+&gt;&gt; Not sure exactly how I made this happen. But when I determined on the
+&gt;&gt; web that I needed the tulip module and  put /sbin/modprobe tulip in /etc/rc.d/rc.modules,
+&gt;&gt; ran netconfig and chose dhcp, and rebooted, eth0 came up.
+
+&gt;&gt; The lack of a /dev/eth0 is really weird...
+
+&gt;&gt; Tom
+
+&gt; You youngsters are spoiled today. Back in the old days we
+&gt; had to do all that stuff for *every* module. :)
+">
+
+Jeesh!
+
+I'm not young in chronological years, just in computer-internet years.
+
+These newfangled computer thingies are sumptin, aint they? :\
+
+<QUOTE PREVIOUSPOST="
+&gt; Glad you are up.
+">
+
+Thanks. I have been lucky as hell, obviously.
+
+Just ordered clearwire wimax. When the connection is up (fingers crossed)
+I am going to post a little howto for Slack on the earlier thread on the subject
+I started: &quot;Clearwire on Slackware&quot;.
+
+Thanks for the very informative threads. I have been learning
+a lot. Wouldn't be up without them, actually.
+
+Tom
+
+--
+simpleman.s43
+That would be at gee male
+</POST>
+</TEXT>
+</BODY>
+</DOC>

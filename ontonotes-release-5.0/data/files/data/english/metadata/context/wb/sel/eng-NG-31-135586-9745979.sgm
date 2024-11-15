@@ -1,0 +1,378 @@
+<DOC>
+<DOCID> eng-NG-31-135586-9745979 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2008-01-12T21:51:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Can a form change session variables?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Kurda Yon &lt;kurda...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2008-01-12T21:51:00 </POSTDATE>
+Hi,
+
+In the first page I declare a session variable. Than, on the same
+page, I make a form which contains a variable which  has the same name
+as the mentioned session variable. Pressing the &quot;submit&quot; button of the
+form I go to the second page which immediately redirects me back to
+the first page (with the &quot;header&quot;). And the mentioned variable does
+NOT have the value which I have specified in the form.
+
+It means, that session does NOT recognize the form variables as
+session variables in spite on the fact that these variables have
+identical names. Is that true?
+</POST>
+<POST>
+<POSTER> &quot;Peter Pei&quot; &lt;yan...@telus.com&gt; </POSTER>
+<POSTDATE> 2008-01-12T21:54:00 </POSTDATE>
+thanks to PHP's globals
+</POST>
+<POST>
+<POSTER> Kurda Yon &lt;kurda...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2008-01-12T21:56:00 </POSTDATE>
+On Jan 12, 9:54 pm, &quot;Peter Pei&quot; &lt;yan ... @telus.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; thanks to PHP's globals
+">
+
+What do you mean?
+</POST>
+<POST>
+<POSTER> seaside &lt;seaside...@mac.com&gt; </POSTER>
+<POSTDATE> 2008-01-12T21:57:00 </POSTDATE>
+On 13 Jan., 03:51, Kurda Yon &lt;kurda ... @yahoo.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In the first page I declare a session variable. Than, on the same
+&gt; page, I make a form which contains a variable which  has the same name
+">
+
+PHP does not automaticall register variables with your session.
+
+Please review http://de.php.net/manual/en/ref.session.php for details.
+
+Do you access your (expected) form/session variable like this:
+$_SESSION['count'] ?
+</POST>
+<POST>
+<POSTER> &quot;Peter Pei&quot; &lt;yan...@telus.com&gt; </POSTER>
+<POSTDATE> 2008-01-12T22:07:00 </POSTDATE>
+version? setting? did you ask? obviously possible
+</POST>
+<POST>
+<POSTER> Jerry Stuckle &lt;jstuck...@attglobal.net&gt; </POSTER>
+<POSTDATE> 2008-01-12T22:08:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Kurda Yon wrote:
+&gt; Hi,
+
+&gt; In the first page I declare a session variable. Than, on the same
+&gt; page, I make a form which contains a variable which  has the same name
+&gt; as the mentioned session variable. Pressing the &quot;submit&quot; button of the
+&gt; form I go to the second page which immediately redirects me back to
+&gt; the first page (with the &quot;header&quot;). And the mentioned variable does
+&gt; NOT have the value which I have specified in the form.
+
+&gt; It means, that session does NOT recognize the form variables as
+&gt; session variables in spite on the fact that these variables have
+&gt; identical names. Is that true?
+">
+
+It used to - there is a parm in the php.ini file called register_globals.
+
+In earlier versions, this was enabled and would do what you want.
+However, this is a huge security risk and has been disabled by default
+in recent versions.
+
+It's simple to get the variable from the session, though.
+
+--
+==================
+Remove the &quot;x&quot; from my email address
+Jerry Stuckle
+JDS Computer Training Corp.
+jstuck ... @attglobal.net
+==================
+</POST>
+<POST>
+<POSTER> Kurda Yon &lt;kurda...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2008-01-12T22:25:00 </POSTDATE>
+On Jan 12, 9:57 pm, seaside &lt;seaside ... @mac.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 13 Jan., 03:51, Kurda Yon &lt;kurda ... @yahoo.com&gt; wrote:
+
+&gt; &gt; In the first page I declare a session variable. Than, on the same
+&gt; &gt; page, I make a form which contains a variable which  has the same name
+
+&gt; PHP does not automaticall register variables with your session.
+">
+
+What do you mean under &quot;PHP ... register&quot;? I have registered variables
+by &quot;session_register&quot;.
+
+<QUOTE PREVIOUSPOST="
+&gt; Please review http://de.php.net/manual/en/ref.session.phpfor details.
+
+&gt; Do you access your (expected) form/session variable like this:
+&gt; $_SESSION['count'] ?
+">
+
+No. I do like that:
+session_start();
+session_register(&quot;txt_l_1&quot;);
+..........
+print &quot;&lt;input type='text' name='txt_l_1' value=\&quot;$txt_l_1\&quot; &gt;\n&quot;;
+</POST>
+<POST>
+<POSTER> Kurda Yon &lt;kurda...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2008-01-12T22:27:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; It's simple to get the variable from the session, though.
+">
+
+I do not mind if the user know all session variables there  is only
+HIS personal information. Or you mean &quot;simple to get for the third
+part&quot;?
+</POST>
+<POST>
+<POSTER> Jerry Stuckle &lt;jstuck...@attglobal.net&gt; </POSTER>
+<POSTDATE> 2008-01-12T22:36:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Kurda Yon wrote:
+&gt;&gt; It's simple to get the variable from the session, though.
+&gt; I do not mind if the user know all session variables there  is only
+&gt; HIS personal information. Or you mean &quot;simple to get for the third
+&gt; part&quot;?
+">
+
+The user has no knowledge of anything in the session (other than the
+session name), since everything is on the server (and thus unavailable
+to the user).
+
+And yes, you stored the value in the session, so it's easy to retrieve
+it from the session whenever you need it.  It will be there until either
+you clear it or the session is ended.
+
+--
+==================
+Remove the &quot;x&quot; from my email address
+Jerry Stuckle
+JDS Computer Training Corp.
+jstuck ... @attglobal.net
+==================
+</POST>
+<POST>
+<POSTER> &quot;Peter Pei&quot; &lt;yan...@telus.com&gt; </POSTER>
+<POSTDATE> 2008-01-12T22:54:00 </POSTDATE>
+register_global is actually broken in 5.2.5, set it to off and it still acts
+as if  on.
+</POST>
+<POST>
+<POSTER> Jerry Stuckle &lt;jstuck...@attglobal.net&gt; </POSTER>
+<POSTDATE> 2008-01-12T23:04:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Peter Pei wrote:
+&gt; register_global is actually broken in 5.2.5, set it to off and it still
+&gt; acts as if  on.
+">
+
+If that were the case I would expect to see a bug report at php.net.
+There isn't one.
+
+--
+==================
+Remove the &quot;x&quot; from my email address
+Jerry Stuckle
+JDS Computer Training Corp.
+jstuck ... @attglobal.net
+==================
+</POST>
+<POST>
+<POSTER> &quot;Peter Pei&quot; &lt;yan...@telus.com&gt; </POSTER>
+<POSTDATE> 2008-01-12T23:11:00 </POSTDATE>
+Unless I totally misunderstood... if I set register_globals to off, and set
+$_SESSION['foo'] = 1, I should not be able to access $foo, eight? but I can.
+am using win2000 + .2.5
+</POST>
+<POST>
+<POSTER> Jerry Stuckle &lt;jstuck...@attglobal.net&gt; </POSTER>
+<POSTDATE> 2008-01-12T23:17:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Peter Pei wrote:
+&gt; Unless I totally misunderstood... if I set register_globals to off, and
+&gt; set $_SESSION['foo'] = 1, I should not be able to access $foo, eight?
+&gt; but I can. am using win2000 + .2.5
+">
+
+Sure you can.  The two have no relationship to each other.
+
+$_SESSION['foo'] is an element of the $_SESSION array with the index of
+'foo'.
+
+$foo is a variable named 'foo'.
+
+The only thing they have in common is an 'f' and two 'o's.
+
+And please learn to quote properly.
+
+--
+==================
+Remove the &quot;x&quot; from my email address
+Jerry Stuckle
+JDS Computer Training Corp.
+jstuck ... @attglobal.net
+==================
+</POST>
+<POST>
+<POSTER> &quot;Peter Pei&quot; &lt;yan...@telus.com&gt; </POSTER>
+<POSTDATE> 2008-01-13T03:06:00 </POSTDATE>
+you missed the point, they share value, change one, the other one changed to
+the same value. you obviously didn't understand this side of php
+</POST>
+<POST>
+<POSTER> &quot;radmissio...@gmail.com&quot; &lt;radmissio...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-13T03:28:00 </POSTDATE>
+On Jan 13, 12:06 am, &quot;Peter Pei&quot; &lt;yan ... @telus.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; you missed the point, they share value, change one, the other one changed to
+&gt; the same value. you obviously didn't understand this side of php
+&gt; &quot;Sure you can.  The two have no relationship to each other.
+&gt; $_SESSION['foo'] is an element of the $_SESSION array with the index of
+">
+
+'foo'.&quot;
+
+I agree with jerry stuckle
+
+$_SESSION is different from $foo;
+$_SESSION is different from $_GET['foo'];
+$_GET['foo'] is the same with $foo (if register_global is on, if not
+they are different.)
+
+the only relationship with session with $foo or $_GET['foo'], they are
+both variables in php.
+session used to store variables like $foo, $_GET['foo'] on current
+session. thats why we have
+session_register(); to register variable on session. coz they are
+different.
+
+if they are not different, they will not provide session_register...
+</POST>
+<POST>
+<POSTER> &quot;radmissio...@gmail.com&quot; &lt;radmissio...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-13T03:31:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; you missed the point, they share value, change one, the other one changed to
+&gt; the same value. you obviously didn't understand this side of php
+">
+
+--------------------------------------------------------------------------- -------
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Sure you can.  The two have no relationship to each other.
+&gt; $_SESSION['foo'] is an element of the $_SESSION array with the index of
+">
+
+'foo'.&quot;
+
+I agree with jerry stuckle
+
+$_SESSION is different from $foo;
+$_SESSION is different from $_GET['foo'];
+$_GET['foo'] is the same with $foo (if register_global is on, if not
+they are different.)
+
+the only relationship with session with $foo or $_GET['foo'] : they
+are both variables in php.
+session used to store variables like $foo/$_GET['foo'] on current
+session. thats why we have session_register();
+to register variable on session. coz they are different.
+
+if they are not different, then they will not provide
+session_register...
+</POST>
+<POST>
+<POSTER> Jerry Stuckle &lt;jstuck...@attglobal.net&gt; </POSTER>
+<POSTDATE> 2008-01-13T09:19:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Peter Pei wrote:
+&gt; you missed the point, they share value, change one, the other one
+&gt; changed to the same value. you obviously didn't understand this side of php
+">
+
+I missed what point?  You didn't quote the relevant points of my
+message, so I have no idea what you're talking about.
+
+--
+==================
+Remove the &quot;x&quot; from my email address
+Jerry Stuckle
+JDS Computer Training Corp.
+jstuck ... @attglobal.net
+==================
+</POST>
+<POST>
+<POSTER> &quot;Peter Pei&quot; &lt;yan...@telus.com&gt; </POSTER>
+<POSTDATE> 2008-01-13T10:56:00 </POSTDATE>
+I don't quote. It is more important to know what I said, not what you said.
+</POST>
+<POST>
+<POSTER> &quot;Peter Pei&quot; &lt;yan...@telus.com&gt; </POSTER>
+<POSTDATE> 2008-01-13T10:57:00 </POSTDATE>
+don't agree with anyone, test it yourself.
+</POST>
+<POST>
+<POSTER> &quot;Peter Pei&quot; &lt;yan...@telus.com&gt; </POSTER>
+<POSTDATE> 2008-01-13T11:06:00 </POSTDATE>
+to be more precise... I tested both 2000 and vista, they behaved
+differently. register_globals is broken on 2000, but not vista
+</POST>
+<POST>
+<POSTER> Jerry Stuckle &lt;jstuck...@attglobal.net&gt; </POSTER>
+<POSTDATE> 2008-01-13T11:06:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Peter Pei wrote:
+&gt; I don't quote. It is more important to know what I said, not what you said.
+">
+
+Then don't expect to get answers on this newsgroup.
+
+What you say has absolutely no importance at all.
+
+&lt;plonk!&gt;
+
+--
+==================
+Remove the &quot;x&quot; from my email address
+Jerry Stuckle
+JDS Computer Training Corp.
+jstuck ... @attglobal.net
+==================
+</POST>
+<POST>
+<POSTER> &quot;Peter Pei&quot; &lt;yan...@telus.com&gt; </POSTER>
+<POSTDATE> 2008-01-13T11:26:00 </POSTDATE>
+I wasn't the OP, so I am not trying to get any help. I am here to give help.
+</POST>
+<POST>
+<POSTER> Michael Fesser &lt;neti...@gmx.de&gt; </POSTER>
+<POSTDATE> 2008-01-13T16:49:00 </POSTDATE>
+.oO(Peter Pei)
+
+<QUOTE PREVIOUSPOST="
+&gt;I don't quote. It is more important to know what I said, not what you said.
+">
+
+It's hard to follow a thread without any quoting. Too much quoting is
+bad, but too less or no quoting at all is even worse. You want to read
+about the netiquette.
+
+Micha
+</POST>
+</TEXT>
+</BODY>
+</DOC>

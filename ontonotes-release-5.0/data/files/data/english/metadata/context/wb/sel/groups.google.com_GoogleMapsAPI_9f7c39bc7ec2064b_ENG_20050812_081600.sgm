@@ -1,0 +1,311 @@
+<DOC>
+<DOCID> groups.google.com_GoogleMapsAPI_9f7c39bc7ec2064b_ENG_20050812_081600 </DOCID>
+<DOCTYPE SOURCE="usenet">USENET TEXT</DOCTYPE>
+<DATETIME>2005-08-12T08:16:00</DATETIME>
+<BODY>
+<HEADLINE>
+Securing my XML feed
+</HEADLINE>
+<TEXT>
+
+<POST>
+<POSTER> rwilson290@hotmail.com </POSTER>
+<POSTDATE> 2005-08-12T08:16:00 </POSTDATE>
+
+I'm very happy with google maps, and now looking to put my data into an
+XML feed to get a little fancier. The question though, is can I secure
+my XML feed so that noone else? It seems to me that that, techincally
+speaking, the users browser is request the feed which means that an
+enterprising person could probably figure out a way to tap into it.
+Aside from the fact that I'm working hard and even paying money to
+acquire the data that will go into my feed, I don't necessarily want
+any unauthorized users tapping into my feed for their own maps, or
+databases.
+
+So, how can I secure it so only google maps on my domain will be able
+to tap into my data feed? Is this possible?
+
+Thanks.
+
+</POST>
+
+
+
+<POST>
+<POSTER> Ian Dees </POSTER>
+<POSTDATE> 2005-08-12T08:55:00 </POSTDATE>
+
+
+Since Google Maps runs in JavaScript in the user's web browser, all of the data has to exist at some point in machine readable (in this case, lat/lon pairs) format on the client side. Any sort of encryption technique you perform on the XML to make it obfuscated would simply do that... obfuscate it. That same enterprising person who would want to nab your XML feed when it was in plain old machine-readable format would probably be willing to slog through your JavaScript code to find the decryption algorithm for your obfuscated XML.
+
+So in the end, no, there is no way to completely hide your data from a user who really wants it using Google Maps.
+
+  winmail.dat
+4K  Download
+</POST>
+
+
+
+<POST>
+<POSTER> maps.huge.info </POSTER>
+<POSTDATE> 2005-08-12T10:39:00 </POSTDATE>
+
+rwilson,
+
+There is one API approved method of securing your xml feed. Put it
+behind a user ID and password required website. You are allowed to do
+this by the Google TOS as long as obtaining the user ID and password
+are free. This way, you can approve who uses the system and if you see
+someone abusing it, revoke their &quot;membership.&quot; You cannot charge for
+this membership though, it has to be free.
+
+Another method, the one I'm currently using is to limit the number of
+&quot;hits&quot; a particular IP can make in a time period. I limit my system to
+50 hits per 2 hours, which is about all a real human will do. I don't
+limit anyone from pulling the data into their own site via a robot or
+redirect or whatever, they are free to use the data, just are limited
+to 50 pulls in 2 hours.
+
+You might consider using either method.
+
+-John
+
+
+</POST>
+
+
+
+<POST>
+<POSTER> Mike Orb </POSTER>
+<POSTDATE> 2005-08-13T17:55:00 </POSTDATE>
+
+You may have already done this, but be sure you put a comment/element in
+your XML file stating your terms of use, copyright, etc. as well as on your
+site.
+
+-Mike
+
+</POST>
+
+
+
+<POST>
+<POSTER> rwilson290@hotmail.com </POSTER>
+<POSTDATE> 2005-08-31T06:42:00 </POSTDATE>
+
+
+<QUOTE PREVIOUSPOST="
+Mike Orb wrote:
+&gt; You may have already done this, but be sure you put a comment/element in
+&gt; your XML file stating your terms of use, copyright, etc. as well as on your
+&gt; site.
+
+&gt; -Mike
+
+"/>
+
+Thanks for the replies. After some experimentation, I've also found
+that when the request for XML is made by the users browser, the page
+requesting the XML feed is passed to the web server as the &quot;referring
+page&quot;. Therefore you can write your server side code to restrict
+returning any xml except for in the case where the referer is your own
+url. So if someone downloads the page and runs it locally or tries to
+directly request the XML, they'll never get to it.
+
+The only problem I can think of with restricting the XML feed based on
+the referer is for those people that use tools such as webwasher, etc
+that block the referer for privacy reasons. These people would not be
+able to use the maps since they also would not be passing a valid
+referer. A second possible hole, is if someone realizes this and
+writes some code that can pass a bogus referer value in the header.
+The people I'm trying to keep away from the data, in general, aren't
+that savvy. So, I'd be more concerned with blocking the innocent
+people.
+
+Any other holes?
+
+In any case, restricting the XML feed based on the referer is another
+option that I've found.
+
+</POST>
+
+
+
+<POST>
+<POSTER> 58sniper </POSTER>
+<POSTDATE> 2005-08-31T09:36:00 </POSTDATE>
+
+Browsers are not required to send the referer, though. You might run
+into problems with that.
+
+<QUOTE PREVIOUSPOST="
+rwilson ... @hotmail.com wrote:
+&gt; Mike Orb wrote:
+&gt;&gt; You may have already done this, but be sure you put a comment/element in
+&gt;&gt; your XML file stating your terms of use, copyright, etc. as well as on your
+&gt;&gt; site.
+
+&gt;&gt; -Mike
+
+&gt; Thanks for the replies. After some experimentation, I've also found
+&gt; that when the request for XML is made by the users browser, the page
+&gt; requesting the XML feed is passed to the web server as the &quot;referring
+&gt; page&quot;. Therefore you can write your server side code to restrict
+&gt; returning any xml except for in the case where the referer is your own
+&gt; url. So if someone downloads the page and runs it locally or tries to
+&gt; directly request the XML, they'll never get to it.
+
+&gt; The only problem I can think of with restricting the XML feed based on
+&gt; the referer is for those people that use tools such as webwasher, etc
+&gt; that block the referer for privacy reasons. These people would not be
+&gt; able to use the maps since they also would not be passing a valid
+&gt; referer. A second possible hole, is if someone realizes this and
+&gt; writes some code that can pass a bogus referer value in the header.
+&gt; The people I'm trying to keep away from the data, in general, aren't
+&gt; that savvy. So, I'd be more concerned with blocking the innocent
+&gt; people.
+
+&gt; Any other holes?
+
+&gt; In any case, restricting the XML feed based on the referer is another
+&gt; option that I've found.
+
+"/>
+
+
+</POST>
+
+
+
+<POST>
+<POSTER> Chris Hunt </POSTER>
+<POSTDATE> 2005-08-31T09:43:00 </POSTDATE>
+
+Hmmm....
+
+So you want to get people who are savvy enough to reverse-engineer your
+javascript code, but not savvy enough to spoof an HTM_REFERER header.
+Tricky.
+
+How about this alternative approach. Write a server side routine that
+encrypts today's date with the password of your choice to create a
+unique key. Generate the maps javascript dynamically to include this
+key in the query string when requesting the XML. When serving up the
+XML, refuse to do so unless it's requested with today's key (perhaps
+accept yesterday's too, to allow for round midnight cases).
+
+That way, although people can find the URL of the XML file by examining
+your code, it will only work for 24 hours. Of course they can scrape
+your Javascript to find the key-of-the-day, but maybe that's avoer your
+savviness bar?
+
+At the end of the day, if the information is that sensitive or
+valuable, don't put it online! What is this precious information anyway?
+
+</POST>
+
+
+
+<POST>
+<POSTER> rwilson290@hotmail.com </POSTER>
+<POSTDATE> 2005-09-28T09:49:00 </POSTDATE>
+
+
+<QUOTE PREVIOUSPOST="
+Chris Hunt wrote:
+&gt; Hmmm....
+
+&gt; So you want to get people who are savvy enough to reverse-engineer your
+&gt; javascript code, but not savvy enough to spoof an HTM_REFERER header.
+&gt; Tricky.
+
+&gt; How about this alternative approach. Write a server side routine that
+&gt; encrypts today's date with the password of your choice to create a
+&gt; unique key. Generate the maps javascript dynamically to include this
+&gt; key in the query string when requesting the XML. When serving up the
+&gt; XML, refuse to do so unless it's requested with today's key (perhaps
+&gt; accept yesterday's too, to allow for round midnight cases).
+
+&gt; That way, although people can find the URL of the XML file by examining
+&gt; your code, it will only work for 24 hours. Of course they can scrape
+&gt; your Javascript to find the key-of-the-day, but maybe that's avoer your
+&gt; savviness bar?
+
+&gt; At the end of the day, if the information is that sensitive or
+&gt; valuable, don't put it online! What is this precious information anyway?
+
+"/>
+
+1) Competitive Advantage
+2) Displaying personal information that belongs to your users
+3) When the data itself is not owned by you (ie. you pay a licensing
+fee to a 3rd party data aggregator for it, and have the right to
+display it on the web but NOT to redistribute the data itself)
+
+So to summarize we have several methods, none of which are guaranteed,
+to secure the data:
+
+1) using the http referrer
+2-a) passing a token that expires after x number of seconds, hours,
+days, etc
+2-b) issue an actual token that's stored in your database that can be
+used once and only once.
+3) obfuscation (insert numerous dynamic &quot;tokens&quot; into the xmlhttp
+request such that a user will have to spend more time figuring out the
+token(s) that are real vs the tokens that are bogus and lead them down
+a dead end)
+4) Putting it behind a site that has a username and password and
+somehow monitoring usage (though not charging for the site)
+
+These all have advantages, and disadvantages, and none of them are
+completely guaranteed. Personally, the token idea appeals to me, and
+I'd be interested in hearing about any alternative ideas or expansions
+on the above mentioned ideas for using tokens and how they may impact
+server resources.
+
+Here are some articles/blogs on the subject of securing your xml feed
+if anyone is interested:
+
+I'll explore the balance of this with AJAX groups, but wanted to post
+what I've come up with since I'm sure others that are new to this like
+me may want to secure or at least reasonably obfuscate their data for
+one of the afformentioned reasons (advantage, user privacy, or for
+simple lack of data ownership).
+
+</POST>
+
+
+
+<POST>
+<POSTER> maps.huge.info </POSTER>
+<POSTDATE> 2005-09-28T20:57:00 </POSTDATE>
+
+rwilson,
+
+I use a backward sort of way to secure my &quot;feed&quot; which isn't really
+securing it, but limiting access from robots. What I do is limit the
+number of hits an IP can have to 50 per 120 minutes. That way, a robot
+would have to work for weeks and weeks to harvest the entire database.
+By that time I would have noticed it in the logs and put a block on the
+IP.
+
+On the other hand, I freely let anyone use my server for their mapping
+data, as long as they understand there is a limit. I don't care if
+someone writes a wrapper and pulls it from their server, uses the data
+for some other purpose or whatever, as long as they don't suck the
+eyeballs out of the server with requests, which the limit will stop.
+
+I would be interested to know, mostly for academic reasons, how
+securing an xml feed can be done. If you figure it out, please by all
+means, post the results.
+
+-John
+
+
+</POST>
+
+
+
+</TEXT>
+</BODY>
+</DOC>

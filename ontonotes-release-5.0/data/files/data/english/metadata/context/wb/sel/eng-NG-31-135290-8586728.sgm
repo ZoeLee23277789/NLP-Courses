@@ -1,0 +1,193 @@
+<DOC>
+<DOCID> eng-NG-31-135290-8586728 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-04T16:33:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Copying an embedded sprite
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> {reduxdj} &lt;d...@reduxdj.org&gt; </POSTER>
+<POSTDATE> 2007-08-04T16:33:00 </POSTDATE>
+I am working on *all* actionscript project and i need help from an
+&quot;actionscript code - api sleuth&quot;.  I have a little difficulty with the
+some of the api.  I approached turning an embedded graphic asset as a
+sprite into a bitmapData object.  I hit a roadblock on copying a a
+sprite with this embedded asset into another sprite.   I tried
+casting... I tried a bunch of different ways, but got an error - illegal
+bitmapData object etc..
+
+If you don't mind, and you can help, PLEASE post an example of how to do
+this.   I really would appreciate it.   I don't know if I missed
+something but there is no example of this scenario.  Of course, examples
+are the key for me to learn these concepts.
+
+Thanks,
+Patrick
+
+P.S.  I am able to copy loaded content fine  - it's embedded assets that
+are the biggest challenge.
+
+_______________________________________________
+Flashcod ... @chattyfig.figleaf.com
+To change your subscription options or search the archive:
+http://chattyfig.figleaf.com/mailman/listinfo/flashcoders
+
+Brought to you by Fig Leaf Software
+Premier Authorized Adobe Consulting and Training
+http://www.figleaf.com
+http://training.figleaf.com
+</POST>
+<POST>
+<POSTER> Ron Wheeler &lt;rwhee...@artifact-software.com&gt; </POSTER>
+<POSTDATE> 2007-08-05T08:12:00 </POSTDATE>
+You might show a small example of the code with the error. That
+sometimes gets a bit more interest than a description.
+
+Ron
+
+<QUOTE PREVIOUSPOST="
+{reduxdj} wrote:
+&gt; I am working on *all* actionscript project and i need help from an
+&gt; &quot;actionscript code - api sleuth&quot;.  I have a little difficulty with the
+&gt; some of the api.  I approached turning an embedded graphic asset as a
+&gt; sprite into a bitmapData object.  I hit a roadblock on copying a a
+&gt; sprite with this embedded asset into another sprite.   I tried
+&gt; casting... I tried a bunch of different ways, but got an error -
+&gt; illegal bitmapData object etc..
+
+&gt; If you don't mind, and you can help, PLEASE post an example of how to
+&gt; do this.   I really would appreciate it.   I don't know if I missed
+&gt; something but there is no example of this scenario.  Of course,
+&gt; examples are the key for me to learn these concepts.
+
+&gt; Thanks,
+&gt; Patrick
+
+&gt; P.S.  I am able to copy loaded content fine  - it's embedded assets
+&gt; that are the biggest challenge.
+
+&gt; _______________________________________________
+&gt; Flashcod ... @chattyfig.figleaf.com
+&gt; To change your subscription options or search the archive:
+&gt; http://chattyfig.figleaf.com/mailman/listinfo/flashcoders
+
+&gt; Brought to you by Fig Leaf Software
+&gt; Premier Authorized Adobe Consulting and Training
+&gt; http://www.figleaf.com
+&gt; http://training.figleaf.com
+">
+
+_______________________________________________
+Flashcod ... @chattyfig.figleaf.com
+To change your subscription options or search the archive:
+http://chattyfig.figleaf.com/mailman/listinfo/flashcoders
+
+Brought to you by Fig Leaf Software
+Premier Authorized Adobe Consulting and Training
+http://www.figleaf.com
+http://training.figleaf.com
+</POST>
+<POST>
+<POSTER> Alan Watts &lt;a...@datax.com&gt; </POSTER>
+<POSTDATE> 2007-08-05T11:22:00 </POSTDATE>
+I've never had any problems using this function to return an embedded
+asset as a bitmap which I can then manipulate or attach.
+
+The getQualifiedSuperclassName if-statement is there because I have
+some assets with scale-9 enabled and they are returned as sprites, so
+I convert them first.
+
+public static function getInterfaceAssetasBitmap
+(interfaceAsset:String):Bitmap {
+var assetClass:Class = getDefinitionByName(interfaceAsset) as Class;
+var returnBitmap:Bitmap;
+if ( getQualifiedSuperclassName(assetClass)==&quot;mx.core::SpriteAsset&quot;) {
+var asset:Sprite = new assetClass();
+var bitmapData:BitmapData = new BitmapData(asset.width,
+asset.height, true, 0x00FFFFFF);
+bitmapData.draw(asset);
+returnBitmap.bitmapData=bitmapData;
+} else if ( getQualifiedSuperclassName(assetClass)
+==&quot;mx.core::BitmapAsset&quot;) {
+returnBitmap = new assetClass();
+}
+return(returnBitmap);
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+Hope it helps,
+Alan
+
+_______________________________________________
+Flashcod ... @chattyfig.figleaf.com
+To change your subscription options or search the archive:
+http://chattyfig.figleaf.com/mailman/listinfo/flashcoders
+
+Brought to you by Fig Leaf Software
+Premier Authorized Adobe Consulting and Training
+http://www.figleaf.com
+http://training.figleaf.com
+</POST>
+<POST>
+<POSTER> {reduxdj} &lt;d...@reduxdj.org&gt; </POSTER>
+<POSTDATE> 2007-08-09T01:37:00 </POSTDATE>
+Alan:
+
+I just picked up essential actionscript 3 and this sort of issue is
+addressed on page 657 and already solved my issue.
+
+i don't know why adobe left the mx.core.bitmap asset out of flash cs3
+all together but at least i learned how to compile flash actionscript 3
+with the bare minimum flex classes.
+
+Thanks for your time.
+Patrick
+
+<QUOTE PREVIOUSPOST="
+Alan Watts wrote:
+&gt; I've never had any problems using this function to return an embedded
+&gt; asset as a bitmap which I can then manipulate or attach.
+
+&gt; The getQualifiedSuperclassName if-statement is there because I have
+&gt; some assets with scale-9 enabled and they are returned as sprites, so
+&gt; I convert them first.
+
+&gt; public static function
+&gt; getInterfaceAssetasBitmap(interfaceAsset:String):Bitmap {
+&gt;     var assetClass:Class = getDefinitionByName(interfaceAsset) as Class;
+&gt;     var returnBitmap:Bitmap;
+&gt;     if (
+&gt; getQualifiedSuperclassName(assetClass)==&quot;mx.core::SpriteAsset&quot;) {
+&gt;         var asset:Sprite = new assetClass();
+&gt;         var bitmapData:BitmapData = new BitmapData(asset.width,
+&gt; asset.height, true, 0x00FFFFFF);
+&gt;                 bitmapData.draw(asset);
+&gt;                 returnBitmap.bitmapData=bitmapData;
+&gt;     } else if (
+&gt; getQualifiedSuperclassName(assetClass)==&quot;mx.core::BitmapAsset&quot;) {
+&gt;         returnBitmap = new assetClass();
+&gt;     }
+&gt;     return(returnBitmap);
+&gt; }
+
+&gt; Hope it helps,
+&gt; Alan
+">
+
+_______________________________________________
+Flashcod ... @chattyfig.figleaf.com
+To change your subscription options or search the archive:
+http://chattyfig.figleaf.com/mailman/listinfo/flashcoders
+
+Brought to you by Fig Leaf Software
+Premier Authorized Adobe Consulting and Training
+http://www.figleaf.com
+http://training.figleaf.com
+</POST>
+</TEXT>
+</BODY>
+</DOC>

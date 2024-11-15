@@ -1,0 +1,386 @@
+<DOC>
+<DOCID> eng-NG-31-128546-9323104 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-11-12T18:50:00 </DATETIME>
+<BODY>
+<HEADLINE>
+post memory test
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Dongying...@us.alphanetworks.com </POSTER>
+<POSTDATE> 2007-11-12T18:50:00 </POSTDATE>
+Hi,
+
+I have a question about post memory test. According to the following code,
+even if memory size is greater than 256M, only 256M memory will be tested.
+Is it true or I missed something.  Thanks a lot.
+
+In U-BOOT-1.2.0
+u-boot\post\drivers\memory.c,
+
+int memory_post_test (int flags)
+{
+int ret = 0;
+DECLARE_GLOBAL_DATA_PTR;
+bd_t *bd = gd-&gt;bd;
+unsigned long memsize = (bd-&gt;bi_memsize &gt;= 256 &lt;&lt; 20 ?
+256 &lt;&lt; 20 : bd-&gt;bi_memsize) - (1 &lt;&lt; 20);
+
+if (flags &amp; POST_SLOWTEST) {
+ret = memory_post_tests (CFG_SDRAM_BASE, memsize);
+} else {                        /* POST_NORMAL */
+
+unsigned long i;
+
+for (i = 0; i &lt; (memsize &gt;&gt; 20) &amp;&amp; ret == 0; i++) {
+if (ret == 0)
+ret = memory_post_tests (i &lt;&lt; 20, 0x800);
+if (ret == 0)
+ret = memory_post_tests ((i &lt;&lt; 20) +
+0xff800, 0x800);
+}
+}
+
+return ret;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+Best Regards
+dongy
+
+-------------------------------------------------------------------------
+This SF.net email is sponsored by: Splunk Inc.
+Still grepping through log files to find problems?  Stop.
+Now Search log events and configuration files using AJAX and a browser.
+Download your FREE copy of Splunk now &gt;&gt; http://get.splunk.com/
+_______________________________________________
+U-Boot-Users mailing list
+U-Boot-Us ... @lists.sourceforge.net
+https://lists.sourceforge.net/lists/listinfo/u-boot-users
+</POST>
+<POST>
+<POSTER> Detlev Zundel &lt;d...@denx.de&gt; </POSTER>
+<POSTDATE> 2007-11-14T06:02:00 </POSTDATE>
+Hi Dongy,
+
+<QUOTE PREVIOUSPOST="
+&gt; I have a question about post memory test. According to the following code, even
+&gt; if memory size is greater than 256M, only 256M memory will be tested.  Is it
+&gt; true or I missed something.  Thanks a lot.
+">
+
+No, this is true.  As I did not write that code, my interpretation
+uses some speculation, but what is very likely the case here is that
+U-Boot potentially does not map all physical available memory and thus
+we cannot even access it.  As we do not have explicit variables
+representing those facts, I guess the 256MB are kind of a least
+common denominator.
+
+As an example look at initdram() in board/Marvell/db64460/sdram_init.c
+where the platform uses Block Address Translations (BATs) to map RAM
+but exhausts these pretty scarce ressources and limits itself to
+mapping only the first 256MB (a usual limit for a BAT).
+
+<QUOTE PREVIOUSPOST="
+&gt; In U-BOOT-1.2.0
+&gt; u-boot\post\drivers\memory.c,
+">
+
+A word to version 1.2.0, if you have a platform with 256MB+ memory,
+please be sure to check the fix from Aug 25 by Yuri Tikhonov &quot;POST:
+limit memory test area to not touch global data anymore&quot; (9c02defc) in
+the current code as the code in 1.2.0 caused problems on such systems.
+
+Cheers
+Detlev
+
+--
+When you  loosen yourself from  all the obvious delusions  - religion,
+ideology,  Communism - you're  still left  with the  myth of  your own
+goodness. Which is the final delusion.
+-- Philip Roth
+--
+DENX Software Engineering GmbH,      MD: Wolfgang Denk &amp; Detlev Zundel
+HRB 165235 Munich,  Office: Kirchenstr.5, D-82194 Groebenzell, Germany
+Phone: (+49)-8142-66989-40 Fax: (+49)-8142-66989-80 Email: d ... @denx.de
+
+-------------------------------------------------------------------------
+This SF.net email is sponsored by: Splunk Inc.
+Still grepping through log files to find problems?  Stop.
+Now Search log events and configuration files using AJAX and a browser.
+Download your FREE copy of Splunk now &gt;&gt; http://get.splunk.com/
+_______________________________________________
+U-Boot-Users mailing list
+U-Boot-Us ... @lists.sourceforge.net
+https://lists.sourceforge.net/lists/listinfo/u-boot-users
+</POST>
+<POST>
+<POSTER> Jens Gehrlein &lt;se...@tqs.de&gt; </POSTER>
+<POSTDATE> 2007-11-16T08:29:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Detlev Zundel wrote:
+&gt; Hi Dongy,
+
+&gt;&gt; I have a question about post memory test. According to the following code, even
+&gt;&gt; if memory size is greater than 256M, only 256M memory will be tested.  Is it
+&gt;&gt; true or I missed something.  Thanks a lot.
+
+&gt; No, this is true.  As I did not write that code, my interpretation
+&gt; uses some speculation, but what is very likely the case here is that
+&gt; U-Boot potentially does not map all physical available memory and thus
+&gt; we cannot even access it.  As we do not have explicit variables
+&gt; representing those facts, I guess the 256MB are kind of a least
+&gt; common denominator.
+
+&gt; As an example look at initdram() in board/Marvell/db64460/sdram_init.c
+&gt; where the platform uses Block Address Translations (BATs) to map RAM
+&gt; but exhausts these pretty scarce ressources and limits itself to
+&gt; mapping only the first 256MB (a usual limit for a BAT).
+">
+
+So it is possible to overlay the function memory_post_test() by a
+board specific routine, which may cover almost all RAM?
+
+BTW, is it possible to overlay _all_ POST routines by board specific
+routines?
+
+Kind regards
+Jens
+
+-------------------------------------------------------------------------
+This SF.net email is sponsored by: Microsoft
+Defy all challenges. Microsoft(R) Visual Studio 2005.
+http://clk.atdmt.com/MRT/go/vse0120000070mrt/direct/01/
+_______________________________________________
+U-Boot-Users mailing list
+U-Boot-Us ... @lists.sourceforge.net
+https://lists.sourceforge.net/lists/listinfo/u-boot-users
+</POST>
+<POST>
+<POSTER> Wolfgang Denk &lt;w...@denx.de&gt; </POSTER>
+<POSTDATE> 2007-11-16T14:21:00 </POSTDATE>
+In message &lt;473D9B54.1010 ... @tqs.de&gt; you wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; As an example look at initdram() in board/Marvell/db64460/sdram_init.c
+&gt; &gt; where the platform uses Block Address Translations (BATs) to map RAM
+&gt; &gt; but exhausts these pretty scarce ressources and limits itself to
+&gt; &gt; mapping only the first 256MB (a usual limit for a BAT).
+
+&gt; So it is possible to overlay the function memory_post_test() by a
+&gt; board specific routine, which may cover almost all RAM?
+">
+
+Everything is possible - this is software, so anything can be done.
+You can even make pigs fly. But not everything does make sense.
+
+<QUOTE PREVIOUSPOST="
+&gt; BTW, is it possible to overlay _all_ POST routines by board specific
+&gt; routines?
+">
+
+It could be done, but I consider it a very, very bad idea.
+
+Best regards,
+
+Wolfgang Denk
+
+--
+DENX Software Engineering GmbH,     MD: Wolfgang Denk &amp; Detlev Zundel
+HRB 165235 Munich, Office: Kirchenstr.5, D-82194 Groebenzell, Germany
+Phone: (+49)-8142-66989-10 Fax: (+49)-8142-66989-80 Email: w ... @denx.de
+When all else fails, read the instructions.
+
+-------------------------------------------------------------------------
+This SF.net email is sponsored by: Microsoft
+Defy all challenges. Microsoft(R) Visual Studio 2005.
+http://clk.atdmt.com/MRT/go/vse0120000070mrt/direct/01/
+_______________________________________________
+U-Boot-Users mailing list
+U-Boot-Us ... @lists.sourceforge.net
+https://lists.sourceforge.net/lists/listinfo/u-boot-users
+</POST>
+<POST>
+<POSTER> Jens Gehrlein &lt;se...@tqs.de&gt; </POSTER>
+<POSTDATE> 2007-11-19T02:55:00 </POSTDATE>
+Wolfgang Denk schrieb:
+
+<QUOTE PREVIOUSPOST="
+&gt; In message &lt;473D9B54.1010 ... @tqs.de&gt; you wrote:
+&gt;&gt;&gt; As an example look at initdram() in board/Marvell/db64460/sdram_init.c
+&gt;&gt;&gt; where the platform uses Block Address Translations (BATs) to map RAM
+&gt;&gt;&gt; but exhausts these pretty scarce ressources and limits itself to
+&gt;&gt;&gt; mapping only the first 256MB (a usual limit for a BAT).
+&gt;&gt; So it is possible to overlay the function memory_post_test() by a
+&gt;&gt; board specific routine, which may cover almost all RAM?
+
+&gt; Everything is possible - this is software, so anything can be done.
+&gt; You can even make pigs fly. But not everything does make sense.
+
+&gt;&gt; BTW, is it possible to overlay _all_ POST routines by board specific
+&gt;&gt; routines?
+
+&gt; It could be done, but I consider it a very, very bad idea.
+
+&gt; Best regards,
+
+&gt; Wolfgang Denk
+">
+
+And what if the tests wouldn't meet certain requirements of the
+developer or customer or if it had to be adapted to CPU- or
+board-specific conditions?
+I suppose, you wouldn't like much &quot;#ifdef &lt;CPU&gt;&quot;s or &quot;#ifdef &lt;board&gt;&quot;s
+in common code.
+Could you please make a proposal to solve this and to get such code
+into the official U-Boot tree?
+
+Kind regards
+Jens
+
+-------------------------------------------------------------------------
+This SF.net email is sponsored by: Microsoft
+Defy all challenges. Microsoft(R) Visual Studio 2005.
+http://clk.atdmt.com/MRT/go/vse0120000070mrt/direct/01/
+_______________________________________________
+U-Boot-Users mailing list
+U-Boot-Us ... @lists.sourceforge.net
+https://lists.sourceforge.net/lists/listinfo/u-boot-users
+</POST>
+<POST>
+<POSTER> Wolfgang Denk &lt;w...@denx.de&gt; </POSTER>
+<POSTDATE> 2007-11-19T08:13:00 </POSTDATE>
+In message &lt;4741416E.1040 ... @tqs.de&gt; you wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; And what if the tests wouldn't meet certain requirements of the
+&gt; developer or customer or if it had to be adapted to CPU- or
+&gt; board-specific conditions?
+">
+
+U-Boot provides ways for CPU and board specific code, also in the POST
+impelmentation, but that should be used only where really necessary.
+
+<QUOTE PREVIOUSPOST="
+&gt; I suppose, you wouldn't like much &quot;#ifdef &lt;CPU&gt;&quot;s or &quot;#ifdef &lt;board&gt;&quot;s
+&gt; in common code.
+">
+
+Definitely not.
+
+<QUOTE PREVIOUSPOST="
+&gt; Could you please make a proposal to solve this and to get such code
+&gt; into the official U-Boot tree?
+">
+
+So what exactly is it what you would like to see changed in the  POST
+memory test?
+
+Best regards,
+
+Wolfgang Denk
+
+--
+DENX Software Engineering GmbH,     MD: Wolfgang Denk &amp; Detlev Zundel
+HRB 165235 Munich, Office: Kirchenstr.5, D-82194 Groebenzell, Germany
+Phone: (+49)-8142-66989-10 Fax: (+49)-8142-66989-80 Email: w ... @denx.de
+All easy problems have already been solved.
+
+-------------------------------------------------------------------------
+This SF.net email is sponsored by: Microsoft
+Defy all challenges. Microsoft(R) Visual Studio 2005.
+http://clk.atdmt.com/MRT/go/vse0120000070mrt/direct/01/
+_______________________________________________
+U-Boot-Users mailing list
+U-Boot-Us ... @lists.sourceforge.net
+https://lists.sourceforge.net/lists/listinfo/u-boot-users
+</POST>
+<POST>
+<POSTER> Detlev Zundel &lt;d...@denx.de&gt; </POSTER>
+<POSTDATE> 2007-11-19T10:34:00 </POSTDATE>
+Hi,
+
+<QUOTE PREVIOUSPOST="
+&gt; Wolfgang Denk schrieb:
+&gt;&gt; In message &lt;473D9B54.1010 ... @tqs.de&gt; you wrote:
+&gt;&gt;&gt;&gt; As an example look at initdram() in board/Marvell/db64460/sdram_init.c
+&gt;&gt;&gt;&gt; where the platform uses Block Address Translations (BATs) to map RAM
+&gt;&gt;&gt;&gt; but exhausts these pretty scarce ressources and limits itself to
+&gt;&gt;&gt;&gt; mapping only the first 256MB (a usual limit for a BAT).
+&gt;&gt;&gt; So it is possible to overlay the function memory_post_test() by a
+&gt;&gt;&gt; board specific routine, which may cover almost all RAM?
+
+&gt;&gt; Everything is possible - this is software, so anything can be done.
+&gt;&gt; You can even make pigs fly. But not everything does make sense.
+
+&gt;&gt;&gt; BTW, is it possible to overlay _all_ POST routines by board specific
+&gt;&gt;&gt; routines?
+
+&gt;&gt; It could be done, but I consider it a very, very bad idea.
+
+&gt;&gt; Best regards,
+
+&gt;&gt; Wolfgang Denk
+
+&gt; And what if the tests wouldn't meet certain requirements of the
+&gt; developer or customer or if it had to be adapted to CPU- or
+&gt; board-specific conditions?
+&gt; I suppose, you wouldn't like much &quot;#ifdef &lt;CPU&gt;&quot;s or &quot;#ifdef &lt;board&gt;&quot;s
+&gt; in common code.
+&gt; Could you please make a proposal to solve this and to get such code
+&gt; into the official U-Boot tree?
+">
+
+Let me restate, that for me U-Boot gets its power from the shared
+source code, not from the &quot;every board uses its own code&quot;.  On the
+contrary, non-shared source is a constant source of trouble in this
+project that surely picked up speed in the last few months.
+
+Code sharing is a _central_ point of the whole U-Boot design and
+especially _test_ routines surely should fall into this category.  So
+we should always strive to solve the problem in common code, probably
+using board specific data structures to cope with the differences.
+
+Instead of discussing the general &quot;why shouldn't we override test xy&quot;
+which I believe cannot be answered in a more general way than I tried
+in the previous paragraph, let's think about the post memory test.
+
+What we really need is (as I already hinted at in my first reply) a
+data structure that allows the post test to know how much memory is
+mapped where.  At first I thought of a single scalar mem_mapped
+variable but discussion with Wolfgang showed me that we really
+need a list of mapped segments for the general case.
+
+So to answer your question, if you come up with an implementation of
+this idea (or something comparable) then I don't see why this could
+not go mainline.
+
+Cheers
+Detlev
+
+--
+LISP is the most powerful programming language, and if you want an inter-
+preter, LISP is the best.  None of the other languages come anywhere near
+LISP in their power.  The most exciting things about LISP are read, eval,
+and print.  If you look at other languages,  they have no equivalent for
+any of those.                             -- Richard Stallman
+--
+DENX Software Engineering GmbH,      MD: Wolfgang Denk &amp; Detlev Zundel
+HRB 165235 Munich,  Office: Kirchenstr.5, D-82194 Groebenzell, Germany
+Phone: (+49)-8142-66989-40 Fax: (+49)-8142-66989-80 Email: d ... @denx.de
+
+-------------------------------------------------------------------------
+This SF.net email is sponsored by: Microsoft
+Defy all challenges. Microsoft(R) Visual Studio 2005.
+http://clk.atdmt.com/MRT/go/vse0120000070mrt/direct/01/
+_______________________________________________
+U-Boot-Users mailing list
+U-Boot-Us ... @lists.sourceforge.net
+https://lists.sourceforge.net/lists/listinfo/u-boot-users
+</POST>
+</TEXT>
+</BODY>
+</DOC>

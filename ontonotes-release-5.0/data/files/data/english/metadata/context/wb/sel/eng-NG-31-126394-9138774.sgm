@@ -1,0 +1,822 @@
+<DOC>
+<DOCID> eng-NG-31-126394-9138774 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-04T11:54:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Passing arrays to C funcions
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> ds &lt;junkmailav...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-09-04T11:54:00 </POSTDATE>
+Hi all,
+
+I have to pass an array of doubles to a legacy C function that copies
+some data using memcpy. The code would look like this:
+
+extern &quot;C&quot;{
+void legacyCFunctionFill(void* arg);
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+...
+int number=5;
+double *my_array=(double*)calloc(number,sizeof(double));
+legacyCFunctionFill((void*)my_array);
+// Do sth useful
+free(my_array);
+
+The question is: if I change calloc() and free() with new and delete
+[] will there be any issues, including portability issues? At first it
+seems that it works, having tested that in my program. But I am not
+sure if the memory allocated by calloc is the same and can be used the
+same way as the memory allocated with new, especially on windows,
+Linux and Sun.
+
+Tahnks a lot!!!
+
+-- dimitris
+</POST>
+<POST>
+<POSTER> Erik Wikström &lt;Erik-wikst...@telia.com&gt; </POSTER>
+<POSTDATE> 2007-09-04T12:02:00 </POSTDATE>
+On 2007-09-04 17:54, ds wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi all,
+
+&gt; I have to pass an array of doubles to a legacy C function that copies
+&gt; some data using memcpy. The code would look like this:
+
+&gt; extern &quot;C&quot;{
+&gt; void legacyCFunctionFill(void* arg);
+&gt; }
+&gt; ...
+&gt; int number=5;
+&gt; double *my_array=(double*)calloc(number,sizeof(double));
+&gt; legacyCFunctionFill((void*)my_array);
+&gt; // Do sth useful
+&gt; free(my_array);
+
+&gt; The question is: if I change calloc() and free() with new and delete
+&gt; [] will there be any issues, including portability issues? At first it
+&gt; seems that it works, having tested that in my program. But I am not
+&gt; sure if the memory allocated by calloc is the same and can be used the
+&gt; same way as the memory allocated with new, especially on windows,
+&gt; Linux and Sun.
+">
+
+As long as legacyCFunctionFill() does not try to deallocate the memory
+using free() everything is fine. There is no difference in the memory
+but you can not allocate memory with malloc and deallocate it with
+delete (or the other way around).
+
+--
+Erik Wikström
+</POST>
+<POST>
+<POSTER> red floyd &lt;no.s...@here.dude&gt; </POSTER>
+<POSTDATE> 2007-09-04T12:05:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+ds wrote:
+&gt; Hi all,
+
+&gt; I have to pass an array of doubles to a legacy C function that copies
+&gt; some data using memcpy. The code would look like this:
+
+&gt; extern &quot;C&quot;{
+&gt; void legacyCFunctionFill(void* arg);
+&gt; }
+&gt; ...
+&gt; int number=5;
+&gt; double *my_array=(double*)calloc(number,sizeof(double));
+&gt; legacyCFunctionFill((void*)my_array);
+&gt; // Do sth useful
+&gt; free(my_array);
+
+&gt; The question is: if I change calloc() and free() with new and delete
+&gt; [] will there be any issues, including portability issues? At first it
+&gt; seems that it works, having tested that in my program. But I am not
+&gt; sure if the memory allocated by calloc is the same and can be used the
+&gt; same way as the memory allocated with new, especially on windows,
+&gt; Linux and Sun.
+">
+
+Assuming that legacyCFunctionFill() doesn't overrun the buffer (how
+*does* it know how much space to fill?), it's fine to use
+new[]/delete[].  A pointer is a pointer.
+
+double *my_array = new double[number];
+legacyCFunctionFill(my_array);  // no cast to void* needed
+delete[] my_array;              // note use of delete[]
+
+Alternatively:
+
+std::vector&lt;double&gt; myvec(number);
+legacyCFunctionFill(&amp;myvec[0]);
+// no deletion necessary
+</POST>
+<POST>
+<POSTER> ds &lt;junkmailav...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-09-04T12:21:00 </POSTDATE>
+On Sep 4, 6:05 pm, red floyd &lt;no.s ... @here.dude&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; ds wrote:
+&gt; &gt; Hi all,
+
+&gt; &gt; I have to pass an array of doubles to a legacy C function that copies
+&gt; &gt; some data using memcpy. The code would look like this:
+
+&gt; &gt; extern &quot;C&quot;{
+&gt; &gt; void legacyCFunctionFill(void* arg);
+&gt; &gt; }
+&gt; &gt; ...
+&gt; &gt; int number=5;
+&gt; &gt; double *my_array=(double*)calloc(number,sizeof(double));
+&gt; &gt; legacyCFunctionFill((void*)my_array);
+&gt; &gt; // Do sth useful
+&gt; &gt; free(my_array);
+
+&gt; &gt; The question is: if I change calloc() and free() with new and delete
+&gt; &gt; [] will there be any issues, including portability issues? At first it
+&gt; &gt; seems that it works, having tested that in my program. But I am not
+&gt; &gt; sure if the memory allocated by calloc is the same and can be used the
+&gt; &gt; same way as the memory allocated with new, especially on windows,
+&gt; &gt; Linux and Sun.
+
+&gt; Assuming that legacyCFunctionFill() doesn't overrun the buffer (how
+&gt; *does* it know how much space to fill?), it's fine to use
+&gt; new[]/delete[].  A pointer is a pointer.
+
+&gt; double *my_array = new double[number];
+&gt; legacyCFunctionFill(my_array);  // no cast to void* needed
+&gt; delete[] my_array;              // note use of delete[]
+
+&gt; Alternatively:
+
+&gt; std::vector&lt;double&gt; myvec(number);
+&gt; legacyCFunctionFill(&amp;myvec[0]);
+&gt; // no deletion necessary
+">
+
+Hi floyd,
+
+it is clear that number has to be passed to the legacy function, which
+performs a memcpy - no allocation/deallocation on the passed array.
+Are you sure that std::vector allocates a continuous block? That would
+be a nice solution for what I want to do, but I am afraid  that not
+all std::vector implementations allocate continuous memory....
+
+thanks a lot!!
+</POST>
+<POST>
+<POSTER> red floyd &lt;no.s...@here.dude&gt; </POSTER>
+<POSTDATE> 2007-09-04T12:37:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+ds wrote:
+&gt; On Sep 4, 6:05 pm, red floyd &lt;no.s ... @here.dude&gt; wrote:
+
+&gt;&gt; std::vector&lt;double&gt; myvec(number);
+&gt;&gt; legacyCFunctionFill(&amp;myvec[0]);
+&gt;&gt; // no deletion necessary
+
+&gt; Hi floyd,
+
+&gt; it is clear that number has to be passed to the legacy function, which
+&gt; performs a memcpy - no allocation/deallocation on the passed array.
+&gt; Are you sure that std::vector allocates a continuous block? That would
+&gt; be a nice solution for what I want to do, but I am afraid  that not
+&gt; all std::vector implementations allocate continuous memory....
+">
+
+Yeah, TC1 aka 14882:2003 guarantees contiguous memory.
+</POST>
+<POST>
+<POSTER> karthikbalaguru &lt;karthikbalagur...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-04T12:44:00 </POSTDATE>
+On Sep 4, 9:21 pm, ds &lt;junkmailav ... @yahoo.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 4, 6:05 pm, red floyd &lt;no.s ... @here.dude&gt; wrote:
+
+&gt; &gt; ds wrote:
+&gt; &gt; &gt; Hi all,
+
+&gt; &gt; &gt; I have to pass an array of doubles to a legacy C function that copies
+&gt; &gt; &gt; some data using memcpy. The code would look like this:
+
+&gt; &gt; &gt; extern &quot;C&quot;{
+&gt; &gt; &gt; void legacyCFunctionFill(void* arg);
+&gt; &gt; &gt; }
+&gt; &gt; &gt; ...
+&gt; &gt; &gt; int number=5;
+&gt; &gt; &gt; double *my_array=(double*)calloc(number,sizeof(double));
+&gt; &gt; &gt; legacyCFunctionFill((void*)my_array);
+&gt; &gt; &gt; // Do sth useful
+&gt; &gt; &gt; free(my_array);
+
+&gt; &gt; &gt; The question is: if I change calloc() and free() with new and delete
+&gt; &gt; &gt; [] will there be any issues, including portability issues? At first it
+&gt; &gt; &gt; seems that it works, having tested that in my program. But I am not
+&gt; &gt; &gt; sure if the memory allocated by calloc is the same and can be used the
+&gt; &gt; &gt; same way as the memory allocated with new, especially on windows,
+&gt; &gt; &gt; Linux and Sun.
+
+&gt; &gt; Assuming that legacyCFunctionFill() doesn't overrun the buffer (how
+&gt; &gt; *does* it know how much space to fill?), it's fine to use
+&gt; &gt; new[]/delete[].  A pointer is a pointer.
+
+&gt; &gt; double *my_array = new double[number];
+&gt; &gt; legacyCFunctionFill(my_array);  // no cast to void* needed
+&gt; &gt; delete[] my_array;              // note use of delete[]
+
+&gt; &gt; Alternatively:
+
+&gt; &gt; std::vector&lt;double&gt; myvec(number);
+&gt; &gt; legacyCFunctionFill(&amp;myvec[0]);
+&gt; &gt; // no deletion necessary
+
+&gt; Hi floyd,
+
+&gt; it is clear that number has to be passed to the legacy function, which
+&gt; performs a memcpy - no allocation/deallocation on the passed array.
+&gt; Are you sure that std::vector allocates a continuous block? That would
+&gt; be a nice solution for what I want to do, but I am afraid  that not
+&gt; all std::vector implementations allocate continuous memory....
+
+&gt; thanks a lot!!- Hide quoted text -
+
+&gt; - Show quoted text -
+">
+
+continuous memory ??
+</POST>
+<POST>
+<POSTER> Erik Wikström &lt;Erik-wikst...@telia.com&gt; </POSTER>
+<POSTDATE> 2007-09-04T12:51:00 </POSTDATE>
+On 2007-09-04 18:21, ds wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 4, 6:05 pm, red floyd &lt;no.s ... @here.dude&gt; wrote:
+&gt;&gt; ds wrote:
+&gt;&gt; &gt; Hi all,
+
+&gt;&gt; &gt; I have to pass an array of doubles to a legacy C function that copies
+&gt;&gt; &gt; some data using memcpy. The code would look like this:
+
+&gt;&gt; &gt; extern &quot;C&quot;{
+&gt;&gt; &gt; void legacyCFunctionFill(void* arg);
+&gt;&gt; &gt; }
+&gt;&gt; &gt; ...
+&gt;&gt; &gt; int number=5;
+&gt;&gt; &gt; double *my_array=(double*)calloc(number,sizeof(double));
+&gt;&gt; &gt; legacyCFunctionFill((void*)my_array);
+&gt;&gt; &gt; // Do sth useful
+&gt;&gt; &gt; free(my_array);
+
+&gt;&gt; &gt; The question is: if I change calloc() and free() with new and delete
+&gt;&gt; &gt; [] will there be any issues, including portability issues? At first it
+&gt;&gt; &gt; seems that it works, having tested that in my program. But I am not
+&gt;&gt; &gt; sure if the memory allocated by calloc is the same and can be used the
+&gt;&gt; &gt; same way as the memory allocated with new, especially on windows,
+&gt;&gt; &gt; Linux and Sun.
+
+&gt;&gt; Assuming that legacyCFunctionFill() doesn't overrun the buffer (how
+&gt;&gt; *does* it know how much space to fill?), it's fine to use
+&gt;&gt; new[]/delete[].  A pointer is a pointer.
+
+&gt;&gt; double *my_array = new double[number];
+&gt;&gt; legacyCFunctionFill(my_array);  // no cast to void* needed
+&gt;&gt; delete[] my_array;              // note use of delete[]
+
+&gt;&gt; Alternatively:
+
+&gt;&gt; std::vector&lt;double&gt; myvec(number);
+&gt;&gt; legacyCFunctionFill(&amp;myvec[0]);
+&gt;&gt; // no deletion necessary
+
+&gt; Hi floyd,
+
+&gt; it is clear that number has to be passed to the legacy function, which
+&gt; performs a memcpy - no allocation/deallocation on the passed array.
+&gt; Are you sure that std::vector allocates a continuous block? That would
+&gt; be a nice solution for what I want to do, but I am afraid  that not
+&gt; all std::vector implementations allocate continuous memory....
+">
+
+All standards compliant std::vectors allocate continuous blocks of memory.
+
+--
+Erik Wikström
+</POST>
+<POST>
+<POSTER> ds &lt;junkmailav...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-09-04T12:58:00 </POSTDATE>
+On Sep 4, 6:51 pm, Erik Wikström &lt;Erik-wikst ... @telia.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2007-09-04 18:21, ds wrote:
+
+&gt; &gt; On Sep 4, 6:05 pm, red floyd &lt;no.s ... @here.dude&gt; wrote:
+&gt; &gt;&gt; ds wrote:
+&gt; &gt;&gt; &gt; Hi all,
+
+&gt; &gt;&gt; &gt; I have to pass an array of doubles to a legacy C function that copies
+&gt; &gt;&gt; &gt; some data using memcpy. The code would look like this:
+
+&gt; &gt;&gt; &gt; extern &quot;C&quot;{
+&gt; &gt;&gt; &gt; void legacyCFunctionFill(void* arg);
+&gt; &gt;&gt; &gt; }
+&gt; &gt;&gt; &gt; ...
+&gt; &gt;&gt; &gt; int number=5;
+&gt; &gt;&gt; &gt; double *my_array=(double*)calloc(number,sizeof(double));
+&gt; &gt;&gt; &gt; legacyCFunctionFill((void*)my_array);
+&gt; &gt;&gt; &gt; // Do sth useful
+&gt; &gt;&gt; &gt; free(my_array);
+
+&gt; &gt;&gt; &gt; The question is: if I change calloc() and free() with new and delete
+&gt; &gt;&gt; &gt; [] will there be any issues, including portability issues? At first it
+&gt; &gt;&gt; &gt; seems that it works, having tested that in my program. But I am not
+&gt; &gt;&gt; &gt; sure if the memory allocated by calloc is the same and can be used the
+&gt; &gt;&gt; &gt; same way as the memory allocated with new, especially on windows,
+&gt; &gt;&gt; &gt; Linux and Sun.
+
+&gt; &gt;&gt; Assuming that legacyCFunctionFill() doesn't overrun the buffer (how
+&gt; &gt;&gt; *does* it know how much space to fill?), it's fine to use
+&gt; &gt;&gt; new[]/delete[].  A pointer is a pointer.
+
+&gt; &gt;&gt; double *my_array = new double[number];
+&gt; &gt;&gt; legacyCFunctionFill(my_array);  // no cast to void* needed
+&gt; &gt;&gt; delete[] my_array;              // note use of delete[]
+
+&gt; &gt;&gt; Alternatively:
+
+&gt; &gt;&gt; std::vector&lt;double&gt; myvec(number);
+&gt; &gt;&gt; legacyCFunctionFill(&amp;myvec[0]);
+&gt; &gt;&gt; // no deletion necessary
+
+&gt; &gt; Hi floyd,
+
+&gt; &gt; it is clear that number has to be passed to the legacy function, which
+&gt; &gt; performs a memcpy - no allocation/deallocation on the passed array.
+&gt; &gt; Are you sure that std::vector allocates a continuous block? That would
+&gt; &gt; be a nice solution for what I want to do, but I am afraid  that not
+&gt; &gt; all std::vector implementations allocate continuous memory....
+
+&gt; All standards compliant std::vectors allocate continuous blocks of memory.
+
+&gt; --
+&gt; Erik Wikström
+">
+
+I agree. But are all stl implementations complying to the standard?
+Especially the MSVC implementation deviates in some cases...
+</POST>
+<POST>
+<POSTER> red floyd &lt;no.s...@here.dude&gt; </POSTER>
+<POSTDATE> 2007-09-04T13:01:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+ds wrote:
+&gt; On Sep 4, 6:51 pm, Erik Wikström &lt;Erik-wikst ... @telia.com&gt; wrote:
+&gt;&gt; All standards compliant std::vectors allocate continuous blocks of memory.
+
+&gt; I agree. But are all stl implementations complying to the standard?
+&gt; Especially the MSVC implementation deviates in some cases...
+">
+
+MSVC uses Dinkumware, so it should be pretty good.  If you're talking
+MSVC 7.1 or 8.0, it should be pretty compliant.  If you're talking
+MSVC6, then you need to upgrade.
+
+Also, please don't quote sigs.
+</POST>
+<POST>
+<POSTER> Erik Wikström &lt;Erik-wikst...@telia.com&gt; </POSTER>
+<POSTDATE> 2007-09-04T14:08:00 </POSTDATE>
+On 2007-09-04 18:44, karthikbalaguru wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 4, 9:21 pm, ds &lt;junkmailav ... @yahoo.com&gt; wrote:
+&gt;&gt; On Sep 4, 6:05 pm, red floyd &lt;no.s ... @here.dude&gt; wrote:
+
+&gt;&gt; &gt; ds wrote:
+&gt;&gt; &gt; &gt; Hi all,
+
+&gt;&gt; &gt; &gt; I have to pass an array of doubles to a legacy C function that copies
+&gt;&gt; &gt; &gt; some data using memcpy. The code would look like this:
+
+&gt;&gt; &gt; &gt; extern &quot;C&quot;{
+&gt;&gt; &gt; &gt; void legacyCFunctionFill(void* arg);
+&gt;&gt; &gt; &gt; }
+&gt;&gt; &gt; &gt; ...
+&gt;&gt; &gt; &gt; int number=5;
+&gt;&gt; &gt; &gt; double *my_array=(double*)calloc(number,sizeof(double));
+&gt;&gt; &gt; &gt; legacyCFunctionFill((void*)my_array);
+&gt;&gt; &gt; &gt; // Do sth useful
+&gt;&gt; &gt; &gt; free(my_array);
+
+&gt;&gt; &gt; &gt; The question is: if I change calloc() and free() with new and delete
+&gt;&gt; &gt; &gt; [] will there be any issues, including portability issues? At first it
+&gt;&gt; &gt; &gt; seems that it works, having tested that in my program. But I am not
+&gt;&gt; &gt; &gt; sure if the memory allocated by calloc is the same and can be used the
+&gt;&gt; &gt; &gt; same way as the memory allocated with new, especially on windows,
+&gt;&gt; &gt; &gt; Linux and Sun.
+
+&gt;&gt; &gt; Assuming that legacyCFunctionFill() doesn't overrun the buffer (how
+&gt;&gt; &gt; *does* it know how much space to fill?), it's fine to use
+&gt;&gt; &gt; new[]/delete[].  A pointer is a pointer.
+
+&gt;&gt; &gt; double *my_array = new double[number];
+&gt;&gt; &gt; legacyCFunctionFill(my_array);  // no cast to void* needed
+&gt;&gt; &gt; delete[] my_array;              // note use of delete[]
+
+&gt;&gt; &gt; Alternatively:
+
+&gt;&gt; &gt; std::vector&lt;double&gt; myvec(number);
+&gt;&gt; &gt; legacyCFunctionFill(&amp;myvec[0]);
+&gt;&gt; &gt; // no deletion necessary
+
+&gt;&gt; Hi floyd,
+
+&gt;&gt; it is clear that number has to be passed to the legacy function, which
+&gt;&gt; performs a memcpy - no allocation/deallocation on the passed array.
+&gt;&gt; Are you sure that std::vector allocates a continuous block? That would
+&gt;&gt; be a nice solution for what I want to do, but I am afraid  that not
+&gt;&gt; all std::vector implementations allocate continuous memory....
+
+&gt;&gt; thanks a lot!!- Hide quoted text -
+
+&gt;&gt; - Show quoted text -
+
+&gt; continuous memory ??
+">
+
+Meaning that all the elements in the vector will be placed one after
+another without any gaps (except padding), in other words that the
+elements will be allocated just like in an array.
+
+--
+Erik Wikström
+</POST>
+<POST>
+<POSTER> blangela &lt;Bob_Langel...@telus.net&gt; </POSTER>
+<POSTDATE> 2007-09-04T16:27:00 </POSTDATE>
+On Sep 4, 9:21 am, ds &lt;junkmailav ... @yahoo.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 4, 6:05 pm, red floyd &lt;no.s ... @here.dude&gt; wrote:
+
+&gt; &gt; ds wrote:
+&gt; &gt; &gt; Hi all,
+
+&gt; &gt; &gt; I have to pass an array of doubles to a legacy C function that copies
+&gt; &gt; &gt; some data using memcpy. The code would look like this:
+
+&gt; &gt; &gt; extern &quot;C&quot;{
+&gt; &gt; &gt; void legacyCFunctionFill(void* arg);
+&gt; &gt; &gt; }
+&gt; &gt; &gt; ...
+&gt; &gt; &gt; int number=5;
+&gt; &gt; &gt; double *my_array=(double*)calloc(number,sizeof(double));
+&gt; &gt; &gt; legacyCFunctionFill((void*)my_array);
+&gt; &gt; &gt; // Do sth useful
+&gt; &gt; &gt; free(my_array);
+
+&gt; &gt; &gt; The question is: if I change calloc() and free() with new and delete
+&gt; &gt; &gt; [] will there be any issues, including portability issues? At first it
+&gt; &gt; &gt; seems that it works, having tested that in my program. But I am not
+&gt; &gt; &gt; sure if the memory allocated by calloc is the same and can be used the
+&gt; &gt; &gt; same way as the memory allocated with new, especially on windows,
+&gt; &gt; &gt; Linux and Sun.
+
+&gt; &gt; Assuming that legacyCFunctionFill() doesn't overrun the buffer (how
+&gt; &gt; *does* it know how much space to fill?), it's fine to use
+&gt; &gt; new[]/delete[].  A pointer is a pointer.
+
+&gt; &gt; double *my_array = new double[number];
+&gt; &gt; legacyCFunctionFill(my_array);  // no cast to void* needed
+&gt; &gt; delete[] my_array;              // note use of delete[]
+
+&gt; &gt; Alternatively:
+
+&gt; &gt; std::vector&lt;double&gt; myvec(number);
+&gt; &gt; legacyCFunctionFill(&amp;myvec[0]);
+&gt; &gt; // no deletion necessary
+
+&gt; Hi floyd,
+
+&gt; it is clear that number has to be passed to the legacy function, which
+&gt; performs a memcpy - no allocation/deallocation on the passed array.
+&gt; Are you sure that std::vector allocates a continuous block? That would
+&gt; be a nice solution for what I want to do, but I am afraid  that not
+&gt; all std::vector implementations allocate continuous memory....
+
+&gt; thanks a lot!!- Hide quoted text -
+
+&gt; - Show quoted text -
+">
+
+Isn't the correct term &quot;contiguous&quot;, not &quot;continuous&quot; ?
+</POST>
+<POST>
+<POSTER> &quot;Default User&quot; &lt;defaultuse...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-09-04T16:32:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Erik Wikstrom wrote:
+&gt; On 2007-09-04 18:44, karthikbalaguru wrote:
+&gt; &gt; continuous memory ??
+
+&gt; Meaning that all the elements in the vector will be placed one after
+&gt; another without any gaps (except padding), in other words that the
+&gt; elements will be allocated just like in an array.
+">
+
+I think &quot;contiguous&quot; is somewhat more common, but either should work
+fine.
+
+Brian
+</POST>
+<POST>
+<POSTER> &quot;Jim Langston&quot; &lt;tazmas...@rocketmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-04T21:00:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;blangela&quot; &lt;Bob_Langel ... @telus.net&gt; wrote in message
+">
+
+news:1188937666.131978.264920@o80g2000hse.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 4, 9:21 am, ds &lt;junkmailav ... @yahoo.com&gt; wrote:
+&gt;&gt; On Sep 4, 6:05 pm, red floyd &lt;no.s ... @here.dude&gt; wrote:
+
+&gt;&gt; &gt; ds wrote:
+&gt;&gt; &gt; &gt; Hi all,
+
+&gt;&gt; &gt; &gt; I have to pass an array of doubles to a legacy C function that copies
+&gt;&gt; &gt; &gt; some data using memcpy. The code would look like this:
+
+&gt;&gt; &gt; &gt; extern &quot;C&quot;{
+&gt;&gt; &gt; &gt; void legacyCFunctionFill(void* arg);
+&gt;&gt; &gt; &gt; }
+&gt;&gt; &gt; &gt; ...
+&gt;&gt; &gt; &gt; int number=5;
+&gt;&gt; &gt; &gt; double *my_array=(double*)calloc(number,sizeof(double));
+&gt;&gt; &gt; &gt; legacyCFunctionFill((void*)my_array);
+&gt;&gt; &gt; &gt; // Do sth useful
+&gt;&gt; &gt; &gt; free(my_array);
+
+&gt;&gt; &gt; &gt; The question is: if I change calloc() and free() with new and delete
+&gt;&gt; &gt; &gt; [] will there be any issues, including portability issues? At first
+&gt;&gt; &gt; &gt; it
+&gt;&gt; &gt; &gt; seems that it works, having tested that in my program. But I am not
+&gt;&gt; &gt; &gt; sure if the memory allocated by calloc is the same and can be used
+&gt;&gt; &gt; &gt; the
+&gt;&gt; &gt; &gt; same way as the memory allocated with new, especially on windows,
+&gt;&gt; &gt; &gt; Linux and Sun.
+
+&gt;&gt; &gt; Assuming that legacyCFunctionFill() doesn't overrun the buffer (how
+&gt;&gt; &gt; *does* it know how much space to fill?), it's fine to use
+&gt;&gt; &gt; new[]/delete[].  A pointer is a pointer.
+
+&gt;&gt; &gt; double *my_array = new double[number];
+&gt;&gt; &gt; legacyCFunctionFill(my_array);  // no cast to void* needed
+&gt;&gt; &gt; delete[] my_array;              // note use of delete[]
+
+&gt;&gt; &gt; Alternatively:
+
+&gt;&gt; &gt; std::vector&lt;double&gt; myvec(number);
+&gt;&gt; &gt; legacyCFunctionFill(&amp;myvec[0]);
+&gt;&gt; &gt; // no deletion necessary
+
+&gt;&gt; Hi floyd,
+
+&gt;&gt; it is clear that number has to be passed to the legacy function, which
+&gt;&gt; performs a memcpy - no allocation/deallocation on the passed array.
+&gt;&gt; Are you sure that std::vector allocates a continuous block? That would
+&gt;&gt; be a nice solution for what I want to do, but I am afraid  that not
+&gt;&gt; all std::vector implementations allocate continuous memory....
+&gt; Isn't the correct term &quot;contiguous&quot;, not &quot;continuous&quot; ?
+">
+
+Continuous memory is contiguous, and contiguous memory is continuous.
+Contiguous is the offical term, but it means continuous anyway.
+
+From dictionary.com definition #1 (which is what we use) for contiguous:
+1. touching; in contact.
+
+From dictoinary.com definition #2 (which woudl apply) for continuous:
+2. being in immediate connection or spatial relationship: a continuous
+series of blasts; a continuous row of warehouses.
+
+They are fairly synonymous in this context.
+</POST>
+<POST>
+<POSTER> ds &lt;junkmailav...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T04:35:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+red floyd wrote:
+&gt; ds wrote:
+&gt; &gt; Erik Wikström wrote:
+&gt; &gt;&gt; All standards compliant std::vectors allocate continuous blocks of memory.
+
+&gt; &gt; I agree. But are all stl implementations complying to the standard?
+&gt; &gt; Especially the MSVC implementation deviates in some cases...
+
+&gt; MSVC uses Dinkumware, so it should be pretty good.  If you're talking
+&gt; MSVC 7.1 or 8.0, it should be pretty compliant.  If you're talking
+&gt; MSVC6, then you need to upgrade.
+
+&gt; Also, please don't quote sigs.
+">
+
+Sorry...
+
+I am talking MSVC 8.0 pro. For example check out this one:
+
+http://www.cplusplus.com/reference/iostream/stringbuf/setbuf.html
+
+this is not implemented in &lt;sstream&gt; - at least in my stl...
+</POST>
+<POST>
+<POSTER> Erik Wikström &lt;Erik-wikst...@telia.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T07:10:00 </POSTDATE>
+On 2007-09-05 10:35, ds wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; red floyd wrote:
+&gt;&gt; ds wrote:
+&gt;&gt; &gt; Erik Wikström wrote:
+&gt;&gt; &gt;&gt; All standards compliant std::vectors allocate continuous blocks of memory.
+
+&gt;&gt; &gt; I agree. But are all stl implementations complying to the standard?
+&gt;&gt; &gt; Especially the MSVC implementation deviates in some cases...
+
+&gt;&gt; MSVC uses Dinkumware, so it should be pretty good.  If you're talking
+&gt;&gt; MSVC 7.1 or 8.0, it should be pretty compliant.  If you're talking
+&gt;&gt; MSVC6, then you need to upgrade.
+
+&gt;&gt; Also, please don't quote sigs.
+
+&gt; Sorry...
+
+&gt; I am talking MSVC 8.0 pro. For example check out this one:
+
+&gt; http://www.cplusplus.com/reference/iostream/stringbuf/setbuf.html
+
+&gt; this is not implemented in &lt;sstream&gt; - at least in my stl...
+">
+
+What do you mean is not implemented?
+
+#include &lt;sstream&gt;
+int main()
+{
+std::stringstream ss;
+char* buf = new char[512];
+ss.rdbuf()-&gt;setbuf(buf, 512);
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+Fails to compile on my MSVC 8.0 Pro because setbuf() is protected, that
+seems like it is implemented to me.
+
+--
+Erik Wikström
+</POST>
+<POST>
+<POSTER> ds &lt;junkmailav...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T07:31:00 </POSTDATE>
+On Sep 5, 1:10 pm, Erik Wikström wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2007-09-05 10:35, ds wrote:
+
+&gt; &gt; red floyd wrote:
+&gt; &gt;&gt; ds wrote:
+&gt; &gt;&gt; &gt; Erik Wikström wrote:
+&gt; &gt;&gt; &gt;&gt; All standards compliant std::vectors allocate continuous blocks of memory.
+
+&gt; &gt;&gt; &gt; I agree. But are all stl implementations complying to the standard?
+&gt; &gt;&gt; &gt; Especially the MSVC implementation deviates in some cases...
+
+&gt; &gt;&gt; MSVC uses Dinkumware, so it should be pretty good.  If you're talking
+&gt; &gt;&gt; MSVC 7.1 or 8.0, it should be pretty compliant.  If you're talking
+&gt; &gt;&gt; MSVC6, then you need to upgrade.
+
+&gt; &gt;&gt; Also, please don't quote sigs.
+
+&gt; &gt; Sorry...
+
+&gt; &gt; I am talking MSVC 8.0 pro. For example check out this one:
+
+&gt; &gt; http://www.cplusplus.com/reference/iostream/stringbuf/setbuf.html
+
+&gt; &gt; this is not implemented in &lt;sstream&gt; - at least in my stl...
+
+&gt; What do you mean is not implemented?
+
+&gt; #include &lt;sstream&gt;
+&gt; int main()
+&gt; {
+&gt;         std::stringstream ss;
+&gt;         char* buf = new char[512];
+&gt;         ss.rdbuf()-&gt;setbuf(buf, 512);
+
+&gt; }
+
+&gt; Fails to compile on my MSVC 8.0 Pro because setbuf() is protected, that
+&gt; seems like it is implemented to me.
+
+&gt; --
+&gt; Erik Wikström
+">
+
+It's virtual and not pure. You actually end up here:
+
+virtual _Myt *__CLR_OR_THIS_CALL setbuf(_Elem *, streamsize)
+{       // offer buffer to external agent (do nothing)
+return (this);
+}
+Now check the documentation:
+http://www.cplusplus.com/reference/iostream/streambuf/setbuf.html and
+the link above of what it should do.
+
+Cheers,
+
+dimitris
+</POST>
+<POST>
+<POSTER> Erik Wikström &lt;Erik-wikst...@telia.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T07:50:00 </POSTDATE>
+On 2007-09-05 13:31, ds wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 5, 1:10 pm, Erik Wikström wrote:
+&gt;&gt; On 2007-09-05 10:35, ds wrote:
+
+&gt;&gt; &gt; red floyd wrote:
+&gt;&gt; &gt;&gt; ds wrote:
+&gt;&gt; &gt;&gt; &gt; Erik Wikström wrote:
+&gt;&gt; &gt;&gt; &gt;&gt; All standards compliant std::vectors allocate continuous blocks of memory.
+
+&gt;&gt; &gt;&gt; &gt; I agree. But are all stl implementations complying to the standard?
+&gt;&gt; &gt;&gt; &gt; Especially the MSVC implementation deviates in some cases...
+
+&gt;&gt; &gt;&gt; MSVC uses Dinkumware, so it should be pretty good.  If you're talking
+&gt;&gt; &gt;&gt; MSVC 7.1 or 8.0, it should be pretty compliant.  If you're talking
+&gt;&gt; &gt;&gt; MSVC6, then you need to upgrade.
+
+&gt;&gt; &gt;&gt; Also, please don't quote sigs.
+
+&gt;&gt; &gt; Sorry...
+
+&gt;&gt; &gt; I am talking MSVC 8.0 pro. For example check out this one:
+
+&gt;&gt; &gt; http://www.cplusplus.com/reference/iostream/stringbuf/setbuf.html
+
+&gt;&gt; &gt; this is not implemented in &lt;sstream&gt; - at least in my stl...
+
+&gt;&gt; What do you mean is not implemented?
+
+&gt;&gt; #include &lt;sstream&gt;
+&gt;&gt; int main()
+&gt;&gt; {
+&gt;&gt;         std::stringstream ss;
+&gt;&gt;         char* buf = new char[512];
+&gt;&gt;         ss.rdbuf()-&gt;setbuf(buf, 512);
+
+&gt;&gt; }
+
+&gt;&gt; Fails to compile on my MSVC 8.0 Pro because setbuf() is protected, that
+&gt;&gt; seems like it is implemented to me.
+
+&gt;&gt; --
+&gt;&gt; Erik Wikström
+
+&gt; It's virtual and not pure. You actually end up here:
+
+&gt;    virtual _Myt *__CLR_OR_THIS_CALL setbuf(_Elem *, streamsize)
+&gt;            {       // offer buffer to external agent (do nothing)
+&gt;            return (this);
+&gt;            }
+&gt; Now check the documentation:
+&gt; http://www.cplusplus.com/reference/iostream/streambuf/setbuf.html and
+&gt; the link above of what it should do.
+">
+
+The effect of stetbuf on a stringbuf is implementation-defined as long
+as setbuf(0,0); does nothing according to the standard, so that seems
+all OK to me.
+
+--
+Erik Wikström
+</POST>
+</TEXT>
+</BODY>
+</DOC>

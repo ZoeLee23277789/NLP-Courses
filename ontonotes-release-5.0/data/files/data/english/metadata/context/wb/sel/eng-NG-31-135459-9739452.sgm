@@ -1,0 +1,246 @@
+<DOC>
+<DOCID> eng-NG-31-135459-9739452 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2008-01-14T13:52:00 </DATETIME>
+<BODY>
+<HEADLINE>
+inexplicable variadic bug with VS 2005?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Henry Townsend &lt;henry.towns...@not.here&gt; </POSTER>
+<POSTDATE> 2008-01-14T13:52:00 </POSTDATE>
+I'm converting a piece of working C code from VS 2003 to VS 2005 and
+have encountered a failure which just seems impossible to me. I've
+scrutinized every line here and it's just not wrong. There's a
+trimmed-down test case below and I'd be very grateful if someone could
+point out my mistake.
+
+Thanks in advance,
+HT
+
+BUILD SEQUENCE:
+
+cl /Od /D &quot;WIN32&quot; /D &quot;_DEBUG&quot; /D &quot;_CONSOLE&quot; /MTd /W3 /nologo /c /Zi vsn.c
+
+link vsn.obj /INCREMENTAL:no /NOLOGO /MANIFEST
+/MANIFESTFILE:&quot;vsn.exe.intermediate.manifest&quot; /DEBUG /SUBSYSTEM:CONSOLE
+/MACHINE:X86
+
+CODE (vsn.c)
+
+#include &quot;io.h&quot;
+#include &quot;stdio.h&quot;
+#include &quot;stdarg.h&quot;
+#include &quot;string.h&quot;
+#include &quot;stdlib.h&quot;
+
+#define SEP ','
+
+static char *
+vsn_asprintf(const char *fmt, ...)
+{
+va_list ap;
+char stkbuf[1024];
+size_t bufsiz;
+char *buf;
+int len;
+
+bufsiz = sizeof(stkbuf);
+memset(stkbuf, 0, sizeof(stkbuf));
+
+va_start(ap, fmt);
+
+//DebugBreak();
+len = _vsnprintf_s(stkbuf, bufsiz, _TRUNCATE, fmt, ap);
+
+va_end(ap);
+
+buf = (char *)malloc(len + sizeof(char));
+strcpy_s(buf, sizeof(stkbuf), stkbuf);
+
+return buf;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+int
+main(int argc, char * const *argv)
+{
+
+const char *hdr;
+
+hdr = vsn_asprintf(&quot;%lu%ld%c%lu%ld%c&quot;,
+0L, 0L, SEP, 0L, 0L, SEP);
+
+_write(2, hdr, (unsigned)strlen(hdr));
+_write(2, &quot;\n&quot;, 1);
+return 0;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+</POST>
+<POST>
+<POSTER> Henry Townsend &lt;henry.towns...@not.here&gt; </POSTER>
+<POSTDATE> 2008-01-14T14:45:00 </POSTDATE>
+BTW, I'm aware that there's some error checking missing and that the
+return of malloc need not be cast. These are the result of breaking the
+test case out of a much larger program.
+
+HT
+</POST>
+<POST>
+<POSTER> Alex &lt;abudov...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-14T19:12:00 </POSTDATE>
+On Jan 15, 6:45 am, Henry Townsend &lt;henry.towns ... @not.here&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; BTW, I'm aware that there's some error checking missing and that the
+&gt; return of malloc need not be cast. These are the result of breaking the
+&gt; test case out of a much larger program.
+
+&gt; HT
+">
+
+And what is the expected output, and what went wrong?
+</POST>
+<POST>
+<POSTER> Alex &lt;abudov...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-14T19:35:00 </POSTDATE>
+Ah, I narrowed it down to only having effect when you link against the
+debug CRT, whether it's /MDd or /MTd it causes the crash. The debugger
+mentions a heap corruption somewhere. Rather wierd.
+</POST>
+<POST>
+<POSTER> Alex &lt;abudov...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-14T19:42:00 </POSTDATE>
+On Jan 15, 11:35 am, Alex &lt;abudov ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Ah, I narrowed it down to only having effect when you link against the
+&gt; debug CRT, whether it's /MDd or /MTd it causes the crash. The debugger
+&gt; mentions a heap corruption somewhere. Rather wierd.
+">
+
+Ah, nevermind, I found the bug in your code. It is indeed a heap
+corruption -- you write way past your allocated buffer. You also have
+a memory leak, but that's minor (you never free the buffer you
+allocate).
+
+The heap overrun is here:
+//strcpy_s(buf, sizeof(stkbuf), stkbuf); // WRONG!
+strcpy_s(buf, len+1, stkbuf);
+
+You incorrectly tell strcpy_s() that the destination buffer is 1024
+bytes long, when you only actually allocate (len+1) bytes.
+</POST>
+<POST>
+<POSTER> Henry Townsend &lt;henry.towns...@not.here&gt; </POSTER>
+<POSTDATE> 2008-01-15T20:46:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Alex wrote:
+&gt; Ah, nevermind, I found the bug in your code. It is indeed a heap
+&gt; corruption -- you write way past your allocated buffer. You also have
+&gt; a memory leak, but that's minor (you never free the buffer you
+&gt; allocate).
+
+&gt; The heap overrun is here:
+&gt;         //strcpy_s(buf, sizeof(stkbuf), stkbuf); // WRONG!
+&gt;         strcpy_s(buf, len+1, stkbuf);
+
+&gt; You incorrectly tell strcpy_s() that the destination buffer is 1024
+&gt; bytes long, when you only actually allocate (len+1) bytes.
+">
+
+Thanks, but I don't think you're right on this. What you say would be
+true for memcpy() but strcpy and friends assume a null-terminated
+string. What MSDN says for the 2nd parameter is &quot;Size of the destination
+string buffer&quot; and for the 3rd &quot;Null-terminated source string buffer&quot;.
+Thus, at least as I understand it, the 2nd param should be the entire
+size of the buffer which is 1024 bytes, though only len+1 bytes will be
+copied due to the null-termination. Here's what MSDN says for vsnprintf_s:
+
+&quot;Each of these functions takes a pointer to an argument list, then
+formats and writes up to count characters of the given data to the
+memory pointed to by buffer *and appends a terminating null*&quot;.
+
+HT
+</POST>
+<POST>
+<POSTER> Alex &lt;abudov...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-15T23:13:00 </POSTDATE>
+On Jan 16, 12:46 pm, Henry Townsend &lt;henry.towns ... @not.here&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Alex wrote:
+&gt; &gt; Ah, nevermind, I found the bug in your code. It is indeed a heap
+&gt; &gt; corruption -- you write way past your allocated buffer. You also have
+&gt; &gt; a memory leak, but that's minor (you never free the buffer you
+&gt; &gt; allocate).
+
+&gt; &gt; The heap overrun is here:
+&gt; &gt;         //strcpy_s(buf, sizeof(stkbuf), stkbuf); // WRONG!
+&gt; &gt;         strcpy_s(buf, len+1, stkbuf);
+
+&gt; &gt; You incorrectly tell strcpy_s() that the destination buffer is 1024
+&gt; &gt; bytes long, when you only actually allocate (len+1) bytes.
+
+&gt; Thanks, but I don't think you're right on this. What you say would be
+&gt; true for memcpy() but strcpy and friends assume a null-terminated
+&gt; string. What MSDN says for the 2nd parameter is &quot;Size of the destination
+&gt; string buffer&quot; and for the 3rd &quot;Null-terminated source string buffer&quot;.
+&gt; Thus, at least as I understand it, the 2nd param should be the entire
+&gt; size of the buffer which is 1024 bytes, though only len+1 bytes will be
+&gt; copied due to the null-termination. Here's what MSDN says for vsnprintf_s:
+
+&gt; &quot;Each of these functions takes a pointer to an argument list, then
+&gt; formats and writes up to count characters of the given data to the
+&gt; memory pointed to by buffer *and appends a terminating null*&quot;.
+
+&gt; HT
+">
+
+I'm afraid that's irrelevant. If you carefully look at the docs for
+strcpy_s, you'll find:
+&quot;The debug versions of these functions first fill the buffer with
+0xFD.&quot;
+(If you look inside a debugger, you will see this happening.)
+
+This is a security precaution to help you find bugs in your code. You
+told it the destination buffer is 1024 bytes, so it believes you and
+tested your theory. Unfortunately, you only allocated 7 bytes, so you
+overran it by 1017 bytes. The reason release build works is because it
+doesn't perform this extra step.
+
+So either allocate more space, or pass the correct amount to strcpy_s.
+</POST>
+<POST>
+<POSTER> Henry Townsend &lt;henry.towns...@not.here&gt; </POSTER>
+<POSTDATE> 2008-01-16T09:39:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Alex wrote:
+&gt; I'm afraid that's irrelevant. If you carefully look at the docs for
+&gt; strcpy_s, you'll find:
+&gt; &quot;The debug versions of these functions first fill the buffer with
+&gt; 0xFD.&quot;
+&gt; (If you look inside a debugger, you will see this happening.)
+
+&gt; This is a security precaution to help you find bugs in your code. You
+&gt; told it the destination buffer is 1024 bytes, so it believes you and
+&gt; tested your theory. Unfortunately, you only allocated 7 bytes, so you
+&gt; overran it by 1017 bytes. The reason release build works is because it
+&gt; doesn't perform this extra step.
+
+&gt; So either allocate more space, or pass the correct amount to strcpy_s.
+">
+
+Yes, you are right and I was wrong. I don't know how  stared at this so
+many times without seeing it but I did. Thanks for the clue.
+
+HT
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,1378 @@
+<DOC>
+<DOCID> eng-NG-31-135591-9754729 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-24T15:46:00 </DATETIME>
+<BODY>
+<HEADLINE>
+.each do |foo, bar| what does bar do?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Thufir &lt;hawat.thu...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-24T15:46:00 </POSTDATE>
+&quot;code_words.each do |real, code|
+idea.gsub!( real, code )
+end
+You see the each method? The each method is all over in Ruby. It's
+available for Arrays, Hashes, even Strings. Here, our code_words
+dictionary is kept in a Hash. This each method will hurry through all
+the pairs of the Hash, one dangerous word matched with its code word,
+handing each pair to the gsub! method for the actual replacement.&quot;
+
+from page 33 of whys-poignant-guide-to-ruby.pdf
+
+Is this similar to nested for statements?  I don't think so.  In the
+first line, why are both &quot;real&quot; and &quot;code&quot; part of the interation?
+
+<QUOTE PREVIOUSPOST="
+&gt;From my understanding of a hash, you can iterate through the keys only
+">
+
+and then find the corresponding bit of the hash.
+
+Why would this fail:
+
+code_words.each do |real|
+idea.gsub!( real, code )
+end
+
+wouldn't the corresponding code get looked up by during the loop?  Or,
+how could the above be changed so that it would work?
+
+thanks,
+
+Thufir
+</POST>
+<POST>
+<POSTER> &quot;David A. Black&quot; &lt;dbl...@rubypal.com&gt; </POSTER>
+<POSTDATE> 2007-10-24T15:57:00 </POSTDATE>
+Hi --
+
+<QUOTE PREVIOUSPOST="
+On Thu, 25 Oct 2007, Thufir wrote:
+&gt; &quot;code_words.each do |real, code|
+&gt; idea.gsub!( real, code )
+&gt; end
+&gt; You see the each method? The each method is all over in Ruby. It's
+&gt; available for Arrays, Hashes, even Strings. Here, our code_words
+&gt; dictionary is kept in a Hash. This each method will hurry through all
+&gt; the pairs of the Hash, one dangerous word matched with its code word,
+&gt; handing each pair to the gsub! method for the actual replacement.&quot;
+
+&gt; from page 33 of whys-poignant-guide-to-ruby.pdf
+
+&gt; Is this similar to nested for statements?  I don't think so.  In the
+&gt; first line, why are both &quot;real&quot; and &quot;code&quot; part of the interation?
+&gt;&gt; From my understanding of a hash, you can iterate through the keys only
+&gt; and then find the corresponding bit of the hash.
+
+&gt; Why would this fail:
+
+&gt; code_words.each do |real|
+&gt; idea.gsub!( real, code )
+&gt; end
+
+&gt; wouldn't the corresponding code get looked up by during the loop?  Or,
+&gt; how could the above be changed so that it would work?
+">
+
+Hashes yield key,value pairs to #each. So you need two block params to
+pick them up.
+
+If you just want the keys, you can use #each_key.
+
+David
+
+--
+Upcoming training by David A. Black/Ruby Power and Light, LLC:
+* Advancing With Rails, Edison, NJ, November 6-9
+* Advancing With Rails, Berlin, Germany, November 19-22
+* Intro to Rails, London, UK, December 3-6 (by Skills Matter)
+See http://www.rubypal.com for details!
+</POST>
+<POST>
+<POSTER> Ben Giddings &lt;bg-rubyt...@infofiend.com&gt; </POSTER>
+<POSTDATE> 2007-10-24T17:14:00 </POSTDATE>
+On 04:50 Thu 25 Oct     , Thufir wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;code_words.each do |real, code|
+&gt; idea.gsub!( real, code )
+&gt; end
+&gt; You see the each method? The each method is all over in Ruby. It's
+&gt; available for Arrays, Hashes, even Strings. Here, our code_words
+&gt; dictionary is kept in a Hash. This each method will hurry through all
+&gt; the pairs of the Hash, one dangerous word matched with its code word,
+&gt; handing each pair to the gsub! method for the actual replacement.&quot;
+
+&gt; from page 33 of whys-poignant-guide-to-ruby.pdf
+
+&gt; Is this similar to nested for statements?  I don't think so.  In the
+&gt; first line, why are both &quot;real&quot; and &quot;code&quot; part of the interation?
+&gt; &gt;From my understanding of a hash, you can iterate through the keys only
+&gt; and then find the corresponding bit of the hash.
+
+&gt; Why would this fail:
+
+&gt; code_words.each do |real|
+&gt; idea.gsub!( real, code )
+&gt; end
+">
+
+What's happening in the first version of the code is that &quot;real&quot; and
+&quot;code&quot; are being assigned from within the &quot;each&quot; method.  At some
+point within each there's some code that essentially looks like:
+&quot;yield(current_hash_key, current_hash_value)&quot;.  When that code is run,
+ruby assigns the variable (in your scope) real to the value of
+&quot;current_hash_key&quot; within the &quot;each&quot; method, and it assigns the
+variable &quot;code&quot; to the value of &quot;current_hash_value&quot;.
+
+Because &quot;yield&quot; has two arguments, the block you pass each should have
+two parameters, which it does.  If you used this instead:
+
+code_words.each do |foo|
+...
+end
+
+Foo would be assigned an array containing both things sent by &quot;yield&quot;,
+i.e. foo[0] would be the same as real, and foo[1] would be the same as
+code.
+
+The key thing here is that not every &quot;each&quot; is the same.  Some have a
+&quot;yield&quot; that tries to send out one value (like the &quot;each&quot; for arrays),
+some pass multiple values (like the &quot;each&quot; for hashes).  You need to
+know how many variables your &quot;each&quot; wants to assign in a block.
+
+In your example:
+
+code_words.each do |real|
+idea.gsub!( real, code )
+end
+
+real would get assigned, but &quot;code&quot; wouldn't have been assigned, so
+Ruby wouldn't know what &quot;code&quot; was and would complain.
+
+Ben
+</POST>
+<POST>
+<POSTER> 7stud -- &lt;bbxx789_0...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-10-24T20:11:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Thufir wrote:
+
+&gt;&gt;From my understanding of a hash, you can iterate through the keys only
+&gt; and then find the corresponding bit of the hash.
+">
+
+Your understanding is incorrect.
+
+<QUOTE PREVIOUSPOST="
+&gt; in the
+&gt; first line, why are both &quot;real&quot; and &quot;code&quot; part of the interation?
+">
+
+Ok, let's get some preliminaries straight:
+
+arr = [1, 2]
+a, b = arr
+puts a,b
+
+--output:--
+1
+2
+
+That's a form of what's called 'parallel assignment' in ruby.
+
+The each() method for a hash sends an array consisting of a key/value
+pair to a block:
+
+h = {&quot;a&quot;=&gt;1, &quot;b&quot;=&gt;2}
+
+h.each do |arr|
+p arr
+end
+
+--output:--
+[&quot;a&quot;, 1]
+[&quot;b&quot;, 2]
+
+The output shows that each() *assigns* an array to the parameter
+variable 'arr'.  Earlier it was established that parallel assignment can
+be used with arrays.  So that loop can also be written like this:
+
+h = {&quot;a&quot;=&gt;1, &quot;b&quot;=&gt;2}
+
+h.each do |key, val|
+print key, val
+puts
+end
+
+--output:--
+a1
+b2
+
+As you can see from the output, ruby is perfectly happy to do parallel
+assignment when passing that array to the block.
+
+<QUOTE PREVIOUSPOST="
+&gt; Why would this fail:
+
+&gt; code_words.each do |real|
+&gt; idea.gsub!( real, code )
+&gt; end
+">
+
+For the same reason the following program will fail:
+
+puts code
+
+<QUOTE PREVIOUSPOST="
+&gt; wouldn't the corresponding code get looked up by during the loop?
+">
+
+How?  In the first instance, you say that it's your understanding that
+when examining a hash with each(), each() will only produce the keys,
+but then you ask why 'code', which is a value, isn't looked up during
+the loop.  So, what exactly is your understanding?
+
+<QUOTE PREVIOUSPOST="
+&gt; how could the above be changed so that it would work?
+">
+
+code_words.each do |arr|
+idea.gsub!( arr[0], arr[1] )
+end
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> 7stud -- &lt;bbxx789_0...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-10-24T20:21:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+7stud -- wrote:
+
+&gt; As you can see from the output, ruby is perfectly happy to do parallel
+&gt; assignment when passing that array to the block.
+">
+
+That should say:
+
+As you can see from the output, ruby is perfectly happy to do parallel
+assignment when passing an array to a block.
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> Thufir &lt;hawat.thu...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-27T06:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Thu, 25 Oct 2007 04:57:50 +0900, David A. Black wrote:
+&gt; Hashes yield key,value pairs to #each. So you need two block params to
+&gt; pick them up.
+
+&gt; If you just want the keys, you can use #each_key.
+">
+
+Ok, I went and read &lt; http://en.wikipedia.org/wiki/Associative_array#Ruby &gt;
+which helped, if only by confirming the syntax.  They give the example:
+
+phonebook = {
+'Sally Smart' =&gt; '555-9999',
+'John Doe' =&gt; '555-1212',
+'J. Random Hacker' =&gt; '553-1337'
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+phonebook['John Doe'] produces '555-1212'
+
+To iterate over the hash, use something like the following:
+
+phonebook.each {|key, value| puts key + &quot; =&gt; &quot; + value}
+
+But, what's being iterated through, the keys or the values?  To my
+understanding, each key must be unique and will lookup or map to a
+specific value.  (I'm thinking of the keys as a list, in that there
+cannot be duplicate keys.  There can be only one 'John Doe' in the above
+to my understanding, but many others could have the same value for the
+phone number field.)
+
+The keys can be iterated through, and that's all that required to get the
+entire hash map because the values can be looked up from the key field.
+So, why are both the key and value iterated through?
+
+I suppose it's kinda &quot;because&quot;.  As you said, key value pairs are yielded
+to #hash, so both key and value must be passed as parameters.  Again,
+though, that doesn't seem strictly required (that both are passed).  Why
+is it required?
+
+It certainly seems possible to my mind to pass a key and get back both
+key and value.  It's then clear what's being iterated through:  the key
+field.  If both key and field are passed, it's unclear what's being
+iterated through.
+
+thanks,
+
+Thufir
+</POST>
+<POST>
+<POSTER> Thufir &lt;hawat.thu...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-27T06:57:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Thu, 25 Oct 2007 06:14:12 +0900, Ben Giddings wrote:
+&gt; Because &quot;yield&quot; has two arguments, the block you pass each should have
+&gt; two parameters, which it does.  If you used this instead:
+
+&gt; code_words.each do |foo|
+&gt;   ...
+&gt; end
+
+&gt; Foo would be assigned an array containing both things sent by &quot;yield&quot;,
+&gt; i.e. foo[0] would be the same as real, and foo[1] would be the same as
+&gt; code.
+">
+
+I don't see what's wrong with having foo[0] and foo[1], but, yes, it's
+clearer to instead use foo and bar instead.  Ok, that convinces me that
+it's good to do it this way, thank you.
+
+I just can't wrap my mind around *what's* being iterated through.  I
+guess it's the way that, as you put it, the &quot;yield(current_hash_key,
+current_hash_value)&quot; is happening behind the scenes.
+
+-Thufir
+</POST>
+<POST>
+<POSTER> &quot;David A. Black&quot; &lt;dbl...@rubypal.com&gt; </POSTER>
+<POSTDATE> 2007-10-27T07:05:00 </POSTDATE>
+Hi --
+
+<QUOTE PREVIOUSPOST="
+On Sat, 27 Oct 2007, Thufir wrote:
+&gt; On Thu, 25 Oct 2007 06:14:12 +0900, Ben Giddings wrote:
+
+&gt;&gt; Because &quot;yield&quot; has two arguments, the block you pass each should have
+&gt;&gt; two parameters, which it does.  If you used this instead:
+
+&gt;&gt; code_words.each do |foo|
+&gt;&gt;   ...
+&gt;&gt; end
+
+&gt;&gt; Foo would be assigned an array containing both things sent by &quot;yield&quot;,
+&gt;&gt; i.e. foo[0] would be the same as real, and foo[1] would be the same as
+&gt;&gt; code.
+
+&gt; I don't see what's wrong with having foo[0] and foo[1], but, yes, it's
+&gt; clearer to instead use foo and bar instead.  Ok, that convinces me that
+&gt; it's good to do it this way, thank you.
+
+&gt; I just can't wrap my mind around *what's* being iterated through.  I
+&gt; guess it's the way that, as you put it, the &quot;yield(current_hash_key,
+&gt; current_hash_value)&quot; is happening behind the scenes.
+">
+
+Yes, that's correct. yield is a keyword that acts like a method call;
+it can have multiple arguments. Blocks can have multiple parameters,
+and can therefore be called with multiple arguments.
+
+If you were going to write Hash#each in Ruby, without recourse to
+#each, you could write it like this:
+
+class Hash
+def each
+keys = self.keys   # make a 'keys' local variable
+i = 0
+until i == keys.size
+key = keys[i]
+yield(key, self[key])
+i += 1
+end
+self
+end
+end
+
+David
+
+--
+Upcoming training by David A. Black/Ruby Power and Light, LLC:
+* Advancing With Rails, Edison, NJ, November 6-9
+* Advancing With Rails, Berlin, Germany, November 19-22
+* Intro to Rails, London, UK, December 3-6 (by Skills Matter)
+See http://www.rubypal.com for details!
+</POST>
+<POST>
+<POSTER> Randy Kramer &lt;rhkra...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-27T07:35:00 </POSTDATE>
+On Saturday 27 October 2007 06:57 am, Thufir wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I just can't wrap my mind around *what's* being iterated through.  I
+&gt; guess it's the way that, as you put it, the &quot;yield(current_hash_key,
+&gt; current_hash_value)&quot; is happening behind the scenes.
+">
+
+Well, let's look at an example hash:
+
+{ &quot;key1&quot;=&gt;&quot;value1&quot;, &quot;key2&quot;=&gt;&quot;value2&quot;,  &quot;cow&quot;=&gt;&quot;bovine&quot;, 12=&gt;&quot;dodecine&quot; }
+
+A hash (literal) is &quot;a list of key =&gt; value pairs between braces&quot; (from
+pickaxe2).
+
+When you iterate through the hash, you are iterating through the key=&gt;value
+*pairs*--on the first iteration you get the values &quot;key1&quot;=&gt;&quot;value1&quot;, on the
+2nd iteration you get &quot;key2&quot;=&gt;&quot;value2&quot;, and so on.  Note that you get *two*
+values.
+
+Randy Kramer
+</POST>
+<POST>
+<POSTER> 7stud -- &lt;bbxx789_0...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-10-27T14:13:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+David A. Black wrote:
+
+&gt; If you were going to write Hash#each in Ruby, without recourse to
+&gt; #each, you could write it like this:
+
+&gt; class Hash
+&gt;    def each
+&gt;      keys = self.keys   # make a 'keys' local variable
+&gt;      i = 0
+&gt;      until i == keys.size
+&gt;        key = keys[i]
+&gt;        yield(key, self[key])
+&gt;        i += 1
+&gt;      end
+&gt;      self
+&gt;    end
+&gt; end
+
+&gt; David
+">
+
+A test run:
+
+h = {&quot;a&quot;=&gt;1, &quot;b&quot;=&gt;2}
+h.each do |arr|
+p arr
+end
+
+--output:--
+r5test.rb:2: warning: method redefined; discarding old each
+r5test.rb:15: warning: multiple values for a block parameter (2 for 1)
+from r5test.rb:7
+[&quot;a&quot;, 1]
+r5test.rb:15: warning: multiple values for a block parameter (2 for 1)
+from r5test.rb:7
+[&quot;b&quot;, 2]
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;7stud -- wrote:
+
+&gt; The each() method for a hash sends an array consisting of a key/value
+&gt; pair to a block:
+
+&gt; h = {&quot;a&quot;=&gt;1, &quot;b&quot;=&gt;2}
+
+&gt; h.each do |arr|
+&gt;   p arr
+&gt; end
+
+&gt; --output:--
+&gt; [&quot;a&quot;, 1]
+&gt; [&quot;b&quot;, 2]
+
+&gt; The output shows that each() *assigns* an array to the parameter
+&gt; variable 'arr'.
+">
+
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> Brian Adkins &lt;lojicdot...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-27T15:03:00 </POSTDATE>
+On Oct 27, 7:05 am, &quot;David A. Black&quot; &lt;dbl ... @rubypal.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; If you were going to write Hash#each in Ruby, without recourse to
+&gt; #each, you could write it like this:
+
+&gt; class Hash
+&gt;    def each
+&gt;      keys = self.keys   # make a 'keys' local variable
+&gt;      i = 0
+&gt;      until i == keys.size
+&gt;        key = keys[i]
+&gt;        yield(key, self[key])
+&gt;        i += 1
+&gt;      end
+&gt;      self
+&gt;    end
+&gt; end
+">
+
+Or this:
+
+class Hash
+def each
+each_key {|key| yield key, self[key] }
+end
+end
+
+I know, you meant w/o recourse to each* :)
+</POST>
+<POST>
+<POSTER> &quot;David A. Black&quot; &lt;dbl...@rubypal.com&gt; </POSTER>
+<POSTDATE> 2007-10-27T16:30:00 </POSTDATE>
+Hi --
+
+<QUOTE PREVIOUSPOST="
+On Sun, 28 Oct 2007, Brian Adkins wrote:
+&gt; On Oct 27, 7:05 am, &quot;David A. Black&quot; &lt;dbl ... @rubypal.com&gt; wrote:
+&gt;&gt; If you were going to write Hash#each in Ruby, without recourse to
+&gt;&gt; #each, you could write it like this:
+
+&gt;&gt; class Hash
+&gt;&gt;    def each
+&gt;&gt;      keys = self.keys   # make a 'keys' local variable
+&gt;&gt;      i = 0
+&gt;&gt;      until i == keys.size
+&gt;&gt;        key = keys[i]
+&gt;&gt;        yield(key, self[key])
+&gt;&gt;        i += 1
+&gt;&gt;      end
+&gt;&gt;      self
+&gt;&gt;    end
+&gt;&gt; end
+
+&gt; Or this:
+
+&gt; class Hash
+&gt;  def each
+&gt;    each_key {|key| yield key, self[key] }
+&gt;  end
+&gt; end
+
+&gt; I know, you meant w/o recourse to each* :)
+">
+
+Yes -- I don't think each_key uses each but it's definitely out of
+bounds for my example :-) Mainly, of course, I wanted to &quot;explode&quot; the
+whole thing so that the underlying logic was brought to the surface.
+
+David
+
+--
+Upcoming training by David A. Black/Ruby Power and Light, LLC:
+* Advancing With Rails, Edison, NJ, November 6-9
+* Advancing With Rails, Berlin, Germany, November 19-22
+* Intro to Rails, London, UK, December 3-6 (by Skills Matter)
+See http://www.rubypal.com for details!
+</POST>
+<POST>
+<POSTER> 7stud -- &lt;bbxx789_0...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-10-27T16:43:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Brian Adkins wrote:
+&gt; On Oct 27, 7:05 am, &quot;David A. Black&quot; &lt;dbl ... @rubypal.com&gt; wrote:
+&gt;&gt;        i += 1
+&gt;&gt;      end
+&gt;&gt;      self
+&gt;&gt;    end
+&gt;&gt; end
+
+&gt; Or this:
+
+&gt; class Hash
+&gt;   def each
+&gt;     each_key {|key| yield key, self[key] }
+&gt;   end
+&gt; end
+">
+
+That suffers the same problem as David Black's example.
+
+<QUOTE PREVIOUSPOST="
+&gt; I know, you meant w/o recourse to each* :)
+">
+
+My tests show that each_keys() does not call Hash#each(), so your
+example seems to use fair means to me:
+
+class Hash
+alias :orig_each :each
+
+def each(&amp;block)
+orig_each(&amp;block)
+puts &quot;orig each called&quot;
+end
+
+def my_method
+each_key {|key| yield key, self[key] }
+end
+end
+
+h = {&quot;a&quot;=&gt;1, &quot;b&quot;=&gt;2}
+
+#call original each() method for a hash:
+h.each do |key, val|
+print key, &quot; &quot;, val
+puts
+end
+
+puts
+
+#call a method that uses each_key():
+h.my_method do |key, val|
+print key, &quot; &quot;, val
+puts
+end
+
+--output:--
+a 1
+b 2
+orig each called
+
+a 1
+b 2
+
+Note that in the last output Hash#each() wasn't called.
+
+That example has raised a question of my own.  Instead of having to
+write:
+
+def each(&amp;block)
+orig_each(&amp;block)
+
+why can't I relay the block to orig_each() without the second '&amp;', like
+this
+
+def each(&amp;block)
+orig_each(block)
+
+According to pickaxe2, p56, the '&amp;' method converts the specified block
+to a Proc object and assigns it to the parameter variable 'block'.  Why
+is the second call to '&amp;' required?
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> &quot;David A. Black&quot; &lt;dbl...@rubypal.com&gt; </POSTER>
+<POSTDATE> 2007-10-27T16:49:00 </POSTDATE>
+Hi --
+
+<QUOTE PREVIOUSPOST="
+On Sun, 28 Oct 2007, 7stud -- wrote:
+&gt; Brian Adkins wrote:
+&gt;&gt; On Oct 27, 7:05 am, &quot;David A. Black&quot; &lt;dbl ... @rubypal.com&gt; wrote:
+&gt;&gt;&gt;        i += 1
+&gt;&gt;&gt;      end
+&gt;&gt;&gt;      self
+&gt;&gt;&gt;    end
+&gt;&gt;&gt; end
+
+&gt;&gt; Or this:
+
+&gt;&gt; class Hash
+&gt;&gt;   def each
+&gt;&gt;     each_key {|key| yield key, self[key] }
+&gt;&gt;   end
+&gt;&gt; end
+
+&gt; That suffers the same problem as David Black's example.
+">
+
+What problem did mine suffer from?
+
+<QUOTE PREVIOUSPOST="
+&gt; That example has raised a question of my own.  Instead of having to
+&gt; write:
+
+&gt; def each(&amp;block)
+&gt;    orig_each(&amp;block)
+
+&gt; why can't I relay the block to orig_each() without the second '&amp;', like
+&gt; this
+
+&gt; def each(&amp;block)
+&gt;    orig_each(block)
+
+&gt; According to pickaxe2, p56, the '&amp;' method converts the specified block
+&gt; to a Proc object and assigns it to the parameter variable 'block'.  Why
+&gt; is the second call to '&amp;' required?
+">
+
+Because there's a difference between passing a Proc around as an
+object, and supplying a code block to a method. You can do both:
+
+meth(arg,&amp;block)
+
+and arg can be a Proc object. So there has to be some way to tell the
+method what you're doing.
+
+David
+
+--
+Upcoming training by David A. Black/Ruby Power and Light, LLC:
+* Advancing With Rails, Edison, NJ, November 6-9
+* Advancing With Rails, Berlin, Germany, November 19-22
+* Intro to Rails, London, UK, December 3-6 (by Skills Matter)
+See http://www.rubypal.com for details!
+</POST>
+<POST>
+<POSTER> Brian Adkins &lt;lojicdot...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-27T17:36:00 </POSTDATE>
+On Oct 27, 4:43 pm, 7stud -- &lt;bbxx789_0 ... @yahoo.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; ...
+&gt; That suffers the same problem as David Black's example.
+&gt; ...
+&gt; My tests show that each_keys() does not call Hash#each(), so your
+&gt; example seems to use fair means to me:
+">
+
+You're a literal type of person, aren't you? :)
+</POST>
+<POST>
+<POSTER> Thufir &lt;hawat.thu...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-30T21:57:00 </POSTDATE>
+I just found an explanation of hashes which is easier for me to grab
+onto:
+
+Arrays and Hashes
+
+Ruby's arrays and hashes are indexed collections. Both store
+collections of objects, accessible using a key. With arrays, the key
+is an integer, whereas hashes support any object as a key. Both arrays
+and hashes grow as needed to hold new elements.
+
+&lt; http://www.ruby-doc.org/docs/ProgrammingRuby/ &gt;
+
+Just thought I'd throw that out there :)
+
+-Thufir
+</POST>
+<POST>
+<POSTER> 7stud -- &lt;bbxx789_0...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T14:52:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+David A. Black wrote:
+&gt; Hi --
+
+&gt; On Sun, 28 Oct 2007, 7stud -- wrote:
+
+&gt;&gt;&gt; class Hash
+&gt;&gt;&gt;   def each
+&gt;&gt;&gt;     each_key {|key| yield key, self[key] }
+&gt;&gt;&gt;   end
+&gt;&gt;&gt; end
+
+&gt;&gt; That suffers the same problem as David Black's example.
+
+&gt; What problem did mine suffer from?
+">
+
+It doesn't return an array.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;def each(&amp;block)
+&gt;   orig_each(&amp;block)
+
+&gt; versus
+
+&gt;&gt;    orig_each(block)
+
+&gt;&gt; According to pickaxe2, p56, the '&amp;' method converts the specified block
+&gt;&gt; to a Proc object and assigns it to the parameter variable 'block'.  Why
+&gt;&gt; is the second call to '&amp;' required?
+
+&gt; Because there's a difference between passing a Proc around as an
+&gt; object, and supplying a code block to a method. You can do both:
+
+&gt;    meth(arg,&amp;block)
+
+&gt; and arg can be a Proc object. So there has to be some way to tell the
+&gt; method what you're doing.
+">
+
+I'm not getting it.  With this definition:
+
+def each(&amp;a_block)
+
+when I call:
+
+each() {some block}
+
+ruby converts the block to a Proc object and assigns it to the variable
+a_block.  So, it seems to me that after ruby passes the args specified
+in the method call to each(), the block would no longer be accessible
+inside the method--only the Proc object assigned to a_block would be
+accessible.  Are you saying that when the next line executes:
+
+<QUOTE PREVIOUSPOST="
+&gt;def each(&amp;a_block)
+&gt;   orig_each(&amp;a_block)  &lt;----****
+">
+
+that the parameter variable a_block in the line:
+
+<QUOTE PREVIOUSPOST="
+&gt; orig_each(&amp;a_block)
+">
+
+is not the same variable as the a_block in the line:
+
+<QUOTE PREVIOUSPOST="
+&gt; def each(&amp;a_block)
+">
+
+????  In other words, does a_block in the line:
+
+<QUOTE PREVIOUSPOST="
+&gt; orig_each(&amp;a_block)
+">
+
+reach outside the method definition and reference the block that is
+floating around in the ether?  Does ruby re-convert the block into a
+Proc object and re-assigns the Proc object to a_block?  If not, I don't
+understand why the second '&amp;' is necessary: writing a_block should be
+enough to access the Proc object that ruby assigned to the parameter
+variable a_block when the method was first called.
+
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> 7stud -- &lt;bbxx789_0...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T14:56:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+7stud -- wrote:
+
+&gt; I'm not getting it.  With this definition:
+
+&gt; def each(&amp;a_block)
+
+&gt; when I call:
+
+&gt; each() {some block}
+
+&gt; ruby converts the block to a Proc object and assigns it to the variable
+&gt; a_block.  So, it seems to me that after ruby passes the args specified
+&gt; in the method call to each()...
+">
+
+Whoops.  That doesn't make any sense.  That should say something like:
+
+After ruby gathers up the block, converts it to a Proc object, and
+assigns the Proc object to the parameter variable a_block...
+
+<QUOTE PREVIOUSPOST="
+&gt; the block would no longer be accessible
+&gt; inside the method--only the Proc object assigned to a_block would be
+&gt; accessible.
+">
+
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> &quot;David A. Black&quot; &lt;dbl...@rubypal.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T15:16:00 </POSTDATE>
+Hi --
+
+<QUOTE PREVIOUSPOST="
+On Thu, 1 Nov 2007, 7stud -- wrote:
+&gt; David A. Black wrote:
+&gt;&gt; Hi --
+
+&gt;&gt; On Sun, 28 Oct 2007, 7stud -- wrote:
+
+&gt;&gt;&gt;&gt; class Hash
+&gt;&gt;&gt;&gt;   def each
+&gt;&gt;&gt;&gt;     each_key {|key| yield key, self[key] }
+&gt;&gt;&gt;&gt;   end
+&gt;&gt;&gt;&gt; end
+
+&gt;&gt;&gt; That suffers the same problem as David Black's example.
+
+&gt;&gt; What problem did mine suffer from?
+
+&gt; It doesn't return an array.
+">
+
+Was it supposed to?
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; def each(&amp;block)
+&gt;&gt;   orig_each(&amp;block)
+
+&gt;&gt; versus
+
+&gt;&gt;&gt;    orig_each(block)
+
+&gt;&gt;&gt; According to pickaxe2, p56, the '&amp;' method converts the specified block
+&gt;&gt;&gt; to a Proc object and assigns it to the parameter variable 'block'.  Why
+&gt;&gt;&gt; is the second call to '&amp;' required?
+
+&gt;&gt; Because there's a difference between passing a Proc around as an
+&gt;&gt; object, and supplying a code block to a method. You can do both:
+
+&gt;&gt;    meth(arg,&amp;block)
+
+&gt;&gt; and arg can be a Proc object. So there has to be some way to tell the
+&gt;&gt; method what you're doing.
+
+&gt; I'm not getting it.  With this definition:
+
+&gt; def each(&amp;a_block)
+
+&gt; when I call:
+
+&gt; each() {some block}
+
+&gt; ruby converts the block to a Proc object and assigns it to the variable
+&gt; a_block.  So, it seems to me that after ruby passes the args specified
+&gt; in the method call to each(), the block would no longer be accessible
+&gt; inside the method--only the Proc object assigned to a_block would be
+&gt; accessible.  Are you saying that when the next line executes:
+
+&gt;&gt; def each(&amp;a_block)
+&gt;&gt;   orig_each(&amp;a_block)  &lt;----****
+
+&gt; that the parameter variable a_block in the line:
+
+&gt;&gt; orig_each(&amp;a_block)
+
+&gt; is not the same variable as the a_block in the line:
+
+&gt;&gt; def each(&amp;a_block)
+">
+
+No, they're the same.
+
+<QUOTE PREVIOUSPOST="
+&gt; ????  In other words, does a_block in the line:
+
+&gt;&gt; orig_each(&amp;a_block)
+
+&gt; reach outside the method definition and reference the block that is
+&gt; floating around in the ether?  Does ruby re-convert the block into a
+&gt; Proc object and re-assigns the Proc object to a_block?  If not, I don't
+&gt; understand why the second '&amp;' is necessary: writing a_block should be
+&gt; enough to access the Proc object that ruby assigned to the parameter
+&gt; variable a_block when the method was first called.
+">
+
+It does access the Proc object. But accessing the Proc object is only
+part of the story; there's also the question of what it does with the
+Proc object.
+
+If you do this:
+
+some_method(some_proc_object)
+
+you're just passing the Proc object around the same way you would pass
+a string or an array or any other object.
+
+If you do this:
+
+some_method &amp;some_proc_object
+
+you're telling some_method that you want some_proc_object to play the
+special role of code-block.
+
+There could even be a situation where you would do:
+
+some_method(proc_1, proc_2) &amp;proc_3
+
+i.e., send two procs as regular arguments, and use a third one as the
+code block.
+
+David
+
+--
+Upcoming training by David A. Black/Ruby Power and Light, LLC:
+* Advancing With Rails, Edison, NJ, November 6-9
+* Advancing With Rails, Berlin, Germany, November 19-22
+* Intro to Rails, London, UK, December 3-6 (by Skills Matter)
+See http://www.rubypal.com for details!
+</POST>
+<POST>
+<POSTER> Brian Adkins &lt;lojicdot...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T17:00:00 </POSTDATE>
+On Oct 31, 3:16 pm, &quot;David A. Black&quot; &lt;dbl ... @rubypal.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Thu, 1 Nov 2007, 7stud -- wrote:
+&gt; &gt; David A. Black wrote:
+&gt; &gt;&gt; On Sun, 28 Oct 2007, 7stud -- wrote:
+&gt; &gt;&gt;&gt; That suffers the same problem as David Black's example.
+
+&gt; &gt;&gt; What problem did mine suffer from?
+
+&gt; &gt; It doesn't return an array.
+
+&gt; Was it supposed to?
+">
+
+I think so, if you want to avoid the &quot;multiple value&quot; warnings shown
+in the earlier post. I suppose someone could look at the Ruby source
+to see if that's what it's actually doing, but I suspect there is a
+good chance it is, judging from the behavior. However, I think that
+would've just cluttered up the example since it's not germane to your
+purpose.
+</POST>
+<POST>
+<POSTER> &quot;David A. Black&quot; &lt;dbl...@rubypal.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T17:14:00 </POSTDATE>
+Hi --
+
+<QUOTE PREVIOUSPOST="
+On Thu, 1 Nov 2007, Brian Adkins wrote:
+&gt; On Oct 31, 3:16 pm, &quot;David A. Black&quot; &lt;dbl ... @rubypal.com&gt; wrote:
+&gt;&gt; On Thu, 1 Nov 2007, 7stud -- wrote:
+&gt;&gt;&gt; David A. Black wrote:
+&gt;&gt;&gt;&gt; On Sun, 28 Oct 2007, 7stud -- wrote:
+&gt;&gt;&gt;&gt;&gt; That suffers the same problem as David Black's example.
+
+&gt;&gt;&gt;&gt; What problem did mine suffer from?
+
+&gt;&gt;&gt; It doesn't return an array.
+
+&gt;&gt; Was it supposed to?
+
+&gt; I think so, if you want to avoid the &quot;multiple value&quot; warnings shown
+&gt; in the earlier post. I suppose someone could look at the Ruby source
+&gt; to see if that's what it's actually doing, but I suspect there is a
+&gt; good chance it is, judging from the behavior. However, I think that
+&gt; would've just cluttered up the example since it's not germane to your
+&gt; purpose.
+">
+
+Do you guys mean what it's yielding, as opposed to what it's
+returning?
+
+David
+
+--
+Upcoming training by David A. Black/Ruby Power and Light, LLC:
+* Advancing With Rails, Edison, NJ, November 6-9
+* Advancing With Rails, Berlin, Germany, November 19-22
+* Intro to Rails, London, UK, December 3-6 (by Skills Matter)
+See http://www.rubypal.com for details!
+</POST>
+<POST>
+<POSTER> 7stud -- &lt;bbxx789_0...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T17:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; David A. Black wrote:
+&gt;&gt;&gt;&gt; That suffers the same problem as David Black's example.
+
+&gt;&gt;&gt; What problem did mine suffer from?
+
+&gt;&gt; It doesn't return an array.
+
+&gt; Was it supposed to?
+">
+
+Hash#each returns an array(as my examples showed). You said:
+
+<QUOTE PREVIOUSPOST="
+&gt;If you were going to write Hash#each in Ruby, without recourse to
+&gt;#each,
+">
+
+So, yes...your example would have to return an array to implement
+Hash#each.
+
+<QUOTE PREVIOUSPOST="
+&gt; If you do this:
+
+&gt;    some_method(some_proc_object)
+
+&gt; you're just passing the Proc object around the same way you would pass
+&gt; a string or an array or any other object.
+
+&gt; If you do this:
+
+&gt;    some_method &amp;some_proc_object
+
+&gt; you're telling some_method that you want some_proc_object to play the
+&gt; special role of code-block.
+">
+
+Ah.  So, it's like the splat operator(*)?  With the splat operator you
+might write:
+
+def meth1(*args)  #gathers the args into an array
+meth2(*args)    #applied a second time -- explodes the array
+end
+
+def meth2(a, b)
+p a
+p b
+end
+
+meth1(1, 2)
+
+So, applying &amp; a second time conceptually converts the Proc object back
+to a block and passes it to the method?
+
+<QUOTE PREVIOUSPOST="
+&gt; There could even be a situation where you would do:
+
+&gt;    some_method(proc_1, proc_2) &amp;proc_3
+
+&gt; i.e., send two procs as regular arguments, and use a third one as the
+&gt; code block.
+">
+
+Whoa.  That doesn't seem consistent with your earlier example.  Why is
+proc3 outside the parentheses?  It doesn't seem to work:
+
+def some_method(proc_1, proc_2)
+proc_1.call
+proc_2.call
+
+yield 'goodbye'
+end
+
+p1 = Proc.new{puts &quot;hello&quot;}
+p2 = Proc.new{puts &quot;world&quot;}
+p3 = Proc.new{|val| puts val}
+
+some_method(p1, p2) &amp;p3
+
+--output:--
+hello
+world
+r6test.rb:5:in `some_method': no block given (LocalJumpError)
+from r6test.rb:11
+
+While this works:
+
+p1 = Proc.new{puts &quot;hello&quot;}
+p2 = Proc.new{puts &quot;world&quot;}
+p3 = Proc.new{|val| puts val}
+some_method(p1, p2, &amp;p3)
+
+--output:--
+hello
+world
+goodbye
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> 7stud -- &lt;bbxx789_0...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T17:53:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+David A. Black wrote:
+">
+</POST>
+<POST>
+<POSTER> &quot;David A. Black&quot; &lt;dbl...@rubypal.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T18:15:00 </POSTDATE>
+Hi --
+
+<QUOTE PREVIOUSPOST="
+On Thu, 1 Nov 2007, 7stud -- wrote:
+&gt;&gt; David A. Black wrote:
+&gt;&gt;&gt;&gt;&gt; That suffers the same problem as David Black's example.
+
+&gt;&gt;&gt;&gt; What problem did mine suffer from?
+
+&gt;&gt;&gt; It doesn't return an array.
+
+&gt;&gt; Was it supposed to?
+
+&gt; Hash#each returns an array(as my examples showed). You said:
+
+&gt;&gt; If you were going to write Hash#each in Ruby, without recourse to
+&gt;&gt; #each,
+
+&gt; So, yes...your example would have to return an array to implement
+&gt; Hash#each.
+">
+
+Actually Hash#each returns its receiver, which is a hash. I think my
+code also returned self.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; If you do this:
+
+&gt;&gt;    some_method(some_proc_object)
+
+&gt;&gt; you're just passing the Proc object around the same way you would pass
+&gt;&gt; a string or an array or any other object.
+
+&gt;&gt; If you do this:
+
+&gt;&gt;    some_method &amp;some_proc_object
+
+&gt;&gt; you're telling some_method that you want some_proc_object to play the
+&gt;&gt; special role of code-block.
+
+&gt; Ah.  So, it's like the splat operator(*)?  With the splat operator you
+&gt; might write:
+
+&gt; def meth1(*args)  #gathers the args into an array
+&gt;  meth2(*args)    #applied a second time -- explodes the array
+&gt; end
+
+&gt; def meth2(a, b)
+&gt;  p a
+&gt;  p b
+&gt; end
+
+&gt; meth1(1, 2)
+
+&gt; So, applying &amp; a second time conceptually converts the Proc object back
+&gt; to a block and passes it to the method?
+">
+
+Yes. I wouldn't bother comparing it to the *. It's a way to use a Proc
+object as a block. It doesn't have to be the one that was passed in
+originally:
+
+def some_method
+p = Proc.new {|x| x * 10 }
+return [1,2,3].map(&amp;p)
+end
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; There could even be a situation where you would do:
+
+&gt;&gt;    some_method(proc_1, proc_2) &amp;proc_3
+
+&gt;&gt; i.e., send two procs as regular arguments, and use a third one as the
+&gt;&gt; code block.
+
+&gt; Whoa.  That doesn't seem consistent with your earlier example.  Why is
+&gt; proc3 outside the parentheses?  It doesn't seem to work:
+">
+
+Whoops, that was supposed to be inside, as your tests showed.
+
+David
+
+--
+Upcoming training by David A. Black/Ruby Power and Light, LLC:
+* Advancing With Rails, Edison, NJ, November 6-9
+* Advancing With Rails, Berlin, Germany, November 19-22
+* Intro to Rails, London, UK, December 3-6 (by Skills Matter)
+See http://www.rubypal.com for details!
+</POST>
+<POST>
+<POSTER> &quot;David A. Black&quot; &lt;dbl...@rubypal.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T19:24:00 </POSTDATE>
+Hi --
+
+<QUOTE PREVIOUSPOST="
+On Thu, 1 Nov 2007, 7stud -- wrote:
+&gt; David A. Black wrote:
+&gt; .
+
+&gt;&gt; Do you guys mean what it's yielding, as opposed to what it's
+&gt;&gt; returning?
+
+&gt; Yes.  Sorry.
+">
+
+I'm still not understanding what the problem was with my example. I'm
+doing:
+
+yield(key,self[key])
+
+and if you do:
+
+hash.each {|k,v| ... }
+
+you should be fine -- no warning.
+
+David
+
+--
+Upcoming training by David A. Black/Ruby Power and Light, LLC:
+* Advancing With Rails, Edison, NJ, November 6-9
+* Advancing With Rails, Berlin, Germany, November 19-22
+* Intro to Rails, London, UK, December 3-6 (by Skills Matter)
+See http://www.rubypal.com for details!
+</POST>
+<POST>
+<POSTER> 7stud -- &lt;bbxx789_0...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T20:21:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+David A. Black wrote:
+">
+
+Thanks for the explanation on the &amp;block question.
+
+<QUOTE PREVIOUSPOST="
+&gt; I'm still not understanding what the problem was with my example. I'm
+&gt; doing:
+
+&gt;    yield(key,self[key])
+
+&gt; and if you do:
+
+&gt;    hash.each {|k,v| ... }
+
+&gt; you should be fine -- no warning.
+">
+
+Yes.  But there is a problem when you do:
+
+hash.each {|arr| ...}
+
+On the other hand, when you write:
+
+hash.each {|arr| ...}
+
+with the actual Hash#each method, there is no problem.
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> &quot;Rick DeNatale&quot; &lt;rick.denat...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T20:28:00 </POSTDATE>
+On 10/31/07, David A. Black &lt;dbl ... @rubypal.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; There could even be a situation where you would do:
+
+&gt;    some_method(proc_1, proc_2) &amp;proc_3
+">
+
+I think you meant
+
+some_method(proc_1, proc_2 &amp;proc_3)
+
+--
+Rick DeNatale
+
+My blog on Ruby
+http://talklikeaduck.denhaven2.com/
+</POST>
+</TEXT>
+</BODY>
+</DOC>

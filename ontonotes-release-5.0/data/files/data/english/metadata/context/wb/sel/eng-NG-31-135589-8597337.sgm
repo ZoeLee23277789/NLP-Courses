@@ -1,0 +1,215 @@
+<DOC>
+<DOCID> eng-NG-31-135589-8597337 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-09T00:56:00 </DATETIME>
+<BODY>
+<HEADLINE>
+How to dump the value of all variables when an exception was raised, and reload them to repeat the error.
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> SullivanZ &lt;sullivanz....@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-09T00:56:00 </POSTDATE>
+I am now using intel visual fortran compiler 10.0 for windows together
+with Visual Studio 2005 standard edition. I have a simulation program
+that has about 1000 variables, but after 10 hrs, there is always one
+floating point exception which results in a  NaN.
+
+I hope I could dump all the values of variables to a file, or even
+dump local memory to a file, and reload them to repeat the error. Is
+it possible by using intel visual fortran compiler and visual studio
+environment?
+
+Thank you so much for help. Any related comments and advices are all
+welcomed.
+</POST>
+<POST>
+<POSTER> Terence &lt;tbwri...@cantv.net&gt; </POSTER>
+<POSTDATE> 2007-08-09T06:50:00 </POSTDATE>
+First, what you ask for (apart from being very unusual to save ALL
+variables) has to be done by specifing what variables you want to see
+and is performed in a block of code branched to when the particular
+exception is trapped (detected). This itself needs special compiled
+run-time options requested in the source code.
+
+Second, don't expect to be able to reload and continue the operation
+from that interrupted pointt. That is the precise error that was made
+which caused the concept of CHAOS to be discovered by someone who
+tried to do the same thing in weather prediction software. From which
+we derive the &quot;butterfly affect&quot; causing storms somewhere else by
+flapping its wings.
+
+THE VALUES AND EXACT SITUATION CAN NEVER BE THE SAME. Partly due to
+the difference between internal register bit lengths and memory
+storage word bit lengths and external saved data bit lengths.
+</POST>
+<POST>
+<POSTER> Craig Powers &lt;eni...@hal-pc.org&gt; </POSTER>
+<POSTDATE> 2007-08-09T13:52:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+SullivanZ wrote:
+&gt; I am now using intel visual fortran compiler 10.0 for windows together
+&gt; with Visual Studio 2005 standard edition. I have a simulation program
+&gt; that has about 1000 variables, but after 10 hrs, there is always one
+&gt; floating point exception which results in a  NaN.
+
+&gt; I hope I could dump all the values of variables to a file, or even
+&gt; dump local memory to a file, and reload them to repeat the error. Is
+&gt; it possible by using intel visual fortran compiler and visual studio
+&gt; environment?
+
+&gt; Thank you so much for help. Any related comments and advices are all
+&gt; welcomed.
+">
+
+I don't know if it's practical, but you could run with the debugger
+attached (in either a debug or a release build), with it instructed to
+trap on FPEs.  Then you'll have an exact picture of the state at the
+time the exception occurs.
+
+Obviously, it's easier to work with a debug build, but this should still
+work with a release build.
+</POST>
+<POST>
+<POSTER> Louis Krupp &lt;lkr...@pssw.nospam.com.invalid&gt; </POSTER>
+<POSTDATE> 2007-08-11T14:37:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+SullivanZ wrote:
+&gt; I am now using intel visual fortran compiler 10.0 for windows together
+&gt; with Visual Studio 2005 standard edition. I have a simulation program
+&gt; that has about 1000 variables, but after 10 hrs, there is always one
+&gt; floating point exception which results in a  NaN.
+
+&gt; I hope I could dump all the values of variables to a file, or even
+&gt; dump local memory to a file, and reload them to repeat the error. Is
+&gt; it possible by using intel visual fortran compiler and visual studio
+&gt; environment?
+
+&gt; Thank you so much for help. Any related comments and advices are all
+&gt; welcomed.
+">
+
+I don't know anything about the Intel compiler or your version of Visual
+Studio.  I do have a couple of ideas, based mostly on Terence and
+Craig's posts:
+
+See what happens when you turn on options to check array bounds and
+uninitialized variables (if the compiler has that option).  You may have
+to do a DEBUG build.  A DEBUG build will be much slower, so start it on
+a Friday afternoon before you leave work and check on it Monday morning.
+
+Generate a list of your 1000 variable names.  Declare an array with 1000
+elements of the right size.  Equivalence each variable to a different
+array element.  Change your program so that once every hour or so it
+writes the array to an unformatted file, closes the file, reopens it,
+and then reads the array back (reading it back will control for the
+register length that Terence mentioned).  Better yet, modify the file
+name so that if you do ten of these checkpoints, you'll have ten files
+with names corresponding to the checkpoint number.  If the program has
+the problem after ten hours, you'll be able to back up and rerun the
+last hour or so.  You might also be able to trace variable values over time.
+
+Louis
+</POST>
+<POST>
+<POSTER> Terence &lt;tbwri...@cantv.net&gt; </POSTER>
+<POSTDATE> 2007-08-11T19:46:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; I don't know if it's practical, but you could run with the debugger
+&gt; attached (in either a debug or a release build), with it instructed to
+&gt; trap on FPEs.  Then you'll have an exact picture of the state at the
+&gt; time the exception occurs.
+">
+
+Actually, no. But the general approach may be possible with pure
+integer operations which essentially are bit-wise truth values not
+susceptible to approximations.
+
+By asking the debugger to interrupt and work on the interruption, you
+can alter the floating point register contents (and exact ssystem
+state at that point) from what they were, to an approximation of what
+they were after interrupting and storing much longer FP register
+contents in memory as shorter values. Chaos ensues.
+Apart from running a different program with a different memory size
+and placing and resources, from the untracked version.
+</POST>
+<POST>
+<POSTER> Craig Powers &lt;eni...@hal-pc.org&gt; </POSTER>
+<POSTDATE> 2007-08-12T22:18:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Terence wrote:
+&gt;&gt; I don't know if it's practical, but you could run with the debugger
+&gt;&gt; attached (in either a debug or a release build), with it instructed to
+&gt;&gt; trap on FPEs.  Then you'll have an exact picture of the state at the
+&gt;&gt; time the exception occurs.
+
+&gt; Actually, no. But the general approach may be possible with pure
+&gt; integer operations which essentially are bit-wise truth values not
+&gt; susceptible to approximations.
+
+&gt; By asking the debugger to interrupt and work on the interruption, you
+&gt; can alter the floating point register contents (and exact ssystem
+&gt; state at that point) from what they were, to an approximation of what
+&gt; they were after interrupting and storing much longer FP register
+&gt; contents in memory as shorter values. Chaos ensues.
+&gt; Apart from running a different program with a different memory size
+&gt; and placing and resources, from the untracked version.
+">
+
+In most instances, I don't think it will really matter if the FP
+register contents get altered.  My presumption is that the OP is
+concerned about having a non-fatal FPE that seeds NaNs and/or INFs in
+his/her variables, and s/he wants find out where and when it happens.
+Trapping into the debugger on FPEs is a reasonable way of accomplishing
+that -- speaking from personal experience.
+</POST>
+<POST>
+<POSTER> Terence &lt;tbwri...@cantv.net&gt; </POSTER>
+<POSTDATE> 2007-08-12T23:40:00 </POSTDATE>
+Trying to deal with the simpler part of the question, OP has at least
+one uninitialised floating point variable after some hours of
+calculations. Therefore, since the variable cannot have been
+initialised, either this variable will given a value in a subroutine
+whose memory space is not saved, or is only given its first value on a
+route which is not taken before code is reached which expects to use
+the variable's value.
+
+So: find where the variable IS initialised (given a real value), and
+where it is used, and print out a trace on both, but stopping just
+before the point of any expected usage of the value of the variable.
+This will give a clue as to the route taken to get there and where it
+didn't go as expected.
+
+I would suggest using FIND (variable name) with any text editor, on
+the source file, and noting the subroutines using the variable.
+</POST>
+<POST>
+<POSTER> nos...@see.signature (Richard Maine) </POSTER>
+<POSTDATE> 2007-08-13T00:25:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Terence &lt;tbwri ... @cantv.net&gt; wrote:
+&gt; OP has at least
+&gt; one uninitialised floating point variable after some hours of
+&gt; calculations. Therefore,...
+">
+
+I am at loss to see how one deduces that this must be the case. I saw no
+mention by the OP (or anyone else in the thread( of uninitialized
+variables. The OP said that he was getting an FPE. While an
+uninitialized variable can indirectly result in an FPE, that is
+certainly not the only way, or even a particularly common one for an FPE
+to arise.
+
+Hmm. This is so much a non-sequitur that I wonder whether it might be
+intended as a reply to some other thread. That does seem plausible, as
+such posts to wrong threads have happened before. But I see no clue
+about what thread it might actually be intended for.
+
+--
+Richard Maine                    | Good judgement comes from experience;
+email: last name at domain . net | experience comes from bad judgement.
+domain: summertriangle           |  -- Mark Twain
+</POST>
+</TEXT>
+</BODY>
+</DOC>

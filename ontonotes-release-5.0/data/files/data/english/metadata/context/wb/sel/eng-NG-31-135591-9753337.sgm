@@ -1,0 +1,235 @@
+<DOC>
+<DOCID> eng-NG-31-135591-9753337 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-12-14T00:18:00 </DATETIME>
+<BODY>
+<HEADLINE>
+C extension: can rb_ivar_set be used to set class variable?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> lianliming &lt;lianlim...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-14T00:18:00 </POSTDATE>
+Hi all,
+
+This is a question on Ruby C extension.
+
+I have been hacking some existed ruby c extension, and found following
+code:
+
+VALUE klass = rb_define_class(name, pClass);
+rb_ivar_set(klass, id_some_var, someValue);
+
+From the book &quot;Programming Ruby, Second Edition&quot;, I know the prototype
+for rb_ivar_set is like:
+
+VALUE rb_ivar_set( VALUE obj, ID name, VALUE value )
+
+And it says the first parameter should be an obj, while as we can see
+from above, the code I am hacking is passing &quot;klass&quot; returned by
+rb_define_class to rb_ivar_set.
+
+So I wonder if this is a way to set class variable for a class. I am
+really confused because the document says it should be used to set
+value of instance variable to a given obj. Am I missing some
+knowledge?
+
+Any help is appreciated and thanks in advance!
+</POST>
+<POST>
+<POSTER> Nobuyoshi Nakada &lt;n...@ruby-lang.org&gt; </POSTER>
+<POSTDATE> 2007-12-14T00:27:00 </POSTDATE>
+Hi,
+
+At Fri, 14 Dec 2007 14:20:01 +0900,
+lianliming wrote in [ruby-talk:283492]:
+
+<QUOTE PREVIOUSPOST="
+&gt; So I wonder if this is a way to set class variable for a class. I am
+&gt; really confused because the document says it should be used to set
+&gt; value of instance variable to a given obj. Am I missing some
+&gt; knowledge?
+">
+
+No, use rb_cvar_set to set class variables.  rb_ivar_set sets
+an instance variable of a class instance.  I.E.,
+
+class Foo
+@foo = &quot;ivar&quot;
+@@foo = &quot;cvar&quot;
+end
+
+--
+Nobu Nakada
+</POST>
+<POST>
+<POSTER> lianliming &lt;lianlim...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-14T01:13:00 </POSTDATE>
+Thanks for your reply!
+
+<QUOTE PREVIOUSPOST="
+&gt; No, use rb_cvar_set to set class variables.  rb_ivar_set sets
+&gt; an instance variable of a class instance.  I.E.,
+
+&gt;   class Foo
+&gt;     @foo = &quot;ivar&quot;
+&gt;     @@foo = &quot;cvar&quot;
+&gt;   end
+">
+
+Will the instance variable &quot;@foo&quot;'s value declared as the above
+example can be referenced in an object of Class Foo?
+
+Please look at following example:
+
+class Foo
+@foo = &quot;ivar&quot;
+
+def printFoo
+puts @foo
+end
+end
+
+f=Foo.new
+f.printFoo
+========&gt; nil
+
+So now, I am curious to know, why the function rb_ivar_set allows
+passing a &quot;klass&quot; as the first parameter to set value of a instance
+variable which can't be referenced by its objects.
+</POST>
+<POST>
+<POSTER> Nobuyoshi Nakada &lt;n...@ruby-lang.org&gt; </POSTER>
+<POSTDATE> 2007-12-14T01:50:00 </POSTDATE>
+Hi,
+
+At Fri, 14 Dec 2007 15:15:02 +0900,
+lianliming wrote in [ruby-talk:283498]:
+
+<QUOTE PREVIOUSPOST="
+&gt; Will the instance variable &quot;@foo&quot;'s value declared as the above
+&gt; example can be referenced in an object of Class Foo?
+">
+
+No, two different objects's instance variables.
+
+Now your question is not related to C extension.  I guess
+others could explain it much better than me.
+
+--
+Nobu Nakada
+</POST>
+<POST>
+<POSTER> Rick DeNatale &lt;rick.denat...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-14T07:59:00 </POSTDATE>
+On 12/14/07, lianliming &lt;lianlim ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Thanks for your reply!
+
+&gt; &gt; No, use rb_cvar_set to set class variables.  rb_ivar_set sets
+&gt; &gt; an instance variable of a class instance.  I.E.,
+
+&gt; &gt;   class Foo
+&gt; &gt;     @foo = &quot;ivar&quot;
+&gt; &gt;     @@foo = &quot;cvar&quot;
+&gt; &gt;   end
+
+&gt; Will the instance variable &quot;@foo&quot;'s value declared as the above
+&gt; example can be referenced in an object of Class Foo?
+
+&gt; Please look at following example:
+
+&gt; class Foo
+&gt;   @foo = &quot;ivar&quot;
+
+&gt;   def printFoo
+&gt;     puts @foo
+&gt;   end
+&gt; end
+
+&gt; f=Foo.new
+&gt; f.printFoo
+&gt;   ========&gt; nil
+
+&gt; So now, I am curious to know, why the function rb_ivar_set allows
+&gt; passing a &quot;klass&quot; as the first parameter to set value of a instance
+&gt; variable which can't be referenced by its objects.
+">
+
+rb_ivar_set takes an object as the first parameter.  Classes are
+objects, and as such can have their own instance variables which are
+visible in class methods.  These are called class instance variables,
+and are quite different from class variables.  Being instance
+variables, class instance variables are only visible to methods of the
+object to which they are attached, which in the case of class instance
+variables would be class methods.
+
+There's also a subtlety to the Ruby object model which can be
+surprising to folks familiar with other OO languages. In many
+languages including Java, C++ and Smalltalk, one of the functions of a
+class is to serve as a template which maps the layout of the object in
+memory, in a manner analogous to a C struct, so that method code can
+reference instance variables by offset from the address of the
+instance. Ruby classes don't really &quot;know&quot; about the instance
+variables of their instances, since instance variables( actually all
+variables) aren't declared in Ruby.  Instance variables get attached
+to an instance dynamically when a method is executed which mentions
+that instance variable.  In fact different instances of the same class
+can have different sets of instance variables, and the set of instance
+variables of a particular object can change over time.
+
+Conceptually, and actually at least for Matz's Ruby Implementation,
+instance variables are resolved by accessing a per-instance internal
+hash table which maps the instance variable name (including the @
+sigil) as a symbol to the value.
+
+Class variables, marked with the @@ sigil are also looked up in a hash
+associated with the class object.  The difference is that for class
+variables, if the key is not found in the hash, the search considers
+iteratively up the superclass chain, and for class methods, it's the
+class and not the metaclass chain which is traversed.  This means that
+class variables are visible to both instance and class methods of the
+class where they live and that classes subclasses.  The MRI, at least
+the last time I looked, actually puts class variables in the same hash
+as class instance variables, i.e. the class objects instance variable
+hash.  It's the difference in the sigils which affects how they are
+seen and used.
+
+--
+Rick DeNatale
+
+My blog on Ruby
+http://talklikeaduck.denhaven2.com/
+</POST>
+<POST>
+<POSTER> Heath Novak &lt;heath.no...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-14T10:31:00 </POSTDATE>
+unsubscribe
+On Dec 13, 2007, at 10:27 PM, Nobuyoshi Nakada wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi,
+
+&gt; At Fri, 14 Dec 2007 14:20:01 +0900,
+&gt; lianliming wrote in [ruby-talk:283492]:
+&gt;&gt; So I wonder if this is a way to set class variable for a class. I am
+&gt;&gt; really confused because the document says it should be used to set
+&gt;&gt; value of instance variable to a given obj. Am I missing some
+&gt;&gt; knowledge?
+
+&gt; No, use rb_cvar_set to set class variables.  rb_ivar_set sets
+&gt; an instance variable of a class instance.  I.E.,
+
+&gt;  class Foo
+&gt;    @foo = &quot;ivar&quot;
+&gt;    @@foo = &quot;cvar&quot;
+&gt;  end
+
+&gt; --
+&gt; Nobu Nakada
+">
+</POST>
+</TEXT>
+</BODY>
+</DOC>

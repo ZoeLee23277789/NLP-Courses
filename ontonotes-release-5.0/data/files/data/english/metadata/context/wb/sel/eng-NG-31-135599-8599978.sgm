@@ -1,0 +1,611 @@
+<DOC>
+<DOCID> eng-NG-31-135599-8599978 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-04T14:40:00 </DATETIME>
+<BODY>
+<HEADLINE>
+VB6 Common Dialog Save
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Bill Plenge&quot; &lt;B_Ple...@NoSpam.com&gt; </POSTER>
+<POSTDATE> 2007-08-04T14:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+notsosm ... @notsosmart.fen wrote:
+&gt; I want to save file Punk_History.def to a directory chosen by the
+&gt; user.  When I execute the code below, the dialog box says the file has
+&gt; been saved.  Problem is that the file does not exist in the directory
+&gt; I chose to save it in.  Why doesn't it work?
+
+&gt; Dim Pathy as string
+&gt; Pathy = &quot;C:\Program Files\Games\&quot;
+
+&gt; With CommonDialog
+&gt;    .DialogTitle = &quot;Archive File - Punk_History.def&quot;
+&gt;    .CancelError = True
+&gt;    .Flags = cdlOFNHideReadOnly + cdlOFNOverwritePrompt +
+&gt; cdlOFNPathMustExist + cdlOFNNoChangeDir
+&gt;    .Filter = &quot;All Files(*.def)|*.def&quot;
+&gt;    .FilterIndex = 1  '1 = Save and 2 = Open
+&gt;    .DefaultExt = &quot;.abd&quot;
+&gt;    .Filename = &quot;Punk_History.def&quot;
+&gt;    .InitDir = Pathy
+&gt;    .ShowSave
+&gt;     MsgBox &quot;You saved the files as  &quot; &amp; .Filename
+&gt; End With
+">
+
+The Common Dialog box allows you to pick, or type in a file name to save the
+file as, it doesn't save anything in and of itself.  You'd need to redo your
+code above as ...
+
+Everything within your With statement except the MsgBox Statement
+Insert code here to actually create the file and write the information into
+it then close the file
+Your MsgBox reporting a successful save, or a failed one if it didn't work.
+
+Hope this is some help.
+
+Best,
+Bill
+</POST>
+<POST>
+<POSTER> &quot;Rod Johnson&quot; &lt;uni...@eircom.net&gt; </POSTER>
+<POSTDATE> 2007-08-04T17:15:00 </POSTDATE>
+Hi,
+
+Perhaps you might like to try this Code:
+
+********************************************************
+Private Sub Command1_Click()
+
+On Error GoTo errhandler
+
+Dim Pathy, x As String
+
+Pathy = &quot;C:\Program Files\Games&quot;
+
+'Firstly, check if the Folder exists. If not, then create it...
+x = Dir(Pathy, 16)
+If x = &quot;&quot; Then
+MkDir Pathy
+Else
+End If
+
+With CommonDialog1
+.DialogTitle = &quot;Archive File - Punk_History.def&quot;
+.CancelError = True
+.flags = cdlOFNHideReadOnly
+.flags = cdlOFNOverwritePrompt
+.flags = cdlOFNPathMustExist
+.flags = cdlOFNNoChangeDir
+.Filter = &quot;All Files(*.def)|*.def&quot;
+.FilterIndex = 1  '1 = Save and 2 = Open  'This is used to specify which
+extension is displayed on top.
+.DefaultExt = &quot;.abd&quot;
+.FileName = &quot;Punk_History.def&quot;
+.InitDir = Pathy
+.ShowSave
+End With
+
+'At this point, I don't know where the File &quot;Punk_History.def&quot; is located,
+'so I will assume that it is in the Folder where you are running the VB App.
+'If not, then you will have to change the path...
+
+Open App.Path &amp; &quot;\Punk_History.def&quot; For Input As #1
+Open CommonDialog1.FileName For Output As #2
+Do Until EOF(1)
+Line Input #1, x
+Print #2, x
+Loop
+Close
+
+'Now, check if the file is in the Pathy folder
+
+x = Dir(CommonDialog1.FileName, 0)
+If Not x = &quot;&quot; Then
+MsgBox &quot;You Saved the File as  &quot; &amp; CommonDialog1.FileName, vbInformation,
+&quot;File Test&quot;
+Else
+MsgBox &quot;FAILURE! The File was NOT Saved.&quot;, vbCritical, &quot;File Test&quot;
+End If
+
+Exit Sub
+
+done1:
+Exit Sub
+
+errhandler:
+Close
+If Left(Error, 6) = &quot;Cancel&quot; Then Resume done1 Else
+MsgBox Error
+Resume done1
+
+End Sub
+********************************************************
+Regards,
+
+Rod Johnson
+uni ... @eircom.net
+
+<QUOTE PREVIOUSPOST="
+&lt;notsosm ... @notsosmart.fen&gt; wrote in message
+">
+
+news:32g9b35pi3hpb68v38bf6jb4028dsk0qba@4ax.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt;I want to save file Punk_History.def to a directory chosen by the
+&gt; user.  When I execute the code below, the dialog box says the file has
+&gt; been saved.  Problem is that the file does not exist in the directory
+&gt; I chose to save it in.  Why doesn't it work?
+
+&gt; Dim Pathy as string
+&gt; Pathy = &quot;C:\Program Files\Games\&quot;
+
+&gt; With CommonDialog
+&gt;    .DialogTitle = &quot;Archive File - Punk_History.def&quot;
+&gt;    .CancelError = True
+&gt;    .Flags = cdlOFNHideReadOnly + cdlOFNOverwritePrompt +
+&gt; cdlOFNPathMustExist + cdlOFNNoChangeDir
+&gt;    .Filter = &quot;All Files(*.def)|*.def&quot;
+&gt;    .FilterIndex = 1  '1 = Save and 2 = Open
+&gt;    .DefaultExt = &quot;.abd&quot;
+&gt;    .Filename = &quot;Punk_History.def&quot;
+&gt;    .InitDir = Pathy
+&gt;    .ShowSave
+&gt;     MsgBox &quot;You saved the files as  &quot; &amp; .Filename
+&gt; End With
+">
+</POST>
+<POST>
+<POSTER> &quot;Rod Johnson&quot; &lt;uni...@eircom.net&gt; </POSTER>
+<POSTDATE> 2007-08-04T17:22:00 </POSTDATE>
+Hi Again,
+
+Just noticed when viewing the Group Posting of the Code I sent, that some of
+the
+Lines of Code were wrapped around where they should not be. Be careful and
+sort these out or you will have errors.
+
+If you have any other questions, please contact me.
+
+Regards, Rod
+
+<QUOTE PREVIOUSPOST="
+&lt;notsosm ... @notsosmart.fen&gt; wrote in message
+">
+
+news:32g9b35pi3hpb68v38bf6jb4028dsk0qba@4ax.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt;I want to save file Punk_History.def to a directory chosen by the
+&gt; user.  When I execute the code below, the dialog box says the file has
+&gt; been saved.  Problem is that the file does not exist in the directory
+&gt; I chose to save it in.  Why doesn't it work?
+
+&gt; Dim Pathy as string
+&gt; Pathy = &quot;C:\Program Files\Games\&quot;
+
+&gt; With CommonDialog
+&gt;    .DialogTitle = &quot;Archive File - Punk_History.def&quot;
+&gt;    .CancelError = True
+&gt;    .Flags = cdlOFNHideReadOnly + cdlOFNOverwritePrompt +
+&gt; cdlOFNPathMustExist + cdlOFNNoChangeDir
+&gt;    .Filter = &quot;All Files(*.def)|*.def&quot;
+&gt;    .FilterIndex = 1  '1 = Save and 2 = Open
+&gt;    .DefaultExt = &quot;.abd&quot;
+&gt;    .Filename = &quot;Punk_History.def&quot;
+&gt;    .InitDir = Pathy
+&gt;    .ShowSave
+&gt;     MsgBox &quot;You saved the files as  &quot; &amp; .Filename
+&gt; End With
+">
+</POST>
+<POST>
+<POSTER> &quot;Rod Johnson&quot; &lt;uni...@eircom.net&gt; </POSTER>
+<POSTDATE> 2007-08-05T04:01:00 </POSTDATE>
+Hi,
+
+In re-running the Code I sent to you, I found that the Overwrite Statement
+is not
+always reliable. If this happens, then insert this Code below under &quot;End
+With&quot;
+
+Regards,  Rod
+*************************************
+x = Dir(CommonDialog1.FileName, 0)
+If Not x = &quot;&quot; Then
+x = MsgBox(&quot;This File Already Exists!&quot; &amp; vbCrLf &amp; &quot;Do You Wish to Overwrite
+It?&quot;, vbQuestion &amp; vbYesNo, &quot;File Test&quot;)
+If x = vbNo Then Exit Sub Else
+Else
+End If
+*************************************
+
+<QUOTE PREVIOUSPOST="
+&lt;notsosm ... @notsosmart.fen&gt; wrote in message
+">
+
+news:32g9b35pi3hpb68v38bf6jb4028dsk0qba@4ax.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt;I want to save file Punk_History.def to a directory chosen by the
+&gt; user.  When I execute the code below, the dialog box says the file has
+&gt; been saved.  Problem is that the file does not exist in the directory
+&gt; I chose to save it in.  Why doesn't it work?
+
+&gt; Dim Pathy as string
+&gt; Pathy = &quot;C:\Program Files\Games\&quot;
+
+&gt; With CommonDialog
+&gt;    .DialogTitle = &quot;Archive File - Punk_History.def&quot;
+&gt;    .CancelError = True
+&gt;    .Flags = cdlOFNHideReadOnly + cdlOFNOverwritePrompt +
+&gt; cdlOFNPathMustExist + cdlOFNNoChangeDir
+&gt;    .Filter = &quot;All Files(*.def)|*.def&quot;
+&gt;    .FilterIndex = 1  '1 = Save and 2 = Open
+&gt;    .DefaultExt = &quot;.abd&quot;
+&gt;    .Filename = &quot;Punk_History.def&quot;
+&gt;    .InitDir = Pathy
+&gt;    .ShowSave
+&gt;     MsgBox &quot;You saved the files as  &quot; &amp; .Filename
+&gt; End With
+">
+</POST>
+<POST>
+<POSTER> &quot;Steve Gerrard&quot; &lt;mynameh...@comcast.net&gt; </POSTER>
+<POSTDATE> 2007-08-05T04:55:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Rod Johnson&quot; &lt;uni ... @eircom.net&gt; wrote in message
+">
+
+news:Xtfti.21299$j7.381599@news.indigo.ie ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi,
+
+&gt; In re-running the Code I sent to you, I found that the Overwrite Statement is
+&gt; not
+&gt; always reliable. If this happens, then insert this Code below under &quot;End With&quot;
+">
+
+Your code contained:
+.flags = cdlOFNHideReadOnly
+.flags = cdlOFNOverwritePrompt
+.flags = cdlOFNPathMustExist
+.flags = cdlOFNNoChangeDir
+
+which makes .Flags = cdlOFNNoChangeDir, with none of the other three set.
+
+You need to Or the flags together:
+.Flags = cdlOFNHideReadOnly _
+Or cdlOFNOverwritePrompt _
+Or cdlOFNPathMustExist _
+Or cdlOFNNoChangeDir
+</POST>
+<POST>
+<POSTER> Neila &lt;neilane...@msn.com&gt; </POSTER>
+<POSTDATE> 2007-08-07T02:47:00 </POSTDATE>
+Well, most people with any sense disable the FSO!
+Good luck, happy trails!
+Freaking System Obombonation!
+
+On Aug 5, 6:18 am, notsosm ... @notsosmart.fen wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sat, 4 Aug 2007 22:15:06 +0100, &quot;Rod Johnson&quot; &lt;uni ... @eircom.net&gt;
+&gt; wrote:
+
+&gt; &gt;Hi,
+
+&gt; &gt;Perhaps you might like to try this Code:
+
+&gt; &gt;********************************************************
+&gt; &gt;Private Sub Command1_Click()
+
+&gt; &gt;On Error GoTo errhandler
+
+&gt; &gt;Dim Pathy, x As String
+
+&gt; &gt;Pathy = &quot;C:\Program Files\Games&quot;
+
+&gt; &gt;'Firstly, check if the Folder exists. If not, then create it...
+&gt; &gt;x = Dir(Pathy, 16)
+&gt; &gt;If x = &quot;&quot; Then
+&gt; &gt;MkDir Pathy
+&gt; &gt;Else
+&gt; &gt;End If
+
+&gt; &gt;With CommonDialog1
+&gt; &gt;    .DialogTitle = &quot;Archive File - Punk_History.def&quot;
+&gt; &gt;    .CancelError = True
+&gt; &gt;    .flags = cdlOFNHideReadOnly
+&gt; &gt;    .flags = cdlOFNOverwritePrompt
+&gt; &gt;    .flags = cdlOFNPathMustExist
+&gt; &gt;    .flags = cdlOFNNoChangeDir
+&gt; &gt;    .Filter = &quot;All Files(*.def)|*.def&quot;
+&gt; &gt;    .FilterIndex = 1  '1 = Save and 2 = Open  'This is used to specify which
+&gt; &gt;extension is displayed on top.
+&gt; &gt;    .DefaultExt = &quot;.abd&quot;
+&gt; &gt;    .FileName = &quot;Punk_History.def&quot;
+&gt; &gt;    .InitDir = Pathy
+&gt; &gt;    .ShowSave
+&gt; &gt;End With
+
+&gt; &gt;'At this point, I don't know where the File &quot;Punk_History.def&quot; is located,
+&gt; &gt;'so I will assume that it is in the Folder where you are running the VB App.
+&gt; &gt;'If not, then you will have to change the path...
+
+&gt; &gt;Open App.Path &amp; &quot;\Punk_History.def&quot; For Input As #1
+&gt; &gt;Open CommonDialog1.FileName For Output As #2
+&gt; &gt;Do Until EOF(1)
+&gt; &gt;Line Input #1, x
+&gt; &gt;Print #2, x
+
+&gt; Line Input and Print work on a text file.  Punk_History.def is a
+&gt; binary file, not a text file.  Since I couldn't use CommonDialog to
+&gt; copy a binary file, I used another solution.  I use the CommonDialog
+&gt; because it is familiar to all users, but the file copying is using the
+&gt; FileSystemObject.  The darn thing works.  The user uses the
+&gt; commondialog to determine where to copy the file to, and  fPath does
+&gt; the actual copying.
+
+&gt; Dim fPath As New FileSystemObject, FilePath
+
+&gt; Pathy = &quot;C:\Program Files\Games&quot;
+
+&gt; With CommonDialog
+&gt;     On Error GoTo Pinko
+&gt;     .DialogTitle = &quot;Archive File - Punk_History.def&quot;
+&gt;     .CancelError = True
+&gt;     .Flags = cdlOFNHideReadOnly + cdlOFNOverwritePrompt +
+&gt; cdlOFNPathMustExist + cdlOFNNoChangeDir '&amp;H1000 Or &amp;H200000 Or &amp;H8 Or
+&gt; &amp;H2 Or &amp;H800
+&gt;     .Filter = &quot;All Files(*.def)|*.def&quot;
+&gt;     .FilterIndex = 1  '1 = Save and 2 = Open
+&gt;     .DefaultExt = &quot;.def&quot;
+&gt;     .Filename = &quot;Punk_History.def&quot;
+&gt;     .InitDir =Pathy
+&gt;     .ShowSave
+&gt;      FilePath = .Filename
+&gt;      If Err.Number Then
+&gt;         'Caption = &quot;Error&quot;
+&gt;         fPath.CopyFile Pathy &amp; &quot;\&quot; &amp; &quot;Punk_History.def&quot;, FilePath,
+&gt; False
+&gt;     Else
+&gt;         'Caption = &quot;Overwrite&quot;
+&gt;         fPath.CopyFile Pathy &amp; &quot;\&quot; &amp; &quot;Punk_History.def&quot;, FilePath,
+&gt; True
+&gt;     End If
+&gt; End With
+
+&gt; Exit Sub
+
+&gt; Pinko:
+&gt; If Err.Number = 32755 Then
+&gt;     'User hit the Cancel button
+&gt;     Exit Sub
+&gt; End If
+">
+</POST>
+<POST>
+<POSTER> Mike Williams &lt;gagam...@yahoo.co.uk&gt; </POSTER>
+<POSTDATE> 2007-08-07T03:58:00 </POSTDATE>
+On 5 Aug, 14:18, notsosm ... @notsosmart.fen wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Punk_History.def is a binary file,
+&gt; not a text file.
+">
+
+This is the first time you've told us what kind of file you are
+dealing with and until that little secret was out of the bag the other
+respondents simply posted a sample showing you how to write a text
+based data file purely as an example. The main point of their
+responses was to inform you that the CommonDialog does not actually
+write any files for you. They probably assumed that once they had told
+you that little fact you would be able to write the file yourself
+using a method suitable to the file you are dealing with.
+
+<QUOTE PREVIOUSPOST="
+&gt; I use a CommonDialog because it is familiar to
+&gt; all users, but the file copying [since I was taught
+&gt; how the CommonDialog works by the previous kind
+&gt; reponses to my question!!!] is using the
+&gt; FileSystemObject.
+">
+
+Now it appears that you are copying a file [where the meaning is quite
+clear] instead of writing one [where it is not clear, because you
+could have meant either crerating from new or copying or almost
+anything]. This is the first time you have told us that you are
+copying an existing file rather than creating one.
+
+<QUOTE PREVIOUSPOST="
+&gt; The darn thing works [the FileSystem object]
+">
+
+Not on my system it doesn't. Nor on my wife's laptop. And I've just
+nipped over to Uncle Charlie's Kebab shop where he does the accounts
+and, blow me down with a feather, it doesn't work on his computer
+either! I wonder why? Is it perhaps because the FileSystem object
+relies on a scripting system that is historically viewed as a
+potential virus delivery system due to the fact that such scripts can
+be contained in otherwise innocuous files such as word processor
+documents and spreadsheets and things? Do you think the administrator
+might have disabled the little beast in order to protect his sytem
+from it? How sad. I would advise you to follow the advice of Uncle
+Charlie in the Kebab shop and ditch the FSO :-)
+
+<QUOTE PREVIOUSPOST="
+&gt; Line Input and Print work on a text file.
+">
+
+Ditch the FileSystem object and have a look at standard VB6 file
+handling. Regarding your comments about Input and Print (which of
+course deal mostly with ascii data or ascii repesentations of the
+contents of variables of one sort or another, since that is their job)
+have you looked at all the other built in VB file I/O methods? You'll
+find all sorts of things such as Open for Binary and Get and Put and
+lots of other stuff that allows you to handle files and file data in
+just about any way you wish, including very easy binary data handling.
+
+<QUOTE PREVIOUSPOST="
+&gt; The user uses the commondialog to determine
+&gt; where to copy the file to, and fPath [part of
+&gt; my obnoxious and foul FSO code ;-)] does
+&gt; the actual copying.
+">
+
+Check out the VB FileCopy statement :-)
+
+Mike
+</POST>
+<POST>
+<POSTER> &quot;Larry Linson&quot; &lt;boun...@localhost.not&gt; </POSTER>
+<POSTDATE> 2007-08-07T20:59:00 </POSTDATE>
+On  the other hand, Mike, perhaps he is always executing in his own
+environment and neither he, nor a system administrator, has chosen to
+disable FSO (and, if really careful, search and destroy any &quot;rogue
+reinstalls&quot; of the WSH on every startup), as many do.  If you can count on
+it being there, FSO pretty much works as advertised, though for the things I
+do, it has never proven any better, and sometimes not so good as, regular,
+traditional VB File I/O.
+
+I remember FSO being highly touted it in a column in one of the trade
+magazines. You'd have thought it was the greatest discovery since slicing
+bread (or an even more monumental discovery sometimes used as a simile), but
+for each of the examples used, I created a File I/O example that did exactly
+the same thing each with at least one less line of code. When I e-mailed
+about it, the columnist had a hard time not admitting that someone at
+Microsoft had done a good sales job about the wondrousness of FSO.
+
+A line of code, more or less, is no big deal, but why spend time and effort
+to learn a &quot;new thing,&quot; in order to be even minutely LESS efficient, even if
+you could count on it being in random systems where your code might be
+executed (which you can't)?
+
+Larry
+
+<QUOTE PREVIOUSPOST="
+&quot;Mike Williams&quot; &lt;gagam ... @yahoo.co.uk&gt; wrote in message
+">
+
+news:1186473538.964936.39480@w3g2000hsg.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On 5 Aug, 14:18, notsosm ... @notsosmart.fen wrote:
+
+&gt;&gt; Punk_History.def is a binary file,
+&gt;&gt; not a text file.
+
+&gt; This is the first time you've told us what kind of file you are
+&gt; dealing with and until that little secret was out of the bag the other
+&gt; respondents simply posted a sample showing you how to write a text
+&gt; based data file purely as an example. The main point of their
+&gt; responses was to inform you that the CommonDialog does not actually
+&gt; write any files for you. They probably assumed that once they had told
+&gt; you that little fact you would be able to write the file yourself
+&gt; using a method suitable to the file you are dealing with.
+
+&gt;&gt; I use a CommonDialog because it is familiar to
+&gt;&gt; all users, but the file copying [since I was taught
+&gt;&gt; how the CommonDialog works by the previous kind
+&gt;&gt; reponses to my question!!!] is using the
+&gt;&gt; FileSystemObject.
+
+&gt; Now it appears that you are copying a file [where the meaning is quite
+&gt; clear] instead of writing one [where it is not clear, because you
+&gt; could have meant either crerating from new or copying or almost
+&gt; anything]. This is the first time you have told us that you are
+&gt; copying an existing file rather than creating one.
+
+&gt;&gt; The darn thing works [the FileSystem object]
+
+&gt; Not on my system it doesn't. Nor on my wife's laptop. And I've just
+&gt; nipped over to Uncle Charlie's Kebab shop where he does the accounts
+&gt; and, blow me down with a feather, it doesn't work on his computer
+&gt; either! I wonder why? Is it perhaps because the FileSystem object
+&gt; relies on a scripting system that is historically viewed as a
+&gt; potential virus delivery system due to the fact that such scripts can
+&gt; be contained in otherwise innocuous files such as word processor
+&gt; documents and spreadsheets and things? Do you think the administrator
+&gt; might have disabled the little beast in order to protect his sytem
+&gt; from it? How sad. I would advise you to follow the advice of Uncle
+&gt; Charlie in the Kebab shop and ditch the FSO :-)
+
+&gt;&gt; Line Input and Print work on a text file.
+
+&gt; Ditch the FileSystem object and have a look at standard VB6 file
+&gt; handling. Regarding your comments about Input and Print (which of
+&gt; course deal mostly with ascii data or ascii repesentations of the
+&gt; contents of variables of one sort or another, since that is their job)
+&gt; have you looked at all the other built in VB file I/O methods? You'll
+&gt; find all sorts of things such as Open for Binary and Get and Put and
+&gt; lots of other stuff that allows you to handle files and file data in
+&gt; just about any way you wish, including very easy binary data handling.
+
+&gt;&gt; The user uses the commondialog to determine
+&gt;&gt; where to copy the file to, and fPath [part of
+&gt;&gt; my obnoxious and foul FSO code ;-)] does
+&gt;&gt; the actual copying.
+
+&gt; Check out the VB FileCopy statement :-)
+
+&gt; Mike
+">
+</POST>
+<POST>
+<POSTER> Mike Williams &lt;gagam...@yahoo.co.uk&gt; </POSTER>
+<POSTDATE> 2007-08-07T21:34:00 </POSTDATE>
+On 8 Aug, 01:59, &quot;Larry Linson&quot; &lt;boun ... @localhost.not&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On  the other hand, Mike, perhaps he is always
+&gt; executing in his own environment and neither he,
+&gt; nor a system administrator, has chosen to disable
+&gt; FSO (and, if really careful, search and destroy
+&gt; any &quot;rogue reinstalls&quot; of the WSH on every startup)
+">
+
+Yeah. He should be okay if he uses it only on known systems that
+definitely do have the scripting stuff installed and enabled and that
+will always be in such a state. The important thing is that he
+realises his code won't work in Uncle Charlie's Kebab shop and in lots
+of other places ;-)
+
+Mike
+</POST>
+<POST>
+<POSTER> &quot;Larry Linson&quot; &lt;boun...@localhost.not&gt; </POSTER>
+<POSTDATE> 2007-08-07T22:04:00 </POSTDATE>
+&quot;Mike Williams&quot; &lt;gagam ... @yahoo.co.uk&gt; wrote
+
+<QUOTE PREVIOUSPOST="
+&gt; Yeah. He should be okay if he uses it only on known systems that
+&gt; definitely do have the scripting stuff installed and enabled and that
+&gt; will always be in such a state. The important thing is that he
+&gt; realises his code won't work in Uncle Charlie's Kebab shop and in lots
+&gt; of other places ;-)
+">
+
+Aw, darn it, Mike... kebabs sound awfully enticing.  Too bad Uncle Charlie's
+is half a world away from where I am now!
+
+I did a File I/O presentation for my user group once, and considered
+mentioning FSO, but then couldn't think of a good reason to cover it, except
+to warn them about &quot;Uncle Charlie's and other places&quot; in case someone tried
+to sell them that bill of goods.
+
+I heard of one very sad developer who'd conferred with his SysAdmin and used
+a lot of FSO on the SysAdmin's assurance that he wasn't going to remove WSH.
+He had a lot of work to do when that SysAdmin moved on to &quot;bigger and
+better&quot; and a new SysAdmin recoiled in horror at the idea of WSH &quot;on my
+system&quot; and went on a search and destroy mission.
+
+Larry
+</POST>
+</TEXT>
+</BODY>
+</DOC>

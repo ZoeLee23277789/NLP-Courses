@@ -1,0 +1,384 @@
+<DOC>
+<DOCID> eng-NG-31-126399-8203661 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-20T18:00:00 </DATETIME>
+<BODY>
+<HEADLINE>
+GeneratorExit should derive from BaseException, not Exception
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Chad Austin &lt;c...@imvu.com&gt; </POSTER>
+<POSTDATE> 2007-08-20T18:00:00 </POSTDATE>
+Hi all,
+
+First, I'd like to describe a system that we've built here at IMVU in
+order to manage the complexity of our network- and UI-heavy application:
+
+Our application is a standard Windows desktop application, with the main
+thread pumping Windows messages as fast as they become available.  On
+top of that, we've added the ability to queue arbitrary Python actions
+in the message pump so that they get executed on the main thread when
+its ready.  You can think of our EventPump as being similar to Twisted's
+reactor.
+
+On top of the EventPump, we have a TaskScheduler which runs &quot;tasks&quot; in
+parallel.  Tasks are generators that behave like coroutines, and it's
+probably easiest to explain how they work with an example (made up on
+the spot, so there may be minor typos):
+
+def openContentsWindow(contents):
+# Imagine a notepad-like window with the URL's contents...
+# ...
+
+@threadtask
+def readURL(url):
+return urllib2.urlopen(url).read()
+
+@task
+def displayURL(url):
+with LoadingDialog():
+# blocks this task from running while contents are being downloaded,
+but does not block
+# main thread because readURL runs in the threadpool.
+contents = yield readURL(url)
+
+openContentsWindow(contents)
+
+A bit of explanation:
+
+The @task decorator turns a generator-returning function into a
+coroutine that is run by the scheduler.  It can call other tasks via
+&quot;yield&quot; and block on network requests, etc.
+
+All blocking network calls such as urllib2's urlopen and friends and
+xmlrpclib ServerProxy calls go behind the @threadtask decorator.  This
+means those functions will run in the thread pool and allow other ready
+tasks to execute in the meantime.
+
+There are several benefits to this approach:
+
+1) The logic is very readable.  The code doesn't have to go through any
+hoops to be performant or correct.
+2) It's also very testable.  All of the threading-specific logic goes
+into the scheduler itself, which means our unit tests don't need to deal
+with any (many?) thread safety issues or races.
+3) Exceptions bubble correctly through tasks, and the stack traces are
+what you would expect.
+4) Tasks always run on the main thread, which is beneficial when you're
+dealing with external objects with thread-affinity, such as Direct3D and
+Windows.
+5) Unlike threads, tasks can be cancelled.
+
+ANYWAY, all advocacy aside, here is one problem we've run into:
+
+Imagine a bit of code like this:
+
+@task
+def pollForChatInvites(chatGateway, userId, decisionCallback,
+startChatCallback, timeProvider, minimumPollInterval = 5):
+while True:
+now = timeProvider()
+
+try:
+result = yield chatGateway.checkForInvite({'userId': userId})
+logger.info('checkForInvite2 returned %s', result)
+except Exception:
+logger.exception('checkForInvite2 failed')
+result = None
+# ...
+yield Sleep(10)
+
+This is real code that I wrote in the last week.  The key portion is the
+try: except:  Basically, there are many reasons the checkForInvite2 call
+can fail.  Maybe a socket.error (connection timeout), maybe some kind of
+httplib error, maybe an xmlrpclib.ProtocolError...  I actually don't
+care how it fails.  If it fails at all, then sleep for a while and try
+again.  All fine and good.
+
+The problem is that, if the task is cancelled while it's waiting on
+checkForInvite2, GeneratorExit gets caught and handled rather than
+(correctly) bubbling out of the task.  GeneratorExit is similar in
+practice to SystemExit here, so it would make sense for it to be a
+BaseException as well.
+
+So, my proposal is that GeneratorExit derive from BaseException instead
+of Exception.
+
+p.s. Should I have sent this mail to python-dev directly?  Does what I'm
+saying make sense?  Does this kind of thing need a PEP?
+
+--
+Chad Austin
+http://imvu.com/technology
+</POST>
+<POST>
+<POSTER> &quot;Terry Reedy&quot; &lt;tjre...@udel.edu&gt; </POSTER>
+<POSTDATE> 2007-08-20T23:37:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Chad Austin&quot; &lt;c ... @imvu.com&gt; wrote in message
+">
+
+news:46CA0EFE.6020103@imvu.com ...
+|| try:
+| result = yield chatGateway.checkForInvite({'userId': userId})
+| logger.info('checkForInvite2 returned %s', result)
+
+would not
+except GeneratorExit: &lt;do whatever&gt;
+solve your problem?
+
+| except Exception:
+
+Such catchalls are known to be prone to catch too much
+and are therefore not encouraged ;-).
+As in 'use at your own risk'.
+Guido encourages specific catches just for the reasons you give here.
+
+| logger.exception('checkForInvite2 failed')
+| result = None
+| # ...
+| yield Sleep(10)
+|
+| This is real code that I wrote in the last week.  The key portion is the
+| try: except:  Basically, there are many reasons the checkForInvite2 call
+| can fail.  Maybe a socket.error (connection timeout), maybe some kind of
+| httplib error, maybe an xmlrpclib.ProtocolError...  I actually don't
+| care how it fails.  If it fails at all, then sleep for a while and try
+| again.  All fine and good.
+...
+| So, my proposal is that GeneratorExit derive from BaseException instead
+| of Exception.
+|
+| p.s. Should I have sent this mail to python-dev directly?  Does what I'm
+| saying make sense?  Does this kind of thing need a PEP?
+
+There was a *long* discussion of the current 2.5 exception hierarchy on
+pydev.  Search either python.org's or gmane's archive if you want to pursue
+this.  But I expect the people involved would say much the same as above.
+
+Terry Jan Reedy
+</POST>
+<POST>
+<POSTER> Chad Austin &lt;c...@imvu.com&gt; </POSTER>
+<POSTDATE> 2007-08-21T03:01:00 </POSTDATE>
+Hi Terry,
+
+Thank you for your feedback.  Responses inline:
+
+<QUOTE PREVIOUSPOST="
+Terry Reedy wrote:
+&gt; &quot;Chad Austin&quot; &lt;c ... @imvu.com&gt; wrote in message
+&gt; news:46CA0EFE.6020103@imvu.com ...
+&gt; || try:
+&gt; | result = yield chatGateway.checkForInvite({'userId': userId})
+&gt; | logger.info('checkForInvite2 returned %s', result)
+
+&gt; would not
+&gt; except GeneratorExit: &lt;do whatever&gt;
+&gt; solve your problem?
+">
+
+Yes, we could add an &quot;except GeneratorExit: raise&quot; clause to every place
+we currently catch Exception, but I feel like this is one of those
+things where it's hard to get it right in all places and also hard to
+cover with unit tests.  Instead, we'll have subtle bugs where finally
+clauses don't run because the GeneratorExit was swallowed.
+
+Also, SystemExit and KeyboardInterrupt were made into BaseExceptions for
+the same reasons as I'm giving.  (As I understand it, anyway.)
+
+<QUOTE PREVIOUSPOST="
+&gt; | except Exception:
+
+&gt; Such catchalls are known to be prone to catch too much
+&gt; and are therefore not encouraged ;-).
+&gt; As in 'use at your own risk'.
+&gt; Guido encourages specific catches just for the reasons you give here.
+">
+
+More below:
+
+<QUOTE PREVIOUSPOST="
+&gt; There was a *long* discussion of the current 2.5 exception hierarchy on
+&gt; pydev.  Search either python.org's or gmane's archive if you want to pursue
+&gt; this.  But I expect the people involved would say much the same as above.
+">
+
+I've actually read the background on the exception hierarchy (and agree
+with it all), especially other suggestions that GeneratorExit derive
+from BaseException.  As I understand it, Guido's objections are threefold:
+
+1) The previous &quot;generators as coroutines&quot; examples were too
+theoretical:  I've wanted GeneratorExit to derive from BaseException for
+months now, but didn't write this proposal until I actually wrote code
+that failed in the presence of task cancellation.
+
+2) You should avoid catching everything with except Exception:  I think
+that's too idealistic. Just do a search for try: except: through
+publicly available Python.  :)  Sometimes, you really _do_ want to catch
+everything.  When you're making a network request that involves
+xmlrpclib, urllib2, httplib, etc. you don't actually care what the error
+was.  (Well, except that the exceptions are submitted for automated
+analysis.)  Similarly, when loading a cache file with pickle, I don't
+care what went wrong, because it's not critical and should not be turned
+into a crash for the user.  (We automatically report exceptions that
+bubble into the main loop as crashes.)
+
+3) If GeneratorExit escapes from the generator somehow and gets raised
+in the main loop, then it will bubble out of the application like
+SystemExit and KeyboardInterrupt would:  I think this argument is
+somewhat specious, because I can't imagine how that would happen.  You'd
+have to store exceptions in your generator and explicitly bubble them
+out somehow.  Our crash handling has to specially handle
+KeyboardInterrupt and SystemExit anyway, since there are currently
+non-Exception exceptions, such as strings and custom classes that forgot
+to derive from Exception, that should count as crashes.
+
+I personally can't think of any cases where I would _want_ to handle
+GeneratorExit.  I just want finally: and with: clauses to do the right
+thing when a task is cancelled.  Anyway, I haven't yet encountered any
+serious bugs due to this yet...  I'm just worried that if a task is
+holding some resource and blocking on something, then the resource won't
+get released.  If this really does come up, then I do have a little bit
+of python + ctypes that replaces GeneratorExit with ImvuGeneratorExit
+(deriving from BaseException), but that's not very appealing.
+
+Thanks again,
+
+--
+Chad Austin
+http://imvu.com/technology
+</POST>
+<POST>
+<POSTER> Chad Austin &lt;c...@imvu.com&gt; </POSTER>
+<POSTDATE> 2007-08-21T03:41:00 </POSTDATE>
+Oops, forgot to mention this:
+
+I wouldn't be opposed to a different extension that would effectively
+let me accomplish the same goals...  arbitrary exception filters.
+Imagine this:
+
+try:
+raise GeneratorExit
+except ExceptionFilter:
+# blah
+
+where ExceptionFilter is any object that can be tested for containment.
+Perhaps implemented like this:
+
+class ExceptionFilter(object):
+def __init__(self):
+self.includes = set()
+self.excludes = set()
+
+self.include = self.includes.add
+self.exclude = self.excludes.add
+
+def __contains__(self, exc):
+return any(isinstance(exc, cls) for cls in self.includes) and \
+not any(isinstance(exc, cls) for cls in self.excludes)
+
+ImvuExceptionFilter = ExceptionFilter()
+ImvuExceptionFilter.include(Exception)
+ImvuExceptionFilter.exclude(GeneratorExit)
+
+Then, our code could just &quot;catch&quot; ImvuExceptionFilter.  This type of
+extension would be backwards compatible with the current except
+(FooError, BarError) tuple syntax.
+
+I've never hacked on CPython itself, so I don't know what kind of
+changes there would be involved, but if there is sufficient pushback
+against making GeneratorExit derive from BaseException, I think this is
+a fine alternative.  Thoughts?
+
+Chad
+
+<QUOTE PREVIOUSPOST="
+Chad Austin wrote:
+&gt; Hi Terry,
+
+&gt; Thank you for your feedback.  Responses inline:
+
+&gt; Terry Reedy wrote:
+&gt;&gt; &quot;Chad Austin&quot; &lt;c ... @imvu.com&gt; wrote in message
+&gt;&gt; news:46CA0EFE.6020103@imvu.com ...
+&gt;&gt; || try:
+&gt;&gt; | result = yield chatGateway.checkForInvite({'userId': userId})
+&gt;&gt; | logger.info('checkForInvite2 returned %s', result)
+
+&gt;&gt; would not
+&gt;&gt; except GeneratorExit: &lt;do whatever&gt;
+&gt;&gt; solve your problem?
+
+&gt; Yes, we could add an &quot;except GeneratorExit: raise&quot; clause to every place
+&gt; we currently catch Exception, but I feel like this is one of those
+&gt; things where it's hard to get it right in all places and also hard to
+&gt; cover with unit tests.  Instead, we'll have subtle bugs where finally
+&gt; clauses don't run because the GeneratorExit was swallowed.
+
+&gt; Also, SystemExit and KeyboardInterrupt were made into BaseExceptions for
+&gt; the same reasons as I'm giving.  (As I understand it, anyway.)
+
+&gt;&gt; | except Exception:
+
+&gt;&gt; Such catchalls are known to be prone to catch too much
+&gt;&gt; and are therefore not encouraged ;-).
+&gt;&gt; As in 'use at your own risk'.
+&gt;&gt; Guido encourages specific catches just for the reasons you give here.
+
+&gt; More below:
+
+&gt;&gt; There was a *long* discussion of the current 2.5 exception hierarchy on
+&gt;&gt; pydev.  Search either python.org's or gmane's archive if you want to pursue
+&gt;&gt; this.  But I expect the people involved would say much the same as above.
+
+&gt; I've actually read the background on the exception hierarchy (and agree
+&gt; with it all), especially other suggestions that GeneratorExit derive
+&gt; from BaseException.  As I understand it, Guido's objections are threefold:
+
+&gt; 1) The previous &quot;generators as coroutines&quot; examples were too
+&gt; theoretical:  I've wanted GeneratorExit to derive from BaseException for
+&gt; months now, but didn't write this proposal until I actually wrote code
+&gt; that failed in the presence of task cancellation.
+
+&gt; 2) You should avoid catching everything with except Exception:  I think
+&gt; that's too idealistic. Just do a search for try: except: through
+&gt; publicly available Python.  :)  Sometimes, you really _do_ want to catch
+&gt; everything.  When you're making a network request that involves
+&gt; xmlrpclib, urllib2, httplib, etc. you don't actually care what the error
+&gt; was.  (Well, except that the exceptions are submitted for automated
+&gt; analysis.)  Similarly, when loading a cache file with pickle, I don't
+&gt; care what went wrong, because it's not critical and should not be turned
+&gt; into a crash for the user.  (We automatically report exceptions that
+&gt; bubble into the main loop as crashes.)
+
+&gt; 3) If GeneratorExit escapes from the generator somehow and gets raised
+&gt; in the main loop, then it will bubble out of the application like
+&gt; SystemExit and KeyboardInterrupt would:  I think this argument is
+&gt; somewhat specious, because I can't imagine how that would happen.  You'd
+&gt; have to store exceptions in your generator and explicitly bubble them
+&gt; out somehow.  Our crash handling has to specially handle
+&gt; KeyboardInterrupt and SystemExit anyway, since there are currently
+&gt; non-Exception exceptions, such as strings and custom classes that forgot
+&gt; to derive from Exception, that should count as crashes.
+
+&gt; I personally can't think of any cases where I would _want_ to handle
+&gt; GeneratorExit.  I just want finally: and with: clauses to do the right
+&gt; thing when a task is cancelled.  Anyway, I haven't yet encountered any
+&gt; serious bugs due to this yet...  I'm just worried that if a task is
+&gt; holding some resource and blocking on something, then the resource won't
+&gt; get released.  If this really does come up, then I do have a little bit
+&gt; of python + ctypes that replaces GeneratorExit with ImvuGeneratorExit
+&gt; (deriving from BaseException), but that's not very appealing.
+
+&gt; Thanks again,
+">
+
+--
+Chad Austin
+http://imvu.com/technology
+</POST>
+</TEXT>
+</BODY>
+</DOC>

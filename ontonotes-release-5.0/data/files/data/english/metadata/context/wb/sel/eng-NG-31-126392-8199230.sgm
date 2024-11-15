@@ -1,0 +1,2640 @@
+<DOC>
+<DOCID> eng-NG-31-126392-8199230 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-07-14T02:11:00 </DATETIME>
+<BODY>
+<HEADLINE>
+return the start of a substring in a string in c
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;ying...@gmail.com&quot; &lt;ying...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-14T02:11:00 </POSTDATE>
+Hi,
+In java, there is an 'indexOf' function in String which does this:
+
+indexOf(String str)
+Returns the index within this string of the first occurrence
+of the specified substring.
+
+is there anything like that in c?
+
+The closest thing I can find is strchr, but it check for a character,
+not a substring?
+
+Thank you.
+</POST>
+<POST>
+<POSTER> Richard Heathfield &lt;r...@see.sig.invalid&gt; </POSTER>
+<POSTDATE> 2007-07-14T02:17:00 </POSTDATE>
+ying ... @gmail.com said:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi,
+&gt; In java, there is an 'indexOf' function in String which does this:
+
+&gt; indexOf(String str)
+&gt;           Returns the index within this string of the first occurrence
+&gt; of the specified substring.
+
+&gt; is there anything like that in c?
+
+&gt; The closest thing I can find is strchr, but it check for a character,
+&gt; not a substring?
+">
+
+strstr returns a pointer to the substring - if this is non-NULL,
+subtract the address of the main string from it to get the index.
+
+--
+Richard Heathfield &lt; http://www.cpax.org.uk &gt;
+Email: -www. +rjh@
+Google users: &lt; http://www.cpax.org.uk/prg/writings/googly.php &gt;
+&quot;Usenet is a strange place&quot; - dmr 29 July 1999
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-07-14T02:29:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Richard Heathfield&quot; &lt;r ... @see.sig.invalid&gt; wrote in message
+">
+
+news:tZ-dneEindxx9AXbRVnyvQA@bt.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; ying ... @gmail.com said:
+
+&gt;&gt; Hi,
+&gt;&gt; In java, there is an 'indexOf' function in String which does this:
+
+&gt;&gt; indexOf(String str)
+&gt;&gt;           Returns the index within this string of the first occurrence
+&gt;&gt; of the specified substring.
+
+&gt;&gt; is there anything like that in c?
+
+&gt;&gt; The closest thing I can find is strchr, but it check for a character,
+&gt;&gt; not a substring?
+
+&gt; strstr returns a pointer to the substring - if this is non-NULL,
+&gt; subtract the address of the main string from it to get the index.
+">
+
+ie;
+
+char *str = &quot;astring&quot;;
+char *substring = &quot;in&quot;;
+char *ptr;
+ptrdiff_t index; /* should be an int. Horrid horrid horrid */
+
+ptr = strstr(str, substring);
+if(ptr)
+{
+index = ptr - str;
+printf(&quot;your substring was found at postion %d (0-based)\n&quot;, (int)
+index);
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+As an exercise to the regs, why do we need that horrid, horrid cast in the
+call to printf?
+
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> Harald van Dĳk &lt;true...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-14T02:43:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Malcolm McLean wrote:
+&gt; char *str = &quot;astring&quot;;
+&gt; char *substring = &quot;in&quot;;
+&gt; char *ptr;
+&gt; ptrdiff_t index; /* should be an int. Horrid horrid horrid */
+
+&gt; ptr = strstr(str, substring);
+&gt; if(ptr)
+&gt; {
+&gt;    index = ptr - str;
+&gt;    printf(&quot;your substring was found at postion %d (0-based)\n&quot;, (int)
+&gt; index);
+&gt; }
+
+&gt; As an exercise to the regs, why do we need that horrid, horrid cast in the
+&gt; call to printf?
+">
+
+You don't. You're already assuming that index will fit in an int, so you can
+just change the declaration of index to match.
+</POST>
+<POST>
+<POSTER> Ralf Kunz &lt;ralf_k...@freenet.de&gt; </POSTER>
+<POSTDATE> 2007-07-14T02:52:00 </POSTDATE>
+ying ... @gmail.com schrieb:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi,
+&gt; In java, there is an 'indexOf' function in String which does this:
+
+&gt;    indexOf(String str)
+&gt;           Returns the index within this string of the first occurrence
+&gt; of the specified substring.
+
+&gt; is there anything like that in c?
+
+&gt; The closest thing I can find is strchr, but it check for a character,
+&gt; not a substring?
+
+&gt; Thank you.
+">
+
+hello,
+
+you can use instead the function
+char * strstr(const char *s1, const char *s2)
+
+from string.h
+
+Ralf
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-07-14T04:34:00 </POSTDATE>
+&quot;Harald van D?k&quot; &lt;true ... @gmail.com&gt; wrote in message
+news:f79r9j$uaq$1@news1.zwoll1.ov.home.nl ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Malcolm McLean wrote:
+&gt;&gt; char *str = &quot;astring&quot;;
+&gt;&gt; char *substring = &quot;in&quot;;
+&gt;&gt; char *ptr;
+&gt;&gt; ptrdiff_t index; /* should be an int. Horrid horrid horrid */
+
+&gt;&gt; ptr = strstr(str, substring);
+&gt;&gt; if(ptr)
+&gt;&gt; {
+&gt;&gt;    index = ptr - str;
+&gt;&gt;    printf(&quot;your substring was found at postion %d (0-based)\n&quot;, (int)
+&gt;&gt; index);
+&gt;&gt; }
+
+&gt;&gt; As an exercise to the regs, why do we need that horrid, horrid cast in
+&gt;&gt; the
+&gt;&gt; call to printf?
+
+&gt; You don't. You're already assuming that index will fit in an int, so you
+&gt; can
+&gt; just change the declaration of index to match.
+">
+
+My point exactly. We fill the language with gibberish types, which don't
+actually gain anything because eventually some fucntion somewhere will
+expect an int.
+Join the campaign for 64 bit ints and this nonsense will fade away.
+
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> Harald van Dĳk &lt;true...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-14T04:42:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Malcolm McLean wrote:
+&gt; &quot;Harald van D?k&quot; &lt;true ... @gmail.com&gt; wrote in message
+&gt; news:f79r9j$uaq$1@news1.zwoll1.ov.home.nl ...
+&gt;&gt; Malcolm McLean wrote:
+&gt;&gt;&gt; char *str = &quot;astring&quot;;
+&gt;&gt;&gt; char *substring = &quot;in&quot;;
+&gt;&gt;&gt; char *ptr;
+&gt;&gt;&gt; ptrdiff_t index; /* should be an int. Horrid horrid horrid */
+
+&gt;&gt;&gt; ptr = strstr(str, substring);
+&gt;&gt;&gt; if(ptr)
+&gt;&gt;&gt; {
+&gt;&gt;&gt;    index = ptr - str;
+&gt;&gt;&gt;    printf(&quot;your substring was found at postion %d (0-based)\n&quot;, (int)
+&gt;&gt;&gt; index);
+&gt;&gt;&gt; }
+
+&gt;&gt;&gt; As an exercise to the regs, why do we need that horrid, horrid cast in
+&gt;&gt;&gt; the
+&gt;&gt;&gt; call to printf?
+
+&gt;&gt; You don't. You're already assuming that index will fit in an int, so you
+&gt;&gt; can
+&gt;&gt; just change the declaration of index to match.
+
+&gt; My point exactly. We fill the language with gibberish types, which don't
+&gt; actually gain anything because eventually some fucntion somewhere will
+&gt; expect an int.
+">
+
+Which function is that, here? You don't need to assume index will fit in an
+int, you just chose to for convenience.
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-07-14T04:58:00 </POSTDATE>
+&quot;Harald van Dĳk&quot; &lt;true ... @gmail.com&gt; wrote in message
+news:f7a29h$bd$1@news3.zwoll1.ov.home.nl ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Malcolm McLean wrote:
+&gt;&gt; &quot;Harald van D?k&quot; &lt;true ... @gmail.com&gt; wrote in message
+&gt;&gt; news:f79r9j$uaq$1@news1.zwoll1.ov.home.nl ...
+&gt;&gt;&gt; Malcolm McLean wrote:
+&gt;&gt;&gt;&gt; char *str = &quot;astring&quot;;
+&gt;&gt;&gt;&gt; char *substring = &quot;in&quot;;
+&gt;&gt;&gt;&gt; char *ptr;
+&gt;&gt;&gt;&gt; ptrdiff_t index; /* should be an int. Horrid horrid horrid */
+
+&gt;&gt;&gt;&gt; ptr = strstr(str, substring);
+&gt;&gt;&gt;&gt; if(ptr)
+&gt;&gt;&gt;&gt; {
+&gt;&gt;&gt;&gt;    index = ptr - str;
+&gt;&gt;&gt;&gt;    printf(&quot;your substring was found at postion %d (0-based)\n&quot;, (int)
+&gt;&gt;&gt;&gt; index);
+&gt;&gt;&gt;&gt; }
+
+&gt;&gt;&gt;&gt; As an exercise to the regs, why do we need that horrid, horrid cast in
+&gt;&gt;&gt;&gt; the
+&gt;&gt;&gt;&gt; call to printf?
+
+&gt;&gt;&gt; You don't. You're already assuming that index will fit in an int, so you
+&gt;&gt;&gt; can
+&gt;&gt;&gt; just change the declaration of index to match.
+
+&gt;&gt; My point exactly. We fill the language with gibberish types, which don't
+&gt;&gt; actually gain anything because eventually some fucntion somewhere will
+&gt;&gt; expect an int.
+
+&gt; Which function is that, here? You don't need to assume index will fit in
+&gt; an
+&gt; int, you just chose to for convenience.
+">
+
+printf(). There probably is a specifier for ptrdiff_t in C99, but I doubt
+you can guarantee its presence.
+
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> Army1987 &lt;army1...@NOSPAM.it&gt; </POSTER>
+<POSTDATE> 2007-07-14T05:03:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sat, 14 Jul 2007 07:29:35 +0100, Malcolm McLean wrote:
+
+&gt; &quot;Richard Heathfield&quot; &lt;r ... @see.sig.invalid&gt; wrote in message
+&gt; news:tZ-dneEindxx9AXbRVnyvQA@bt.com ...
+&gt;&gt; ying ... @gmail.com said:
+
+&gt;&gt;&gt; Hi,
+&gt;&gt;&gt; In java, there is an 'indexOf' function in String which does this:
+
+&gt;&gt;&gt; indexOf(String str)
+&gt;&gt;&gt;           Returns the index within this string of the first occurrence
+&gt;&gt;&gt; of the specified substring.
+
+&gt;&gt;&gt; is there anything like that in c?
+
+&gt;&gt;&gt; The closest thing I can find is strchr, but it check for a character,
+&gt;&gt;&gt; not a substring?
+
+&gt;&gt; strstr returns a pointer to the substring - if this is non-NULL,
+&gt;&gt; subtract the address of the main string from it to get the index.
+
+&gt; ie;
+
+&gt; char *str = &quot;astring&quot;;
+&gt; char *substring = &quot;in&quot;;
+&gt; char *ptr;
+&gt; ptrdiff_t index; /* should be an int. Horrid horrid horrid */
+
+&gt; ptr = strstr(str, substring);
+&gt; if(ptr)
+&gt; {
+&gt;    index = ptr - str;
+&gt;    printf(&quot;your substring was found at postion %d (0-based)\n&quot;, (int)
+&gt; index);
+&gt; }
+
+&gt; As an exercise to the regs, why do we need that horrid, horrid cast in the
+&gt; call to printf?
+">
+
+Because you feared enough that the magnitude of (ptr - str) could
+ever be &gt; 32767, that you didn't declare index as an int.
+Otherwise you could declare it as a long and use &quot;%ld&quot; in printf.
+--
+Army1987 (Replace &quot;NOSPAM&quot; with &quot;email&quot;)
+&quot;Never attribute to malice that which can be adequately explained
+by stupidity.&quot; -- R. J. Hanlon (?)
+</POST>
+<POST>
+<POSTER> Harald van Dĳk &lt;true...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-14T05:18:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Malcolm McLean wrote:
+&gt; &quot;Harald van Dĳk&quot; &lt;true ... @gmail.com&gt; wrote in message
+&gt; news:f7a29h$bd$1@news3.zwoll1.ov.home.nl ...
+&gt;&gt; Malcolm McLean wrote:
+&gt;&gt;&gt; &quot;Harald van D?k&quot; &lt;true ... @gmail.com&gt; wrote in message
+&gt;&gt;&gt; news:f79r9j$uaq$1@news1.zwoll1.ov.home.nl ...
+&gt;&gt;&gt;&gt; Malcolm McLean wrote:
+&gt;&gt;&gt;&gt;&gt; char *str = &quot;astring&quot;;
+&gt;&gt;&gt;&gt;&gt; char *substring = &quot;in&quot;;
+&gt;&gt;&gt;&gt;&gt; char *ptr;
+&gt;&gt;&gt;&gt;&gt; ptrdiff_t index; /* should be an int. Horrid horrid horrid */
+
+&gt;&gt;&gt;&gt;&gt; ptr = strstr(str, substring);
+&gt;&gt;&gt;&gt;&gt; if(ptr)
+&gt;&gt;&gt;&gt;&gt; {
+&gt;&gt;&gt;&gt;&gt;    index = ptr - str;
+&gt;&gt;&gt;&gt;&gt;    printf(&quot;your substring was found at postion %d (0-based)\n&quot;, (int)
+&gt;&gt;&gt;&gt;&gt; index);
+&gt;&gt;&gt;&gt;&gt; }
+
+&gt;&gt;&gt;&gt;&gt; As an exercise to the regs, why do we need that horrid, horrid cast in
+&gt;&gt;&gt;&gt;&gt; the
+&gt;&gt;&gt;&gt;&gt; call to printf?
+
+&gt;&gt;&gt;&gt; You don't. You're already assuming that index will fit in an int, so
+&gt;&gt;&gt;&gt; you can
+&gt;&gt;&gt;&gt; just change the declaration of index to match.
+
+&gt;&gt;&gt; My point exactly. We fill the language with gibberish types, which don't
+&gt;&gt;&gt; actually gain anything because eventually some fucntion somewhere will
+&gt;&gt;&gt; expect an int.
+
+&gt;&gt; Which function is that, here? You don't need to assume index will fit in
+&gt;&gt; an
+&gt;&gt; int, you just chose to for convenience.
+
+&gt; printf(). There probably is a specifier for ptrdiff_t in C99,
+">
+
+Indeed there is.
+
+<QUOTE PREVIOUSPOST="
+&gt; but I doubt
+&gt; you can guarantee its presence.
+">
+
+#if __STDC_VERSION__ &gt;= 199901L
+ptrdiff_t index = ptr - str;
+printf(&quot;your substring was found at postion %td (0-based)\n&quot;, index);
+#else
+long index = ptr - str;
+printf(&quot;your substring was found at postion %ld (0-based)\n&quot;, index);
+#endif
+
+C99 has a specifier for ptrdiff_t. C90 has a guarantee that ptrdiff_t is no
+wider than long. If neither applies, you're not dealing with an
+implementation of standard C. (Yes, I'm aware that there are real-world
+C-like implementations that do not conform to any standard.)
+</POST>
+<POST>
+<POSTER> Flash Gordon &lt;s...@flash-gordon.me.uk&gt; </POSTER>
+<POSTDATE> 2007-07-14T05:37:00 </POSTDATE>
+Malcolm McLean wrote, On 14/07/07 09:34:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Harald van D?k&quot; &lt;true ... @gmail.com&gt; wrote in message
+&gt; news:f79r9j$uaq$1@news1.zwoll1.ov.home.nl ...
+&gt;&gt; Malcolm McLean wrote:
+&gt;&gt;&gt; char *str = &quot;astring&quot;;
+&gt;&gt;&gt; char *substring = &quot;in&quot;;
+&gt;&gt;&gt; char *ptr;
+&gt;&gt;&gt; ptrdiff_t index; /* should be an int. Horrid horrid horrid */
+
+&gt;&gt;&gt; ptr = strstr(str, substring);
+&gt;&gt;&gt; if(ptr)
+&gt;&gt;&gt; {
+&gt;&gt;&gt;    index = ptr - str;
+&gt;&gt;&gt;    printf(&quot;your substring was found at postion %d (0-based)\n&quot;, (int)
+&gt;&gt;&gt; index);
+&gt;&gt;&gt; }
+
+&gt;&gt;&gt; As an exercise to the regs, why do we need that horrid, horrid cast
+&gt;&gt;&gt; in the
+&gt;&gt;&gt; call to printf?
+
+&gt;&gt; You don't. You're already assuming that index will fit in an int, so
+&gt;&gt; you can
+&gt;&gt; just change the declaration of index to match.
+
+&gt; My point exactly. We fill the language with gibberish types,
+">
+
+You may consider them gibberish, but others don't.
+
+&gt; which don't
+
+<QUOTE PREVIOUSPOST="
+&gt; actually gain anything because eventually some fucntion somewhere will
+&gt; expect an int.
+">
+
+Only if you make the choice to do that.
+
+<QUOTE PREVIOUSPOST="
+&gt; Join the campaign for 64 bit ints and this nonsense will fade away.
+">
+
+As has been pointed out before, it seems to be a one man campaign
+which has been started after all the key decisions have been made and
+the key implementations have selected 32 bit ints. To statnd a chance
+you need to work on what will be done with 128 bit processors, not 64
+bit processors where it is done and dusted.
+--
+Flash Gordon
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-07-14T08:31:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Flash Gordon&quot; &lt;s ... @flash-gordon.me.uk&gt; wrote in message
+">
+
+news:33imm4xp4c.ln2@news.flash-gordon.me.uk ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Malcolm McLean wrote, On 14/07/07 09:34:
+
+&gt;&gt; &quot;Harald van D?k&quot; &lt;true ... @gmail.com&gt; wrote in message
+&gt;&gt; news:f79r9j$uaq$1@news1.zwoll1.ov.home.nl ...
+&gt;&gt;&gt; Malcolm McLean wrote:
+&gt;&gt;&gt;&gt; char *str = &quot;astring&quot;;
+&gt;&gt;&gt;&gt; char *substring = &quot;in&quot;;
+&gt;&gt;&gt;&gt; char *ptr;
+&gt;&gt;&gt;&gt; ptrdiff_t index; /* should be an int. Horrid horrid horrid */
+
+&gt;&gt;&gt;&gt; ptr = strstr(str, substring);
+&gt;&gt;&gt;&gt; if(ptr)
+&gt;&gt;&gt;&gt; {
+&gt;&gt;&gt;&gt;    index = ptr - str;
+&gt;&gt;&gt;&gt;    printf(&quot;your substring was found at postion %d (0-based)\n&quot;, (int)
+&gt;&gt;&gt;&gt; index);
+&gt;&gt;&gt;&gt; }
+
+&gt;&gt;&gt;&gt; As an exercise to the regs, why do we need that horrid, horrid cast in
+&gt;&gt;&gt;&gt; the
+&gt;&gt;&gt;&gt; call to printf?
+
+&gt;&gt;&gt; You don't. You're already assuming that index will fit in an int, so you
+&gt;&gt;&gt; can
+&gt;&gt;&gt; just change the declaration of index to match.
+
+&gt;&gt; My point exactly. We fill the language with gibberish types,
+
+&gt; You may consider them gibberish, but others don't.
+
+&gt; &gt; which don't
+&gt;&gt; actually gain anything because eventually some fucntion somewhere will
+&gt;&gt; expect an int.
+
+&gt; Only if you make the choice to do that.
+
+&gt;&gt; Join the campaign for 64 bit ints and this nonsense will fade away.
+
+&gt; As has been pointed out before, it seems to be a one man campaign
+&gt; which has been started after all the key decisions have been made and the
+&gt; key implementations have selected 32 bit ints. To statnd a chance you need
+&gt; to work on what will be done with 128 bit processors, not 64 bit
+&gt; processors where it is done and dusted.
+">
+
+It is still a one-man campaign.  I am anxious to turn it into a 2-man
+campaign.
+It is not obvious what to do with 128 bits. The point is that integers
+usually count things, but it is unlikely that there will ever be enough
+memory in a machine to overflow a 64 bit int. I almost said enough memory
+manufactured, but in fact a world of 4 billion machines with 4GB each is
+perfectly foreseeable.
+
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> Ben Bacarisse &lt;ben.use...@bsb.me.uk&gt; </POSTER>
+<POSTDATE> 2007-07-14T08:43:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Malcolm McLean&quot; &lt;regniz ... @btinternet.com&gt; writes:
+&gt; &quot;Flash Gordon&quot; &lt;s ... @flash-gordon.me.uk&gt; wrote in message
+&gt; news:33imm4xp4c.ln2@news.flash-gordon.me.uk ...
+&gt;&gt; Malcolm McLean wrote, On 14/07/07 09:34:
+&gt;&gt;&gt; Join the campaign for 64 bit ints and this nonsense will fade away.
+
+&gt;&gt; As has been pointed out before, it seems to be a one man campaign
+&gt;&gt; which has been started after all the key decisions have been made
+&gt;&gt; and the key implementations have selected 32 bit ints. To statnd a
+&gt;&gt; chance you need to work on what will be done with 128 bit
+&gt;&gt; processors, not 64 bit processors where it is done and dusted.
+
+&gt; It is still a one-man campaign.  I am anxious to turn it into a 2-man
+&gt; campaign.
+&gt; It is not obvious what to do with 128 bits. The point is that integers
+&gt; usually count things, but it is unlikely that there will ever be
+&gt; enough memory in a machine to overflow a 64 bit int.
+">
+
+Why do say integers usually count things?  Don't you ever calculate
+things with integers?  I used to work on projects (cryptography stuff)
+where calculating was more common than counting and ints were
+always too short.  Counting is usually done with integers, but you
+can't turn that round the other way.
+
+--
+Ben.
+</POST>
+<POST>
+<POSTER> &quot;Stephen Sprunk&quot; &lt;step...@sprunk.org&gt; </POSTER>
+<POSTDATE> 2007-07-14T04:54:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&lt;ying ... @gmail.com&gt; wrote in message
+">
+
+news:1184393465.624496.162340@d55g2000hsg.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi,
+&gt; In java, there is an 'indexOf' function in String which does this:
+
+&gt; indexOf(String str)
+&gt;          Returns the index within this string of the first occurrence
+&gt; of the specified substring.
+
+&gt; is there anything like that in c?
+
+&gt; The closest thing I can find is strchr, but it check for a character,
+&gt; not a substring?
+">
+
+If you know strchr() searches a string for a char, did it not occur to you
+to check if strstr() searches a string for a string?
+
+However, both return a pointer to the first instance found (or NULL, if
+none) instead of an index.  If the returned value was non-NULL, subtract the
+pointer to the original string from the returned value to get the index.
+
+S
+
+--
+Stephen Sprunk      &quot;Those people who think they know everything
+CCIE #3723         are a great annoyance to those of us who do.&quot;
+K5SSS                                             --Isaac Asimov
+
+--
+Posted via a free Usenet account from http://www.teranews.com
+</POST>
+<POST>
+<POSTER> Flash Gordon &lt;s...@flash-gordon.me.uk&gt; </POSTER>
+<POSTDATE> 2007-07-14T12:04:00 </POSTDATE>
+Ben Bacarisse wrote, On 14/07/07 13:43:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Malcolm McLean&quot; &lt;regniz ... @btinternet.com&gt; writes:
+
+&gt;&gt; &quot;Flash Gordon&quot; &lt;s ... @flash-gordon.me.uk&gt; wrote in message
+&gt;&gt; news:33imm4xp4c.ln2@news.flash-gordon.me.uk ...
+&gt;&gt;&gt; Malcolm McLean wrote, On 14/07/07 09:34:
+&gt;&gt;&gt;&gt; Join the campaign for 64 bit ints and this nonsense will fade away.
+&gt;&gt;&gt; As has been pointed out before, it seems to be a one man campaign
+&gt;&gt;&gt; which has been started after all the key decisions have been made
+&gt;&gt;&gt; and the key implementations have selected 32 bit ints. To statnd a
+&gt;&gt;&gt; chance you need to work on what will be done with 128 bit
+&gt;&gt;&gt; processors, not 64 bit processors where it is done and dusted.
+
+&gt;&gt; It is still a one-man campaign.  I am anxious to turn it into a 2-man
+&gt;&gt; campaign.
+">
+
+Your approach on this group is more likely to make people campaign
+against you.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; It is not obvious what to do with 128 bits. The point is that integers
+&gt;&gt; usually count things, but it is unlikely that there will ever be
+&gt;&gt; enough memory in a machine to overflow a 64 bit int.
+
+&gt; Why do say integers usually count things?  Don't you ever calculate
+&gt; things with integers?  I used to work on projects (cryptography stuff)
+&gt; where calculating was more common than counting and ints were
+&gt; always too short.  Counting is usually done with integers, but you
+&gt; can't turn that round the other way.
+">
+
+We've been through this before with Malcolm, he seems unable to
+comprehend that a lot of peoples experience does not match his. and that
+it is only his personal opinion which he has been unable to give any
+convincing evidence for, let alone proof.
+--
+Flash Gordon
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-07-14T14:29:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Ben Bacarisse&quot; &lt;ben.use ... @bsb.me.uk&gt; wrote in message
+&gt; Why do say integers usually count things?  Don't you ever calculate
+&gt; things with integers?  I used to work on projects (cryptography stuff)
+&gt; where calculating was more common than counting and ints were
+&gt; always too short.  Counting is usually done with integers, but you
+&gt; can't turn that round the other way.
+">
+
+As Flash says, we've been through all this before. I even pulled up some
+Java stats that showed pretty clearly that there were about as many indexed
+array accesses as integer operations in a sample of Java programs. I
+couldn't find a similar study for C, though I didn't try too hard, but there
+is no reason to suppose that C programs are radically different from Java
+ones.
+
+Computers spend most of their cycles moving data from one place to another,
+and most integers are used to count things in the computer's memory. That's
+not every cycle, of course, nor is every single integer a count of
+something - cryptography is an obvious exception, as are intermediate
+results in frequency transforms, or pixel colours. The last leads us to
+another issue, in a typical image function
+
+void setpixel(long *img, int width, int height, int x, int y, long val)
+{
+assert(x &gt;= 0 &amp;&amp; x &lt; width);
+assert*y &gt;= 0 &amp;&amp; y &lt; height);
+img[y*width + x] = height;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+How many integers do we have? You could say width * height, plus a few, or
+you could say six, of which two are pixel values and four intermediates in
+array calculations. I'm counting it as six, which isn't the only answer
+justifiable, but makes sense in the context of how best to define the types
+in a high-level language.
+
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> Keith Thompson &lt;ks...@mib.org&gt; </POSTER>
+<POSTDATE> 2007-07-14T14:52:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Malcolm McLean&quot; &lt;regniz ... @btinternet.com&gt; writes:
+">
+
+[...]
+
+<QUOTE PREVIOUSPOST="
+&gt; My point exactly. We fill the language with gibberish types, which
+&gt; don't actually gain anything because eventually some fucntion
+&gt; somewhere will expect an int.
+&gt; Join the campaign for 64 bit ints and this nonsense will fade away.
+">
+
+Your best approach, I think, would be to take an existing compiler and
+modify it so it supports only the 64-bit int that you want.
+(Presumably you would drop short, long, and long long; I'm guessing
+you'd still want unsigned int, but that's up to you.)  You could then
+use your customized compiler for your own programming.
+
+It's likely that nobody else would be interested in using it.  But if
+you're right, everyone else is wrong, and your approach is better than
+what we've been doing for the past several decades, then an existing
+compiler could be the best way to spread your unusual ideas.
+
+--
+Keith Thompson (The_Other_Keith) ks ... @mib.org  &lt; http://www.ghoti.net/~kst &gt;
+San Diego Supercomputer Center             &lt;*&gt;  &lt; http://users.sdsc.edu/~kst &gt;
+&quot;We must do something.  This is something.  Therefore, we must do this.&quot;
+-- Antony Jay and Jonathan Lynn, &quot;Yes Minister&quot;
+</POST>
+<POST>
+<POSTER> Flash Gordon &lt;s...@flash-gordon.me.uk&gt; </POSTER>
+<POSTDATE> 2007-07-14T15:05:00 </POSTDATE>
+Malcolm McLean wrote, On 14/07/07 19:29:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Ben Bacarisse&quot; &lt;ben.use ... @bsb.me.uk&gt; wrote in message
+&gt;&gt; Why do say integers usually count things?  Don't you ever calculate
+&gt;&gt; things with integers?  I used to work on projects (cryptography stuff)
+&gt;&gt; where calculating was more common than counting and ints were
+&gt;&gt; always too short.  Counting is usually done with integers, but you
+&gt;&gt; can't turn that round the other way.
+
+&gt; As Flash says, we've been through all this before. I even pulled up some
+&gt; Java stats that showed pretty clearly that there were about as many
+&gt; indexed array accesses as integer operations in a sample of Java
+&gt; programs. I couldn't find a similar study for C, though I didn't try too
+&gt; hard, but there is no reason to suppose that C programs are radically
+&gt; different from Java ones.
+">
+
+As was pointed out it explicitly excluded major application domains and
+had other major flaws in trying to prove your point, so it failed to
+prove it. For example there was nothing in the study indicating that the
+extremely small sample was representative.
+
+<QUOTE PREVIOUSPOST="
+&gt; Computers spend most of their cycles moving data from one place to
+&gt; another,
+">
+
+In your opinion. The only code I've come across where that was even
+close to true were dedicated communications cards.
+
+&gt; and most integers are used to count things in the computer's
+
+<QUOTE PREVIOUSPOST="
+&gt; memory.
+">
+
+In your opinion. It is untrue for all of the software I've worked on in
+over 20 years.
+
+The one piece of SW I've come across where I think your claim might be
+true, the original designer admitted when I confronted him that with
+hindsight it was the wrong design, and that my suggestion which would
+have avoided at least three quarters of the moving would have been
+vastly more efficient. However, even then when you add in the other
+processors in the system more processing power (probably by an order of
+magnitude or more, since I'm talking about the other dozen or more
+processors) was spent processing data then moving or counting it.
+
+&gt; That's not every cycle, of course, nor is every single integer a
+
+<QUOTE PREVIOUSPOST="
+&gt; count of something - cryptography is an obvious exception,
+">
+
+As is a lot of image processing (done as integer arithmetic for speed),
+a lot of financial processing (done as integer arithmetic on pennies
+because you are not aloud to have rounding errors), as is almost all the
+software in almost every avionics system I've worked on (imaging
+systems, radar systems, built in test software etc).
+
+&gt; as are
+
+<QUOTE PREVIOUSPOST="
+&gt; intermediate results in frequency transforms, or pixel colours. The last
+&gt; leads us to another issue, in a typical image function
+&gt; void setpixel(long *img, int width, int height, int x, int y, long val)
+&gt; {
+&gt;    assert(x &gt;= 0 &amp;&amp; x &lt; width);
+&gt;    assert*y &gt;= 0 &amp;&amp; y &lt; height);
+&gt;   img[y*width + x] = height;
+&gt; }
+
+&gt; How many integers do we have? You could say width * height, plus a few,
+&gt; or you could say six, of which two are pixel values and four
+&gt; intermediates in array calculations. I'm counting it as six, which isn't
+&gt; the only answer justifiable, but makes sense in the context of how best
+&gt; to define the types in a high-level language.
+">
+
+The integer processing I've done when doing image processing had more
+like several dozen integer operations on pixel values, and only a very
+few on position. Almost all of the algorithms I've worked on or come
+across are designed so that the address calculations are simple
+increments, because there is too much other integer work to do to waist
+cycles on address arithmetic.
+
+One made up example is proof of nothing. Even one real example proves
+nothing about what the major use for integers is.
+
+If you want to say it is anything other than personal opinion then find
+some evidence, otherwise stop claiming your personal opinion is reality.
+I.e. either find a study designed to prove your point or get your
+university to fund one and do it properly. I'm sure the stats department
+can tell you how to design a proper study, including telling you that
+you need to find a large enough *representative* sample.
+
+I'm not the only one to have expressed a dissenting opinion, an I don't
+think I've seen anyone agree with you. Ever considered that if no one
+supports you then the experience of most people here disagrees with you
+and that therefore it might be you that is wrong?
+--
+Flash Gordon
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-07-14T15:22:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Flash Gordon&quot; &lt;s ... @flash-gordon.me.uk&gt; wrote in message
+">
+
+news:ucjnm4xphm.ln2@news.flash-gordon.me.uk ...
+
+<QUOTE PREVIOUSPOST="
+&gt; If you want to say it is anything other than personal opinion then find
+&gt; some evidence, otherwise stop claiming your personal opinion is reality.
+&gt; I.e. either find a study designed to prove your point or get your
+&gt; university to fund one and do it properly. I'm sure the stats department
+&gt; can tell you how to design a proper study, including telling you that you
+&gt; need to find a large enough *representative* sample.
+">
+
+That's a very common fallacy. I can find some objection to your evidence,
+therefore you have offered a &quot;no evidence&quot; position.
+Eg Martha saw Fred do the murder. But Martha is Fred's ex-mistress.
+Therefore there is no evidence against Fred. No. It's plausible that an
+ex-mistress would want to frame someone for murder, but not very likely
+given the risks.
+
+<QUOTE PREVIOUSPOST="
+&gt; I'm not the only one to have expressed a dissenting opinion, an I don't
+&gt; think I've seen anyone agree with you. Ever considered that if no one
+&gt; supports you then the experience of most people here disagrees with you
+&gt; and that therefore it might be you that is wrong?
+">
+
+I haven't seen anyone really demolish my claim that most processor cycles
+are consumed in moving data from place to another. Generally what is offered
+is &quot;I can write a program where that isn't true&quot; or &quot;my subjective opinion
+is otherwise because I do X, which involves a lot of integer calculation&quot;.
+That is weak because we naturally say &quot;the spreadheet is calculating an
+average&quot;. It is, and that is point of the operation. However really it is
+updating a video display.
+
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-07-14T15:27:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Keith Thompson&quot; &lt;ks ... @mib.org&gt; wrote in message
+">
+
+news:lnfy3q6cne.fsf@nuthaus.mib.org ...
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Malcolm McLean&quot; &lt;regniz ... @btinternet.com&gt; writes:
+&gt; [...]
+&gt;&gt; My point exactly. We fill the language with gibberish types, which
+&gt;&gt; don't actually gain anything because eventually some fucntion
+&gt;&gt; somewhere will expect an int.
+&gt;&gt; Join the campaign for 64 bit ints and this nonsense will fade away.
+
+&gt; Your best approach, I think, would be to take an existing compiler and
+&gt; modify it so it supports only the 64-bit int that you want.
+&gt; (Presumably you would drop short, long, and long long; I'm guessing
+&gt; you'd still want unsigned int, but that's up to you.)  You could then
+&gt; use your customized compiler for your own programming.
+
+&gt; It's likely that nobody else would be interested in using it.  But if
+&gt; you're right, everyone else is wrong, and your approach is better than
+&gt; what we've been doing for the past several decades, then an existing
+&gt; compiler could be the best way to spread your unusual ideas.
+">
+
+It is an idea. I could modify the GNU front end, and it would probably be
+quite trivial, though quite hard to understand the code structure.
+However the vast majority of my programming has to work on anything, which
+is partly why having several integer types is such a nuisance.
+
+ints have been able to address all of memory space, with the unimportant
+exception of strings or char arrays which occupy more than 50% of memory, of
+the vast majority of machines up till now. The advent of 64 bits onto the
+desktop will change that.
+
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-07-14T15:49:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Malcolm McLean&quot; &lt;regniz ... @btinternet.com&gt; wrote in message
+">
+
+news:taSdndcPS9wzvgTbRVnyhAA@bt.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Keith Thompson&quot; &lt;ks ... @mib.org&gt; wrote in message
+&gt; news:lnfy3q6cne.fsf@nuthaus.mib.org ...
+&gt;&gt; &quot;Malcolm McLean&quot; &lt;regniz ... @btinternet.com&gt; writes:
+&gt;&gt; [...]
+&gt;&gt;&gt; My point exactly. We fill the language with gibberish types, which
+&gt;&gt;&gt; don't actually gain anything because eventually some fucntion
+&gt;&gt;&gt; somewhere will expect an int.
+&gt;&gt;&gt; Join the campaign for 64 bit ints and this nonsense will fade away.
+
+&gt;&gt; Your best approach, I think, would be to take an existing compiler and
+&gt;&gt; modify it so it supports only the 64-bit int that you want.
+&gt;&gt; (Presumably you would drop short, long, and long long; I'm guessing
+&gt;&gt; you'd still want unsigned int, but that's up to you.)  You could then
+&gt;&gt; use your customized compiler for your own programming.
+
+&gt;&gt; It's likely that nobody else would be interested in using it.  But if
+&gt;&gt; you're right, everyone else is wrong, and your approach is better than
+&gt;&gt; what we've been doing for the past several decades, then an existing
+&gt;&gt; compiler could be the best way to spread your unusual ideas.
+
+&gt; It is an idea. I could modify the GNU front end, and it would probably be
+&gt; quite trivial, though quite hard to understand the code structure.
+&gt; However the vast majority of my programming has to work on anything, &gt;
+&gt; which is partly why having several integer types is such a nuisance.
+">
+
+On second thoughts, the snag is the linker. If integers are passed by
+address, which is by no means uncommon, you have to rebuild every library.
+This only needs doing once, but it means that to be practical the decision
+cannot be taken by one person, because every library has to be run through
+the new compiler. Or you've got to make major changes to gcc so that the 64
+bit C compiler is effectively a new language written on top of existing
+libraries, rather than an interface to those libraries, which could be done
+but isn't a simple as switching the code for &quot;int&quot; and &quot;long long&quot; in the
+front end.
+
+(You've also got the problem of library code not written in C. There will
+never be a good answer to that one.)
+
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> Flash Gordon &lt;s...@flash-gordon.me.uk&gt; </POSTER>
+<POSTDATE> 2007-07-14T15:40:00 </POSTDATE>
+Malcolm McLean wrote, On 14/07/07 20:22:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Flash Gordon&quot; &lt;s ... @flash-gordon.me.uk&gt; wrote in message
+&gt; news:ucjnm4xphm.ln2@news.flash-gordon.me.uk ...
+
+&gt;&gt; If you want to say it is anything other than personal opinion then
+&gt;&gt; find some evidence, otherwise stop claiming your personal opinion is
+&gt;&gt; reality.
+&gt;&gt; I.e. either find a study designed to prove your point or get your
+&gt;&gt; university to fund one and do it properly. I'm sure the stats
+&gt;&gt; department can tell you how to design a proper study, including
+&gt;&gt; telling you that you need to find a large enough *representative* sample.
+
+&gt; That's a very common fallacy. I can find some objection to your
+&gt; evidence, therefore you have offered a &quot;no evidence&quot; position.
+&gt; Eg Martha saw Fred do the murder. But Martha is Fred's ex-mistress.
+&gt; Therefore there is no evidence against Fred. No. It's plausible that an
+&gt; ex-mistress would want to frame someone for murder, but not very likely
+&gt; given the risks.
+">
+
+Your fallacy is that an unrepresentative sample proves something. Most
+people on this group post using male names, therefore most people in the
+world are male.
+
+Several reasons why you have not proved your point have been pointed out
+to you, and the experience of everyone on this group who expresses an
+opinion disagrees with you, so my study, which is based on a sample of C
+programmers in different fields (rather than one person doing a study on
+a different point with Java), by your logic proves that you are wrong.
+
+Alternatively, we have one study for and one against, with more people
+disagreeing with you than agreeing, so the balance of evidence currently
+available suggests it is more likely that you are wrong than correct.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; I'm not the only one to have expressed a dissenting opinion, an I
+&gt;&gt; don't think I've seen anyone agree with you. Ever considered that if
+&gt;&gt; no one supports you then the experience of most people here disagrees
+&gt;&gt; with you and that therefore it might be you that is wrong?
+
+&gt; I haven't seen anyone really demolish my claim that most processor
+&gt; cycles are consumed in moving data from place to another.
+">
+
+So your unrelated study and personal opinion are evidence, but the
+experience of anyone else does not count. I think you have a very
+inflated opinion of yourself.
+
+Had more people on the group agreed with you I would have accepted that
+was supporting evidence (not proof), but I don't think anyone has posted
+supporting you.
+
+&gt; Generally what
+
+<QUOTE PREVIOUSPOST="
+&gt; is offered is &quot;I can write a program where that isn't true&quot; or &quot;my
+&gt; subjective opinion is otherwise because I do X, which involves a lot of
+&gt; integer calculation&quot;.
+">
+
+Misrepresenting what others say does not prove your point either. Others
+are saying that there many years of experience in real programming in
+the real world for real world applications in a variety of application
+domains disagrees with your opinion.
+
+&gt; That is weak because we naturally say &quot;the
+
+<QUOTE PREVIOUSPOST="
+&gt; spreadheet is calculating an average&quot;. It is, and that is point of the
+&gt; operation. However really it is updating a video display.
+">
+
+So you don't could the 50 your 100 integer calculations used to generate
+a value, only the dozen used to calculate where to get and put data?
+
+Your experience and opinion proves your point but the experience and
+opinion of everyone else does not count? Why should anyone take account
+of your experience or opinion if you don't consider the experience of
+others relevant?
+--
+Flash Gordon
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-07-14T16:11:00 </POSTDATE>
+&quot;Flash Gordon&quot; &lt;s ... @flash-gordon.me.uk&gt; wrote
+
+<QUOTE PREVIOUSPOST="
+&gt; So you don't could the 50 your 100 integer calculations used to generate a
+&gt; value, only the dozen used to calculate where to get and put data?
+">
+
+That's right. if we say &quot;most integers are used to count things&quot; then what
+matters is the final contribution of that integer to the program's output.
+Normally it ends up being used as an array index. However there is almost
+always some intermediate calculation, such as an increment and comparison to
+step through a loop. If the intermediate calculations are very elaborate,
+such as a cryptographical app that, ultimately, produces a list of indices
+into a character table, then you could say that the analysis isn't too
+useful because we are not really representing where the integers spend their
+time. In the last example, the fact that the integer will eventually index
+the character table isn't important and we are unlikely to care if it goes
+through a conversion subroutine to put it into the range of the character
+set. However generally the final destination will dominate our choice of
+representation.
+
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> Flash Gordon &lt;s...@flash-gordon.me.uk&gt; </POSTER>
+<POSTDATE> 2007-07-14T16:43:00 </POSTDATE>
+Malcolm McLean wrote, On 14/07/07 21:11:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Flash Gordon&quot; &lt;s ... @flash-gordon.me.uk&gt; wrote
+
+&gt;&gt; So you don't could the 50 your 100 integer calculations used to
+&gt;&gt; generate a value, only the dozen used to calculate where to get and
+&gt;&gt; put data?
+
+&gt; That's right. if we say &quot;most integers are used to count things&quot; then
+&gt; what matters is the final contribution of that integer to the program's
+&gt; output. Normally it ends up being used as an array index. However there
+">
+
+That may be your experience, but it is not mine.
+So you think that in
+a[b+c] = d*e*f*g*h*h;
+most stuff is to do with indexing? I suggest that almost everyone would
+disagree with you. Only 3 operation in the above are to do with the
+indexing, all the rest are calculating a value which has nothing to do
+with indexing. Most of my work actually has simpler expressions for
+indexing (if there is any) and more complex expressions for calculating
+the value.
+
+To take just one real example. Starting with under a dozen numbers which
+were not part of an array the processor spent on average over 20ms doing
+3 dimensional geometry mostly in integer arithmetic for speed and
+probably about 2ms doing a completely separate task which involved a
+1024 element array, but in that task the output was 2 numbers.
+
+<QUOTE PREVIOUSPOST="
+&gt; is almost always some intermediate calculation, such as an increment and
+&gt; comparison to step through a loop.
+">
+
+Ah, you think if there is one loop in a program then all integer
+arithmetic is to do with counting, even if it is nothing to do with the
+loop variable.
+
+&gt; If the intermediate calculations are
+
+<QUOTE PREVIOUSPOST="
+&gt; very elaborate, such as a cryptographical app that, ultimately, produces
+&gt; a list of indices into a character table, then you could say that the
+&gt; analysis isn't too useful because we are not really representing where
+&gt; the integers spend their time. In the last example, the fact that the
+&gt; integer will eventually index the character table isn't important and we
+&gt; are unlikely to care if it goes through a conversion subroutine to put
+&gt; it into the range of the character set. However generally the final
+&gt; destination will dominate our choice of representation.
+">
+
+I will leave someone who knows about cryptography to answer that.
+
+Personally I'm starting to think you are using a very strange definition
+of what counting and array indexing is to come up with your figures. I
+don't consider calculating the value to put in to an array to be
+anything to do with counting or indexing, I only count the calculation
+of where to put it as indexing, which a lot of the time is just one or
+two additions, maybe a multiplication. Calculating the value on the
+other hand is often dozens or more operations.
+--
+Flash Gordon
+</POST>
+<POST>
+<POSTER> Flash Gordon &lt;s...@flash-gordon.me.uk&gt; </POSTER>
+<POSTDATE> 2007-07-14T17:07:00 </POSTDATE>
+Malcolm McLean wrote, On 14/07/07 20:27:
+
+&lt;snip&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; However the vast majority of my programming has to work on anything,
+&gt; which is partly why having several integer types is such a nuisance.
+">
+
+So use the types defined by the standard for the purposes they were
+defined, then it will work. That is why different integer types are
+provided for different purposes! You can even &lt;gasp&gt; use the values in
+limits.h to find out what the limits are at compile time.
+
+Alternatively move to Java where everything is nailed down to be the
+same on all implementations (apart from my Java code that will not run
+on SCO despite doing nothing exotic) however inefficient it is.
+
+<QUOTE PREVIOUSPOST="
+&gt; ints have been able to address all of memory space, with the unimportant
+&gt; exception of strings or char arrays which occupy more than 50% of
+&gt; memory, of the vast majority of machines up till now. The advent of 64
+&gt; bits onto the desktop will change that.
+">
+
+Hold your breath whilst you wait. Of course, this will rewuire holding
+your breath at least until 128 bit processors are used for desktops, but
+that is your problem not mine.
+--
+Flash Gordon
+</POST>
+<POST>
+<POSTER> Army1987 &lt;army1...@NOSPAM.it&gt; </POSTER>
+<POSTDATE> 2007-07-15T06:48:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sat, 14 Jul 2007 19:29:15 +0100, Malcolm McLean wrote:
+
+&gt; &quot;Ben Bacarisse&quot; &lt;ben.use ... @bsb.me.uk&gt; wrote in message
+&gt;&gt; Why do say integers usually count things?  Don't you ever calculate
+&gt;&gt; things with integers?  I used to work on projects (cryptography stuff)
+&gt;&gt; where calculating was more common than counting and ints were
+&gt;&gt; always too short.  Counting is usually done with integers, but you
+&gt;&gt; can't turn that round the other way.
+
+&gt; As Flash says, we've been through all this before. I even pulled up some
+&gt; Java stats that showed pretty clearly that there were about as many indexed
+&gt; array accesses as integer operations in a sample of Java programs. I
+&gt; couldn't find a similar study for C, though I didn't try too hard, but there
+&gt; is no reason to suppose that C programs are radically different from Java
+&gt; ones.
+">
+
+Yes, I'm trying to make a point, but...
+What fraction of integers is used to index arrays in this program?
+#include &lt;stdio.h&gt;
+#include &lt;limits.h&gt;
+#define MAX 108
+#define DIGITS (((CHAR_BIT * (int)sizeof(int) - 1) * 28 - 1)/ 93 + 1)
+#define COLUMNS (79 / (DIGITS + 1))
+#define SQR(x) ((x) * (x))
+int main(void)
+{
+int primes[MAX] = { 2, 3, 5, 7 };
+int *current = &amp;primes[4];
+int k1, k2;
+size_t column = 0;
+for (k1 = 11, k2 = 13; current &lt; primes + MAX; k1 += 6, k2 += 6) {
+int *cursor;
+int flag = 1;
+for (cursor = &amp;primes[2]; SQR(*cursor) &lt;= k1; cursor++)
+if (k1 % *cursor == 0) {
+flag = 0;
+break;
+}
+if (flag)
+*current++ = k1;
+if (current == primes + MAX)
+break;
+flag = 1;
+for (cursor = &amp;primes[2]; SQR(*cursor) &lt;= k2; cursor++)
+if (k2 % *cursor == 0) {
+flag = 0;
+break;
+}
+if (flag)
+*current++ = k2;
+if (k2 &gt; INT_MAX - 6)
+break;
+}
+for (current = primes; current &lt; primes + MAX; current++) {
+printf(&quot;%*d &quot;, DIGITS, *current);
+if (++column &gt;= COLUMNS) {
+putchar('\n');
+column = 0;
+}
+}
+if (column)
+putchar('\n');
+return 0;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+--
+Army1987 (Replace &quot;NOSPAM&quot; with &quot;email&quot;)
+&quot;Never attribute to malice that which can be adequately explained
+by stupidity.&quot; -- R. J. Hanlon (?)
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-07-15T09:19:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Army1987&quot; &lt;army1 ... @NOSPAM.it&gt; wrote in message
+">
+
+news:pan.2007.07.15.09.44.11.498555@NOSPAM.it ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sat, 14 Jul 2007 19:29:15 +0100, Malcolm McLean wrote:
+
+&gt;&gt; &quot;Ben Bacarisse&quot; &lt;ben.use ... @bsb.me.uk&gt; wrote in message
+&gt;&gt;&gt; Why do say integers usually count things?  Don't you ever calculate
+&gt;&gt;&gt; things with integers?  I used to work on projects (cryptography stuff)
+&gt;&gt;&gt; where calculating was more common than counting and ints were
+&gt;&gt;&gt; always too short.  Counting is usually done with integers, but you
+&gt;&gt;&gt; can't turn that round the other way.
+
+&gt;&gt; As Flash says, we've been through all this before. I even pulled up some
+&gt;&gt; Java stats that showed pretty clearly that there were about as many
+&gt;&gt; indexed
+&gt;&gt; array accesses as integer operations in a sample of Java programs. I
+&gt;&gt; couldn't find a similar study for C, though I didn't try too hard, but
+&gt;&gt; there
+&gt;&gt; is no reason to suppose that C programs are radically different from Java
+&gt;&gt; ones.
+&gt; Yes, I'm trying to make a point, but...
+&gt; What fraction of integers is used to index arrays in this program?
+&gt; #include &lt;stdio.h&gt;
+&gt; #include &lt;limits.h&gt;
+&gt; #define MAX 108
+&gt; #define DIGITS (((CHAR_BIT * (int)sizeof(int) - 1) * 28 - 1)/ 93 + 1)
+&gt; #define COLUMNS (79 / (DIGITS + 1))
+&gt; #define SQR(x) ((x) * (x))
+&gt; int main(void)
+&gt; {
+&gt;    int primes[MAX] = { 2, 3, 5, 7 };
+&gt;    int *current = &amp;primes[4];
+&gt;    int k1, k2;
+&gt;    size_t column = 0;
+&gt;    for (k1 = 11, k2 = 13; current &lt; primes + MAX; k1 += 6, k2 += 6) {
+&gt;        int *cursor;
+&gt; int flag = 1;
+&gt;        for (cursor = &amp;primes[2]; SQR(*cursor) &lt;= k1; cursor++)
+&gt;            if (k1 % *cursor == 0) {
+&gt; flag = 0;
+&gt;                break;
+&gt;     }
+&gt;        if (flag)
+&gt;            *current++ = k1;
+&gt; if (current == primes + MAX)
+&gt;     break;
+&gt; flag = 1;
+&gt;        for (cursor = &amp;primes[2]; SQR(*cursor) &lt;= k2; cursor++)
+&gt;            if (k2 % *cursor == 0) {
+&gt; flag = 0;
+&gt;                break;
+&gt; }
+&gt;        if (flag)
+&gt;            *current++ = k2;
+&gt;        if (k2 &gt; INT_MAX - 6)
+&gt;            break;
+&gt;    }
+&gt;    for (current = primes; current &lt; primes + MAX; current++) {
+&gt;        printf(&quot;%*d &quot;, DIGITS, *current);
+&gt;        if (++column &gt;= COLUMNS) {
+&gt;            putchar('\n');
+&gt;            column = 0;
+&gt;        }
+&gt;    }
+&gt;    if (column)
+&gt;        putchar('\n');
+&gt;    return 0;
+&gt; }
+
+Malcolm (upthread)
+&gt;&gt;&gt; Generally what
+&gt;&gt;&gt;is offered is &quot;I can write a program where that isn't true&quot;
+">
+
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> Army1987 &lt;army1...@NOSPAM.it&gt; </POSTER>
+<POSTDATE> 2007-07-15T11:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sun, 15 Jul 2007 14:19:12 +0100, Malcolm McLean wrote:
+
+&gt; &quot;Army1987&quot; &lt;army1 ... @NOSPAM.it&gt; wrote in message
+&gt; news:pan.2007.07.15.09.44.11.498555@NOSPAM.it ...
+&gt;&gt; On Sat, 14 Jul 2007 19:29:15 +0100, Malcolm McLean wrote:
+&gt;&gt;&gt; As Flash says, we've been through all this before. I even pulled up some
+&gt;&gt;&gt; Java stats that showed pretty clearly that there were about as many
+&gt;&gt;&gt; indexed
+&gt;&gt;&gt; array accesses as integer operations in a sample of Java programs. I
+&gt;&gt;&gt; couldn't find a similar study for C, though I didn't try too hard, but
+&gt;&gt;&gt; there
+&gt;&gt;&gt; is no reason to suppose that C programs are radically different from Java
+&gt;&gt;&gt; ones.
+&gt;&gt; Yes, I'm trying to make a point, but...
+&gt;&gt; What fraction of integers is used to index arrays in this program?
+[snip]
+&gt;&gt; int main(void)
+&gt;&gt; {
+&gt;&gt;    int primes[MAX] = { 2, 3, 5, 7 };
+&gt;&gt;    int *current = &amp;primes[4];
+&gt;&gt;    int k1, k2;
+&gt;&gt;    size_t column = 0;
+&gt;&gt;    for (k1 = 11, k2 = 13; current &lt; primes + MAX; k1 += 6, k2 += 6) {
+&gt;&gt;        int *cursor;
+&gt;&gt; int flag = 1;
+&gt;&gt;        for (cursor = &amp;primes[2]; SQR(*cursor) &lt;= k1; cursor++)
+&gt;&gt;            if (k1 % *cursor == 0) {
+&gt;&gt; flag = 0;
+&gt;&gt;                break;
+&gt;&gt;     }
+&gt;&gt;        if (flag)
+&gt;&gt;            *current++ = k1;
+&gt;&gt; if (current == primes + MAX)
+&gt;&gt;     break;
+[snip]
+&gt; Malcolm (upthread)
+&gt;&gt;&gt;&gt; Generally what
+&gt;&gt;&gt;&gt;is offered is &quot;I can write a program where that isn't true&quot;
+">
+
+I don't know about Java, but if it doesn't have pointer arithmetic
+*cursor++ or equivalent, the above program would need far more
+array indexing than C.
+So
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; there
+&gt;&gt;&gt; is no reason to suppose that C programs are radically different from Java
+&gt;&gt;&gt; ones.
+">
+
+is very dubious at least.
+--
+Army1987 (Replace &quot;NOSPAM&quot; with &quot;email&quot;)
+&quot;Never attribute to malice that which can be adequately explained
+by stupidity.&quot; -- R. J. Hanlon (?)
+</POST>
+<POST>
+<POSTER> Ben Bacarisse &lt;ben.use...@bsb.me.uk&gt; </POSTER>
+<POSTDATE> 2007-07-15T13:56:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Malcolm McLean&quot; &lt;regniz ... @btinternet.com&gt; writes:
+&gt; &quot;Ben Bacarisse&quot; &lt;ben.use ... @bsb.me.uk&gt; wrote in message
+&gt;&gt; Why do say integers usually count things?  Don't you ever calculate
+&gt;&gt; things with integers?  I used to work on projects (cryptography stuff)
+&gt;&gt; where calculating was more common than counting and ints were
+&gt;&gt; always too short.  Counting is usually done with integers, but you
+&gt;&gt; can't turn that round the other way.
+
+&gt; As Flash says, we've been through all this before. I even pulled up
+&gt; some Java stats that showed pretty clearly that there were about as
+&gt; many indexed array accesses as integer operations in a sample of Java
+&gt; programs. I couldn't find a similar study for C, though I didn't try
+&gt; too hard, but there is no reason to suppose that C programs are
+&gt; radically different from Java ones.
+">
+
+I don't want to kick this off again (I missed the last one, must have
+been during a break in reading c.l.c) but until Java is the language
+of choice for either OS development or embedded systems there are
+obvious reasons to suppose that C programs are (statistically)
+different from Java ones.
+
+That aside, I just don't know where you are going with your argument.
+I was initially correcting the logical fallacy that &quot;most integers are
+used to count&quot; is not the same as &quot;most counting is done with
+integers&quot;.  If you *are* saying that &quot;most integers are used to count&quot;
+and let us suppose that that turns out to be true, where does that
+take you?  How does that advance the cause for denuding C of its
+(other) integer types?  To put it another way, what is the problem, to
+which universal 64 bit integers is the solution?
+
+As I said, I don't want to kick this off again, so please feel free to
+leave this answered if it was dealt with last time.  I'll look for the
+old thread if I feel I have to know.
+
+--
+Ben.
+</POST>
+<POST>
+<POSTER> Flash Gordon &lt;s...@flash-gordon.me.uk&gt; </POSTER>
+<POSTDATE> 2007-07-15T15:36:00 </POSTDATE>
+Malcolm McLean wrote, On 15/07/07 14:19:
+
+&lt;snip counter-example&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; Malcolm (upthread)
+&gt;&gt;&gt;&gt; Generally what
+&gt;&gt;&gt;&gt; is offered is &quot;I can write a program where that isn't true&quot;
+">
+
+So any counter to your claim does not count because it is &quot;a program
+where that isn't true.&quot;
+--
+Flash Gordon
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-07-15T18:28:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Ben Bacarisse&quot; &lt;ben.use ... @bsb.me.uk&gt; wrote in message
+">
+
+news:87zm1xblf2.fsf@bsb.me.uk ...
+
+<QUOTE PREVIOUSPOST="
+&gt; I don't want to kick this off again (I missed the last one, must have
+&gt; been during a break in reading c.l.c) but until Java is the language
+&gt; of choice for either OS development or embedded systems there are
+&gt; obvious reasons to suppose that C programs are (statistically)
+&gt; different from Java ones.
+">
+
+You can count the number of array access in a Java program by looking at the
+bytecode. It's a bit more difficult with a C compiler. However the two
+languages are very similar - yes occasionally you might want to use a
+pointer rather than an index variable to walk a C array for some reason, and
+there will be a difference between embedded apps and business logic. A
+difference can be statistically highly significant without being either
+large or important. For instance slightly more boys than girls are born, but
+for most practical purposes we can regard the ratio as 50%.
+
+<QUOTE PREVIOUSPOST="
+&gt; That aside, I just don't know where you are going with your argument.
+&gt; I was initially correcting the logical fallacy that &quot;most integers are
+&gt; used to count&quot; is not the same as &quot;most counting is done with
+&gt; integers&quot;.
+">
+
+Viritually all counting is done with integers, and most integers are used to
+count things. Both are true, but one doesn't imply the other. Both are
+important in deciding what representation of integers we need, but the
+second more important.
+
+<QUOTE PREVIOUSPOST="
+&gt; If you *are* saying that &quot;most integers are used to count&quot;
+&gt; and let us suppose that that turns out to be true, where does that
+&gt; take you?  How does that advance the cause for denuding C of its
+&gt; (other) integer types?  To put it another way, what is the problem, to
+&gt; which universal 64 bit integers is the solution?
+">
+
+Let's say we've got hammers in various calibres - sledgehammers, claw
+hammers, stone hammers, and so forth. It transpires that almost always we
+use these hammers for cracking hazelnuts. Whilst it is physically possible
+to crack a nut with almost any hammer, in fact a small to medium hammer is
+by far the most convenient. Armed with this knowledge, it might be a good
+idea to get rid of all the hammers and just buy small to medium hammers.
+
+<QUOTE PREVIOUSPOST="
+
+">
+
+If you want to index an array in C, your integer type needs to be big enough
+to address the whole of memory. So 32 bits on a 4GB machine, 64 bits on a
+larger machine. You'll notice a slight snag. You can't address an array of
+2^63 chars with 64 bits. In practise this is unlikely matter, though that
+consideration dominated the definition of size_t.
+
+<QUOTE PREVIOUSPOST="
+
+">
+
+Hence the campaign for 64 bits calls for int to be a 64 bit type, on 64 bit
+architectures. The other types will essentially melt away because the need
+for them will be so specialised that programmers will just forget they
+exist. However, at least at present, there is no proposal to actually change
+the C standard, merely to maintain the convention that int is the &quot;natural
+integer type&quot; for the machine.
+
+<QUOTE PREVIOUSPOST="
+&gt; As I said, I don't want to kick this off again, so please feel free to
+&gt; leave this answered if it was dealt with last time.  I'll look for the
+&gt; old thread if I feel I have to know.
+">
+
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> Old Wolf &lt;oldw...@inspire.net.nz&gt; </POSTER>
+<POSTDATE> 2007-07-15T18:47:00 </POSTDATE>
+On Jul 14, 6:43 pm, Harald van D k &lt;true ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Malcolm McLean wrote:
+&gt; &gt; ptrdiff_t index; /* should be an int. Horrid horrid horrid */
+
+&gt; &gt;    index = ptr - str;
+&gt; &gt;    printf(&quot;your substring was found at postion %d (0-based)\n&quot;, (int)
+&gt; &gt; index);
+
+&gt; &gt; As an exercise to the regs, why do we need that horrid, horrid cast in the
+&gt; &gt; call to printf?
+
+&gt; You don't. You're already assuming that index will fit in an int, so you can
+&gt; just change the declaration of index to match.
+">
+
+You didn't say this explicitly, so OP may have missed
+it: both versions cause implementation-defined behaviour
+if the value is outside of the range of an int.
+
+I would at least make 'index' an unsigned type, since
+it is meaningless for the index of the string to be
+negative anyway; and then you don't get any UB either.
+</POST>
+<POST>
+<POSTER> Ben Bacarisse &lt;ben.use...@bsb.me.uk&gt; </POSTER>
+<POSTDATE> 2007-07-15T19:12:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Malcolm McLean&quot; &lt;regniz ... @btinternet.com&gt; writes:
+&gt; &quot;Ben Bacarisse&quot; &lt;ben.use ... @bsb.me.uk&gt; wrote in message
+&gt; news:87zm1xblf2.fsf@bsb.me.uk ...
+
+&gt;&gt; I don't want to kick this off again (I missed the last one, must have
+&gt;&gt; been during a break in reading c.l.c) but until Java is the language
+&gt;&gt; of choice for either OS development or embedded systems there are
+&gt;&gt; obvious reasons to suppose that C programs are (statistically)
+&gt;&gt; different from Java ones.
+
+&gt; You can count the number of array access in a Java program by looking
+&gt; at the bytecode. It's a bit more difficult with a C compiler. However
+&gt; the two languages are very similar - yes occasionally you might want
+&gt; to use a pointer rather than an index variable to walk a C array for
+&gt; some reason, and there will be a difference between embedded apps and
+&gt; business logic. A difference can be statistically highly significant
+&gt; without being either large or important. For instance slightly more
+&gt; boys than girls are born, but for most practical purposes we can
+&gt; regard the ratio as 50%.
+">
+
+I don't see any supporting evidence or argument that the differences
+can safely be ignored.  I also think you know what I meant by C
+programs being statistically different to Java ones.  You chose to
+correct my language rather than argue the point.  Are you confident
+that evidence drawn from Java programs applies to C programs?  Franky,
+if you say &quot;yes&quot; I'll drop it because I certainly don't have any
+evident to the contrary.
+
+&lt;snip hammers analogy&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; Hence the campaign for 64 bits calls for int to be a 64 bit type, on
+&gt; 64 bit architectures.
+">
+
+The analogy did not help me.  I am still stuck on this: &quot;what is the
+problem that you are campaigning to solve?&quot;.  I thought you wanted all
+integer types to be 64 bits, but it seems that all you want is for
+undecorated &quot;int&quot; to 64 bits on 64 bit processors.  What problem does
+that solve?
+
+--
+Ben.
+</POST>
+<POST>
+<POSTER> Flash Gordon &lt;s...@flash-gordon.me.uk&gt; </POSTER>
+<POSTDATE> 2007-07-15T19:17:00 </POSTDATE>
+Malcolm McLean wrote, On 15/07/07 23:28:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Ben Bacarisse&quot; &lt;ben.use ... @bsb.me.uk&gt; wrote in message
+&gt; news:87zm1xblf2.fsf@bsb.me.uk ...
+
+&gt;&gt; I don't want to kick this off again (I missed the last one, must have
+&gt;&gt; been during a break in reading c.l.c) but until Java is the language
+&gt;&gt; of choice for either OS development or embedded systems there are
+&gt;&gt; obvious reasons to suppose that C programs are (statistically)
+&gt;&gt; different from Java ones.
+
+&gt; You can count the number of array access in a Java program by looking at
+&gt; the bytecode. It's a bit more difficult with a C compiler. However the
+&gt; two languages are very similar
+">
+
+Yes, I can see how a language is objects (in the OO sense) is similar to
+one without. Also how similar the usage is, with all those device
+drivers and operating systems written in Java. Oh, wait a moment, those
+things are not true, so perhaps they are significantly different after all.
+
+&gt; - yes occasionally you might want to use
+
+<QUOTE PREVIOUSPOST="
+&gt; a pointer rather than an index variable to walk a C array for some
+&gt; reason,
+">
+
+Lots of reasons, and it is quite common in C programming.
+
+&gt; and there will be a difference between embedded apps and
+
+<QUOTE PREVIOUSPOST="
+&gt; business logic.
+">
+
+And all the other types of SW that people have pointed out to you.
+
+&gt; A difference can be statistically highly significant
+
+<QUOTE PREVIOUSPOST="
+&gt; without being either large or important. For instance slightly more boys
+&gt; than girls are born, but for most practical purposes we can regard the
+&gt; ratio as 50%.
+">
+
+Or a statistical difference can be extremely important. You have yet to
+demonstrate that the statistical differences are not important, so the
+above does nothing to forward your argument.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; That aside, I just don't know where you are going with your argument.
+&gt;&gt; I was initially correcting the logical fallacy that &quot;most integers are
+&gt;&gt; used to count&quot; is not the same as &quot;most counting is done with
+&gt;&gt; integers&quot;.
+
+&gt; Viritually all counting is done with integers,
+">
+
+Probably true.
+
+&gt; and most integers are
+
+<QUOTE PREVIOUSPOST="
+&gt; used to count things.
+">
+
+Still unproven and people other than me have said it does not agree with
+their experience. Don't state things as facts when you cannot prove them
+and they disagree with other peoples experience.
+
+&gt; Both are true, but one doesn't imply the other.
+
+No, one is probably true and the other you keep claiming and claiming to
+have proved even though others have shown why you did not succeed in
+proving it and have provided evidence against it.
+
+<QUOTE PREVIOUSPOST="
+&gt; Both are important in deciding what representation of integers we need,
+&gt; but the second more important.
+">
+
+Ah, so something unproven is more important than the inefficiencies that
+switching to a 64 bit int would lead to. If you don't believe there are
+inefficiencies look at the documentation on why the POSIX people decided
+what they did.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; If you *are* saying that &quot;most integers are used to count&quot;
+&gt;&gt; and let us suppose that that turns out to be true, where does that
+&gt;&gt; take you?  How does that advance the cause for denuding C of its
+&gt;&gt; (other) integer types?  To put it another way, what is the problem, to
+&gt;&gt; which universal 64 bit integers is the solution?
+
+&gt; Let's say we've got hammers in various calibres - sledgehammers, claw
+&gt; hammers, stone hammers, and so forth. It transpires that almost always
+&gt; we use these hammers for cracking hazelnuts. Whilst it is physically
+&gt; possible to crack a nut with almost any hammer, in fact a small to
+&gt; medium hammer is by far the most convenient. Armed with this knowledge,
+&gt; it might be a good idea to get rid of all the hammers and just buy small
+&gt; to medium hammers.
+">
+
+No, a sensible person decides to use the correct tool for the job and
+keep the other tools around for when they need them. Otherwise breaking
+up concrete and hammering in fence posts becomes a lot harder.
+
+<QUOTE PREVIOUSPOST="
+&gt; If you want to index an array in C, your integer type needs to be big
+&gt; enough to address the whole of memory. So 32 bits on a 4GB machine, 64
+&gt; bits on a larger machine. You'll notice a slight snag. You can't address
+&gt; an array of 2^63 chars with 64 bits. In practise this is unlikely
+&gt; matter, though that consideration dominated the definition of size_t.
+">
+
+Where does it say this in the rational of the C standard? Or where you
+involved in designing some of the major C compilers? If not, where is
+your evidence for this being the reason? Anyway, you have just found the
+type large enough for your purpose so use it and stop complaining.
+
+<QUOTE PREVIOUSPOST="
+&gt; Hence the campaign for 64 bits calls for int to be a 64 bit type, on 64
+&gt; bit architectures.
+">
+
+A campaign of one and unlikely to do more than mildly irritate a few people.
+
+&gt; The other types will essentially melt away because
+
+<QUOTE PREVIOUSPOST="
+&gt; the need for them will be so specialised that programmers will just
+&gt; forget they exist.
+">
+
+Strange that they have not started melting away yet then, when some
+people here have been using 64 bit processors for decades.
+
+&gt; However, at least at present, there is no proposal to
+
+<QUOTE PREVIOUSPOST="
+&gt; actually change the C standard, merely to maintain the convention that
+&gt; int is the &quot;natural integer type&quot; for the machine.
+">
+
+On common desktop systems 32 bit ints are *also* natural because they
+have registers and operations for them and they can often be handled faster.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; As I said, I don't want to kick this off again, so please feel free to
+&gt;&gt; leave this answered if it was dealt with last time.  I'll look for the
+&gt;&gt; old thread if I feel I have to know.
+">
+
+Ben, I would not worry too much about it, I just find it amusing that
+Malcolm's experience and a study designed to prove something completely
+unrelated which does not prove his point for many reasons count as
+evidence, but decades of experience of others in real world programming
+in a variety of fields does not count as evidence.
+
+Anyone could make the opposite claim to Malcolm and it would be just as
+justified if they just referenced this and the previous thread.
+--
+Flash Gordon
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-07-16T15:14:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Ben Bacarisse&quot; &lt;ben.use ... @bsb.me.uk&gt; wrote in message
+">
+
+news:877ip1b6s3.fsf@bsb.me.uk ...
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Malcolm McLean&quot; &lt;regniz ... @btinternet.com&gt; writes:
+
+&gt; The analogy did not help me.  I am still stuck on this: &quot;what is the
+&gt; problem that you are campaigning to solve?&quot;.  I thought you wanted all
+&gt; integer types to be 64 bits, but it seems that all you want is for
+&gt; undecorated &quot;int&quot; to 64 bits on 64 bit processors.  What problem does
+&gt; that solve?
+">
+
+It means that we almost never need anything other than an undecorated int.
+In the nineteenth century Sir Joseph Whitworth stadnardised screw threads.
+No longer did you need the matching nut for a bolt - all bolts and nuts
+would match. Superficially that might seem a small change. In fact it was
+one of the seminal events of the Industrial Revolution.
+Standardising on 64 bit integers will have a similar effect on the
+productivity of C programmers.
+
+However we've got to move by stages. Just to ban &quot;short&quot; and &quot;long&quot; would
+break too much code. So first they become rare, then deprecated, then they
+map to 64 bits unless you compile with a separate flag. Finally they are
+removed from the language, and it becomes simpler rather than more
+complicated.
+
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> Flash Gordon &lt;s...@flash-gordon.me.uk&gt; </POSTER>
+<POSTDATE> 2007-07-16T15:39:00 </POSTDATE>
+Malcolm McLean wrote, On 16/07/07 20:14:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Ben Bacarisse&quot; &lt;ben.use ... @bsb.me.uk&gt; wrote in message
+&gt; news:877ip1b6s3.fsf@bsb.me.uk ...
+&gt;&gt; &quot;Malcolm McLean&quot; &lt;regniz ... @btinternet.com&gt; writes:
+
+&gt;&gt; The analogy did not help me.  I am still stuck on this: &quot;what is the
+&gt;&gt; problem that you are campaigning to solve?&quot;.  I thought you wanted all
+&gt;&gt; integer types to be 64 bits, but it seems that all you want is for
+&gt;&gt; undecorated &quot;int&quot; to 64 bits on 64 bit processors.  What problem does
+&gt;&gt; that solve?
+
+&gt; It means that we almost never need anything other than an undecorated int.
+&gt; In the nineteenth century Sir Joseph Whitworth stadnardised screw
+&gt; threads.
+">
+
+He did not successfully standardise nuts and bolts though, only certain
+aspects of them.
+
+&gt; No longer did you need the matching nut for a bolt - all bolts
+
+<QUOTE PREVIOUSPOST="
+&gt; and nuts would match.
+">
+
+So why does my M5 nut not fit my M6 bolt?
+
+&gt; Superficially that might seem a small change. In
+
+<QUOTE PREVIOUSPOST="
+&gt; fact it was one of the seminal events of the Industrial Revolution.
+&gt; Standardising on 64 bit integers will have a similar effect on the
+&gt; productivity of C programmers.
+">
+
+The int type not being 64 bits does not slow me down. Not having smaller
+integer types than 64 bits, on the other hand, would significantly slow
+down one of the pieces of SW I work on, SW which is already slow enough
+on some tasks that people wait noticeable amounts of time. The reason it
+is slow is because it is IO (specifically disk) bound, and that is why
+going to a larger integer type would slow it down.
+
+<QUOTE PREVIOUSPOST="
+&gt; However we've got to move by stages. Just to ban &quot;short&quot; and &quot;long&quot;
+&gt; would break too much code. So first they become rare, then deprecated,
+&gt; then they map to 64 bits unless you compile with a separate flag.
+&gt; Finally they are removed from the language, and it becomes simpler
+&gt; rather than more complicated.
+">
+
+Alternatively you can change to a language that already meets your
+requirements since there are plenty to choose from.
+
+Oh, and if you ban having larger integer types than 64 bit (which you
+seem to be proposing) you will also prevent people taking easy advantage
+of newer HW that supports 128 bit or 256 bit operations, something that
+would be very useful in some fields, such as cryptography, and most
+people who use computers these days use some cryptographic SW whether
+they know it or not.
+--
+Flash Gordon
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-07-16T17:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Flash Gordon&quot; &lt;s ... @flash-gordon.me.uk&gt; wrote in message
+">
+
+news:t4usm4xs7p.ln2@news.flash-gordon.me.uk ...
+
+<QUOTE PREVIOUSPOST="
+&gt; So why does my M5 nut not fit my M6 bolt?
+
+&gt; &gt; Superficially that might seem a small change. In
+&gt;&gt; fact it was one of the seminal events of the Industrial Revolution.
+&gt;&gt; Standardising on 64 bit integers will have a similar effect on the
+&gt;&gt; productivity of C programmers.
+
+&gt; The int type not being 64 bits does not slow me down.
+">
+
+That was probably what the craftsmen said. The nut comes screwed onto the
+bolt anyway. Sometimes you need a thick thread for a heavy duty one,
+othertimes a shallow thread is cheaper. Thnen there's always one situation
+where we need M5 bolts instead of M6.
+In fact standardisation realsied something. But it won't necessarily ossify
+the language for all time. Having pared down C to three data types; reals,
+characters and integers, it might make sense to build it up again, maybe by
+adding complexes or symbols like PI, e and surds. If there are about twenty
+integer types that becomes much more difficult. In practise what will happen
+will be that the language will become unwieldy and be abandoned.
+
+<QUOTE PREVIOUSPOST="
+&gt; Oh, and if you ban having larger integer types than 64 bit (which you seem
+&gt; to be proposing) you will also prevent people taking easy advantage of
+&gt; newer HW that supports 128 bit or 256 bit operations, something that would
+&gt; be very useful in some fields, such as cryptography, and most people who
+&gt; use computers these days use some cryptographic SW whether they know it or
+&gt; not.
+">
+
+You probably don't want to write your bignum arithmetical ops in C anyway.
+If you are relying on particular machine instructions being avialable to get
+needed performance, assembly is still the way to go. We are talking about
+literally half a dozen functions, of which only div mod is likely to be
+non-trivial.
+
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> Ben Bacarisse &lt;ben.use...@bsb.me.uk&gt; </POSTER>
+<POSTDATE> 2007-07-16T20:13:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Malcolm McLean&quot; &lt;regniz ... @btinternet.com&gt; writes:
+&gt; &quot;Ben Bacarisse&quot; &lt;ben.use ... @bsb.me.uk&gt; wrote in message
+&gt; news:877ip1b6s3.fsf@bsb.me.uk ...
+&gt;&gt; &quot;Malcolm McLean&quot; &lt;regniz ... @btinternet.com&gt; writes:
+
+&gt;&gt; The analogy did not help me.  I am still stuck on this: &quot;what is the
+&gt;&gt; problem that you are campaigning to solve?&quot;.  I thought you wanted all
+&gt;&gt; integer types to be 64 bits, but it seems that all you want is for
+&gt;&gt; undecorated &quot;int&quot; to 64 bits on 64 bit processors.  What problem does
+&gt;&gt; that solve?
+
+&gt; It means that we almost never need anything other than an undecorated int.
+&gt; In the nineteenth century Sir Joseph Whitworth
+">
+
+Oh dear.  I hate reasoning by analogy.  It has never done anything for
+me.  I always wonder what parts are important and what parts are not.
+
+<QUOTE PREVIOUSPOST="
+&gt; stadnardised screw
+&gt; threads. No longer did you need the matching nut for a bolt - all
+&gt; bolts and nuts would match. Superficially that might seem a small
+&gt; change. In fact it was one of the seminal events of the Industrial
+&gt; Revolution.
+">
+
+And there is why I can't get one with it.  Whitworth standardised the
+thread profile but not the size.  Different BSW sizes do *not* match.
+Even C does better than that -- the different sizes can be assign and
+converted, often without any problems at all.
+
+Whitworth sizing was very important, but why was it extended with
+extra profiles?  Because the BSW profile does not work equally well
+for all materials in all situations.[1]
+
+So from this analogy I conclude that C's plethora of integer sizes is
+already better than the Whitworth ideal (there are fewer of them and
+the sizes are all compatible for assignment and comparison, whereas
+different BSW thread do not &quot;match&quot; in any useful way at all[2]) and
+that we should expect to introduce more, even less compatible, integer
+types in future C to handle new, as yet unforeseen situations.
+
+I don't for a moment believe what either of us thinks we can draw from
+this analogy to an engineering standard -- so don't take this as a
+counter argument.  It is, like yours, a non-argument.[3]
+
+<QUOTE PREVIOUSPOST="
+&gt; Standardising on 64 bit integers will have a similar effect on the
+&gt; productivity of C programmers.
+">
+
+I don't see the problem holding back the C programmers, and I can only
+image that you have no evidence that it is really there or you would
+be pointing to it rather than drawing analogies.
+
+[1] The wide pitch makes BSW threads more prone to vibration.  A
+narrow pitch was required to cope well with modern mechanical
+situations (in particular the &quot;new&quot; automotive industry).
+
+[2] The value of the standardisation was that it no longer mattered
+who you bought a 1/4&quot; nut from.  It did not mean that the different
+nut sizes matched.
+
+[3] Analogies can, sometimes, clarify an confused situation, but they
+rarely help to persuade.
+
+--
+Ben.
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-07-17T17:06:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Ben Bacarisse&quot; &lt;ben.use ... @bsb.me.uk&gt; wrote in message
+">
+
+news:878x9fanva.fsf@bsb.me.uk ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Oh dear.  I hate reasoning by analogy.  It has never done anything for
+&gt; me.  I always wonder what parts are important and what parts are not.
+
+&gt; And there is why I can't get one with it.  Whitworth standardised the
+&gt; thread profile but not the size.  Different BSW sizes do *not* match.
+&gt; Even C does better than that -- the different sizes can be assign and
+&gt; converted, often without any problems at all.
+">
+
+Engineering is psychological as well as physical. When you are dealing with
+human social beahviour, you don't get exactly the same situation twice.
+For instance the Dutch tulip mania and the dot com bubble had some
+similarities, but one wasn't just an exact replay of the other. Tulip mania
+was confined to Holland whilst dot coms were international, for instance.
+However the general rule that stocks can be wildly overbid still holds.
+
+Similarly C standards and bolt standards have their differences. However it
+obvious that C has too many integer types; short, int, long, long long, in
+signed and unsigned, size_t and ptrdiff_t. That's ten standards for
+representing an integer. We also know that standardisation tends to work.
+
+You can't just argue by analogy, of course, but don't ignore the lessons of
+history.
+
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> Keith Thompson &lt;ks...@mib.org&gt; </POSTER>
+<POSTDATE> 2007-07-17T17:28:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Malcolm McLean&quot; &lt;regniz ... @btinternet.com&gt; writes:
+">
+
+[...]
+
+<QUOTE PREVIOUSPOST="
+&gt; Similarly C standards and bolt standards have their
+&gt; differences. However it obvious that C has too many integer types;
+&gt; short, int, long, long long, in signed and unsigned, size_t and
+&gt; ptrdiff_t.
+">
+
+[...]
+
+It's obvious only to you.
+
+--
+Keith Thompson (The_Other_Keith) ks ... @mib.org  &lt; http://www.ghoti.net/~kst &gt;
+San Diego Supercomputer Center             &lt;*&gt;  &lt; http://users.sdsc.edu/~kst &gt;
+&quot;We must do something.  This is something.  Therefore, we must do this.&quot;
+-- Antony Jay and Jonathan Lynn, &quot;Yes Minister&quot;
+</POST>
+<POST>
+<POSTER> Eric Sosman &lt;Eric.Sos...@sun.com&gt; </POSTER>
+<POSTDATE> 2007-07-17T17:41:00 </POSTDATE>
+Malcolm McLean wrote On 07/17/07 17:06,:
+
+<QUOTE PREVIOUSPOST="
+&gt; [...] However it
+&gt; obvious that C has too many integer types; short, int, long, long long, in
+&gt; signed and unsigned, size_t and ptrdiff_t.
+">
+
+Drat!  My obviousness detector must be on the fritz
+again.  Probably forgot to pay my platitude purveyor.
+
+<QUOTE PREVIOUSPOST="
+&gt; That's ten standards for
+&gt; representing an integer.
+">
+
+... to accompany three looping constructs, two ways
+to exit, and a partridge in a pear tree.  What's wrong
+with an expressive vocabulary?  Are you an aficionado of
+Newspeak, perchance?
+
+<QUOTE PREVIOUSPOST="
+&gt; We also know that standardisation tends to work.
+">
+
+Hence the QWERTY keyboard and the NTSC signal.  Not
+to mention VHS, the way English is spel{led,t}, Daylight
+Saving Time, and foot binding.  By definition, &quot;standard&quot;
+is never &quot;superior.&quot;
+
+<QUOTE PREVIOUSPOST="
+&gt; You can't just argue by analogy, of course, but don't ignore the lessons of
+&gt; history.
+">
+
+The lessons of history *are* analogy.
+
+--
+Eric.Sos ... @sun.com
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-07-17T18:19:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Eric Sosman&quot; &lt;Eric.Sos ... @sun.com&gt; wrote in message
+">
+
+news:1184708470.948105@news1nwk ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Malcolm McLean wrote On 07/17/07 17:06,:
+&gt;&gt; [...] However it
+&gt;&gt; obvious that C has too many integer types; short, int, long, long long,
+&gt;&gt; in
+&gt;&gt; signed and unsigned, size_t and ptrdiff_t.
+
+&gt;    Drat!  My obviousness detector must be on the fritz
+&gt; again.  Probably forgot to pay my platitude purveyor.
+
+&gt;&gt; That's ten standards for
+&gt;&gt; representing an integer.
+
+&gt;    ... to accompany three looping constructs, two ways
+&gt; to exit, and a partridge in a pear tree.  What's wrong
+&gt; with an expressive vocabulary?  Are you an aficionado of
+&gt; Newspeak, perchance?
+">
+
+The difference is that the integer representation is the way that functions
+talk to each other.
+No one minds ten different kinds of kettles in the shop. However when you've
+got ten different standards for plugs it becomes a real problem.
+
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> Ian Collins &lt;ian-n...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-17T19:37:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Malcolm McLean wrote:
+
+&gt; &quot;Eric Sosman&quot; &lt;Eric.Sos ... @sun.com&gt; wrote in message
+&gt; news:1184708470.948105@news1nwk ...
+&gt;&gt; Malcolm McLean wrote On 07/17/07 17:06,:
+&gt;&gt;&gt; [...] However it
+&gt;&gt;&gt; obvious that C has too many integer types; short, int, long, long
+&gt;&gt;&gt; long, in
+&gt;&gt;&gt; signed and unsigned, size_t and ptrdiff_t.
+
+&gt;&gt;    Drat!  My obviousness detector must be on the fritz
+&gt;&gt; again.  Probably forgot to pay my platitude purveyor.
+
+&gt;&gt;&gt; That's ten standards for
+&gt;&gt;&gt; representing an integer.
+
+&gt;&gt;    ... to accompany three looping constructs, two ways
+&gt;&gt; to exit, and a partridge in a pear tree.  What's wrong
+&gt;&gt; with an expressive vocabulary?  Are you an aficionado of
+&gt;&gt; Newspeak, perchance?
+
+&gt; The difference is that the integer representation is the way that
+&gt; functions talk to each other.
+&gt; No one minds ten different kinds of kettles in the shop. However when
+&gt; you've got ten different standards for plugs it becomes a real problem.
+">
+
+Unless you have 10 standards for sockets.
+
+Try controlling real hardware with only one integer type.
+
+--
+Ian Collins.
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-07-18T02:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Ian Collins&quot; &lt;ian-n ... @hotmail.com&gt; wrote in message
+">
+
+news:5g525qF3e3g6kU1@mid.individual.net ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Malcolm McLean wrote:
+
+&gt;&gt; &quot;Eric Sosman&quot; &lt;Eric.Sos ... @sun.com&gt; wrote in message
+&gt;&gt; news:1184708470.948105@news1nwk ...
+&gt;&gt;&gt; Malcolm McLean wrote On 07/17/07 17:06,:
+&gt;&gt;&gt;&gt; [...] However it
+&gt;&gt;&gt;&gt; obvious that C has too many integer types; short, int, long, long
+&gt;&gt;&gt;&gt; long, in
+&gt;&gt;&gt;&gt; signed and unsigned, size_t and ptrdiff_t.
+
+&gt;&gt;&gt;    Drat!  My obviousness detector must be on the fritz
+&gt;&gt;&gt; again.  Probably forgot to pay my platitude purveyor.
+
+&gt;&gt;&gt;&gt; That's ten standards for
+&gt;&gt;&gt;&gt; representing an integer.
+
+&gt;&gt;&gt;    ... to accompany three looping constructs, two ways
+&gt;&gt;&gt; to exit, and a partridge in a pear tree.  What's wrong
+&gt;&gt;&gt; with an expressive vocabulary?  Are you an aficionado of
+&gt;&gt;&gt; Newspeak, perchance?
+
+&gt;&gt; The difference is that the integer representation is the way that
+&gt;&gt; functions talk to each other.
+&gt;&gt; No one minds ten different kinds of kettles in the shop. However when
+&gt;&gt; you've got ten different standards for plugs it becomes a real problem.
+
+&gt; Unless you have 10 standards for sockets.
+">
+
+So we've got ten different plugs, and ten different matching sockets. If
+your kitchen socket doesn't match the plug of the kettle you want, you can
+buy an adapter, but there are ninety of them.
+
+<QUOTE PREVIOUSPOST="
+&gt; Try controlling real hardware with only one integer type.
+">
+
+That's partly why I insist on separating IO from logic. It is a lot easier
+said than done.
+But code that interacts with hardware devices using bits is inherently
+non-portable anyway. It won't become any less portable if you use a
+platform-specific extension.
+
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> Flash Gordon &lt;s...@flash-gordon.me.uk&gt; </POSTER>
+<POSTDATE> 2007-07-18T03:22:00 </POSTDATE>
+Malcolm McLean wrote, On 18/07/07 07:40:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Ian Collins&quot; &lt;ian-n ... @hotmail.com&gt; wrote in message
+&gt; news:5g525qF3e3g6kU1@mid.individual.net ...
+&gt;&gt; Malcolm McLean wrote:
+
+&gt;&gt;&gt; &quot;Eric Sosman&quot; &lt;Eric.Sos ... @sun.com&gt; wrote in message
+&gt;&gt;&gt; news:1184708470.948105@news1nwk ...
+&gt;&gt;&gt;&gt; Malcolm McLean wrote On 07/17/07 17:06,:
+&gt;&gt;&gt;&gt;&gt; [...] However it
+&gt;&gt;&gt;&gt;&gt; obvious that C has too many integer types; short, int, long, long
+&gt;&gt;&gt;&gt;&gt; long, in
+&gt;&gt;&gt;&gt;&gt; signed and unsigned, size_t and ptrdiff_t.
+
+&gt;&gt;&gt;&gt;    Drat!  My obviousness detector must be on the fritz
+&gt;&gt;&gt;&gt; again.  Probably forgot to pay my platitude purveyor.
+
+&gt;&gt;&gt;&gt;&gt; That's ten standards for
+&gt;&gt;&gt;&gt;&gt; representing an integer.
+
+&gt;&gt;&gt;&gt;    ... to accompany three looping constructs, two ways
+&gt;&gt;&gt;&gt; to exit, and a partridge in a pear tree.  What's wrong
+&gt;&gt;&gt;&gt; with an expressive vocabulary?  Are you an aficionado of
+&gt;&gt;&gt;&gt; Newspeak, perchance?
+
+&gt;&gt;&gt; The difference is that the integer representation is the way that
+&gt;&gt;&gt; functions talk to each other.
+&gt;&gt;&gt; No one minds ten different kinds of kettles in the shop. However when
+&gt;&gt;&gt; you've got ten different standards for plugs it becomes a real problem.
+
+&gt;&gt; Unless you have 10 standards for sockets.
+
+&gt; So we've got ten different plugs, and ten different matching sockets. If
+&gt; your kitchen socket doesn't match the plug of the kettle you want, you
+&gt; can buy an adapter, but there are ninety of them.
+">
+
+Actually, different types of plugs and sockets for different purposes is
+very useful. It prevents you from plugging the wrong plug in to the
+wrong socket. This is also why in some countries they use different
+plugs for different power ratings to ensure you do not overload the
+current (we even do it in the UK still for certain specific purposes,
+mainly industrial, which is appropriate since so much C is written
+commercially).
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Try controlling real hardware with only one integer type.
+
+&gt; That's partly why I insist on separating IO from logic. It is a lot
+&gt; easier said than done.
+&gt; But code that interacts with hardware devices using bits is inherently
+&gt; non-portable anyway.
+">
+
+Where did Ian mention bits? A vast amount of I/O is integer information
+of an appropriate width.
+
+&gt; It won't become any less portable if you use a
+
+<QUOTE PREVIOUSPOST="
+&gt; platform-specific extension.
+">
+
+Actually, it does. A number of problems have a finite limit on the width
+of data it will ever be worth using, so you use the same unsigned
+integer type throughout the calculation which gives you more range that
+can be useful because of physics, and suddenly all of your code is
+non-portable instead of just the I/O code. Or you simply have a
+processor that cannot efficiently process a larger integer type, and you
+cannot change to a bigger processor because of power and/or thermal
+restrictions (or you care about global warming and so simply do not want
+to use something that uses more power than required and takes more
+energy to manufacture than required).
+
+Also there is the problem of I/O bandwidth on, for example, some
+database applications which are I/O bound, so you want your data type in
+the database to be the smallest type large enough to avoid slowing
+things down. Or you are dealing with a SQL database which provides a 32
+bit integer type (i.e. MS SQL, Oracle, MySQL, PostgresQL...). Or you are
+dealing with interfacing to another language that has a 32 bit integer type.
+
+I've only worked in a few industries in over 20 years, but in most of
+those for most of the time using an integer type larger than 32 bits (or
+often 16 bits, and sometimes 8 bits) would be a waste of resource
+(time/money/power/make-the-project-fail) and only occasionally needed a
+64 bit integer type.
+
+Maybe having multiple types is something some programmers cannot cope
+with, but for those programmers there are typeless languages.
+--
+Flash Gordon
+</POST>
+<POST>
+<POSTER> Ben Bacarisse &lt;ben.use...@bsb.me.uk&gt; </POSTER>
+<POSTDATE> 2007-07-18T06:59:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Malcolm McLean&quot; &lt;regniz ... @btinternet.com&gt; writes:
+&gt; &quot;Ben Bacarisse&quot; &lt;ben.use ... @bsb.me.uk&gt; wrote in message
+&gt; news:878x9fanva.fsf@bsb.me.uk ...
+
+&gt;&gt; Oh dear.  I hate reasoning by analogy.  It has never done anything for
+&gt;&gt; me.  I always wonder what parts are important and what parts are not.
+
+&gt;&gt; And there is why I can't get one with it.  Whitworth standardised the
+&gt;&gt; thread profile but not the size.  Different BSW sizes do *not* match.
+&gt;&gt; Even C does better than that -- the different sizes can be assign and
+&gt;&gt; converted, often without any problems at all.
+
+&gt; Engineering is psychological as well as physical. When you are dealing
+&gt; with human social beahviour, you don't get exactly the same situation
+&gt; twice.
+&gt; For instance the Dutch tulip mania and the dot com bubble had some
+&gt; similarities,
+">
+
+More analogies.  I'd rather see a C program that is hard to write
+unless &quot;int is 64 bits on 64 bit processors&quot; (if that remains your now
+rather narrow clam).  A study showing what effect your proposed
+changes might have on existing code bases (e.g. Linux, FreeBSD,
+openSSL...) on 64 bit machines would also do more good than an appeal
+to Whitworth thread sizing.
+
+<QUOTE PREVIOUSPOST="
+&gt; However it obvious that C has too many integer types;
+">
+
+Ah.  If that means it is not debatable, then I have nothing more to
+add.
+
+--
+Ben.
+</POST>
+<POST>
+<POSTER> Eric Sosman &lt;Eric.Sos...@sun.com&gt; </POSTER>
+<POSTDATE> 2007-07-18T10:40:00 </POSTDATE>
+Malcolm McLean wrote On 07/17/07 18:19,:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Eric Sosman&quot; &lt;Eric.Sos ... @sun.com&gt; wrote in message
+&gt; news:1184708470.948105@news1nwk ...
+
+&gt;&gt;Malcolm McLean wrote On 07/17/07 17:06,:
+
+&gt;&gt;&gt;[...] However it
+&gt;&gt;&gt;obvious that C has too many integer types; short, int, long, long long,
+&gt;&gt;&gt;in
+&gt;&gt;&gt;signed and unsigned, size_t and ptrdiff_t.
+
+&gt;&gt;   Drat!  My obviousness detector must be on the fritz
+&gt;&gt;again.  Probably forgot to pay my platitude purveyor.
+
+&gt;&gt;&gt;That's ten standards for
+&gt;&gt;&gt;representing an integer.
+
+&gt;&gt;   ... to accompany three looping constructs, two ways
+&gt;&gt;to exit, and a partridge in a pear tree.  What's wrong
+&gt;&gt;with an expressive vocabulary?  Are you an aficionado of
+&gt;&gt;Newspeak, perchance?
+
+&gt; The difference is that the integer representation is the way that functions
+&gt; talk to each other.
+">
+
+First: Functions do not &quot;talk to each other&quot; through
+integers alone.  (If you doubt this, please explain how
+strstr() communicates with its caller.)  Second: Even if
+integers were the official Esperanto of functiondom, why
+should the language have only one word?
+
+<QUOTE PREVIOUSPOST="
+&gt; No one minds ten different kinds of kettles in the shop. However when you've
+&gt; got ten different standards for plugs it becomes a real problem.
+">
+
+Most people think it a Good Thing, not &quot;a real problem,&quot;
+that Ethernet cables won't plug into the power mains.
+
+--
+Eric.Sos ... @sun.com
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-07-18T17:02:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Eric Sosman&quot; &lt;Eric.Sos ... @sun.com&gt; wrote in message
+
+&gt; First: Functions do not &quot;talk to each other&quot; through
+&gt; integers alone.  (If you doubt this, please explain how
+&gt; strstr() communicates with its caller.)  Second: Even if
+&gt; integers were the official Esperanto of functiondom, why
+&gt; should the language have only one word?
+">
+
+Take this:
+void getcursor(unsigned char *x, unsigned short *y)
+
+Here we are specifying that caller and callee shall communicate with each
+other using a certain standard for specifying integer, namely the C short
+representation. If caller passes the address of an int the compiler ought to
+complain. More subtly, if he passes the address of a sint16 then he is also
+committing an error.
+
+There is no reason for using different representations of integers other
+than machine efficiency. They are all just whole numbers. However on a 64
+bit machine, 64 bit integers are efficient.
+
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> Eric Sosman &lt;Eric.Sos...@sun.com&gt; </POSTER>
+<POSTDATE> 2007-07-18T17:50:00 </POSTDATE>
+Malcolm McLean wrote On 07/18/07 17:02,:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Eric Sosman&quot; &lt;Eric.Sos ... @sun.com&gt; wrote in message
+
+&gt;&gt;First: Functions do not &quot;talk to each other&quot; through
+&gt;&gt;integers alone.  (If you doubt this, please explain how
+&gt;&gt;strstr() communicates with its caller.)  Second: Even if
+&gt;&gt;integers were the official Esperanto of functiondom, why
+&gt;&gt;should the language have only one word?
+
+&gt; Take this:
+">
+
+Why not the explanation of how strstr() and its caller
+&quot;talk to&quot; each other via integers?  Do you find the answer
+an Inconvenient Truth?
+
+<QUOTE PREVIOUSPOST="
+&gt; void getcursor(unsigned char *x, unsigned short *y)
+
+&gt; Here we are specifying that caller and callee shall communicate with each
+&gt; other using a certain standard for specifying integer, namely the C short
+&gt; representation. If caller passes the address of an int the compiler ought to
+&gt; complain. More subtly, if he passes the address of a sint16 then he is also
+&gt; committing an error.
+">
+
+The compiler *will* complain, in both cases, assuming
+a prototype is in scope at the point of the call.
+
+<QUOTE PREVIOUSPOST="
+&gt; There is no reason for using different representations of integers other
+&gt; than machine efficiency. They are all just whole numbers. However on a 64
+&gt; bit machine, 64 bit integers are efficient.
+">
+
+One of the biggest problems in modern machine design
+is dealing with the fact that the CPU reads and writes data
+much faster than the memory can deliver and absorb it.  Even
+with multiple levels of very expensive cache to buffer the
+speed mismatch, a CPU running at &quot;100% utilization&quot; is often
+spending more than half its cycles in wait state, just idling
+while the memory system trudges slowly along.
+
+Using 16-bit shorts instead of your 64-bit whatevers, I
+can get four times as many numbers to and from memory per
+cache transaction.  Between memory stalls, my CPU executes
+four times as many instructions as yours -- or to turn it
+around, my CPU can get through a bazillion computations with
+one-quarter the number of memory stalls yours will incur.
+
+... and you claim your CPU is running &quot;efficiently?&quot;
+
+Real-world example: I'm transcribing some of my ancient
+LP vinyl records onto CD via my home computer's sound card.
+The CD recording format specifies 16-bit samples, and that's
+what the sound card delivers, at 44100 samples per second
+for each of two stereo channels.  One side of an LP runs
+about forty minutes, so my sound card produces about 400MB
+per side.  I've got 1.5GB of RAM, so even with Microbloat
+and lots of other goo in the system there's still plenty of
+room to soak up the data.
+
+But with your &quot;efficiency&quot; ideas, I'd have 1600MB to
+deal with instead.  Not too terrible, because the data rate
+of 40MB/s is probably something my disk can handle -- it'd
+be nicer if I only had to worry about 10MB/s, but Malcolm
+says it's better to spend the extra 30MB/s to make sure I've
+got plenty of copies of the sign bits.
+
+... and you claim this is &quot;efficient?&quot;
+
+Then comes the editing, cleanup, track separation, and
+so on, where the recorded data gets read in and massaged by
+software.  Instead of a sound file that fits entirely in
+memory, I've got a file that cannot be processed without
+going back and forth to the page device all the time.  Now
+instead of waiting (say) 200ns to get data from RAM, my
+CPU is waiting (say) 10ms to get it from disk -- a small
+matter of fifty thousand times longer.
+
+... and you claim this is &quot;efficient?&quot;
+
+Dogma has overtaken reason.
+
+--
+Eric.Sos ... @sun.com
+</POST>
+<POST>
+<POSTER> Flash Gordon &lt;s...@flash-gordon.me.uk&gt; </POSTER>
+<POSTDATE> 2007-07-18T18:11:00 </POSTDATE>
+Eric Sosman wrote, On 18/07/07 22:50:
+
+<QUOTE PREVIOUSPOST="
+&gt; Malcolm McLean wrote On 07/18/07 17:02,:
+&gt;&gt; &quot;Eric Sosman&quot; &lt;Eric.Sos ... @sun.com&gt; wrote in message
+
+&gt;&gt;&gt; First: Functions do not &quot;talk to each other&quot; through
+&gt;&gt;&gt; integers alone.  (If you doubt this, please explain how
+&gt;&gt;&gt; strstr() communicates with its caller.)  Second: Even if
+&gt;&gt;&gt; integers were the official Esperanto of functiondom, why
+&gt;&gt;&gt; should the language have only one word?
+
+&gt;&gt; Take this:
+
+&gt;     Why not the explanation of how strstr() and its caller
+&gt; &quot;talk to&quot; each other via integers?  Do you find the answer
+&gt; an Inconvenient Truth?
+">
+
+I thought it was a good point as well. Shame we've not got an answer.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; void getcursor(unsigned char *x, unsigned short *y)
+
+&gt;&gt; Here we are specifying that caller and callee shall communicate with each
+&gt;&gt; other using a certain standard for specifying integer, namely the C short
+&gt;&gt; representation. If caller passes the address of an int the compiler ought to
+&gt;&gt; complain. More subtly, if he passes the address of a sint16 then he is also
+&gt;&gt; committing an error.
+
+&gt;     The compiler *will* complain, in both cases, assuming
+&gt; a prototype is in scope at the point of the call.
+">
+
+You forgot that a lot of types are to indicate different usage. This is
+more useful in a more strongly typed language, but it still documents
+usage and allows for type change if appropriate. Although in this case I
+would expect to see either
+void getcursor(struct coord *cursor)
+or
+struct coord getcursor(void)
+
+No integer in sight.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; There is no reason for using different representations of integers other
+&gt;&gt; than machine efficiency. They are all just whole numbers. However on a 64
+&gt;&gt; bit machine, 64 bit integers are efficient.
+
+&gt;     One of the biggest problems in modern machine design
+&gt; is dealing with the fact that the CPU reads and writes data
+&gt; much faster than the memory can deliver and absorb it.  Even
+">
+
+&lt;snip good example&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt;     ... and you claim this is &quot;efficient?&quot;
+
+&gt;     Dogma has overtaken reason.
+">
+
+Indeed it has with Malcolm. It's not even a very good dogma in the first
+place.
+--
+Flash Gordon
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,3981 @@
+<DOC>
+<DOCID> eng-NG-31-135587-9748148 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-13T21:22:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Bailey's &quot;two pass&quot; FFT algorithm question
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-10-13T21:22:00 </POSTDATE>
+Hi.
+
+I was working on an implementation of Bailey's &quot;two pass&quot; FFT
+algorithm for doing FFTs on disk, intended to be used for
+multiplication, and am wondering: In the paper (&quot;FFTs in external or
+hierarchical memory&quot;), it is said the matrix needs to be stored
+&quot;columnwise&quot;. But for FFT multiplication, does not it need to be
+stored row-wise? Otherwise you need an EXPENSIVE (i.e. disk intensive
+(&quot;thrashing&quot; like crazy), and eats a lot of time) transpose to change
+it over. Is there a version of the algorithm that would operate on a
+row-wise matrix? If so, how does it work?
+</POST>
+<POST>
+<POSTER> rem6...@yahoo.com (Robert Maas, see http://tinyurl.com/uh3t) </POSTER>
+<POSTDATE> 2007-10-14T05:06:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; From:  mike3 &lt;mike4 ... @yahoo.com&gt;
+&gt; ... it is said the matrix needs to be stored &quot;columnwise&quot;. But
+&gt; for FFT multiplication, does not it need to be stored row-wise?
+&gt; Otherwise you need an EXPENSIVE (i.e. disk intensive (&quot;thrashing&quot;
+&gt; like crazy), and eats a lot of time) transpose to change it over.
+">
+
+Don't you know how to sort data according to a new key?
+The data is sorted per row. You want it sorted per column instead.
+Or vice versa. You can go back and forth as needed for overall algorithm
+Read Knuth &quot;Art of Computer Programming&quot; chapter on sorting,
+in particular the N-way external (disk) sort-by-merging.
+Or find the same info in Wikipedia or whatever via Google search.
+
+By the way one of my significant accomplishments on Macintosh was
+to write a program that scanned the hard disk or a diskette to
+build up a hierarchial structure representing the directory
+structure, and later to flatten the complete collection of such
+directory listings for the hard disk and several hundred diskettes
+to one record per file, and then sort on file name in order to
+bring all copies/versions of the same file together so that my
+program could warn me if there was a file without any backup or if
+there was a file with too many old versions still sitting around on
+scattered diskettes.
+
+--
+Nobody in their right mind likes spammers, nor their automated assistants.
+To open an account here, you must demonstrate you're not one of them.
+Please spend a few seconds to try to read the text-picture in this box:
+
+/--------------------------------------------------------------\
+|       ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,   ,      |
+|      /|  -+- /|  -+- /|  -+- /|  -+- /|  -+- /|  -+- /|      |
+|      .|.  '  .|.  '  .|.  '  .|.  '  .|.  '  .|.  '  .|.     |
+\-(Rendered by means of &lt; http://www.schnoggo.com/figlet.html &gt;)-/
+
+Then enter your best guess of the answer (3-8 characters) into this TextField:
++--------+
+|        |
++--------+
+(Answer must be a *word*, not a numeral.)
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-10-14T16:24:00 </POSTDATE>
+On Oct 14, 3:06 am, rem6 ... @yahoo.com (Robert Maas, see http://tinyurl.com/uh3t )
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; From:  mike3 &lt;mike4 ... @yahoo.com&gt;
+&gt; &gt; ... it is said the matrix needs to be stored &quot;columnwise&quot;. But
+&gt; &gt; for FFT multiplication, does not it need to be stored row-wise?
+&gt; &gt; Otherwise you need an EXPENSIVE (i.e. disk intensive (&quot;thrashing&quot;
+&gt; &gt; like crazy), and eats a lot of time) transpose to change it over.
+
+&gt; Don't you know how to sort data according to a new key?
+&gt; The data is sorted per row. You want it sorted per column instead.
+&gt; Or vice versa. You can go back and forth as needed for overall algorithm
+&gt; Read Knuth &quot;Art of Computer Programming&quot; chapter on sorting,
+&gt; in particular the N-way external (disk) sort-by-merging.
+&gt; Or find the same info in Wikipedia or whatever via Google search.
+">
+
+So it's a transpose, or at least equivalent to one. But how many
+passes does it require over the data? According to the article
+on Wikipedia, mergesort takes lg n passes. When n = 33,554,432
+as in my program, that equates to 25 passes. Holy cow! 25
+passes over 128 megabytes of data?!  And you need not one, but
+a whopping *3* mergesorts: one for number A, one for B, then
+another to return the product to numeric order after you get done
+with the FFTs!
+
+This seems impractical for my application. That's why I'm wondering
+if there is a way to rework Bailey's algorithm to work in row-
+major order instead of column-major.
+</POST>
+<POST>
+<POSTER> &quot;Steven G. Johnson&quot; &lt;stev...@alum.mit.edu&gt; </POSTER>
+<POSTDATE> 2007-10-15T13:03:00 </POSTDATE>
+On Oct 13, 9:22 pm, mike3 &lt;mike4 ... @yahoo.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I was working on an implementation of Bailey's &quot;two pass&quot; FFT
+&gt; algorithm for doing FFTs on disk, intended to be used for
+&gt; multiplication, and am wondering: In the paper (&quot;FFTs in external or
+&gt; hierarchical memory&quot;), it is said the matrix needs to be stored
+&gt; &quot;columnwise&quot;. But for FFT multiplication, does not it need to be
+&gt; stored row-wise? Otherwise you need an EXPENSIVE (i.e. disk intensive
+&gt; (&quot;thrashing&quot; like crazy), and eats a lot of time) transpose to change
+&gt; it over. Is there a version of the algorithm that would operate on a
+&gt; row-wise matrix? If so, how does it work?
+">
+
+No.  This is (as far as I can tell) an intrinsic property of FFT
+algorithms: especially if you want to operate with in-order input and
+output, then you must accept non-consecutive memory access (or,
+equivalently, transpositions).  That's why Bailey's &quot;six-step&quot;
+algorithm has so many transpositions (to get the data consecutive on
+disk so that you can read it without thrashing).
+
+However, there has been a fair amount of work on out-of-core
+transposition, and you can certainly do better than transposing
+element-by-element.  Google for it; see also the references at the end
+of
+http://en.wikipedia.org/wiki/In-place_matrix_transposition
+
+Regards,
+Steven G. Johnson
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-10-15T14:19:00 </POSTDATE>
+On Oct 15, 11:03 am, &quot;Steven G. Johnson&quot; &lt;stev ... @alum.mit.edu&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Oct 13, 9:22 pm, mike3 &lt;mike4 ... @yahoo.com&gt; wrote:
+
+&gt; &gt; I was working on an implementation of Bailey's &quot;two pass&quot; FFT
+&gt; &gt; algorithm for doing FFTs on disk, intended to be used for
+&gt; &gt; multiplication, and am wondering: In the paper (&quot;FFTs in external or
+&gt; &gt; hierarchical memory&quot;), it is said the matrix needs to be stored
+&gt; &gt; &quot;columnwise&quot;. But for FFT multiplication, does not it need to be
+&gt; &gt; stored row-wise? Otherwise you need an EXPENSIVE (i.e. disk intensive
+&gt; &gt; (&quot;thrashing&quot; like crazy), and eats a lot of time) transpose to change
+&gt; &gt; it over. Is there a version of the algorithm that would operate on a
+&gt; &gt; row-wise matrix? If so, how does it work?
+
+&gt; No.  This is (as far as I can tell) an intrinsic property of FFT
+&gt; algorithms: especially if you want to operate with in-order input and
+&gt; output, then you must accept non-consecutive memory access (or,
+&gt; equivalently, transpositions).  That's why Bailey's &quot;six-step&quot;
+&gt; algorithm has so many transpositions (to get the data consecutive on
+&gt; disk so that you can read it without thrashing).
+
+&gt; However, there has been a fair amount of work on out-of-core
+&gt; transposition, and you can certainly do better than transposing
+&gt; element-by-element.  Google for it; see also the references at the end
+&gt; of
+&gt; http://en.wikipedia.org/wiki/In-place_matrix_transposition
+">
+
+But at least in this case you need to only do 3 transposes for the
+whole operation: two to transpose the two input data sets, and a
+third to transpose the results. That's a lot better than doing 3
+transposes per transform, which gives 9 for a single batch of
+FFTs for the multiplication.
+
+Anyway, once the data _is_ ordered &quot;columnwise&quot;, then
+you do only need sequential accesses to it.
+
+However, even with this, can one still expect lots and lots
+of disk thrashing for the transpose? The reason why I'm
+asking is because I'm using this for a program to compute
+digits of pi, and there's programs out there that seldom
+thrash the disk.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; Regards,
+&gt; Steven G. Johnson
+">
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-10-16T20:57:00 </POSTDATE>
+On Oct 14, 3:06 am, rem6 ... @yahoo.com (Robert Maas, see http://tinyurl.com/uh3t )
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; From:  mike3 &lt;mike4 ... @yahoo.com&gt;
+&gt; &gt; ... it is said the matrix needs to be stored &quot;columnwise&quot;. But
+&gt; &gt; for FFT multiplication, does not it need to be stored row-wise?
+&gt; &gt; Otherwise you need an EXPENSIVE (i.e. disk intensive (&quot;thrashing&quot;
+&gt; &gt; like crazy), and eats a lot of time) transpose to change it over.
+
+&gt; Don't you know how to sort data according to a new key?
+&gt; The data is sorted per row. You want it sorted per column instead.
+&gt; Or vice versa. You can go back and forth as needed for overall algorithm
+&gt; Read Knuth &quot;Art of Computer Programming&quot; chapter on sorting,
+&gt; in particular the N-way external (disk) sort-by-merging.
+&gt; Or find the same info in Wikipedia or whatever via Google search.
+
+&gt; By the way one of my significant accomplishments on Macintosh was
+&gt; to write a program that scanned the hard disk or a diskette to
+&gt; build up a hierarchial structure representing the directory
+&gt; structure, and later to flatten the complete collection of such
+&gt; directory listings for the hard disk and several hundred diskettes
+&gt; to one record per file, and then sort on file name in order to
+&gt; bring all copies/versions of the same file together so that my
+&gt; program could warn me if there was a file without any backup or if
+&gt; there was a file with too many old versions still sitting around on
+&gt; scattered diskettes.
+">
+
+Alright, I've tried implementing the merge transposition
+algorithm. But it still accesses the disk very heavily -- some
+merge passes take like 4x longer than the quickest ones, with
+very heavy disk access. I don't think there's any more &quot;textbook&quot;
+a definition of &quot;thrashing&quot; than that -- it's wasting time accessing
+the resource (the disk), so it's &quot;thrashing&quot; the resource! The
+test was done with a 4096 x 4096 transpose and 128 MB of
+memory allocated to doing it(!). On a good run it'll get maybe
+13 sec. total, on a bad one it'll get 22. Since those pi programs
+I've seen (QuickPi, PiFast, etc.) do not thrash the hard drive
+anywhere near this much there's _got_ to be a way to do this stuff
+without thrashing, I just can't figure out what it is!
+
+Here's the code:
+
+http://www.mediafire.com/download.php?0y3amgzhde5
+</POST>
+<POST>
+<POSTER> moi &lt;r...@invalid.address.org&gt; </POSTER>
+<POSTDATE> 2007-10-17T12:22:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Tue, 16 Oct 2007 17:57:59 -0700, mike3 wrote:
+
+&gt; Alright, I've tried implementing the merge transposition algorithm. But
+&gt; it still accesses the disk very heavily -- some merge passes take like
+&gt; 4x longer than the quickest ones, with very heavy disk access. I don't
+&gt; think there's any more &quot;textbook&quot; a definition of &quot;thrashing&quot; than that
+&gt; -- it's wasting time accessing the resource (the disk), so it's
+&gt; &quot;thrashing&quot; the resource! The test was done with a 4096 x 4096 transpose
+&gt; and 128 MB of memory allocated to doing it(!). On a good run it'll get
+&gt; maybe 13 sec. total, on a bad one it'll get 22. Since those pi programs
+&gt; I've seen (QuickPi, PiFast, etc.) do not thrash the hard drive anywhere
+&gt; near this much there's _got_ to be a way to do this stuff without
+&gt; thrashing, I just can't figure out what it is!
+
+&gt; Here's the code:
+
+&gt; http://www.mediafire.com/download.php?0y3amgzhde5
+">
+
+Even an &quot;optimal&quot; transpose on a disk-based matrix needs one read() and
+one write() for each diskblock. For a 50MB/s I/O bandwidth this means you
+can fetch and store 25MB/s, so you'll need approx 5 seconds for a 128 MB
+file. My guess is there is enough memory and CPU bandwidth to actually
+perfom the transpose in these 5 secs.
+(BTW if your data happens to be in the diskbuffercache, your I/O is
+effectively without a cost.)
+
+I read some of your code, and I think you can improve it by using mmap()
+(this has been suggested before) instead of malloc/read/write/free. That
+will avoid the double buffering, that you seem to suffer from.
+(BTW: don't cast malloc()s returnvalue; include &lt;stdlib.h&gt; ; )
+It would also _simplify_ your code (no more buffer management; no more
+malloc/free)
+
+For mmap() to work optimally for you, I'd suggest working in pagesize-
+chunks, typically 4096 bytes, which would accommodate 32*32*sizeof(int),
+iff sizeof(int) == 4.
+
+HTH,
+AvK
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-10-17T18:44:00 </POSTDATE>
+On Oct 17, 10:22 am, moi &lt;r ... @invalid.address.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Tue, 16 Oct 2007 17:57:59 -0700, mike3 wrote:
+
+&gt; &gt; Alright, I've tried implementing the merge transposition algorithm. But
+&gt; &gt; it still accesses the disk very heavily -- some merge passes take like
+&gt; &gt; 4x longer than the quickest ones, with very heavy disk access. I don't
+&gt; &gt; think there's any more &quot;textbook&quot; a definition of &quot;thrashing&quot; than that
+&gt; &gt; -- it's wasting time accessing the resource (the disk), so it's
+&gt; &gt; &quot;thrashing&quot; the resource! The test was done with a 4096 x 4096 transpose
+&gt; &gt; and 128 MB of memory allocated to doing it(!). On a good run it'll get
+&gt; &gt; maybe 13 sec. total, on a bad one it'll get 22. Since those pi programs
+&gt; &gt; I've seen (QuickPi, PiFast, etc.) do not thrash the hard drive anywhere
+&gt; &gt; near this much there's _got_ to be a way to do this stuff without
+&gt; &gt; thrashing, I just can't figure out what it is!
+
+&gt; &gt; Here's the code:
+
+&gt; &gt; http://www.mediafire.com/download.php?0y3amgzhde5
+
+&gt; Even an &quot;optimal&quot; transpose on a disk-based matrix needs one read() and
+&gt; one write() for each diskblock. For a 50MB/s I/O bandwidth this means you
+&gt; can fetch and store 25MB/s, so you'll need approx 5 seconds for a 128 MB
+&gt; file. My guess is there is enough memory and CPU bandwidth to actually
+&gt; perfom the transpose in these 5 secs.
+&gt; (BTW if your data happens to be in the diskbuffercache, your I/O is
+&gt; effectively without a cost.)
+">
+
+So then the question comes: how to do this &quot;optimal&quot; transpose? Since
+the thing makes several passes over the data of varying lengths, could
+there be a way to rework it so it does all that in RAM, and hence only
+does one read/write disk I/O pass over the entire file (which would
+dramatically decrease the transpose time -- 5 secs sounds really,
+really good and would definitely meet my performance requirements.).
+Any ideas as to how to do that?
+
+<QUOTE PREVIOUSPOST="
+&gt; I read some of your code, and I think you can improve it by using mmap()
+&gt; (this has been suggested before) instead of malloc/read/write/free. That
+&gt; will avoid the double buffering, that you seem to suffer from.
+">
+
+Would that obviate the need for trying to figure out how to work
+in doing multiple merge passes in RAM?
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; (BTW: don't cast malloc()s returnvalue; include &lt;stdlib.h&gt; ; )
+&gt; It would also _simplify_ your code (no more buffer management; no more
+&gt; malloc/free)
+
+&gt; For mmap() to work optimally for you, I'd suggest working in pagesize-
+&gt; chunks, typically 4096 bytes, which would accommodate 32*32*sizeof(int),
+&gt; iff sizeof(int) == 4.
+
+&gt; HTH,
+&gt; AvK
+">
+</POST>
+<POST>
+<POSTER> moi &lt;r...@invalid.address.org&gt; </POSTER>
+<POSTDATE> 2007-10-17T19:49:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Wed, 17 Oct 2007 15:44:15 -0700, mike3 wrote:
+
+&gt; So then the question comes: how to do this &quot;optimal&quot; transpose? Since
+&gt; the thing makes several passes over the data of varying lengths, could
+&gt; there be a way to rework it so it does all that in RAM, and hence only
+&gt; does one read/write disk I/O pass over the entire file (which would
+&gt; dramatically decrease the transpose time -- 5 secs sounds really, really
+&gt; good and would definitely meet my performance requirements.). Any ideas
+&gt; as to how to do that?
+">
+
+The &quot;optimal&quot; thing is what I call &quot;one-touch football&quot;:
+once you have something in RAM (could be mmap()ed, but could just as well
+be explicitly buffered) do *everything* that you want to do with it,
+and avoid the need to re-fetch it.
+For the transpose-case this means, you'll have to splice your matrix into
+chewable (preferably pagesize) blocks and flip-and-swap these.
+
+For example, consider the following matrix:
+A B
+C D
+(A,B,C,D are all 32*32 submatrices)
+
+The transpose of this is:
+At Ct
+Bt Dt
+
+So, you only have to transpose each submatrix and swap B and C.
+This process has a &quot;memory footprint&quot; of one or two submatrices
+(plus some tempspace, maximally one submatrix)
+This way, you can avoid one submatrix being referenced more than once:
+every block is only needed once.
+{
+read A; flip A; write A;
+read B; read C; flip B; flip C; swap B,C; write B; write C;
+read D; flip D; write D;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+For the mmap()ed case, this reduces to
+{
+mmap(...);
+flip A;
+flip B; flip C; swap B,C;
+flip D;
+munmap(...);
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+HTH,
+AvK
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-10-18T01:25:00 </POSTDATE>
+On Oct 17, 5:49 pm, moi &lt;r ... @invalid.address.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Wed, 17 Oct 2007 15:44:15 -0700, mike3 wrote:
+
+&gt; &gt; So then the question comes: how to do this &quot;optimal&quot; transpose? Since
+&gt; &gt; the thing makes several passes over the data of varying lengths, could
+&gt; &gt; there be a way to rework it so it does all that in RAM, and hence only
+&gt; &gt; does one read/write disk I/O pass over the entire file (which would
+&gt; &gt; dramatically decrease the transpose time -- 5 secs sounds really, really
+&gt; &gt; good and would definitely meet my performance requirements.). Any ideas
+&gt; &gt; as to how to do that?
+
+&gt; The &quot;optimal&quot; thing is what I call &quot;one-touch football&quot;:
+&gt; once you have something in RAM (could be mmap()ed, but could just as well
+&gt; be explicitly buffered) do *everything* that you want to do with it,
+&gt; and avoid the need to re-fetch it.
+&gt; For the transpose-case this means, you'll have to splice your matrix into
+&gt; chewable (preferably pagesize) blocks and flip-and-swap these.
+
+&gt; For example, consider the following matrix:
+&gt; A B
+&gt; C D
+&gt; (A,B,C,D are all 32*32 submatrices)
+
+&gt; The transpose of this is:
+&gt; At Ct
+&gt; Bt Dt
+
+&gt; So, you only have to transpose each submatrix and swap B and C.
+&gt; This process has a &quot;memory footprint&quot; of one or two submatrices
+&gt; (plus some tempspace, maximally one submatrix)
+&gt; This way, you can avoid one submatrix being referenced more than once:
+&gt; every block is only needed once.
+&gt; {
+&gt;         read A; flip A; write A;
+&gt;         read B; read C; flip B; flip C; swap B,C; write B; write C;
+&gt;         read D; flip D; write D;
+
+&gt; }
+">
+
+However, what happens when A, B, C, and D are still too large
+to fit in RAM? If you have to recurse, how do you do the giant
+swap of the chunks that are too large to fit? That's why I
+gave up on the &quot;block&quot; approach and went for the &quot;merge&quot;
+approach. And, what about matrices that are not square, but
+1x2 rectangles (ie. twice as wide as they are high)? As odd
+powers of 2 (that is, the exponent is odd) do not have integer
+square roots.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; For the mmap()ed case, this reduces to
+&gt; {
+&gt; mmap(...);
+&gt;         flip A;
+&gt;         flip B; flip C; swap B,C;
+&gt;         flip D;
+&gt; munmap(...);
+
+&gt; }
+
+&gt; HTH,
+&gt; AvK
+">
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-10-18T01:28:00 </POSTDATE>
+On Oct 15, 11:03 am, &quot;Steven G. Johnson&quot; &lt;stev ... @alum.mit.edu&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Oct 13, 9:22 pm, mike3 &lt;mike4 ... @yahoo.com&gt; wrote:
+
+&gt; &gt; I was working on an implementation of Bailey's &quot;two pass&quot; FFT
+&gt; &gt; algorithm for doing FFTs on disk, intended to be used for
+&gt; &gt; multiplication, and am wondering: In the paper (&quot;FFTs in external or
+&gt; &gt; hierarchical memory&quot;), it is said the matrix needs to be stored
+&gt; &gt; &quot;columnwise&quot;. But for FFT multiplication, does not it need to be
+&gt; &gt; stored row-wise? Otherwise you need an EXPENSIVE (i.e. disk intensive
+&gt; &gt; (&quot;thrashing&quot; like crazy), and eats a lot of time) transpose to change
+&gt; &gt; it over. Is there a version of the algorithm that would operate on a
+&gt; &gt; row-wise matrix? If so, how does it work?
+
+&gt; No.  This is (as far as I can tell) an intrinsic property of FFT
+&gt; algorithms: especially if you want to operate with in-order input and
+&gt; output, then you must accept non-consecutive memory access (or,
+&gt; equivalently, transpositions).  That's why Bailey's &quot;six-step&quot;
+&gt; algorithm has so many transpositions (to get the data consecutive on
+&gt; disk so that you can read it without thrashing).
+">
+
+But of course it depends on what &quot;order&quot; your input is in. That's
+the thing -- if it was acceptable for the data to be stored
+columnwise,
+then you can use the algorithm to pull off a very consecutive
+transform even with &quot;in order&quot; input, since &quot;in order&quot; would be
+columnwise in that case. So, then, why is the columnwise order
+_required_ -- why does there _not_ exist a version that does it
+rowwise?
+</POST>
+<POST>
+<POSTER> moi &lt;r...@invalid.address.org&gt; </POSTER>
+<POSTDATE> 2007-10-18T05:17:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Wed, 17 Oct 2007 22:25:16 -0700, mike3 wrote:
+
+&gt;&gt; For example, consider the following matrix: A B
+&gt;&gt; C D
+&gt;&gt; (A,B,C,D are all 32*32 submatrices)
+
+&gt;&gt; The transpose of this is:
+&gt;&gt; At Ct
+&gt;&gt; Bt Dt
+
+&gt;&gt; So, you only have to transpose each submatrix and swap B and C. This
+&gt;&gt; process has a &quot;memory footprint&quot; of one or two submatrices (plus some
+&gt;&gt; tempspace, maximally one submatrix) This way, you can avoid one
+&gt;&gt; submatrix being referenced more than once: every block is only needed
+&gt;&gt; once.
+
+&gt; However, what happens when A, B, C, and D are still too large to fit in
+&gt; RAM? If you have to recurse, how do you do the giant swap of the chunks
+&gt; that are too large to fit? That's why I gave up on the &quot;block&quot; approach
+&gt; and went for the &quot;merge&quot; approach. And, what about matrices that are not
+&gt; square, but 1x2 rectangles (ie. twice as wide as they are high)? As odd
+&gt; powers of 2 (that is, the exponent is odd) do not have integer square
+&gt; roots.
+">
+
+[ I cannot see the reason for non-square matrices to exist. I cannot see
+the reason for not being  transposable in O(N), either ...]
+
+Make them smaller. (it was an example)
+
+A B C D
+E F G H
+I J K L
+M N O P
+
+&lt;--&gt;
+
+A E I M
+B F J N
+C G K O
+D H L P
+
+Only two (or three) submatrices have to be in RAM at the same time.
+Just make them small enough.
+
+HTH,
+AvK
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-10-18T16:55:00 </POSTDATE>
+On Oct 18, 3:17 am, moi &lt;r ... @invalid.address.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Wed, 17 Oct 2007 22:25:16 -0700, mike3 wrote:
+
+&gt; &gt;&gt; For example, consider the following matrix: A B
+&gt; &gt;&gt; C D
+&gt; &gt;&gt; (A,B,C,D are all 32*32 submatrices)
+
+&gt; &gt;&gt; The transpose of this is:
+&gt; &gt;&gt; At Ct
+&gt; &gt;&gt; Bt Dt
+
+&gt; &gt;&gt; So, you only have to transpose each submatrix and swap B and C. This
+&gt; &gt;&gt; process has a &quot;memory footprint&quot; of one or two submatrices (plus some
+&gt; &gt;&gt; tempspace, maximally one submatrix) This way, you can avoid one
+&gt; &gt;&gt; submatrix being referenced more than once: every block is only needed
+&gt; &gt;&gt; once.
+
+&gt; &gt; However, what happens when A, B, C, and D are still too large to fit in
+&gt; &gt; RAM? If you have to recurse, how do you do the giant swap of the chunks
+&gt; &gt; that are too large to fit? That's why I gave up on the &quot;block&quot; approach
+&gt; &gt; and went for the &quot;merge&quot; approach. And, what about matrices that are not
+&gt; &gt; square, but 1x2 rectangles (ie. twice as wide as they are high)? As odd
+&gt; &gt; powers of 2 (that is, the exponent is odd) do not have integer square
+&gt; &gt; roots.
+
+&gt; [ I cannot see the reason for non-square matrices to exist. I cannot see
+&gt; the reason for not being  transposable in O(N), either ...]
+">
+
+They'd exist since the matrix sizes (# of elements) are all
+powers of 2, and not all such powers are perfect squares.
+If the exponent is odd, then it is not a perfect square.
+For example, sqrt(256) = 16, but sqrt(128) ~ 11.314.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; Make them smaller. (it was an example)
+
+&gt; A B C D
+&gt; E F G H
+&gt; I J K L
+&gt; M N O P
+
+&gt; &lt;--&gt;
+
+&gt; A E I M
+&gt; B F J N
+&gt; C G K O
+&gt; D H L P
+
+&gt; Only two (or three) submatrices have to be in RAM at the same time.
+&gt; Just make them small enough.
+">
+
+But how do you use those two in at the same time when
+you're doing a 4x4? I can see how it works for the 2x2
+as then you can write the chunks more sequentially,
+but I'm not quite sure how you'd do it on the 4x4.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; HTH,
+&gt; AvK
+">
+</POST>
+<POST>
+<POSTER> moi &lt;r...@invalid.address.org&gt; </POSTER>
+<POSTDATE> 2007-10-18T18:45:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Thu, 18 Oct 2007 13:55:06 -0700, mike3 wrote:
+&gt; On Oct 18, 3:17 am, moi &lt;r ... @invalid.address.org&gt; wrote:
+&gt;&gt; [ I cannot see the reason for non-square matrices to exist. I cannot
+&gt;&gt; see the reason for not being  transposable in O(N), either ...]
+
+&gt; They'd exist since the matrix sizes (# of elements) are all powers of 2,
+&gt; and not all such powers are perfect squares. If the exponent is odd,
+&gt; then it is not a perfect square. For example, sqrt(256) = 16, but
+&gt; sqrt(128) ~ 11.314.
+">
+
+The
+A B C D
+E F G H
+
+matrix can also be transposed by &quot;one-touch-football&quot;
+this is the shuffle or permutation as explained on the wiki-page.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Only two (or three) submatrices have to be in RAM at the same time.
+&gt;&gt; Just make them small enough.
+
+&gt; But how do you use those two in at the same time when you're doing a
+&gt; 4x4? I can see how it works for the 2x2 as then you can write the chunks
+&gt; more sequentially, but I'm not quite sure how you'd do it on the 4x4.
+">
+
+You don't. There is only one ordering present at a time. If you need
+another ordering, you'll have to reorder (maybe on a copy, copying is
+probably as costly as read+seek+rewrite)
+
+You seem too much obsessed with sequentiality.
+This may be good for the inner loops {read row(A), read column(B), write
+SUM(a*b) to destination; } but for transposing either A or B, you'll have
+to *reorder*, which implies nonsequential access, either at the source or
+at the destination. So it goes...
+
+For transposing a mmap()ed square matrix, the following snippet works
+fine for me: (sorry, I used floats ...)
+
+*********************************
+
+struct square { /* this is designed to fit in a memory page */
+float data[32*32];
+};
+
+void flip(struct square * sq)
+{
+unsigned i,j;
+float temp;
+for(i=0; i &lt; 32; i++) {
+for(j=i+1; j &lt; 32; j++) {
+#if WANT_MEUK
+fprintf(stderr, &quot;[%u,%u]&quot;, i*32+j, j*32+i);
+#endif
+temp = sq-&gt;data[i*32 + j];
+sq-&gt;data[i*32 + j] = sq-&gt;data[j*32 + i];
+sq-&gt;data[j*32 + i] = temp;
+}
+}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+void swap(struct square * a, struct square * b)
+{
+struct square temp;
+
+memcpy(&amp;temp, a, sizeof temp);
+memcpy(a, b, sizeof temp);
+memcpy(b, &amp;temp, sizeof temp);
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+void transpose(struct square * sq, unsigned edge)
+{
+unsigned i,j;
+
+struct square *sa, *sb;
+
+/* There are smarter ways to do this... */
+for(i=0; i &lt; edge; i++) {
+for(j=i; j &lt; edge; j++) {
+sa = &amp;sq[i*edge + j];
+#if WANT_MEUK
+fprintf(stderr,&quot;Flip %u\n&quot;,  i*edge+j);
+#endif
+flip(sa);
+if (j==i) continue;
+sb = &amp;sq[j*edge + i];
+#if WANT_MEUK
+fprintf(stderr,&quot;Flip %u\n&quot;,  i+j*edge );
+#endif
+flip(sb);
+#if WANT_MEUK
+fprintf(stderr,&quot;Swap %u,%u\n&quot;,  i*edge+j ,  i+j*edge );
+#endif
+swap(sa,sb);
+}
+}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+**************************
+for a 64 MB file this will mostly cost I/O (as expected) :
+[avk@guus01 math]$ time ./transpose 64M
+Ptr = 0xaff07000, Sz = 67108864
+Squares= 16384, Edge = 128
+
+real    0m24.881s
+user    0m0.137s
+sys     0m0.177s
+[avk@guus01 math]$ time ./transpose 64M
+Ptr = 0xafec7000, Sz = 67108864
+Squares= 16384, Edge = 128
+
+real    0m11.209s
+user    0m0.120s
+sys     0m0.131s
+
+This is a reasonably fast(3.2GHz) machine with slow disk I/O and a lot
+of disk activity. The second time it performs 67/11 ~= 6MB/s disk
+throughput. (the first time more than twice that figure, because disk
+pages had to be faulted in) As you can see the CPU is mostly waiting for
+the bus (or disk). (the matrix is just some random data, dd'd from a
+zipped file)
+
+HTH,
+AvK
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-10-19T00:58:00 </POSTDATE>
+On Oct 18, 3:17 am, moi &lt;r ... @invalid.address.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Wed, 17 Oct 2007 22:25:16 -0700, mike3 wrote:
+
+&gt; &gt;&gt; For example, consider the following matrix: A B
+&gt; &gt;&gt; C D
+&gt; &gt;&gt; (A,B,C,D are all 32*32 submatrices)
+
+&gt; &gt;&gt; The transpose of this is:
+&gt; &gt;&gt; At Ct
+&gt; &gt;&gt; Bt Dt
+
+&gt; &gt;&gt; So, you only have to transpose each submatrix and swap B and C. This
+&gt; &gt;&gt; process has a &quot;memory footprint&quot; of one or two submatrices (plus some
+&gt; &gt;&gt; tempspace, maximally one submatrix) This way, you can avoid one
+&gt; &gt;&gt; submatrix being referenced more than once: every block is only needed
+&gt; &gt;&gt; once.
+
+&gt; &gt; However, what happens when A, B, C, and D are still too large to fit in
+&gt; &gt; RAM? If you have to recurse, how do you do the giant swap of the chunks
+&gt; &gt; that are too large to fit? That's why I gave up on the &quot;block&quot; approach
+&gt; &gt; and went for the &quot;merge&quot; approach. And, what about matrices that are not
+&gt; &gt; square, but 1x2 rectangles (ie. twice as wide as they are high)? As odd
+&gt; &gt; powers of 2 (that is, the exponent is odd) do not have integer square
+&gt; &gt; roots.
+
+&gt; [ I cannot see the reason for non-square matrices to exist. I cannot see
+&gt; the reason for not being  transposable in O(N), either ...]
+">
+
+They'd exist since the matrix sizes (# of elements) are all
+powers of 2, and not all such powers are perfect squares.
+If the exponent is odd, then it is not a perfect square.
+For example, sqrt(256) = 16, but sqrt(128) ~ 11.314.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; Make them smaller. (it was an example)
+
+&gt; A B C D
+&gt; E F G H
+&gt; I J K L
+&gt; M N O P
+
+&gt; &lt;--&gt;
+
+&gt; A E I M
+&gt; B F J N
+&gt; C G K O
+&gt; D H L P
+
+&gt; Only two (or three) submatrices have to be in RAM at the same time.
+&gt; Just make them small enough.
+">
+
+But how do you use those two in at the same time when
+you're doing a 4x4? I can see how it works for the 2x2
+as then you can write the chunks more sequentially,
+but I'm not quite sure how you'd do it on the 4x4.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; HTH,
+&gt; AvK
+">
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-10-20T02:42:00 </POSTDATE>
+On Oct 18, 4:45 pm, moi &lt;r ... @invalid.address.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Thu, 18 Oct 2007 13:55:06 -0700, mike3 wrote:
+&gt; &gt; On Oct 18, 3:17 am, moi &lt;r ... @invalid.address.org&gt; wrote:
+&gt; &gt;&gt; [ I cannot see the reason for non-square matrices to exist. I cannot
+&gt; &gt;&gt; see the reason for not being  transposable in O(N), either ...]
+
+&gt; &gt; They'd exist since the matrix sizes (# of elements) are all powers of 2,
+&gt; &gt; and not all such powers are perfect squares. If the exponent is odd,
+&gt; &gt; then it is not a perfect square. For example, sqrt(256) = 16, but
+&gt; &gt; sqrt(128) ~ 11.314.
+
+&gt; The
+&gt; A B C D
+&gt; E F G H
+
+&gt; matrix can also be transposed by &quot;one-touch-football&quot;
+&gt; this is the shuffle or permutation as explained on the wiki-page.
+
+&gt; &gt;&gt; Only two (or three) submatrices have to be in RAM at the same time.
+&gt; &gt;&gt; Just make them small enough.
+
+&gt; &gt; But how do you use those two in at the same time when you're doing a
+&gt; &gt; 4x4? I can see how it works for the 2x2 as then you can write the chunks
+&gt; &gt; more sequentially, but I'm not quite sure how you'd do it on the 4x4.
+
+&gt; You don't. There is only one ordering present at a time. If you need
+&gt; another ordering, you'll have to reorder (maybe on a copy, copying is
+&gt; probably as costly as read+seek+rewrite)
+
+&gt; You seem too much obsessed with sequentiality.
+&gt; This may be good for the inner loops {read row(A), read column(B), write
+&gt; SUM(a*b) to destination; } but for transposing either A or B, you'll have
+&gt; to *reorder*, which implies nonsequential access, either at the source or
+&gt; at the destination. So it goes...
+
+&gt; For transposing a mmap()ed square matrix, the following snippet works
+&gt; fine for me: (sorry, I used floats ...)
+
+&gt; *********************************
+
+&gt; struct square { /* this is designed to fit in a memory page */
+&gt;         float data[32*32];
+&gt;         };
+
+&gt; void flip(struct square * sq)
+&gt; {
+&gt; unsigned i,j;
+&gt; float temp;
+&gt; for(i=0; i &lt; 32; i++) {
+&gt;         for(j=i+1; j &lt; 32; j++) {
+&gt; #if WANT_MEUK
+&gt;                 fprintf(stderr, &quot;[%u,%u]&quot;, i*32+j, j*32+i);
+&gt; #endif
+&gt;                 temp = sq-&gt;data[i*32 + j];
+&gt;                 sq-&gt;data[i*32 + j] = sq-&gt;data[j*32 + i];
+&gt;                 sq-&gt;data[j*32 + i] = temp;
+&gt;                 }
+&gt;         }
+
+&gt; }
+
+&gt; void swap(struct square * a, struct square * b)
+&gt; {
+&gt; struct square temp;
+
+&gt; memcpy(&amp;temp, a, sizeof temp);
+&gt; memcpy(a, b, sizeof temp);
+&gt; memcpy(b, &amp;temp, sizeof temp);
+
+&gt; }
+
+&gt; void transpose(struct square * sq, unsigned edge)
+&gt; {
+&gt; unsigned i,j;
+
+&gt; struct square *sa, *sb;
+
+&gt;         /* There are smarter ways to do this... */
+&gt; for(i=0; i &lt; edge; i++) {
+&gt;         for(j=i; j &lt; edge; j++) {
+&gt;                 sa = &amp;sq[i*edge + j];
+&gt; #if WANT_MEUK
+&gt;                 fprintf(stderr,&quot;Flip %u\n&quot;,  i*edge+j);
+&gt; #endif
+&gt;                 flip(sa);
+&gt;                 if (j==i) continue;
+&gt;                 sb = &amp;sq[j*edge + i];
+&gt; #if WANT_MEUK
+&gt;                 fprintf(stderr,&quot;Flip %u\n&quot;,  i+j*edge );
+&gt; #endif
+&gt;                 flip(sb);
+&gt; #if WANT_MEUK
+&gt;                 fprintf(stderr,&quot;Swap %u,%u\n&quot;,  i*edge+j ,  i+j*edge );
+&gt; #endif
+&gt;                 swap(sa,sb);
+&gt;                 }
+&gt;         }
+
+&gt; }
+
+&gt; **************************
+&gt; for a 64 MB file this will mostly cost I/O (as expected) :
+&gt; [avk@guus01 math]$ time ./transpose 64M
+&gt; Ptr = 0xaff07000, Sz = 67108864
+&gt; Squares= 16384, Edge = 128
+
+&gt; real    0m24.881s
+&gt; user    0m0.137s
+&gt; sys     0m0.177s
+&gt; [avk@guus01 math]$ time ./transpose 64M
+&gt; Ptr = 0xafec7000, Sz = 67108864
+&gt; Squares= 16384, Edge = 128
+
+&gt; real    0m11.209s
+&gt; user    0m0.120s
+&gt; sys     0m0.131s
+
+&gt; This is a reasonably fast(3.2GHz) machine with slow disk I/O and a lot
+&gt; of disk activity. The second time it performs 67/11 ~= 6MB/s disk
+&gt; throughput. (the first time more than twice that figure, because disk
+&gt; pages had to be faulted in) As you can see the CPU is mostly waiting for
+&gt; the bus (or disk). (the matrix is just some random data, dd'd from a
+&gt; zipped file)
+
+&gt; HTH,
+&gt; AvK
+">
+
+I've recently put together a &quot;block&quot; transpose which
+has a lot of non-sequential reads/writes and could
+transpose 64M elements (not bytes, but elements --
+each one is 4 bytes so that's actually 256 MB of data)
+in around 8 seconds on my machine, also with a lot
+of disk activity. However it stores a lot of the data
+in RAM. The matrices though that I need for 128M (512
+MB data) take longer, as it can't all fit in RAM, but
+is still not too much.
+
+But it's that lot of disk activity I don't like. There are
+pi programs out there (that's what I'm using this for,
+to compute digits of pi), that thrash very little. The
+Fourier transforms, after the transposes, do not
+thrash that much, in my program.
+
+That's why I keep wondering if there's some way to
+do the FFT without the data having to be stored
+columnwise...
+</POST>
+<POST>
+<POSTER> moi &lt;r...@invalid.address.org&gt; </POSTER>
+<POSTDATE> 2007-10-20T04:34:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Fri, 19 Oct 2007 23:42:47 -0700, mike3 wrote:
+&gt; On Oct 18, 4:45 pm, moi &lt;r ... @invalid.address.org&gt; wrote:
+&gt;&gt; On Thu, 18 Oct 2007 13:55:06 -0700, mike3 wrote:
+&gt;&gt; &gt; On Oct 18, 3:17 am, moi &lt;r ... @invalid.address.org&gt; wrote:
+&gt;&gt; &gt;&gt; [ I cannot see the reason for non-square matrices to exist. I cannot
+&gt;&gt; &gt;&gt; see the reason for not being  transposable in O(N), either ...]
+
+&gt;&gt; &gt; They'd exist since the matrix sizes (# of elements) are all powers of
+&gt;&gt; &gt; 2, and not all such powers are perfect squares. If the exponent is
+&gt;&gt; &gt; odd, then it is not a perfect square. For example, sqrt(256) = 16,
+&gt;&gt; &gt; but sqrt(128) ~ 11.314.
+
+&gt;&gt; The
+&gt;&gt; A B C D
+&gt;&gt; E F G H
+
+&gt;&gt; matrix can also be transposed by &quot;one-touch-football&quot; this is the
+&gt;&gt; shuffle or permutation as explained on the wiki-page.
+
+&gt;&gt; &gt;&gt; Only two (or three) submatrices have to be in RAM at the same time.
+&gt;&gt; &gt;&gt; Just make them small enough.
+
+&gt;&gt; &gt; But how do you use those two in at the same time when you're doing a
+&gt;&gt; &gt; 4x4? I can see how it works for the 2x2 as then you can write the
+&gt;&gt; &gt; chunks more sequentially, but I'm not quite sure how you'd do it on
+&gt;&gt; &gt; the 4x4.
+
+&gt;&gt; You don't. There is only one ordering present at a time. If you need
+&gt;&gt; another ordering, you'll have to reorder (maybe on a copy, copying is
+&gt;&gt; probably as costly as read+seek+rewrite)
+
+&gt;&gt; You seem too much obsessed with sequentiality. This may be good for the
+&gt;&gt; inner loops {read row(A), read column(B), write SUM(a*b) to
+&gt;&gt; destination; } but for transposing either A or B, you'll have to
+&gt;&gt; *reorder*, which implies nonsequential access, either at the source or
+&gt;&gt; at the destination. So it goes...
+
+&gt;&gt; For transposing a mmap()ed square matrix, the following snippet works
+&gt;&gt; fine for me: (sorry, I used floats ...)
+
+&gt;&gt; *********************************
+
+&gt;&gt; struct square { /* this is designed to fit in a memory page */
+&gt;&gt;         float data[32*32];
+&gt;&gt;         };
+
+&gt;&gt; void flip(struct square * sq)
+&gt;&gt; {
+&gt;&gt; unsigned i,j;
+&gt;&gt; float temp;
+&gt;&gt; for(i=0; i &lt; 32; i++) {
+&gt;&gt;         for(j=i+1; j &lt; 32; j++) {
+&gt;&gt; #if WANT_MEUK
+&gt;&gt;                 fprintf(stderr, &quot;[%u,%u]&quot;, i*32+j, j*32+i);
+&gt;&gt; #endif
+&gt;&gt;                 temp = sq-&gt;data[i*32 + j];
+&gt;&gt;                 sq-&gt;data[i*32 + j] = sq-&gt;data[j*32 + i]; sq-&gt;data[j*32
+&gt;&gt;                 + i] = temp;
+&gt;&gt;                 }
+&gt;&gt;         }
+
+&gt;&gt; }
+
+&gt;&gt; void swap(struct square * a, struct square * b) {
+&gt;&gt; struct square temp;
+
+&gt;&gt; memcpy(&amp;temp, a, sizeof temp);
+&gt;&gt; memcpy(a, b, sizeof temp);
+&gt;&gt; memcpy(b, &amp;temp, sizeof temp);
+
+&gt;&gt; }
+
+&gt;&gt; void transpose(struct square * sq, unsigned edge) {
+&gt;&gt; unsigned i,j;
+
+&gt;&gt; struct square *sa, *sb;
+
+&gt;&gt;         /* There are smarter ways to do this... */
+&gt;&gt; for(i=0; i &lt; edge; i++) {
+&gt;&gt;         for(j=i; j &lt; edge; j++) {
+&gt;&gt;                 sa = &amp;sq[i*edge + j];
+&gt;&gt; #if WANT_MEUK
+&gt;&gt;                 fprintf(stderr,&quot;Flip %u\n&quot;,  i*edge+j);
+&gt;&gt; #endif
+&gt;&gt;                 flip(sa);
+&gt;&gt;                 if (j==i) continue;
+&gt;&gt;                 sb = &amp;sq[j*edge + i];
+&gt;&gt; #if WANT_MEUK
+&gt;&gt;                 fprintf(stderr,&quot;Flip %u\n&quot;,  i+j*edge );
+&gt;&gt; #endif
+&gt;&gt;                 flip(sb);
+&gt;&gt; #if WANT_MEUK
+&gt;&gt;                 fprintf(stderr,&quot;Swap %u,%u\n&quot;,  i*edge+j ,  i+j*edge );
+&gt;&gt; #endif
+&gt;&gt;                 swap(sa,sb);
+&gt;&gt;                 }
+&gt;&gt;         }
+
+&gt;&gt; }
+
+&gt;&gt; **************************
+&gt;&gt; for a 64 MB file this will mostly cost I/O (as expected) : [avk@guus01
+&gt;&gt; math]$ time ./transpose 64M Ptr = 0xaff07000, Sz = 67108864
+&gt;&gt; Squares= 16384, Edge = 128
+
+&gt;&gt; real    0m24.881s
+&gt;&gt; user    0m0.137s
+&gt;&gt; sys     0m0.177s
+&gt;&gt; [avk@guus01 math]$ time ./transpose 64M Ptr = 0xafec7000, Sz = 67108864
+&gt;&gt; Squares= 16384, Edge = 128
+
+&gt;&gt; real    0m11.209s
+&gt;&gt; user    0m0.120s
+&gt;&gt; sys     0m0.131s
+
+&gt;&gt; This is a reasonably fast(3.2GHz) machine with slow disk I/O and a lot
+&gt;&gt; of disk activity. The second time it performs 67/11 ~= 6MB/s disk
+&gt;&gt; throughput. (the first time more than twice that figure, because disk
+&gt;&gt; pages had to be faulted in) As you can see the CPU is mostly waiting
+&gt;&gt; for the bus (or disk). (the matrix is just some random data, dd'd from
+&gt;&gt; a zipped file)
+
+&gt;&gt; HTH,
+&gt;&gt; AvK
+
+&gt; I've recently put together a &quot;block&quot; transpose which has a lot of
+&gt; non-sequential reads/writes and could transpose 64M elements (not bytes,
+&gt; but elements -- each one is 4 bytes so that's actually 256 MB of data)
+&gt; in around 8 seconds on my machine, also with a lot of disk activity.
+&gt; However it stores a lot of the data in RAM. The matrices though that I
+&gt; need for 128M (512 MB data) take longer, as it can't all fit in RAM, but
+&gt; is still not too much.
+
+&gt; But it's that lot of disk activity I don't like. There are pi programs
+&gt; out there (that's what I'm using this for, to compute digits of pi),
+&gt; that thrash very little. The Fourier transforms, after the transposes,
+&gt; do not thrash that much, in my program.
+
+&gt; That's why I keep wondering if there's some way to do the FFT without
+&gt; the data having to be stored columnwise...
+">
+
+If I swap floats instead of 4K blocks, the walltime needed increases from
+about 10 sec to 100 sec. need I say more ?
+
+SWAP PAGES, NOT ELEMENTS.
+
+http://citeseer.ist.psu.edu/307799.html
+
+look at the walks at the tird page. the cell-by-cell walks (a and b)
+traverse each diskpage 32 times! (for a 4k pages, sizeof float==4)
+
+HTH,
+AvK
+</POST>
+<POST>
+<POSTER> rem6...@yahoo.com (Robert Maas, see http://tinyurl.com/uh3t) </POSTER>
+<POSTDATE> 2007-10-24T13:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; From:  mike3 &lt;mike4 ... @yahoo.com&gt;
+&gt; So it's a transpose, or at least equivalent to one. But how many
+&gt; passes does it require over the data? According to the article on
+&gt; Wikipedia, mergesort takes lg n passes.
+">
+
+No. Log-base-m n, where m is the number of files being
+simultaneously merged in a single pass, and n is the number of
+merge runs you have at the very start. For example, with one
+megabyte of RAM available (such as a Macintosh Plus circa 1990
+extended to 2 megabytes total RAM, 1 megabyte for the system and
+application, and 1 megabyte for the being built into merge runs),
+and with 128 megabytes of data, you can build merge runs of 1
+megabyte each, so n=128. With your data on a magtape drive, with 2
+spare magtape drives, three total, you can do a 2-way merge, so it
+takes log2 128 = 7 merge passes. But with a more modern computer,
+with 64 megabytes RAM, half for software and half for data, then
+splitting 128 megabytes into merge runs of 32 megabytes each,
+that's only 4 merge runs so it takes only 2 passes. With a really
+modern computer that has a gigabyte of RAM, you can do the whole
+sort in RAM, no disk/tape merge runs needed at all.
+
+<QUOTE PREVIOUSPOST="
+&gt; When n = 33,554,432 as in my program, that equates to 25 passes.
+">
+
+Whatever gives you the idea you will have more than 33 million
+merge runs? I suspect you don't understand how merge-sort works and
+why the log-base-m n number appears.
+
+<QUOTE PREVIOUSPOST="
+&gt; Holy cow! 25 passes over 128 megabytes of data?!
+">
+
+Let me work that backwards: 128 megabytes of data split into 33
+million merge runs, that's about 4 bytes of data per merge run.
+That's so ridicuously wrong that I'm not going to humor you any
+longer. Get your facts straight before you ask for any more help.
+
+How much RAM do you have available for building merge runs (or for
+sorting the whole batch in RAM without a single disk access)?
+Do you have a special CPU cache that is even faster than RAM?
+If so, how large is it?
+How many tape or disk drives do you have available for external
+merging if you can't do the whole job in RAM?
+What is the capacity per external drive?
+
+Note that for an *internal* merge-sort, performed entirely in
+actual RAM (no swapping of virtual memory), you indeed start with
+runs of a single record each, which might be as small as 4 bytes
+per record equals 4 bytes per single-record merge-run. In real RAM
+you don't bother to do more than a 2-way merge, because logic to do
+a multi-way merge is slower than just doing extra merge passes. So
+then you have 25 merge passes, which takes 1 microsecond per
+individual comparison on a modern fast computer, plus 1 extra
+microsecond to flush the unmatched records at the end, total number
+of comparisons equals the total number of records being merged, so:
+- the first merge pass takes 2 microseconds per pair of merge runs,
+16 million such merges on 32 Million merge runs to produce 16
+million two-record merge runs, 33 seconds total.
+- the second merge pass takes 4 microseconds per pair of merge runs,
+8 million such merges on 16 million merge runs to produce 16
+million two-record merge runs, 33 seconds total.
+Etc., 33 seconds per merge pass, 25 passes, that's 825 seconds
+which is 13 3/4 minutes. Now if you had a faster computer, or more
+than one CPU that could share the load, it would take less time.
+
+<QUOTE PREVIOUSPOST="
+&gt; And you need not one, but a whopping *3* mergesorts: one for
+&gt; number A, one for B, then another to return the product to
+&gt; numeric order after you get done with the FFTs!
+">
+
+OK, so it takes about 40 minutes to do the whole task.
+You could have gotten it all finished in the time it took you to
+compose a single article asking how to do it faster.
+
+Caveat: I might have made a math mistake above. If I did, please correct me!
+
+Note: Google Groups search engine
+&lt; http://groups.google.com/groups?as_q=&amp;num;=10&amp;scoring;=d&amp;hl;=en&amp;as;_epq=r... &gt;
+&lt; http://tinyurl.com/23yvz7 &gt;
+doesn't show anything more recent than Oct.13, so I have no way to
+see if anybody responded to anything I posted recently, so if you
+need my attention please go to my Web site to send me an instant
+alert telling me the message-ID or URL of your article that needs
+my attention.
+</POST>
+<POST>
+<POSTER> rem6...@yahoo.com (Robert Maas, see http://tinyurl.com/uh3t) </POSTER>
+<POSTDATE> 2007-10-24T14:22:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; From:  mike3 &lt;mike4 ... @yahoo.com&gt;
+&gt; Alright, I've tried implementing the merge transposition algorithm.
+">
+
+OK, the first question is whether you did it entire in actual RAM,
+or did it entirely in virtual RAM with disk as backing store for
+pages of RAM, or built merge runs using actual RAM then merged
+using disk, or what? It makes a whale of a difference.
+
+For a starter as to my overall advice how best to do it, I need to
+know how much physical (actual) RAM you have available for data
+(discount anything already used for system and application), and
+how much virtual memory you are allowed, and how many disk or tape
+drives you have available for merge runs.
+
+<QUOTE PREVIOUSPOST="
+&gt; But it still accesses the disk very heavily
+">
+
+What does that mean? You explicitly did an external merge, so you
+control the disk access, or you tried to use virtual memory to do
+the merge and swapping is using the disk? If you did an explicit
+external merge, did you put each merge run on a separate drive,
+such that each drive is accessing sequentually most of the time,
+and all you hear is a slow click click click from each drive as it
+moves to the next cylender of that disk? Or did you try to use a
+single drive for all data, whereby the disk is constantly seeking
+back and forth between the various input runs and the single output
+run making a horrible vibrating noise.
+
+<QUOTE PREVIOUSPOST="
+&gt; some merge passes take like 4x longer than the quickest ones,
+&gt; with very heavy disk access.
+">
+
+That sounds like you're trying to do the whole job in virtual
+memory, with swapping causing that disk activity. Is that correct?
+If so, don't do it that way!!!
+
+<QUOTE PREVIOUSPOST="
+&gt; I don't think there's any more &quot;textbook&quot; a definition of
+&gt; &quot;thrashing&quot; than that -- it's wasting time accessing the resource
+&gt; (the disk), so it's &quot;thrashing&quot; the resource!
+">
+
+Yeah, if you're using virtual memory for a task whose effective
+working set is large than your real memory, it'll thrash, every
+time, you can be sure it'll thrash, you just can't be sure how
+*much* it'll thrash because of race conditions between 'chron' jobs
+and other system utilties that swap in a system page at
+unpredictable times messing up the nice mathematical behaviour of
+the threshing for your task.
+
+<QUOTE PREVIOUSPOST="
+&gt; The test was done with a 4096 x 4096 transpose and 128 MB of
+&gt; memory allocated to doing it(!).
+">
+
+How many bytes per single element of the matrix? From what you said
+earlier, I'm assuming 4 bytes per element, is that correct?
+But from what you say now, 4096*4096=16777216 elements,
+128MB=128*1024*1024=134217728 bytes total, that's
+134217728/16777216=8 bytes per element, twice what I guessed from
+your earlier remarks. Please clarify which is the case.
+Maybe you mean you have 64 MB to actually hold the array and
+another 64 MB to hold a copy of it during merging, merge back and
+forth between two blocks of RAM, 64 MB total runs being merged
+and 64 MB total larger runs result of merge with each pass?
+That makes sense. Please confirm that's what you mean.
+
+But the key question: 128 MB of actual RAM, or 128 MB of virtual memory,
+with only some lesser amount of actual RAM available.
+
+<QUOTE PREVIOUSPOST="
+&gt; On a good run it'll get maybe 13 sec. total, on a bad one it'll
+&gt; get 22.
+">
+
+Hey, your computer seems to be quite a bit faster than I estimated.
+Is that 13 seconds total per merge run, or per complete sort (25
+2-way merge passes from single-element merge runs at the start), or
+per complete matrix operation (3 complete sorts)?
+
+<QUOTE PREVIOUSPOST="
+&gt; Since those pi programs I've seen (QuickPi, PiFast, etc.) do not
+&gt; thrash the hard drive anywhere near this much there's _got_ to be
+&gt; a way to do this stuff without thrashing, I just can't figure out
+&gt; what it is!
+">
+
+- Buy enough actual RAM.
+- Localize memory use more carefully.
+- Make merge runs within your smaller amount of *actual* RAM, then
+do an external disk merge using eight separate external drives,
+four drives for the separate sets of input merge runs, to do a 4-way
+merge, and four drives for artificially distributed set of
+output merge runs. These don't have to be 8 dedicated drives
+since you're using only a tiny portion of each, but you really do
+need completely separate heads which usually requires completely
+separate disk drives. How much does a 1 GB drive cost nowadays?
+How much discount for 8 of them in group/batch/lot purchase?
+
+<QUOTE PREVIOUSPOST="
+&gt; Here's the code:
+&gt; http://www.mediafire.com/download.php?0y3amgzhde5
+">
+
+That requires setting up an account for each person who wants to
+view your files, which is absurd!! Please copy your files to
+5gbfree where it takes one account to store the files but viewing
+is public with no account needed.
+</POST>
+<POST>
+<POSTER> moi &lt;r...@invalid.address.org&gt; </POSTER>
+<POSTDATE> 2007-10-24T14:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt;&gt; &gt; Here's the code:
+
+&gt;&gt; &gt; http://www.mediafire.com/download.php?0y3amgzhde5
+
+&gt;&gt; (BTW: don't cast malloc()s returnvalue; include &lt;stdlib.h&gt; ; ) It would
+&gt;&gt; also _simplify_ your code (no more buffer management; no more
+&gt;&gt; malloc/free)
+">
+
+Some more comment on the code:
+
+0) the include file is missing.
+
+1) your usage of &quot;sizeof diskbuf1&quot; does not do what you intend.
+Hint: do a &quot;printf(&quot;Size=%u\n&quot;, (unsigned) sizeof diskbuf1);&quot;
+
+2) your usage of feof() doesn't, either.
+
+HTH,
+AvK
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-10-24T16:41:00 </POSTDATE>
+On Oct 24, 11:50 am, rem6 ... @yahoo.com (Robert Maas, see http://tinyurl.com/uh3t )
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; From:  mike3 &lt;mike4 ... @yahoo.com&gt;
+&gt; &gt; So it's a transpose, or at least equivalent to one. But how many
+&gt; &gt; passes does it require over the data? According to the article on
+&gt; &gt; Wikipedia, mergesort takes lg n passes.
+
+&gt; No. Log-base-m n, where m is the number of files being
+&gt; simultaneously merged in a single pass, and n is the number of
+&gt; merge runs you have at the very start. For example, with one
+&gt; megabyte of RAM available (such as a Macintosh Plus circa 1990
+&gt; extended to 2 megabytes total RAM, 1 megabyte for the system and
+&gt; application, and 1 megabyte for the being built into merge runs),
+&gt; and with 128 megabytes of data, you can build merge runs of 1
+&gt; megabyte each, so n=128. With your data on a magtape drive, with 2
+&gt; spare magtape drives, three total, you can do a 2-way merge, so it
+&gt; takes log2 128 = 7 merge passes. But with a more modern computer,
+&gt; with 64 megabytes RAM, half for software and half for data, then
+&gt; splitting 128 megabytes into merge runs of 32 megabytes each,
+&gt; that's only 4 merge runs so it takes only 2 passes. With a really
+&gt; modern computer that has a gigabyte of RAM, you can do the whole
+&gt; sort in RAM, no disk/tape merge runs needed at all.
+">
+
+Yes, I was wrong. For the algorithm used, one makes n/2 merge
+runs, where n is the row/column size of the matrix (square in
+this case for simplicity): if the matrix has size nxn, then one
+needs to merge 2 rows in one run on the first pass, so then
+since there are n rows, n/2 of those passes are needed.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; When n = 33,554,432 as in my program, that equates to 25 passes.
+
+&gt; Whatever gives you the idea you will have more than 33 million
+&gt; merge runs? I suspect you don't understand how merge-sort works and
+&gt; why the log-base-m n number appears.
+">
+
+I was looking at the merge algorithm for transposing a matrix,
+shown here:
+http://algo2.iti.uni-karlsruhe.de/dementiev/courses/cache05/hpca00.pdf
+
+I was a bit wrong, we don't take lg N for the absolute amount of
+merge passes required with N being the size of the matrix, we
+use lg(sqrt(N))-1 passes across the data, when the matrix is square.
+That's a lot better. If N = 16777216, then sqrt(N) = 4096, so
+lg(sqrt(N))-1 = lg(4096)-1 = 12.
+
+I guess I kept confusing this and the Wikipedia sources. :( Also,
+the &quot;n&quot; I was referring to in the calculation was the size of the
+data set I wanted to transpose. I did not know it referred to
+something else.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Holy cow! 25 passes over 128 megabytes of data?!
+
+&gt; Let me work that backwards: 128 megabytes of data split into 33
+&gt; million merge runs, that's about 4 bytes of data per merge run.
+&gt; That's so ridicuously wrong that I'm not going to humor you any
+&gt; longer. Get your facts straight before you ask for any more help.
+">
+
+I guess I thought &quot;n&quot; was the size of the data set I wanted to
+transpose. Oh well, my bad. But hey, at least I realized
+my error. But does that mean you won't even listen to see
+that I _did_ realize the error?!
+
+<QUOTE PREVIOUSPOST="
+&gt; How much RAM do you have available for building merge runs (or for
+&gt; sorting the whole batch in RAM without a single disk access)?
+&gt; Do you have a special CPU cache that is even faster than RAM?
+&gt; If so, how large is it?
+">
+
+I've got 512 KB of fast cache, enough to store 8 rows
+(each row is of size 16,384, 4 bytes per modular integer
+component (finite field element) for a total of 65,536 bytes
+per row.). RAM is 768 MB, which could store the whole
+matrix with just one pass to read it off the disk plus one
+more pass to write it down again. (Actually since it can
+all be stored, we just need one pass to do the entire six-step
+NTT transform!).
+
+<QUOTE PREVIOUSPOST="
+&gt; How many tape or disk drives do you have available for external
+&gt; merging if you can't do the whole job in RAM?
+&gt; What is the capacity per external drive?
+">
+
+Two drives, each one with 30-40 GB capacity, but only 2 GB free.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; Note that for an *internal* merge-sort, performed entirely in
+&gt; actual RAM (no swapping of virtual memory), you indeed start with
+&gt; runs of a single record each, which might be as small as 4 bytes
+&gt; per record equals 4 bytes per single-record merge-run. In real RAM
+&gt; you don't bother to do more than a 2-way merge, because logic to do
+&gt; a multi-way merge is slower than just doing extra merge passes. So
+&gt; then you have 25 merge passes, which takes 1 microsecond per
+&gt; individual comparison on a modern fast computer, plus 1 extra
+&gt; microsecond to flush the unmatched records at the end, total number
+&gt; of comparisons equals the total number of records being merged, so:
+&gt; - the first merge pass takes 2 microseconds per pair of merge runs,
+&gt;    16 million such merges on 32 Million merge runs to produce 16
+&gt;    million two-record merge runs, 33 seconds total.
+&gt; - the second merge pass takes 4 microseconds per pair of merge runs,
+&gt;    8 million such merges on 16 million merge runs to produce 16
+&gt;    million two-record merge runs, 33 seconds total.
+&gt; Etc., 33 seconds per merge pass, 25 passes, that's 825 seconds
+&gt; which is 13 3/4 minutes. Now if you had a faster computer, or more
+&gt; than one CPU that could share the load, it would take less time.
+
+&gt; &gt; And you need not one, but a whopping *3* mergesorts: one for
+&gt; &gt; number A, one for B, then another to return the product to
+&gt; &gt; numeric order after you get done with the FFTs!
+
+&gt; OK, so it takes about 40 minutes to do the whole task.
+&gt; You could have gotten it all finished in the time it took you to
+&gt; compose a single article asking how to do it faster.
+
+&gt; Caveat: I might have made a math mistake above. If I did, please correct me!
+
+&gt; Note: Google Groups search engine
+&gt; &lt; http://groups.google.com/groups?as_q=&amp;num;=10&amp;scoring;=d&amp;hl;=en&amp;as;_epq=r ...&gt;
+&gt; &lt; http://tinyurl.com/23yvz7 &gt;
+&gt; doesn't show anything more recent than Oct.13, so I have no way to
+&gt; see if anybody responded to anything I posted recently, so if you
+&gt; need my attention please go to my Web site to send me an instant
+&gt; alert telling me the message-ID or URL of your article that needs
+&gt; my attention.
+">
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-10-24T17:35:00 </POSTDATE>
+On Oct 24, 12:22 pm, rem6 ... @yahoo.com (Robert Maas, see http://tinyurl.com/uh3t )
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; From:  mike3 &lt;mike4 ... @yahoo.com&gt;
+&gt; &gt; Alright, I've tried implementing the merge transposition algorithm.
+
+&gt; OK, the first question is whether you did it entire in actual RAM,
+&gt; or did it entirely in virtual RAM with disk as backing store for
+&gt; pages of RAM, or built merge runs using actual RAM then merged
+&gt; using disk, or what? It makes a whale of a difference.
+">
+
+I was doing the merge completely on disk.
+
+<QUOTE PREVIOUSPOST="
+&gt; For a starter as to my overall advice how best to do it, I need to
+&gt; know how much physical (actual) RAM you have available for data
+&gt; (discount anything already used for system and application), and
+&gt; how much virtual memory you are allowed, and how many disk or tape
+&gt; drives you have available for merge runs.
+">
+
+I have two drives. The matrix data is stored on one. I can't use
+the second drive since it's not formatted for Linux use.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; But it still accesses the disk very heavily
+
+&gt; What does that mean? You explicitly did an external merge, so you
+&gt; control the disk access, or you tried to use virtual memory to do
+&gt; the merge and swapping is using the disk? If you did an explicit
+&gt; external merge, did you put each merge run on a separate drive,
+&gt; such that each drive is accessing sequentually most of the time,
+&gt; and all you hear is a slow click click click from each drive as it
+&gt; moves to the next cylender of that disk? Or did you try to use a
+&gt; single drive for all data, whereby the disk is constantly seeking
+&gt; back and forth between the various input runs and the single output
+&gt; run making a horrible vibrating noise.
+">
+
+I tried using a single drive. That explains it. If I only put the
+&quot;rows&quot; I wanted to merge in the merge chunks on different
+drives... However like I said, I need the transpose done on
+one drive: trying to run the program on the other drive,
+NTFS formatted, fails under Linux. I can't do it on two.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; some merge passes take like 4x longer than the quickest ones,
+&gt; &gt; with very heavy disk access.
+
+&gt; That sounds like you're trying to do the whole job in virtual
+&gt; memory, with swapping causing that disk activity. Is that correct?
+&gt; If so, don't do it that way!!!
+">
+
+That's right -- all on disk. However what about the large
+merge passes at the end where the size of the data
+streams being merged exceeds the size of the RAM
+buffers? Even if I were to put the first few passes in RAM,
+you still get those other passes after it and that &quot;awful
+vibrating noise&quot; as you called it.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; I don't think there's any more &quot;textbook&quot; a definition of
+&gt; &gt; &quot;thrashing&quot; than that -- it's wasting time accessing the resource
+&gt; &gt; (the disk), so it's &quot;thrashing&quot; the resource!
+
+&gt; Yeah, if you're using virtual memory for a task whose effective
+&gt; working set is large than your real memory, it'll thrash, every
+&gt; time, you can be sure it'll thrash, you just can't be sure how
+&gt; *much* it'll thrash because of race conditions between 'chron' jobs
+&gt; and other system utilties that swap in a system page at
+&gt; unpredictable times messing up the nice mathematical behaviour of
+&gt; the threshing for your task.
+
+&gt; &gt; The test was done with a 4096 x 4096 transpose and 128 MB of
+&gt; &gt; memory allocated to doing it(!).
+
+&gt; How many bytes per single element of the matrix? From what you said
+&gt; earlier, I'm assuming 4 bytes per element, is that correct?
+&gt; But from what you say now, 4096*4096=16777216 elements,
+&gt; 128MB=128*1024*1024=134217728 bytes total, that's
+&gt; 134217728/16777216=8 bytes per element, twice what I guessed from
+&gt; your earlier remarks. Please clarify which is the case.
+&gt; Maybe you mean you have 64 MB to actually hold the array and
+&gt; another 64 MB to hold a copy of it during merging, merge back and
+&gt; forth between two blocks of RAM, 64 MB total runs being merged
+&gt; and 64 MB total larger runs result of merge with each pass?
+&gt; That makes sense. Please confirm that's what you mean.
+">
+
+That is correct. I have 64 MB for one buffer, 64 MB for the
+merge algorithm's scratchpad.
+
+<QUOTE PREVIOUSPOST="
+&gt; But the key question: 128 MB of actual RAM, or 128 MB of virtual memory,
+&gt; with only some lesser amount of actual RAM available.
+">
+
+I've actually got more than 128 MB.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; On a good run it'll get maybe 13 sec. total, on a bad one it'll
+&gt; &gt; get 22.
+
+&gt; Hey, your computer seems to be quite a bit faster than I estimated.
+&gt; Is that 13 seconds total per merge run, or per complete sort (25
+&gt; 2-way merge passes from single-element merge runs at the start), or
+&gt; per complete matrix operation (3 complete sorts)?
+">
+
+That's 13 to 22 seconds total for the entire transposition: 12 2-way
+merge
+passes, with the first pass doing 2048 merges of pairs of data of
+length
+4096 elements (corresponding to one row of the matrix), second pass
+doing 1024 merges of pairs of data of length 8192 elements, third
+doing 512 merges of pairs of data of length 16384 els, etc.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Since those pi programs I've seen (QuickPi, PiFast, etc.) do not
+&gt; &gt; thrash the hard drive anywhere near this much there's _got_ to be
+&gt; &gt; a way to do this stuff without thrashing, I just can't figure out
+&gt; &gt; what it is!
+
+&gt; - Buy enough actual RAM.
+">
+
+Why should I spend money when I can optimize the program? Like
+I said, Quickpi, etc. do this stuff a lot faster than my program. So
+it would seem a waste to just spend lots of money.
+
+Anyway, I just noticed I hadn't had my program set for the entire
+maximum amount of physical RAM in my system. Now that I
+look at the prog some more, I could have done the first sets of
+passes in physical RAM, but wanted to time the disk I/O. In
+fact I probably could have done it all in RAM. Yay! I was
+using less physical RAM since PiFast, the program I want at
+least 30% of the speed of, does a 64 meg pi calculation
+with around 200 MB of RAM if I recall correctly. So I wanted
+to see if I could make my program use as little of the RAM as
+Pifast did. You don't know how much I'd love to have a peek
+at the source code of that program! :)
+
+I know, I should've divulged all these details. I guess I wasn't
+thinking. Sorry :(
+
+<QUOTE PREVIOUSPOST="
+&gt; - Localize memory use more carefully.
+&gt; - Make merge runs within your smaller amount of *actual* RAM, then
+&gt;    do an external disk merge using eight separate external drives,
+&gt;    four drives for the separate sets of input merge runs, to do a 4-way
+&gt;    merge, and four drives for artificially distributed set of
+&gt;    output merge runs. These don't have to be 8 dedicated drives
+&gt;    since you're using only a tiny portion of each, but you really do
+&gt;    need completely separate heads which usually requires completely
+&gt;    separate disk drives. How much does a 1 GB drive cost nowadays?
+&gt;    How much discount for 8 of them in group/batch/lot purchase?
+">
+
+I would not have room in my case for 8 drives nor the controllers
+on the mobo to handle it. I'd have to get more IDE controllers (ie.
+cards.) Why throw all this money to get lots of hardware when
+you can write a better program (Pifast, etc. prove it's possible),
+which costs the utterly unbeatable price of $0? It just seems like
+such an extreme thing to do. And just to compute pi no less!
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Here's the code:
+&gt; &gt; http://www.mediafire.com/download.php?0y3amgzhde5
+
+&gt; That requires setting up an account for each person who wants to
+&gt; view your files, which is absurd!! Please copy your files to
+&gt; 5gbfree where it takes one account to store the files but viewing
+&gt; is public with no account needed.
+">
+
+WHAT? It downloads just fine for me even when I'm not logged
+into my account. You can set the files to &quot;public&quot; access mode
+and they will indeed be just that: public.
+
+Ooooh, baby. It looks like I posted a link to the wrong file :(
+That's my disk math package, not my transpose thingy. Here:
+
+http://www.mediafire.com/?60c0cx4o6gn
+</POST>
+<POST>
+<POSTER> user923005 &lt;dcor...@connx.com&gt; </POSTER>
+<POSTDATE> 2007-10-24T20:59:00 </POSTDATE>
+On Oct 24, 10:50 am, rem6 ... @yahoo.com (Robert Maas, see http://tinyurl.com/uh3t )
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; From:  mike3 &lt;mike4 ... @yahoo.com&gt;
+&gt; &gt; So it's a transpose, or at least equivalent to one. But how many
+&gt; &gt; passes does it require over the data? According to the article on
+&gt; &gt; Wikipedia, mergesort takes lg n passes.
+
+&gt; No. Log-base-m n, where m is the number of files being
+&gt; simultaneously merged in a single pass, and n is the number of
+&gt; merge runs you have at the very start. For example, with one
+&gt; megabyte of RAM available (such as a Macintosh Plus circa 1990
+&gt; extended to 2 megabytes total RAM, 1 megabyte for the system and
+&gt; application, and 1 megabyte for the being built into merge runs),
+&gt; and with 128 megabytes of data, you can build merge runs of 1
+&gt; megabyte each, so n=128. With your data on a magtape drive, with 2
+&gt; spare magtape drives, three total, you can do a 2-way merge, so it
+&gt; takes log2 128 = 7 merge passes. But with a more modern computer,
+&gt; with 64 megabytes RAM, half for software and half for data, then
+&gt; splitting 128 megabytes into merge runs of 32 megabytes each,
+&gt; that's only 4 merge runs so it takes only 2 passes. With a really
+&gt; modern computer that has a gigabyte of RAM, you can do the whole
+&gt; sort in RAM, no disk/tape merge runs needed at all.
+
+&gt; &gt; When n = 33,554,432 as in my program, that equates to 25 passes.
+
+&gt; Whatever gives you the idea you will have more than 33 million
+&gt; merge runs? I suspect you don't understand how merge-sort works and
+&gt; why the log-base-m n number appears.
+
+&gt; &gt; Holy cow! 25 passes over 128 megabytes of data?!
+
+&gt; Let me work that backwards: 128 megabytes of data split into 33
+&gt; million merge runs, that's about 4 bytes of data per merge run.
+&gt; That's so ridicuously wrong that I'm not going to humor you any
+&gt; longer. Get your facts straight before you ask for any more help.
+
+&gt; How much RAM do you have available for building merge runs (or for
+&gt; sorting the whole batch in RAM without a single disk access)?
+&gt; Do you have a special CPU cache that is even faster than RAM?
+&gt; If so, how large is it?
+&gt; How many tape or disk drives do you have available for external
+&gt; merging if you can't do the whole job in RAM?
+&gt; What is the capacity per external drive?
+
+&gt; Note that for an *internal* merge-sort, performed entirely in
+&gt; actual RAM (no swapping of virtual memory), you indeed start with
+&gt; runs of a single record each, which might be as small as 4 bytes
+&gt; per record equals 4 bytes per single-record merge-run. In real RAM
+&gt; you don't bother to do more than a 2-way merge, because logic to do
+&gt; a multi-way merge is slower than just doing extra merge passes. So
+&gt; then you have 25 merge passes, which takes 1 microsecond per
+&gt; individual comparison on a modern fast computer, plus 1 extra
+&gt; microsecond to flush the unmatched records at the end, total number
+&gt; of comparisons equals the total number of records being merged, so:
+&gt; - the first merge pass takes 2 microseconds per pair of merge runs,
+&gt;    16 million such merges on 32 Million merge runs to produce 16
+&gt;    million two-record merge runs, 33 seconds total.
+&gt; - the second merge pass takes 4 microseconds per pair of merge runs,
+&gt;    8 million such merges on 16 million merge runs to produce 16
+&gt;    million two-record merge runs, 33 seconds total.
+&gt; Etc., 33 seconds per merge pass, 25 passes, that's 825 seconds
+&gt; which is 13 3/4 minutes. Now if you had a faster computer, or more
+&gt; than one CPU that could share the load, it would take less time.
+
+&gt; &gt; And you need not one, but a whopping *3* mergesorts: one for
+&gt; &gt; number A, one for B, then another to return the product to
+&gt; &gt; numeric order after you get done with the FFTs!
+
+&gt; OK, so it takes about 40 minutes to do the whole task.
+&gt; You could have gotten it all finished in the time it took you to
+&gt; compose a single article asking how to do it faster.
+
+&gt; Caveat: I might have made a math mistake above. If I did, please correct me!
+
+&gt; Note: Google Groups search engine
+&gt; &lt; http://groups.google.com/groups?as_q=&amp;num;=10&amp;scoring;=d&amp;hl;=en&amp;as;_epq=r ...&gt;
+&gt; &lt; http://tinyurl.com/23yvz7 &gt;
+&gt; doesn't show anything more recent than Oct.13, so I have no way to
+&gt; see if anybody responded to anything I posted recently, so if you
+&gt; need my attention please go to my Web site to send me an instant
+&gt; alert telling me the message-ID or URL of your article that needs
+&gt; my attention.
+">
+
+You can use a priority queue to do all merges in one pass.  I have no
+idea if it helps for this application.
+</POST>
+<POST>
+<POSTER> rem6...@yahoo.com (Robert Maas, see http://tinyurl.com/uh3t) </POSTER>
+<POSTDATE> 2007-10-31T04:27:00 </POSTDATE>
+Alert: For weeks, right up through Friday aftermoon, Google Groups
+was showing search results only through Oct.13, so I had no way to
+find more recent articles that mentionned my name, such as
+followups to stuff I previously posted. Just Friday night GG
+finally enabled me to find:
+
+<QUOTE PREVIOUSPOST="
+&gt; Date: Wed, 24 Oct 2007 13:41:13 -0700
+&gt; From:  mike3 &lt;mike4 ... @yahoo.com&gt;
+&gt; For the algorithm used, one makes n/2 merge runs, where n is the
+&gt; row/column size of the matrix (square in this case for
+&gt; simplicity): if the matrix has size nxn, then one needs to merge
+&gt; 2 rows in one run on the first pass, so then since there are n
+&gt; rows, n/2 of those passes are needed.
+">
+
+No. You need to make log2(n) merge runs. For example, suppose you
+have a 16x16 matrix, so you need to sort 16 rows, so n=16, log2(n)=4:
+
+First run: single-row runs merged to make 2-row runs, 8 such groups in the pass
+In1: row1    row2     row3    row4    row5    row6    row7     row8
+In2: row9   row10    row11   row12   row13   row14   row15    row16
+Out: Mer19  Mer210  Mer311  Mer412  Mer513  Mer614  Mer715  Mer816
+
+Second run: 2-row runs merged to make 4-row runs, 4 such groups in the pass
+In1:    Mer19     Mer210     Mer311     Mer412
+In2:   Mer513     Mer614     Mer715     Mer816
+Out: Mer15913  Mer261014  Mer371115  Mer481216
+
+Third run: 4-row runs merged to make 8-row runs, 2 such groups in the pass
+In1:       Mer15913        Mer261014
+In2:      Mer371115        Mer481216
+Out: Mer13579111315  Mer246810121416
+
+Fourth run: 8-row runs merged to make 16-row run, 1 such group in the pass
+In1:             Mer13579111315
+In2:            Mer246810121416
+Out: Mer12345678910111213141516
+
+Note if you're using external media such as disk or tape, you need
+to distribute the output to two different drives,so that they will
+be ready to be merged from those two drives during the next pass.
+But if you're using RAM, there's no need to bother with that, you
+just pretend like the first half is one logical file and the second
+half is another logical file.
+
+But the point was that the number of passes is log2(n) not n/2.
+
+<QUOTE PREVIOUSPOST="
+&gt; I was looking at the merge algorithm for transposing a matrix,
+&gt; shown here:
+&gt; http://algo2.iti.uni-karlsruhe.de/dementiev/courses/cache05/hpca00.pdf
+">
+
+I have no way to view PDF files here.
+
+<QUOTE PREVIOUSPOST="
+&gt; I was a bit wrong, we don't take lg N for the absolute amount of
+&gt; merge passes required with N being the size of the matrix, we
+&gt; use lg(sqrt(N))-1 passes across the data, when the matrix is square.
+&gt; That's a lot better. If N = 16777216, then sqrt(N) = 4096, so
+&gt; lg(sqrt(N))-1 = lg(4096)-1 = 12.
+">
+
+Almost correct. It's log2(n) where n is number of initial merge runs.
+The rows don't have to each be internally sorted, only sorted amongst
+themselves, so there are n = sqrt(N) items to sort, hence log2(n)
+= logs(sqrt(N)) passes of merging..
+
+I don't know why you have the -1 after that.
+log2(4096) = log2(1024*4) = log2(1024) + log2(4) = 10 + 2 = 12.
+You seem to have made two mistakes that cancelled each other.
+
+<QUOTE PREVIOUSPOST="
+&gt; I guess I kept confusing this and the Wikipedia sources. :( Also,
+&gt; the &quot;n&quot; I was referring to in the calculation was the size of the
+&gt; data set I wanted to transpose. I did not know it referred to
+&gt; something else.
+">
+
+Yeah. n is the number of initial merge runs before you start
+merging them together to halve the number of separate runs while
+doubling the length per individual run.
+
+Now I have to think very carefully to see if to transpose the matrix
+you have to sort only rows as units ... nah, I'm too sleepy tonight.
+
+<QUOTE PREVIOUSPOST="
+&gt; I guess I thought &quot;n&quot; was the size of the data set I wanted to
+&gt; transpose.
+">
+
+Well, if you want log2(n) to be number of merge passes you need,
+then n always must be the number of initial merge runs. How that
+relates to the actual amount of data is too complicated for me to
+remember the analysis tonight.
+
+<QUOTE PREVIOUSPOST="
+&gt; I've got 512 KB of fast cache, enough to store 8 rows
+&gt; (each row is of size 16,384, 4 bytes per modular integer
+&gt; component (finite field element) for a total of 65,536 bytes
+&gt; per row.). RAM is 768 MB, which could store the whole
+&gt; matrix with just one pass to read it off the disk plus one
+&gt; more pass to write it down again. (Actually since it can
+&gt; all be stored, we just need one pass to do the entire six-step
+&gt; NTT transform!).
+">
+
+Yes, you could run the whole algorithm in RAM, but then the fast
+cache would thrash. You'd rather keep the working set small enough
+to fit within the fast cache at all times, say half the fast cache
+with program and half the fast cache with matrix data. So you
+should aim for an algorithm that needs to actively process only 4
+rows at a time. There are lots of alternative ways to lay out a
+matrix in RAM, and different storage methods may be optimal for
+different operations on it. We assumed from the start that you have
+the data stored in the obvious way as row-major or column-major and
+you needed to invert that. But if you have it stored in sub-blocks
+instead of in rows or columns, that might actually work faster,
+although it complicates the algorithm quite a lot.
+
+Also I mentionned the sort-merge algorithm as a general took that
+frequently works for rearranging lots of data. It would be
+reasonably fast for your task. It's a good thing to learn how to do
+efficiently in any case. But somebody else suggested a completely
+different algorithm which is speciic to this task performed on
+square matrices, and that sounded like it might be faster than my
+more general method. So IMO you should figure out how to make both
+methods as efficient as possible using your specific machine
+configuration, assuming you'll need to do this task many many times
+over the years so the investment to make it efficient will
+eventually pay you back. If you only need to do this once, don't
+worry about efficiency, let it thrash for twenty minutes, or three
+hours, which is less time than it takes to write an efficient
+algorithm.
+
+<QUOTE PREVIOUSPOST="
+&gt; Two drives, each one with 30-40 GB capacity, but only 2 GB free.
+">
+
+Given your large amount of RAM and your smaller but still
+substantial fast cache, it sounds like you can do the following:
+Read input from one disk drive, sort en route using RAM and fast
+cache, write to second disk drive, so each disk drive is running
+sequentially, no thrashing there, and your in-RAM/cache algorithm
+was hopefully not thrashing the fast cache either.
+</POST>
+<POST>
+<POSTER> moi &lt;r...@invalid.address.org&gt; </POSTER>
+<POSTDATE> 2007-10-31T05:40:00 </POSTDATE>
+On Wed, 31 Oct 2007 01:27:15 -0700, Robert Maas, see
+
+<QUOTE PREVIOUSPOST="
+http://tinyurl.com/uh3t wrote:
+">
+
+[good stuff snipped]
+
+<QUOTE PREVIOUSPOST="
+&gt; Also I mentionned the sort-merge algorithm as a general took that
+&gt; frequently works for rearranging lots of data. It would be reasonably
+&gt; fast for your task. It's a good thing to learn how to do efficiently in
+&gt; any case. But somebody else suggested a completely different algorithm
+&gt; which is speciic to this task performed on square matrices, and that
+&gt; sounded like it might be faster than my more general method. So IMO you
+">
+
+Yes, that someone was me. I ran some tests, and my mmap() + tile-flipping
+approach is about 10 times faster then Mike's disk-exerciser. Basically
+because it does 10 times fewer disk-I/O.
+
+<QUOTE PREVIOUSPOST="
+&gt; Given your large amount of RAM and your smaller but still substantial
+&gt; fast cache, it sounds like you can do the following: Read input from one
+&gt; disk drive, sort en route using RAM and fast cache, write to second disk
+&gt; drive, so each disk drive is running sequentially, no thrashing there,
+&gt; and your in-RAM/cache algorithm was hopefully not thrashing the fast
+&gt; cache either.
+">
+
+It is hard (and silly, IMHO) to tune cache effects for a program that
+spends about .12 sec user + .24 sec sys CPU in some 3..30 sec walltime.
+The CPU is idling anyway.
+
+Note that the system's LRU caching effectively results in double
+buffering. While Mike is juggling his tiny buffers, the system has
+probably all of the file cached into system buffers. Constantly hammering
+the LRU with writes will probably cause some 'write through' to disk by
+the system.
+
+AvK
+</POST>
+<POST>
+<POSTER> rem6...@yahoo.com (Robert Maas, see http://tinyurl.com/uh3t) </POSTER>
+<POSTDATE> 2007-10-31T13:29:00 </POSTDATE>
+Alert: For weeks, right up through Friday aftermoon, Google Groups
+was showing search results only through Oct.13, so I had no way to
+find more recent articles that mentionned my name, such as
+followups to stuff I previously posted. Just Friday night GG
+finally enabled me to find:
+
+<QUOTE PREVIOUSPOST="
+&gt; Date: Wed, 24 Oct 2007 17:59:41 -0700
+">
+
+Since Friday I've been trying to catch up with backlog.
+I'm less than a week behind at the moment.
+
+<QUOTE PREVIOUSPOST="
+&gt; From:  user923005 &lt;dcor ... @connx.com&gt;
+&gt; You can use a priority queue to do all merges in one pass.  I have no
+">
+
+Yes, such as using a Heap. But then you completely lose control of
+localization of reference, and in general your virtual memory
+(whether it be RAM backed up by disk, or fast cache backed up by
+RAM) will most likely thrash madly. The nice thing about merge-sort
+is that each merge is *sequentual* access for both input files and
+output file, thus *guaranteeing* localization of reference and
+hence preventing thrashing.
+</POST>
+<POST>
+<POSTER> rem6...@yahoo.com (Robert Maas, see http://tinyurl.com/uh3t) </POSTER>
+<POSTDATE> 2007-10-31T16:12:00 </POSTDATE>
+Alert: For weeks, right up through Friday aftermoon, Google Groups
+was showing search results only through Oct.13, so I had no way to
+find more recent articles that mentionned my name, such as
+followups to stuff I previously posted. Just Friday night GG
+finally enabled me to find a lot of articles before this:
+
+<QUOTE PREVIOUSPOST="
+&gt; Date: Fri, 19 Oct 2007 00:45:42 +0200
+&gt; From: moi &lt;r ... @invalid.address.org&gt;
+">
+
+Since Friday I've been trying to catch up with backlog.
+I'm less than 6 days behind at the moment.
+
+<QUOTE PREVIOUSPOST="
+&gt; The
+&gt; A B C D
+&gt; E F G H
+&gt; matrix can also be transposed by &quot;one-touch-football&quot;
+&gt; this is the shuffle or permutation as explained on the wiki-page.
+">
+
+A Google search for: one-touch-football transpose matrix
+doesn't turn up anything related except this thread itself.
+I don't know what you mean by &quot;the wiki-page&quot;.
+
+However in general I like the idea of breaking the data into chunks
+of size that match the backing store to assure locality of reference.
+
+For fast cache backed by RAM, whatever unit of RAM is in each
+pagemap entry is the appropriate unit, since RAM is by definition
+Random Access, you can load data from any pagemap unit at any time
+without any cost beyond the actual access to those memory
+locations. Based on the OP's later info, this seems appropriate.
+
+For RAM backed by disk, the key thing which takes the most time is
+seeking. First you need absolute control over disk allocation so
+that you can store your data in contiguous disk space so as to minimize
+the total number of cylinders.
+If your data takes more than one cylinder, then the first thing you
+need to do is localize your cylinder access so that you never go
+back to a cylinder you already were using before, you load
+everything you need from one cylinder before moving to the next.
+If your dataset fits on one cylinder, then no problem.
+
+Secondarily, you need to localize sector reads within that one
+cylinder you are using at the moment, and in fact you need to
+arrange your sectors around each track in such a way that you have
+time to get ready to read each sector before that sector comes up,
+to avoid missing the sector and having to wait a whole rotation of
+the disk for it to come around again. Asynchronous interrupt-driven
+I/O and/or interleaved sector addressing may solve the problem if
+your CPU isn't fast enough to read data at full disk rotation
+speed. For example, you might use 2:1 interleaving of sector
+addresses, so that &quot;sequential&quot; access of all the sectors in a
+track requires two complete rotations:
+
+<QUOTE PREVIOUSPOST="
+&gt;-------physical-placement-around-the-track-------------------------------- ----&gt;
+">
+
+Sec#0     Sec#1     Sec#2     Sec#3     Sec#4     Sec#5     Sec#6     Sec#7
+Sec#8     Sec#9     Sec#A     Sec#B     Sec#C     Sec#D     Sec#E     Sec#F
+If you tried to pack all those sectors sequentially and your CPU
+isn't ready for the next sector until a tad bit too late, you'd
+miss the next sector each time after the first and have to go all
+the way around to get it, resulting in fifteen complete rotations
+to read the sixteen sectors. When you format a disk, you generally
+have control over the level of interleaving of sector addresses
+within the track, and you select which level of interleaving based
+on how fast a CPU you have relative to the speed of the disk.
+
+Of course in any case you need to read each sector of data just
+once and never read the same sector again.
+
+<QUOTE PREVIOUSPOST="
+&gt; You seem too much obsessed with sequentiality.
+&gt; This may be good for the inner loops {read row(A), read column(B), write
+&gt; SUM(a*b) to destination; } but for transposing either A or B, you'll have
+&gt; to *reorder*, which implies nonsequential access, either at the source or
+&gt; at the destination.
+">
+
+Yes, that's the same point I was making. The sequence of access
+between source and destination is grossly different, so at least
+one of the two must be non-sequential. Merge-sort is a multi-pass
+algorithm that assures almost-sequential access, which is good
+enough for a reasonable implementation. But completely foregoing
+the ease of programming by explicitly handling chunks that aren't
+rows or columns might be even faster.
+
+One idea I saw hinted at elsewhere in this thread is to not store
+the array in row-major or column-major order at all, but instead to
+explicitly store as a hierarchial structure of sub-arrays that are
+each just the right size for whatever unit is used for backing
+store. (For disk-to-RAM paging, one cylinder per large sub-matrix,
+and one sector per small sub-matrix, a three-level hierarchy; For
+RAM-to-cache paging, one 'page' per sub-matrix, just a two-level
+hierarchy.) For example, let's imagine a grossly simplified case
+where virtual memory allows four numeric values per 'page', and you
+have a 4x4 array to process:
+A1 A2 B1 B2
+A3 A4 B3 B4
+C1 C2 D1 D2
+C3 C4 D3 D4
+The upper-left 2x2 sub-matrix is stored in one 'page', etc.
+So to transpose, you do (in any random order) these four sub-tasks:
+- load original sub-matrix A, transpose locally, store in destination A;
+- load original sub-matrix B, transpose locally, store in destination C;
+- load original sub-matrix C, transpose locally, store in destination B;
+- load original sub-matrix D, transpose locally, store in destination D;
+
+So how do you transpose locally? For this special case you simply
+swap lower left and upper right elements. For more general case you
+have a two-level loop which traverses the upper-right triangle in
+parallel with the lower-left triangle.
+
+So how do you write the toplevel algorithm to perform those four tasks?
+For this special case you hardwire the calls in any order you want:
+LoadLocalTransposeStore(0,0,0,0);
+LoadLocalTransposeStore(0,1,1,0);
+LoadLocalTransposeStore(1,0,0,1);
+LoadLocalTransposeStore(1,1,1,1);
+For more general case, you have a two-level loop which passes first
+two indexes straight and second two indexes reversed (k = number of
+partitions i.e. total size N divided by number of rows,cols in each
+sub-matrix, in example above N=4, k=2).
+for (i=0, i&lt;k, i++)
+for (j=0, j&lt;k, j++)
+LoadLocalTransposeStore(i,j,j,i);
+Trivial, huh?
+
+Now the *usual* algorithms, such as matrix multiplication which
+involves dot product of row from one matrix and transposed column
+of other matrix, gets more complicated but not horribly so.
+You do *not* perform a dot product of a whole row at a time.
+You interleave all the dot products of all the rows that pass
+through one row of sub-matrices. I'll leave it to you to work out
+the details.
+
+Ao before you start *any* of this, you need to make a complete list
+of what matrix operations you need. I'm guessing you mostly need
+matrix multiplication, and maybe eigenvalues, right?
+Let me go back to the original post to remind myself what the real
+purpose of this all was ... OK, you want to do FFT on large sets of
+data from the disk and write back out to disk. I've never written
+an FFT algorithm, but I vaguely read about the &quot;butterfly&quot; dataflow
+used by it, let me check on WikiPedia to make sure I understand it
+.. unfortunately http://en.wikipedia.org/wiki/Butterfly_diagram
+shows most of the useful info in a png file which I have no way to
+view here. OK, here's a nice text description of the algorithm:
+&lt; http://www.relisoft.com/Science/Physics/fft.html &gt;
+I'll comment on locality of reference for each step:
+1. Select N that is a power of two. You'll be calculating an N-point
+FFT.
+2. Gather your samples into a buffer of size N
+Sweeps your RAM once when you load original data from disk.
+3. Sort the samples in bit-reversed order and put them in a complex
+N-point buffer (set the imaginary parts to zero)
+;This takes n log(n) time, and using either MergeSort or hardwired
+; equivalent specifically for FFT you have nice locality of reference
+; for each pass. You sweep n units of memory log(n) times total.
+4. Apply the first stage butterfly using adjacent pairs of numbers in
+the buffer
+;Complete locality of reference, swapping two bites within exact same page.
+5. Apply the second stage butterfly using pairs that are separated by
+2
+;Complete locality of reference, assuming your pages are at least 4
+;bytes each.
+6. Apply the third stage butterfly using pairs that are separated by
+4
+;Complete locality of reference, assuming your pages are at least 8
+;bytes each.
+7. Continue butterflying the numbers in your buffer until you get to
+separation of N/2
+;At some point, you will be swapping elements that are in
+; *different* pages, because the distance you are swapping is larger
+; than the size of a page. But in that case, you have only two active
+; pages at any one time, and once you finish those two pages you
+; never return to them again (during this *step* in the overall
+; algorithm, among log(n) steps total).
+8. The buffer will contain the Fourier transform
+Sweeps your RAM once when you store result to disk.
+
+So my question: Why isn't that straightforward algorithm what you
+have chosen to implement? You sweep the pages once per merge pass,
+log(n) total (three active pages at any time, two inputs and one
+output), then you sweep the pages once per butterfly pass, again
+log(n) total (one or two active pages any any one time depending on
+whether elements swapped are in same page or not), hence 2 * log(n)
+sweeps of pages altogether, plus one sweep when you originally read
+the data from disk, and another sweep at the end when you write the
+FFT to disk. Isn't that good enough?
+
+My guess: You got fascinated by Bailey's algorithm and decided to
+see if you could make it as efficient (in regard to paging
+behaviour) as the utterly simple algorithm described by relisoft.com?
+
+One little note to what I said about memory sweeps: If you have
+*real* data, and you compute *complex* FFT result, then the memory
+sweeps for merge at the start are *real* values whereas the
+butterfly swaps are *complex* values, so the butterfly sweeps use
+twice as much actual memory as the merge sweeps, minor detail.
+This doesn't affect the locality of
+...
+read more »
+</POST>
+<POST>
+<POSTER> rem6...@yahoo.com (Robert Maas, see http://tinyurl.com/uh3t) </POSTER>
+<POSTDATE> 2007-10-31T16:50:00 </POSTDATE>
+Alert: For weeks, right up through Friday aftermoon, Google Groups
+was showing search results only through Oct.13, so I had no way to
+find more recent articles that mentionned my name, such as
+followups to stuff I previously posted. Just Friday night GG
+finally enabled me to find:
+
+<QUOTE PREVIOUSPOST="
+&gt; Date: Wed, 24 Oct 2007 14:35:00 -0700
+&gt; From:  mike3 &lt;mike4 ... @yahoo.com&gt;
+">
+
+Since Friday I've been trying to catch up with backlog.
+I'm less than a week behind at the moment.
+
+<QUOTE PREVIOUSPOST="
+&gt; I was doing the merge completely on disk.
+">
+
+Then I'm confused. From what you said elsewhere, it sounded like
+you had enough RAM to do the whole task in RAM. Just load original
+data sequentially from disk, do FFT in RAM, sequentially dump FFT
+result to disk. So why would you do it any other way?
+
+<QUOTE PREVIOUSPOST="
+&gt; I have two drives. The matrix data is stored on one. I can't use
+&gt; the second drive since it's not formatted for Linux use.
+">
+
+If your one usable drive has only a single seek mechanism (a single
+set of heads that move all as a single unit), then you don't want
+to do disk-to-disk merge (unless the whole dataset and all
+temporary files reside in a single cylinder), because even if you
+are reading each input file sequentially, and writing the output
+file sequentially, you are jumping back and forth between the
+various cylinders that are active for your current read/write
+points in those three files at any one time.
+
+Do you have a disk partition that you can completely empty of all
+files then put your dataset there, to assure that it occupies
+contiguous cylinders from the start of the partition, not
+intermixed with any old files still scattered around that
+partition?
+
+<QUOTE PREVIOUSPOST="
+&gt; what about the large merge passes at the end where the size of
+&gt; the data streams being merged exceeds the size of the ram buffers?
+">
+
+(Assuming you have at least three separate drives, preferably four:)
+When you are merging, logically you need only one record from each
+input stream in RAM, and then the smallest record gets written to
+output stream and a new input record from that input stream is read
+in to replace it. If records are smaller than disk blocks, then
+you read a whole disk block into RAM, extract records from it until
+it's exhausted, then replace that disk block in RAM from the next
+block on the disk. For overlapped I/O, you use double buffering,
+where you have the currently-being-processed input block from each
+input file in RAM, and also you have a spare input block in RAM
+being loaded in background from the next disk block so it'll be all
+finished loading and sitting in RAM by the time you are ready to
+start extracting records from it. So you need enough RAM for six
+disk blocks (2+2 input and 2 output) plus two logical records plus
+pointers/indexes/etc.
+
+<QUOTE PREVIOUSPOST="
+&gt; In fact I probably could have done it all in RAM.
+">
+
+In that case, you just load the input data once, do everything in
+RAM, then write the output data once, so you only need one disk
+drive. (For safety you write output as a new file, not overwriting
+input file, in case an error crashes your system in the middle of
+writing output. But you knew that, right?)
+
+So you need to optimize paging between fast cache and RAM, whereby
+for each merge pass the input files in RAM are swept just once
+each, and output is written back into RAM sequentially, with your
+working set of RAM pages small enough to fit into fast cache.
+The logic is the same except you don't need multiple RAM drives. :-)
+(Although if you *do* have multiple RAM devices, such that you can
+read from one during the same clock cycle as writing to another,
+that does speed up the algorithm by nearly a factor of
+approximately 2.)
+
+<QUOTE PREVIOUSPOST="
+&gt; Ooooh, baby. It looks like I posted a link to the wrong file :(
+&gt; That's my disk math package, not my transpose thingy. Here:
+&gt; http://www.mediafire.com/?60c0cx4o6gn
+">
+
+I get a similar problem as with the other URL. I get a Web page
+that looks like this, and I have no idea what to do next:
+Processing..
+
+Create a Free Account | Login
+|Logout
+
+Free File Hosting Made Simple
+
+free file hosting
+* Upload Files
+* My Files
+* My Account
+
+[whatsnew.gif]
+
+X
+Please enter your email address and password to login to your account:
+
+Email Address:
+____________________
+Password:
+____________________
+[_]  Remember me on this computer
+
+Login to MediaFire
+Forgot your password?
+X
+Create a free account to easily manage your uploaded files:
+
+Email Address:
+____________________
+Password: (minimum 5 characters)
+____________________
+Confirm Password:
+____________________
+We respect your privacy and will not spam, sell, or share your email
+address
+
+Create a Free Account
+Tell us what you think
+
+Root Folder Explanation
+
+Add Text
+
+You requested mergexpose.c (4.8 KB)
+Browse public files
+[facebook2.gif]
+MediaFire App is now available on Facebook!
+Share all your MediaFire files with your Facebook friends
+[ajax-loader-small-whitebg.gif]
+- Password Protected File -
+Please enter the password below to download this file
+____________________
+[BUTTON]
+Preparing download...
+This file has been virus scanned for your protection
+Scan your own computer for viruses
+
+[upload_share.gif]
+* Info
+* Email
+* Share by IM
+* Embed
+
+[copy_button_small.gif] HTML Embed Code
+____________________
+[copy_button_small.gif] Sharing URL
+____________________
+click &quot;Embed in Website&quot; tab for more options
+
+Report this file
+This form is for reporting files that abuse MediaFire's Terms of
+Service or Acceptable Use Policy.
+Please enter the reason for reporting this file:
+
+______________________________________________________________________
+______________________________________________________________________
+______________________________________________________________________
+______________________________________________________________________
+
+Report File
+
+Contact
+About
+FAQs
+Blog
+Tell a Friend
+Link to MediaFire
+Bookmark
+Support
+Save to del.icio.us
+
+Copyright &lt;A9&gt; 2007 MediaFire. All rights reserved.
+
+Acceptable Use Policy | Terms of Service | Privacy Policy
+
+IFRAME: userwork
+
+IFRAME: emailwork
+</POST>
+<POST>
+<POSTER> moi &lt;r...@invalid.address.org&gt; </POSTER>
+<POSTDATE> 2007-10-31T16:54:00 </POSTDATE>
+On Wed, 31 Oct 2007 13:12:16 -0700, Robert Maas, see
+
+<QUOTE PREVIOUSPOST="
+http://tinyurl.com/uh3t wrote:
+&gt; Alert: For weeks, right up through Friday aftermoon, Google Groups was
+&gt; showing search results only through Oct.13, so I had no way to find more
+&gt; recent articles that mentionned my name, such as followups to stuff I
+&gt; previously posted. Just Friday night GG finally enabled me to find a lot
+&gt; of articles before this:
+&gt;&gt; Date: Fri, 19 Oct 2007 00:45:42 +0200 From: moi
+&gt;&gt; &lt;r ... @invalid.address.org&gt;
+&gt; Since Friday I've been trying to catch up with backlog. I'm less than 6
+&gt; days behind at the moment.
+&gt;&gt; The
+&gt;&gt; A B C D
+&gt;&gt; E F G H
+&gt;&gt; matrix can also be transposed by &quot;one-touch-football&quot; this is the
+&gt;&gt; shuffle or permutation as explained on the wiki-page.
+
+&gt; A Google search for: one-touch-football transpose matrix doesn't turn up
+&gt; anything related except this thread itself. I don't know what you mean
+&gt; by &quot;the wiki-page&quot;.
+">
+
+Wiki-page has been referred to somewhere at the start of this (or
+another, Mike has started more than one thread on the same subject)
+
+http://en.wikipedia.org/wiki/In-place_matrix_transposition
+One-touch-football was a term I invented.
+
+<QUOTE PREVIOUSPOST="
+&gt; One idea I saw hinted at elsewhere in this thread is to not store the
+&gt; array in row-major or column-major order at all, but instead to
+&gt; explicitly store as a hierarchial structure of sub-arrays that are each
+&gt; just the right size for whatever unit is used for backing store. (For
+&gt; disk-to-RAM paging, one cylinder per large sub-matrix, and one sector
+&gt; per small sub-matrix, a three-level hierarchy; For RAM-to-cache paging,
+&gt; one 'page' per sub-matrix, just a two-level hierarchy.) For example,
+&gt; let's imagine a grossly simplified case where virtual memory allows four
+&gt; numeric values per 'page', and you have a 4x4 array to process:
+&gt;    A1 A2 B1 B2
+&gt;    A3 A4 B3 B4
+&gt;    C1 C2 D1 D2
+&gt;    C3 C4 D3 D4
+">
+
+This is almost the Morton addressing.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; The upper-left 2x2 sub-matrix is stored in one 'page', etc. So to
+&gt; transpose, you do (in any random order) these four sub-tasks: - load
+&gt; original sub-matrix A, transpose locally, store in destination A; - load
+&gt; original sub-matrix B, transpose locally, store in destination C; - load
+&gt; original sub-matrix C, transpose locally, store in destination B; - load
+&gt; original sub-matrix D, transpose locally, store in destination D;
+
+&gt; So how do you transpose locally? For this special case you simply swap
+&gt; lower left and upper right elements. For more general case you have a
+&gt; two-level loop which traverses the upper-right triangle in parallel with
+&gt; the lower-left triangle.
+
+&gt; So how do you write the toplevel algorithm to perform those four tasks?
+&gt; For this special case you hardwire the calls in any order you want:
+&gt;   LoadLocalTransposeStore(0,0,0,0);
+&gt;   LoadLocalTransposeStore(0,1,1,0);
+&gt;   LoadLocalTransposeStore(1,0,0,1);
+&gt;   LoadLocalTransposeStore(1,1,1,1);
+&gt; For more general case, you have a two-level loop which passes first two
+&gt; indexes straight and second two indexes reversed (k = number of
+&gt; partitions i.e. total size N divided by number of rows,cols in each
+&gt; sub-matrix, in example above N=4, k=2).
+&gt;   for (i=0, i&lt;k, i++)
+&gt;     for (j=0, j&lt;k, j++)
+&gt;       LoadLocalTransposeStore(i,j,j,i);
+&gt; Trivial, huh?
+">
+
+I guess you must have missed the posting with my code-snippet,
+which used a similar trivial flip&amp;swap method.
+BTW for non-square matrices things become more complicated.
+
+AvK
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T03:02:00 </POSTDATE>
+On Oct 31, 1:54 pm, moi &lt;r ... @invalid.address.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Wed, 31 Oct 2007 13:12:16 -0700, Robert Maas, see
+
+&gt; http://tinyurl.com/uh3twrote:
+&gt; &gt; Alert: For weeks, right up through Friday aftermoon, Google Groups was
+&gt; &gt; showing search results only through Oct.13, so I had no way to find more
+&gt; &gt; recent articles that mentionned my name, such as followups to stuff I
+&gt; &gt; previously posted. Just Friday night GG finally enabled me to find a lot
+&gt; &gt; of articles before this:
+&gt; &gt;&gt; Date: Fri, 19 Oct 2007 00:45:42 +0200 From: moi
+&gt; &gt;&gt; &lt;r ... @invalid.address.org&gt;
+&gt; &gt; Since Friday I've been trying to catch up with backlog. I'm less than 6
+&gt; &gt; days behind at the moment.
+&gt; &gt;&gt; The
+&gt; &gt;&gt; A B C D
+&gt; &gt;&gt; E F G H
+&gt; &gt;&gt; matrix can also be transposed by &quot;one-touch-football&quot; this is the
+&gt; &gt;&gt; shuffle or permutation as explained on the wiki-page.
+
+&gt; &gt; A Google search for: one-touch-football transpose matrix doesn't turn up
+&gt; &gt; anything related except this thread itself. I don't know what you mean
+&gt; &gt; by &quot;the wiki-page&quot;.
+
+&gt; Wiki-page has been referred to somewhere at the start of this (or
+&gt; another, Mike has started more than one thread on the same subject)
+
+&gt; http://en.wikipedia.org/wiki/In-place_matrix_transposition
+&gt; One-touch-football was a term I invented.
+">
+
+However I haven't been able to get anything really helpful, it doesn't
+describe for example how to do on-disk transpose efficiently, it just
+gives reviews of various stuff.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; One idea I saw hinted at elsewhere in this thread is to not store the
+&gt; &gt; array in row-major or column-major order at all, but instead to
+&gt; &gt; explicitly store as a hierarchial structure of sub-arrays that are each
+&gt; &gt; just the right size for whatever unit is used for backing store. (For
+&gt; &gt; disk-to-RAM paging, one cylinder per large sub-matrix, and one sector
+&gt; &gt; per small sub-matrix, a three-level hierarchy; For RAM-to-cache paging,
+&gt; &gt; one 'page' per sub-matrix, just a two-level hierarchy.) For example,
+&gt; &gt; let's imagine a grossly simplified case where virtual memory allows four
+&gt; &gt; numeric values per 'page', and you have a 4x4 array to process:
+&gt; &gt;    A1 A2 B1 B2
+&gt; &gt;    A3 A4 B3 B4
+&gt; &gt;    C1 C2 D1 D2
+&gt; &gt;    C3 C4 D3 D4
+
+&gt; This is almost the Morton addressing.
+
+&gt; &gt; The upper-left 2x2 sub-matrix is stored in one 'page', etc. So to
+&gt; &gt; transpose, you do (in any random order) these four sub-tasks: - load
+&gt; &gt; original sub-matrix A, transpose locally, store in destination A; - load
+&gt; &gt; original sub-matrix B, transpose locally, store in destination C; - load
+&gt; &gt; original sub-matrix C, transpose locally, store in destination B; - load
+&gt; &gt; original sub-matrix D, transpose locally, store in destination D;
+
+&gt; &gt; So how do you transpose locally? For this special case you simply swap
+&gt; &gt; lower left and upper right elements. For more general case you have a
+&gt; &gt; two-level loop which traverses the upper-right triangle in parallel with
+&gt; &gt; the lower-left triangle.
+
+&gt; &gt; So how do you write the toplevel algorithm to perform those four tasks?
+&gt; &gt; For this special case you hardwire the calls in any order you want:
+&gt; &gt;   LoadLocalTransposeStore(0,0,0,0);
+&gt; &gt;   LoadLocalTransposeStore(0,1,1,0);
+&gt; &gt;   LoadLocalTransposeStore(1,0,0,1);
+&gt; &gt;   LoadLocalTransposeStore(1,1,1,1);
+&gt; &gt; For more general case, you have a two-level loop which passes first two
+&gt; &gt; indexes straight and second two indexes reversed (k = number of
+&gt; &gt; partitions i.e. total size N divided by number of rows,cols in each
+&gt; &gt; sub-matrix, in example above N=4, k=2).
+&gt; &gt;   for (i=0, i&lt;k, i++)
+&gt; &gt;     for (j=0, j&lt;k, j++)
+&gt; &gt;       LoadLocalTransposeStore(i,j,j,i);
+&gt; &gt; Trivial, huh?
+
+&gt; I guess you must have missed the posting with my code-snippet,
+&gt; which used a similar trivial flip&amp;swap method.
+&gt; BTW for non-square matrices things become more complicated.
+
+&gt; AvK
+">
+
+Hmm. This is interesting. How does it perform on
+fairly large matrices, anyway, especially when they're
+too large to all fit in main memory? I've noticed that on
+my system, when I have files mapped to virtual memory
+that are too large to store in main memory, the
+hard drive is accessed very vigorously, even for something
+as simple as a digit-by-digit addition of two huge integers
+stored on the hard drive, taking much longer than, say, a
+simple file copy of a similar amount of data. Why is this?
+
+Also, for the Bailey algorithms under discussion, they
+seem to require the data be in column-major order, and
+it was mentioned here that the algorithm cannot be
+converted to work with data in row-major order. In addition,
+if one uses a discontiguous representation of the data
+on disk to accelerate the transpose, it may hamper the
+row/column FFTs/NTTs, which are best done when
+rows/colums are stored contiguously.
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T03:05:00 </POSTDATE>
+On Oct 31, 2:40 am, moi &lt;r ... @invalid.address.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Wed, 31 Oct 2007 01:27:15 -0700, Robert Maas, see
+
+&gt; http://tinyurl.com/uh3twrote:
+
+&gt; [good stuff snipped]
+
+&gt; &gt; Also I mentionned the sort-merge algorithm as a general took that
+&gt; &gt; frequently works for rearranging lots of data. It would be reasonably
+&gt; &gt; fast for your task. It's a good thing to learn how to do efficiently in
+&gt; &gt; any case. But somebody else suggested a completely different algorithm
+&gt; &gt; which is speciic to this task performed on square matrices, and that
+&gt; &gt; sounded like it might be faster than my more general method. So IMO you
+
+&gt; Yes, that someone was me. I ran some tests, and my mmap() + tile-flipping
+&gt; approach is about 10 times faster then Mike's disk-exerciser. Basically
+&gt; because it does 10 times fewer disk-I/O.
+">
+
+How does it do when the file size exceeds the amount of physical
+RAM in the system? For example, try a transpose with it on
+a file of 1024 MB with only 512 MB of RAM. What's the disk
+activity like?
+
+On Oct 31, 1:54 pm, moi &lt;r ... @invalid.address.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; On Wed, 31 Oct 2007 13:12:16 -0700, Robert Maas, see
+
+&gt; http://tinyurl.com/uh3twrote:
+&gt; &gt; Alert: For weeks, right up through Friday aftermoon, Google Groups was
+&gt; &gt; showing search results only through Oct.13, so I had no way to find more
+&gt; &gt; recent articles that mentionned my name, such as followups to stuff I
+&gt; &gt; previously posted. Just Friday night GG finally enabled me to find a lot
+&gt; &gt; of articles before this:
+&gt; &gt;&gt; Date: Fri, 19 Oct 2007 00:45:42 +0200 From: moi
+&gt; &gt;&gt; &lt;r ... @invalid.address.org&gt;
+&gt; &gt; Since Friday I've been trying to catch up with backlog. I'm less than 6
+&gt; &gt; days behind at the moment.
+&gt; &gt;&gt; The
+&gt; &gt;&gt; A B C D
+&gt; &gt;&gt; E F G H
+&gt; &gt;&gt; matrix can also be transposed by &quot;one-touch-football&quot; this is the
+&gt; &gt;&gt; shuffle or permutation as explained on the wiki-page.
+
+&gt; &gt; A Google search for: one-touch-football transpose matrix doesn't turn up
+&gt; &gt; anything related except this thread itself. I don't know what you mean
+&gt; &gt; by &quot;the wiki-page&quot;.
+
+&gt; Wiki-page has been referred to somewhere at the start of this (or
+&gt; another, Mike has started more than one thread on the same subject)
+
+&gt; http://en.wikipedia.org/wiki/In-place_matrix_transposition
+&gt; One-touch-football was a term I invented.
+">
+
+However I haven't been able to get anything really helpful, it doesn't
+describe for example how to do on-disk transpose efficiently, it just
+gives reviews of various stuff.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; One idea I saw hinted at elsewhere in this thread is to not store the
+&gt; &gt; array in row-major or column-major order at all, but instead to
+&gt; &gt; explicitly store as a hierarchial structure of sub-arrays that are each
+&gt; &gt; just the right size for whatever unit is used for backing store. (For
+&gt; &gt; disk-to-RAM paging, one cylinder per large sub-matrix, and one sector
+&gt; &gt; per small sub-matrix, a three-level hierarchy; For RAM-to-cache paging,
+&gt; &gt; one 'page' per sub-matrix, just a two-level hierarchy.) For example,
+&gt; &gt; let's imagine a grossly simplified case where virtual memory allows four
+&gt; &gt; numeric values per 'page', and you have a 4x4 array to process:
+&gt; &gt;    A1 A2 B1 B2
+&gt; &gt;    A3 A4 B3 B4
+&gt; &gt;    C1 C2 D1 D2
+&gt; &gt;    C3 C4 D3 D4
+
+&gt; This is almost the Morton addressing.
+
+&gt; &gt; The upper-left 2x2 sub-matrix is stored in one 'page', etc. So to
+&gt; &gt; transpose, you do (in any random order) these four sub-tasks: - load
+&gt; &gt; original sub-matrix A, transpose locally, store in destination A; - load
+&gt; &gt; original sub-matrix B, transpose locally, store in destination C; - load
+&gt; &gt; original sub-matrix C, transpose locally, store in destination B; - load
+&gt; &gt; original sub-matrix D, transpose locally, store in destination D;
+
+&gt; &gt; So how do you transpose locally? For this special case you simply swap
+&gt; &gt; lower left and upper right elements. For more general case you have a
+&gt; &gt; two-level loop which traverses the upper-right triangle in parallel with
+&gt; &gt; the lower-left triangle.
+
+&gt; &gt; So how do you write the toplevel algorithm to perform those four tasks?
+&gt; &gt; For this special case you hardwire the calls in any order you want:
+&gt; &gt;   LoadLocalTransposeStore(0,0,0,0);
+&gt; &gt;   LoadLocalTransposeStore(0,1,1,0);
+&gt; &gt;   LoadLocalTransposeStore(1,0,0,1);
+&gt; &gt;   LoadLocalTransposeStore(1,1,1,1);
+&gt; &gt; For more general case, you have a two-level loop which passes first two
+&gt; &gt; indexes straight and second two indexes reversed (k = number of
+&gt; &gt; partitions i.e. total size N divided by number of rows,cols in each
+&gt; &gt; sub-matrix, in example above N=4, k=2).
+&gt; &gt;   for (i=0, i&lt;k, i++)
+&gt; &gt;     for (j=0, j&lt;k, j++)
+&gt; &gt;       LoadLocalTransposeStore(i,j,j,i);
+&gt; &gt; Trivial, huh?
+
+&gt; I guess you must have missed the posting with my code-snippet,
+&gt; which used a similar trivial flip&amp;swap method.
+&gt; BTW for non-square matrices things become more complicated.
+
+&gt; AvK
+">
+
+Hmm. This is interesting. How does it perform on
+fairly large matrices, anyway, especially when they're
+too large to all fit in main memory? I've noticed that on
+my system, when I have files mapped to virtual memory
+that are too large to store in main memory, the
+hard drive is accessed very vigorously, even for something
+as simple as a digit-by-digit addition of two huge integers
+stored on the hard drive, taking much longer than, say, a
+simple file copy of a similar amount of data. Why is this?
+
+Also, for the Bailey algorithms under discussion, they
+seem to require the data be in column-major order, and
+it was mentioned here that the algorithm cannot be
+converted to work with data in row-major order. In addition,
+if one uses a discontiguous representation of the data
+on disk to accelerate the transpose, it may hamper the
+row/column FFTs/NTTs, which are best done when
+rows/colums are stored contiguously.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Given your large amount of RAM and your smaller but still substantial
+&gt; &gt; fast cache, it sounds like you can do the following: Read input from one
+&gt; &gt; disk drive, sort en route using RAM and fast cache, write to second disk
+&gt; &gt; drive, so each disk drive is running sequentially, no thrashing there,
+&gt; &gt; and your in-RAM/cache algorithm was hopefully not thrashing the fast
+&gt; &gt; cache either.
+
+&gt; It is hard (and silly, IMHO) to tune cache effects for a program that
+&gt; spends about .12 sec user + .24 sec sys CPU in some 3..30 sec walltime.
+&gt; The CPU is idling anyway.
+">
+
+How do I get rid of that, anyway? How do I make the wall time
+as low as possible?
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; Note that the system's LRU caching effectively results in double
+&gt; buffering. While Mike is juggling his tiny buffers, the system has
+&gt; probably all of the file cached into system buffers. Constantly hammering
+&gt; the LRU with writes will probably cause some 'write through' to disk by
+&gt; the system.
+
+&gt; AvK
+">
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T03:59:00 </POSTDATE>
+On Oct 31, 3:40 am, moi &lt;r ... @invalid.address.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Wed, 31 Oct 2007 01:27:15 -0700, Robert Maas, see
+
+&gt; http://tinyurl.com/uh3twrote:
+
+&gt; [good stuff snipped]
+
+&gt; &gt; Also I mentionned the sort-merge algorithm as a general took that
+&gt; &gt; frequently works for rearranging lots of data. It would be reasonably
+&gt; &gt; fast for your task. It's a good thing to learn how to do efficiently in
+&gt; &gt; any case. But somebody else suggested a completely different algorithm
+&gt; &gt; which is speciic to this task performed on square matrices, and that
+&gt; &gt; sounded like it might be faster than my more general method. So IMO you
+
+&gt; Yes, that someone was me. I ran some tests, and my mmap() + tile-flipping
+&gt; approach is about 10 times faster then Mike's disk-exerciser. Basically
+&gt; because it does 10 times fewer disk-I/O.
+
+&gt; &gt; Given your large amount of RAM and your smaller but still substantial
+&gt; &gt; fast cache, it sounds like you can do the following: Read input from one
+&gt; &gt; disk drive, sort en route using RAM and fast cache, write to second disk
+&gt; &gt; drive, so each disk drive is running sequentially, no thrashing there,
+&gt; &gt; and your in-RAM/cache algorithm was hopefully not thrashing the fast
+&gt; &gt; cache either.
+
+&gt; It is hard (and silly, IMHO) to tune cache effects for a program that
+&gt; spends about .12 sec user + .24 sec sys CPU in some 3..30 sec walltime.
+&gt; The CPU is idling anyway.
+
+&gt; Note that the system's LRU caching effectively results in double
+&gt; buffering. While Mike is juggling his tiny buffers, the system has
+&gt; probably all of the file cached into system buffers. Constantly hammering
+&gt; the LRU with writes will probably cause some 'write through' to disk by
+&gt; the system.
+
+&gt; AvK
+">
+
+Alright, I gave yours a try, to compare it to my so-called &quot;disk
+exerciser&quot;, using the code you provided. On my system, I got
+the following timings, with a system having 768 MB of physical
+memory:
+
+1024x1024 (4 MB):
+real    0m0.035s
+user    0m0.012s
+sys     0m0.020s
+
+2048x2048 (16 MB):
+real    0m0.126s
+user    0m0.064s
+sys     0m0.060s
+
+4096x4096 (64 MB):
+real    0m0.552s
+user    0m0.244s
+sys     0m0.248s
+
+8192x8192 (256 MB):
+real    0m2.334s
+user    0m0.964s
+sys     0m0.936s
+
+16384x16384 (1024 MB -- now too big to fit in physical memory):
+real    4m16.226s
+user    0m3.284s
+sys     0m4.664s
+
+Now, the question is, why the huge hike on the last one (the
+ratio of CPU to wall time is a whopping factor of 50!)? The
+machine has 768 MB of RAM, and 400 or more is often
+free, so it should be able to get a significant piece of the
+data it's working on into memory, shouldn't it? But for some
+reason, the hard drive is being thrashed horribly angrily! Why?
+It's like once it can't get it ALL into RAM, any performance
+gains just go out the window and it turns into a disk hog and
+the drive thrashes like a fish that has just been plucked from the
+sea -- gives that disk a workout like running a marathon! What
+gives? How does it do on your system? Maybe my computer
+has a problem?
+
+This is the testing routine that I hooked up to your snippet (I
+changed float to modint since that's how my pi program works):
+
+int main(int argc, char **argv)
+{
+FILE *fd;
+struct square *mtx;
+int i;
+struct square buf;
+clock_t startcpu, endcpu;
+time_t startwall, endwall;
+int rowsize, rowblocks;
+
+/* Get commandline */
+if(argc != 2)
+{
+printf(&quot;usage: fastxpose &lt;row size&gt;\n&quot;);
+return(1);
+} else {
+rowsize = atoi(argv[1]);
+rowblocks = rowsize/32;
+}
+
+/* Open matrix file */
+fd = fopen(&quot;matrix.tmp&quot;, &quot;wb+&quot;);
+
+printf(&quot;Initializing file...&quot;); fflush(stdout);
+
+/* Fill it up with dummy data */
+for(i=0;i&lt;1024;i++) buf.data[i] = 0;
+for(i=0;i&lt;rowblocks*rowblocks;i++)
+fwrite(&amp;buf, sizeof(struct square), 1, fd);
+fflush(fd);
+
+printf(&quot;done.\n&quot;); fflush(stdout);
+
+/* Mmap the file */
+mtx = mmap(0, rowsize*rowsize*sizeof(modint), PROT_READ |
+PROT_WRITE,
+MAP_SHARED, fileno(fd), 0);
+
+/* Do the transposition */
+startcpu = clock(); /* CPU time */
+time(&amp;startwall);   /* wall time */
+
+printf(&quot;Transposing file (%d x %d, %d MB of data)...\n&quot;, rowsize,
+rowsize, rowsize*rowsize*sizeof(modint)/1048576);
+fflush(stdout);
+
+transpose(mtx, rowblocks);
+
+endcpu = clock();
+time(&amp;endwall);
+
+printf(&quot;Transposition complete.\n&quot;);
+printf(&quot;CPU time required: %ld sec.\n&quot;, (endcpu-startcpu)/
+CLOCKS_PER_SEC);
+printf(&quot;Wall time required: %ld sec.\n&quot;, (endwall-startwall));
+
+/* Clean up */
+printf(&quot;Cleaning up temporary file...&quot;);
+munmap(mtx, rowsize*rowsize*sizeof(modint));
+fclose(fd);
+remove(&quot;matrix.tmp&quot;);
+printf(&quot;done!\n&quot;);
+
+return(0);
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+}
+">
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T04:19:00 </POSTDATE>
+On Oct 31, 2:50 pm, rem6 ... @yahoo.com (Robert Maas, see http://tinyurl.com/uh3t )
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Alert: For weeks, right up through Friday aftermoon, Google Groups
+&gt; was showing search results only through Oct.13, so I had no way to
+&gt; find more recent articles that mentionned my name, such as
+&gt; followups to stuff I previously posted. Just Friday night GG
+&gt; finally enabled me to find:&gt; Date: Wed, 24 Oct 2007 14:35:00 -0700
+&gt; &gt; From:  mike3 &lt;mike4 ... @yahoo.com&gt;
+
+&gt; Since Friday I've been trying to catch up with backlog.
+&gt; I'm less than a week behind at the moment.
+
+&gt; &gt; I was doing the merge completely on disk.
+
+&gt; Then I'm confused. From what you said elsewhere, it sounded like
+&gt; you had enough RAM to do the whole task in RAM. Just load original
+&gt; data sequentially from disk, do FFT in RAM, sequentially dump FFT
+&gt; result to disk. So why would you do it any other way?
+">
+
+Testing. Trying to see how far the envelope can be pushed,
+you know, that type of stuff. You know, like the guys pushing
+to bust the sound barrier, pushing to drive a racecar at 400mph,
+overclocking a CPU up to 5GHZ, etc. You think I'd stop at 128
+megs of pi? :snicker: How about 512? :)
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; I have two drives. The matrix data is stored on one. I can't use
+&gt; &gt; the second drive since it's not formatted for Linux use.
+
+&gt; If your one usable drive has only a single seek mechanism (a single
+&gt; set of heads that move all as a single unit), then you don't want
+&gt; to do disk-to-disk merge (unless the whole dataset and all
+&gt; temporary files reside in a single cylinder), because even if you
+&gt; are reading each input file sequentially, and writing the output
+&gt; file sequentially, you are jumping back and forth between the
+&gt; various cylinders that are active for your current read/write
+&gt; points in those three files at any one time.
+
+&gt; Do you have a disk partition that you can completely empty of all
+&gt; files then put your dataset there, to assure that it occupies
+&gt; contiguous cylinders from the start of the partition, not
+&gt; intermixed with any old files still scattered around that
+&gt; partition?
+">
+
+These multidisk techniques seem odd in the light of the fact that
+programs like PiFast designed from the ground up for high-efficiency
+computation of pi, can do a pretty quick calculation using only the
+one hard drive. I once tried doing an 800M pi run with PiFast when I
+had only 512 MB of total RAM (of which a goodly chunk was also
+given to the program for it's use), and it did not access the disk
+anywhere near as nastily.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; what about the large merge passes at the end where the size of
+&gt; &gt; the data streams being merged exceeds the size of the ram buffers?
+
+&gt; (Assuming you have at least three separate drives, preferably four:)
+&gt; When you are merging, logically you need only one record from each
+&gt; input stream in RAM, and then the smallest record gets written to
+&gt; output stream and a new input record from that input stream is read
+&gt; in to replace it. If records are smaller than disk blocks, then
+&gt; you read a whole disk block into RAM, extract records from it until
+&gt; it's exhausted, then replace that disk block in RAM from the next
+&gt; block on the disk. For overlapped I/O, you use double buffering,
+&gt; where you have the currently-being-processed input block from each
+&gt; input file in RAM, and also you have a spare input block in RAM
+&gt; being loaded in background from the next disk block so it'll be all
+&gt; finished loading and sitting in RAM by the time you are ready to
+&gt; start extracting records from it. So you need enough RAM for six
+&gt; disk blocks (2+2 input and 2 output) plus two logical records plus
+&gt; pointers/indexes/etc.
+">
+
+I've only got two hard drives, though. So I have to figure out
+THE most efficient way (or at least half of that way's efficiency)
+to calculate pi using that.  I'd love to have access to the source
+code for world-class pi calculators like PiFast and QuickPi so I
+could see how they do what they do. Too bad it isn't available... :(
+
+Oh, by the way, is this how they often do this type of stuff
+on supercomputing farms where you've often got multiple
+dedicated drives in each node? Although I'd bet those nodes
+have got like gigs and gigs of ram in them, however when
+you've filled THAT up... Man, with 4 drives I could use
+similar strategies for the arithmetic! when doing like
+an addition/subtraction I could store the two numbers to
+be added/subtracted on 2 drives and use the 3rd to store
+the sum, then just juggle the numbers between the
+different disks! But I don't really like the idea of throwing
+money at hardware just to do something as fluff as calculating
+pi... Although I am planning on building a new computer
+when I get enough money, to do more worthwhile things
+such as 3D modeling and rendering. Maybe I'll put a bunch
+of drives in it.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; In fact I probably could have done it all in RAM.
+
+&gt; In that case, you just load the input data once, do everything in
+&gt; RAM, then write the output data once, so you only need one disk
+&gt; drive. (For safety you write output as a new file, not overwriting
+&gt; input file, in case an error crashes your system in the middle of
+&gt; writing output. But you knew that, right?)
+
+&gt; So you need to optimize paging between fast cache and RAM, whereby
+&gt; for each merge pass the input files in RAM are swept just once
+&gt; each, and output is written back into RAM sequentially, with your
+&gt; working set of RAM pages small enough to fit into fast cache.
+&gt; The logic is the same except you don't need multiple RAM drives. :-)
+&gt; (Although if you *do* have multiple RAM devices, such that you can
+&gt; read from one during the same clock cycle as writing to another,
+&gt; that does speed up the algorithm by nearly a factor of
+&gt; approximately 2.)
+
+&gt; &gt; Ooooh, baby. It looks like I posted a link to the wrong file :(
+&gt; &gt; That's my disk math package, not my transpose thingy. Here:
+&gt; &gt; http://www.mediafire.com/?60c0cx4o6gn
+
+&gt; I get a similar problem as with the other URL. I get a Web page
+&gt; that looks like this, and I have no idea what to do next:
+">
+
+&lt;snip&gt;
+
+That's strange. Password protected file? I'm going to check
+the settings... It does not appear to be protected. I don't know,
+but I'm wondering if there's a problem on your end. Did you
+try, say, just entering a blank password? Also, I'm not quite
+sure what's going on with that disorganized text copy of the
+site. Could you provide a graphical screenshot of your
+web browser?
+</POST>
+<POST>
+<POSTER> moi &lt;r...@invalid.address.org&gt; </POSTER>
+<POSTDATE> 2007-11-03T05:46:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sat, 03 Nov 2007 00:59:54 -0700, mike3 wrote:
+&gt; On Oct 31, 3:40 am, moi &lt;r ... @invalid.address.org&gt; wrote:
+&gt;&gt; On Wed, 31 Oct 2007 01:27:15 -0700, Robert Maas, see
+
+&gt;&gt; http://tinyurl.com/uh3twrote:
+
+&gt;&gt; [good stuff snipped]
+
+&gt;&gt; &gt; Also I mentionned the sort-merge algorithm as a general took that
+&gt;&gt; &gt; frequently works for rearranging lots of data. It would be reasonably
+&gt;&gt; &gt; fast for your task. It's a good thing to learn how to do efficiently
+&gt;&gt; &gt; in any case. But somebody else suggested a completely different
+&gt;&gt; &gt; algorithm which is speciic to this task performed on square matrices,
+&gt;&gt; &gt; and that sounded like it might be faster than my more general method.
+&gt;&gt; &gt; So IMO you
+
+&gt;&gt; Yes, that someone was me. I ran some tests, and my mmap() +
+&gt;&gt; tile-flipping approach is about 10 times faster then Mike's
+&gt;&gt; disk-exerciser. Basically because it does 10 times fewer disk-I/O.
+
+&gt;&gt; &gt; Given your large amount of RAM and your smaller but still substantial
+&gt;&gt; &gt; fast cache, it sounds like you can do the following: Read input from
+&gt;&gt; &gt; one disk drive, sort en route using RAM and fast cache, write to
+&gt;&gt; &gt; second disk drive, so each disk drive is running sequentially, no
+&gt;&gt; &gt; thrashing there, and your in-RAM/cache algorithm was hopefully not
+&gt;&gt; &gt; thrashing the fast cache either.
+
+&gt;&gt; It is hard (and silly, IMHO) to tune cache effects for a program that
+&gt;&gt; spends about .12 sec user + .24 sec sys CPU in some 3..30 sec walltime.
+&gt;&gt; The CPU is idling anyway.
+
+&gt;&gt; Note that the system's LRU caching effectively results in double
+&gt;&gt; buffering. While Mike is juggling his tiny buffers, the system has
+&gt;&gt; probably all of the file cached into system buffers. Constantly
+&gt;&gt; hammering the LRU with writes will probably cause some 'write through'
+&gt;&gt; to disk by the system.
+
+&gt;&gt; AvK
+
+&gt; Alright, I gave yours a try, to compare it to my so-called &quot;disk
+&gt; exerciser&quot;, using the code you provided. On my system, I got the
+&gt; following timings, with a system having 768 MB of physical memory:
+
+&gt; 1024x1024 (4 MB):
+&gt; real    0m0.035s
+&gt; user    0m0.012s
+&gt; sys     0m0.020s
+
+&gt; 2048x2048 (16 MB):
+&gt; real    0m0.126s
+&gt; user    0m0.064s
+&gt; sys     0m0.060s
+
+&gt; 4096x4096 (64 MB):
+&gt; real    0m0.552s
+&gt; user    0m0.244s
+&gt; sys     0m0.248s
+
+&gt; 8192x8192 (256 MB):
+&gt; real    0m2.334s
+&gt; user    0m0.964s
+&gt; sys     0m0.936s
+
+&gt; 16384x16384 (1024 MB -- now too big to fit in physical memory): real
+&gt; 4m16.226s
+&gt; user    0m3.284s
+&gt; sys     0m4.664s
+
+&gt; Now, the question is, why the huge hike on the last one (the ratio of
+&gt; CPU to wall time is a whopping factor of 50!)? The machine has 768 MB of
+&gt; RAM, and 400 or more is often free, so it should be able to get a
+">
+
+I hope it is not &quot;free&quot; but dedicated to the disk-buffer cache.
+
+<QUOTE PREVIOUSPOST="
+&gt; significant piece of the data it's working on into memory, shouldn't it?
+">
+
+No. that is not how it works. Pages are read into memory only when needed
+('faulted in'). Since every page is needed exactly once, you need exactly
+N*N reads and writes to disk.
+
+<QUOTE PREVIOUSPOST="
+&gt; But for some reason, the hard drive is being thrashed horribly angrily!
+&gt; Why? It's like once it can't get it ALL into RAM, any performance gains
+&gt; just go out the window and it turns into a disk hog and the drive
+">
+
+No you got confused.
+By first writing the file from within the same program,
+you actually primed the systems buffercache. If everything fits into
+buffercache, it will still be there once you start transposing.
+If the matrix is bigger than available bufferspace, the first (oldest)
+part will already have been pushed out once you start accessing it.
+When you access the first block (or earlier, or later) , the system needs
+to free a buffer for it, kicking out an older block. Once you need that,
+it will also have vanished. Perfectly normal.
+
+<QUOTE PREVIOUSPOST="
+&gt; thrashes like a fish that has just been plucked from the sea -- gives
+&gt; that disk a workout like running a marathon! What gives? How does it do
+&gt; on your system? Maybe my computer has a problem?
+">
+
+No, that's the sound of a 1GB file being accessed.
+
+<QUOTE PREVIOUSPOST="
+&gt; This is the testing routine that I hooked up to your snippet (I changed
+&gt; float to modint since that's how my pi program works):
+">
+
+They are the same size, so that should work ok.
+
+AvK
+</POST>
+<POST>
+<POSTER> moi &lt;r...@invalid.address.org&gt; </POSTER>
+<POSTDATE> 2007-11-03T05:53:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sat, 03 Nov 2007 01:19:36 -0700, mike3 wrote:
+&gt; On Oct 31, 2:50 pm, rem6 ... @yahoo.com (Robert Maas, see
+&gt;&gt; &gt; Ooooh, baby. It looks like I posted a link to the wrong file :(
+&gt;&gt; &gt; That's my disk math package, not my transpose thingy. Here:
+&gt;&gt; &gt; http://www.mediafire.com/?60c0cx4o6gn
+
+&gt;&gt; I get a similar problem as with the other URL. I get a Web page that
+&gt;&gt; looks like this, and I have no idea what to do next:
+&gt; &lt;snip&gt;
+
+&gt; That's strange. Password protected file? I'm going to check the
+&gt; settings... It does not appear to be protected. I don't know, but I'm
+&gt; wondering if there's a problem on your end. Did you try, say, just
+&gt; entering a blank password? Also, I'm not quite sure what's going on with
+&gt; that disorganized text copy of the site. Could you provide a graphical
+&gt; screenshot of your web browser?
+">
+
+The part to access the actual download does nos show up in lynx, for
+example. Bad webpage design by mediafire, I guess. The advertising does
+show up, however...
+
+AvK
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T15:01:00 </POSTDATE>
+On Nov 3, 3:53 am, moi &lt;r ... @invalid.address.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sat, 03 Nov 2007 01:19:36 -0700, mike3 wrote:
+&gt; &gt; On Oct 31, 2:50 pm, rem6 ... @yahoo.com (Robert Maas, see
+&gt; &gt;&gt; &gt; Ooooh, baby. It looks like I posted a link to the wrong file :(
+&gt; &gt;&gt; &gt; That's my disk math package, not my transpose thingy. Here:
+&gt; &gt;&gt; &gt; http://www.mediafire.com/?60c0cx4o6gn
+
+&gt; &gt;&gt; I get a similar problem as with the other URL. I get a Web page that
+&gt; &gt;&gt; looks like this, and I have no idea what to do next:
+&gt; &gt; &lt;snip&gt;
+
+&gt; &gt; That's strange. Password protected file? I'm going to check the
+&gt; &gt; settings... It does not appear to be protected. I don't know, but I'm
+&gt; &gt; wondering if there's a problem on your end. Did you try, say, just
+&gt; &gt; entering a blank password? Also, I'm not quite sure what's going on with
+&gt; &gt; that disorganized text copy of the site. Could you provide a graphical
+&gt; &gt; screenshot of your web browser?
+
+&gt; The part to access the actual download does nos show up in lynx, for
+&gt; example. Bad webpage design by mediafire, I guess. The advertising does
+&gt; show up, however...
+
+&gt; AvK
+">
+
+It shows up OK in my Mozilla browser (FireFox), or in Internet
+Explorer (when I'm running Windows instead of Linux). Maybe
+you need a better browser?
+
+However, anyway, do you know of a site that would work on your
+browser?
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T15:02:00 </POSTDATE>
+On Nov 3, 3:46 am, moi &lt;r ... @invalid.address.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sat, 03 Nov 2007 00:59:54 -0700, mike3 wrote:
+&gt; &gt; On Oct 31, 3:40 am, moi &lt;r ... @invalid.address.org&gt; wrote:
+&gt; &gt;&gt; On Wed, 31 Oct 2007 01:27:15 -0700, Robert Maas, see
+
+&gt; &gt;&gt; http://tinyurl.com/uh3twrote:
+
+&gt; &gt;&gt; [good stuff snipped]
+
+&gt; &gt;&gt; &gt; Also I mentionned the sort-merge algorithm as a general took that
+&gt; &gt;&gt; &gt; frequently works for rearranging lots of data. It would be reasonably
+&gt; &gt;&gt; &gt; fast for your task. It's a good thing to learn how to do efficiently
+&gt; &gt;&gt; &gt; in any case. But somebody else suggested a completely different
+&gt; &gt;&gt; &gt; algorithm which is speciic to this task performed on square matrices,
+&gt; &gt;&gt; &gt; and that sounded like it might be faster than my more general method.
+&gt; &gt;&gt; &gt; So IMO you
+
+&gt; &gt;&gt; Yes, that someone was me. I ran some tests, and my mmap() +
+&gt; &gt;&gt; tile-flipping approach is about 10 times faster then Mike's
+&gt; &gt;&gt; disk-exerciser. Basically because it does 10 times fewer disk-I/O.
+
+&gt; &gt;&gt; &gt; Given your large amount of RAM and your smaller but still substantial
+&gt; &gt;&gt; &gt; fast cache, it sounds like you can do the following: Read input from
+&gt; &gt;&gt; &gt; one disk drive, sort en route using RAM and fast cache, write to
+&gt; &gt;&gt; &gt; second disk drive, so each disk drive is running sequentially, no
+&gt; &gt;&gt; &gt; thrashing there, and your in-RAM/cache algorithm was hopefully not
+&gt; &gt;&gt; &gt; thrashing the fast cache either.
+
+&gt; &gt;&gt; It is hard (and silly, IMHO) to tune cache effects for a program that
+&gt; &gt;&gt; spends about .12 sec user + .24 sec sys CPU in some 3..30 sec walltime.
+&gt; &gt;&gt; The CPU is idling anyway.
+
+&gt; &gt;&gt; Note that the system's LRU caching effectively results in double
+&gt; &gt;&gt; buffering. While Mike is juggling his tiny buffers, the system has
+&gt; &gt;&gt; probably all of the file cached into system buffers. Constantly
+&gt; &gt;&gt; hammering the LRU with writes will probably cause some 'write through'
+&gt; &gt;&gt; to disk by the system.
+
+&gt; &gt;&gt; AvK
+
+&gt; &gt; Alright, I gave yours a try, to compare it to my so-called &quot;disk
+&gt; &gt; exerciser&quot;, using the code you provided. On my system, I got the
+&gt; &gt; following timings, with a system having 768 MB of physical memory:
+
+&gt; &gt; 1024x1024 (4 MB):
+&gt; &gt; real    0m0.035s
+&gt; &gt; user    0m0.012s
+&gt; &gt; sys     0m0.020s
+
+&gt; &gt; 2048x2048 (16 MB):
+&gt; &gt; real    0m0.126s
+&gt; &gt; user    0m0.064s
+&gt; &gt; sys     0m0.060s
+
+&gt; &gt; 4096x4096 (64 MB):
+&gt; &gt; real    0m0.552s
+&gt; &gt; user    0m0.244s
+&gt; &gt; sys     0m0.248s
+
+&gt; &gt; 8192x8192 (256 MB):
+&gt; &gt; real    0m2.334s
+&gt; &gt; user    0m0.964s
+&gt; &gt; sys     0m0.936s
+
+&gt; &gt; 16384x16384 (1024 MB -- now too big to fit in physical memory): real
+&gt; &gt; 4m16.226s
+&gt; &gt; user    0m3.284s
+&gt; &gt; sys     0m4.664s
+
+&gt; &gt; Now, the question is, why the huge hike on the last one (the ratio of
+&gt; &gt; CPU to wall time is a whopping factor of 50!)? The machine has 768 MB of
+&gt; &gt; RAM, and 400 or more is often free, so it should be able to get a
+
+&gt; I hope it is not &quot;free&quot; but dedicated to the disk-buffer cache.
+">
+
+That's before the program gets launched.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; significant piece of the data it's working on into memory, shouldn't it?
+
+&gt; No. that is not how it works. Pages are read into memory only when needed
+&gt; ('faulted in'). Since every page is needed exactly once, you need exactly
+&gt; N*N reads and writes to disk.
+">
+
+So there is not any way to decrease the number of read/write
+operations
+then?
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; But for some reason, the hard drive is being thrashed horribly angrily!
+&gt; &gt; Why? It's like once it can't get it ALL into RAM, any performance gains
+&gt; &gt; just go out the window and it turns into a disk hog and the drive
+
+&gt; No you got confused.
+&gt; By first writing the file from within the same program,
+&gt; you actually primed the systems buffercache. If everything fits into
+&gt; buffercache, it will still be there once you start transposing.
+&gt; If the matrix is bigger than available bufferspace, the first (oldest)
+&gt; part will already have been pushed out once you start accessing it.
+&gt; When you access the first block (or earlier, or later) , the system needs
+&gt; to free a buffer for it, kicking out an older block. Once you need that,
+&gt; it will also have vanished. Perfectly normal.
+">
+
+So then there isn't any way to haggle this to keep large chunks of the
+file in memory and hence minimize the number of disk operations?
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; thrashes like a fish that has just been plucked from the sea -- gives
+&gt; &gt; that disk a workout like running a marathon! What gives? How does it do
+&gt; &gt; on your system? Maybe my computer has a problem?
+
+&gt; No, that's the sound of a 1GB file being accessed.
+
+&gt; &gt; This is the testing routine that I hooked up to your snippet (I changed
+&gt; &gt; float to modint since that's how my pi program works):
+
+&gt; They are the same size, so that should work ok.
+
+&gt; AvK
+">
+
+However since you said your program does 10 times fewer
+disk I/O than my &quot;disk exerciser&quot; as you called it, then
+does that mean that my program would have actually
+taken 40 minutes (holy crap!) to do that run? Ouch!
+
+I wonder still how programs like PiFast, etc. manage
+to do the disk access as efficiently as they do.
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T15:07:00 </POSTDATE>
+On Oct 31, 11:29 am, rem6 ... @yahoo.com (Robert Maas, see http://tinyurl.com/uh3t )
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Alert: For weeks, right up through Friday aftermoon, Google Groups
+&gt; was showing search results only through Oct.13, so I had no way to
+&gt; find more recent articles that mentionned my name, such as
+&gt; followups to stuff I previously posted. Just Friday night GG
+&gt; finally enabled me to find:&gt; Date: Wed, 24 Oct 2007 17:59:41 -0700
+
+&gt; Since Friday I've been trying to catch up with backlog.
+&gt; I'm less than a week behind at the moment.
+
+&gt; &gt; From:  user923005 &lt;dcor ... @connx.com&gt;
+&gt; &gt; You can use a priority queue to do all merges in one pass.  I have no
+
+&gt; Yes, such as using a Heap. But then you completely lose control of
+&gt; localization of reference, and in general your virtual memory
+&gt; (whether it be RAM backed up by disk, or fast cache backed up by
+&gt; RAM) will most likely thrash madly. The nice thing about merge-sort
+&gt; is that each merge is *sequentual* access for both input files and
+&gt; output file, thus *guaranteeing* localization of reference and
+&gt; hence preventing thrashing.
+">
+
+Hmm. So then exactly how would one implement this 100%
+sequential transposition? In my program, I have to read from
+two parts of the file that are separated at a distance, which is
+definitely not sequential. But then again you say I'd need
+more hard drives for this to work, and that's gonna be a problem.
+
+Too bad I dunno the secret of PiFast and QuickPi... :(
+
+Anyway, since I can't seem to get my files to view on your
+browsers, I'll just post the merge routine right here for you
+to see. lg(n) passes of this routine over the file are required
+for transpose, where n is the length of one row/column of the
+matrix (matrix is square here).
+
+************************************************
+
+/* Merge two &quot;rows&quot; of data from a file. */
+/* This takes the two &quot;rows&quot; and interleaves &quot;mergechunklen&quot;-sized
+chunks
+* of each. Ex. ABCD EFGH (two length-4 &quot;rows&quot;) becomes AEBF CGDH with
+chunks
+* of size 1, ABEF CDGH with chunks of size 2. It can also operate on
+* multiple batches of two &quot;rows&quot;, as is needed for the transpose (the
+&quot;nrows&quot;
+* parameter sets how many &quot;rows&quot; to use, ie. nrows/2 batches of two
+rows are
+* interleaved, with the batches stored sequentially.).
+*/
+void merge(FILE *dst, FILE *src, int rowlen, int mergechunklen, int
+nrows, long origin)
+{
+int i, j, k, l, rowcnt;
+long merge1ptr, merge2ptr;
+long readsize = bufsize/2;
+mod31 *row1data = mergebuf, *row2data = mergebuf+readsize;
+
+/* The size of the elements to merge should fit entirely
+* in the buffer.
+*/
+if(mergechunklen &gt; readsize)
+return; /* too big! */
+
+if(readsize &gt; rowlen)
+readsize = rowlen;
+
+/* Now set up pointers to each of the rows. */
+merge1ptr = origin; merge2ptr = origin+rowlen;
+
+/* Set file pointers */
+fseek(dst, origin*sizeof(mod31), SEEK_SET);
+fseek(src, origin*sizeof(mod31), SEEK_SET);
+
+/* Now go through the rows and merge. */
+l = 0;
+for(rowcnt=0;rowcnt&lt;nrows;rowcnt+=2)
+{
+for(i=0;i&lt;rowlen;i+=readsize)
+{
+/* Read in some data */
+fseek(src, merge1ptr*sizeof(mod31), SEEK_SET);
+fread(row1data, sizeof(mod31), readsize, src);
+fseek(src, merge2ptr*sizeof(mod31), SEEK_SET);
+fread(row2data, sizeof(mod31), readsize, src);
+
+/* Now merge the data into the output. */
+for(j=0;j&lt;readsize;j+=mergechunklen)
+{
+/* 1st chunk */
+for(k=0;k&lt;mergechunklen;k++)
+{
+outbuf[l] = row1data[j+k]; l++;
+if(l &gt; bufsize)
+{
+/* write buffer */
+fwrite(outbuf, sizeof(mod31), bufsize, dst);
+fflush(dst);
+l = 0;
+}
+}
+
+/* 2nd chunk */
+for(k=0;k&lt;mergechunklen;k++)
+{
+outbuf[l] = row2data[j+k]; l++;
+if(l &gt; bufsize)
+{
+/* write buffer */
+fwrite(outbuf, sizeof(mod31), bufsize, dst);
+fflush(dst);
+l = 0;
+}
+}
+}
+
+/* Increment file pointers */
+merge1ptr += readsize;
+merge2ptr += readsize;
+}
+
+merge1ptr += rowlen;
+merge2ptr += rowlen;
+}
+
+/* Write and flush remaining buffer */
+if(l != 0)
+{
+fwrite(outbuf, sizeof(mod31), l, dst);
+fflush(dst);
+}
+
+/* Reset file pointers */
+fseek(src, 0, SEEK_SET);
+fseek(dst, 0, SEEK_SET);
+
+/* Done! */
+return;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+************************************************
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T15:09:00 </POSTDATE>
+On Oct 31, 11:29 am, rem6 ... @yahoo.com (Robert Maas, see http://tinyurl.com/uh3t )
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Alert: For weeks, right up through Friday aftermoon, Google Groups
+&gt; was showing search results only through Oct.13, so I had no way to
+&gt; find more recent articles that mentionned my name, such as
+&gt; followups to stuff I previously posted. Just Friday night GG
+&gt; finally enabled me to find:&gt; Date: Wed, 24 Oct 2007 17:59:41 -0700
+
+&gt; Since Friday I've been trying to catch up with backlog.
+&gt; I'm less than a week behind at the moment.
+
+&gt; &gt; From:  user923005 &lt;dcor ... @connx.com&gt;
+&gt; &gt; You can use a priority queue to do all merges in one pass.  I have no
+
+&gt; Yes, such as using a Heap. But then you completely lose control of
+&gt; localization of reference, and in general your virtual memory
+&gt; (whether it be RAM backed up by disk, or fast cache backed up by
+&gt; RAM) will most likely thrash madly. The nice thing about merge-sort
+&gt; is that each merge is *sequentual* access for both input files and
+&gt; output file, thus *guaranteeing* localization of reference and
+&gt; hence preventing thrashing.
+">
+
+I've interestingly also noted that even pure-sequential operations
+seem to thrash, such as simply adding two integers, when the
+two files are too large to fit in main memory. Is it because they
+are both stored on the same disk?
+</POST>
+<POST>
+<POSTER> moi &lt;r...@invalid.address.org&gt; </POSTER>
+<POSTDATE> 2007-11-03T16:08:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sat, 03 Nov 2007 12:09:08 -0700, mike3 wrote:
+
+&gt; I've interestingly also noted that even pure-sequential operations seem
+&gt; to thrash, such as simply adding two integers, when the two files are
+&gt; too large to fit in main memory. Is it because they are both stored on
+&gt; the same disk?
+">
+
+'sequential files' don not exist. You can access them sequentially, but
+you have no control over the cylinder/head/sector numbers that are hidden
+below the filesystem-layer. The system *may* help you, by prefetching the
+C/H/S that correspond to the next page(s). But effectively, each read()
+consists of one disk-seek() and one disk-read. Combining multiple reads
+for one cylinder may improve troughput (but you still need control over
+the placement ...)
+
+Of course, storing source and destination on the same disk will cause
+more head-movements. Probably the system will combine clusters of buffers
+to be written together. (Linus used to call this 'elevator seek', IIRC)
+
+HTH,
+AvK
+</POST>
+<POST>
+<POSTER> moi &lt;r...@invalid.address.org&gt; </POSTER>
+<POSTDATE> 2007-11-03T16:09:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sat, 03 Nov 2007 12:01:39 -0700, mike3 wrote:
+&gt; On Nov 3, 3:53 am, moi &lt;r ... @invalid.address.org&gt; wrote:
+&gt;&gt; On Sat, 03 Nov 2007 01:19:36 -0700, mike3 wrote:
+&gt;&gt; &gt; On Oct 31, 2:50 pm, rem6 ... @yahoo.com (Robert Maas, see
+&gt;&gt; &gt;&gt; &gt; Ooooh, baby. It looks like I posted a link to the wrong file :(
+&gt;&gt; &gt;&gt; &gt; That's my disk math package, not my transpose thingy. Here:
+&gt;&gt; &gt;&gt; &gt; http://www.mediafire.com/?60c0cx4o6gn
+
+&gt;&gt; &gt;&gt; I get a similar problem as with the other URL. I get a Web page that
+&gt;&gt; &gt;&gt; looks like this, and I have no idea what to do next:
+&gt;&gt; &gt; &lt;snip&gt;
+
+&gt;&gt; &gt; That's strange. Password protected file? I'm going to check the
+&gt;&gt; &gt; settings... It does not appear to be protected. I don't know, but I'm
+&gt;&gt; &gt; wondering if there's a problem on your end. Did you try, say, just
+&gt;&gt; &gt; entering a blank password? Also, I'm not quite sure what's going on
+&gt;&gt; &gt; with that disorganized text copy of the site. Could you provide a
+&gt;&gt; &gt; graphical screenshot of your web browser?
+
+&gt;&gt; The part to access the actual download does nos show up in lynx, for
+&gt;&gt; example. Bad webpage design by mediafire, I guess. The advertising does
+&gt;&gt; show up, however...
+
+&gt;&gt; AvK
+
+&gt; It shows up OK in my Mozilla browser (FireFox), or in Internet Explorer
+&gt; (when I'm running Windows instead of Linux). Maybe you need a better
+&gt; browser?
+
+&gt; However, anyway, do you know of a site that would work on your browser?
+">
+
+Learn how to read.
+I had already succeeded in downloading both of your sources from the
+mediafire site, but when Robert Maas reported having problems finding it,
+I tried it with lynx, and the 'download now' button did not show up.
+Lynx is often een good way to verify a website's accessibility for eg
+visually impaired (formerly known as 'blind') people.
+
+This is not about browser-wars. This is about a website, offering free
+storage to the world, where everything except the &quot;free storage&quot; -part
+functions on every browser. (this could have been done on purpose, to
+discourage scripts and bots, BTW)
+
+AvK
+</POST>
+<POST>
+<POSTER> CBFalconer &lt;cbfalco...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T18:36:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+moi wrote:
+
+... snip ...
+
+&gt; 'sequential files' don not exist. You can access them sequentially,
+">
+
+Did you never read a tape (mag or paper), or a serial link, etc.
+
+--
+Chuck F (cbfalconer at maineline dot net)
+&lt; http://cbfalconer.home.att.net &gt;
+Try the download section.
+
+--
+Posted via a free Usenet account from http://www.teranews.com
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T19:17:00 </POSTDATE>
+On Nov 3, 1:08 pm, moi &lt;r ... @invalid.address.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sat, 03 Nov 2007 12:09:08 -0700, mike3 wrote:
+
+&gt; &gt; I've interestingly also noted that even pure-sequential operations seem
+&gt; &gt; to thrash, such as simply adding two integers, when the two files are
+&gt; &gt; too large to fit in main memory. Is it because they are both stored on
+&gt; &gt; the same disk?
+
+&gt; 'sequential files' don not exist. You can access them sequentially, but
+&gt; you have no control over the cylinder/head/sector numbers that are hidden
+&gt; below the filesystem-layer. The system *may* help you, by prefetching the
+&gt; C/H/S that correspond to the next page(s). But effectively, each read()
+&gt; consists of one disk-seek() and one disk-read. Combining multiple reads
+&gt; for one cylinder may improve troughput (but you still need control over
+&gt; the placement ...)
+
+&gt; Of course, storing source and destination on the same disk will cause
+&gt; more head-movements. Probably the system will combine clusters of buffers
+&gt; to be written together. (Linus used to call this 'elevator seek', IIRC)
+
+&gt; HTH,
+&gt; AvK
+">
+
+So then what must be the secret used by really efficient
+programs like PiFast or QuickPi, for example, to do
+their calculations with a minimum of disk activity?
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T19:19:00 </POSTDATE>
+On Nov 3, 1:09 pm, moi &lt;r ... @invalid.address.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sat, 03 Nov 2007 12:01:39 -0700, mike3 wrote:
+&lt;snip&gt;
+&gt; &gt; It shows up OK in my Mozilla browser (FireFox), or in Internet Explorer
+&gt; &gt; (when I'm running Windows instead of Linux). Maybe you need a better
+&gt; &gt; browser?
+
+&gt; &gt; However, anyway, do you know of a site that would work on your browser?
+
+&gt; Learn how to read.
+">
+
+If I didn't know how to read, it is strange that I've carried
+on a discussion this long.
+
+<QUOTE PREVIOUSPOST="
+&gt; I had already succeeded in downloading both of your sources from the
+&gt; mediafire site, but when Robert Maas reported having problems finding it,
+&gt; I tried it with lynx, and the 'download now' button did not show up.
+&gt; Lynx is often een good way to verify a website's accessibility for eg
+&gt; visually impaired (formerly known as 'blind') people.
+">
+
+You said this:
+
+&quot;The part to access the actual download does nos show up in lynx, for
+example. Bad webpage design by mediafire, I guess. The advertising
+does
+show up, however...&quot;
+
+I interpreted that as you having trouble with the download. But
+I guess I was wrong. I must have forgotten something mentioned
+somewhere you said earlier as this thread has been going on so
+long.
+
+<QUOTE PREVIOUSPOST="
+&gt; This is not about browser-wars. This is about a website, offering free
+&gt; storage to the world, where everything except the &quot;free storage&quot; -part
+&gt; functions on every browser. (this could have been done on purpose, to
+&gt; discourage scripts and bots, BTW)
+
+&gt; AvK
+">
+
+What would be a better site?
+</POST>
+<POST>
+<POSTER> moi &lt;r...@invalid.address.org&gt; </POSTER>
+<POSTDATE> 2007-11-03T20:16:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sat, 03 Nov 2007 17:36:04 -0500, CBFalconer wrote:
+&gt; moi wrote:
+
+&gt; ... snip ...
+
+&gt;&gt; 'sequential files' don not exist. You can access them sequentially,
+
+&gt; Did you never read a tape (mag or paper), or a serial link, etc.
+">
+
+Yes baby; you're right.
+I meant to say: &quot;for disk files (blabla)&quot; etc.
+context facit venenum.
+
+AvK
+</POST>
+<POST>
+<POSTER> moi &lt;r...@invalid.address.org&gt; </POSTER>
+<POSTDATE> 2007-11-03T20:21:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sat, 03 Nov 2007 16:17:05 -0700, mike3 wrote:
+
+&gt; So then what must be the secret used by really efficient programs like
+&gt; PiFast or QuickPi, for example, to do their calculations with a minimum
+&gt; of disk activity?
+">
+
+I don't know. Maybe they don't transpose, but use another way of
+addressing (like Morton's). Maybe they are better at partitioning, or
+they just prefetch the needed rows. I really don't know.
+
+AvK
+</POST>
+<POST>
+<POSTER> CBFalconer &lt;cbfalco...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T21:03:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+moi wrote:
+&gt; CBFalconer wrote:
+&gt; &gt; moi wrote:
+
+&gt;&gt; ... snip ...
+
+&gt;&gt;&gt; 'sequential files' don not exist. You can access them sequentially,
+
+&gt;&gt; Did you never read a tape (mag or paper), or a serial link, etc.
+
+&gt; Yes baby; you're right.  I meant to say: &quot;for disk files (blabla)&quot;
+&gt; etc. context facit venenum.
+">
+
+And streams, which are the fundamental C file access method, make
+disk files look like sequential files, but may allow a few extra
+'special' operations, such as seek.
+
+--
+Chuck F (cbfalconer at maineline dot net)
+&lt; http://cbfalconer.home.att.net &gt;
+Try the download section.
+
+--
+Posted via a free Usenet account from http://www.teranews.com
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T21:52:00 </POSTDATE>
+On Nov 3, 5:21 pm, moi &lt;r ... @invalid.address.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sat, 03 Nov 2007 16:17:05 -0700, mike3 wrote:
+
+&gt; &gt; So then what must be the secret used by really efficient programs like
+&gt; &gt; PiFast or QuickPi, for example, to do their calculations with a minimum
+&gt; &gt; of disk activity?
+
+&gt; I don't know. Maybe they don't transpose, but use another way of
+&gt; addressing (like Morton's). Maybe they are better at partitioning, or
+&gt; they just prefetch the needed rows. I really don't know.
+
+&gt; AvK
+">
+
+Yep. Too bad the source code isn't available... :(((
+</POST>
+<POST>
+<POSTER> user923005 &lt;dcor...@connx.com&gt; </POSTER>
+<POSTDATE> 2007-11-05T16:00:00 </POSTDATE>
+On Nov 3, 4:16 pm, moi &lt;r ... @invalid.address.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sat, 03 Nov 2007 17:36:04 -0500, CBFalconer wrote:
+&gt; &gt; moi wrote:
+
+&gt; &gt; ... snip ...
+
+&gt; &gt;&gt; 'sequential files' don not exist. You can access them sequentially,
+
+&gt; &gt; Did you never read a tape (mag or paper), or a serial link, etc.
+
+&gt; Yes baby; you're right.
+&gt; I meant to say: &quot;for disk files (blabla)&quot; etc.
+&gt; context facit venenum.
+">
+
+On disk, they sometimes occur by accident.
+
+They are not at all unusual when the file contains a single block.
+;-)
+</POST>
+<POST>
+<POSTER> user923005 &lt;dcor...@connx.com&gt; </POSTER>
+<POSTDATE> 2007-11-05T16:02:00 </POSTDATE>
+On Nov 3, 5:52 pm, mike3 &lt;mike4 ... @yahoo.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Nov 3, 5:21 pm, moi &lt;r ... @invalid.address.org&gt; wrote:
+
+&gt; &gt; On Sat, 03 Nov 2007 16:17:05 -0700, mike3 wrote:
+
+&gt; &gt; &gt; So then what must be the secret used by really efficient programs like
+&gt; &gt; &gt; PiFast or QuickPi, for example, to do their calculations with a minimum
+&gt; &gt; &gt; of disk activity?
+
+&gt; &gt; I don't know. Maybe they don't transpose, but use another way of
+&gt; &gt; addressing (like Morton's). Maybe they are better at partitioning, or
+&gt; &gt; they just prefetch the needed rows. I really don't know.
+
+&gt; &gt; AvK
+
+&gt; Yep. Too bad the source code isn't available... :(((
+">
+
+Get a disassembler like IdaPro and you can see what he is doing.
+http://www.datarescue.com/idabase/
+</POST>
+</TEXT>
+</BODY>
+</DOC>

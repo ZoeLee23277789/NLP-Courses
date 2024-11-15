@@ -1,0 +1,488 @@
+<DOC>
+<DOCID> eng-NG-31-135591-9755148 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-06T14:27:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Ternary Usage
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Greg Willits &lt;li...@gregwillits.ws&gt; </POSTER>
+<POSTDATE> 2007-10-06T14:27:00 </POSTDATE>
+New to Ruby. Having trouble with ternary statements.
+
+I am used to a language that allows these two forms:
+
+test ? trueStuff
+test ? trueStuff | falseStuff
+
+While I have yet to find a reference that explicitly states this, it
+would appear that ternary statement in Ruby is not allowed to exclude
+the :, as without it I get an &quot;unexpected '\n'&quot; error statement.
+
+Ok, fine, so I can write something like this:
+
+$debug ? $devLog.info(&quot;bla bla bla&quot;) :
+
+That's working for most cases, however, whenever such a line appears in
+IF statements, it generates another set of errors.
+
+if (...whatever...)
+...do some stuff...
+$debug ? $devLog.info(&quot;bla bla bla&quot;) :
+else
+...do other stuff...
+$debug ? $devLog.info(&quot;yadda yadda&quot;) :
+end
+
+I get &quot;unexpected kELSE&quot; and &quot;unexpected kEND&quot; syntax errors.
+
+Hard to comprehend what can be so tricky about a simple ternary
+statement. Indeed it is assumed to be so simple that the Programming
+Ruby book offers no details for its use, yet clearly there are some
+rules that need to be followed.
+
+Any enlightment is appreciated. TIA.
+
+-- greg willits
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> &quot;Michael Fellinger&quot; &lt;m.fellin...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-06T14:34:00 </POSTDATE>
+On 10/7/07, Greg Willits &lt;li ... @gregwillits.ws&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; New to Ruby. Having trouble with ternary statements.
+
+&gt; I am used to a language that allows these two forms:
+
+&gt;    test ? trueStuff
+&gt;    test ? trueStuff | falseStuff
+
+&gt; While I have yet to find a reference that explicitly states this, it
+&gt; would appear that ternary statement in Ruby is not allowed to exclude
+&gt; the :, as without it I get an &quot;unexpected '\n'&quot; error statement.
+
+&gt; Ok, fine, so I can write something like this:
+
+&gt;    $debug ? $devLog.info(&quot;bla bla bla&quot;) :
+
+&gt; That's working for most cases, however, whenever such a line appears in
+&gt; IF statements, it generates another set of errors.
+
+&gt; if (...whatever...)
+&gt;   ...do some stuff...
+&gt;   $debug ? $devLog.info(&quot;bla bla bla&quot;) :
+&gt; else
+&gt;   ...do other stuff...
+&gt;   $debug ? $devLog.info(&quot;yadda yadda&quot;) :
+&gt; end
+
+&gt; I get &quot;unexpected kELSE&quot; and &quot;unexpected kEND&quot; syntax errors.
+
+&gt; Hard to comprehend what can be so tricky about a simple ternary
+&gt; statement. Indeed it is assumed to be so simple that the Programming
+&gt; Ruby book offers no details for its use, yet clearly there are some
+&gt; rules that need to be followed.
+">
+
+The ternary operator is not used very often, Ruby offers a different
+way to do what you try.
+
+do_stuff if test
+do_stuff unless test
+
+are both valid forms.
+
+You cannot omit the third parameter from the ternary (that's why it
+has this name, after all)
+So if you want to make it work you have to:
+test ? do_stuff : nil
+
+Hope this helps, more information on the ruby quickref:
+http://www.zenspider.com/Languages/Ruby/QuickRef.html
+</POST>
+<POST>
+<POSTER> Xavier Noria &lt;f...@hashref.com&gt; </POSTER>
+<POSTDATE> 2007-10-06T14:37:00 </POSTDATE>
+On Oct 6, 2007, at 8:27 PM, Greg Willits wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I am used to a language that allows these two forms:
+
+&gt;    test ? trueStuff
+&gt;    test ? trueStuff | falseStuff
+
+&gt; While I have yet to find a reference that explicitly states this, it
+&gt; would appear that ternary statement in Ruby is not allowed to exclude
+&gt; the :
+">
+
+That operator is called &quot;ternary&quot; because it needs 3 operands
+(addition is a binary operand, the unary minus acts on a single
+operand).
+
+<QUOTE PREVIOUSPOST="
+&gt; Ok, fine, so I can write something like this:
+
+&gt;    $debug ? $devLog.info(&quot;bla bla bla&quot;) :
+">
+
+Write it like this instead:
+
+$devLog.info(&quot;bla bla bla&quot;) if $debug
+
+-- fxn
+</POST>
+<POST>
+<POSTER> Greg Willits &lt;li...@gregwillits.ws&gt; </POSTER>
+<POSTDATE> 2007-10-06T14:44:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; The ternary operator is not used very often, Ruby offers a different
+&gt; way to do what you try.
+
+&gt; do_stuff if test
+&gt; do_stuff unless test
+">
+
+Ah, OK. Strange structure. (rhetorical Q:) Why read through all the
+do_stuff if it isn't going to matter by the time you get the IF?
+
+I guess I'll switch to that if it is more customary.
+
+<QUOTE PREVIOUSPOST="
+&gt; You cannot omit the third parameter from the ternary (that's why it
+&gt; has this name, after all)
+">
+
+OK, thanks for confirming that. Sure, name makes sense, but so does
+allowing a form w/o the ELSE (which is what I am accustomed to doing).
+
+<QUOTE PREVIOUSPOST="
+&gt; So if you want to make it work you have to:
+&gt; test ? do_stuff : nil
+">
+
+Tried that early on and still got errors, but after experimenting more I
+see now its beacuse I only tried that in a few places rather than in all
+ternaries in the script. Once I did it for all, the script worked.
+
+<QUOTE PREVIOUSPOST="
+&gt; Hope this helps
+">
+
+Indeed. Thanks much.
+
+-- gw
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> &quot;Rudi Cilibrasi&quot; &lt;cilib...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-06T14:57:00 </POSTDATE>
+You might enjoy the &quot;short-circuiting&quot; operators instead:
+
+condition &amp;&amp; ifitstruedothis()
+or
+condition || ifitsfalsedothis()
+
+these are like C.  Cheers, -r.
+
+On 10/6/07, Greg Willits &lt;li ... @gregwillits.ws&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; The ternary operator is not used very often, Ruby offers a different
+&gt; &gt; way to do what you try.
+
+&gt; &gt; do_stuff if test
+&gt; &gt; do_stuff unless test
+
+&gt; Ah, OK. Strange structure. (rhetorical Q:) Why read through all the
+&gt; do_stuff if it isn't going to matter by the time you get the IF?
+
+&gt; I guess I'll switch to that if it is more customary.
+
+&gt; &gt; You cannot omit the third parameter from the ternary (that's why it
+&gt; &gt; has this name, after all)
+
+&gt; OK, thanks for confirming that. Sure, name makes sense, but so does
+&gt; allowing a form w/o the ELSE (which is what I am accustomed to doing).
+
+&gt; &gt; So if you want to make it work you have to:
+&gt; &gt; test ? do_stuff : nil
+
+&gt; Tried that early on and still got errors, but after experimenting more I
+&gt; see now its beacuse I only tried that in a few places rather than in all
+&gt; ternaries in the script. Once I did it for all, the script worked.
+
+&gt; &gt; Hope this helps
+
+&gt; Indeed. Thanks much.
+
+&gt; -- gw
+&gt; --
+&gt; Posted via http://www.ruby-forum.com/ .
+">
+
+--
+&quot;We can try to do it by breaking free of the mental prison of
+separation and exclusion and see the world in its interconnectedness
+and non-separability, allowing new alternatives to emerge.&quot; -- after
+Vandana Shiva
+</POST>
+<POST>
+<POSTER> Jay Levitt &lt;jay+n...@jay.fm&gt; </POSTER>
+<POSTDATE> 2007-10-06T15:06:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sun, 7 Oct 2007 03:44:20 +0900, Greg Willits wrote:
+&gt; Ah, OK. Strange structure. (rhetorical Q:) Why read through all the
+&gt; do_stuff if it isn't going to matter by the time you get the IF?
+">
+
+Rhetorical semi-answer (by argument to consequences):
+
+Ruby, unlike some (most?) languages, *always* requires an end for its if
+statements; that is to say, you can't just type
+
+if debug_mode then
+puts &quot;Got to line 123&quot;
+
+do_something important
+
+You have to have an &quot;end&quot; for the if.
+
+Allowing the form
+
+puts &quot;Got to line 123&quot; if debug_mode
+do_something important
+
+lets you have more compact code, at the potential expense of readability.
+I believe the construct came from Perl, but I'm not sure that's the first
+place it ever appeared.
+
+For readability's sake, I usually follow the guideline &quot;don't use that form
+unless the main body of code is the common path&quot;.  That is, I wouldn't use
+it for debug statements, because they're usually not executed, so you spend
+a lot of time reading code and then realizing it didn't get executed after
+all.  I might use it for something like:
+
+puts &quot;First name: #{first_name}&quot; unless first_name.nil?
+
+where the &quot;unless&quot; is more of a guard statement.
+
+--
+Jay Levitt                |
+Boston, MA                | My character doesn't like it when they
+Faster: jay at jay dot fm | cry or shout or hit.
+http://www.jay.fm | - Kristoffer
+</POST>
+<POST>
+<POSTER> Greg Willits &lt;li...@gregwillits.ws&gt; </POSTER>
+<POSTDATE> 2007-10-06T15:28:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jay Levitt wrote:
+&gt; On Sun, 7 Oct 2007 03:44:20 +0900, Greg Willits wrote:
+
+&gt;&gt; Ah, OK. Strange structure. (rhetorical Q:) Why read through all the
+&gt;&gt; do_stuff if it isn't going to matter by the time you get the IF?
+
+&gt; Rhetorical semi-answer (by argument to consequences):
+
+&gt; Allowing the form
+&gt;   puts &quot;Got to line 123&quot; if debug_mode
+&gt;   do_something important
+
+&gt; lets you have more compact code, at the potential expense of
+&gt; readability.
+
+&gt; For readability's sake, I usually follow the guideline &quot;don't use that
+&gt; form
+&gt; unless the main body of code is the common path&quot;.  That is, I wouldn't
+&gt; use
+&gt; it for debug statements, because they're usually not executed, so you
+&gt; spend
+&gt; a lot of time reading code and then realizing it didn't get executed
+&gt; after all.
+">
+
+Thanks for piping up and saying &quot;don't use that.&quot; I agree :-)
+
+All this is exactly why
+
+condition ? do_stuff
+
+is very useful. Compact. Readable. Logical. Efficient. Even if it is not
+a true ternary.
+
+I have plenty enough experience in dynamic, reflective, OO programming,
+to figure out the bulk of Ruby, but Ruby does seems to have its own way
+of approaching some things compared to my experience.
+
+I know there's a book called The Ruby Way -- does it tend to address
+these kinds of usage idioms where &quot;method 2 out of 4 tends to be the way
+most people do it&quot;?
+
+-- gw
+
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> Jay Levitt &lt;jay+n...@jay.fm&gt; </POSTER>
+<POSTDATE> 2007-10-06T16:03:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sun, 7 Oct 2007 04:28:34 +0900, Greg Willits wrote:
+&gt; I know there's a book called The Ruby Way -- does it tend to address
+&gt; these kinds of usage idioms where &quot;method 2 out of 4 tends to be the way
+&gt; most people do it&quot;?
+">
+
+Many, and I'd highly recommend the book.  But Ruby's a young language, and
+idioms go in and out of fashion, especially in the Rails community, which
+(for better or worse) makes up a large part of the newest Ruby population.
+
+The newsgroups and reading other people's code are the best two ways I've
+found to learn idioms - that, and posting my own code here in a &quot;how would
+you do this better?&quot; thread.
+
+--
+Jay Levitt                |
+Boston, MA                | My character doesn't like it when they
+Faster: jay at jay dot fm | cry or shout or hit.
+http://www.jay.fm | - Kristoffer
+</POST>
+<POST>
+<POSTER> &quot;David A. Black&quot; &lt;dbl...@rubypal.com&gt; </POSTER>
+<POSTDATE> 2007-10-06T16:48:00 </POSTDATE>
+Hi --
+
+<QUOTE PREVIOUSPOST="
+On Sun, 7 Oct 2007, Greg Willits wrote:
+&gt; I have plenty enough experience in dynamic, reflective, OO programming,
+&gt; to figure out the bulk of Ruby, but Ruby does seems to have its own way
+&gt; of approaching some things compared to my experience.
+">
+
+There wouldn't be much point in having it if it didn't :-) It's a
+relatively easy language to learn, a lot of experienced programmers
+find, but there's definitely some learning involved, as with any
+language. Hopefully you'll find it interesting and worthwhile.
+
+David
+
+--
+Upcoming training from Ruby Power and Light, LLC:
+* Intro to Ruby on Rails, Edison, NJ, October 23-26
+* Advancing with Rails, Edison, NJ, November 6-9
+Both taught by David A. Black.
+See http://www.rubypal.com for more info!
+</POST>
+<POST>
+<POSTER> Greg Willits &lt;li...@gregwillits.ws&gt; </POSTER>
+<POSTDATE> 2007-10-06T17:01:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt;&gt; I know there's a book called The Ruby Way -- does it tend to address
+&gt;&gt; these kinds of usage idioms where &quot;method 2 out of 4 tends to be the way
+&gt;&gt; most people do it&quot;?
+Jay Levitt wrote:
+&gt; Many, and I'd highly recommend the book.  But Ruby's a young language,
+&gt; and idioms go in and out of fashion, especially in the Rails community,
+&gt; which (for better or worse) makes up a large part of the newest Ruby
+&gt; population.
+">
+
+Cool, I'll get the book. I'm overseeing a Rails project, so I need to
+have at least a working familiarity with both, though I'm more
+interested in learning Ruby to a deeper level than Rails. (I've been
+doing all my own work in another language &amp; my own framework). However,
+I'm also going to be doing a bunch of automated / CLI data aggregation
+and misc utility work which I chose Ruby for -- mostly to force the
+issue of familiarity.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; I have plenty enough experience in dynamic, reflective, OO programming,
+&gt;&gt; to figure out the bulk of Ruby, but Ruby does seems to have its own way
+&gt;&gt; of approaching some things compared to my experience.
+David A. Black wrote:
+&gt; There wouldn't be much point in having it if it didn't :-)
+">
+
+Heh. True. :-)
+
+<QUOTE PREVIOUSPOST="
+&gt; Hopefully you'll find it interesting and worthwhile.
+">
+
+I'm sure I will. My first code has been a simple web crawler. After
+getting over a few little syntax humps, it's been fairly easy to
+implement.
+
+Thanks everyone. I look forward to more chats :-)
+
+-- gw
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> John Joyce &lt;dangerwillrobinsondan...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-06T21:24:00 </POSTDATE>
+The Ruby Way is an excellent book for experienced programmers to get
+a good look at many different things in Ruby.
+But there are lots of good Ruby books! You should probably head down
+to a bookstore that carries them and browse them for the one(s) that
+will serve you best.
+I'm trying to collect them all. I just wish they came with
+collector's cards or something collectible.
+(that might not be a bad idea to create a market for outdated (in the
+future) computer books.
+</POST>
+<POST>
+<POSTER> Jay Levitt &lt;jay+n...@jay.fm&gt; </POSTER>
+<POSTDATE> 2007-10-06T22:11:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sun, 7 Oct 2007 10:24:35 +0900, John Joyce wrote:
+&gt; (that might not be a bad idea to create a market for outdated (in the
+&gt; future) computer books.
+">
+
+I know entire stores that carry nothing but outdated computer books.
+
+Barnes and Noble, Borders...
+
+--
+Jay Levitt                |
+Boston, MA                | My character doesn't like it when they
+Faster: jay at jay dot fm | cry or shout or hit.
+http://www.jay.fm | - Kristoffer
+</POST>
+<POST>
+<POSTER> &quot;John W. Kennedy&quot; &lt;jwke...@attglobal.net&gt; </POSTER>
+<POSTDATE> 2007-10-06T22:39:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jay Levitt wrote:
+&gt; On Sun, 7 Oct 2007 10:24:35 +0900, John Joyce wrote:
+
+&gt;&gt; (that might not be a bad idea to create a market for outdated (in the
+&gt;&gt; future) computer books.
+
+&gt; I know entire stores that carry nothing but outdated computer books.
+
+&gt; Barnes and Noble, Borders...
+">
+
+(Looking at my months-old book for GIMP 2.4....)
+
+--
+John W. Kennedy
+&quot;The whole modern world has divided itself into Conservatives and
+Progressives. The business of Progressives is to go on making mistakes.
+The business of the Conservatives is to prevent the mistakes from being
+corrected.&quot;
+-- G. K. Chesterton
+</POST>
+</TEXT>
+</BODY>
+</DOC>

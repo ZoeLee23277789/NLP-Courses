@@ -1,0 +1,258 @@
+<DOC>
+<DOCID> eng-NG-31-126414-9148129 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-15T02:39:00 </DATETIME>
+<BODY>
+<HEADLINE>
+I can't seem to locate conio
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Lars Eighner &lt;use...@larseighner.com&gt; </POSTER>
+<POSTDATE> 2007-09-15T02:39:00 </POSTDATE>
+I can't seem to locate conio in 6.2-RELEASE.  Where is it, or what is
+substituted for it?
+
+--
+Lars Eighner     &lt; http://larseighner.com/ &gt;     &lt; http://myspace.com/larseighner &gt;
+Countdown: 493 days to go.
+What do you do when you're debranded?
+</POST>
+<POST>
+<POSTER> michaelgrunew...@yahoo.fr (Michaël Grünewald) </POSTER>
+<POSTDATE> 2007-09-15T04:01:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Lars Eighner &lt;use ... @larseighner.com&gt; writes:
+&gt; I can't seem to locate conio in 6.2-RELEASE.  Where is it, or what is
+&gt; substituted for it?
+">
+
+If you think to the conio.h C header file usually found on MS DOS
+systems, there is no such file. If you want to control the terminal
+and/or realize a sort of character-mode gui, you can look after the
+ncurses library (man ncurses). If you need only basic dialog widgets,
+maybe libdialog (man 3 dialog) is for you (it is built over ncurses).
+You may also want to know about the stty program, it allows you to do
+a few manipulations from the command line, like turning echo on/off in
+order to read a password.
+--
+Cheers
+</POST>
+<POST>
+<POSTER> Lars Eighner &lt;use...@larseighner.com&gt; </POSTER>
+<POSTDATE> 2007-09-15T04:30:00 </POSTDATE>
+In our last episode,
+&lt;86myvos6ff. ... @Llea.celt.neu&gt;,
+the lovely and talented Michaël Grünewald
+broadcast on comp.unix.bsd.freebsd.misc:
+
+<QUOTE PREVIOUSPOST="
+&gt; Lars Eighner &lt;use ... @larseighner.com&gt; writes:
+&gt;&gt; I can't seem to locate conio in 6.2-RELEASE.  Where is it, or what is
+&gt;&gt; substituted for it?
+&gt; If you think to the conio.h C header file usually found on MS DOS
+&gt; systems, there is no such file. If you want to control the terminal
+&gt; and/or realize a sort of character-mode gui, you can look after the
+&gt; ncurses library (man ncurses).
+">
+
+The problem with this is that to use keypad in ncurses (so far as I
+can tell) I must initscr which causes ncurses to seize the terminal
+and blank the screen.  I do not want to do that.  I want to write
+ANSI to the screen and capture (nonechoing) keypresses.
+
+<QUOTE PREVIOUSPOST="
+&gt; If you need only basic dialog widgets,
+&gt; maybe libdialog (man 3 dialog) is for you (it is built over ncurses).
+">
+
+Ugly and inflexible.
+
+<QUOTE PREVIOUSPOST="
+&gt; You may also want to know about the stty program, it allows you to do
+&gt; a few manipulations from the command line, like turning echo on/off in
+&gt; order to read a password.
+">
+
+At the moment, I am trying to get to the bottom of the the suggestion
+that there may be something helpful in termios.
+
+--
+Lars Eighner     &lt; http://larseighner.com/ &gt;     &lt; http://myspace.com/larseighner &gt;
+Countdown: 493 days to go.
+What do you do when you're debranded?
+</POST>
+<POST>
+<POSTER> Lars Eighner &lt;use...@larseighner.com&gt; </POSTER>
+<POSTDATE> 2007-09-16T03:29:00 </POSTDATE>
+The problem was to capture key presses from a vtty (including such function
+keys as your keymap will allow so they do not echo as you might want to do
+in developing a full-screen text-mode interface or a simple console-type
+game.
+
+Here is my solution in demo form,  It turns out this highly system
+dependent.  Any real application would probably need to do some signal
+handling, and for some things (such as entering text in a box) translation
+to a more human readable form would be desirable.  This seems to work or
+seems to be subject to being made to work for the printable and control
+characters in an Xterm, but is hopeless with function keys.  I have not, and
+probably will not further investigate that because my project deals with
+text-mode terminals.  With -lc, this compiles with out warnings in
+-Wall -pedantic.  However, it uses %p format in printf which seems to be
+undocumented in the man.
+
+I have no idea what I am doing.
+
+#include &lt;stdio.h&gt;
+#include &lt;termios.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;sys/uio.h&gt;
+#include &lt;unistd.h&gt;
+
+char *k;
+int getkey (void);
+ssize_t
+read(int d, void *buf, size_t nbytes);
+
+int main (void)
+{
+int knum;
+
+knum = getkey();
+printf (&quot;knum is %i \n&quot;,knum);
+printf (&quot;value is %p \n&quot;,k);
+return 0;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+int getkey (void)
+{
+struct termios unwhacked, whacked;
+int knoc;
+fflush(0);
+tcgetattr(0,&amp;unwhacked);           /* get terminal flags */
+whacked = unwhacked;               /* save flags for restore */
+whacked.c_lflag &amp;= ~ICANON;        /* turn off cannical input */
+whacked.c_lflag &amp;= ~ECHO;          /* turn off echoing */
+whacked.c_cc[VMIN] = 1;            /* capture at least 1 character */
+whacked.c_cc[VTIME] = 1;           /* and of them that come quick */
+tcsetattr(0,TCSANOW,&amp;whacked);     /* whack the terminal with new flags now */
+knoc = read (0,&amp;k,6);
+tcsetattr(0,TCSANOW,&amp;unwhacked);   /* unwhack the terminal */
+return knoc;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+--
+Lars Eighner     &lt; http://larseighner.com/ &gt;     &lt; http://myspace.com/larseighner &gt;
+Countdown: 492 days to go.
+What do you do when you're debranded?
+</POST>
+<POST>
+<POSTER> p...@hedeland.org (Per Hedeland) </POSTER>
+<POSTDATE> 2007-09-16T16:57:00 </POSTDATE>
+In article &lt;slrnfepmqq.1pmm.use ... @debranded.larseighner.com&gt; Lars
+
+<QUOTE PREVIOUSPOST="
+Eighner &lt;use ... @larseighner.com&gt; writes:
+&gt;The problem was to capture key presses from a vtty (including such function
+&gt;keys as your keymap will allow so they do not echo as you might want to do
+&gt;in developing a full-screen text-mode interface or a simple console-type
+&gt;game.
+
+&gt;Here is my solution in demo form,  It turns out this highly system
+&gt;dependent.
+">
+
+Hm, it used to be (SysV vs BSD thing), but these days I think you can
+expect to find termios everywhere (on *nix).
+
+<QUOTE PREVIOUSPOST="
+&gt;  Any real application would probably need to do some signal
+&gt;handling, and for some things (such as entering text in a box) translation
+&gt;to a more human readable form would be desirable.  This seems to work or
+&gt;seems to be subject to being made to work for the printable and control
+&gt;characters in an Xterm, but is hopeless with function keys.
+">
+
+Well, it's actually pretty broken - you're apparently attempting to read
+upto 6 characters, but you're reading them into a char *, i.e. a pointer
+- besides being wrong(tm), if you actually managed to get more than 4
+(assuming 32-bit system), you might clobber some other data or get a
+segfault.
+
+<QUOTE PREVIOUSPOST="
+&gt;  I have not, and
+&gt;probably will not further investigate that because my project deals with
+&gt;text-mode terminals.  With -lc, this compiles with out warnings in
+&gt;-Wall -pedantic.  However, it uses %p format in printf which seems to be
+&gt;undocumented in the man.
+">
+
+It's in printf(3) (which you're using), but not in printf(1) (which you
+perhaps looked at), probably because you can't really have a pointer on
+the commandline. But it's supposed to take a pointer, and will thus
+elicit a warning with -Wall, and on some architectures possibly
+breakage, if you feed it a char, which is what you really want I think
+(I guess that's what made you use a pointer).
+
+Try the below - I've kept your ugly:-) (non-)indentation style.
+
+--Per Hedeland
+p ... @hedeland.org
+
+--------------------------------------
+#include &lt;stdio.h&gt;
+#include &lt;termios.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;sys/uio.h&gt;
+#include &lt;unistd.h&gt;
+
+char buf[6];
+int getkey (void);
+
+int main (void)
+{
+int knum;
+int i;
+
+knum = getkey();
+printf (&quot;knum is %i \n&quot;,knum);
+printf (&quot;value is&quot;);
+for (i = 0; i &lt; knum; i++)
+printf(&quot; 0x%.2x&quot;, buf[i]);
+printf(&quot;\n&quot;);
+return 0;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+int getkey (void)
+{
+struct termios unwhacked, whacked;
+int knoc;
+fflush(0);
+tcgetattr(0,&amp;unwhacked);           /* get terminal flags */
+whacked = unwhacked;               /* save flags for restore */
+whacked.c_lflag &amp;= ~ICANON;        /* turn off cannical input */
+whacked.c_lflag &amp;= ~ECHO;          /* turn off echoing */
+whacked.c_cc[VMIN] = sizeof(buf);  /* capture at most as many characters
+as fits in buf[] */
+whacked.c_cc[VTIME] = 1;           /* and only if they come quick */
+tcsetattr(0,TCSANOW,&amp;whacked);     /* whack the terminal with new flags now */
+knoc = read(0, buf, sizeof(buf));
+tcsetattr(0,TCSANOW,&amp;unwhacked);   /* unwhack the terminal */
+return knoc;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+</POST>
+</TEXT>
+</BODY>
+</DOC>

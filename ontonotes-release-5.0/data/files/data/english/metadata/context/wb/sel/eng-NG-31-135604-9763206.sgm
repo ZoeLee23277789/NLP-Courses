@@ -1,0 +1,443 @@
+<DOC>
+<DOCID> eng-NG-31-135604-9763206 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-26T18:13:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Seasonal Variation in Trend Analysis
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> David Fanning &lt;n...@dfanning.com&gt; </POSTER>
+<POSTDATE> 2007-09-26T18:13:00 </POSTDATE>
+Folks,
+
+Does anyone happen to have an IDL example of some
+code that might remove seasonal variation in a time
+series? Or some suggestions for how to proceed in IDL?
+I can see that I might want to use a model that has
+sin and cosine terms, but I can't see how to find the
+coefficients of such a model in IDL.
+
+Cheers,
+
+David
+--
+David Fanning, Ph.D.
+Fanning Software Consulting, Inc.
+Coyote's Guide to IDL Programming: http://www.dfanning.com/
+Sepore ma de ni thui. (&quot;Perhaps thou speakest truth.&quot;)
+</POST>
+<POST>
+<POSTER> &quot;R.G. Stockwell&quot; &lt;noem...@please.com&gt; </POSTER>
+<POSTDATE> 2007-09-26T18:42:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;David Fanning&quot; &lt;n ... @dfanning.com&gt; wrote in message
+">
+
+news:MPG.2164877cbc85365998a09c@news.frii.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Folks,
+
+&gt; Does anyone happen to have an IDL example of some
+&gt; code that might remove seasonal variation in a time
+&gt; series? Or some suggestions for how to proceed in IDL?
+&gt; I can see that I might want to use a model that has
+&gt; sin and cosine terms, but I can't see how to find the
+&gt; coefficients of such a model in IDL.
+
+&gt; Cheers,
+
+&gt; David
+">
+
+Just Least Squares fit the cos and sine functions (0 phase in both
+those, you get phase from the amplitudes).
+
+Ax=b
+where
+[c,s] [x] = [data]
+x is the unknown. c, s are your sine and cosine terms.
+
+Use the choledky (faster) or SVD solver routines.
+
+interesting note, if the total length of the time series is a
+multiple of the length of the season, just FFT and read off those
+values (real = cos, imag = sin for the appropriate frequency)
+It is a 'fast' way of solving the least squares fit problem
+
+Cheers,
+bob
+</POST>
+<POST>
+<POSTER> Ingo von Borstel &lt;newsgro...@planetmaker.de&gt; </POSTER>
+<POSTDATE> 2007-09-27T08:04:00 </POSTDATE>
+Hi,
+
+<QUOTE PREVIOUSPOST="
+&gt; Does anyone happen to have an IDL example of some
+&gt; code that might remove seasonal variation in a time
+&gt; series? Or some suggestions for how to proceed in IDL?
+&gt; I can see that I might want to use a model that has
+&gt; sin and cosine terms, but I can't see how to find the
+&gt; coefficients of such a model in IDL.
+">
+
+I'd do a Fourier transform, filter out the terms that correspond to the
+seasonal frequency/ies and possibly do a back-transform.
+
+Best regards,
+Ingo
+
+--
+Ingo von Borstel                &lt;newsgro ... @planetmaker.de&gt;
+Public Key: http://www.planetmaker.de/ingo.asc
+
+If you need an urgent reply, replace newsgroups by vgap.
+</POST>
+<POST>
+<POSTER> &quot;Kenneth P. Bowman&quot; &lt;k-bow...@removethis.tamu.edu&gt; </POSTER>
+<POSTDATE> 2007-09-26T23:01:00 </POSTDATE>
+In article &lt;MPG.2164877cbc85365998a ... @news.frii.com&gt;,
+David Fanning &lt;n ... @dfanning.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Folks,
+
+&gt; Does anyone happen to have an IDL example of some
+&gt; code that might remove seasonal variation in a time
+&gt; series? Or some suggestions for how to proceed in IDL?
+&gt; I can see that I might want to use a model that has
+&gt; sin and cosine terms, but I can't see how to find the
+&gt; coefficients of such a model in IDL.
+">
+
+There are several ways to do this, David, depending on exactly what
+you are trying to do.
+
+Let's assume that you have evenly-spaced data, say monthly,
+and you have complete years of data (12*nyears data points).
+Those assumptions are not essential, but make the analysis
+simpler.
+
+One approach is to remove the climatological annual cycle.  This is
+done by computing the average of all the Januaries, all the Februaries,
+etc.  Then subtract the average January from each of the individual
+Januaries.  The residual is called the &quot;anomaly&quot;.
+
+Another approach is to remove the annual harmonic (a perfect
+sinusoid).  This can be done with an FFT, but is usually easier to do
+with simple regression.  (FFT and regression are equivalent for
+evenly-spaced data with no missing values.)
+
+The difference between these two methods is that the second
+method removes only the first harmonic of the annual cycle.
+The first method removes the first *six* harmonics.  In many
+cases the annual cycle is dominated by the first harmonic,
+so the results of the two methods are similar.  In some cases, the
+semi-annual harmonic might be important, in which case the second method
+would not work as well.  The second method, however, guarantees
+a smooth estimate of the annual cycle.  (Note that you could also compute
+the higher harmonics, with FFT or REGRESS, and then remove as many
+harmonics as you want.)
+
+Here is a sample program that illustrates both approaches using some
+synthetic monthly data.  The values are assumed to be located at the
+centers of the months.
+
+Cheers, Ken
+
+;   Removing the climatological mean
+
+nyears  = 4                                      ;Number of years
+nmonths = 12*nyears                              ;Number of months
+t       = (0.5 + FINDGEN(nmonths))/12            ;Time in years
+
+z = COS(2.0*!PI*t) + 0.2*RANDOMN(seed, n)        ;Data with an annual cycle
+z = REFORM(z, 12, nyears)                        ;Rearrange for convenience
+zclim = REBIN(TOTAL(z, 2)/nyears, 12, nyears)    ;Compute climatological mean
+
+PLOT, t, z, PSYM = 1                             ;Plot original data
+OPLOT, t, zclim                                  ;Plot climatological mean
+OPLOT, t, z - zclim, LINESTYLE = 1               ;Plot anomaly
+
+cr = ''
+READ, cr, PROMPT = 'Enter &lt;cr&gt; to continue : '
+
+;   Removing the annual harmonic
+
+z = COS(2.0*!PI*t - 0.75) + 0.2*RANDOMN(seed, n)    ;Data with an annual cycle
+x = TRANSPOSE([[SIN(2.0*!PI*t)], [COS(2.0*!PI*t)]]) ;Create predictor variables
+
+coeffs = REGRESS(x, z, CONST = zmean, YFIT = yfit)  ;Fit the sinusoids
+PRINT, SQRT(TOTAL(coeffs^2)), ATAN(coeffs[0], coeffs[1]) ;Amplitude and phase
+
+PLOT, t, z, PSYM = 1                                ;Plot original data
+OPLOT, t, yfit                                      ;Plot climatological mean
+OPLOT, t, z - yfit, LINESTYLE = 1                   ;Plot anomaly
+</POST>
+<POST>
+<POSTER> David Fanning &lt;n...@dfanning.com&gt; </POSTER>
+<POSTDATE> 2007-09-27T09:12:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Ingo von Borstel writes:
+&gt; I'd do a Fourier transform, filter out the terms that correspond to the
+&gt; seasonal frequency/ies and possibly do a back-transform.
+">
+
+Well, I can see this is what I *want* to do, but I
+am still having some trouble with the *how* to do. :-)
+
+For example, how, exactly, would I construct such
+a filter. To knock out the first harmonic, would
+I construct a circular filter near the origin? How
+near? I take it from both your post and Bob's that
+this is pretty much common knowledge, but if it is,
+I must have been asleep in that class. The books I
+have been using to understand regression and trend
+analysis have not mentioned FFT filtering at all.
+And although I think I have at least a limited grasp
+of the theory, a practical understanding of the IDL
+code to implement it still eludes me.
+
+Cheers,
+
+David
+--
+David Fanning, Ph.D.
+Fanning Software Consulting, Inc.
+Coyote's Guide to IDL Programming: http://www.dfanning.com/
+Sepore ma de ni thui. (&quot;Perhaps thou speakest truth.&quot;)
+</POST>
+<POST>
+<POSTER> David Fanning &lt;n...@dfanning.com&gt; </POSTER>
+<POSTDATE> 2007-09-27T09:13:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Kenneth P. Bowman writes:
+&gt; There are several ways to do this, David, depending on exactly what
+&gt; you are trying to do.
+">
+
+Thanks, Ken. Very helpful. I appreciate it. :-)
+
+Cheers,
+
+David
+--
+David Fanning, Ph.D.
+Fanning Software Consulting, Inc.
+Coyote's Guide to IDL Programming: http://www.dfanning.com/
+Sepore ma de ni thui. (&quot;Perhaps thou speakest truth.&quot;)
+</POST>
+<POST>
+<POSTER> &quot;R.G. Stockwell&quot; &lt;noem...@please.com&gt; </POSTER>
+<POSTDATE> 2007-09-27T13:26:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;David Fanning&quot; &lt;n ... @dfanning.com&gt; wrote in message
+">
+
+news:MPG.21655a1d1487d44b98a09d@news.frii.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Ingo von Borstel writes:
+
+&gt;&gt; I'd do a Fourier transform, filter out the terms that correspond to the
+&gt;&gt; seasonal frequency/ies and possibly do a back-transform.
+
+&gt; Well, I can see this is what I *want* to do, but I
+&gt; am still having some trouble with the *how* to do. :-)
+
+&gt; For example, how, exactly, would I construct such
+&gt; a filter. To knock out the first harmonic, would
+&gt; I construct a circular filter near the origin? How
+&gt; near?
+">
+
+As a quick answer, FFT the data (assuming regular sampling etc)
+and find the frequency corresponding to the seasonal signal.
+(frequencies are i/NT where T is the sampling interval - for instance
+one measurement each day).
+
+Multiply your spectrum with zero at that point (and 1 every other point)
+(also do that for the negative frequency component - assuming real data).
+Invert the FFT.
+
+You have removed the precise seasonal frequency.
+
+You can perhaps improve that by multiplying the adjacent frequencies
+by 0.5 above (i.e. your mask is  1,1,1,1,1,1....1,1 ,0.5,0,0.5,1,1.....)
+
+That is equivalent to applying a hanning window filter to remove the
+seasonal signal.
+
+Sorry for brief description, I am taking care of a 2.5 yr old with the flu
+right now so I have to be quick.
+
+Cheers,
+bob
+</POST>
+<POST>
+<POSTER> wita &lt;allard.de...@wur.nl&gt; </POSTER>
+<POSTDATE> 2007-09-27T15:09:00 </POSTDATE>
+David,
+
+<QUOTE PREVIOUSPOST="
+&gt; Well, I can see this is what I *want* to do, but I
+&gt; am still having some trouble with the *how* to do. :-)
+">
+
+You may want to have a look at the IDL implementation of the HANTS
+(Harmonic Analyses of NDVI Time Series) algorithm I wrote. The code is
+available at: http://www.ittvis.com/codebank/search.asp?FID=333
+
+Basically HANTS searches for the seasonality rather then removing it,
+but the principle is the same.
+
+with best regards,
+
+Allard
+</POST>
+<POST>
+<POSTER> David Fanning &lt;da...@dfanning.com&gt; </POSTER>
+<POSTDATE> 2007-09-27T15:27:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+wita writes:
+&gt; You may want to have a look at the IDL implementation of the HANTS
+&gt; (Harmonic Analyses of NDVI Time Series) algorithm I wrote. The code is
+&gt; available at: http://www.ittvis.com/codebank/search.asp?FID=333
+
+&gt; Basically HANTS searches for the seasonality rather then removing it,
+&gt; but the principle is the same.
+">
+
+Alas, when I hit the Download button there, I get the picture,
+but not the code. I already have the picture, sorta. :-)
+
+Cheers,
+
+David
+
+--
+David Fanning, Ph.D.
+Fanning Software Consulting, Inc.
+Coyote's Guide to IDL Programming: http://www.dfanning.com/
+</POST>
+<POST>
+<POSTER> Allard de Wit &lt;allard.de...@wur.nl&gt; </POSTER>
+<POSTDATE> 2007-09-28T08:09:00 </POSTDATE>
+David,
+
+This is indeed stupid by ittvis, putting the picture under the
+download button.
+Anyway try this one: ftp://sc:ima ... @ftp.alterra.nl/pub/adewit/hants.zip
+
+with best regards,
+
+Allard
+</POST>
+<POST>
+<POSTER> David Fanning &lt;n...@dfanning.com&gt; </POSTER>
+<POSTDATE> 2007-09-28T10:34:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+wita writes:
+&gt; You may want to have a look at the IDL implementation of the HANTS
+&gt; (Harmonic Analyses of NDVI Time Series) algorithm I wrote. The code is
+&gt; available at: http://www.ittvis.com/codebank/search.asp?FID=333
+
+&gt; Basically HANTS searches for the seasonality rather then removing it,
+&gt; but the principle is the same.
+">
+
+Thank you. This is very helpful.
+
+When I initially ran the example program in cgi_fftndvi.pro
+I got thrown into an infinite loop. I killed the process and
+moved the CATCH, /CANCEL in your error handler to the *first*
+line after the CATCH, and then the program ran perfectly.
+
+To test, I set it back where it was before, and the program
+*still* ran fine! So, I don't know what that is all about.
+But I do feel more comfortable having that CANCEL as the
+first line after a CATCH to avoid these kinds of problems. :-)
+
+Cheers,
+
+David
+--
+David Fanning, Ph.D.
+Fanning Software Consulting, Inc.
+Coyote's Guide to IDL Programming: http://www.dfanning.com/
+Sepore ma de ni thui. (&quot;Perhaps thou speakest truth.&quot;)
+</POST>
+<POST>
+<POSTER> David Fanning &lt;n...@dfanning.com&gt; </POSTER>
+<POSTDATE> 2007-09-28T12:13:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Allard de Wit writes:
+&gt; Anyway try this one: ftp://sc:ima ... @ftp.alterra.nl/pub/adewit/hants.zip
+">
+
+Wow! This has even caused me to go dig out that E. Oran Brigham book
+on the FFT that Bob suckered me into buying several years ago.
+Oddly enough, some of it is starting to make sense to me now. :-)
+
+Cheers,
+
+David
+--
+David Fanning, Ph.D.
+Fanning Software Consulting, Inc.
+Coyote's Guide to IDL Programming: http://www.dfanning.com/
+Sepore ma de ni thui. (&quot;Perhaps thou speakest truth.&quot;)
+</POST>
+<POST>
+<POSTER> &quot;R.G. Stockwell&quot; &lt;noem...@please.com&gt; </POSTER>
+<POSTDATE> 2007-09-28T12:35:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;David Fanning&quot; &lt;n ... @dfanning.com&gt; wrote in message
+">
+
+news:MPG.2166d611a2078c5498a0a0@news.frii.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Allard de Wit writes:
+
+&gt;&gt; Anyway try this one: ftp://sc:ima ... @ftp.alterra.nl/pub/adewit/hants.zip
+
+&gt; Wow! This has even caused me to go dig out that E. Oran Brigham book
+&gt; on the FFT that Bob suckered me into buying several years ago.
+">
+
+:O
+
+&quot;suckered&quot;?  That is one of the best books of all time!
+Better than War and Peace, and Lord of the Rings combined.
+Rumour has it that Angelina Jolie is in talks to play DFT in
+the movie version of it.
+
+Seriously, anyone who has ever used the fft() routine must
+read that book first (imho) :)
+
+Cheers,
+bob
+</POST>
+<POST>
+<POSTER> Allard de Wit &lt;allard.de...@wur.nl&gt; </POSTER>
+<POSTDATE> 2007-10-01T15:16:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; When I initially ran the example program in cgi_fftndvi.pro
+&gt; I got thrown into an infinite loop. I killed the process and
+&gt; moved the CATCH, /CANCEL in your error handler to the *first*
+&gt; line after the CATCH, and then the program ran perfectly.
+">
+
+Thanks for the tip, I wil change this in the next version of HANTS.
+
+best regards,
+
+Allard
+</POST>
+</TEXT>
+</BODY>
+</DOC>

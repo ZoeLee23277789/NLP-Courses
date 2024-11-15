@@ -1,0 +1,787 @@
+<DOC>
+<DOCID> eng-NG-31-126392-9136570 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-02T23:54:00 </DATETIME>
+<BODY>
+<HEADLINE>
+ceil() and log10() - undefined?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> ptn &lt;tn.pa...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-02T23:54:00 </POSTDATE>
+Hi everyone,
+
+I was messing around with math.h and I got this error:
+
+&quot;&quot;&quot;
+/tmp/ccefZYYN.o: In function `digcount':
+itos.c:(.text+0x103): undefined reference to `log10'
+itos.c:(.text+0x111): undefined reference to `ceil'
+collect2: ld returned 1 exit status
+
+shell returned 1
+&quot;&quot;&quot;
+
+It can't be that log10() and ceil() aren't defined, because math.h
+takes care of that. I admit that I have no idea what .text+0x111/.text
++0x103 means
+
+The complete code is here:
+
+# include &lt;stdio.h&gt;
+# include &lt;malloc.h&gt;
+# include &lt;math.h&gt;
+
+int digcount(int num);  // counts the digits of &lt;num&gt;
+
+main()
+// transform a number to a string
+{
+int num, fact, dig, digits, i;
+char *s;
+
+scanf(&quot;%d&quot;, &amp;num);
+digits = digcount(num);
+s = (char *) malloc((digits + 1) * sizeof(char));       // assign just
+enough space
+s += (digits - 1);      // go to the last address of the memory space
+assigned
+*s-- = '\0';            // mark the end of the string
+for (i = 0; i &lt; digits; i++) {
+dig = num % 10;
+num /= 10;
+*s-- = '0' + dig;       // store digit by digit
+}
+printf(&quot;\&quot;%s\&quot;\n&quot;, ++s);    // after the for, s is pointing to the
+addres before the start of the string
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+int digcount(int num)
+/* N = trunc(log(x), 0) + 1, where N is the number of digits of x */
+{
+double ans;
+
+ans = log10(num);
+ans = ceil(ans);
+return (int) ans;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+Any ideas are welcome.
+(I'm using Vim + gcc under Ubuntu Feisty Fawn)
+
+Thanks,
+
+Pablo Torres Navarrete
+</POST>
+<POST>
+<POSTER> ptn &lt;tn.pa...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-02T23:55:00 </POSTDATE>
+Hi everyone,
+
+I was messing around with math.h and I got this error:
+
+&quot;&quot;&quot;
+/tmp/ccefZYYN.o: In function `digcount':
+itos.c:(.text+0x103): undefined reference to `log10'
+itos.c:(.text+0x111): undefined reference to `ceil'
+collect2: ld returned 1 exit status
+
+shell returned 1
+&quot;&quot;&quot;
+
+It can't be that log10() and ceil() aren't defined, because math.h
+takes care of that. I admit that I have no idea what .text+0x111/.text
++0x103 means
+
+The complete code is here:
+
+# include &lt;stdio.h&gt;
+# include &lt;malloc.h&gt;
+# include &lt;math.h&gt;
+
+int digcount(int num);  // counts the digits of &lt;num&gt;
+
+main()
+// transform a number to a string
+{
+int num, fact, dig, digits, i;
+char *s;
+
+scanf(&quot;%d&quot;, &amp;num);
+digits = digcount(num);
+s = (char *) malloc((digits + 1) * sizeof(char));       // assign just
+enough space
+s += (digits - 1);      // go to the last address of the memory space
+assigned
+*s-- = '\0';            // mark the end of the string
+for (i = 0; i &lt; digits; i++) {
+dig = num % 10;
+num /= 10;
+*s-- = '0' + dig;       // store digit by digit
+}
+printf(&quot;\&quot;%s\&quot;\n&quot;, ++s);    // after the for, s is pointing to the
+addres before the start of the string
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+int digcount(int num)
+/* N = trunc(log(x), 0) + 1, where N is the number of digits of x */
+{
+double ans;
+
+ans = log10(num);
+ans = ceil(ans);
+return (int) ans;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+Any ideas are welcome.
+(I'm using Vim + gcc under Ubuntu Feisty Fawn)
+
+Thanks,
+
+Pablo Torres Navarrete
+</POST>
+<POST>
+<POSTER> pateld...@rediffmail.com </POSTER>
+<POSTDATE> 2007-10-03T00:11:00 </POSTDATE>
+On Oct 3, 8:55 am, ptn &lt;tn.pa ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi everyone,
+
+&gt; I was messing around with math.h and I got this error:
+
+&gt; &quot;&quot;&quot;
+&gt; /tmp/ccefZYYN.o: In function `digcount':
+&gt; itos.c:(.text+0x103): undefined reference to `log10'
+&gt; itos.c:(.text+0x111): undefined reference to `ceil'
+&gt; collect2: ld returned 1 exit status
+
+&gt; shell returned 1
+&gt; &quot;&quot;&quot;
+
+&gt; It can't be that log10() and ceil() aren't defined, because math.h
+&gt; takes care of that. I admit that I have no idea what .text+0x111/.text
+&gt; +0x103 means
+
+&gt; The complete code is here:
+
+&gt; # include &lt;stdio.h&gt;
+&gt; # include &lt;malloc.h&gt;
+&gt; # include &lt;math.h&gt;
+
+&gt; int digcount(int num);  // counts the digits of &lt;num&gt;
+
+&gt; main()
+&gt; // transform a number to a string
+&gt; {
+&gt;         int num, fact, dig, digits, i;
+&gt;         char *s;
+
+&gt;         scanf(&quot;%d&quot;, &amp;num);
+&gt;         digits = digcount(num);
+&gt;         s = (char *) malloc((digits + 1) * sizeof(char));       // assign just
+&gt; enough space
+&gt;         s += (digits - 1);      // go to the last address of the memory space
+&gt; assigned
+&gt;         *s-- = '\0';            // mark the end of the string
+&gt;         for (i = 0; i &lt; digits; i++) {
+&gt;                 dig = num % 10;
+&gt;                 num /= 10;
+&gt;                 *s-- = '0' + dig;       // store digit by digit
+&gt;         }
+&gt;         printf(&quot;\&quot;%s\&quot;\n&quot;, ++s);    // after the for, s is pointing to the
+&gt; addres before the start of the string
+
+&gt; }
+
+&gt; int digcount(int num)
+&gt; /* N = trunc(log(x), 0) + 1, where N is the number of digits of x */
+&gt; {
+&gt;         double ans;
+">
+
+Too difficult question for me
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;         ans = log10(num);
+&gt;         ans = ceil(ans);
+&gt;         return (int) ans;
+
+&gt; }
+
+&gt; Any ideas are welcome.
+&gt; (I'm using Vim + gcc under Ubuntu Feisty Fawn)
+
+&gt; Thanks,
+
+&gt; Pablo Torres Navarrete
+">
+</POST>
+<POST>
+<POSTER> Peter Nilsson &lt;ai...@acay.com.au&gt; </POSTER>
+<POSTDATE> 2007-10-03T00:46:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+ptn &lt;tn.pa ... @gmail.com&gt; wrote:
+&gt; /tmp/ccefZYYN.o: In function `digcount':
+&gt; itos.c:(.text+0x103): undefined reference to `log10'
+&gt; itos.c:(.text+0x111): undefined reference to `ceil'
+&gt; collect2: ld returned 1 exit status
+
+&gt; It can't be that log10() and ceil() aren't defined, because
+&gt; math.h takes care of that.
+">
+
+For the compiler perhaps, but not for the linker.
+
+See the FAQ: http://c-faq.com/fp/libm.html
+
+--
+Peter
+</POST>
+<POST>
+<POSTER> Ben Pfaff &lt;b...@cs.stanford.edu&gt; </POSTER>
+<POSTDATE> 2007-10-03T00:57:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+ptn &lt;tn.pa ... @gmail.com&gt; writes:
+&gt; I was messing around with math.h and I got this error:
+
+&gt; &quot;&quot;&quot;
+&gt; /tmp/ccefZYYN.o: In function `digcount':
+&gt; itos.c:(.text+0x103): undefined reference to `log10'
+&gt; itos.c:(.text+0x111): undefined reference to `ceil'
+&gt; collect2: ld returned 1 exit status
+
+&gt; shell returned 1
+&gt; &quot;&quot;&quot;
+">
+
+This is in the C FAQ.
+
+14.3:   I'm trying to do some simple trig, and I am #including &lt;math.h&gt;,
+but I keep getting &quot;undefined: sin&quot; compilation errors.
+
+A:      Make sure you're actually linking with the math library.  For
+instance, under Unix, you usually need to use the -lm option, at
+the *end* of the command line, when compiling/linking.  See also
+questions 13.25, 13.26, and 14.2.
+
+--
+&quot;Large amounts of money tend to quench any scruples I might be having.&quot;
+-- Stephan Wilms
+</POST>
+<POST>
+<POSTER> ptn &lt;tn.pa...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-03T01:03:00 </POSTDATE>
+On Oct 2, 11:57 pm, Ben Pfaff &lt;b ... @cs.stanford.edu&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; ptn &lt;tn.pa ... @gmail.com&gt; writes:
+&gt; &gt; I was messing around with math.h and I got this error:
+
+&gt; &gt; &quot;&quot;&quot;
+&gt; &gt; /tmp/ccefZYYN.o: In function `digcount':
+&gt; &gt; itos.c:(.text+0x103): undefined reference to `log10'
+&gt; &gt; itos.c:(.text+0x111): undefined reference to `ceil'
+&gt; &gt; collect2: ld returned 1 exit status
+
+&gt; &gt; shell returned 1
+&gt; &gt; &quot;&quot;&quot;
+
+&gt; This is in the C FAQ.
+
+&gt; 14.3:   I'm trying to do some simple trig, and I am #including &lt;math.h&gt;,
+&gt;         but I keep getting &quot;undefined: sin&quot; compilation errors.
+
+&gt; A:      Make sure you're actually linking with the math library.  For
+&gt;         instance, under Unix, you usually need to use the -lm option, at
+&gt;         the *end* of the command line, when compiling/linking.  See also
+&gt;         questions 13.25, 13.26, and 14.2.
+
+&gt; --
+&gt; &quot;Large amounts of money tend to quench any scruples I might be having.&quot;
+&gt;   -- Stephan Wilms
+">
+
+Thank you very much. Program runs OK now :)
+
+ptn
+</POST>
+<POST>
+<POSTER> Martin Ambuhl &lt;mamb...@earthlink.net&gt; </POSTER>
+<POSTDATE> 2007-10-03T01:29:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+ptn wrote:
+&gt; Hi everyone,
+
+&gt; I was messing around with math.h and I got this error:
+
+&gt; &quot;&quot;&quot;
+&gt; /tmp/ccefZYYN.o: In function `digcount':
+&gt; itos.c:(.text+0x103): undefined reference to `log10'
+&gt; itos.c:(.text+0x111): undefined reference to `ceil'
+&gt; collect2: ld returned 1 exit status
+
+&gt; shell returned 1
+&gt; &quot;&quot;&quot;
+
+&gt; It can't be that log10() and ceil() aren't defined, because math.h
+&gt; takes care of that.
+">
+
+No, it doesn't.
+You want to get the FAQ &lt; http://c-faq.com/index.html &gt; and check it
+before posting any more questions.  Most beginner's questions have been
+asked many times before and answered many times before.  If you check
+the FAQ before posting, you will avoid the ire of people who get very
+tired of this.  In your case, you have asked a form of the question
+found, along with the answer, at &lt; http://c-faq.com/fp/libm.html &gt;,
+&quot;Question 14.3, Q: I'm trying to do some simple trig, and I am
+#including &lt;math.h&gt;, but the linker keeps complaining that functions
+like sin and cos are undefined.&quot;
+
+BTW, not all of us agree with the word &quot;bug&quot; given in the answer.
+</POST>
+<POST>
+<POSTER> Martin Ambuhl &lt;mamb...@earthlink.net&gt; </POSTER>
+<POSTDATE> 2007-10-03T01:31:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+ptn wrote:
+">
+
+[...]
+
+<QUOTE PREVIOUSPOST="
+&gt; # include &lt;malloc.h&gt;
+">
+
+I forgot to mention that there is no such standard header.  Include
+&lt;stdlib.h&gt; for malloc() and friends.
+</POST>
+<POST>
+<POSTER> CBFalconer &lt;cbfalco...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-10-03T21:11:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+ptn wrote:
+
+... snip ...
+
+&gt; The complete code is here:
+
+&gt; # include &lt;stdio.h&gt;
+&gt; # include &lt;malloc.h&gt;
+">
+
+No such standard include file exists.  Probably should be stdlib.h.
+
+<QUOTE PREVIOUSPOST="
+&gt; # include &lt;math.h&gt;
+
+&gt; int digcount(int num);  // counts the digits of &lt;num&gt;
+
+&gt; main()
+">
+
+Main returns an int.  Say so.  Use &quot;int main(void)&quot;.
+
+<QUOTE PREVIOUSPOST="
+&gt; // transform a number to a string
+">
+
+C89 does not allow // comments, nor does Usenet, because of line
+wrapping.  Use /* ... */
+
+<QUOTE PREVIOUSPOST="
+&gt; {
+&gt;         int num, fact, dig, digits, i;
+&gt;         char *s;
+
+&gt;         scanf(&quot;%d&quot;, &amp;num);
+">
+
+NEVER use scanf without checking its error return.  This should be
+&quot;if (1 != scanf(&quot;5d&quot;, &amp; num)) /* recover */ else /* OK */
+
+<QUOTE PREVIOUSPOST="
+&gt;         digits = digcount(num);
+&gt;         s = (char *) malloc((digits + 1) * sizeof(char));       // assign just
+">
+
+Never cast the return from malloc.  sizeof(char) is one.
+
+<QUOTE PREVIOUSPOST="
+&gt; enough space
+">
+
+This is a syntax error!!
+
+<QUOTE PREVIOUSPOST="
+&gt;         s += (digits - 1);      // go to the last address of the memory space
+&gt; assigned
+">
+
+So is this !!
+
+<QUOTE PREVIOUSPOST="
+&gt;         *s-- = '\0';            // mark the end of the string
+&gt;         for (i = 0; i &lt; digits; i++) {
+&gt;                 dig = num % 10;
+&gt;                 num /= 10;
+&gt;                 *s-- = '0' + dig;       // store digit by digit
+&gt;         }
+&gt;         printf(&quot;\&quot;%s\&quot;\n&quot;, ++s);        // after the for, s is pointing to the
+&gt; addres before the start of the string
+">
+
+Another syntax error here.  Then you have failed to return 0,
+EXIT_FAILURE, or EXIT_SUCCESS from main.  The EXITs are found in
+stdlib.h.
+
+<QUOTE PREVIOUSPOST="
+&gt; }
+
+&gt; int digcount(int num)
+&gt; /* N = trunc(log(x), 0) + 1, where N is the number of digits of x */
+&gt; {
+&gt;         double ans;
+
+&gt;         ans = log10(num);
+&gt;         ans = ceil(ans);
+&gt;         return (int) ans;
+">
+
+This is a useless cast.  Just eliminate it.  In fact you can use:
+
+return ceil(log10(num));
+
+and the default conversions will handle everything.  All casts are
+suspicious and probably erroneous and/or unneeded, except for
+variadic function parameters.
+
+<QUOTE PREVIOUSPOST="
+&gt; }
+
+&gt; Any ideas are welcome.
+">
+
+I suggest you first fix the above errors/oversights, and limit the
+line length to 72 chars.  The best way to handle malloc's is:
+
+if (!(p = malloc(N * sizeof *p))) /* recovery code */;
+else /* successful malloc, carry on */
+
+--
+Chuck F (cbfalconer at maineline dot net)
+Available for consulting/temporary embedded and systems.
+&lt; http://cbfalconer.home.att.net &gt;
+
+--
+Posted via a free Usenet account from http://www.teranews.com
+</POST>
+<POST>
+<POSTER> ptn &lt;tn.pa...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-04T00:54:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; &gt; }
+
+&gt; &gt; Any ideas are welcome.
+
+&gt; I suggest you first fix the above errors/oversights, and limit the
+&gt; line length to 72 chars.  The best way to handle malloc's is:
+
+&gt;    if (!(p = malloc(N * sizeof *p))) /* recovery code */;
+&gt;    else /* successful malloc, carry on */
+">
+
+You have given me a lot more information than what I'd expected. I
+learned a lot :)
+
+ptn
+</POST>
+<POST>
+<POSTER> santosh &lt;santosh....@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-04T01:00:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+ptn wrote:
+">
+
+[CBFalconer wrote the text below]
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; &gt; Any ideas are welcome.
+
+&gt;&gt; I suggest you first fix the above errors/oversights, and limit the
+&gt;&gt; line length to 72 chars.  The best way to handle malloc's is:
+
+&gt;&gt;    if (!(p = malloc(N * sizeof *p))) /* recovery code */;
+&gt;&gt;    else /* successful malloc, carry on */
+
+&gt; You have given me a lot more information than what I'd expected. I
+&gt; learned a lot :)
+">
+
+Please don't snip attributions, i.e., those lines beginning with &quot;so-and-so
+wrote:&quot;
+
+Removing them makes the discussion hard to follow for those without threaded
+newsreaders.
+</POST>
+<POST>
+<POSTER> Richard Heathfield &lt;r...@see.sig.invalid&gt; </POSTER>
+<POSTDATE> 2007-10-04T03:37:00 </POSTDATE>
+santosh said:
+
+<QUOTE PREVIOUSPOST="
+&gt; ptn wrote:
+
+&gt; [CBFalconer wrote the text below]
+
+&gt;&gt;&gt; &gt; Any ideas are welcome.
+">
+
+...but Chuck didn't write that bit. :-)
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; I suggest you first fix the above errors/oversights, and limit the
+&gt;&gt;&gt; line length to 72 chars.  The best way to handle malloc's is:
+
+&gt;&gt;&gt;    if (!(p = malloc(N * sizeof *p))) /* recovery code */;
+&gt;&gt;&gt;    else /* successful malloc, carry on */
+
+&gt;&gt; You have given me a lot more information than what I'd expected. I
+&gt;&gt; learned a lot :)
+
+&gt; Please don't snip attributions, i.e., those lines beginning with
+&gt; &quot;so-and-so wrote:&quot;
+
+&gt; Removing them makes the discussion hard to follow for those without
+&gt; threaded newsreaders.
+">
+
+Even so, ptn should be applauded for paying attention to Chuck's points
+even though they were not directly related to the question he actually
+asked. Someone has actually taken the trouble to learn more about C in
+general, rather than &quot;enough to get me over *this* hill&quot;. I wish there
+were more like ptn.
+
+--
+Richard Heathfield &lt; http://www.cpax.org.uk &gt;
+Email: - http://www . +rjh@
+Google users: &lt; http://www.cpax.org.uk/prg/writings/googly.php &gt;
+&quot;Usenet is a strange place&quot; - dmr 29 July 1999
+</POST>
+<POST>
+<POSTER> Richard &lt;rgr...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-04T08:55:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+santosh &lt;santosh. ... @gmail.com&gt; writes:
+&gt; ptn wrote:
+
+&gt; [CBFalconer wrote the text below]
+
+&gt;&gt;&gt; &gt; Any ideas are welcome.
+
+&gt;&gt;&gt; I suggest you first fix the above errors/oversights, and limit the
+&gt;&gt;&gt; line length to 72 chars.  The best way to handle malloc's is:
+
+&gt;&gt;&gt;    if (!(p = malloc(N * sizeof *p))) /* recovery code */;
+&gt;&gt;&gt;    else /* successful malloc, carry on */
+
+&gt;&gt; You have given me a lot more information than what I'd expected. I
+&gt;&gt; learned a lot :)
+
+&gt; Please don't snip attributions, i.e., those lines beginning with &quot;so-and-so
+&gt; wrote:&quot;
+
+&gt; Removing them makes the discussion hard to follow for those without threaded
+&gt; newsreaders.
+">
+
+KNode is a threaded news reader, so why the noise?
+</POST>
+<POST>
+<POSTER> santosh &lt;santosh....@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-04T09:12:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Richard wrote:
+&gt; santosh &lt;santosh. ... @gmail.com&gt; writes:
+
+&gt;&gt; ptn wrote:
+
+&gt;&gt; [CBFalconer wrote the text below]
+
+&gt;&gt;&gt;&gt; &gt; Any ideas are welcome.
+
+&gt;&gt;&gt;&gt; I suggest you first fix the above errors/oversights, and limit the
+&gt;&gt;&gt;&gt; line length to 72 chars.  The best way to handle malloc's is:
+
+&gt;&gt;&gt;&gt;    if (!(p = malloc(N * sizeof *p))) /* recovery code */;
+&gt;&gt;&gt;&gt;    else /* successful malloc, carry on */
+
+&gt;&gt;&gt; You have given me a lot more information than what I'd expected. I
+&gt;&gt;&gt; learned a lot :)
+
+&gt;&gt; Please don't snip attributions, i.e., those lines beginning with
+&gt;&gt; &quot;so-and-so wrote:&quot;
+
+&gt;&gt; Removing them makes the discussion hard to follow for those without
+&gt;&gt; threaded newsreaders.
+
+&gt; KNode is a threaded news reader, so why the noise?
+">
+
+I have it in a mode which shows only unread articles, so that I needn't sort
+through hundreds of previously read ones. This also avoids the problem of
+articles in long threads from scrolling off the right side of KNode's pane
+for threads.
+
+In any case, to make sense of an article with attributions snipped, you need
+to find the previous article to know who wrote what. If there are
+quotations from multiple posters, it soon gets annoying.
+</POST>
+<POST>
+<POSTER> Richard Heathfield &lt;r...@see.sig.invalid&gt; </POSTER>
+<POSTDATE> 2007-10-04T10:39:00 </POSTDATE>
+santosh said:
+
+<QUOTE PREVIOUSPOST="
+&gt; Richard wrote:
+
+&gt;&gt; santosh &lt;santosh. ... @gmail.com&gt; writes:
+
+&lt;snip&gt;
+
+&gt;&gt;&gt; Removing [attributions] makes the discussion hard to follow for
+&gt;&gt;&gt; those without threaded newsreaders.
+
+&gt;&gt; KNode is a threaded news reader, so why the noise?
+
+&gt; I have it in a mode which shows only unread articles,
+">
+
+Furthermore, it is not &quot;noise&quot; to plead for good manners on behalf of other
+people. Just because you and I have threaded newsreaders, that doesn't
+mean that everyone else does.
+
+&lt;snip&gt;
+
+--
+Richard Heathfield &lt; http://www.cpax.org.uk &gt;
+Email: - http://www . +rjh@
+Google users: &lt; http://www.cpax.org.uk/prg/writings/googly.php &gt;
+&quot;Usenet is a strange place&quot; - dmr 29 July 1999
+</POST>
+<POST>
+<POSTER> gaze...@xmission.xmission.com (Kenny McCormack) </POSTER>
+<POSTDATE> 2007-10-04T10:56:00 </POSTDATE>
+In article &lt;be4ft4-9e7. ... @news.individual.net&gt;,
+
+<QUOTE PREVIOUSPOST="
+Richard  &lt;rgr ... @gmail.com&gt; wrote:
+&gt;santosh &lt;santosh. ... @gmail.com&gt; writes:
+
+&gt;&gt; ptn wrote:
+
+&gt;&gt; [CBFalconer wrote the text below]
+
+&gt;&gt;&gt;&gt; &gt; Any ideas are welcome.
+
+&gt;&gt;&gt;&gt; I suggest you first fix the above errors/oversights, and limit the
+&gt;&gt;&gt;&gt; line length to 72 chars.  The best way to handle malloc's is:
+
+&gt;&gt;&gt;&gt;    if (!(p = malloc(N * sizeof *p))) /* recovery code */;
+&gt;&gt;&gt;&gt;    else /* successful malloc, carry on */
+
+&gt;&gt;&gt; You have given me a lot more information than what I'd expected. I
+&gt;&gt;&gt; learned a lot :)
+
+&gt;&gt; Please don't snip attributions, i.e., those lines beginning with &quot;so-and-so
+&gt;&gt; wrote:&quot;
+
+&gt;&gt; Removing them makes the discussion hard to follow for those without threaded
+&gt;&gt; newsreaders.
+
+&gt;KNode is a threaded news reader, so why the noise?
+">
+
+It is (feigned) concern for &quot;the common man&quot;.
+
+As I've pointed out several times in the past, the ethos of this NG is
+very similar to that of organized (faith-based) religion.  One of the
+attributes of successful religions is that it has to be accessible by
+everyone - but comprehensible only by the elite.  That's a key part of
+it all.
+
+Note: In the above, I am assuming that you (rgrdev) have sussed out that
+he (santosh) *is* running a threaded newsreader - hence the wonder at
+his concern.  I haven't taken the time to analyze people's newsreaders,
+so I'm taking this on face value.
+</POST>
+<POST>
+<POSTER> Keith Thompson &lt;ks...@mib.org&gt; </POSTER>
+<POSTDATE> 2007-10-04T16:16:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+santosh &lt;santosh. ... @gmail.com&gt; writes:
+&gt; ptn wrote:
+
+&gt; [CBFalconer wrote the text below]
+
+&gt;&gt;&gt; &gt; Any ideas are welcome.
+
+&gt;&gt;&gt; I suggest you first fix the above errors/oversights, and limit the
+&gt;&gt;&gt; line length to 72 chars.  The best way to handle malloc's is:
+
+&gt;&gt;&gt;    if (!(p = malloc(N * sizeof *p))) /* recovery code */;
+&gt;&gt;&gt;    else /* successful malloc, carry on */
+
+&gt;&gt; You have given me a lot more information than what I'd expected. I
+&gt;&gt; learned a lot :)
+
+&gt; Please don't snip attributions, i.e., those lines beginning with &quot;so-and-so
+&gt; wrote:&quot;
+
+&gt; Removing them makes the discussion hard to follow for those without threaded
+&gt; newsreaders.
+">
+
+Removing attributions makes the discussion hard to follow even for
+those of us who do use threaded newsreaders.  I read one article at a
+time, and I don't usually go back to previous articles that I've
+already read.  I *can* (usually) go back to the parent article to see
+who wrote it, but it's inconvenient, especially when I'm
+simultaneously following dozens of threads as they develop over
+periods of weeks.
+
+Of course, the trolls have jumped on santosh's perfectly reasonable
+suggestion and made a much bigger deal out of this than it needs to
+be.
+
+ptn just made a minor error in posting a followup, that's all.  Given
+the exemplary attitude he's displayed above, I suspect he won't repeat
+the error.
+
+--
+Keith Thompson (The_Other_Keith) ks ... @mib.org  &lt; http://www.ghoti.net/~kst &gt;
+San Diego Supercomputer Center             &lt;*&gt;  &lt; http://users.sdsc.edu/~kst &gt;
+&quot;We must do something.  This is something.  Therefore, we must do this.&quot;
+-- Antony Jay and Jonathan Lynn, &quot;Yes Minister&quot;
+</POST>
+</TEXT>
+</BODY>
+</DOC>

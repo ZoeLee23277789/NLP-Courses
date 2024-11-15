@@ -1,0 +1,2866 @@
+<DOC>
+<DOCID> eng-NG-31-135601-9761985 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-12-12T08:47:00 </DATETIME>
+<BODY>
+<HEADLINE>
+working storage values
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> yoqi99 &lt;yoq...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-12T08:47:00 </POSTDATE>
+Have vendor started task that runs constantly while listening on port
+1205.  This started task has a loadlib with user written cobol
+programs.  This started task also has a control file (jcl ddname)
+with a record.  For performance reasons, I only want to read the
+record one time only.  How should I code the cobol program  so that
+the working storage values are retained between calls.
+
+I can't statically link the vendor program with my program.....
+</POST>
+<POST>
+<POSTER> &quot;Michael Mattias&quot; &lt;mmatt...@talsystems.com&gt; </POSTER>
+<POSTDATE> 2007-12-12T09:53:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;yoqi99&quot; &lt;yoq ... @gmail.com&gt; wrote in message
+">
+
+news:18bff75d-832d-4089-a301-1b5162d5eed4@a35g2000prf.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Have vendor started task that runs constantly while listening on port
+&gt; 1205.  This started task has a loadlib with user written cobol
+&gt; programs.  This started task also has a control file (jcl ddname)
+&gt; with a record.  For performance reasons, I only want to read the
+&gt; record one time only.  How should I code the cobol program  so that
+&gt; the working storage values are retained between calls.
+
+&gt; I can't statically link the vendor program with my program.....
+">
+
+Unless my COBOL has completely deserted me (it's been about six years)....
+
+Option A, straight answer:
+Don't CANCEL the called module from the calling program until done with it
+AND
+Don't use the INITIAL option in the PROGRAM-ID of the called module
+
+Option B, the pragmatic  answer
+Don't waste your time thinking about retaining values for one dinky record.
+Just read the damn thing when you need it.
+
+Option C, the creative answer.
+Code the calling program to pass a group-item containing all the info to be
+retained acrosss multiple calls; pass BY REFERENCE. On the first call, read
+your record and fill that group item with the necessary info; maintain as
+necessary whilst the called module executes.
+
+On subsequent calls, use the values in the passed group-item instead of
+re-reading the file.
+
+That is, let the calling program retain the called module's 'static' working
+storage instead of trying to do so in the called module.
+
+This option also has the advantage of not being dependent on the INITIAL
+clause or any compile-time options, and will also work 'as is' if you do
+someday go to static linking.
+
+MCM
+</POST>
+<POST>
+<POSTER> yoqi99 &lt;yoq...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-12T10:09:00 </POSTDATE>
+On Dec 12, 8:53 am, &quot;Michael Mattias&quot; &lt;mmatt ... @talsystems.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Option A, straight answer:
+&gt; Don't CANCEL the called module from the calling program until done with it
+&gt; AND
+&gt; Don't use the INITIAL option in the PROGRAM-ID of the called module
+">
+
+Calling the vendor program that calls the user-written program
+terminates, thereby losing the values in working storage.  This
+is not an option.
+
+<QUOTE PREVIOUSPOST="
+&gt; Option B, the pragmatic  answer
+&gt; Don't waste your time thinking about retaining values for one dinky record.
+&gt; Just read the damn thing when you need it.
+">
+
+I'm not wasting my time retaining values....Reading the record adds
+1/10 of a second to the execution time.  In a high-volume web
+environment, with limited port connections, this translates to longer
+response times.
+
+<QUOTE PREVIOUSPOST="
+&gt; Option C, the creative answer.
+&gt; Code the calling program to pass a group-item containing all the info to be
+&gt; retained acrosss multiple calls; pass BY REFERENCE. On the first call, read
+&gt; your record and fill that group item with the necessary info; maintain as
+&gt; necessary whilst the called module executes.
+
+&gt; On subsequent calls, use the values in the passed group-item instead of
+&gt; re-reading the file.
+
+&gt; That is, let the calling program retain the called module's 'static' working
+&gt; storage instead of trying to do so in the called module.
+
+&gt; This option also has the advantage of not being dependent on the INITIAL
+&gt; clause or any compile-time options, and will also work 'as is' if you do
+&gt; someday go to static linking.
+
+&gt; MCM
+">
+
+I thought about calling a separate program that reads the record and
+retaining the values in a client singleton program, but this would be
+problematic if the the started job ends and restarted with new values
+in the file.  From the web perspective, the singleton program would
+have to be reloaded everytime the started job ends....
+</POST>
+<POST>
+<POSTER> &quot;Michael Mattias&quot; &lt;mmatt...@talsystems.com&gt; </POSTER>
+<POSTDATE> 2007-12-12T10:47:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;yoqi99&quot; &lt;yoq ... @gmail.com&gt; wrote in message
+">
+
+news:145804c2-faeb-4437-aa27-40f37d1169e5@y5g2000hsf.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 12, 8:53 am, &quot;Michael Mattias&quot; &lt;mmatt ... @talsystems.com&gt; wrote:
+&gt;&gt; Option A, straight answer:
+&gt;&gt; Don't CANCEL the called module from the calling program until done with
+&gt;&gt; it
+&gt;&gt; AND
+&gt;&gt; Don't use the INITIAL option in the PROGRAM-ID of the called module
+
+&gt; Calling the vendor program that calls the user-written program
+&gt; terminates, thereby losing the values in working storage.  This
+&gt; is not an option.
+
+&gt;&gt; Option B, the pragmatic  answer
+&gt;&gt; Don't waste your time thinking about retaining values for one dinky
+&gt;&gt; record.
+&gt;&gt; Just read the damn thing when you need it.
+
+&gt; I'm not wasting my time retaining values....Reading the record adds
+&gt; 1/10 of a second to the execution time.  In a high-volume web
+&gt; environment, with limited port connections, this translates to longer
+&gt; response times.
+
+&gt;&gt; Option C, the creative answer.
+&gt;&gt; Code the calling program to pass a group-item containing all the info to
+&gt;&gt; be
+&gt;&gt; retained acrosss multiple calls; pass BY REFERENCE. On the first call,
+&gt;&gt; read
+&gt;&gt; your record and fill that group item with the necessary info; maintain as
+&gt;&gt; necessary whilst the called module executes.
+
+&gt;&gt; On subsequent calls, use the values in the passed group-item instead of
+&gt;&gt; re-reading the file.
+
+&gt;&gt; That is, let the calling program retain the called module's 'static'
+&gt;&gt; working
+&gt;&gt; storage instead of trying to do so in the called module.
+
+&gt;&gt; This option also has the advantage of not being dependent on the INITIAL
+&gt;&gt; clause or any compile-time options, and will also work 'as is' if you do
+&gt;&gt; someday go to static linking.
+
+&gt;&gt; MCM
+&gt; I thought about calling a separate program that reads the record and
+&gt; retaining the values in a client singleton program, but this would be
+&gt; problematic if the the started job ends and restarted with new values
+&gt; in the file.  From the web perspective, the singleton program would
+&gt; have to be reloaded everytime the started job ends....
+">
+
+Well, since you found fault with all three good-faith no-cost suggestions
+provided as best I could from the sketchy and incomplete &quot;conditions&quot;, good
+luck finding someone who will actually participate in Option D (The Final
+Option):
+
+OPTION D
+Engage a professional to solve this problem.
+
+MCM
+</POST>
+<POST>
+<POSTER> listmaz...@gmail.com </POSTER>
+<POSTDATE> 2007-12-12T11:27:00 </POSTDATE>
+On Dec 12, 9:47 am, &quot;Michael Mattias&quot; &lt;mmatt ... @talsystems.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;yoqi99&quot; &lt;yoq ... @gmail.com&gt; wrote in message
+
+&gt; news:145804c2-faeb-4437-aa27-40f37d1169e5@y5g2000hsf.googlegroups.com ...
+
+&gt; &gt; On Dec 12, 8:53 am, &quot;Michael Mattias&quot; &lt;mmatt ... @talsystems.com&gt; wrote:
+&gt; &gt;&gt; Option A, straight answer:
+&gt; &gt;&gt; Don't CANCEL the called module from the calling program until done with
+&gt; &gt;&gt; it
+&gt; &gt;&gt; AND
+&gt; &gt;&gt; Don't use the INITIAL option in the PROGRAM-ID of the called module
+
+&gt; &gt; Calling the vendor program that calls the user-written program
+&gt; &gt; terminates, thereby losing the values in working storage.  This
+&gt; &gt; is not an option.
+
+&gt; &gt;&gt; Option B, the pragmatic  answer
+&gt; &gt;&gt; Don't waste your time thinking about retaining values for one dinky
+&gt; &gt;&gt; record.
+&gt; &gt;&gt; Just read the damn thing when you need it.
+
+&gt; &gt; I'm not wasting my time retaining values....Reading the record adds
+&gt; &gt; 1/10 of a second to the execution time.  In a high-volume web
+&gt; &gt; environment, with limited port connections, this translates to longer
+&gt; &gt; response times.
+
+&gt; &gt;&gt; Option C, the creative answer.
+&gt; &gt;&gt; Code the calling program to pass a group-item containing all the info to
+&gt; &gt;&gt; be
+&gt; &gt;&gt; retained acrosss multiple calls; pass BY REFERENCE. On the first call,
+&gt; &gt;&gt; read
+&gt; &gt;&gt; your record and fill that group item with the necessary info; maintain as
+&gt; &gt;&gt; necessary whilst the called module executes.
+
+&gt; &gt;&gt; On subsequent calls, use the values in the passed group-item instead of
+&gt; &gt;&gt; re-reading the file.
+
+&gt; &gt;&gt; That is, let the calling program retain the called module's 'static'
+&gt; &gt;&gt; working
+&gt; &gt;&gt; storage instead of trying to do so in the called module.
+
+&gt; &gt;&gt; This option also has the advantage of not being dependent on the INITIAL
+&gt; &gt;&gt; clause or any compile-time options, and will also work 'as is' if you do
+&gt; &gt;&gt; someday go to static linking.
+
+&gt; &gt;&gt; MCM
+&gt; &gt; I thought about calling a separate program that reads the record and
+&gt; &gt; retaining the values in a client singleton program, but this would be
+&gt; &gt; problematic if the the started job ends and restarted with new values
+&gt; &gt; in the file.  From the web perspective, the singleton program would
+&gt; &gt; have to be reloaded everytime the started job ends....
+
+&gt; Well, since you found fault with all three good-faith no-cost suggestions
+&gt; provided as best I could from the sketchy and incomplete &quot;conditions&quot;, good
+&gt; luck finding someone who will actually participate in Option D (The Final
+&gt; Option):
+
+&gt; OPTION D
+&gt; Engage a professional to solve this problem.
+
+&gt; MCM
+">
+
+ok, thanks dad.  next time i will do everything you suggest.
+plonk....
+</POST>
+<POST>
+<POSTER> &quot;William M. Klein&quot; &lt;wmkl...@nospam.netcom.com&gt; </POSTER>
+<POSTDATE> 2007-12-12T11:57:00 </POSTDATE>
+I don't really understand your application structure.
+
+The rules of (Standard) COBOL *require* that the Working-Storage values be
+retained between calls to the same subprogram *UNLESS* special things are done.
+
+If your user program is a subprogram (called by the Vendor &quot;main&quot; program) and
+the subprogram is &quot;losing&quot; WS values, then the Vendor main program MUST be doing
+something &quot;special&quot;.  It might be doing a CANCEL (if it is written in COBOL).
+However, if the vendor main program is NOT a COBOL program (and I am correct
+that you are on MVS - because of some of the terms you are using), then it is
+possible that the main program is NOT &quot;calling&quot; your user program but is doing
+an &quot;ATTACH&quot; or something else that &quot;refreshes&quot; your subprogram.  This is
+something that you need to find out from the vendor.
+
+There is one solution that MIGHT work for you.  If you place the values that you
+want to keep into an EXTERNAL 01-level in your user-written program, then these
+values should be kept - even if the program is CANCELLED by a high-level
+program.  However, if the higher-level program isn't COBOL, then this may or may
+not work.
+
+--
+Bill Klein
+wmklein &lt;at&gt; ix.netcom.com
+
+<QUOTE PREVIOUSPOST="
+&quot;yoqi99&quot; &lt;yoq ... @gmail.com&gt; wrote in message
+">
+
+news:145804c2-faeb-4437-aa27-40f37d1169e5@y5g2000hsf.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 12, 8:53 am, &quot;Michael Mattias&quot; &lt;mmatt ... @talsystems.com&gt; wrote:
+&gt;&gt; Option A, straight answer:
+&gt;&gt; Don't CANCEL the called module from the calling program until done with it
+&gt;&gt; AND
+&gt;&gt; Don't use the INITIAL option in the PROGRAM-ID of the called module
+
+&gt; Calling the vendor program that calls the user-written program
+&gt; terminates, thereby losing the values in working storage.  This
+&gt; is not an option.
+
+&gt;&gt; Option B, the pragmatic  answer
+&gt;&gt; Don't waste your time thinking about retaining values for one dinky record.
+&gt;&gt; Just read the damn thing when you need it.
+
+&gt; I'm not wasting my time retaining values....Reading the record adds
+&gt; 1/10 of a second to the execution time.  In a high-volume web
+&gt; environment, with limited port connections, this translates to longer
+&gt; response times.
+
+&gt;&gt; Option C, the creative answer.
+&gt;&gt; Code the calling program to pass a group-item containing all the info to be
+&gt;&gt; retained acrosss multiple calls; pass BY REFERENCE. On the first call, read
+&gt;&gt; your record and fill that group item with the necessary info; maintain as
+&gt;&gt; necessary whilst the called module executes.
+
+&gt;&gt; On subsequent calls, use the values in the passed group-item instead of
+&gt;&gt; re-reading the file.
+
+&gt;&gt; That is, let the calling program retain the called module's 'static' working
+&gt;&gt; storage instead of trying to do so in the called module.
+
+&gt;&gt; This option also has the advantage of not being dependent on the INITIAL
+&gt;&gt; clause or any compile-time options, and will also work 'as is' if you do
+&gt;&gt; someday go to static linking.
+
+&gt;&gt; MCM
+&gt; I thought about calling a separate program that reads the record and
+&gt; retaining the values in a client singleton program, but this would be
+&gt; problematic if the the started job ends and restarted with new values
+&gt; in the file.  From the web perspective, the singleton program would
+&gt; have to be reloaded everytime the started job ends....
+">
+</POST>
+<POST>
+<POSTER> &quot;Rick Smith&quot; &lt;ricksm...@mfi.net&gt; </POSTER>
+<POSTDATE> 2007-12-12T12:48:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&lt;listmaz ... @gmail.com&gt; wrote in message
+">
+
+news:258ae2a6-31d7-4909-92b0-0d52479a6e60@e23g2000prf.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 12, 9:47 am, &quot;Michael Mattias&quot; &lt;mmatt ... @talsystems.com&gt; wrote:
+&gt; &gt; &quot;yoqi99&quot; &lt;yoq ... @gmail.com&gt; wrote in message
+
+&gt; &gt; news:145804c2-faeb-4437-aa27-40f37d1169e5@y5g2000hsf.googlegroups.com ...
+
+&gt; &gt; &gt; On Dec 12, 8:53 am, &quot;Michael Mattias&quot; &lt;mmatt ... @talsystems.com&gt; wrote:
+&gt; &gt; &gt;&gt; Option A, straight answer:
+&gt; &gt; &gt;&gt; Don't CANCEL the called module from the calling program until done
+with
+&gt; &gt; &gt;&gt; it
+&gt; &gt; &gt;&gt; AND
+&gt; &gt; &gt;&gt; Don't use the INITIAL option in the PROGRAM-ID of the called module
+
+&gt; &gt; &gt; Calling the vendor program that calls the user-written program
+&gt; &gt; &gt; terminates, thereby losing the values in working storage.  This
+&gt; &gt; &gt; is not an option.
+
+&gt; &gt; &gt;&gt; Option B, the pragmatic  answer
+&gt; &gt; &gt;&gt; Don't waste your time thinking about retaining values for one dinky
+&gt; &gt; &gt;&gt; record.
+&gt; &gt; &gt;&gt; Just read the damn thing when you need it.
+
+&gt; &gt; &gt; I'm not wasting my time retaining values....Reading the record adds
+&gt; &gt; &gt; 1/10 of a second to the execution time.  In a high-volume web
+&gt; &gt; &gt; environment, with limited port connections, this translates to longer
+&gt; &gt; &gt; response times.
+
+&gt; &gt; &gt;&gt; Option C, the creative answer.
+&gt; &gt; &gt;&gt; Code the calling program to pass a group-item containing all the info
+to
+&gt; &gt; &gt;&gt; be
+&gt; &gt; &gt;&gt; retained acrosss multiple calls; pass BY REFERENCE. On the first
+call,
+&gt; &gt; &gt;&gt; read
+&gt; &gt; &gt;&gt; your record and fill that group item with the necessary info;
+maintain as
+&gt; &gt; &gt;&gt; necessary whilst the called module executes.
+
+&gt; &gt; &gt;&gt; On subsequent calls, use the values in the passed group-item instead
+of
+&gt; &gt; &gt;&gt; re-reading the file.
+
+&gt; &gt; &gt;&gt; That is, let the calling program retain the called module's 'static'
+&gt; &gt; &gt;&gt; working
+&gt; &gt; &gt;&gt; storage instead of trying to do so in the called module.
+
+&gt; &gt; &gt;&gt; This option also has the advantage of not being dependent on the
+INITIAL
+&gt; &gt; &gt;&gt; clause or any compile-time options, and will also work 'as is' if you
+do
+&gt; &gt; &gt;&gt; someday go to static linking.
+
+&gt; &gt; &gt;&gt; MCM
+&gt; &gt; &gt; I thought about calling a separate program that reads the record and
+&gt; &gt; &gt; retaining the values in a client singleton program, but this would be
+&gt; &gt; &gt; problematic if the the started job ends and restarted with new values
+&gt; &gt; &gt; in the file.  From the web perspective, the singleton program would
+&gt; &gt; &gt; have to be reloaded everytime the started job ends....
+
+&gt; &gt; Well, since you found fault with all three good-faith no-cost
+suggestions
+&gt; &gt; provided as best I could from the sketchy and incomplete &quot;conditions&quot;,
+good
+&gt; &gt; luck finding someone who will actually participate in Option D (The
+Final
+&gt; &gt; Option):
+
+&gt; &gt; OPTION D
+&gt; &gt; Engage a professional to solve this problem.
+
+&gt; &gt; MCM
+
+&gt; ok, thanks dad.  next time i will do everything you suggest.
+&gt; plonk....
+">
+
+It seems you might also benefit from a second professional
+to help you deal with your personal issues!
+
+What you provided was very sketchy. No mention of the
+compiler, OS, or platform; though IBM is suggested by
+mention of 'jcl ddname'. Also, it seems retention of
+working-storage values is not required, only the retention
+of data from one record.
+
+Off-hand, I might suggest that, since EXTERNAL data
+belongs to the run unit, a COBOL program might read
+the file placing the data in an EXTERNAL data-item,
+then calling the vendor program. When the vendor
+program calls the user progam, the user program gets
+the data from the EXTERNAL data-item. But I am
+uncertain what you intend by &quot;vendor started task&quot; and,
+if you do not have access to the JCL, this method
+probably can not be implemented.
+</POST>
+<POST>
+<POSTER> Richard &lt;rip...@azonic.co.nz&gt; </POSTER>
+<POSTDATE> 2007-12-12T14:42:00 </POSTDATE>
+On Dec 13, 2:47 am, yoqi99 &lt;yoq ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Have vendor started task that runs constantly while listening on port
+&gt; 1205.  This started task has a loadlib with user written cobol
+&gt; programs.  This started task also has a control file (jcl ddname)
+&gt; with a record.  For performance reasons, I only want to read the
+&gt; record one time only.  How should I code the cobol program  so that
+&gt; the working storage values are retained between calls.
+
+&gt; I can't statically link the vendor program with my program.....
+">
+
+If the vendor program CALLs your user written program and does not
+CANCEL it then the Working-Storage will be retained intact between
+CALLs.  You only need to set a flag that indicates that the record has
+already been read:
+
+Working-Storage Section.
+01  Already-Read   PIC X VALUE &quot;N&quot;.
+01  Record-Data ...
+
+Procedure Division.
+
+If ( Already-Read NOT = &quot;Y&quot; )
+read ..
+MOVE &quot;Y&quot; TO Already-Read
+END-IF
+
+do whatever with data ..
+
+If the vendor program CANCELs or restarts then you will reread the
+record.
+</POST>
+<POST>
+<POSTER> &quot;William M. Klein&quot; &lt;wmkl...@nospam.netcom.com&gt; </POSTER>
+<POSTDATE> 2007-12-12T15:32:00 </POSTDATE>
+I already sent one message saying that we need to know more about the
+&quot;structure&quot; of your application and the vendor program that calls your
+user-written application.
+
+One thing that I thought of was that *if* (as I assume) you are on an IBM
+mainframe, then it is possible that not only is your vendor &quot;main&quot; program NOT
+written in COBOL, but it is also possible that it is NOT an &quot;LE-conforming&quot;
+Assembler driver.  This would certainly (help) explain why your application
+subprograms are ACTING as if they were &quot;main&quot; programs.  In this case, EXTERNAL
+wouldn't help (nor would anything else that I can think of - except writing the
+data out into &quot;system&quot; storage of some sort or another.).  You really do need to
+find out from the vendor whether the program is or is not LE-conforming (not
+just LE &quot;tolerant).
+
+If the vendor program is NOT LE-conforming, then you could still &quot;solve&quot; your
+problem by creating an LE-conforming (COBOL, Assembler, or whatever) and have
+that driver call the vendor program (once - to get it started).  In that case,
+your COBOL WS items would be retained. However, depending upon how the vendor
+program is designed, this MIGHT cause either performance or storage issues.
+
+--
+Bill Klein
+wmklein &lt;at&gt; ix.netcom.com
+
+<QUOTE PREVIOUSPOST="
+&quot;yoqi99&quot; &lt;yoq ... @gmail.com&gt; wrote in message
+">
+
+news:18bff75d-832d-4089-a301-1b5162d5eed4@a35g2000prf.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Have vendor started task that runs constantly while listening on port
+&gt; 1205.  This started task has a loadlib with user written cobol
+&gt; programs.  This started task also has a control file (jcl ddname)
+&gt; with a record.  For performance reasons, I only want to read the
+&gt; record one time only.  How should I code the cobol program  so that
+&gt; the working storage values are retained between calls.
+
+&gt; I can't statically link the vendor program with my program.....
+">
+</POST>
+<POST>
+<POSTER> docdw...@panix.com () </POSTER>
+<POSTDATE> 2007-12-12T18:32:00 </POSTDATE>
+In article &lt;966198db-204f-4634-9c2b-8d21439f6 ... @o42g2000hsc.googlegroups.com&gt;,
+
+<QUOTE PREVIOUSPOST="
+Richard  &lt;rip ... @azonic.co.nz&gt; wrote:
+&gt;On Dec 13, 2:47 am, yoqi99 &lt;yoq ... @gmail.com&gt; wrote:
+&gt;&gt; Have vendor started task that runs constantly while listening on port
+&gt;&gt; 1205.  This started task has a loadlib with user written cobol
+&gt;&gt; programs.  This started task also has a control file (jcl ddname)
+&gt;&gt; with a record.  For performance reasons, I only want to read the
+&gt;&gt; record one time only.  How should I code the cobol program  so that
+&gt;&gt; the working storage values are retained between calls.
+
+&gt;&gt; I can't statically link the vendor program with my program.....
+
+&gt;If the vendor program CALLs your user written program and does not
+&gt;CANCEL it then the Working-Storage will be retained intact between
+&gt;CALLs.  You only need to set a flag that indicates that the record has
+&gt;already been read:
+
+&gt;     Working-Storage Section.
+&gt;     01  Already-Read   PIC X VALUE &quot;N&quot;.
+&gt;     01  Record-Data ...
+
+&gt;     Procedure Division.
+
+&gt;         If ( Already-Read NOT = &quot;Y&quot; )
+&gt;              read ..
+&gt;              MOVE &quot;Y&quot; TO Already-Read
+&gt;         END-IF
+
+&gt;         do whatever with data ..
+">
+
+Hmmmmm... leaving aside the matter of style (any good, true, decent and
+sane programmer worthy of the pittance of a salary paid for those hard-won
+skills would, of course, make Already-Read an 88) I read this and thought
+that lo, there is nothing new under the sun.
+
+IF EIBCALEN = 0
+PERFORM 0000-HOUSEKEEPING  THRU 0000-HSK-EX
+ELSE
+PERFORM 5000-PROCESS-INPUT THRU 5000-PI-EX.
+
+DD
+</POST>
+<POST>
+<POSTER> Richard &lt;rip...@azonic.co.nz&gt; </POSTER>
+<POSTDATE> 2007-12-13T18:54:00 </POSTDATE>
+On Dec 13, 12:32 pm, docdw ... @panix.com () wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In article &lt;966198db-204f-4634-9c2b-8d21439f6 ... @o42g2000hsc.googlegroups.com&gt;,
+
+&gt; Richard  &lt;rip ... @azonic.co.nz&gt; wrote:
+&gt; &gt;On Dec 13, 2:47 am, yoqi99 &lt;yoq ... @gmail.com&gt; wrote:
+&gt; &gt;&gt; Have vendor started task that runs constantly while listening on port
+&gt; &gt;&gt; 1205.  This started task has a loadlib with user written cobol
+&gt; &gt;&gt; programs.  This started task also has a control file (jcl ddname)
+&gt; &gt;&gt; with a record.  For performance reasons, I only want to read the
+&gt; &gt;&gt; record one time only.  How should I code the cobol program  so that
+&gt; &gt;&gt; the working storage values are retained between calls.
+
+&gt; &gt;&gt; I can't statically link the vendor program with my program.....
+
+&gt; &gt;If the vendor program CALLs your user written program and does not
+&gt; &gt;CANCEL it then the Working-Storage will be retained intact between
+&gt; &gt;CALLs.  You only need to set a flag that indicates that the record has
+&gt; &gt;already been read:
+
+&gt; &gt;     Working-Storage Section.
+&gt; &gt;     01  Already-Read   PIC X VALUE &quot;N&quot;.
+&gt; &gt;     01  Record-Data ...
+
+&gt; &gt;     Procedure Division.
+
+&gt; &gt;         If ( Already-Read NOT = &quot;Y&quot; )
+&gt; &gt;              read ..
+&gt; &gt;              MOVE &quot;Y&quot; TO Already-Read
+&gt; &gt;         END-IF
+
+&gt; &gt;         do whatever with data ..
+
+&gt; Hmmmmm... leaving aside the matter of style (any good, true, decent and
+&gt; sane programmer worthy of the pittance of a salary paid for those hard-won
+&gt; skills would, of course, make Already-Read an 88)
+">
+
+88s are soooo '60s.
+
+I dislike 88 levels and do not use them. They would interfere with
+searching for uses of particular variables.
+
+For example I can find where a variable is used with:
+
+grep variable *.cbl *.pd
+
+or by using a text editor search. With 88s I need to also know what
+those names are and search for them too. I'm too lazy to be bothered
+with that.
+
+In any case I tend to use modern constructs, such as 'EVALUATE
+variable' and the archaic 88 style does not fit into that.
+
+<QUOTE PREVIOUSPOST="
+&gt; I read this and thought
+&gt; that lo, there is nothing new under the sun.
+
+&gt; IF EIBCALEN = 0
+&gt;     PERFORM 0000-HOUSEKEEPING  THRU 0000-HSK-EX
+&gt; ELSE
+&gt;     PERFORM 5000-PROCESS-INPUT THRU 5000-PI-EX.
+
+&gt; DD
+">
+
+That, too, is soooo 60s.
+
+Seeing an example like that, no wonder Cobol is dying.
+</POST>
+<POST>
+<POSTER> docdw...@panix.com () </POSTER>
+<POSTDATE> 2007-12-13T19:11:00 </POSTDATE>
+In article &lt;6969359c-00e5-4485-9e94-2e0e0acb1 ... @s12g2000prg.googlegroups.com&gt;,
+
+<QUOTE PREVIOUSPOST="
+Richard  &lt;rip ... @azonic.co.nz&gt; wrote:
+&gt;On Dec 13, 12:32 pm, docdw ... @panix.com () wrote:
+&gt;&gt; In article
+&gt;&lt;966198db-204f-4634-9c2b-8d21439f6 ... @o42g2000hsc.googlegroups.com&gt;,
+
+&gt;&gt; Richard  &lt;rip ... @azonic.co.nz&gt; wrote:
+&gt;&gt; &gt;On Dec 13, 2:47 am, yoqi99 &lt;yoq ... @gmail.com&gt; wrote:
+&gt;&gt; &gt;&gt; Have vendor started task that runs constantly while listening on port
+&gt;&gt; &gt;&gt; 1205.  This started task has a loadlib with user written cobol
+&gt;&gt; &gt;&gt; programs.  This started task also has a control file (jcl ddname)
+&gt;&gt; &gt;&gt; with a record.  For performance reasons, I only want to read the
+&gt;&gt; &gt;&gt; record one time only.  How should I code the cobol program  so that
+&gt;&gt; &gt;&gt; the working storage values are retained between calls.
+
+&gt;&gt; &gt;&gt; I can't statically link the vendor program with my program.....
+
+&gt;&gt; &gt;If the vendor program CALLs your user written program and does not
+&gt;&gt; &gt;CANCEL it then the Working-Storage will be retained intact between
+&gt;&gt; &gt;CALLs.  You only need to set a flag that indicates that the record has
+&gt;&gt; &gt;already been read:
+
+&gt;&gt; &gt;     Working-Storage Section.
+&gt;&gt; &gt;     01  Already-Read   PIC X VALUE &quot;N&quot;.
+&gt;&gt; &gt;     01  Record-Data ...
+
+&gt;&gt; &gt;     Procedure Division.
+
+&gt;&gt; &gt;         If ( Already-Read NOT = &quot;Y&quot; )
+&gt;&gt; &gt;              read ..
+&gt;&gt; &gt;              MOVE &quot;Y&quot; TO Already-Read
+&gt;&gt; &gt;         END-IF
+
+&gt;&gt; &gt;         do whatever with data ..
+
+&gt;&gt; Hmmmmm... leaving aside the matter of style (any good, true, decent and
+&gt;&gt; sane programmer worthy of the pittance of a salary paid for those hard-won
+&gt;&gt; skills would, of course, make Already-Read an 88)
+
+&gt;88s are soooo '60s.
+">
+
+... and '70s... and '80s... and onward, Good Style is Tymeless.
+
+<QUOTE PREVIOUSPOST="
+&gt;I dislike 88 levels and do not use them. They would interfere with
+&gt;searching for uses of particular variables.
+">
+
+I've never found that to be the case... but perhaps our experiences are
+different.
+
+<QUOTE PREVIOUSPOST="
+&gt;For example I can find where a variable is used with:
+
+&gt;  grep variable *.cbl *.pd
+
+&gt;or by using a text editor search.
+">
+
+Again, our experiences may be different... I'm not familiar with
+any platform where a text editor search was not available.
+
+<QUOTE PREVIOUSPOST="
+&gt;With 88s I need to also know what
+&gt;those names are and search for them too. I'm too lazy to be bothered
+&gt;with that.
+">
+
+Too lazy to know what you're working on... hmmmmm... something comes to
+mind about 'worthy of the pittance of a salary.
+
+<QUOTE PREVIOUSPOST="
+&gt;In any case I tend to use modern constructs, such as 'EVALUATE
+&gt;variable' and the archaic 88 style does not fit into that.
+">
+
+Wow... maybe someone might put together something like
+
+EVALUATE TRUE
+WHEN condition-name
+imperative
+
+... and we could have archaic and eat it, too.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; I read this and thought
+&gt;&gt; that lo, there is nothing new under the sun.
+
+&gt;&gt; IF EIBCALEN = 0
+&gt;&gt;     PERFORM 0000-HOUSEKEEPING  THRU 0000-HSK-EX
+&gt;&gt; ELSE
+&gt;&gt;     PERFORM 5000-PROCESS-INPUT THRU 5000-PI-EX.
+
+&gt;That, too, is soooo 60s.
+">
+
+See above about Tymelessness.
+
+<QUOTE PREVIOUSPOST="
+&gt;Seeing an example like that, no wonder Cobol is dying.
+">
+
+Some see examples like that every working day on systems that are still
+hugely profitable to the companies that run them... a curious sort of
+death, aye.
+
+DD
+</POST>
+<POST>
+<POSTER> Richard &lt;rip...@azonic.co.nz&gt; </POSTER>
+<POSTDATE> 2007-12-14T00:54:00 </POSTDATE>
+On Dec 14, 1:11 pm, docdw ... @panix.com () wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In article &lt;6969359c-00e5-4485-9e94-2e0e0acb1 ... @s12g2000prg.googlegroups.com&gt;,
+
+&gt; Richard  &lt;rip ... @azonic.co.nz&gt; wrote:
+&gt; &gt;On Dec 13, 12:32 pm, docdw ... @panix.com () wrote:
+&gt; &gt;&gt; In article
+&gt; &gt;&lt;966198db-204f-4634-9c2b-8d21439f6 ... @o42g2000hsc.googlegroups.com&gt;,
+
+&gt; &gt;&gt; Richard  &lt;rip ... @azonic.co.nz&gt; wrote:
+&gt; &gt;&gt; &gt;On Dec 13, 2:47 am, yoqi99 &lt;yoq ... @gmail.com&gt; wrote:
+&gt; &gt;&gt; &gt;&gt; Have vendor started task that runs constantly while listening on port
+&gt; &gt;&gt; &gt;&gt; 1205.  This started task has a loadlib with user written cobol
+&gt; &gt;&gt; &gt;&gt; programs.  This started task also has a control file (jcl ddname)
+&gt; &gt;&gt; &gt;&gt; with a record.  For performance reasons, I only want to read the
+&gt; &gt;&gt; &gt;&gt; record one time only.  How should I code the cobol program  so that
+&gt; &gt;&gt; &gt;&gt; the working storage values are retained between calls.
+
+&gt; &gt;&gt; &gt;&gt; I can't statically link the vendor program with my program.....
+
+&gt; &gt;&gt; &gt;If the vendor program CALLs your user written program and does not
+&gt; &gt;&gt; &gt;CANCEL it then the Working-Storage will be retained intact between
+&gt; &gt;&gt; &gt;CALLs.  You only need to set a flag that indicates that the record has
+&gt; &gt;&gt; &gt;already been read:
+
+&gt; &gt;&gt; &gt;     Working-Storage Section.
+&gt; &gt;&gt; &gt;     01  Already-Read   PIC X VALUE &quot;N&quot;.
+&gt; &gt;&gt; &gt;     01  Record-Data ...
+
+&gt; &gt;&gt; &gt;     Procedure Division.
+
+&gt; &gt;&gt; &gt;         If ( Already-Read NOT = &quot;Y&quot; )
+&gt; &gt;&gt; &gt;              read ..
+&gt; &gt;&gt; &gt;              MOVE &quot;Y&quot; TO Already-Read
+&gt; &gt;&gt; &gt;         END-IF
+
+&gt; &gt;&gt; &gt;         do whatever with data ..
+
+&gt; &gt;&gt; Hmmmmm... leaving aside the matter of style (any good, true, decent and
+&gt; &gt;&gt; sane programmer worthy of the pittance of a salary paid for those hard-won
+&gt; &gt;&gt; skills would, of course, make Already-Read an 88)
+
+&gt; &gt;88s are soooo '60s.
+
+&gt; ... and '70s... and '80s... and onward, Good Style is Tymeless.
+">
+
+I suppose that if you are stuck in the past then you wouldn't notice
+that the rest of the world has moved on.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;I dislike 88 levels and do not use them. They would interfere with
+&gt; &gt;searching for uses of particular variables.
+
+&gt; I've never found that to be the case... but perhaps our experiences are
+&gt; different.
+
+&gt; &gt;For example I can find where a variable is used with:
+
+&gt; &gt;  grep variable *.cbl *.pd
+
+&gt; &gt;or by using a text editor search.
+
+&gt; Again, our experiences may be different... I'm not familiar with
+&gt; any platform where a text editor search was not available.
+">
+
+Of course search is available in every text editor. Grep however will
+search all files specified (for example where the search is for a file
+field usage) without having to bother with using an editor to open
+each file.  Of course the result of a grep can be piped into the
+editor so that the files can be accessed directly by tapping on the
+provided file names.
+
+But regardless of how the search is done the use of 88s may mean that
+multiple greps/searches are required.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;With 88s I need to also know what
+&gt; &gt;those names are and search for them too. I'm too lazy to be bothered
+&gt; &gt;with that.
+
+&gt; Too lazy to know what you're working on... hmmmmm... something comes to
+&gt; mind about 'worthy of the pittance of a salary.
+">
+
+Being lazy means that I get the job done with minimum effort.
+Certainly this means that the project is completed with fewer billing
+hours.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;In any case I tend to use modern constructs, such as 'EVALUATE
+&gt; &gt;variable' and the archaic 88 style does not fit into that.
+
+&gt; Wow... maybe someone might put together something like
+
+&gt; EVALUATE TRUE
+&gt;     WHEN condition-name
+&gt;         imperative
+
+&gt; ... and we could have archaic and eat it, too.
+">
+
+Yes you could, but I dislike 'EVALUATE TRUE'.
+
+The use of 'condition-name' not only gets in the way of finding every
+place where the underlying variable is used it also dis-locates the
+specific values and the resulting actions.
+
+I am sure that you have devised techniques for overcoming this
+objection, but I have avoided needing that by dealing with it in other
+ways.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;&gt; I read this and thought
+&gt; &gt;&gt; that lo, there is nothing new under the sun.
+
+&gt; &gt;&gt; IF EIBCALEN = 0
+&gt; &gt;&gt;     PERFORM 0000-HOUSEKEEPING  THRU 0000-HSK-EX
+&gt; &gt;&gt; ELSE
+&gt; &gt;&gt;     PERFORM 5000-PROCESS-INPUT THRU 5000-PI-EX.
+
+&gt; &gt;That, too, is soooo 60s.
+
+&gt; See above about Tymelessness.
+">
+
+See above for not noticing what happened elsewhere.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;Seeing an example like that, no wonder Cobol is dying.
+
+&gt; Some see examples like that every working day on systems that are still
+&gt; hugely profitable to the companies that run them... a curious sort of
+&gt; death, aye.
+">
+
+Maybe, but the number of companies keeping such examples, and the
+number that see these, are declining. You may be in an enclave of
+archaicisms, but others have better ways.
+</POST>
+<POST>
+<POSTER> docdw...@panix.com () </POSTER>
+<POSTDATE> 2007-12-14T05:18:00 </POSTDATE>
+In article &lt;794c0dfd-a161-4f3a-b26f-a30aeb06b ... @e6g2000prf.googlegroups.com&gt;,
+
+<QUOTE PREVIOUSPOST="
+Richard  &lt;rip ... @azonic.co.nz&gt; wrote:
+&gt;On Dec 14, 1:11 pm, docdw ... @panix.com () wrote:
+">
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; ... and '70s... and '80s... and onward, Good Style is Tymeless.
+
+&gt;I suppose that if you are stuck in the past then you wouldn't notice
+&gt;that the rest of the world has moved on.
+">
+
+There are other elements of Good Style which might have been added over
+the years, certainly; one with a sufficiently large capacity might find
+room for those, as well.
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; &gt;For example I can find where a variable is used with:
+
+&gt;&gt; &gt;  grep variable *.cbl *.pd
+
+&gt;&gt; &gt;or by using a text editor search.
+
+&gt;&gt; Again, our experiences may be different... I'm not familiar with
+&gt;&gt; any platform where a text editor search was not available.
+
+&gt;Of course search is available in every text editor.
+">
+
+There's a clever lad... things might be worthy of hope, after all!
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Too lazy to know what you're working on... hmmmmm... something comes to
+&gt;&gt; mind about 'worthy of the pittance of a salary.
+
+&gt;Being lazy means that I get the job done with minimum effort.
+&gt;Certainly this means that the project is completed with fewer billing
+&gt;hours.
+">
+
+To 'get the job done' can be accomplished without the least invocation or
+use of Good Style, last I looked.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; &gt;In any case I tend to use modern constructs, such as 'EVALUATE
+&gt;&gt; &gt;variable' and the archaic 88 style does not fit into that.
+
+&gt;&gt; Wow... maybe someone might put together something like
+
+&gt;&gt; EVALUATE TRUE
+&gt;&gt;     WHEN condition-name
+&gt;&gt;         imperative
+
+&gt;&gt; ... and we could have archaic and eat it, too.
+
+&gt;Yes you could, but I dislike 'EVALUATE TRUE'.
+">
+
+Such a sensitive soul... how you manage to get by is truly a Testament to
+Human Strength.
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Some see examples like that every working day on systems that are still
+&gt;&gt; hugely profitable to the companies that run them... a curious sort of
+&gt;&gt; death, aye.
+
+&gt;Maybe, but the number of companies keeping such examples, and the
+&gt;number that see these, are declining. You may be in an enclave of
+&gt;archaicisms, but others have better ways.
+">
+
+There are different ways in many places, Mr Plinston, and I've seen a
+few... it was mentioned a few times that our experiences might, possibly,
+be different.
+
+DD
+</POST>
+<POST>
+<POSTER> &quot;Roger While&quot; &lt;si...@sim-basis.de&gt; </POSTER>
+<POSTDATE> 2007-12-14T10:41:00 </POSTDATE>
+In W/S (Assuming no DECIMAL-POINT IS COMMA) -
+&lt;level wahtever&gt;  MYFLD  PIC ZZZ,Z   VALUE ALL '9'.
+
+Equivalent in PROCEDURE -
+MOVE ALL '9' TO MYFLD.
+
+AFAIK, num-edits are class alphanumeric and as such current
+compilers (tested MF/ACU) produce a value of
+99999 in MYFLD. (Which, if I am reading the past/current standards
+is correct). This seems to me to me to
+be non-intuitive. In fact, OC produces 999,9.
+Thoughts?
+
+Roger
+</POST>
+<POST>
+<POSTER> &quot;William M. Klein&quot; &lt;wmkl...@nospam.netcom.com&gt; </POSTER>
+<POSTDATE> 2007-12-14T13:48:00 </POSTDATE>
+&lt;Joke&gt;
+
+Using grep (or similar) is *SO* '60's.  All current COBOL sensitive editors have
+ways of searching for &quot;referenced data items&quot; that include 88-levels and other
+&quot;implicit&quot; modifications to COBOL data items.
+
+--
+Bill Klein
+wmklein &lt;at&gt; ix.netcom.com
+
+<QUOTE PREVIOUSPOST="
+&quot;Richard&quot; &lt;rip ... @azonic.co.nz&gt; wrote in message
+">
+
+news:794c0dfd-a161-4f3a-b26f-a30aeb06bc9c@e6g2000prf.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 14, 1:11 pm, docdw ... @panix.com () wrote:
+&gt;&gt; In article
+&gt;&gt; &lt;6969359c-00e5-4485-9e94-2e0e0acb1 ... @s12g2000prg.googlegroups.com&gt;,
+
+&gt;&gt; Richard  &lt;rip ... @azonic.co.nz&gt; wrote:
+&gt;&gt; &gt;On Dec 13, 12:32 pm, docdw ... @panix.com () wrote:
+&gt;&gt; &gt;&gt; In article
+&gt;&gt; &gt;&lt;966198db-204f-4634-9c2b-8d21439f6 ... @o42g2000hsc.googlegroups.com&gt;,
+
+&gt;&gt; &gt;&gt; Richard  &lt;rip ... @azonic.co.nz&gt; wrote:
+&gt;&gt; &gt;&gt; &gt;On Dec 13, 2:47 am, yoqi99 &lt;yoq ... @gmail.com&gt; wrote:
+&gt;&gt; &gt;&gt; &gt;&gt; Have vendor started task that runs constantly while listening on port
+&gt;&gt; &gt;&gt; &gt;&gt; 1205.  This started task has a loadlib with user written cobol
+&gt;&gt; &gt;&gt; &gt;&gt; programs.  This started task also has a control file (jcl ddname)
+&gt;&gt; &gt;&gt; &gt;&gt; with a record.  For performance reasons, I only want to read the
+&gt;&gt; &gt;&gt; &gt;&gt; record one time only.  How should I code the cobol program  so that
+&gt;&gt; &gt;&gt; &gt;&gt; the working storage values are retained between calls.
+
+&gt;&gt; &gt;&gt; &gt;&gt; I can't statically link the vendor program with my program.....
+
+&gt;&gt; &gt;&gt; &gt;If the vendor program CALLs your user written program and does not
+&gt;&gt; &gt;&gt; &gt;CANCEL it then the Working-Storage will be retained intact between
+&gt;&gt; &gt;&gt; &gt;CALLs.  You only need to set a flag that indicates that the record has
+&gt;&gt; &gt;&gt; &gt;already been read:
+
+&gt;&gt; &gt;&gt; &gt;     Working-Storage Section.
+&gt;&gt; &gt;&gt; &gt;     01  Already-Read   PIC X VALUE &quot;N&quot;.
+&gt;&gt; &gt;&gt; &gt;     01  Record-Data ...
+
+&gt;&gt; &gt;&gt; &gt;     Procedure Division.
+
+&gt;&gt; &gt;&gt; &gt;         If ( Already-Read NOT = &quot;Y&quot; )
+&gt;&gt; &gt;&gt; &gt;              read ..
+&gt;&gt; &gt;&gt; &gt;              MOVE &quot;Y&quot; TO Already-Read
+&gt;&gt; &gt;&gt; &gt;         END-IF
+
+&gt;&gt; &gt;&gt; &gt;         do whatever with data ..
+
+&gt;&gt; &gt;&gt; Hmmmmm... leaving aside the matter of style (any good, true, decent and
+&gt;&gt; &gt;&gt; sane programmer worthy of the pittance of a salary paid for those hard-won
+&gt;&gt; &gt;&gt; skills would, of course, make Already-Read an 88)
+
+&gt;&gt; &gt;88s are soooo '60s.
+
+&gt;&gt; ... and '70s... and '80s... and onward, Good Style is Tymeless.
+
+&gt; I suppose that if you are stuck in the past then you wouldn't notice
+&gt; that the rest of the world has moved on.
+
+&gt;&gt; &gt;I dislike 88 levels and do not use them. They would interfere with
+&gt;&gt; &gt;searching for uses of particular variables.
+
+&gt;&gt; I've never found that to be the case... but perhaps our experiences are
+&gt;&gt; different.
+
+&gt;&gt; &gt;For example I can find where a variable is used with:
+
+&gt;&gt; &gt;  grep variable *.cbl *.pd
+
+&gt;&gt; &gt;or by using a text editor search.
+
+&gt;&gt; Again, our experiences may be different... I'm not familiar with
+&gt;&gt; any platform where a text editor search was not available.
+
+&gt; Of course search is available in every text editor. Grep however will
+&gt; search all files specified (for example where the search is for a file
+&gt; field usage) without having to bother with using an editor to open
+&gt; each file.  Of course the result of a grep can be piped into the
+&gt; editor so that the files can be accessed directly by tapping on the
+&gt; provided file names.
+
+&gt; But regardless of how the search is done the use of 88s may mean that
+&gt; multiple greps/searches are required.
+
+&gt;&gt; &gt;With 88s I need to also know what
+&gt;&gt; &gt;those names are and search for them too. I'm too lazy to be bothered
+&gt;&gt; &gt;with that.
+
+&gt;&gt; Too lazy to know what you're working on... hmmmmm... something comes to
+&gt;&gt; mind about 'worthy of the pittance of a salary.
+
+&gt; Being lazy means that I get the job done with minimum effort.
+&gt; Certainly this means that the project is completed with fewer billing
+&gt; hours.
+
+&gt;&gt; &gt;In any case I tend to use modern constructs, such as 'EVALUATE
+&gt;&gt; &gt;variable' and the archaic 88 style does not fit into that.
+
+&gt;&gt; Wow... maybe someone might put together something like
+
+&gt;&gt; EVALUATE TRUE
+&gt;&gt;     WHEN condition-name
+&gt;&gt;         imperative
+
+&gt;&gt; ... and we could have archaic and eat it, too.
+
+&gt; Yes you could, but I dislike 'EVALUATE TRUE'.
+
+&gt; The use of 'condition-name' not only gets in the way of finding every
+&gt; place where the underlying variable is used it also dis-locates the
+&gt; specific values and the resulting actions.
+
+&gt; I am sure that you have devised techniques for overcoming this
+&gt; objection, but I have avoided needing that by dealing with it in other
+&gt; ways.
+
+&gt;&gt; &gt;&gt; I read this and thought
+&gt;&gt; &gt;&gt; that lo, there is nothing new under the sun.
+
+&gt;&gt; &gt;&gt; IF EIBCALEN = 0
+&gt;&gt; &gt;&gt;     PERFORM 0000-HOUSEKEEPING  THRU 0000-HSK-EX
+&gt;&gt; &gt;&gt; ELSE
+&gt;&gt; &gt;&gt;     PERFORM 5000-PROCESS-INPUT THRU 5000-PI-EX.
+
+&gt;&gt; &gt;That, too, is soooo 60s.
+
+&gt;&gt; See above about Tymelessness.
+
+&gt; See above for not noticing what happened elsewhere.
+
+&gt;&gt; &gt;Seeing an example like that, no wonder Cobol is dying.
+
+&gt;&gt; Some see examples like that every working day on systems that are still
+&gt;&gt; hugely profitable to the companies that run them... a curious sort of
+&gt;&gt; death, aye.
+
+&gt; Maybe, but the number of companies keeping such examples, and the
+&gt; number that see these, are declining. You may be in an enclave of
+&gt; archaicisms, but others have better ways.
+">
+</POST>
+<POST>
+<POSTER> &quot;William M. Klein&quot; &lt;wmkl...@nospam.netcom.com&gt; </POSTER>
+<POSTDATE> 2007-12-14T13:52:00 </POSTDATE>
+Value clauses are NOT the same as &quot;MOVE literal to field-name (and this is a
+good example).
+
+As I recall (but haven't checked this recently)
+Set 88-level to true
+
+also follows the rules of VALUE clause and not MOVE.  (I think there are some
+issues with JUSTIFIED as well as all &quot;literal&quot;).
+
+--
+Bill Klein
+wmklein &lt;at&gt; ix.netcom.com
+
+<QUOTE PREVIOUSPOST="
+&quot;Roger While&quot; &lt;si ... @sim-basis.de&gt; wrote in message
+">
+
+news:fju86o$7rg$02$1@news.t-online.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; In W/S (Assuming no DECIMAL-POINT IS COMMA) -
+&gt; &lt;level wahtever&gt;  MYFLD  PIC ZZZ,Z   VALUE ALL '9'.
+
+&gt; Equivalent in PROCEDURE -
+&gt; MOVE ALL '9' TO MYFLD.
+
+&gt; AFAIK, num-edits are class alphanumeric and as such current
+&gt; compilers (tested MF/ACU) produce a value of
+&gt; 99999 in MYFLD. (Which, if I am reading the past/current standards
+&gt; is correct). This seems to me to me to
+&gt; be non-intuitive. In fact, OC produces 999,9.
+&gt; Thoughts?
+
+&gt; Roger
+">
+</POST>
+<POST>
+<POSTER> Richard &lt;rip...@azonic.co.nz&gt; </POSTER>
+<POSTDATE> 2007-12-14T15:13:00 </POSTDATE>
+On Dec 14, 11:18 pm, docdw ... @panix.com () wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In article &lt;794c0dfd-a161-4f3a-b26f-a30aeb06b ... @e6g2000prf.googlegroups.com&gt;,
+
+&gt; Richard  &lt;rip ... @azonic.co.nz&gt; wrote:
+&gt; &gt;On Dec 14, 1:11 pm, docdw ... @panix.com () wrote:
+
+&gt; [snip]
+
+&gt; &gt;&gt; ... and '70s... and '80s... and onward, Good Style is Tymeless.
+
+&gt; &gt;I suppose that if you are stuck in the past then you wouldn't notice
+&gt; &gt;that the rest of the world has moved on.
+
+&gt; There are other elements of Good Style which might have been added over
+&gt; the years, certainly; one with a sufficiently large capacity might find
+&gt; room for those, as well.
+&gt; [snip]
+
+&gt; &gt;&gt; &gt;For example I can find where a variable is used with:
+
+&gt; &gt;&gt; &gt;  grep variable *.cbl *.pd
+
+&gt; &gt;&gt; &gt;or by using a text editor search.
+
+&gt; &gt;&gt; Again, our experiences may be different... I'm not familiar with
+&gt; &gt;&gt; any platform where a text editor search was not available.
+
+&gt; &gt;Of course search is available in every text editor.
+
+&gt; There's a clever lad... things might be worthy of hope, after all!
+
+&gt; [snip]
+
+&gt; &gt;&gt; Too lazy to know what you're working on... hmmmmm... something comes to
+&gt; &gt;&gt; mind about 'worthy of the pittance of a salary.
+
+&gt; &gt;Being lazy means that I get the job done with minimum effort.
+&gt; &gt;Certainly this means that the project is completed with fewer billing
+&gt; &gt;hours.
+
+&gt; To 'get the job done' can be accomplished without the least invocation or
+&gt; use of Good Style, last I looked.
+">
+
+I didn't know that, but I bow to your superior experience with that
+issue.
+
+I find that the style that I use gets the job done more effectively,
+most noticeably when projects need to be enhanced to meet new
+requirements many years later. But each to their own.
+
+I don't know what your 'Good Style' is, perhaps someday you could post
+a few lines that use it rather than the style you do post.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;&gt; &gt;In any case I tend to use modern constructs, such as 'EVALUATE
+&gt; &gt;&gt; &gt;variable' and the archaic 88 style does not fit into that.
+
+&gt; &gt;&gt; Wow... maybe someone might put together something like
+
+&gt; &gt;&gt; EVALUATE TRUE
+&gt; &gt;&gt;     WHEN condition-name
+&gt; &gt;&gt;         imperative
+
+&gt; &gt;&gt; ... and we could have archaic and eat it, too.
+
+&gt; &gt;Yes you could, but I dislike 'EVALUATE TRUE'.
+
+&gt; Such a sensitive soul... how you manage to get by is truly a Testament to
+&gt; Human Strength.
+">
+
+It does not require any effort at all, I never see 'EVALUATE TRUE' so
+it is of no concern.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;&gt; Some see examples like that every working day on systems that are still
+&gt; &gt;&gt; hugely profitable to the companies that run them... a curious sort of
+&gt; &gt;&gt; death, aye.
+
+&gt; &gt;Maybe, but the number of companies keeping such examples, and the
+&gt; &gt;number that see these, are declining. You may be in an enclave of
+&gt; &gt;archaicisms, but others have better ways.
+
+&gt; There are different ways in many places, Mr Plinston, and I've seen a
+&gt; few... it was mentioned a few times that our experiences might, possibly,
+&gt; be different.
+">
+
+From what I have read before I would hazard a guess that most of your
+'many places' were mainframe Cobol shops. Certainly there are many
+ways to recycle styles from the 60s.
+
+I would say that the main influence this century on the style that I
+use is my adoption of Python as my primary language.
+
+Most of the Cobol (and C, etc) that I now write tends to be table-
+driven. A data table is created that specifies all the conditions and
+actions and then code processes the table.  The table, of course, can
+be external data so that the program action can be changed without
+fiddling with code at all.
+</POST>
+<POST>
+<POSTER> Richard &lt;rip...@azonic.co.nz&gt; </POSTER>
+<POSTDATE> 2007-12-14T15:38:00 </POSTDATE>
+On Dec 15, 7:48 am, &quot;William M. Klein&quot; &lt;wmkl ... @nospam.netcom.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &lt;Joke&gt;
+
+&gt; Using grep (or similar) is *SO* '60's.
+">
+
+Well, actually it is late 70's.  grep derives from the Unix ed (and vi
+derivative) editor's command g/re/p which means 'global / regular
+expression / print', in other words a text editor search function able
+to find variations described by the expression.
+
+Having it additionally as a separate utility allows it to feed results
+into any other utility and build scripts that save having to do things
+manually by typing, and retyping, into a text editor.
+
+<QUOTE PREVIOUSPOST="
+&gt; All current COBOL sensitive editors have
+&gt; ways of searching for &quot;referenced data items&quot; that include 88-levels and other
+&gt; &quot;implicit&quot; modifications to COBOL data items.
+">
+
+'All' ?  Didn't you recently critize someone for implying 'all' ?
+
+Does the lack of this feature indicate that an editor is not 'current'
+or not 'Cobol sensitive' ?
+
+Anyway, that 'solution' is just a complexification of a problem that
+is best solved (IMHO) by avoiding it.  For example, that solution
+would most likely use proprietry editors that may not be available,
+for various reasons, on a particular system.
+
+I use an editor that I can adapt to whatever task that I am currently
+engaged on, but sometimes I have to use different ones and adapt to
+those. Tying code to an editor's feature set may make good business
+sense to the editor's vendor, but not to me.
+</POST>
+<POST>
+<POSTER> Robert &lt;n...@e.mail&gt; </POSTER>
+<POSTDATE> 2007-12-14T21:08:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Fri, 14 Dec 2007 16:41:39 +0100, &quot;Roger While&quot; &lt;si ... @sim-basis.de&gt; wrote:
+&gt;In W/S (Assuming no DECIMAL-POINT IS COMMA) -
+&gt;&lt;level wahtever&gt;  MYFLD  PIC ZZZ,Z   VALUE ALL '9'.
+
+&gt;Equivalent in PROCEDURE -
+&gt;MOVE ALL '9' TO MYFLD.
+
+&gt;AFAIK, num-edits are class alphanumeric and as such current
+&gt;compilers (tested MF/ACU) produce a value of
+&gt;99999 in MYFLD. (Which, if I am reading the past/current standards
+&gt;is correct). This seems to me to me to
+&gt;be non-intuitive. In fact, OC produces 999,9.
+&gt;Thoughts?
+">
+
+13.16.61.2
+8) Editing characters in a picture character-string are included in determining the size
+of the data item, but do not cause editing of the initial value when the data item is
+initialized.
+
+What happens when you INITIALIZE MYFLD TO VALUE? Generally, INITIALIZE follows the rules
+for MOVE, which would give 999,9. However, the Standard muddies the waters by saying:
+
+14.8.19.3.6.a.3
+The actual sending-operand is a literal that, when moved to the receiving-operand with a
+MOVE statement, produces the same result as the initial value of the data item as produced
+by the application of the VALUE clause.
+
+The requirement is impossible. There IS NO LITERAL that will produce 99999 when MOVEd to
+MYFLD.
+
+I tried it on Fujitsu. VALUE ZERO gives 00000. INITIALIZE MYFLD gives 000,0. This compiler
+doesn't support TO VALUE.
+</POST>
+<POST>
+<POSTER> Howard Brazee &lt;how...@brazee.net&gt; </POSTER>
+<POSTDATE> 2007-12-14T21:27:00 </POSTDATE>
+On Thu, 13 Dec 2007 15:54:50 -0800 (PST), Richard
+
+<QUOTE PREVIOUSPOST="
+&lt;rip ... @azonic.co.nz&gt; wrote:
+&gt;For example I can find where a variable is used with:
+
+&gt;  grep variable *.cbl *.pd
+
+&gt;or by using a text editor search. With 88s I need to also know what
+&gt;those names are and search for them too. I'm too lazy to be bothered
+&gt;with that.
+">
+
+That's a reasonable argument.
+
+<QUOTE PREVIOUSPOST="
+&gt;In any case I tend to use modern constructs, such as 'EVALUATE
+&gt;variable' and the archaic 88 style does not fit into that.
+">
+
+Huh?   Why not?
+</POST>
+<POST>
+<POSTER> Richard &lt;rip...@azonic.co.nz&gt; </POSTER>
+<POSTDATE> 2007-12-14T23:57:00 </POSTDATE>
+On Dec 15, 3:27 pm, Howard Brazee &lt;how ... @brazee.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Thu, 13 Dec 2007 15:54:50 -0800 (PST), Richard
+
+&gt; &lt;rip ... @azonic.co.nz&gt; wrote:
+&gt; &gt;For example I can find where a variable is used with:
+
+&gt; &gt;  grep variable *.cbl *.pd
+
+&gt; &gt;or by using a text editor search. With 88s I need to also know what
+&gt; &gt;those names are and search for them too. I'm too lazy to be bothered
+&gt; &gt;with that.
+
+&gt; That's a reasonable argument.
+
+&gt; &gt;In any case I tend to use modern constructs, such as 'EVALUATE
+&gt; &gt;variable' and the archaic 88 style does not fit into that.
+
+&gt; Huh?   Why not?
+">
+
+You will note that I said 'EVALUATE variable', condition names only
+fit where it is 'EVALUATE TRUE' (or FALSE).
+</POST>
+<POST>
+<POSTER> &quot;William M. Klein&quot; &lt;wmkl...@nospam.netcom.com&gt; </POSTER>
+<POSTDATE> 2007-12-15T00:36:00 </POSTDATE>
+Sounds like someone should send J4 an interpretation request.
+
+--
+Bill Klein
+wmklein &lt;at&gt; ix.netcom.com
+
+<QUOTE PREVIOUSPOST="
+&quot;Robert&quot; &lt;n ... @e.mail&gt; wrote in message
+">
+
+news:je56m39r1iar54qglkgu5mgkauafa6tagv@4ax.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Fri, 14 Dec 2007 16:41:39 +0100, &quot;Roger While&quot; &lt;si ... @sim-basis.de&gt; wrote:
+
+&gt;&gt;In W/S (Assuming no DECIMAL-POINT IS COMMA) -
+&gt;&gt;&lt;level wahtever&gt;  MYFLD  PIC ZZZ,Z   VALUE ALL '9'.
+
+&gt;&gt;Equivalent in PROCEDURE -
+&gt;&gt;MOVE ALL '9' TO MYFLD.
+
+&gt;&gt;AFAIK, num-edits are class alphanumeric and as such current
+&gt;&gt;compilers (tested MF/ACU) produce a value of
+&gt;&gt;99999 in MYFLD. (Which, if I am reading the past/current standards
+&gt;&gt;is correct). This seems to me to me to
+&gt;&gt;be non-intuitive. In fact, OC produces 999,9.
+&gt;&gt;Thoughts?
+
+&gt; 13.16.61.2
+&gt; 8) Editing characters in a picture character-string are included in
+&gt; determining the size
+&gt; of the data item, but do not cause editing of the initial value when the data
+&gt; item is
+&gt; initialized.
+
+&gt; What happens when you INITIALIZE MYFLD TO VALUE? Generally, INITIALIZE follows
+&gt; the rules
+&gt; for MOVE, which would give 999,9. However, the Standard muddies the waters by
+&gt; saying:
+
+&gt; 14.8.19.3.6.a.3
+&gt; The actual sending-operand is a literal that, when moved to the
+&gt; receiving-operand with a
+&gt; MOVE statement, produces the same result as the initial value of the data item
+&gt; as produced
+&gt; by the application of the VALUE clause.
+
+&gt; The requirement is impossible. There IS NO LITERAL that will produce 99999
+&gt; when MOVEd to
+&gt; MYFLD.
+
+&gt; I tried it on Fujitsu. VALUE ZERO gives 00000. INITIALIZE MYFLD gives 000,0.
+&gt; This compiler
+&gt; doesn't support TO VALUE.
+">
+</POST>
+<POST>
+<POSTER> Robert &lt;n...@e.mail&gt; </POSTER>
+<POSTDATE> 2007-12-15T00:48:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Fri, 14 Dec 2007 19:27:21 -0700, Howard Brazee &lt;how ... @brazee.net&gt; wrote:
+&gt;On Thu, 13 Dec 2007 15:54:50 -0800 (PST), Richard
+&gt;&lt;rip ... @azonic.co.nz&gt; wrote:
+
+&gt;&gt;For example I can find where a variable is used with:
+
+&gt;&gt;  grep variable *.cbl *.pd
+
+&gt;&gt;or by using a text editor search. With 88s I need to also know what
+&gt;&gt;those names are and search for them too. I'm too lazy to be bothered
+&gt;&gt;with that.
+
+&gt;That's a reasonable argument.
+
+&gt;&gt;In any case I tend to use modern constructs, such as 'EVALUATE
+&gt;&gt;variable' and the archaic 88 style does not fit into that.
+
+&gt;Huh?   Why not?
+">
+
+Because you can't do this:
+
+01  end-of-file-ind pic x.
+88  end-of-file value 'y'.
+88  not-end-of-file value 'n'.
+
+evaluate end-of-file-ind
+when end-of-file exit perform
+when not-end-of-file continue
+end-evaluate
+
+You'll get an error because the compiler thinks you're not testing values in
+end-of-file-ind. To do that, you must say evaluate true.
+
+One solution:
+
+1. Don't give the data a name. You don't want to set it with the name and test it with the
+88, or vice versa. You want to set and test it the same way.
+
+2. If there are two possible values, use false clause on the 88. That way there's only one
+name. If you're going to do that, you might as well make it a boolean.
+
+01  pic 1 bit.
+88 end-of-file value B'1'' false zero.
+
+set end-of-file to false
+perform until end-of-file
+....
+read ... at end set end-of-file to true end-read
+end-perform
+</POST>
+<POST>
+<POSTER> &quot;William M. Klein&quot; &lt;wmkl...@nospam.netcom.com&gt; </POSTER>
+<POSTDATE> 2007-12-15T00:49:00 </POSTDATE>
+Robert,
+I just looked farther.
+
+Did you see the note under SR(8) which says,
+
+&quot;NOTE The programmer is responsible for specifying the value of a literal
+associated with an alphanumeric-edited,
+numeric-edited, or national-edited item in edited form.&quot;
+
+Value ALl &quot;9&quot;
+
+may be accepted by compilers (I think many/most do) and they may indeed do what
+you say, but the source is not conforming to the Standard, so its rules don't
+apply.
+
+If you had
+
+05  Num-Ed  Pic 99,999.99 Value &quot;12,345.67&quot;.
+....
+Initialize Num-Edi to Value
+
+then all would work &quot;as defined in the Standard&quot;.
+
+--
+Bill Klein
+wmklein &lt;at&gt; ix.netcom.com
+&quot;William M. Klein&quot; &lt;wmkl ... @nospam.netcom.com&gt; wrote in message
+news:WJJ8j.138292$Hq5.20184@fe04.news.easynews.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Sounds like someone should send J4 an interpretation request.
+
+&gt; --
+&gt; Bill Klein
+&gt; wmklein &lt;at&gt; ix.netcom.com
+&gt; &quot;Robert&quot; &lt;n ... @e.mail&gt; wrote in message
+&gt; news:je56m39r1iar54qglkgu5mgkauafa6tagv@4ax.com ...
+&gt;&gt; On Fri, 14 Dec 2007 16:41:39 +0100, &quot;Roger While&quot; &lt;si ... @sim-basis.de&gt; wrote:
+
+&gt;&gt;&gt;In W/S (Assuming no DECIMAL-POINT IS COMMA) -
+&gt;&gt;&gt;&lt;level wahtever&gt;  MYFLD  PIC ZZZ,Z   VALUE ALL '9'.
+
+&gt;&gt;&gt;Equivalent in PROCEDURE -
+&gt;&gt;&gt;MOVE ALL '9' TO MYFLD.
+
+&gt;&gt;&gt;AFAIK, num-edits are class alphanumeric and as such current
+&gt;&gt;&gt;compilers (tested MF/ACU) produce a value of
+&gt;&gt;&gt;99999 in MYFLD. (Which, if I am reading the past/current standards
+&gt;&gt;&gt;is correct). This seems to me to me to
+&gt;&gt;&gt;be non-intuitive. In fact, OC produces 999,9.
+&gt;&gt;&gt;Thoughts?
+
+&gt;&gt; 13.16.61.2
+&gt;&gt; 8) Editing characters in a picture character-string are included in
+&gt;&gt; determining the size
+&gt;&gt; of the data item, but do not cause editing of the initial value when the data
+&gt;&gt; item is
+&gt;&gt; initialized.
+
+&gt;&gt; What happens when you INITIALIZE MYFLD TO VALUE? Generally, INITIALIZE
+&gt;&gt; follows the rules
+&gt;&gt; for MOVE, which would give 999,9. However, the Standard muddies the waters by
+&gt;&gt; saying:
+
+&gt;&gt; 14.8.19.3.6.a.3
+&gt;&gt; The actual sending-operand is a literal that, when moved to the
+&gt;&gt; receiving-operand with a
+&gt;&gt; MOVE statement, produces the same result as the initial value of the data
+&gt;&gt; item as produced
+&gt;&gt; by the application of the VALUE clause.
+
+&gt;&gt; The requirement is impossible. There IS NO LITERAL that will produce 99999
+&gt;&gt; when MOVEd to
+&gt;&gt; MYFLD.
+
+&gt;&gt; I tried it on Fujitsu. VALUE ZERO gives 00000. INITIALIZE MYFLD gives 000,0.
+&gt;&gt; This compiler
+&gt;&gt; doesn't support TO VALUE.
+">
+</POST>
+<POST>
+<POSTER> &quot;William M. Klein&quot; &lt;wmkl...@nospam.netcom.com&gt; </POSTER>
+<POSTDATE> 2007-12-15T12:18:00 </POSTDATE>
+Just so it is clear, you CAN use
+Evaluate &quot;name&quot;
+with 88-levels, i.e.
+
+evaluate end-of-file
+*&gt; This evaluate tests the value in end-of-file-ind
+when True exit perform
+when False continue
+end-evaluate
+
+I don't claim that this is a style you would &quot;like&quot; - but it does work (and the
+comment allows you to grep for it.  However, if some of us, you actually put the
+88-levels under a &quot;filler&quot; field,  (and use only SET TO TRUE/FALSE) then that
+won't work.
+
+--
+Bill Klein
+wmklein &lt;at&gt; ix.netcom.com
+
+<QUOTE PREVIOUSPOST="
+&quot;Robert&quot; &lt;n ... @e.mail&gt; wrote in message
+">
+
+news:lon6m3didvvp3r6i9jdqafbk85n8g9264h@4ax.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Fri, 14 Dec 2007 19:27:21 -0700, Howard Brazee &lt;how ... @brazee.net&gt; wrote:
+
+&gt;&gt;On Thu, 13 Dec 2007 15:54:50 -0800 (PST), Richard
+&gt;&gt;&lt;rip ... @azonic.co.nz&gt; wrote:
+
+&gt;&gt;&gt;For example I can find where a variable is used with:
+
+&gt;&gt;&gt;  grep variable *.cbl *.pd
+
+&gt;&gt;&gt;or by using a text editor search. With 88s I need to also know what
+&gt;&gt;&gt;those names are and search for them too. I'm too lazy to be bothered
+&gt;&gt;&gt;with that.
+
+&gt;&gt;That's a reasonable argument.
+
+&gt;&gt;&gt;In any case I tend to use modern constructs, such as 'EVALUATE
+&gt;&gt;&gt;variable' and the archaic 88 style does not fit into that.
+
+&gt;&gt;Huh?   Why not?
+
+&gt; Because you can't do this:
+
+&gt; 01  end-of-file-ind pic x.
+&gt;      88  end-of-file value 'y'.
+&gt;      88  not-end-of-file value 'n'.
+
+&gt; evaluate end-of-file-ind
+&gt;    when end-of-file exit perform
+&gt;    when not-end-of-file continue
+&gt; end-evaluate
+
+&gt; You'll get an error because the compiler thinks you're not testing values in
+&gt; end-of-file-ind. To do that, you must say evaluate true.
+
+&gt; One solution:
+
+&gt; 1. Don't give the data a name. You don't want to set it with the name and test
+&gt; it with the
+&gt; 88, or vice versa. You want to set and test it the same way.
+
+&gt; 2. If there are two possible values, use false clause on the 88. That way
+&gt; there's only one
+&gt; name. If you're going to do that, you might as well make it a boolean.
+
+&gt; 01  pic 1 bit.
+&gt;     88 end-of-file value B'1'' false zero.
+
+&gt; set end-of-file to false
+&gt; perform until end-of-file
+&gt;    ....
+&gt;    read ... at end set end-of-file to true end-read
+&gt; end-perform
+">
+</POST>
+<POST>
+<POSTER> Robert &lt;n...@e.mail&gt; </POSTER>
+<POSTDATE> 2007-12-15T16:46:00 </POSTDATE>
+On Sat, 15 Dec 2007 17:18:47 GMT, &quot;William M. Klein&quot; &lt;wmkl ... @nospam.netcom.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;Just so it is clear, you CAN use
+&gt;    Evaluate &quot;name&quot;
+&gt;with 88-levels, i.e.
+
+&gt; evaluate end-of-file
+&gt;   *&gt; This evaluate tests the value in end-of-file-ind
+&gt;    when True exit perform
+&gt;    when False continue
+&gt; end-evaluate
+
+&gt;I don't claim that this is a style you would &quot;like&quot; - but it does work (and the
+&gt;comment allows you to grep for it.  However, if some of us, you actually put the
+&gt;88-levels under a &quot;filler&quot; field,  (and use only SET TO TRUE/FALSE) then that
+&gt;won't work.
+">
+
+The evaluate will work, and the grep will work on the condition name, which is the ONLY
+name.
+
+If there are only two values, true and false, you might as well use IF or UNTIL.
+
+At the place where I work now, they qualify 88s with the data name. That satisfies the
+grep requirement.
+
+set end-of-file in end-of-file-ind to false
+perform until end-of-file in end-of-file-ind
+....
+end-perform
+
+Micro Focus lets you mix a value test on the subject with a normal conditional, like so:
+
+evaluate end-of-file-ind
+when any and end-of-file
+
+evaluate end-of-file-ind
+when  B'1' or phase-of-moon = 'full'
+
+evaluate end-of-file-ind
+when not = B'1' and B'0'
+
+<QUOTE PREVIOUSPOST="
+&gt;&quot;Robert&quot; &lt;n ... @e.mail&gt; wrote in message
+&gt; news:lon6m3didvvp3r6i9jdqafbk85n8g9264h@4ax.com ...
+&gt;&gt; On Fri, 14 Dec 2007 19:27:21 -0700, Howard Brazee &lt;how ... @brazee.net&gt; wrote:
+
+&gt;&gt;&gt;On Thu, 13 Dec 2007 15:54:50 -0800 (PST), Richard
+&gt;&gt;&gt;&lt;rip ... @azonic.co.nz&gt; wrote:
+
+&gt;&gt;&gt;&gt;For example I can find where a variable is used with:
+
+&gt;&gt;&gt;&gt;  grep variable *.cbl *.pd
+
+&gt;&gt;&gt;&gt;or by using a text editor search. With 88s I need to also know what
+&gt;&gt;&gt;&gt;those names are and search for them too. I'm too lazy to be bothered
+&gt;&gt;&gt;&gt;with that.
+
+&gt;&gt;&gt;That's a reasonable argument.
+
+&gt;&gt;&gt;&gt;In any case I tend to use modern constructs, such as 'EVALUATE
+&gt;&gt;&gt;&gt;variable' and the archaic 88 style does not fit into that.
+
+&gt;&gt;&gt;Huh?   Why not?
+
+&gt;&gt; Because you can't do this:
+
+&gt;&gt; 01  end-of-file-ind pic x.
+&gt;&gt;      88  end-of-file value 'y'.
+&gt;&gt;      88  not-end-of-file value 'n'.
+
+&gt;&gt; evaluate end-of-file-ind
+&gt;&gt;    when end-of-file exit perform
+&gt;&gt;    when not-end-of-file continue
+&gt;&gt; end-evaluate
+
+&gt;&gt; You'll get an error because the compiler thinks you're not testing values in
+&gt;&gt; end-of-file-ind. To do that, you must say evaluate true.
+
+&gt;&gt; One solution:
+
+&gt;&gt; 1. Don't give the data a name. You don't want to set it with the name and test
+&gt;&gt; it with the
+&gt;&gt; 88, or vice versa. You want to set and test it the same way.
+
+&gt;&gt; 2. If there are two possible values, use false clause on the 88. That way
+&gt;&gt; there's only one
+&gt;&gt; name. If you're going to do that, you might as well make it a boolean.
+
+&gt;&gt; 01  pic 1 bit.
+&gt;&gt;     88 end-of-file value B'1'' false zero.
+
+&gt;&gt; set end-of-file to false
+&gt;&gt; perform until end-of-file
+&gt;&gt;    ....
+&gt;&gt;    read ... at end set end-of-file to true end-read
+&gt;&gt; end-perform
+">
+</POST>
+<POST>
+<POSTER> Robert &lt;n...@e.mail&gt; </POSTER>
+<POSTDATE> 2007-12-15T17:09:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Fri, 14 Dec 2007 00:11:28 +0000 (UTC), docdw ... @panix.com () wrote:
+&gt;In article &lt;6969359c-00e5-4485-9e94-2e0e0acb1 ... @s12g2000prg.googlegroups.com&gt;,
+&gt;Richard  &lt;rip ... @azonic.co.nz&gt; wrote:
+&gt;&gt;Seeing an example like that, no wonder Cobol is dying.
+
+&gt;Some see examples like that every working day on systems that are still
+&gt;hugely profitable to the companies that run them... a curious sort of
+&gt;death, aye.
+">
+
+Mainframe systems are hugely EXPENSIVE to the companies that run them. They are hugely
+profitable to IBM.
+</POST>
+<POST>
+<POSTER> docdw...@panix.com () </POSTER>
+<POSTDATE> 2007-12-15T19:28:00 </POSTDATE>
+In article &lt;8731d51b-1604-4c2c-8413-e189158ac ... @e25g2000prg.googlegroups.com&gt;,
+
+<QUOTE PREVIOUSPOST="
+Richard  &lt;rip ... @azonic.co.nz&gt; wrote:
+&gt;On Dec 14, 11:18 pm, docdw ... @panix.com () wrote:
+">
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; To 'get the job done' can be accomplished without the least invocation or
+&gt;&gt; use of Good Style, last I looked.
+
+&gt;I didn't know that, but I bow to your superior experience with that
+&gt;issue.
+">
+
+No need to rely on the experience of others, Mr Plinston... a bit of
+mental exercise might be able to supply a bit of evidence.  Good Style
+can, say, includes datanames which reflect the content of the field; were
+one to use a text editor that has not only search capabilities but global
+replace ones it would be a trivial task to take a chunk of source and
+change all Customer-Number to C001, Customer-Name to C002, Customer-Addr1
+to C003, etc.
+
+As long as the changes were global the program would still get the job
+done... but, to many eyes, be a tad less legible, as well.
+
+<QUOTE PREVIOUSPOST="
+&gt;I find that the style that I use gets the job done more effectively,
+&gt;most noticeably when projects need to be enhanced to meet new
+&gt;requirements many years later.
+">
+
+As my Sainted Paternal Grandfather - may he sleep with the angels! - said,
+'Never use yourself as a comparative, you'll only be disappointed'.
+
+But each to their own... after all, what you've found may be all that
+there is to be found, right?
+
+<QUOTE PREVIOUSPOST="
+&gt;I don't know what your 'Good Style' is, perhaps someday you could post
+&gt;a few lines that use it rather than the style you do post.
+">
+
+Mr Plinston, I've let competent coders decide which of the styles I've
+posted in are considered Good and which aren't, if you want to read what
+they have said you may, perhaps, learn something from it.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; &gt;Yes you could, but I dislike 'EVALUATE TRUE'.
+
+&gt;&gt; Such a sensitive soul... how you manage to get by is truly a Testament to
+&gt;&gt; Human Strength.
+
+&gt;It does not require any effort at all, I never see 'EVALUATE TRUE' so
+&gt;it is of no concern.
+">
+
+A few examples have been posted here... but see above about 'what you've
+found'.
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; There are different ways in many places, Mr Plinston, and I've seen a
+&gt;&gt; few... it was mentioned a few times that our experiences might, possibly,
+&gt;&gt; be different.
+
+&gt;From what I have read before I would hazard a guess that most of your
+&gt;'many places' were mainframe Cobol shops.
+">
+
+A careful reader, Mr Plinston, might have noticed that I made no claim to
+having 'many places' and only to having seen 'a few'.
+
+DD
+</POST>
+<POST>
+<POSTER> docdw...@panix.com () </POSTER>
+<POSTDATE> 2007-12-15T19:30:00 </POSTDATE>
+In article &lt;01k8m3p53kfh8f2j0ungcajdunflbka ... @4ax.com&gt;,
+
+<QUOTE PREVIOUSPOST="
+Robert  &lt;n ... @e.mail&gt; wrote:
+&gt;On Fri, 14 Dec 2007 00:11:28 +0000 (UTC), docdw ... @panix.com () wrote:
+
+&gt;&gt;In article &lt;6969359c-00e5-4485-9e94-2e0e0acb1 ... @s12g2000prg.googlegroups.com&gt;,
+&gt;&gt;Richard  &lt;rip ... @azonic.co.nz&gt; wrote:
+
+&gt;&gt;&gt;Seeing an example like that, no wonder Cobol is dying.
+
+&gt;&gt;Some see examples like that every working day on systems that are still
+&gt;&gt;hugely profitable to the companies that run them... a curious sort of
+&gt;&gt;death, aye.
+
+&gt;Mainframe systems are hugely EXPENSIVE to the companies that run them.
+">
+
+Mr Wagner, some study in economics might reveal that being EXPENSIVE (caps
+original) and being profitable are in no wise mutually exclusive.
+
+DD
+</POST>
+<POST>
+<POSTER> &quot;Michael Mattias&quot; &lt;mmatt...@talsystems.com&gt; </POSTER>
+<POSTDATE> 2007-12-16T09:46:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&lt;docdw ... @panix.com&gt; wrote in message news:fk1rjr$eej$1@reader1.panix.com ...
+&gt; Mr Wagner, some study in economics might reveal that being EXPENSIVE (caps
+&gt; original) and being profitable are in no wise mutually exclusive.
+">
+
+Too many of today's managers don't understand the difference between
+&quot;expense&quot; and &quot;value.&quot;
+
+MCM
+</POST>
+<POST>
+<POSTER> docdw...@panix.com () </POSTER>
+<POSTDATE> 2007-12-16T12:14:00 </POSTDATE>
+In article &lt;PUa9j.6119$fl7. ... @newssvr22.news.prodigy.net&gt;,
+
+<QUOTE PREVIOUSPOST="
+Michael Mattias &lt;mmatt ... @talsystems.com&gt; wrote:
+&gt;&lt;docdw ... @panix.com&gt; wrote in message news:fk1rjr$eej$1@reader1.panix.com ...
+&gt;&gt; Mr Wagner, some study in economics might reveal that being EXPENSIVE (caps
+&gt;&gt; original) and being profitable are in no wise mutually exclusive.
+
+&gt;Too many of today's managers don't understand the difference between
+&gt;&quot;expense&quot; and &quot;value.&quot;
+">
+
+Ahhhhh, the equating of 'costs anything' with 'costs too much!'... I've
+seen that a few times, here and there.
+
+DD
+</POST>
+<POST>
+<POSTER> Richard &lt;rip...@azonic.co.nz&gt; </POSTER>
+<POSTDATE> 2007-12-16T20:09:00 </POSTDATE>
+On Dec 16, 1:28 pm, docdw ... @panix.com () wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In article &lt;8731d51b-1604-4c2c-8413-e189158ac ... @e25g2000prg.googlegroups.com&gt;,
+
+&gt; Richard  &lt;rip ... @azonic.co.nz&gt; wrote:
+&gt; &gt;On Dec 14, 11:18 pm, docdw ... @panix.com () wrote:
+
+&gt; [snip]
+
+&gt; &gt;&gt; To 'get the job done' can be accomplished without the least invocation or
+&gt; &gt;&gt; use of Good Style, last I looked.
+
+&gt; &gt;I didn't know that, but I bow to your superior experience with that
+&gt; &gt;issue.
+
+&gt; No need to rely on the experience of others, Mr Plinston... a bit of
+&gt; mental exercise might be able to supply a bit of evidence.  Good Style
+&gt; can, say, includes datanames which reflect the content of the field; were
+&gt; one to use a text editor that has not only search capabilities but global
+&gt; replace ones it would be a trivial task to take a chunk of source and
+&gt; change all Customer-Number to C001, Customer-Name to C002, Customer-Addr1
+&gt; to C003, etc.
+">
+
+I am not sure why you would want to tediously change all those, one at
+a time, manually, using a tool as crude as a text editor.
+
+<QUOTE PREVIOUSPOST="
+&gt; As long as the changes were global the program would still get the job
+&gt; done... but, to many eyes, be a tad less legible, as well.
+">
+
+Yes, and is this example from one of your messages a result of this
+editing, or is it supposed to represent your 'Good Style' ?
+
+IF EIBCALEN = 0
+PERFORM 0000-HOUSEKEEPING  THRU 0000-HSK-EX
+ELSE
+PERFORM 5000-PROCESS-INPUT THRU 5000-PI-EX.
+
+Or was it merely a parody of the 1960s ?
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;I find that the style that I use gets the job done more effectively,
+&gt; &gt;most noticeably when projects need to be enhanced to meet new
+&gt; &gt;requirements many years later.
+
+&gt; As my Sainted Paternal Grandfather - may he sleep with the angels! - said,
+&gt; 'Never use yourself as a comparative, you'll only be disappointed'.
+
+&gt; But each to their own... after all, what you've found may be all that
+&gt; there is to be found, right?
+
+&gt; &gt;I don't know what your 'Good Style' is, perhaps someday you could post
+&gt; &gt;a few lines that use it rather than the style you do post.
+
+&gt; Mr Plinston, I've let competent coders decide which of the styles I've
+&gt; posted in are considered Good and which aren't, if you want to read what
+&gt; they have said you may, perhaps, learn something from it.
+">
+
+Is this indicating that a 'coder' (a rather archaic term from when
+there was a strict hierarchy from analyst -&gt; designer -&gt; programmer -&gt;
+coder -&gt; card punch operator, but perhaps it still exists in some
+halls of cubicaled mazes), that chooses differently is, in your
+opinion, less than competent ?
+
+As I cannot tell which 'coders' that you may label 'competent' and
+which you would not I could not distinguish between comments deciding
+one way or another.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;&gt; &gt;Yes you could, but I dislike 'EVALUATE TRUE'.
+
+&gt; &gt;&gt; Such a sensitive soul... how you manage to get by is truly a Testament to
+&gt; &gt;&gt; Human Strength.
+
+&gt; &gt;It does not require any effort at all, I never see 'EVALUATE TRUE' so
+&gt; &gt;it is of no concern.
+
+&gt; A few examples have been posted here... but see above about 'what you've
+&gt; found'.
+
+&gt; [snip]
+
+&gt; &gt;&gt; There are different ways in many places, Mr Plinston, and I've seen a
+&gt; &gt;&gt; few... it was mentioned a few times that our experiences might, possibly,
+&gt; &gt;&gt; be different.
+
+&gt; &gt;From what I have read before I would hazard a guess that most of your
+&gt; &gt;'many places' were mainframe Cobol shops.
+
+&gt; A careful reader, Mr Plinston, might have noticed that I made no claim to
+&gt; having 'many places' and only to having seen 'a few'.
+">
+
+I stand corrected: your experience is that you have seen only a few
+mainframe Cobol shops.
+</POST>
+<POST>
+<POSTER> &quot;William M. Klein&quot; &lt;wmkl...@nospam.netcom.com&gt; </POSTER>
+<POSTDATE> 2007-12-16T22:39:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Richard&quot; &lt;rip ... @azonic.co.nz&gt; wrote in message
+">
+
+news:39b46538-277e-4cff-84db-f9e0afc006fe@d27g2000prf.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 16, 1:28 pm, docdw ... @panix.com () wrote:
+&gt;&gt; In article
+&gt;&gt; &lt;8731d51b-1604-4c2c-8413-e189158ac ... @e25g2000prg.googlegroups.com&gt;,
+&lt;snip&gt;
+&gt; Yes, and is this example from one of your messages a result of this
+&gt; editing, or is it supposed to represent your 'Good Style' ?
+
+&gt; IF EIBCALEN = 0
+&gt;    PERFORM 0000-HOUSEKEEPING  THRU 0000-HSK-EX
+&gt; ELSE
+&gt;    PERFORM 5000-PROCESS-INPUT THRU 5000-PI-EX.
+
+&gt; Or was it merely a parody of the 1960s ?
+">
+
+For those to whom &quot;EIBCALEN&quot; is not just &quot;any old&quot; variable name, the code above
+is VERY meaningful and represents a few lines of code that is in HOUNDREDS
+(thousands?) of COBOL programs in their shop.  If &quot;EIBCALEN' and what it mands
+to be &quot;0&quot; is NOT meaningful to you, then you would not know exactly how common
+this specific code sequence is.
+
+Such code *is* still in use (and being used by new programs) today.
+
+The original post was talking about this as a '60ish&quot; thing, but as I can't
+remember when Command-level came in or how this was done in macro level, I would
+guess it is actually a 70's thru current thing.
+
+--
+Bill Klein
+wmklein &lt;at&gt; ix.netcom.com
+</POST>
+<POST>
+<POSTER> Richard &lt;rip...@azonic.co.nz&gt; </POSTER>
+<POSTDATE> 2007-12-17T00:00:00 </POSTDATE>
+On Dec 17, 4:39 pm, &quot;William M. Klein&quot; &lt;wmkl ... @nospam.netcom.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Richard&quot; &lt;rip ... @azonic.co.nz&gt; wrote in message
+
+&gt; news:39b46538-277e-4cff-84db-f9e0afc006fe@d27g2000prf.googlegroups.com ...
+
+&gt; &gt; On Dec 16, 1:28 pm, docdw ... @panix.com () wrote:
+&gt; &gt;&gt; In article
+&gt; &gt;&gt; &lt;8731d51b-1604-4c2c-8413-e189158ac ... @e25g2000prg.googlegroups.com&gt;,
+&gt; &lt;snip&gt;
+&gt; &gt; Yes, and is this example from one of your messages a result of this
+&gt; &gt; editing, or is it supposed to represent your 'Good Style' ?
+
+&gt; &gt; IF EIBCALEN = 0
+&gt; &gt;    PERFORM 0000-HOUSEKEEPING  THRU 0000-HSK-EX
+&gt; &gt; ELSE
+&gt; &gt;    PERFORM 5000-PROCESS-INPUT THRU 5000-PI-EX.
+
+&gt; &gt; Or was it merely a parody of the 1960s ?
+
+&gt; For those to whom &quot;EIBCALEN&quot; is not just &quot;any old&quot; variable name, the code above
+&gt; is VERY meaningful and represents a few lines of code that is in HOUNDREDS
+&gt; (thousands?) of COBOL programs in their shop.  If &quot;EIBCALEN' and what it mands
+&gt; to be &quot;0&quot; is NOT meaningful to you, then you would not know exactly how common
+&gt; this specific code sequence is.
+
+&gt; Such code *is* still in use (and being used by new programs) today.
+">
+
+I grant that this is arcane rather than archaic then.
+
+<QUOTE PREVIOUSPOST="
+&gt; The original post was talking about this as a '60ish&quot; thing, but as I can't
+&gt; remember when Command-level came in or how this was done in macro level, I would
+&gt; guess it is actually a 70's thru current thing.
+">
+
+The particular issues that I would raise as a matter of '60s style'
+would be:
+
+Paragraph numbering is reminiscent of early Fortran and BASIC and is
+probably the result of designing using HIPO charts. This was really
+useful when it was necessary to find your way around a box of cards,
+and possibly even when green line printouts were the best means of
+browsing source.
+
+The whole idea of numbering that followed a hierarchical system is
+preconditioned by the concept that code follows a strict hierarchy of
+execution and follows from 60s style batch processing.
+
+PERFORM THRU predicts that a GO TO will be used to take early exit. If
+GO TO is not used then the THRU can be discarded. Any style that
+relies on GO TO and/or THRU is liable to a number of coding errors
+that the compiler cannot detect, and may be difficult and time
+consuming to resolve manually.
+
+Full Stops at the end of a line of code and the lack of scope
+terminators classifies this as 'two decades ago' at least.
+
+These are why I asked for clarification as to whether this was an
+example of Doc's 'Good Style', where the capitalizing into proper
+nouns appears to indicate some specific set of rules, or a parody in
+an archaic bad style.
+</POST>
+<POST>
+<POSTER> docdw...@panix.com () </POSTER>
+<POSTDATE> 2007-12-17T05:27:00 </POSTDATE>
+In article &lt;39b46538-277e-4cff-84db-f9e0afc00 ... @d27g2000prf.googlegroups.com&gt;,
+
+<QUOTE PREVIOUSPOST="
+Richard  &lt;rip ... @azonic.co.nz&gt; wrote:
+&gt;On Dec 16, 1:28 pm, docdw ... @panix.com () wrote:
+&gt;&gt; In article
+&gt;&lt;8731d51b-1604-4c2c-8413-e189158ac ... @e25g2000prg.googlegroups.com&gt;,
+
+&gt;&gt; Richard  &lt;rip ... @azonic.co.nz&gt; wrote:
+&gt;&gt; &gt;On Dec 14, 11:18 pm, docdw ... @panix.com () wrote:
+
+&gt;&gt; [snip]
+
+&gt;&gt; &gt;&gt; To 'get the job done' can be accomplished without the least invocation or
+&gt;&gt; &gt;&gt; use of Good Style, last I looked.
+
+&gt;&gt; &gt;I didn't know that, but I bow to your superior experience with that
+&gt;&gt; &gt;issue.
+
+&gt;&gt; No need to rely on the experience of others, Mr Plinston... a bit of
+&gt;&gt; mental exercise might be able to supply a bit of evidence.  Good Style
+&gt;&gt; can, say, includes datanames which reflect the content of the field; were
+&gt;&gt; one to use a text editor that has not only search capabilities but global
+&gt;&gt; replace ones it would be a trivial task to take a chunk of source and
+&gt;&gt; change all Customer-Number to C001, Customer-Name to C002, Customer-Addr1
+&gt;&gt; to C003, etc.
+
+&gt;I am not sure why you would want to tediously change all those, one at
+&gt;a time, manually, using a tool as crude as a text editor.
+
+&gt;&gt; As long as the changes were global the program would still get the job
+&gt;&gt; done... but, to many eyes, be a tad less legible, as well.
+
+&gt;Yes, and is this example from one of your messages a result of this
+&gt;editing, or is it supposed to represent your 'Good Style' ?
+
+&gt;IF EIBCALEN = 0
+&gt;    PERFORM 0000-HOUSEKEEPING  THRU 0000-HSK-EX
+&gt;ELSE
+&gt;    PERFORM 5000-PROCESS-INPUT THRU 5000-PI-EX.
+
+&gt;Or was it merely a parody of the 1960s ?
+">
+
+Mr Plinston, a bit of careful reading would show this was addressed when I
+posted that bit of code on 12 Dec 2007; perhaps my parenthetic note
+distracted you and if that is the case I apologise.
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Mr Plinston, I've let competent coders decide which of the styles I've
+&gt;&gt; posted in are considered Good and which aren't, if you want to read what
+&gt;&gt; they have said you may, perhaps, learn something from it.
+
+&gt;Is this indicating that a 'coder' (a rather archaic term from when
+&gt;there was a strict hierarchy from analyst -&gt; designer -&gt; programmer -&gt;
+&gt;coder -&gt; card punch operator, but perhaps it still exists in some
+&gt;halls of cubicaled mazes), that chooses differently is, in your
+&gt;opinion, less than competent ?
+">
+
+No, Mr Plinston, this is indicating that I've let competent coders decide
+which of the styles I've posted in are considered Good and which aren't.
+
+It further is indicating that if you want to read what they have said you
+may, perhaps, learn something from it... my apologies, once again, for
+being so obscure.
+
+<QUOTE PREVIOUSPOST="
+&gt;As I cannot tell which 'coders' that you may label 'competent' and
+&gt;which you would not I could not distinguish between comments deciding
+&gt;one way or another.
+">
+
+Now there's a bit of a challenge for a stout lad... have at it!  Find the
+code, determine the quality, find the comments, evaluate the competency,
+compare with your own conclusions... looks like someone's going to be
+rather busy.
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; &gt;&gt; There are different ways in many places, Mr Plinston, and I've seen a
+&gt;&gt; &gt;&gt; few... it was mentioned a few times that our experiences might, possibly,
+&gt;&gt; &gt;&gt; be different.
+
+&gt;&gt; &gt;From what I have read before I would hazard a guess that most of your
+&gt;&gt; &gt;'many places' were mainframe Cobol shops.
+
+&gt;&gt; A careful reader, Mr Plinston, might have noticed that I made no claim to
+&gt;&gt; having 'many places' and only to having seen 'a few'.
+
+&gt;I stand corrected: your experience is that you have seen only a few
+&gt;mainframe Cobol shops.
+">
+
+Exactly right, Mr Plinston... a couple here, a couple there, nothing
+special whatsoever... remember, I'se jes' a COBOL-codin' fool.
+
+DD
+</POST>
+<POST>
+<POSTER> docdw...@panix.com () </POSTER>
+<POSTDATE> 2007-12-17T05:28:00 </POSTDATE>
+In article &lt;zbm9j.191960$_H4.138 ... @fe08.news.easynews.com&gt;,
+William M. Klein &lt;wmkl ... @nospam.netcom.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&quot;Richard&quot; &lt;rip ... @azonic.co.nz&gt; wrote in message
+&gt; news:39b46538-277e-4cff-84db-f9e0afc006fe@d27g2000prf.googlegroups.com ...
+&gt;&gt; On Dec 16, 1:28 pm, docdw ... @panix.com () wrote:
+&gt;&gt;&gt; In article
+&gt;&gt;&gt; &lt;8731d51b-1604-4c2c-8413-e189158ac ... @e25g2000prg.googlegroups.com&gt;,
+&gt;&lt;snip&gt;
+&gt;&gt; Yes, and is this example from one of your messages a result of this
+&gt;&gt; editing, or is it supposed to represent your 'Good Style' ?
+
+&gt;&gt; IF EIBCALEN = 0
+&gt;&gt;    PERFORM 0000-HOUSEKEEPING  THRU 0000-HSK-EX
+&gt;&gt; ELSE
+&gt;&gt;    PERFORM 5000-PROCESS-INPUT THRU 5000-PI-EX.
+
+&gt;&gt; Or was it merely a parody of the 1960s ?
+
+&gt;For those to whom &quot;EIBCALEN&quot; is not just &quot;any old&quot; variable name, the
+&gt;code above
+&gt;is VERY meaningful and represents a few lines of code that is in HOUNDREDS
+&gt;(thousands?) of COBOL programs in their shop.  If &quot;EIBCALEN' and what it mands
+&gt;to be &quot;0&quot; is NOT meaningful to you, then you would not know exactly how common
+&gt;this specific code sequence is.
+">
+
+Perhaps, Mr Klein, Mr Plinston does not have the experiences others have
+garnered by working in 'a few' shops... but he seems happy and that's
+what's important.
+
+DD
+</POST>
+<POST>
+<POSTER> Robert &lt;n...@e.mail&gt; </POSTER>
+<POSTDATE> 2007-12-17T09:36:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Fri, 14 Dec 2007 16:41:39 +0100, &quot;Roger While&quot; &lt;si ... @sim-basis.de&gt; wrote:
+&gt;In W/S (Assuming no DECIMAL-POINT IS COMMA) -
+&gt;&lt;level wahtever&gt;  MYFLD  PIC ZZZ,Z   VALUE ALL '9'.
+
+&gt;Equivalent in PROCEDURE -
+&gt;MOVE ALL '9' TO MYFLD.
+
+&gt;AFAIK, num-edits are class alphanumeric and as such current
+&gt;compilers (tested MF/ACU) produce a value of
+&gt;99999 in MYFLD. (Which, if I am reading the past/current standards
+&gt;is correct). This seems to me to me to
+&gt;be non-intuitive. In fact, OC produces 999,9.
+&gt;Thoughts?
+">
+
+Editing rules are likely to be set at execution time, based on locale. For instance, the
+currency symbol and whether to use a period or comma before pennies. If the initial value
+followed the rules for MOVE, that would complicate program loading  and concievably affect
+program logic. I believe the Standard is attempting to avoid that inconvenience.
+</POST>
+<POST>
+<POSTER> Howard Brazee &lt;how...@brazee.net&gt; </POSTER>
+<POSTDATE> 2007-12-17T12:12:00 </POSTDATE>
+On Sun, 16 Dec 2007 21:00:56 -0800 (PST), Richard
+
+<QUOTE PREVIOUSPOST="
+&lt;rip ... @azonic.co.nz&gt; wrote:
+&gt;The particular issues that I would raise as a matter of '60s style'
+&gt;would be:
+
+&gt;Paragraph numbering is reminiscent of early Fortran and BASIC and is
+&gt;probably the result of designing using HIPO charts. This was really
+&gt;useful when it was necessary to find your way around a box of cards,
+&gt;and possibly even when green line printouts were the best means of
+&gt;browsing source.
+
+&gt;The whole idea of numbering that followed a hierarchical system is
+&gt;preconditioned by the concept that code follows a strict hierarchy of
+&gt;execution and follows from 60s style batch processing.
+
+&gt;PERFORM THRU predicts that a GO TO will be used to take early exit. If
+&gt;GO TO is not used then the THRU can be discarded. Any style that
+&gt;relies on GO TO and/or THRU is liable to a number of coding errors
+&gt;that the compiler cannot detect, and may be difficult and time
+&gt;consuming to resolve manually.
+
+&gt;Full Stops at the end of a line of code and the lack of scope
+&gt;terminators classifies this as 'two decades ago' at least.
+
+&gt;These are why I asked for clarification as to whether this was an
+&gt;example of Doc's 'Good Style', where the capitalizing into proper
+&gt;nouns appears to indicate some specific set of rules, or a parody in
+&gt;an archaic bad style.
+">
+
+My measure of good code or bad code isn't whether the code is in
+fashion today or not.
+
+Does the code do what it is supposed to do?
+Is the code clear?
+Is the code easily maintainable?
+Does the code handle exceptions effectively?
+and even
+Is the code efficient?
+
+Fashions come and go.   Some fashions are actually useful.    But
+having or not having sequence numbers in paragraph names says nothing
+about the quality of the code.
+</POST>
+<POST>
+<POSTER> Howard Brazee &lt;how...@brazee.net&gt; </POSTER>
+<POSTDATE> 2007-12-17T12:16:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sat, 15 Dec 2007 16:09:30 -0600, Robert &lt;n ... @e.mail&gt; wrote:
+&gt;Mainframe systems are hugely EXPENSIVE to the companies that run them.
+">
+
+As are alternatives that provide the same security, reliability, and
+scale as mainframes.
+
+<QUOTE PREVIOUSPOST="
+&gt; They are hugely profitable to IBM.
+">
+
+(Only IBM mainframes are hugely profitable to IBM.   There are other
+mainframe companies).
+
+But Windows &amp; Office is hugely profitable to MS.   And Macs and iPods
+are hugely profitable to Apple.
+
+How much profit they make has nothing to do with whether their
+products are the best choice for me.
+</POST>
+<POST>
+<POSTER> docdw...@panix.com () </POSTER>
+<POSTDATE> 2007-12-17T12:43:00 </POSTDATE>
+In article &lt;u7bdm3tu3vjc5vof12f5mfu48e6einq ... @4ax.com&gt;,
+Howard Brazee  &lt;how ... @brazee.net&gt; wrote:
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt;But
+&gt;having or not having sequence numbers in paragraph names says nothing
+&gt;about the quality of the code.
+">
+
+Mr Brazee, some people feel *very* deeply about these matters... my memory
+is, admittedly, porous but I recall someone posting to this newsgroup
+claiming that changing the case in which code was written, from mixed to
+upper, changed it from 'good' to 'bad' code.
+
+DD
+</POST>
+<POST>
+<POSTER> &quot;Roger While&quot; &lt;si...@sim-basis.de&gt; </POSTER>
+<POSTDATE> 2007-12-17T13:29:00 </POSTDATE>
+&quot;Robert&quot; &lt;n ... @e.mail&gt; schrieb im Newsbeitrag
+news:cu1dm3131h913ngk02am3o26emhg6bq137@4ax.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Fri, 14 Dec 2007 16:41:39 +0100, &quot;Roger While&quot; &lt;si ... @sim-basis.de&gt;
+wrote:
+
+&gt; &gt;In W/S (Assuming no DECIMAL-POINT IS COMMA) -
+&gt; &gt;&lt;level wahtever&gt;  MYFLD  PIC ZZZ,Z   VALUE ALL '9'.
+
+&gt; &gt;Equivalent in PROCEDURE -
+&gt; &gt;MOVE ALL '9' TO MYFLD.
+
+&gt; &gt;AFAIK, num-edits are class alphanumeric and as such current
+&gt; &gt;compilers (tested MF/ACU) produce a value of
+&gt; &gt;99999 in MYFLD. (Which, if I am reading the past/current standards
+&gt; &gt;is correct). This seems to me to me to
+&gt; &gt;be non-intuitive. In fact, OC produces 999,9.
+&gt; &gt;Thoughts?
+
+&gt; Editing rules are likely to be set at execution time, based on locale. For
+instance, the
+&gt; currency symbol and whether to use a period or comma before pennies. If
+the initial value
+&gt; followed the rules for MOVE, that would complicate program loading  and
+concievably affect
+&gt; program logic. I believe the Standard is attempting to avoid that
+">
+
+inconvenience.
+
+Indeed, I am not disputing that. Moving of alpha-numeric to
+numeric(-edited) has always been a bone of contention.
+However, one ends up with a maybe not expected value in
+the field. Funnily enough this turned up with a user
+of OC who did not understand the warning that was given
+(and which does not appear with MF/ACU, with highest warning level).
+
+OC does initialization at module load time, not at compile time.
+
+Roger
+</POST>
+<POST>
+<POSTER> Robert &lt;n...@e.mail&gt; </POSTER>
+<POSTDATE> 2007-12-17T13:33:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Mon, 17 Dec 2007 10:16:27 -0700, Howard Brazee &lt;how ... @brazee.net&gt; wrote:
+&gt;On Sat, 15 Dec 2007 16:09:30 -0600, Robert &lt;n ... @e.mail&gt; wrote:
+
+&gt;&gt;Mainframe systems are hugely EXPENSIVE to the companies that run them.
+
+&gt;As are alternatives that provide the same security, reliability, and
+&gt;scale as mainframes.
+">
+
+z/OS scales from big to very big. It cannot run on handhelds, and isn't run on
+supercomputres. It isn't even economically practical on medium sized, which run VSE.
+
+Security is mostly a function of administration, or lack thereof. If z/OS were deployed on
+a hundred million home computers, some or most of them would be vulnerable.
+
+As for reliability, when is the last time you couldn't get dial tone?
+</POST>
+<POST>
+<POSTER> Howard Brazee &lt;how...@brazee.net&gt; </POSTER>
+<POSTDATE> 2007-12-17T13:58:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Mon, 17 Dec 2007 12:33:48 -0600, Robert &lt;n ... @e.mail&gt; wrote:
+&gt;&gt;&gt;Mainframe systems are hugely EXPENSIVE to the companies that run them.
+
+&gt;&gt;As are alternatives that provide the same security, reliability, and
+&gt;&gt;scale as mainframes.
+
+&gt;z/OS scales from big to very big. It cannot run on handhelds, and isn't run on
+&gt;supercomputres. It isn't even economically practical on medium sized, which run VSE.
+">
+
+Are you implying that tools should be optimized to fit their task?
+Or are you implying that one size should fit all?
+
+A train engine won't run a cargo ship, nor will it run a sports car.
+It is possible to use sports cars to carry large amounts cargo across
+the country if the cargo can be compartmentalized sufficiently.   And
+there is a business case for using sports cars for some deliveries.
+
+But different business needs have different optimal tools.
+
+It is easy to say that the solution that works for me is the Right
+solution.    But lots of hatred, wars, and missed opportunities are
+created by people who reject the notion that some other solution works
+for others.
+
+Trains, cargo ships, and big iron computers are soooo yesterday.
+Anybody who uses them obviously must not have done a careful analysis
+of fashions.
+
+<QUOTE PREVIOUSPOST="
+&gt;Security is mostly a function of administration, or lack thereof. If z/OS were deployed on
+&gt;a hundred million home computers, some or most of them would be vulnerable.
+">
+
+Therefore, Big Iron is dead.   We should replace it with a server farm
+- because if Z/OS could be vulnerable on a hundred million computers,
+obviously it isn't secure on a single secured spot.
+
+<QUOTE PREVIOUSPOST="
+&gt;As for reliability, when is the last time you couldn't get dial tone?
+">
+
+I'm not getting why you are asking this, but last week.
+</POST>
+<POST>
+<POSTER> Richard &lt;rip...@azonic.co.nz&gt; </POSTER>
+<POSTDATE> 2007-12-17T14:45:00 </POSTDATE>
+On Dec 17, 11:28 pm, docdw ... @panix.com () wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In article &lt;zbm9j.191960$_H4.138 ... @fe08.news.easynews.com&gt;,
+&gt; William M. Klein &lt;wmkl ... @nospam.netcom.com&gt; wrote:
+
+&gt; &gt;&quot;Richard&quot; &lt;rip ... @azonic.co.nz&gt; wrote in message
+&gt; &gt; news:39b46538-277e-4cff-84db-f9e0afc006fe@d27g2000prf.googlegroups.com ...
+&gt; &gt;&gt; On Dec 16, 1:28 pm, docdw ... @panix.com () wrote:
+&gt; &gt;&gt;&gt; In article
+&gt; &gt;&gt;&gt; &lt;8731d51b-1604-4c2c-8413-e189158ac ... @e25g2000prg.googlegroups.com&gt;,
+&gt; &gt;&lt;snip&gt;
+&gt; &gt;&gt; Yes, and is this example from one of your messages a result of this
+&gt; &gt;&gt; editing, or is it supposed to represent your 'Good Style' ?
+
+&gt; &gt;&gt; IF EIBCALEN = 0
+&gt; &gt;&gt;    PERFORM 0000-HOUSEKEEPING  THRU 0000-HSK-EX
+&gt; &gt;&gt; ELSE
+&gt; &gt;&gt;    PERFORM 5000-PROCESS-INPUT THRU 5000-PI-EX.
+
+&gt; &gt;&gt; Or was it merely a parody of the 1960s ?
+
+&gt; &gt;For those to whom &quot;EIBCALEN&quot; is not just &quot;any old&quot; variable name, the
+&gt; &gt;code above
+&gt; &gt;is VERY meaningful and represents a few lines of code that is in HOUNDREDS
+&gt; &gt;(thousands?) of COBOL programs in their shop.  If &quot;EIBCALEN' and what it mands
+&gt; &gt;to be &quot;0&quot; is NOT meaningful to you, then you would not know exactly how common
+&gt; &gt;this specific code sequence is.
+
+&gt; Perhaps, Mr Klein, Mr Plinston does not have the experiences others have
+&gt; garnered by working in 'a few' shops... but he seems happy and that's
+&gt; what's important.
+
+&gt; DD
+">
+
+I have plenty of experience in working in quite a few shops,and
+several other places which didn't use that term, but none of them were
+IBM DOS or MVS (where it seems EICALEN does have a meaning). My
+experience is in a variety of different places with systems that you
+may not have even heard of.
+
+This may be why the style that I use has not been constructed around
+HIPO charts, arcane IBMisms and other stuff that derives directly from
+the 60s.
+</POST>
+<POST>
+<POSTER> Richard &lt;rip...@azonic.co.nz&gt; </POSTER>
+<POSTDATE> 2007-12-17T15:15:00 </POSTDATE>
+On Dec 18, 6:12 am, Howard Brazee &lt;how ... @brazee.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sun, 16 Dec 2007 21:00:56 -0800 (PST), Richard
+
+&gt; &lt;rip ... @azonic.co.nz&gt; wrote:
+&gt; &gt;The particular issues that I would raise as a matter of '60s style'
+&gt; &gt;would be:
+
+&gt; &gt;Paragraph numbering is reminiscent of early Fortran and BASIC and is
+&gt; &gt;probably the result of designing using HIPO charts. This was really
+&gt; &gt;useful when it was necessary to find your way around a box of cards,
+&gt; &gt;and possibly even when green line printouts were the best means of
+&gt; &gt;browsing source.
+
+&gt; &gt;The whole idea of numbering that followed a hierarchical system is
+&gt; &gt;preconditioned by the concept that code follows a strict hierarchy of
+&gt; &gt;execution and follows from 60s style batch processing.
+
+&gt; &gt;PERFORM THRU predicts that a GO TO will be used to take early exit. If
+&gt; &gt;GO TO is not used then the THRU can be discarded. Any style that
+&gt; &gt;relies on GO TO and/or THRU is liable to a number of coding errors
+&gt; &gt;that the compiler cannot detect, and may be difficult and time
+&gt; &gt;consuming to resolve manually.
+
+&gt; &gt;Full Stops at the end of a line of code and the lack of scope
+&gt; &gt;terminators classifies this as 'two decades ago' at least.
+
+&gt; &gt;These are why I asked for clarification as to whether this was an
+&gt; &gt;example of Doc's 'Good Style', where the capitalizing into proper
+&gt; &gt;nouns appears to indicate some specific set of rules, or a parody in
+&gt; &gt;an archaic bad style.
+
+&gt; My measure of good code or bad code isn't whether the code is in
+&gt; fashion today or not.
+">
+
+Maybe, but the willingness of a new generation of programmers to work
+with such code may well depend on that. Cobol is dying along with
+those who wrote it since the 60s (which includes myself) because
+bright young programmers (which I would like to include myself) won't
+work with archaic styles.
+
+<QUOTE PREVIOUSPOST="
+&gt; Does the code do what it is supposed to do?
+">
+
+Almost any style can achieve that.
+
+<QUOTE PREVIOUSPOST="
+&gt; Is the code clear?
+">
+
+That may depend on 'what one is used to'. Code is usually clear to the
+one who wrote it. Shop standards try to ensure that all code is
+written the same so that it is 'clear' to all that have written code
+to that standard.
+
+To someone that hasn't stuck with the same set of shop standards since
+the 60s, such as those trained on Pascal, C++, Java, C#, it may not be
+clear at all.
+
+<QUOTE PREVIOUSPOST="
+&gt; Is the code easily maintainable?
+">
+
+Same as above. Those whose solution toolset is 'create a new object
+and put it in the collection', will not find PERFORM THRU to be
+'easily maintainable'.
+
+<QUOTE PREVIOUSPOST="
+&gt; Does the code handle exceptions effectively?
+&gt; and even
+&gt; Is the code efficient?
+
+&gt; Fashions come and go.   Some fashions are actually useful.    But
+&gt; having or not having sequence numbers in paragraph names says nothing
+&gt; about the quality of the code.
+">
+
+It will have something to do with the age of the programmer still
+willing to work on it.
+
+Actually, as I said before, the whole idea that the code is a simple
+hierarchy that can be broken down and sequenced so that the code is
+laid out like the execution sequence (ie a HIPO chart) locks the code
+into a batch type environment. If the sequence numbers aren't
+reflective of any structural hierarchy then what is the point of them
+at all ?, habit ?, ability to find them in the card trays ?
+
+GUI, OO, Web Sites, Web Services, aren't written as strict
+hierarchical structures. It is not fashion, it is function.
+
+Hierarchical sequence numbering also implies that it is the result of
+a strict 'top-down' design methodology, or 'stepwise refinement'
+perhaps. More recent methodologies are required when the application
+is not 'top-down'.
+</POST>
+<POST>
+<POSTER> Richard &lt;rip...@azonic.co.nz&gt; </POSTER>
+<POSTDATE> 2007-12-17T15:17:00 </POSTDATE>
+On Dec 18, 6:43 am, docdw ... @panix.com () wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In article &lt;u7bdm3tu3vjc5vof12f5mfu48e6einq ... @4ax.com&gt;,
+&gt; Howard Brazee  &lt;how ... @brazee.net&gt; wrote:
+
+&gt; [snip]
+
+&gt; &gt;But
+&gt; &gt;having or not having sequence numbers in paragraph names says nothing
+&gt; &gt;about the quality of the code.
+
+&gt; Mr Brazee, some people feel *very* deeply about these matters... my memory
+&gt; is, admittedly, porous but I recall someone posting to this newsgroup
+&gt; claiming that changing the case in which code was written, from mixed to
+&gt; upper, changed it from 'good' to 'bad' code.
+">
+
+It certainly would do in very many languages.
+
+(but you may not have known that).
+</POST>
+<POST>
+<POSTER> Richard &lt;rip...@azonic.co.nz&gt; </POSTER>
+<POSTDATE> 2007-12-17T15:35:00 </POSTDATE>
+On Dec 18, 7:58 am, Howard Brazee &lt;how ... @brazee.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Mon, 17 Dec 2007 12:33:48 -0600, Robert &lt;n ... @e.mail&gt; wrote:
+&gt; &gt;&gt;&gt;Mainframe systems are hugely EXPENSIVE to the companies that run them.
+
+&gt; &gt;&gt;As are alternatives that provide the same security, reliability, and
+&gt; &gt;&gt;scale as mainframes.
+
+&gt; &gt;z/OS scales from big to very big. It cannot run on handhelds, and isn't run on
+&gt; &gt;supercomputres. It isn't even economically practical on medium sized, which run VSE.
+
+&gt; Are you implying that tools should be optimized to fit their task?
+&gt; Or are you implying that one size should fit all?
+">
+
+I think that it was you that claimed 'scale'. Linux, in fact, can and
+does run on watches and some of the largest supercomputers. It is not
+that it should, but it can.
+
+<QUOTE PREVIOUSPOST="
+&gt; A train engine won't run a cargo ship,
+">
+
+I wonder why you would imagine this. The same engines have been used
+in both trains and ships.
+
+<QUOTE PREVIOUSPOST="
+&gt; nor will it run a sports car.
+">
+
+Interestingly, they have. The Bugatti Royale did use a train engine,
+One of Bugatti's main business was engines for railcars.
+
+<QUOTE PREVIOUSPOST="
+&gt; It is possible to use sports cars to carry large amounts cargo across
+&gt; the country if the cargo can be compartmentalized sufficiently.   And
+&gt; there is a business case for using sports cars for some deliveries.
+
+&gt; But different business needs have different optimal tools.
+
+&gt; It is easy to say that the solution that works for me is the Right
+&gt; solution.    But lots of hatred, wars, and missed opportunities are
+&gt; created by people who reject the notion that some other solution works
+&gt; for others.
+
+&gt; Trains, cargo ships, and big iron computers are soooo yesterday.
+&gt; Anybody who uses them obviously must not have done a careful analysis
+&gt; of fashions.
+
+&gt; &gt;Security is mostly a function of administration, or lack thereof. If z/OS were deployed on
+&gt; &gt;a hundred million home computers, some or most of them would be vulnerable.
+
+&gt; Therefore, Big Iron is dead.   We should replace it with a server farm
+&gt; - because if Z/OS could be vulnerable on a hundred million computers,
+&gt; obviously it isn't secure on a single secured spot.
+">
+
+I think it was you who claimed 'security' for mainframes. This
+security is not inherent in the design but is the result of
+administration.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;As for reliability, when is the last time you couldn't get dial tone?
+
+&gt; I'm not getting why you are asking this, but last week.
+">
+
+IBM big iron mainframes certainly are reliable, but so are other
+systems.
+</POST>
+<POST>
+<POSTER> Howard Brazee &lt;how...@brazee.net&gt; </POSTER>
+<POSTDATE> 2007-12-17T15:44:00 </POSTDATE>
+On Mon, 17 Dec 2007 12:15:41 -0800 (PST), Richard
+
+<QUOTE PREVIOUSPOST="
+&lt;rip ... @azonic.co.nz&gt; wrote:
+&gt;Actually, as I said before, the whole idea that the code is a simple
+&gt;hierarchy that can be broken down and sequenced so that the code is
+&gt;laid out like the execution sequence (ie a HIPO chart) locks the code
+&gt;into a batch type environment. If the sequence numbers aren't
+&gt;reflective of any structural hierarchy then what is the point of them
+&gt;at all ?, habit ?, ability to find them in the card trays ?
+">
+
+Or in the print-out.   But having little or no utility doesn't make
+the code bad unless it makes them bad by some measure more that can be
+measured by criteria more meaningful than &quot;it is sooo 1960s&quot;.
+</POST>
+<POST>
+<POSTER> Howard Brazee &lt;how...@brazee.net&gt; </POSTER>
+<POSTDATE> 2007-12-17T15:46:00 </POSTDATE>
+On Mon, 17 Dec 2007 12:15:41 -0800 (PST), Richard
+
+<QUOTE PREVIOUSPOST="
+&lt;rip ... @azonic.co.nz&gt; wrote:
+&gt;It will have something to do with the age of the programmer still
+&gt;willing to work on it.
+">
+
+I guess there is an argument that fashion can count, even when
+function doesn't count.    The CEO wearing a tie might lose some blood
+flow to the brain but makes sure everybody know his position.
+</POST>
+</TEXT>
+</BODY>
+</DOC>

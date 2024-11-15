@@ -1,0 +1,526 @@
+<DOC>
+<DOCID> eng-NG-31-126392-9136379 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-19T10:54:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Large Database System
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> raidv...@yahoo.com </POSTER>
+<POSTDATE> 2007-10-19T10:54:00 </POSTDATE>
+Hi there,
+
+We have been looking for some time now for a database system that can
+fit a large distributed computing project, but we haven't been able to
+find one.
+I was hoping that someone can point us in the right direction or give
+us some advice.
+
+Here is what we need. Mind you, these are ideal requirements so we do
+not expect to find something that fits entirely into what we need
+but we hope to get somewhat closer to that.
+
+We need a database/file system:
+1. built in C preferrably ANSI C, so that we can port it to Linux/
+Unix, Windows, Mac and various other platforms; if it can work on
+Linux only then it is OK for now
+2. that has a public domain or GPL/LGPL licence and source code access
+3. uses hashing or b-trees or a similar structure
+4. has support for files in the range of 1-10 GB; if it can get to 1
+GB only, that should still be OK
+5. can work with an unlimited number of files on a local machine; we
+don't need access over a network, just local file access
+6. that is fairly simple (i.e. library-style, key/data records); it
+doesn't have to have SQL support of any kind; as long as we can add,
+update, possibly delete data, browse through the records and filter/
+query them it should be OK; no other features are required, like
+backup, restore, users &amp; security, stored procedures...
+7. reliable if possible
+8 .local transactional support if possible; there is no need for
+distributed transactions
+9. fast data access if possible
+
+We can not use any of the major commercial databases (e.g. Oracle, SQL
+Server, DB2 or larger systems like Daytona...) obviously because of
+licensing and source code issues. We looked closer to MySQL,
+PostgreSQL but they are too big and have way too many features that we
+do not need. We need to be able to install a database/file system on
+possibly tens of thousands of machines and we also expect it to work
+without administration.
+On top of that, we might end up with thousands of files of different
+sizes on each machine. Are there any embedded (i.e. &quot;lighter&quot;)
+versions of these two databases?
+We haven't been able to find anything like that. I am not sure how
+much work would involve in &quot;trimming&quot; down some of these databases,
+but that doesn't seem to be too easy to do.
+Berkeley-DB would have been the best but is now under Oracle hands and
+the licence has changed. TinyCDB was a close call, but the fact
+that we need to rebuild the database for each data update is making it
+unfeasible for large files (i.e. ~1Gb). SQL Lite is very interesting,
+but it has many features that we don't need, like SQL support.
+
+Right now we are using plain XML files so anything else would be a
+great improvement.
+
+Any suggestions or links to sites or papers or books would be welcome.
+Any help would be greatly appreciated.
+
+If this is not in the proper forum I appreciate if someone can move
+the post to the right location or point us to the right one.
+
+Thanks in advance.
+
+Best regards,
+Ovidiu Anghelidi
+ovi ... @intelligencerealm.com
+
+Artificial Intelligence - Reverse Engineering The Brain
+</POST>
+<POST>
+<POSTER> user923005 &lt;dcor...@connx.com&gt; </POSTER>
+<POSTDATE> 2007-10-19T15:11:00 </POSTDATE>
+On Oct 19, 7:54 am, raidv ... @yahoo.com wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi there,
+
+&gt; We have been looking for some time now for a database system that can
+&gt; fit a large distributed computing project, but we haven't been able to
+&gt; find one.
+&gt; I was hoping that someone can point us in the right direction or give
+&gt; us some advice.
+
+&gt; Here is what we need. Mind you, these are ideal requirements so we do
+&gt; not expect to find something that fits entirely into what we need
+&gt; but we hope to get somewhat closer to that.
+
+&gt; We need a database/file system:
+&gt; 1. built in C preferrably ANSI C, so that we can port it to Linux/
+&gt; Unix, Windows, Mac and various other platforms; if it can work on
+&gt; Linux only then it is OK for now
+&gt; 2. that has a public domain or GPL/LGPL licence and source code access
+&gt; 3. uses hashing or b-trees or a similar structure
+&gt; 4. has support for files in the range of 1-10 GB; if it can get to 1
+&gt; GB only, that should still be OK
+&gt; 5. can work with an unlimited number of files on a local machine; we
+&gt; don't need access over a network, just local file access
+&gt; 6. that is fairly simple (i.e. library-style, key/data records); it
+&gt; doesn't have to have SQL support of any kind; as long as we can add,
+&gt; update, possibly delete data, browse through the records and filter/
+&gt; query them it should be OK; no other features are required, like
+&gt; backup, restore, users &amp; security, stored procedures...
+&gt; 7. reliable if possible
+&gt; 8 .local transactional support if possible; there is no need for
+&gt; distributed transactions
+&gt; 9. fast data access if possible
+
+&gt; We can not use any of the major commercial databases (e.g. Oracle, SQL
+&gt; Server, DB2 or larger systems like Daytona...) obviously because of
+&gt; licensing and source code issues. We looked closer to MySQL,
+&gt; PostgreSQL but they are too big and have way too many features that we
+&gt; do not need. We need to be able to install a database/file system on
+&gt; possibly tens of thousands of machines and we also expect it to work
+&gt; without administration.
+">
+
+Say that last sentence out loud in front of a group of DBAs and I
+guess you will get a little bit of mirth.  This statement alone is
+proof that your project will fail.  Every database system (even simple
+keysets like the Sleepycat database) needs administration.
+
+Listen, you are going to have tens of thousands of points of failure
+in your system.  Is that what you really want?  If you have (for
+instance) 20,000 machines getting a big pile of data shoved down their
+throat, you pretty much have a guarantee that a few hundred are going
+to be out of space and that once a month a disk drive is going to fail
+somewhere.
+
+<QUOTE PREVIOUSPOST="
+&gt; On top of that, we might end up with thousands of files of different
+&gt; sizes on each machine. Are there any embedded (i.e. &quot;lighter&quot;)
+&gt; versions of these two databases?
+">
+
+Do you know what happens to performance when you put thousands of
+active files on a machine?  Pretend that you are a disk head and
+imagine the jostling you are going to receive.
+
+<QUOTE PREVIOUSPOST="
+&gt; We haven't been able to find anything like that. I am not sure how
+&gt; much work would involve in &quot;trimming&quot; down some of these databases,
+&gt; but that doesn't seem to be too easy to do.
+">
+
+They are the size that they are for a reason.  It's not fat that gets
+trimmed off to scale things down, it's muscle.
+
+<QUOTE PREVIOUSPOST="
+&gt; Berkeley-DB would have been the best but is now under Oracle hands and
+&gt; the licence has changed. TinyCDB was a close call, but the fact
+&gt; that we need to rebuild the database for each data update is making it
+&gt; unfeasible for large files (i.e. ~1Gb). SQL Lite is very interesting,
+&gt; but it has many features that we don't need, like SQL support.
+">
+
+You do know that SQLite is a single user database?
+
+<QUOTE PREVIOUSPOST="
+&gt; Right now we are using plain XML files so anything else would be a
+&gt; great improvement.
+">
+
+I'll say.
+
+<QUOTE PREVIOUSPOST="
+&gt; Any suggestions or links to sites or papers or books would be welcome.
+&gt; Any help would be greatly appreciated.
+
+&gt; If this is not in the proper forum I appreciate if someone can move
+&gt; the post to the right location or point us to the right one.
+">
+
+The right thing to do is go to SourceForge and execute a few
+searches.  The pedagogic answer to to refer to newsgroup
+news:comp.sources.wanted, but it's a ghost town.
+
+I suspect that you have no idea what you are doing.  Do you have any
+concept about what is going to happen when your problem scales to
+10GB?  Get a consultant who understands the problem space or you'll be
+sorry.  By the way, this is definitely not the right forum for your
+post -- which does not exactly make it appear that you have anything
+on the ball.  (Really a newsgroup post in general is the wrong
+approach here).
+
+I guess that FastDB or GigaBase might be suitable (WARNING!  One
+writer at a time).  I also guess that you are going to severely need
+the capabilities that you do not think you need at some point.
+http://www.garret.ru/~knizhnik/databases.html
+
+Another possibility is QDBM:
+http://sourceforge.net/projects/qdbm/
+I guess that you will like this one but also that it is the wrong
+choice.
+
+I don't know anything about your project but I think you need to
+rethink your big picture of how you are going to solve it.
+</POST>
+<POST>
+<POSTER> raidv...@yahoo.com </POSTER>
+<POSTDATE> 2007-10-21T01:53:00 </POSTDATE>
+Hi there,
+
+Thank you for taking the time to answer to the post.
+
+<QUOTE PREVIOUSPOST="
+&gt; Say that last sentence out loud in front of a group of DBAs and I
+&gt; guess you will get a little bit of mirth.  This statement alone is
+&gt; proof that your project will fail.
+">
+
+We are using the BOINC distributed architecture for now, which seems
+to already be working on hundreds of thousands of machines. We want to
+add database capabilities to the data files that are being processed.
+
+<QUOTE PREVIOUSPOST="
+&gt; Every database system (even simple
+&gt; keysets like the Sleepycat database) needs administration.
+">
+
+Because of the sheer number of machines involved in computations we
+need to avoid that. If it will not be possible we'll have to stick
+with XML until we find something better.
+
+<QUOTE PREVIOUSPOST="
+&gt; Listen, you are going to have tens of thousands of points of failure
+&gt; in your system.  Is that what you really want?  If you have (for
+&gt; instance) 20,000 machines getting a big pile of data shoved down their
+&gt; throat, you pretty much have a guarantee that a few hundred are going
+&gt; to be out of space and that once a month a disk drive is going to fail
+&gt; somewhere
+">
+
+That is not a concern. When you are going to have the same data
+replicated on 1 to 10 machines, reliability is no longer becoming an
+issue.
+
+<QUOTE PREVIOUSPOST="
+&gt; Do you know what happens to performance when you put thousands of
+&gt; active files on a machine?  Pretend that you are a disk head and
+&gt; imagine the jostling you are going to receive.
+">
+
+I haven't been able to provide more details about the project but most
+of the data will be historic in nature. Once a calculation is
+performed that data will be stored and in most cases will no longer be
+active. It will still be needed though. So having thousands of files
+on a machine is not so bad. This is a not a classic database
+application and that is why it probably seems strange, that features
+like reliability which should be on top, are listed as last and are
+not a concern.
+
+<QUOTE PREVIOUSPOST="
+&gt; They are the size that they are for a reason.  It's not fat that gets
+&gt; trimmed off to scale things down, it's muscle.
+&gt; You do know that SQLite is a single user database?
+">
+
+That is exactly what we need. Data will be sent over the Internet to
+other machines which will also use a single user database.
+
+<QUOTE PREVIOUSPOST="
+&gt; The right thing to do is go to SourceForge and execute a few
+&gt; searches.  The pedagogic answer to to refer to newsgroup
+&gt; news:comp.sources.wanted, but it's a ghost town.
+">
+
+I have looked over there but I should probably search again.
+Thank you.
+
+<QUOTE PREVIOUSPOST="
+&gt; I suspect that you have no idea what you are doing.  Do you have any
+&gt; concept about what is going to happen when your problem scales to
+&gt; 10GB?
+">
+
+If things go bad at 10 GB we can just go with 1 GB or if 1 GB is not
+good we can go with 100 MB. We can always increase the number of files
+and distribute the data on more machines. The ideal solution is to
+have the data in large compact files.
+
+<QUOTE PREVIOUSPOST="
+&gt; Get a consultant who understands the problem space or you'll be
+&gt; sorry.  By the way, this is definitely not the right forum for your
+&gt; post -- which does not exactly make it appear that you have anything
+&gt; on the ball.  (Really a newsgroup post in general is the wrong
+&gt; approach here).
+&gt; I guess that FastDB or GigaBase might be suitable (WARNING!  One
+&gt; writer at a time).  I also guess that you are going to severely need
+&gt; the capabilities that you do not think you need at some point. http://www.garret.ru/~knizhnik/databases.html
+">
+
+Finding out about these two databases is a step forward and it seems
+that is was worthy to post it in here. Again, I appreciate your time.
+We will look closer at these.
+
+<QUOTE PREVIOUSPOST="
+&gt; Another possibility is QDBM: http://sourceforge.net/projects/qdbm/
+&gt; I guess that you will like this one but also that it is the wrong
+&gt; choice.
+">
+
+I have looked at it before. It appears to be quite new and there are
+not many people using it, and we do not want to go a narrow road that
+is less traveled.
+
+<QUOTE PREVIOUSPOST="
+&gt; I don't know anything about your project but I think you need to
+&gt; rethink your big picture of how you are going to solve it.
+">
+
+Thanks again.
+Ovidiu
+</POST>
+<POST>
+<POSTER> CBFalconer &lt;cbfalco...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-10-19T16:17:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+raidv ... @yahoo.com wrote:
+
+&gt; We have been looking for some time now for a database system that
+&gt; can fit a large distributed computing project, but we haven't been
+&gt; able to find one. I was hoping that someone can point us in the
+&gt; right direction or give us some advice.
+
+&gt; Here is what we need. Mind you, these are ideal requirements so we
+&gt; do not expect to find something that fits entirely into what we
+&gt; need but we hope to get somewhat closer to that.
+
+&gt; We need a database/file system:
+&gt; 1. built in C preferrably ANSI C, so that we can port it to Linux/
+&gt;    Unix, Windows, Mac and various other platforms; if it can work
+&gt;    on Linux only then it is OK for now
+&gt; 2. that has a public domain or GPL/LGPL licence and source code
+&gt;    access
+&gt; 3. uses hashing or b-trees or a similar structure
+&gt; 4. has support for files in the range of 1-10 GB; if it can get to
+&gt;    1 GB only, that should still be OK
+&gt; 5. can work with an unlimited number of files on a local machine;
+&gt;    we don't need access over a network, just local file access
+&gt; 6. that is fairly simple (i.e. library-style, key/data records);
+&gt;    it doesn't have to have SQL support of any kind; as long as we
+&gt;    can add, update, possibly delete data, browse through the
+&gt;    records and filter/query them it should be OK; no other
+&gt;    features are required, like backup, restore, users &amp; security,
+&gt;    stored procedures...
+&gt; 7. reliable if possible
+&gt; 8  .local transactional support if possible; there is no need for
+&gt;    distributed transactions
+&gt; 9. fast data access if possible
+">
+
+We already have such a thing in hashlib, with the exception of the
+ability to easily store and recall from external files.  Such a
+facility can be added, but requires that the file mechanism knows
+all about the structure of the database.  So far hashlib is
+completely independent of such structure.  Available under GPL,
+written in purely standard C:
+
+&lt; http://cbfalconer.home.att.net/download/ &gt;
+
+--
+Chuck F (cbfalconer at maineline dot net)
+Available for consulting/temporary embedded and systems.
+&lt; http://cbfalconer.home.att.net &gt;
+
+--
+Posted via a free Usenet account from http://www.teranews.com
+</POST>
+<POST>
+<POSTER> user923005 &lt;dcor...@connx.com&gt; </POSTER>
+<POSTDATE> 2007-10-22T15:32:00 </POSTDATE>
+On Oct 20, 10:53 pm, raidv ... @yahoo.com wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi there,
+
+&gt; Thank you for taking the time to answer to the post.
+
+&gt; &gt; Say that last sentence out loud in front of a group of DBAs and I
+&gt; &gt; guess you will get a little bit of mirth.  This statement alone is
+&gt; &gt; proof that your project will fail.
+
+&gt; We are using the BOINC distributed architecture for now, which seems
+&gt; to already be working on hundreds of thousands of machines. We want to
+&gt; add database capabilities to the data files that are being processed.
+
+&gt; &gt; Every database system (even simple
+&gt; &gt; keysets like the Sleepycat database) needs administration.
+
+&gt; Because of the sheer number of machines involved in computations we
+&gt; need to avoid that. If it will not be possible we'll have to stick
+&gt; with XML until we find something better.
+">
+
+I do not understand why you don't want to store your thousands of
+files on a single database server and then let the machines check out
+problems from the database server.  It seems a much less complicated
+solution to me.  The administration is now confined to a single
+machine.
+
+I imagine it like this:
+The data is loaded into a single, whopping database on a very hefty
+machine (Ultra320 SCSI disks, 20 GB ram, 4 cores or more).  There is a
+&quot;problem&quot; table that stores the data set information and also the
+status of the problem (e.g. 'verified', 'solved', 'checked out',
+'unsolved').  The users connect to the database and check out unsolved
+problems until all are solved and then check out solved problems until
+all of them are verified.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Listen, you are going to have tens of thousands of points of failure
+&gt; &gt; in your system.  Is that what you really want?  If you have (for
+&gt; &gt; instance) 20,000 machines getting a big pile of data shoved down their
+&gt; &gt; throat, you pretty much have a guarantee that a few hundred are going
+&gt; &gt; to be out of space and that once a month a disk drive is going to fail
+&gt; &gt; somewhere
+
+&gt; That is not a concern. When you are going to have the same data
+&gt; replicated on 1 to 10 machines, reliability is no longer becoming an
+&gt; issue.
+">
+
+What if you get 4 different answers?  What if the data is damaged on
+three of them?  Reliability is always an issue.  The more complicated
+the system, the more difficult it will become to verify validity of
+your answers.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Do you know what happens to performance when you put thousands of
+&gt; &gt; active files on a machine?  Pretend that you are a disk head and
+&gt; &gt; imagine the jostling you are going to receive.
+
+&gt; I haven't been able to provide more details about the project but most
+&gt; of the data will be historic in nature. Once a calculation is
+&gt; performed that data will be stored and in most cases will no longer be
+&gt; active. It will still be needed though. So having thousands of files
+&gt; on a machine is not so bad. This is a not a classic database
+&gt; application and that is why it probably seems strange, that features
+&gt; like reliability which should be on top, are listed as last and are
+&gt; not a concern.
+">
+
+Data reliability is always a concern.  If you cannot verify the
+reliability of the data, then nobody should trust your answers.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; They are the size that they are for a reason.  It's not fat that gets
+&gt; &gt; trimmed off to scale things down, it's muscle.
+&gt; &gt; You do know that SQLite is a single user database?
+
+&gt; That is exactly what we need. Data will be sent over the Internet to
+&gt; other machines which will also use a single user database.
+">
+
+How will you coordinate who is working on what steps of the problem?
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; The right thing to do is go to SourceForge and execute a few
+&gt; &gt; searches.  The pedagogic answer to to refer to newsgroup
+&gt; &gt; news:comp.sources.wanted, but it's a ghost town.
+
+&gt; I have looked over there but I should probably search again.
+&gt; Thank you.
+
+&gt; &gt; I suspect that you have no idea what you are doing.  Do you have any
+&gt; &gt; concept about what is going to happen when your problem scales to
+&gt; &gt; 10GB?
+
+&gt; If things go bad at 10 GB we can just go with 1 GB or if 1 GB is not
+&gt; good we can go with 100 MB. We can always increase the number of files
+&gt; and distribute the data on more machines. The ideal solution is to
+&gt; have the data in large compact files.
+
+&gt; &gt; Get a consultant who understands the problem space or you'll be
+&gt; &gt; sorry.  By the way, this is definitely not the right forum for your
+&gt; &gt; post -- which does not exactly make it appear that you have anything
+&gt; &gt; on the ball.  (Really a newsgroup post in general is the wrong
+&gt; &gt; approach here).
+&gt; &gt; I guess that FastDB or GigaBase might be suitable (WARNING!  One
+&gt; &gt; writer at a time).  I also guess that you are going to severely need
+&gt; &gt; the capabilities that you do not think you need at some point. http://www.garret.ru/~knizhnik/databases.html
+
+&gt; Finding out about these two databases is a step forward and it seems
+&gt; that is was worthy to post it in here. Again, I appreciate your time.
+&gt; We will look closer at these.
+
+&gt; &gt; Another possibility is QDBM: http://sourceforge.net/projects/qdbm/
+&gt; &gt; I guess that you will like this one but also that it is the wrong
+&gt; &gt; choice.
+
+&gt; I have looked at it before. It appears to be quite new and there are
+&gt; not many people using it, and we do not want to go a narrow road that
+&gt; is less traveled.
+
+&gt; &gt; I don't know anything about your project but I think you need to
+&gt; &gt; rethink your big picture of how you are going to solve it.
+">
+
+Since single user data access is what you are after, FastDB might be
+interesting.  If you compile it for 64 bit UNIX you can have files of
+arbitrary size, and they are memory mapped so access should be very
+fast.  I have done experiments with FastDB and its performance is
+quite good.  You can use it as a simple file source but it also has
+advanced capabilities.  The footprint is very small.
+
+I think we shold move the discussions to news:comp.programming, and so
+I have set the follow-ups.
+</POST>
+</TEXT>
+</BODY>
+</DOC>

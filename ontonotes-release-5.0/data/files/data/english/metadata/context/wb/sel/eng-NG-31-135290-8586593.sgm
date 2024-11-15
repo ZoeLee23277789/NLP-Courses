@@ -1,0 +1,305 @@
+<DOC>
+<DOCID> eng-NG-31-135290-8586593 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-25T12:43:00 </DATETIME>
+<BODY>
+<HEADLINE>
+[OT} simple math problem (cubic easing)
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Roy Pardi &lt;li...@roypardi.com&gt; </POSTER>
+<POSTDATE> 2007-08-25T12:43:00 </POSTDATE>
+This is sort of OT but maybe some can give me a nudge in the right direction:
+
+I am writing a motor controller (will be in C/Wiring but modeling it in
+Actionscript). To avoid &quot;jerking&quot; when the motor starts and stops I want to
+ramp the motor speed. The standard way of doing this is through a
+trapezoidal velocity profile: constant acceleration by fixed amount at
+beginning + end of move. i.e.:
+
+-----------------------------------------
+/                                                 \
+/                                                   \
+
+This works fine but gives a rather &quot;flat&quot; motion profile and I am trying to
+use Penner's 'easeInOutCubic' function instead.
+
+Ok - here's the question (if you have read this far...;-):
+I need to map the  distance-based acceleration that the function yields to
+values for controlling the motor speed so I can ramp up/down the motor
+speed based on the distance to be traveled.
+
+The motor is being PWM with a start speed of 60 and a max speed of 255 - so
+I need to ramp proportionally from 60 &gt; 255 and back down to 60 over an
+arbitrary distance.
+
+Seems like it is a simple math problem since I know the acceleration- but I
+am having trouble getting my brain around it. The basic  easeInOutCubic is
+below. Once I know the acceleration at each frame, where I am stuck is
+applying that to adjust motor speed.
+
+Whew!~
+
+--Roy
+
+//this is AS 2-
+function easeInOutCubic(t, b, c, d) {
+if ((t /= d/2)&lt;1) {
+return c/2*Math.pow(t, 3)+b;
+}
+return c/2*(Math.pow(t-2, 3)+2)+b;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+///
+ball_mc = this.createEmptyMovieClip(&quot;ball&quot;, this.getNextHighestDepth());
+ball_mc.moveTo(0, 0);
+ball_mc.lineStyle(8, 0x000000);
+ball_mc.lineTo(50, 0);
+ball_mc.lineTo(50, 50);
+ball_mc.lineTo(0, 50);
+ball_mc.lineTo(0, 0);
+ball_mc._y = 100;
+//
+
+ball_mc.time     = 0; //time
+ball_mc.begin    = ball_mc._x; //begin
+ball_mc.change   =  Stage.width - (ball_mc.begin + ball_mc._width); //change
+ball_mc.duration = 20; //duration
+ball_mc.active   = true;
+ball_mc.lastX    = ball_mc.begin;
+//
+ball_mc.onEnterFrame = function() {
+if (this.active) {
+xPos = easeInOutCubic(ball_mc.time++, this.begin, this.change,
+this.duration);
+acceleration =xPos-this.lastX;
+//
+trace(acceleration);
+//
+this.lastX = xPos;
+this._x = xPos;
+if (this.time &gt;this.duration) {
+this.active = false;
+}
+}
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+//
+//
+
+--
+-----------------------------------------------------------------
+Studio Site Updated!
+http://www.roypardi.com/
+
+_______________________________________________
+Flashcod ... @chattyfig.figleaf.com
+To change your subscription options or search the archive:
+http://chattyfig.figleaf.com/mailman/listinfo/flashcoders
+
+Brought to you by Fig Leaf Software
+Premier Authorized Adobe Consulting and Training
+http://www.figleaf.com
+http://training.figleaf.com
+</POST>
+<POST>
+<POSTER> Rich Shupe &lt;li...@fmaonline.com&gt; </POSTER>
+<POSTDATE> 2007-08-25T16:27:00 </POSTDATE>
+Hi Roy. It seems like it's been decades since I said hello.
+
+I'm not sure I understand exactly what you're doing, but I gave it a shot.
+If you're trying to get a value for motor speed that is between 60 and 255,
+here's a way to do it without relying on a fixed distance. This seems goofy,
+but it was the first thing that popped into my head.
+
+Determine the value for motor acceleration directly. The problem is, the
+easing equations return the final value of the prop in question, so you
+can't send motor speed to easeInOutCubic the way you can send distance. That
+is, you can't get 60 to 255 to 60. You might be able to switch to Back
+instead of Cubic, if you want to simplify things, but I didn't try that.
+Instead, I used easeIn and then used the same values in reverse, to simulate
+your desired easeInOutCubic.
+
+The only flaw I see in this idea--which may not apply in your situation--is
+that it will take a lot longer to finish the sequence over longer distances.
+If you use the trapezoidal velocity profile you cited, the motor will run at
+max velocity for the longest of any velocity. Using this simulated
+easeInOutCubic, it's only at max velocity for one iteration. For short
+distances that might be fine, but if you had to travel a long distance, it
+would take a lot longer to get there.
+
+This example just traces the actual motor speed. I understood your post to
+say that it should be between 60 and 255. However, I used variables so you
+could change that if I'm wrong.
+
+//arbitrary distance
+var distanceStart:Number = 0;
+var distanceFin:Number = 50;
+var distanceHalf:Number = (distanceFin - distanceStart) / 2;
+var timeIncr:Number = 0;
+
+var minMotorSpeed:Number = 60;
+var maxMotorSpeed:Number = 255;
+//one simple way to avoid exeeding the max value by the min value is to
+//  run the equations starting with zero. Can compensate another way.
+var easeStart:Number = 0;
+var easeFin:Number = maxMotorSpeed - minMotorSpeed;
+
+var accArray:Array = new Array();
+
+this.onEnterFrame = function() {
+var motorSpeed:Number;
+var motorAcc:Number;
+if (timeIncr &lt;= distanceHalf) {
+motorAcc = easeInCubic(timeIncr, easeStart, easeFin, distanceHalf);
+//store in array, avoiding duplication of last value
+if (timeIncr &lt; distanceHalf) { accArray.push(motorAcc); }
+motorSpeed = minMotorSpeed + motorAcc;
+} else {
+motorSpeed = minMotorSpeed + accArray.pop();
+}
+//the value needed:
+trace(timeIncr + &quot; &quot; + motorSpeed);
+
+if (timeIncr &gt;= distanceFin) {delete this.onEnterFrame;}
+timeIncr++;
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+function easeInCubic(t:Number, b:Number, c:Number, d:Number):Number {
+return c * (t /= d) * t * t + b;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+_______________________________________________
+Flashcod ... @chattyfig.figleaf.com
+To change your subscription options or search the archive:
+http://chattyfig.figleaf.com/mailman/listinfo/flashcoders
+
+Brought to you by Fig Leaf Software
+Premier Authorized Adobe Consulting and Training
+http://www.figleaf.com
+http://training.figleaf.com
+</POST>
+<POST>
+<POSTER> &quot;Mendelsohn, Michael&quot; &lt;michael.mendels...@fmglobal.com&gt; </POSTER>
+<POSTDATE> 2007-08-27T11:30:00 </POSTDATE>
+Hi Roy...
+
+How ya been?  You could perhaps try something like this.
+
+- Michael M.
+
+import mx.transitions.Tween;
+import mx.transitions.easing.*;
+
+var YourDuration:Number = 25
+var rampUp:Object = new Tween(_root.mc, &quot;_x&quot;, Regular.easeIn, 0,100,20,
+false);
+rampUp.onMotionFinished = function():Void{
+var continueTo:Object = new Tween(_root.mc, &quot;_x&quot;, None.easeNone,
+100, 300, YourDuration, false);
+continueTo.onMotionFinished = function():Void{
+var rampDown:Object = new Tween(_root.mc, &quot;_x&quot;,
+Regular.easeOut, 300, 400, 20, false);
+}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+_______________________________________________
+Flashcod ... @chattyfig.figleaf.com
+To change your subscription options or search the archive:
+http://chattyfig.figleaf.com/mailman/listinfo/flashcoders
+
+Brought to you by Fig Leaf Software
+Premier Authorized Adobe Consulting and Training
+http://www.figleaf.com
+http://training.figleaf.com
+</POST>
+<POST>
+<POSTER> Roy Pardi &lt;li...@roypardi.com&gt; </POSTER>
+<POSTDATE> 2007-08-30T10:34:00 </POSTDATE>
+At 11:30 AM -0400 8/27/07, Mendelsohn, Michael wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;Hi Roy...
+
+&gt;How ya been?  You could perhaps try something like this.
+
+&gt;- Michael M.
+">
+
+hey Michael~
+
+Things are good; hope all is well with you! The end code for this will be
+in the C-like language that the Wiring microcontroller uses but I'm
+modeling it in Flash because it's faster to rough out the code (compared to
+compiling + downloading it to the board each time I want to run it) so I
+can't use Flash specific stuff. (though I guess the Tween class is based on
+the Penner easing stuff I am using).
+
+Rich Shupe gave me a good push and I was able to get a workable routine
+together. On another list someone suggested using a bezier curve to handle
+the easing - and I think that has promise since I can control the easing
+rate based on distance traveled more directly.
+
+--Roy
+
+<QUOTE PREVIOUSPOST="
+&gt;import mx.transitions.Tween;
+&gt;import mx.transitions.easing.*;
+
+&gt;var YourDuration:Number = 25
+&gt;var rampUp:Object = new Tween(_root.mc, &quot;_x&quot;, Regular.easeIn, 0,100,20,
+&gt;false);
+&gt;rampUp.onMotionFinished = function():Void{
+&gt;    var continueTo:Object = new Tween(_root.mc, &quot;_x&quot;, None.easeNone,
+&gt;100, 300, YourDuration, false);
+&gt;    continueTo.onMotionFinished = function():Void{
+&gt;            var rampDown:Object = new Tween(_root.mc, &quot;_x&quot;,
+&gt;Regular.easeOut, 300, 400, 20, false);
+&gt;    }
+&gt;}
+
+&gt;_______________________________________________
+&gt;Flashcod ... @chattyfig.figleaf.com
+&gt;To change your subscription options or search the archive:
+&gt; http://chattyfig.figleaf.com/mailman/listinfo/flashcoders
+
+&gt;Brought to you by Fig Leaf Software
+&gt;Premier Authorized Adobe Consulting and Training
+&gt; http://www.figleaf.com
+&gt; http://training.figleaf.com
+">
+
+--
+-----------------------------------------------------------------
+Studio Site Updated!
+http://www.roypardi.com/
+
+_______________________________________________
+Flashcod ... @chattyfig.figleaf.com
+To change your subscription options or search the archive:
+http://chattyfig.figleaf.com/mailman/listinfo/flashcoders
+
+Brought to you by Fig Leaf Software
+Premier Authorized Adobe Consulting and Training
+http://www.figleaf.com
+http://training.figleaf.com
+</POST>
+</TEXT>
+</BODY>
+</DOC>

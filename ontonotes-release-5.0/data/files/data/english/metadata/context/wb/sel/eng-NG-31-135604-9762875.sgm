@@ -1,0 +1,441 @@
+<DOC>
+<DOCID> eng-NG-31-135604-9762875 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-12-04T05:26:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Diplay 2D data
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Lasse Clausen &lt;la...@lbnc.de&gt; </POSTER>
+<POSTDATE> 2007-12-04T05:26:00 </POSTDATE>
+Hi there,
+
+in one of the recent posts there was a link to Brian Larsen's homepage
+and in particular his imagesc.pro. This reminded me that I wanted to
+ask a question related to the matter of image display with axes:
+
+What's the best way to display 2D colour-coded data with axes and what-
+not? Or rather, what do people out there use?
+
+For a long time I used a routine called IMDISP which I downloaded
+somewhere. It seems to be the same approach as Brian's, getting a 2D
+array, using one of the TV commands to display it at a certain
+position and the overplotting axes. I am not happy with that approach
+because axes and image are completely unconnected, if I change the
+axes ranges then I (or the display routine) needs to chop of bits of
+the image array, otherwise the same image is displayed just with
+different axes. More importantly, both mentioned routines cannot pad
+zeros to the image such that the axis range is extended over the
+extends of the image. This is important for me because I am anal and I
+want my dynamic spectra plots to start at round times - but the data
+doesn't. And also, since the pixels have finite dimensions, I really
+also need to change the axes values to the exact position at the end
+of the pixel.
+
+This then led me to write my own routine which uses POLYFILL. So
+basically every pixel is drawn as a filled polygon with a certain
+colour. This allows me to easily (in my mind) change the ranges
+without having to fiddle with the data.
+
+However, not only is a FOR loop with POLYFILL slow but also a page of
+three dynamic spectra with 8000x128 points now easily makes a 40MB
+PostScript - not surprisingly, really.
+
+So to get back to the original question: How do other people display
+2D data?
+
+Cheers
+Lasse Clausen
+</POST>
+<POST>
+<POSTER> Vince Hradil &lt;hrad...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-12-04T09:43:00 </POSTDATE>
+On Dec 4, 4:26 am, Lasse Clausen &lt;la ... @lbnc.de&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi there,
+
+&gt; in one of the recent posts there was a link to Brian Larsen's homepage
+&gt; and in particular his imagesc.pro. This reminded me that I wanted to
+&gt; ask a question related to the matter of image display with axes:
+
+&gt; What's the best way to display 2D colour-coded data with axes and what-
+&gt; not? Or rather, what do people out there use?
+
+&gt; For a long time I used a routine called IMDISP which I downloaded
+&gt; somewhere. It seems to be the same approach as Brian's, getting a 2D
+&gt; array, using one of the TV commands to display it at a certain
+&gt; position and the overplotting axes. I am not happy with that approach
+&gt; because axes and image are completely unconnected, if I change the
+&gt; axes ranges then I (or the display routine) needs to chop of bits of
+&gt; the image array, otherwise the same image is displayed just with
+&gt; different axes. More importantly, both mentioned routines cannot pad
+&gt; zeros to the image such that the axis range is extended over the
+&gt; extends of the image. This is important for me because I am anal and I
+&gt; want my dynamic spectra plots to start at round times - but the data
+&gt; doesn't. And also, since the pixels have finite dimensions, I really
+&gt; also need to change the axes values to the exact position at the end
+&gt; of the pixel.
+
+&gt; This then led me to write my own routine which uses POLYFILL. So
+&gt; basically every pixel is drawn as a filled polygon with a certain
+&gt; colour. This allows me to easily (in my mind) change the ranges
+&gt; without having to fiddle with the data.
+
+&gt; However, not only is a FOR loop with POLYFILL slow but also a page of
+&gt; three dynamic spectra with 8000x128 points now easily makes a 40MB
+&gt; PostScript - not surprisingly, really.
+
+&gt; So to get back to the original question: How do other people display
+&gt; 2D data?
+
+&gt; Cheers
+&gt; Lasse Clausen
+">
+
+I use tvim ( http://www.astro.washington.edu/deutsch/idl/htmlhelp/
+library28.html#TVIM) mostly out of habit, though.  David has a nice tv/
+tvscl replacement on his website, too http://www.dfanning.com/programs/tvimage.pro
+.  I don't think either of these handle the axes the way you want them
+to, though.  I always just extrac(t) the appropriate range and use
+that.
+</POST>
+<POST>
+<POSTER> &quot;Jeff N.&quot; &lt;jnett...@utk.edu&gt; </POSTER>
+<POSTDATE> 2007-12-04T11:07:00 </POSTDATE>
+On Dec 4, 5:26 am, Lasse Clausen &lt;la ... @lbnc.de&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi there,
+
+&gt; in one of the recent posts there was a link to Brian Larsen's homepage
+&gt; and in particular his imagesc.pro. This reminded me that I wanted to
+&gt; ask a question related to the matter of image display with axes:
+
+&gt; What's the best way to display 2D colour-coded data with axes and what-
+&gt; not? Or rather, what do people out there use?
+
+&gt; For a long time I used a routine called IMDISP which I downloaded
+&gt; somewhere. It seems to be the same approach as Brian's, getting a 2D
+&gt; array, using one of the TV commands to display it at a certain
+&gt; position and the overplotting axes. I am not happy with that approach
+&gt; because axes and image are completely unconnected, if I change the
+&gt; axes ranges then I (or the display routine) needs to chop of bits of
+&gt; the image array, otherwise the same image is displayed just with
+&gt; different axes. More importantly, both mentioned routines cannot pad
+&gt; zeros to the image such that the axis range is extended over the
+&gt; extends of the image. This is important for me because I am anal and I
+&gt; want my dynamic spectra plots to start at round times - but the data
+&gt; doesn't. And also, since the pixels have finite dimensions, I really
+&gt; also need to change the axes values to the exact position at the end
+&gt; of the pixel.
+
+&gt; This then led me to write my own routine which uses POLYFILL. So
+&gt; basically every pixel is drawn as a filled polygon with a certain
+&gt; colour. This allows me to easily (in my mind) change the ranges
+&gt; without having to fiddle with the data.
+
+&gt; However, not only is a FOR loop with POLYFILL slow but also a page of
+&gt; three dynamic spectra with 8000x128 points now easily makes a 40MB
+&gt; PostScript - not surprisingly, really.
+
+&gt; So to get back to the original question: How do other people display
+&gt; 2D data?
+
+&gt; Cheers
+&gt; Lasse Clausen
+">
+
+David's XImage program might be useful for you:
+http://www.dfanning.com/documents/programs.html#XIMAGE
+
+Also note that iImage displays images with axes if you want to go down
+that road.
+</POST>
+<POST>
+<POSTER> Brian Larsen &lt;balar...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-04T11:20:00 </POSTDATE>
+I fully agree with you on all counts.  I wrote that imagesc because I
+couldn't find a solution that worked for me and I needed axes.
+imagesc can display just part of an image by inputing the 2-d data and
+the x and y values, then using the xrange and yrange keywords.  At
+this moment it won't pad zeros to make a larger range but that is just
+laziness but you might be able to change that.
+
+One thought is to create some kind of object to contain the 2-d data
+and the x and y values and manipulate the object though defined
+methods to create a connection between the axes and the 2-d data.
+Then it could be displayed using a modified imagsc, tvscl, tvim, or
+anything else.
+
+just a thought,
+
+Brian
+
+--------------------------------------------------------------------------
+Brian Larsen
+Boston University
+Center for Space Physics
+</POST>
+<POST>
+<POSTER> wlandsman &lt;wlands...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-04T14:12:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; So to get back to the original question: How do other people display
+&gt; 2D data?
+">
+
+I  use Craig Markwardt's PLOTIMAGE ( http://cow.physics.wisc.edu/~craigm/idl/graphics.html
+) which
+mostly allows one to use the PLOT syntax for displaying images.     It
+allows the image range (e.g. IMGXRANGE) to be different from the plot
+range (XRANGE), but I don't think it performs the zero padding you are
+looking for.  --Wayne
+</POST>
+<POST>
+<POSTER> Brian Larsen &lt;balar...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-04T15:13:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; I  use Craig Markwardt's PLOTIMAGE ( http://cow.physics.wisc.edu/~craigm/idl/graphics.html
+&gt; ) which
+&gt; mostly allows one to use the PLOT syntax for displaying images.     It
+&gt; allows the image range (e.g. IMGXRANGE) to be different from the plot
+&gt; range (XRANGE), but I don't think it performs the zero padding you are
+&gt; looking for.  --Wayne
+">
+
+Amazing what you learn when you read this newsgroup, I didn't know
+about that function.  I will study it and see if I can improve imagesc
+in some way (or if I should just use plotimage)
+
+Brian
+
+--------------------------------------------------------------------------
+Brian Larsen
+Boston University
+Center for Space Physics
+</POST>
+<POST>
+<POSTER> pgri...@gmail.com </POSTER>
+<POSTDATE> 2007-12-04T15:43:00 </POSTDATE>
+Hi,
+
+I just want to point out that there exists an implementation in the
+solarsoft library (which admittedly require the whole library
+to be installed, as it calls many other routines) called spectro_plot,
+which also allows for logarithmic axis (which I think is a nice
+feature,
+and not easy to implement from scratch). As an example, if you create
+an image and axis with:
+
+n=200
+m=500
+im=dist(n,m)
+x=findgen(n)+10
+y=findgen(m)+10
+
+the plot resulting from
+
+spectro_plot,im,x,y,xrange=[-100,300],yrange=[1,800],/ylog,/no_ut,/
+xstyle,/ystyle
+
+is exactely what you would expect from a plot-compatible image
+displayer such as the quick &amp; dirty
+
+contour,im,x,y,xrange=[-100,300],yrange=[1,800],/ylog,/xstyle,/ystyle,/
+fill,levels=indgen(256)/255.*max(im)
+
+but faster and without the artifacts &amp; smoothing from the contouring.
+Mind the /no_ut keyword, though.
+
+Cheers,
+Paolo Grigis
+
+<QUOTE PREVIOUSPOST="
+Brian Larsen wrote:
+&gt; &gt; I  use Craig Markwardt's PLOTIMAGE ( http://cow.physics.wisc.edu/~craigm/idl/graphics.html
+&gt; &gt; ) which
+&gt; &gt; mostly allows one to use the PLOT syntax for displaying images.     It
+&gt; &gt; allows the image range (e.g. IMGXRANGE) to be different from the plot
+&gt; &gt; range (XRANGE), but I don't think it performs the zero padding you are
+&gt; &gt; looking for.  --Wayne
+
+&gt; Amazing what you learn when you read this newsgroup, I didn't know
+&gt; about that function.  I will study it and see if I can improve imagesc
+&gt; in some way (or if I should just use plotimage)
+
+&gt; Brian
+
+&gt; --------------------------------------------------------------------------
+&gt; Brian Larsen
+&gt; Boston University
+&gt; Center for Space Physics
+">
+</POST>
+<POST>
+<POSTER> Brian Larsen &lt;balar...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-04T15:52:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; I just want to point out that there exists an implementation in the
+&gt; solarsoft library (which admittedly require the whole library
+&gt; to be installed, as it calls many other routines) called spectro_plot,
+&gt; which also allows for logarithmic axis (which I think is a nice
+&gt; feature,
+&gt; and not easy to implement from scratch). As an example, if you create
+&gt; an image and axis with:
+
+&gt; n=200
+&gt; m=500
+&gt; im=dist(n,m)
+&gt; x=findgen(n)+10
+&gt; y=findgen(m)+10
+
+&gt; the plot resulting from
+
+&gt; spectro_plot,im,x,y,xrange=[-100,300],yrange=[1,800],/ylog,/no_ut,/
+&gt; xstyle,/ystyle
+
+&gt; is exactely what you would expect from a plot-compatible image
+&gt; displayer such as the quick &amp; dirty
+
+&gt; contour,im,x,y,xrange=[-100,300],yrange=[1,800],/ylog,/xstyle,/ystyle,/
+&gt; fill,levels=indgen(256)/255.*max(im)
+
+&gt; but faster and without the artifacts &amp; smoothing from the contouring.
+&gt; Mind the /no_ut keyword, though.
+">
+
+Arg, I use solarsoft all the time and haven't used that routine and it
+seems great.
+
+Brian
+
+--------------------------------------------------------------------------
+Brian Larsen
+Boston University
+Center for Space Physics
+</POST>
+<POST>
+<POSTER> Lasse Clausen &lt;la...@lbnc.de&gt; </POSTER>
+<POSTDATE> 2007-12-05T04:05:00 </POSTDATE>
+On 4 Dec, 20:43, pgri ... @gmail.com wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi,
+
+&gt; I just want to point out that there exists an implementation in the
+&gt; solarsoft library (which admittedly require the whole library
+&gt; to be installed, as it calls many other routines) called spectro_plot,
+&gt; which also allows for logarithmic axis (which I think is a nice
+&gt; feature,
+&gt; and not easy to implement from scratch).
+">
+
+Well, using the POLYFILL approach you don't need to worry about that.
+The PLOT, /NODATA, /YLOG command plots the coordinate system and then
+POLYFILL figures out where to place the pixel, how high it is and so
+on and so on. No fiddling with the original data required by the user,
+IDL takes care of it.
+
+Actually, I'm quite happy with my approach. I don't need to worry
+about any padding, cropping, rebinning, logarithmic axis etc - which
+is nice. The PostScript files get quite big, admittedly, but I can
+gzip them, reducing the size by a factor of 15-20 as ps files are
+ASCII files. In Windows I can still just double click on the .ps.gz
+and GsView decompresses it automatically. And if need be the ps's are
+readily converted to png to make them even smaller.
+
+As I said, I just wanted to know what other people use.
+
+Cheers
+Lasse
+</POST>
+<POST>
+<POSTER> pgri...@gmail.com </POSTER>
+<POSTDATE> 2007-12-05T14:23:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Lasse Clausen wrote:
+&gt; On 4 Dec, 20:43, pgri ... @gmail.com wrote:
+&gt; &gt; Hi,
+
+&gt; &gt; I just want to point out that there exists an implementation in the
+&gt; &gt; solarsoft library (which admittedly require the whole library
+&gt; &gt; to be installed, as it calls many other routines) called spectro_plot,
+&gt; &gt; which also allows for logarithmic axis (which I think is a nice
+&gt; &gt; feature,
+&gt; &gt; and not easy to implement from scratch).
+
+&gt; Well, using the POLYFILL approach you don't need to worry about that.
+&gt; The PLOT, /NODATA, /YLOG command plots the coordinate system and then
+&gt; POLYFILL figures out where to place the pixel, how high it is and so
+&gt; on and so on. No fiddling with the original data required by the user,
+&gt; IDL takes care of it.
+
+&gt; Actually, I'm quite happy with my approach. I don't need to worry
+&gt; about any padding, cropping, rebinning, logarithmic axis etc - which
+&gt; is nice. The PostScript files get quite big, admittedly, but I can
+&gt; gzip them, reducing the size by a factor of 15-20 as ps files are
+&gt; ASCII files. In Windows I can still just double click on the .ps.gz
+&gt; and GsView decompresses it automatically. And if need be the ps's are
+&gt; readily converted to png to make them even smaller.
+">
+
+May I ask what is the practical limit in the size of image (in, say,
+megapixel)
+for using this approach before it gets too slow? I agree that your
+idea is
+easier and simpler for small images, but I don't think it works on
+large
+images, because of the overhead of calling polyfill so many times...
+
+Ciao,
+Paolo
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; As I said, I just wanted to know what other people use.
+
+&gt; Cheers
+&gt; Lasse
+">
+</POST>
+<POST>
+<POSTER> Lasse Clausen &lt;la...@lbnc.de&gt; </POSTER>
+<POSTDATE> 2007-12-06T05:36:00 </POSTDATE>
+On 5 Dec, 19:23, pgri ... @gmail.com wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; May I ask what is the practical limit in the size of image (in, say,
+&gt; megapixel)
+&gt; for using this approach before it gets too slow? I agree that your
+&gt; idea is
+&gt; easier and simpler for small images, but I don't think it works on
+&gt; large
+&gt; images, because of the overhead of calling polyfill so many times...
+
+&gt; Ciao,
+&gt; Paolo
+">
+
+Ay caramba, these results are a bit shocking though not surprising.
+
+When using a 300x200 array of random numbers, the difference in
+runtime is about 200, something of the order of some milliseconds for
+tvscl and just below one second for POLY_FILL. File size is ~3MB vs 64
+KB. For a 3000x2000 image the runtime ratio is about 30 (POLY_FILL
+takes 90 seconds to complete) and file size is ~294MB vs 6MB.
+
+My spectra are of the order of 4000x100 and take 5 seconds to write as
+PostScript.
+
+Cheers
+Lasse
+</POST>
+</TEXT>
+</BODY>
+</DOC>

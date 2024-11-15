@@ -1,0 +1,57 @@
+<DOC>
+<DOCID> eng-NG-31-126397-7105680 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-04-18T00:08:00 </DATETIME>
+<BODY>
+<HEADLINE>
+maintain long-lived servlet connection to receive serialized data?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;dkso...@comcast.net&quot; &lt;dkso...@comcast.net&gt; </POSTER>
+<POSTDATE> 2007-04-18T00:08:00 </POSTDATE>
+Can anyone help me understand how I might use an HttpServlet to
+maintain a socket connection with a client and repeatedly send
+serialized data to this client without closing the connection?
+
+The use case is I have a client application (non-browser) interested
+in the Servlet's ever-changing data. Rather than poll the servlet for
+new data, I'd like the client to establish a long-lived connection to
+the Servlet and receive serialized Objects which the client can
+deserialize and use.  The problems I'm having relate to understanding
+how the Servlet could indicate to the client that the data its sending
+is complete and ready to be deserialized (i.e., what delimits the end
+of an Object stream?) as well as the appropriate use of the servlet
+outputstream's flush() and close() methods.
+
+Here's some pseudo-code that hints at what I'm after:
+
+Servlet:
+while (true){
+ObjectOutputStream objstream = new
+ObjectOutputStream(response.getOutputStream());
+objstream.writeObject(data);
+objstream.flush();
+response.getOutputStream().flush();
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+Client:
+httpclient.executeGet("someURL");
+InputStream response = httpclient.getResponseStream();
+ObjectInputStream objInputStream = new ObjectInputStream(response);
+while (true){
+Object data = objInputStream.readObject();
+doSomething(data);
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+Thanks in advance!
+</POST>
+</TEXT>
+</BODY>
+</DOC>

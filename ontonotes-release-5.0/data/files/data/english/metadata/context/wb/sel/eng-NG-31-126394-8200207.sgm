@@ -1,0 +1,1693 @@
+<DOC>
+<DOCID> eng-NG-31-126394-8200207 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-01T04:35:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Only one point of return
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> cppques...@googlemail.com </POSTER>
+<POSTDATE> 2007-08-01T04:35:00 </POSTDATE>
+A colleague told me that there is a rule about good stype that a
+function in C++ should have only one point of return (ie. return
+statement). Otherwise there might be trouble.
+I never heard about it and doubt it.
+Anybody heard of it? What would be the advantage?
+
+Regards,
+Marc
+
+Example:
+
+bool f()
+{
+if( !pointer1) return false;
+pointer1-&gt;doSomething();
+
+if( !pointer2) return false;
+pointer2-&gt;doSomething1();
+
+return true;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+vs.
+
+bool f()
+{
+bool retVal=true;
+if( pointer1)
+{
+pointer1-&gt;doSomething();
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+else
+retVal=false;
+
+if( pointer2)
+{
+pointer2-&gt;doSomething();
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+else
+retVal=false;
+
+return retVal;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+</POST>
+<POST>
+<POSTER> Ian Collins &lt;ian-n...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-01T05:09:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+cppques ... @googlemail.com wrote:
+&gt; A colleague told me that there is a rule about good stype that a
+&gt; function in C++ should have only one point of return (ie. return
+&gt; statement). Otherwise there might be trouble.
+&gt; I never heard about it and doubt it.
+&gt; Anybody heard of it? What would be the advantage?
+">
+
+It is a fairly common coding standard.
+
+In my opinion it makes more sense for C than C++, provided your code is
+exception safe an early return shouldn't do any harm.  Some may argue
+that a single point of return makes debugging easier.
+
+A common problem early returns with either C or C++ that isn't exception
+safe is resource leaks where the resource in question is only released
+at the end of the function or before the last return.
+
+--
+Ian Collins.
+</POST>
+<POST>
+<POSTER> &quot;Alf P. Steinbach&quot; &lt;al...@start.no&gt; </POSTER>
+<POSTDATE> 2007-08-01T05:11:00 </POSTDATE>
+* cppques ... @googlemail.com:
+
+<QUOTE PREVIOUSPOST="
+&gt; A colleague told me that there is a rule about good stype that a
+&gt; function in C++ should have only one point of return (ie. return
+&gt; statement). Otherwise there might be trouble.
+&gt; I never heard about it and doubt it.
+&gt; Anybody heard of it? What would be the advantage?
+">
+
+It's called SESE (Single Entry Single Exit), as opposed to SEME (Single
+Entry Multiple Exit).
+
+SESE is a good idea in languages like C, which have no provision for
+cleaning up automatically on function return.  There, when maintaining
+code, you don't want cleanup code to be jumped over by an early return.
+
+C++ code, on the other hand, must be prepared to handle exceptions at
+any point, i.e. it's multiple exit at the outset.  Or at least, if it's
+written by competent people, it will be designed for that, using RAII.
+So there's much less that can go wrong by using early normal returns,
+and the only factor should be what's more /clear/, in the context of a
+given function.
+
+<QUOTE PREVIOUSPOST="
+&gt; Regards,
+&gt; Marc
+
+&gt; Example:
+
+&gt; bool f()
+&gt; {
+&gt; if( !pointer1) return false;
+&gt; pointer1-&gt;doSomething();
+
+&gt; if( !pointer2) return false;
+&gt; pointer2-&gt;doSomething1();
+
+&gt; return true;
+&gt; }
+">
+
+Bad, because it uses global variables, and is unclear.
+
+Are you really want it to do one of the things without doing both?
+
+But if so, try
+
+bool f()
+{
+if( pointer1 != 0 )
+{
+pointer1-&gt;doSomething();
+if( pointer1 != 0 )
+{
+pointer2-&gt;doSomething1();
+return true;
+}
+}
+return false;
+}
+
+<QUOTE PREVIOUSPOST="
+&gt; vs.
+
+&gt; bool f()
+&gt; {
+&gt; bool retVal=true;
+&gt; if( pointer1)
+&gt; {
+&gt; pointer1-&gt;doSomething();
+&gt; }
+&gt; else
+&gt; retVal=false;
+
+&gt; if( pointer2)
+&gt; {
+&gt; pointer2-&gt;doSomething();
+&gt; }
+&gt; else
+&gt; retVal=false;
+
+&gt; return retVal;
+&gt; }
+">
+
+Urgh. :-)
+
+--
+A: Because it messes up the order in which people normally read text.
+Q: Why is it such a bad thing?
+A: Top-posting.
+Q: What is the most annoying thing on usenet and in e-mail?
+</POST>
+<POST>
+<POSTER> &quot;duane hebert&quot; &lt;s...@flarn.com&gt; </POSTER>
+<POSTDATE> 2007-08-01T08:55:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&lt;cppques ... @googlemail.com&gt; wrote in message
+">
+
+news:1185957323.294139.171110@o61g2000hsh.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt;A colleague told me that there is a rule about good stype that a
+&gt; function in C++ should have only one point of return (ie. return
+&gt; statement). Otherwise there might be trouble.
+&gt; I never heard about it and doubt it.
+&gt; Anybody heard of it? What would be the advantage?
+
+&gt; Regards,
+&gt; Marc
+
+&gt; Example:
+
+&gt; bool f()
+&gt; {
+&gt; if( !pointer1) return false;
+&gt; pointer1-&gt;doSomething();
+
+&gt; if( !pointer2) return false;
+&gt; pointer2-&gt;doSomething1();
+
+&gt; return true;
+&gt; }
+
+&gt; vs.
+
+&gt; bool f()
+&gt; {
+&gt; bool retVal=true;
+&gt; if( pointer1)
+&gt; {
+&gt; pointer1-&gt;doSomething();
+&gt; }
+&gt; else
+&gt; retVal=false;
+
+&gt; if( pointer2)
+&gt; {
+&gt; pointer2-&gt;doSomething();
+&gt; }
+&gt; else
+&gt; retVal=false;
+
+&gt; return retVal;
+&gt; }
+">
+
+This second example is different than the first since
+it goes to the pointer2 part even if pointer1 doesn't
+exist.
+Everyone has an opinion but IMO in C++, maintaining
+a single entry point leads to more obfuscated code
+rather than less (which is, I believe, the argument in
+favor of it.)
+</POST>
+<POST>
+<POSTER> &quot;duane hebert&quot; &lt;s...@flarn.com&gt; </POSTER>
+<POSTDATE> 2007-08-01T08:57:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;duane hebert&quot; &lt;s ... @flarn.com&gt; wrote in message
+">
+
+news:9p%ri.51852$Mw2.416802@weber.videotron.net ...
+
+<QUOTE PREVIOUSPOST="
+&gt; This second example is different than the first since
+&gt; it goes to the pointer2 part even if pointer1 doesn't
+&gt; exist.
+&gt; Everyone has an opinion but IMO in C++, maintaining
+&gt; a single entry point leads to more obfuscated code
+">
+
+a single exit point  (duh)
+</POST>
+<POST>
+<POSTER> werasm &lt;wer...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-01T09:46:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Alf P. Steinbach wrote:
+">
+
+but if so, try
+
+<QUOTE PREVIOUSPOST="
+&gt;    bool f()
+&gt;    {
+&gt;        if( pointer1 != 0 )
+&gt;        {
+&gt;            pointer1-&gt;doSomething();
+&gt;            if( pointer1 != 0 )
+&gt;            {
+&gt;                pointer2-&gt;doSomething1();
+&gt;                return true;
+&gt;            }
+&gt;        }
+&gt;        return false;
+&gt;    }
+">
+
+Hmmm, or:
+
+bool f()
+{
+if( pointer1 == 0 ){ return false; }
+pointer1-&gt;doSomething();
+if( pointer2 == 0 ){ return false; }
+pointer2-&gt;doSomething();
+return true;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+I like this because it seems less complex to read and understand, but
+the rationale is of course subjective (as is SESE and SEME in C++,
+depending to who you speak). I like getting the pre-conditions out of
+the way before handling the meat. SEME for me seems to do this better
+than SESE.
+
+Another alternative...
+
+template &lt;class T&gt;
+class ExistentPtr
+{
+public:
+ExistentPtr
+( T*&amp; p );
+T&amp; operator*() const; //throws if pointer_ NULL.
+T* operator-&gt;() const; //throws if pointer_ NULL.
+
+private:
+T*&amp; pointer_;
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+bool f()
+{
+ExistentPtr&lt;Type&gt; p1( pointer1 );
+ExistentPtr&lt;Type&gt; p2( pointer2 );
+
+try
+{
+p1-&gt;doSomething();
+p2-&gt;doSomething();
+return true;
+}
+catch( const null_ptr_error&amp; )
+{
+return false;//
+}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+Perhaps, if a function is written properly, it may never require
+visible ifs
+for the sake of handling errors, but this is very subjective.
+
+Regards,
+
+Werner
+</POST>
+<POST>
+<POSTER> &quot;Alf P. Steinbach&quot; &lt;al...@start.no&gt; </POSTER>
+<POSTDATE> 2007-08-01T14:07:00 </POSTDATE>
+* werasm:
+
+<QUOTE PREVIOUSPOST="
+&gt; Alf P. Steinbach wrote:
+&gt; but if so, try
+&gt;&gt;    bool f()
+&gt;&gt;    {
+&gt;&gt;        if( pointer1 != 0 )
+&gt;&gt;        {
+&gt;&gt;            pointer1-&gt;doSomething();
+&gt;&gt;            if( pointer1 != 0 )
+&gt;&gt;            {
+&gt;&gt;                pointer2-&gt;doSomething1();
+&gt;&gt;                return true;
+&gt;&gt;            }
+&gt;&gt;        }
+&gt;&gt;        return false;
+&gt;&gt;    }
+
+&gt; Hmmm, or:
+
+&gt; bool f()
+&gt; {
+&gt;     if( pointer1 == 0 ){ return false; }
+&gt;     pointer1-&gt;doSomething();
+&gt;     if( pointer2 == 0 ){ return false; }
+&gt;     pointer2-&gt;doSomething();
+&gt;     return true;
+&gt; }
+
+&gt; I like this because it seems less complex to read and understand, but
+&gt; the rationale is of course subjective (as is SESE and SEME in C++,
+&gt; depending to who you speak).
+">
+
+Both versions are SEME.  Yours is less clear because you can't tell at a
+glance under which conditions it will return true.  You have to
+laboriously analyse the complete code in order to establish that.
+
+<QUOTE PREVIOUSPOST="
+&gt; I like getting the pre-conditions out of
+&gt; the way before handling the meat.
+">
+
+That's always necessary for precondition checking.  Here we have no
+function level preconditions.  But if we had, then checking them after
+they apply would not be a matter of like or dislike, it would simply be
+incorrect with possible undefined behavior.
+
+<QUOTE PREVIOUSPOST="
+&gt; SEME for me seems to do this better than SESE.
+">
+
+Often yes.  Both versions above are SEME.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; Another alternative...
+
+&gt; template &lt;class T&gt;
+&gt; class ExistentPtr
+&gt; {
+&gt;   public:
+&gt;     ExistentPtr
+&gt; ( T*&amp; p );
+&gt;     T&amp; operator*() const; //throws if pointer_ NULL.
+&gt;     T* operator-&gt;() const; //throws if pointer_ NULL.
+
+&gt;   private:
+&gt;     T*&amp; pointer_;
+&gt; };
+
+&gt; bool f()
+&gt; {
+&gt;   ExistentPtr&lt;Type&gt; p1( pointer1 );
+&gt;   ExistentPtr&lt;Type&gt; p2( pointer2 );
+
+&gt;   try
+&gt;   {
+&gt;     p1-&gt;doSomething();
+&gt;     p2-&gt;doSomething();
+&gt;     return true;
+&gt;   }
+&gt;   catch( const null_ptr_error&amp; )
+&gt;   {
+&gt;     return false;//
+&gt;   }
+&gt; }
+">
+
+Is both needlessly inefficient and unclear.  Are the conditions under
+which p2-&gt;doSomething() is executed, intentional or an arbitrary side
+effect of using ExistenPtr?  Impossible to tell, and that's a nightmare
+for the one maintaining the code, who must then check all /calling/ code
+for expectations about f's behavior (or lack of behavior).
+
+<QUOTE PREVIOUSPOST="
+&gt; Perhaps, if a function is written properly, it may never require
+&gt; visible ifs
+&gt; for the sake of handling errors, but this is very subjective.
+">
+
+What makes you think the original example was handling any errors?  It
+looked like normal case code to me.  For errors, terminate or throw.
+
+--
+A: Because it messes up the order in which people normally read text.
+Q: Why is it such a bad thing?
+A: Top-posting.
+Q: What is the most annoying thing on usenet and in e-mail?
+</POST>
+<POST>
+<POSTER> werasm &lt;wer...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-01T15:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Alf P. Steinbach wrote:
+&gt; Both versions are SEME.  Yours is less clear because you can't tell at a
+&gt; glance under which conditions it will return true.  You have to
+&gt; laboriously analyse the complete code in order to establish that.
+">
+
+Yes, true (both SEME), but I don't agree on the clarity. I prefer
+(that is probably subjective) completing the code that may cause the
+rest not to execute (as in the example), where in your case
+your if nesting becomes deeper (and for slightly longer functions
+very deep quite soon).
+
+<QUOTE PREVIOUSPOST="
+&gt; That's always necessary for precondition checking.  Here we have no
+&gt; function level preconditions.
+">
+
+Well yes, perhaps they cannot be considered function level pre-
+conditions,
+but they certainly are pre-conditions to the code that follow, and
+prevent
+the function from continuing if they are not met.
+
+<QUOTE PREVIOUSPOST="
+&gt; Often yes.  Both versions above are SEME.
+">
+
+Yes, no arguing there, true.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Another alternative...
+
+&gt; &gt; template &lt;class T&gt;
+&gt; &gt; class ExistentPtr
+&gt; &gt; {
+&gt; &gt;   public:
+&gt; &gt;     ExistentPtr
+&gt; &gt; ( T*&amp; p );
+&gt; &gt;     T&amp; operator*() const; //throws if pointer_ NULL.
+&gt; &gt;     T* operator-&gt;() const; //throws if pointer_ NULL.
+
+&gt; &gt;   private:
+&gt; &gt;     T*&amp; pointer_;
+&gt; &gt; };
+
+&gt; &gt; bool f()
+&gt; &gt; {
+&gt; &gt;   ExistentPtr&lt;Type&gt; p1( pointer1 );
+&gt; &gt;   ExistentPtr&lt;Type&gt; p2( pointer2 );
+
+&gt; &gt;   try
+&gt; &gt;   {
+&gt; &gt;     p1-&gt;doSomething();
+&gt; &gt;     p2-&gt;doSomething();
+&gt; &gt;     return true;
+&gt; &gt;   }
+&gt; &gt;   catch( const null_ptr_error&amp; )
+&gt; &gt;   {
+&gt; &gt;     return false;//
+&gt; &gt;   }
+&gt; &gt; }
+
+&gt; Is both needlessly inefficient and unclear.  Are the conditions under
+&gt; which p2-&gt;doSomething() is executed, intentional or an arbitrary side
+&gt; effect of using ExistenPtr?
+">
+
+In the example the condition under which p2-&gt;doSomething() is executed
+is always a function of p1-&gt;doSomething completing successfully and
+of p2's existence. The pointer wrapper should make the second
+pre-condition clear. Of course, p1-&gt;doSomething()'s successful
+completion is a function of p1's existence, which is naturally a
+pre-condition to p2.
+
+<QUOTE PREVIOUSPOST="
+&gt; Impossible to tell, and that's a nightmare
+&gt; for the one maintaining the code, who must then check all /calling/ code
+&gt; for expectations about f's behavior (or lack of behavior).
+">
+
+Not if ExistentPtr's behavior is known to throw null_ptr_error if the
+pointer it wraps temporarily does not exist.
+
+<QUOTE PREVIOUSPOST="
+&gt; What makes you think the original example was handling any errors?  It
+&gt; looked like normal case code to me.  For errors, terminate or throw.
+">
+
+Yes, there is truth in this. The fact that the weak associations did
+not exist
+may imply that that part of functionality does not apply. I may have
+considered it erroneous prematurely. If it was handling an error, then
+code like
+this would have made sense to me:
+
+ExistentPtr&lt;Type&gt; p1( pointer1 );
+ExistentPtr&lt;Type&gt; p2( pointer2 );
+
+p1-&gt;doSomething();
+p2-&gt;doSomething();
+
+Regards,
+
+Werner
+</POST>
+<POST>
+<POSTER> &quot;Alf P. Steinbach&quot; &lt;al...@start.no&gt; </POSTER>
+<POSTDATE> 2007-08-01T16:29:00 </POSTDATE>
+* werasm:
+
+<QUOTE PREVIOUSPOST="
+&gt; Alf P. Steinbach wrote:
+
+&gt;&gt; Both versions are SEME.  Yours is less clear because you can't tell at a
+&gt;&gt; glance under which conditions it will return true.  You have to
+&gt;&gt; laboriously analyse the complete code in order to establish that.
+
+&gt; Yes, true (both SEME), but I don't agree on the clarity. I prefer
+&gt; (that is probably subjective) completing the code that may cause the
+&gt; rest not to execute (as in the example), where in your case
+&gt; your if nesting becomes deeper (and for slightly longer functions
+&gt; very deep quite soon).
+">
+
+That's a design error.  Don't do it.  Keep functions reasonably small.
+
+--
+A: Because it messes up the order in which people normally read text.
+Q: Why is it such a bad thing?
+A: Top-posting.
+Q: What is the most annoying thing on usenet and in e-mail?
+</POST>
+<POST>
+<POSTER> James Kanze &lt;james.ka...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-02T05:02:00 </POSTDATE>
+On Aug 1, 11:09 am, Ian Collins &lt;ian-n ... @hotmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; cppques ... @googlemail.com wrote:
+&gt; &gt; A colleague told me that there is a rule about good stype that a
+&gt; &gt; function in C++ should have only one point of return (ie. return
+&gt; &gt; statement). Otherwise there might be trouble.
+&gt; &gt; I never heard about it and doubt it.
+&gt; &gt; Anybody heard of it? What would be the advantage?
+&gt; It is a fairly common coding standard.
+&gt; In my opinion it makes more sense for C than C++, provided your code is
+&gt; exception safe an early return shouldn't do any harm.  Some may argue
+&gt; that a single point of return makes debugging easier.
+">
+
+The real argument is that it makes understanding the code and
+reasoning about the correction of the code a lot easier, so you
+don't have to debug.  It's more than just common; I'd say that
+it's present almost always where code review is taken seriously
+(which in turn means everywhere where the quality of code is
+taken seriously).
+
+About the only exceptions I've seen is clearing out
+pre-conditions at the top of the function, and in a few cases,
+if the function consists only of a single switch or a single
+list of chained if/else if/else, with all branches ending in a
+return.  (The latter case is rarely allowed, probably because it
+is difficult to formulate precisely.)
+
+--
+James Kanze (GABI Software)             email:james.ka ... @gmail.com
+Conseils en informatique orientée objet/
+Beratung in objektorientierter Datenverarbeitung
+9 place Sémard, 78210 St.-Cyr-l'École, France, +33 (0)1 30 23 00 34
+</POST>
+<POST>
+<POSTER> James Kanze &lt;james.ka...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-02T05:16:00 </POSTDATE>
+On Aug 1, 11:11 am, &quot;Alf P. Steinbach&quot; &lt;al ... @start.no&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; * cppques ... @googlemail.com:
+&gt; &gt; A colleague told me that there is a rule about good stype that a
+&gt; &gt; function in C++ should have only one point of return (ie. return
+&gt; &gt; statement). Otherwise there might be trouble.
+&gt; &gt; I never heard about it and doubt it.
+&gt; &gt; Anybody heard of it? What would be the advantage?
+&gt; It's called SESE (Single Entry Single Exit), as opposed to SEME (Single
+&gt; Entry Multiple Exit).
+&gt; SESE is a good idea in languages like C, which have no provision for
+&gt; cleaning up automatically on function return.  There, when maintaining
+&gt; code, you don't want cleanup code to be jumped over by an early return.
+">
+
+The issue has more to do with understanding and reasoning about
+code than with the any cleanup code.
+
+<QUOTE PREVIOUSPOST="
+&gt; C++ code, on the other hand, must be prepared to handle exceptions at
+&gt; any point, i.e. it's multiple exit at the outset.
+">
+
+I've noticed that in well written C++, any exceptions tend to
+cluster at the top of the function, in a manner coherent with
+the one frequently accepted exception: checking pre-conditions.
+You don't want to exit code at just any old point.
+
+<QUOTE PREVIOUSPOST="
+&gt; Or at least, if it's written by competent people, it will be
+&gt; designed for that, using RAII.  So there's much less that can
+&gt; go wrong by using early normal returns, and the only factor
+&gt; should be what's more /clear/, in the context of a given
+&gt; function.
+&gt; &gt; Example:
+&gt; &gt; bool f()
+&gt; &gt; {
+&gt; &gt; if( !pointer1) return false;
+&gt; &gt; pointer1-&gt;doSomething();
+&gt; &gt; if( !pointer2) return false;
+&gt; &gt; pointer2-&gt;doSomething1();
+&gt; &gt; return true;
+&gt; &gt; }
+&gt; Bad, because it uses global variables, and is unclear.
+&gt; Are you really want it to do one of the things without doing both?
+&gt; But if so, try
+&gt;    bool f()
+&gt;    {
+&gt;        if( pointer1 != 0 )
+&gt;        {
+&gt;            pointer1-&gt;doSomething();
+&gt;            if( pointer1 != 0 )
+&gt;            {
+&gt;                pointer2-&gt;doSomething1();
+&gt;                return true;
+&gt;            }
+">
+
+Just curious, but what invariants hold here?
+
+<QUOTE PREVIOUSPOST="
+&gt;        }
+&gt;        return false;
+&gt;    }
+">
+
+Which is easily (and more clearly) rewritten as:
+
+bool
+f()
+{
+bool succeeded = false ;
+if ( pointer1 != NULL ) {
+pointer1-&gt;doSomething() ;
+if ( pointer2 != NULL ) {
+pointer2-&gt;doSomething() ;
+succeeded = true ;
+}
+}
+return succeeded ;
+}
+
+By naming the condition, you've adding important semantic
+content for the reader.  Even better would be something like:
+
+bool
+maybe1()
+{
+if ( pointer1 != NULL ) {
+pointer1-&gt;doSomething() ;
+}
+return pointer1 != NULL ;
+}
+
+bool
+maybe2()
+{
+//  Alternate way of writing it...
+//  (only for those who swear by functional
+//  programming:-)
+return pointer2 != NULL
+&amp;&amp; (pointer2-&gt;doSomething(), true) ;
+}
+
+bool
+f()
+{
+return maybe1() &amp;&amp; maybe2() ;
+}
+
+(But like you, I have a great deal of difficulty imagining a
+case where you'd want to do half the job, and then report that
+you'd not done any of it.)
+
+--
+James Kanze (GABI Software)             email:james.ka ... @gmail.com
+Conseils en informatique orientée objet/
+Beratung in objektorientierter Datenverarbeitung
+9 place Sémard, 78210 St.-Cyr-l'École, France, +33 (0)1 30 23 00 34
+</POST>
+<POST>
+<POSTER> &quot;Alf P. Steinbach&quot; &lt;al...@start.no&gt; </POSTER>
+<POSTDATE> 2007-08-02T06:18:00 </POSTDATE>
+* James Kanze:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Aug 1, 11:11 am, &quot;Alf P. Steinbach&quot; &lt;al ... @start.no&gt; wrote:
+&gt;&gt; * cppques ... @googlemail.com:
+
+&gt;&gt;&gt; A colleague told me that there is a rule about good stype that a
+&gt;&gt;&gt; function in C++ should have only one point of return (ie. return
+&gt;&gt;&gt; statement). Otherwise there might be trouble.
+&gt;&gt;&gt; I never heard about it and doubt it.
+&gt;&gt;&gt; Anybody heard of it? What would be the advantage?
+
+&gt;&gt; It's called SESE (Single Entry Single Exit), as opposed to SEME (Single
+&gt;&gt; Entry Multiple Exit).
+
+&gt;&gt; SESE is a good idea in languages like C, which have no provision for
+&gt;&gt; cleaning up automatically on function return.  There, when maintaining
+&gt;&gt; code, you don't want cleanup code to be jumped over by an early return.
+
+&gt; The issue has more to do with understanding and reasoning about
+&gt; code than with the any cleanup code.
+">
+
+Well, that's a generalization: cleanup code is just the most important
+in practice, because maintainance is more important than original
+development.  You may be one of the lucky people who has not had to help
+maintain C systems with 600 to 1000 line functions, evolved haphazardly.
+I can assure that you such systems are very common, for you see, most
+programmers are average.  And the average programmer who maintains such
+code has a tendency to introduce early returns that skip cleanup code
+(often this is later corrected by duplicating the cleanup code in
+question, which then gets out of synch, and so on and on).
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; C++ code, on the other hand, must be prepared to handle exceptions at
+&gt;&gt; any point, i.e. it's multiple exit at the outset.
+
+&gt; I've noticed that in well written C++, any exceptions tend to
+&gt; cluster at the top of the function, in a manner coherent with
+&gt; the one frequently accepted exception: checking pre-conditions.
+&gt; You don't want to exit code at just any old point.
+">
+
+You're IMO right that it's best to not hide exits deeply nested in
+masses of other code, but C++ code must be /prepared/ to exit any point.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Or at least, if it's written by competent people, it will be
+&gt;&gt; designed for that, using RAII.  So there's much less that can
+&gt;&gt; go wrong by using early normal returns, and the only factor
+&gt;&gt; should be what's more /clear/, in the context of a given
+&gt;&gt; function.
+
+&gt;&gt;&gt; Example:
+
+&gt;&gt;&gt; bool f()
+&gt;&gt;&gt; {
+&gt;&gt;&gt; if( !pointer1) return false;
+&gt;&gt;&gt; pointer1-&gt;doSomething();
+
+&gt;&gt;&gt; if( !pointer2) return false;
+&gt;&gt;&gt; pointer2-&gt;doSomething1();
+
+&gt;&gt;&gt; return true;
+&gt;&gt;&gt; }
+
+&gt;&gt; Bad, because it uses global variables, and is unclear.
+
+&gt;&gt; Are you really want it to do one of the things without doing both?
+
+&gt;&gt; But if so, try
+
+&gt;&gt;    bool f()
+&gt;&gt;    {
+&gt;&gt;        if( pointer1 != 0 )
+&gt;&gt;        {
+&gt;&gt;            pointer1-&gt;doSomething();
+&gt;&gt;            if( pointer1 != 0 )
+&gt;&gt;            {
+&gt;&gt;                pointer2-&gt;doSomething1();
+&gt;&gt;                return true;
+&gt;&gt;            }
+
+&gt; Just curious, but what invariants hold here?
+
+&gt;&gt;        }
+&gt;&gt;        return false;
+&gt;&gt;    }
+">
+
+&quot;Invariants&quot; is not really meaningful here.  But at the point you
+indicate, you can assert(pointer1!=0), so that's an invariant of sorts.
+Also, at that point pointer1-doSometing() has been executed.
+
+<QUOTE PREVIOUSPOST="
+&gt; Which is easily (and more clearly) rewritten as:
+
+&gt;     bool
+&gt;     f()
+&gt;     {
+&gt;         bool succeeded = false ;
+&gt;         if ( pointer1 != NULL ) {
+&gt;             pointer1-&gt;doSomething() ;
+&gt;             if ( pointer2 != NULL ) {
+&gt;                 pointer2-&gt;doSomething() ;
+&gt;                 succeeded = true ;
+&gt;             }
+&gt;         }
+&gt;         return succeeded ;
+&gt;     }
+">
+
+I wouldn't call that clear, rather completely /misleading/: judging from
+the original code, this function succeeds even when it does nothing.
+But using a result variable has its charms.  E.g. you can set a
+conditional breakpoint on the single return statement.  The cost is, as
+evidenced by the code above, less clarity. ;-)
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; By naming the condition, you've adding important semantic
+&gt; content for the reader.  Even better would be something like:
+
+&gt;     bool
+&gt;     maybe1()
+&gt;     {
+&gt;         if ( pointer1 != NULL ) {
+&gt;             pointer1-&gt;doSomething() ;
+&gt;         }
+&gt;         return pointer1 != NULL ;
+&gt;     }
+
+&gt;     bool
+&gt;     maybe2()
+&gt;     {
+&gt;         //  Alternate way of writing it...
+&gt;         //  (only for those who swear by functional
+&gt;         //  programming:-)
+&gt;         return pointer2 != NULL
+&gt;             &amp;&amp; (pointer2-&gt;doSomething(), true) ;
+&gt;     }
+
+&gt;     bool
+&gt;     f()
+&gt;     {
+&gt;         return maybe1() &amp;&amp; maybe2() ;
+&gt;     }
+
+&gt; (But like you, I have a great deal of difficulty imagining a
+&gt; case where you'd want to do half the job, and then report that
+&gt; you'd not done any of it.)
+">
+
+--
+A: Because it messes up the order in which people normally read text.
+Q: Why is it such a bad thing?
+A: Top-posting.
+Q: What is the most annoying thing on usenet and in e-mail?
+</POST>
+<POST>
+<POSTER> Jorgen Grahn &lt;grahn+n...@snipabacken.dyndns.org&gt; </POSTER>
+<POSTDATE> 2007-08-03T03:53:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Wed, 1 Aug 2007 08:55:31 -0400, duane hebert &lt;s ... @flarn.com&gt; wrote:
+
+&gt; &lt;cppques ... @googlemail.com&gt; wrote in message
+&gt; news:1185957323.294139.171110@o61g2000hsh.googlegroups.com ...
+&gt;&gt;A colleague told me that there is a rule about good stype that a
+&gt;&gt; function in C++ should have only one point of return (ie. return
+&gt;&gt; statement). Otherwise there might be trouble.
+...
+&gt; Everyone has an opinion but IMO in C++, maintaining
+&gt; a single entry [he means exit] point leads to more obfuscated code
+&gt; rather than less (which is, I believe, the argument in
+&gt; favor of it.)
+">
+
+My experience, too, kind of.
+
+I haven't been in a project where we had to follow the rule, but I
+have worked with people who have adopted it, to some extent.
+
+I can well believe that otherwise well-written code (where functions
+are the right size and have the right amount of responsibility) are
+often better and more elegant if they are rewritten with a single exit
+point.
+
+But if the code, the programmers and the time schedule are only
+half-decent and you enforce the single-exit-point rule (it's easy to
+spot and comment on in a code review) I believe you tend to end up
+with the ugliness and bugs that come with:
+
+- deeply nested if/else logic
+- numerous local boolean flags controlling the flow
+- the return value being set in half a dozen places, on different code
+paths
+
+For a concrete example: I hate reading a two-page function which ends
+with &quot;return result;&quot; and searching back for all places where 'result'
+is (or isn't) initialized with a relevant value.
+
+/Jorgen
+
+--
+// Jorgen Grahn &lt;grahn@        Ph'nglui mglw'nafh Cthulhu
+\X/     snipabacken.dyndns.org&gt;  R'lyeh wgah'nagl fhtagn!
+</POST>
+<POST>
+<POSTER> James Kanze &lt;james.ka...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-03T04:05:00 </POSTDATE>
+On Aug 2, 12:18 pm, &quot;Alf P. Steinbach&quot; &lt;al ... @start.no&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; * James Kanze:
+&gt; &gt; On Aug 1, 11:11 am, &quot;Alf P. Steinbach&quot; &lt;al ... @start.no&gt; wrote:
+&gt; &gt;&gt; * cppques ... @googlemail.com:
+&gt; &gt;&gt;&gt; A colleague told me that there is a rule about good stype that a
+&gt; &gt;&gt;&gt; function in C++ should have only one point of return (ie. return
+&gt; &gt;&gt;&gt; statement). Otherwise there might be trouble.
+&gt; &gt;&gt;&gt; I never heard about it and doubt it.
+&gt; &gt;&gt;&gt; Anybody heard of it? What would be the advantage?
+&gt; &gt;&gt; It's called SESE (Single Entry Single Exit), as opposed to SEME (Single
+&gt; &gt;&gt; Entry Multiple Exit).
+&gt; &gt;&gt; SESE is a good idea in languages like C, which have no provision for
+&gt; &gt;&gt; cleaning up automatically on function return.  There, when maintaining
+&gt; &gt;&gt; code, you don't want cleanup code to be jumped over by an early return.
+&gt; &gt; The issue has more to do with understanding and reasoning about
+&gt; &gt; code than with the any cleanup code.
+&gt; Well, that's a generalization:
+">
+
+It's a relativisation.  The original arguments in favor of SESE
+(e.g. by Dijkstra et al.) did not involve cleanup code.  That
+doesn't mean that cleanup code isn't important in practice.
+Just that it wasn't the original motivation (and that even when
+cleanup code isn't an issue, e.g. when you are using RAII, the
+original arguments hold).
+
+<QUOTE PREVIOUSPOST="
+&gt; cleanup code is just the most important
+&gt; in practice, because maintainance is more important than original
+&gt; development.  You may be one of the lucky people who has not had to help
+&gt; maintain C systems with 600 to 1000 line functions, evolved haphazardly.
+">
+
+I have.  In such cases, there is only one solution: rewrite the
+code with smaller functions.
+
+<QUOTE PREVIOUSPOST="
+&gt;   I can assure that you such systems are very common, for you see, most
+&gt; programmers are average.  And the average programmer who maintains such
+&gt; code has a tendency to introduce early returns that skip cleanup code
+&gt; (often this is later corrected by duplicating the cleanup code in
+&gt; question, which then gets out of synch, and so on and on).
+">
+
+The problem isn't just the programmers.  &quot;Average&quot; programmers
+can write very good code, if they are managed correctly.  Good
+code review, and coding guidelines, for example.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;&gt; C++ code, on the other hand, must be prepared to handle exceptions at
+&gt; &gt;&gt; any point, i.e. it's multiple exit at the outset.
+&gt; &gt; I've noticed that in well written C++, any exceptions tend to
+&gt; &gt; cluster at the top of the function, in a manner coherent with
+&gt; &gt; the one frequently accepted exception: checking pre-conditions.
+&gt; &gt; You don't want to exit code at just any old point.
+&gt; You're IMO right that it's best to not hide exits deeply nested in
+&gt; masses of other code, but C++ code must be /prepared/ to exit any point.
+">
+
+It depends.  I tend to prefer a transactional style, which
+verifies first that nothing can fail, before modifying any
+actual data.  (But of course, it isn't always possible.)  In
+practice, no throw guarantees are important for many idioms.
+
+[...]
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;&gt; Are you really want it to do one of the things without doing both?
+&gt; &gt;&gt; But if so, try
+&gt; &gt;&gt;    bool f()
+&gt; &gt;&gt;    {
+&gt; &gt;&gt;        if( pointer1 != 0 )
+&gt; &gt;&gt;        {
+&gt; &gt;&gt;            pointer1-&gt;doSomething();
+&gt; &gt;&gt;            if( pointer1 != 0 )
+&gt; &gt;&gt;            {
+&gt; &gt;&gt;                pointer2-&gt;doSomething1();
+&gt; &gt;&gt;                return true;
+&gt; &gt;&gt;            }
+&gt; &gt; Just curious, but what invariants hold here?
+&gt; &gt;&gt;        }
+&gt; &gt;&gt;        return false;
+&gt; &gt;&gt;    }
+&gt; &quot;Invariants&quot; is not really meaningful here.
+">
+
+Invariants are always important.
+
+The problem here, of course, is that we have an abstract
+function, without any idea as to what it really means.  So we
+don't know what invariants are relevant.  The important point is
+that the structure of the code (indenting, etc.) very strongly
+suggests that the results of pointer2-&gt;doSomething1() may in
+fact hold, where as it is actually guaranteed that they don't.
+The indenting is a lie.
+
+<QUOTE PREVIOUSPOST="
+&gt; But at the point you
+&gt; indicate, you can assert(pointer1!=0), so that's an invariant of sorts.
+&gt;   Also, at that point pointer1-doSometing() has been executed.
+">
+
+It's the first I was thinking of.  The indentation and program
+structure says one thing.  (We're after the if, so the condition
+of the if is no longer guaranteed.)  The actual situation is
+another.  The indentation is lying.
+
+Of course, the original author, when writing the code, is very
+much aware of the preceding return, and the additional
+guarantees it introduces.  So he writes code which takes
+advantage of them.  The later maintenance programmer then has to
+try to figure out how it can work, when the invariant on which
+it depends apparently isn't guaranteed.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Which is easily (and more clearly) rewritten as:
+&gt; &gt;     bool
+&gt; &gt;     f()
+&gt; &gt;     {
+&gt; &gt;         bool succeeded = false ;
+&gt; &gt;         if ( pointer1 != NULL ) {
+&gt; &gt;             pointer1-&gt;doSomething() ;
+&gt; &gt;             if ( pointer2 != NULL ) {
+&gt; &gt;                 pointer2-&gt;doSomething() ;
+&gt; &gt;                 succeeded = true ;
+&gt; &gt;             }
+&gt; &gt;         }
+&gt; &gt;         return succeeded ;
+&gt; &gt;     }
+&gt; I wouldn't call that clear, rather completely /misleading/: judging from
+&gt; the original code, this function succeeds even when it does nothing.
+">
+
+Who knows?  I just guessed at a semantic signification for the
+bool.  The whole function is, as you originally pointed out,
+problematic.  It's very hard to discuss what is reasonable in a
+solution without knowing what the problem is.
+
+<QUOTE PREVIOUSPOST="
+&gt; But using a result variable has its charms.
+">
+
+Yes.  It allows naming the condition.  This is very important
+when dealing with bool, since the name is all you really have to
+go on.  (It's a totally different issue, but in my experience,
+it is very, very rare that a function should return bool.  But
+there are obvious exceptions: just about any function whose name
+begins with &quot;is&quot;, for example, or something like &quot;contains(key)&quot;
+on a map.)
+
+It allows allows the visual structure to correspond to the
+actual control flow; code which is outside of a block controled
+by an if doesn't depend on that if.
+
+--
+James Kanze (GABI Software)             email:james.ka ... @gmail.com
+Conseils en informatique orientée objet/
+Beratung in objektorientierter Datenverarbeitung
+9 place Sémard, 78210 St.-Cyr-l'École, France, +33 (0)1 30 23 00 34
+</POST>
+<POST>
+<POSTER> &quot;Alf P. Steinbach&quot; &lt;al...@start.no&gt; </POSTER>
+<POSTDATE> 2007-08-03T04:41:00 </POSTDATE>
+* James Kanze:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Aug 2, 12:18 pm, &quot;Alf P. Steinbach&quot; &lt;al ... @start.no&gt; wrote:
+
+&gt;&gt;&gt;&gt;    bool f()
+&gt;&gt;&gt;&gt;    {
+&gt;&gt;&gt;&gt;        if( pointer1 != 0 )
+&gt;&gt;&gt;&gt;        {
+&gt;&gt;&gt;&gt;            pointer1-&gt;doSomething();
+&gt;&gt;&gt;&gt;            if( pointer1 != 0 )
+&gt;&gt;&gt;&gt;            {
+&gt;&gt;&gt;&gt;                pointer2-&gt;doSomething1();
+&gt;&gt;&gt;&gt;                return true;
+&gt;&gt;&gt;&gt;            }
+
+&gt;&gt;&gt; Just curious, but what invariants hold here?
+
+&gt;&gt;&gt;&gt;        }
+&gt;&gt;&gt;&gt;        return false;
+&gt;&gt;&gt;&gt;    }
+
+&gt;&gt; &quot;Invariants&quot; is not really meaningful here.
+
+&gt; Invariants are always important.
+
+&gt; The problem here, of course, is that we have an abstract
+&gt; function, without any idea as to what it really means.  So we
+&gt; don't know what invariants are relevant.  The important point is
+&gt; that the structure of the code (indenting, etc.) very strongly
+&gt; suggests that the results of pointer2-&gt;doSomething1() may in
+&gt; fact hold, where as it is actually guaranteed that they don't.
+&gt; The indenting is a lie.
+">
+
+An invariant about a particular place in the possible execution, holds
+about that place, and no other place.
+
+If the execution ever passes your comment, then at that point the
+invariant holds: pointer1 != 0, and pointer1-&gt;doSomething has been
+executed successfully (assuming that it throws on failure).
+
+This is trivial, and the indentation is correct, not a lie or misleading.
+
+There is in general no guarantee in C++ that execution will ever reach
+any particular point.
+
+Yet of course that does not invalidate the concept of invariants that
+hold at particular places that potentially can be reached (and will be
+reaced in normal code execution).
+
+--
+A: Because it messes up the order in which people normally read text.
+Q: Why is it such a bad thing?
+A: Top-posting.
+Q: What is the most annoying thing on usenet and in e-mail?
+</POST>
+<POST>
+<POSTER> werasm &lt;wer...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-03T05:04:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Alf P. Steinbach wrote:
+&gt; That's a design error.  Don't do it.  Keep functions reasonably small.
+">
+
+In all honesty, I'm an advocate of short functions - &quot;One function
+one responsibility&quot; as well. Originally I considered a similar
+solution to Kanze where two seperate functions existed, each
+returning boolean, but this function seemed to short to bother.
+Boolean also seems the wrong return value as this function has
+more than one reason for failure.
+
+I don't have that big a problem with what you've done really,
+in the context is was done. This is an unusual function as one
+does not know whether pointer2 becomes valid due to action on
+pointer1. Perhaps a better solution would have been to verify both
+pointers prior to performing the operations on them, but one does
+not know in this case whether its an error or intentional. IMO if
+intentional, this should have actually been two functions as
+performing these actions in one function allows state to be modified
+partially, so to speak (the function does not have commit/rollback
+semantics (fail or succeed)).
+
+Stating now that I always get pre-conditions out of the way early,
+would not be true. I just did not like your nesting, and in
+retrospect none of the proposed solutions - my response on
+yours included were sufficient. Of all I liked &quot;return( doOne()
+&amp;&amp; doTwo() );&quot; the best, but a boolean return value is deceiving
+in this case. This should have been two functions.
+
+BTW. I have done maintenance for 3 years on a large, ugly 'oll
+C program. I know what it feels like to work through 300 liners (with
+which I don't agree - of course). If the responsibility of an
+abstraction
+is known, it does not make maintenance more difficult, on the
+contrary.
+
+Kind regards,
+
+Werner
+</POST>
+<POST>
+<POSTER> &quot;Alf P. Steinbach&quot; &lt;al...@start.no&gt; </POSTER>
+<POSTDATE> 2007-08-03T05:32:00 </POSTDATE>
+* werasm:
+
+<QUOTE PREVIOUSPOST="
+&gt; Alf P. Steinbach wrote:
+
+&gt;&gt; That's a design error.  Don't do it.  Keep functions reasonably small.
+
+&gt; In all honesty, I'm an advocate of short functions - &quot;One function
+&gt; one responsibility&quot; as well. Originally I considered a similar
+&gt; solution to Kanze where two seperate functions existed, each
+&gt; returning boolean, but this function seemed to short to bother.
+&gt; Boolean also seems the wrong return value as this function has
+&gt; more than one reason for failure.
+
+&gt; I don't have that big a problem with what you've done really,
+&gt; in the context is was done. This is an unusual function as one
+&gt; does not know whether pointer2 becomes valid due to action on
+&gt; pointer1. Perhaps a better solution would have been to verify both
+&gt; pointers prior to performing the operations on them, but one does
+&gt; not know in this case whether its an error or intentional. IMO if
+&gt; intentional, this should have actually been two functions as
+&gt; performing these actions in one function allows state to be modified
+&gt; partially, so to speak (the function does not have commit/rollback
+&gt; semantics (fail or succeed)).
+
+&gt; Stating now that I always get pre-conditions out of the way early,
+&gt; would not be true. I just did not like your nesting, and in
+&gt; retrospect none of the proposed solutions - my response on
+&gt; yours included were sufficient. Of all I liked &quot;return( doOne()
+&gt; &amp;&amp; doTwo() );&quot; the best, but a boolean return value is deceiving
+&gt; in this case. This should have been two functions.
+
+&gt; BTW. I have done maintenance for 3 years on a large, ugly 'oll
+&gt; C program. I know what it feels like to work through 300 liners (with
+&gt; which I don't agree - of course). If the responsibility of an
+&gt; abstraction
+&gt; is known, it does not make maintenance more difficult, on the
+&gt; contrary.
+">
+
+Well I think we're into matters of personal preference.
+
+But about the translate-bools-to-exceptions-and-back-to-bools code: as
+part of being more complicated in the sense of figuring intended
+functionality (versus unintended), it swallows null_ptr_error exceptions
+from the two functions called, replacing with bool return.  Depending on
+the specification of what the bool return means (i.e. does it indicate
+error or how much successful work as specified by arguments) that may be
+correct, or not.  Most likely the OP didn't mean the function to swallow
+any exceptions, and in that case it's incorrect; anyway, not
+functionally the exact same.
+
+So I think of it as over-abstraction (also a little inefficient!); if we
+want always non-null arguments, that's better expressed as references.
+
+Cheers,
+
+- Alf
+
+--
+A: Because it messes up the order in which people normally read text.
+Q: Why is it such a bad thing?
+A: Top-posting.
+Q: What is the most annoying thing on usenet and in e-mail?
+</POST>
+<POST>
+<POSTER> werasm &lt;wer...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-03T08:38:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Alf P. Steinbach wrote:
+&gt; But about the translate-bools-to-exceptions-and-back-to-bools code: as
+&gt; part of being more complicated in the sense of figuring intended
+&gt; functionality (versus unintended), it swallows null_ptr_error exceptions
+&gt; from the two functions called, replacing with bool return.
+">
+
+Agreed (in retrospect). The intention of that pointer wrapper is
+mostly to
+initialize pointers that might be used as weak associations (I
+would not want to have a lecture on shared_ptrs or scoped_ptr
+as alternative). In this context it could have been used to
+determine the nullness, but not necessary. I made the initial
+assumption that the pointers should never be null (that it
+is an error), but as you rightly stated, then we should
+terminate or throw (if it was an error).
+
+A useful place for ExistentPtr is as wrapper for a
+raw pointer member - guaranteeing initialisation to
+NULL. Then throwing if the pointer is used without
+pointing to something. This prevents the sloppy pro-
+grammer (they do exist, unfortunately) from not
+initialising a pointer to NULL in the initialisation list.
+The problem with scoped_ptr is that the behaviour
+is undefined if it is not initialised. In practise though,
+it probably does the same thing.
+
+<QUOTE PREVIOUSPOST="
+&gt; So I think of it as over-abstraction (also a little inefficient!); if we
+&gt; want always non-null arguments, that's better expressed as references.
+">
+
+Yes, although a reference requires initialization at construction. We
+don't
+know whether in this case, references were plausible and that the re-
+lationships were actually known at the time of construction. IME I
+have
+found that good work- arounds exist most of the time when
+relationships
+aren't known at the time of construction. References aren't one of
+them.
+
+Regards,
+
+Werner
+</POST>
+<POST>
+<POSTER> Kai-Uwe Bux &lt;jkherci...@gmx.net&gt; </POSTER>
+<POSTDATE> 2007-08-03T08:44:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+cppques ... @googlemail.com wrote:
+&gt; A colleague told me that there is a rule about good stype that a
+&gt; function in C++ should have only one point of return (ie. return
+&gt; statement). Otherwise there might be trouble.
+&gt; I never heard about it and doubt it.
+&gt; Anybody heard of it?
+">
+
+Sure.
+
+<QUOTE PREVIOUSPOST="
+&gt; What would be the advantage?
+">
+
+Don't know. Some people think it makes it easier to argue correctness. I am
+not so sure about that, though. However, I can see the point: return
+statements are like goto statements; they jump to the end of the current
+routine. As with goto statements, you need to be careful.
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt; bool f()
+&gt; {
+&gt; if( !pointer1) return false;
+&gt; pointer1-&gt;doSomething();
+
+&gt; if( !pointer2) return false;
+&gt; pointer2-&gt;doSomething1();
+
+&gt; return true;
+&gt; }
+
+&gt; vs.
+
+&gt; bool f()
+&gt; {
+&gt; bool retVal=true;
+&gt; if( pointer1)
+&gt; {
+&gt; pointer1-&gt;doSomething();
+&gt; }
+&gt; else
+&gt; retVal=false;
+
+&gt; if( pointer2)
+&gt; {
+&gt; pointer2-&gt;doSomething();
+&gt; }
+&gt; else
+&gt; retVal=false;
+
+&gt; return retVal;
+&gt; }
+">
+
+I am not really certain about that example. I tend to have multiple exits in
+situations like this:
+
+/*
+triple is like pair, except that it has fields &quot;first&quot;,
+&quot;second&quot;, and &quot;third&quot;.
+*/
+template &lt; typename A, typename B, typename C &gt;
+bool operator&lt; ( triple&lt; A, B, C &gt; const &amp; lhs,
+triple&lt; A, B, C &gt; const &amp; rhs ) {
+// try deciding using first:
+if ( lhs.first &lt; rhs.first ) {
+return ( true );
+}
+if ( rhs.first &lt; lhs.first ) {
+return ( false );
+}
+// first was tied. try second:
+if ( lhs.second &lt; rhs.second ) {
+return ( true );
+}
+if ( rhs.second &lt; lhs.second ) {
+return ( false );
+}
+// first and second tied. try thrid:
+if ( lhs.third &lt; rhs.third ) {
+return ( true );
+}
+if ( rhs.third &lt; lhs.third ) {
+return ( false );
+}
+// all tied:
+return ( false );
+}
+
+or
+
+template &lt; typename ForwardIter, typename Pred &gt;
+bool forall ( ForwardIter from, ForwardIter to, Pred p ) {
+// returns true iff p is not false for all *i in the range [from,to)
+while ( from != to ) {
+if ( ! p(*from) ) {
+return ( false );
+}
+++ from;
+}
+return ( true );
+}
+
+Best
+
+Kai-Uwe Bux
+</POST>
+<POST>
+<POSTER> &quot;Jim Langston&quot; &lt;tazmas...@rocketmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-04T01:37:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&lt;cppques ... @googlemail.com&gt; wrote in message
+">
+
+news:1185957323.294139.171110@o61g2000hsh.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt;A colleague told me that there is a rule about good stype that a
+&gt; function in C++ should have only one point of return (ie. return
+&gt; statement). Otherwise there might be trouble.
+&gt; I never heard about it and doubt it.
+&gt; Anybody heard of it? What would be the advantage?
+
+&gt; Regards,
+&gt; Marc
+
+&gt; Example:
+
+&gt; bool f()
+&gt; {
+&gt; if( !pointer1) return false;
+&gt; pointer1-&gt;doSomething();
+
+&gt; if( !pointer2) return false;
+&gt; pointer2-&gt;doSomething1();
+
+&gt; return true;
+&gt; }
+
+&gt; vs.
+
+&gt; bool f()
+&gt; {
+&gt; bool retVal=true;
+&gt; if( pointer1)
+&gt; {
+&gt; pointer1-&gt;doSomething();
+&gt; }
+&gt; else
+&gt; retVal=false;
+
+&gt; if( pointer2)
+&gt; {
+&gt; pointer2-&gt;doSomething();
+&gt; }
+&gt; else
+&gt; retVal=false;
+
+&gt; return retVal;
+&gt; }
+">
+
+This was one of the fundamentals of &quot;top down design&quot; that came out of
+trying to prevent spagetti code.  The reasoning being it is much easier to
+understand which code is executed and which isn't without having to look
+farther up the function.  It is a good idea to get used to, but I find it
+better to return earlier on exceptions when it's rather obvious.
+
+With short functions, however, it should not be a problem.  I find that if
+I'm checking on the validity of something (returning bool) that it is easier
+to read with many return statements.  Consider, which is easier to
+understand at first glance?
+
+bool CheckValue( Foo bar )
+{
+if ( bar.value )
+return false;
+if ( bar.otherval &gt; 0 )
+return false;
+if ( bar.value == bar.othervalue )
+return false;
+return true;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+bool CheckValue( Foo bar )
+{
+bool ReturnVal = true;
+if ( bar.value )
+ReturnVal = false;
+if ( bar.othervalue )
+ReturnVal = false;
+if ( bar.value == bar.othervalue )
+ReturnVal = false;
+return ReturnVal;
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+}
+}
+">
+</POST>
+<POST>
+<POSTER> Jerry Coffin &lt;jcof...@taeus.com&gt; </POSTER>
+<POSTDATE> 2007-08-05T17:00:00 </POSTDATE>
+In article &lt;13b0jdq3drn2 ... @corp.supernews.com&gt;, al ... @start.no says...
+
+<QUOTE PREVIOUSPOST="
+&gt; * cppques ... @googlemail.com:
+">
+
+[ ... ]
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Example:
+
+&gt; &gt; bool f()
+&gt; &gt; {
+&gt; &gt; if( !pointer1) return false;
+&gt; &gt; pointer1-&gt;doSomething();
+
+&gt; &gt; if( !pointer2) return false;
+&gt; &gt; pointer2-&gt;doSomething1();
+
+&gt; &gt; return true;
+&gt; &gt; }
+
+&gt; Bad, because it uses global variables, and is unclear.
+
+&gt; Are you really want it to do one of the things without doing both?
+">
+
+I think you're right that the usual intent is more like this:
+
+bool f() {
+
+if ( pointer1 == 0 || pointer2 == 0)
+return false;
+
+pointer1-&gt;doSomething();
+pointer2-&gt;doSomething();
+return true;
+
+<QUOTE PREVIOUSPOST="
+}
+&gt; But if so, try
+
+&gt;    bool f()
+&gt;    {
+&gt;        if( pointer1 != 0 )
+&gt;        {
+&gt;            pointer1-&gt;doSomething();
+&gt;            if( pointer1 != 0 )
+">
+
+Presumably you meant pointer2 here.
+
+<QUOTE PREVIOUSPOST="
+&gt;            {
+&gt;                pointer2-&gt;doSomething1();
+&gt;                return true;
+&gt;            }
+&gt;        }
+&gt;        return false;
+&gt;    }
+">
+
+Personally, I think I'd generally prefer something like this:
+
+bool f() {
+if (pointer1 != 0) {
+pointer1-&gt;doSomething();
+if (pointer2 != 0)
+pointer2-&gt;doSomething();
+}
+return (pointer1 != 0) &amp;&amp; (pointer2 != 0);
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+--
+Later,
+Jerry.
+
+The universe is a figment of its own imagination.
+</POST>
+</TEXT>
+</BODY>
+</DOC>

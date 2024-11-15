@@ -1,0 +1,3345 @@
+<DOC>
+<DOCID> eng-NG-31-135592-8597939 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-31T09:19:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Twisting a Rope (#137)
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Ruby Quiz &lt;ja...@grayproductions.net&gt; </POSTER>
+<POSTDATE> 2007-08-31T09:19:00 </POSTDATE>
+The three rules of Ruby Quiz:
+
+1.  Please do not post any solutions or spoiler discussion for this quiz until
+48 hours have passed from the time on this message.
+
+2.  Support Ruby Quiz by submitting ideas as often as you can:
+
+http://www.rubyquiz.com/
+
+3.  Enjoy!
+
+Suggestion:  A [QUIZ] in the subject of emails about the problem helps everyone
+on Ruby Talk follow the discussion.  Please reply to the original quiz message,
+if you can.
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- =-=-=
+
+by John Miller
+
+This week's task is to implement the Rope data structure as a Ruby class.  This
+topic comes out of the ICFP programming competition
+( http://www.icfpcontest.com/ ) which had competitors manipulating a 7.5 million
+character string this year.
+
+What is a Rope:
+
+You may not realize it, but for many changes the content to a String, Ruby
+creates a new copy of the original with the modifications applied.  For small
+strings that are created once and read often this is actually a very efficient
+way to do thing, but what happens when the string starts to get long, and is
+undergoing a lot of changes?  First, the program will spend more and more of its
+processing cycles just copying bits around.  Second, the garbage collector will
+be called more and more often to pick up the little stringy scraps you've left
+all over the memory.
+
+Ropes (the name is a pun for a heavy duty string) are tree structures where a
+node represents the concatenation of its left branch with its right, and leaves
+are flat strings. (This is a little sloppy. A rope may contain shared subtrees,
+and is thus really a directed acyclic graph, where the out-edges of each vertex
+are ordered. We will continue to be sloppy.)  E.g. To prepend Text A to Text B,
+one creates a Node (call it N1) with A as its left branch and B as its right.
+To further append Text C create a new Node N2 with its left branch pointing to
+N1 and its right to C.  Easy, right?  To find out more see Boehm, Atkinson and
+Plass &quot;Ropes: an Alternative to Strings&quot; at:
+
+http://rubyurl.com/2FRbO
+
+The task comes in three parts, each increasing in difficulty:
+
+Part one:
+
+Create a Rope class that can do the following:
+
+a. 'append' or 'prepend' a String or another Rope
+(alias the &lt;&lt; operator to the append function)
+b. Return the fully concatenated text with 'to_s'
+c. define 'slice' to call to_s.slice
+d. provide a 'length' method
+
+Part two:
+
+Add the following:
+
+a. Add the ability to 'index' a single character given a 0-based offset
+from the beginning of the string.
+b. Add the ability to 'shift' a single character from the front of a Rope.
+(Remove and return the character)
+c. Add your own 'slice' method that returns a String. Implement as many of
+the String method's forms as possible.  To run the example code this
+function will only need to understand the slice(offset,length) form.
+Major Bonus for Regex and Substring forms.
+d. &quot;Balance&quot; the tree with a 'normalize' method.
+(see Boehm, Atkinson and Plass 1319 Rebalancing)
+
+Part three: (bonus)
+
+Add the following:
+
+a. Change the 'slice' method to return a Rope. Ideally this method should
+do as little string copying as possible. (Doing this will well
+dramatically increase the speed of the example code)
+b. Allow 'shift' to optionally accept an integer number of characters to
+remove and return.
+c. modify the '&lt;&lt;' operator so that can efficiently append a few
+characters at a time. (see Boehm, Atkinson and Plass 1318 para. 4)
+d. *Major Bonus* Add the ability to append and prepend IO classes in a
+lazy fashion. (see Boehm, Atkinson and Plass 1318 para. 2)
+
+The following code may help you explore how efficient your code is and show
+where Ropes are useful.  `ruby -r /path/to/your/rope/class this_script.rb Rope`
+will run the test with your code.  Run the script without arguments to see how
+well String does.  Also play around with the SIZE and CHUNKS constants to get a
+feel for how they affect performance.
+
+require 'benchmark'
+
+#This code make a String/Rope of  CHUNCKS chunks of text
+#each chunck is SIZE bytes long.  Each chunck starts with
+#an 8 byte number.  Initially the chuncks are shuffled the
+#qsort method sorts them into ascending order.
+#
+#pass the name of the class to use as a parameter
+#ruby -r rope.rb this_file Rope
+
+puts 'preparing data...'
+TextClass = Object.const_get(ARGV.shift || :String)
+
+def qsort(text)
+return TextClass.new if text.length == 0
+pivot = text.slice(0,8).to_s.to_i
+less = TextClass.new
+more = TextClass.new
+offset = 8+SIZE
+while (offset &lt; text.length)
+i = text.slice(offset,8).to_s.to_i
+(i &lt; pivot ? less : more) &lt;&lt; text.slice(offset,8+SIZE)
+offset = offset + 8+SIZE
+end
+print &quot;*&quot;
+return qsort(less) &lt;&lt; text.slice(0,8+SIZE) &lt;&lt; qsort(more)
+end
+
+SIZE  = 512 * 1024
+CHUNCKS = 128
+CHARS = %w[R O P E]
+data = TextClass.new
+bulk_string =
+TextClass.new(Array.new(SIZE) { CHARS[rand(4)] }.join)
+puts 'Building Text...'
+build = Benchmark.measure do
+(0..CHUNCKS).sort_by { rand }.each do |n|
+data&lt;&lt; sprintf(&quot;%08i&quot;,n) &lt;&lt; bulk_string
+end
+data.normalize  if data.respond_to? :normalize
+end
+GC.start
+sort = Benchmark.measure do
+puts &quot;Sorting Text...&quot;
+qsort(data)
+puts&quot;\nEND&quot;
+end
+
+puts &quot;Build: #{build}Sort: #{sort}&quot;
+</POST>
+<POST>
+<POSTER> John Miller &lt;jfmille...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-09-01T01:20:00 </POSTDATE>
+My apologies,
+
+The first line of the quiz should read:
+&quot;You may not realize it, but for many changes to the content of a
+String,&quot;
+
+I am really looking forward to seeing some ingenious solutions to this
+problem.  The concept seemed very simple to me but my first attempt kept
+becoming mired down in edge cases.  I hope everyone has a good weekend
+and a good Labor Day weekend to those in the US (plenty of time to work
+on this weeks quiz ;)
+
+John Miller
+
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> James Edward Gray II &lt;ja...@grayproductions.net&gt; </POSTER>
+<POSTDATE> 2007-09-01T14:48:00 </POSTDATE>
+On Sep 1, 2007, at 12:20 AM, John Miller wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; The first line of the quiz should read:
+&gt; &quot;You may not realize it, but for many changes to the content of a
+&gt; String,&quot;
+">
+
+I've fixed this on the web site.  Thanks for pointing it out.
+
+James Edward Gray II
+</POST>
+<POST>
+<POSTER> Carl Porth &lt;badc...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-02T10:26:00 </POSTDATE>
+I've done parts one and two so far.  I'll try to add more in the next
+few days.
+
+For simplicity and speed, append and prepend don't modify the
+receiver.
+
+If anyone has any questions about my code, I'll be happy to answer.
+
+Carl
+
+require &quot;rubygems&quot;
+require &quot;facets&quot;
+require &quot;kernel/with&quot;
+require &quot;symbol/to_proc&quot;
+
+class String
+def shift
+return nil if empty?
+returning self[0].chr do
+self[0] = &quot;&quot;
+end
+end
+end
+
+class Rope
+attr_reader :left, :right, :length
+
+def Rope.new(*args)
+if args.size &lt;= 2
+super
+else # build balanced tree
+mid = args.size / 2
+args[mid,2] = Rope.new(*args[mid,2])
+Rope.new(*args)
+end
+end
+
+def initialize(left=&quot;&quot;,right=&quot;&quot;)
+@left, @right = left, right
+@length = @left.length + @right.length
+end
+
+def replace(rope)
+initialize(rope.left,rope.right)
+self
+end
+
+# clean out empty strings and rebuild tree
+def normalize
+Rope.new(*flat_strings.reject(&amp;:empty?))
+end
+
+def to_s
+flat_strings.join('')
+end
+
+def append(str)
+Rope.new(self,str)
+end
+alias_method :&lt;&lt;, :append
+
+def prepend(str)
+Rope.new(str,self)
+end
+
+def slice(start,length=@length-start)
+if start &gt; left.length # right
+right.slice(start-left.length,length-left.length)
+elsif left.length &lt; length # left and right
+left.slice(start,left.length) +
+right.slice(start-left.length,length-left.length)
+else # left
+left.slice(start,length)
+end
+end
+
+def shift
+if letter = left.shift || right.shift
+@length -= 1
+letter
+else
+nil
+end
+end
+
+def index(letter,start=0)
+if start &gt; left.length # right
+left.length + right.index(letter,start - left.length)
+else # left
+left.index(letter,start) || left.length + right.index(letter)
+end
+rescue
+nil
+end
+
+# TODO implement rest of methods
+def method_missing(method, *args, &amp;block)
+result = to_s.send(method, *args, &amp;block)
+if result.is_a?(String)
+if method.to_s =~ /!$/
+replace(Rope.new(result))
+else
+Rope.new(result)
+end
+else
+result
+end
+end
+
+protected
+
+# traverse the tree
+def traverse(&amp;block)
+@left.is_a?(Rope) ? @left.traverse(&amp;block) : block.call(@left)
+@right.is_a?(Rope) ? @right.traverse(&amp;block) : block.call(@right)
+end
+
+# collect all the flat strings
+def flat_strings
+returning [] do |ary|
+traverse { |str| ary &lt;&lt; str }
+end
+end
+
+end
+
+On Aug 31, 6:19 am, Ruby Quiz &lt;ja ... @grayproductions.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; The three rules of Ruby Quiz:
+
+&gt; 1.  Please do not post any solutions or spoiler discussion for this quiz until
+&gt; 48 hours have passed from the time on this message.
+
+&gt; 2.  Support Ruby Quiz by submitting ideas as often as you can:
+
+&gt; http://www.rubyquiz.com/
+
+&gt; 3.  Enjoy!
+
+&gt; Suggestion:  A [QUIZ] in the subject of emails about the problem helps everyone
+&gt; on Ruby Talk follow the discussion.  Please reply to the original quiz message,
+&gt; if you can.
+
+&gt; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- =-=-=
+
+&gt; by John Miller
+
+&gt; This week's task is to implement the Rope data structure as a Ruby class.  This
+&gt; topic comes out of the ICFP programming competition
+&gt; ( http://www.icfpcontest.com/ ) which had competitors manipulating a 7.5 million
+&gt; character string this year.
+
+&gt;         What is a Rope:
+
+&gt; You may not realize it, but for many changes the content to a String, Ruby
+&gt; creates a new copy of the original with the modifications applied.  For small
+&gt; strings that are created once and read often this is actually a very efficient
+&gt; way to do thing, but what happens when the string starts to get long, and is
+&gt; undergoing a lot of changes?  First, the program will spend more and more of its
+&gt; processing cycles just copying bits around.  Second, the garbage collector will
+&gt; be called more and more often to pick up the little stringy scraps you've left
+&gt; all over the memory.
+
+&gt; Ropes (the name is a pun for a heavy duty string) are tree structures where a
+&gt; node represents the concatenation of its left branch with its right, and leaves
+&gt; are flat strings. (This is a little sloppy. A rope may contain shared subtrees,
+&gt; and is thus really a directed acyclic graph, where the out-edges of each vertex
+&gt; are ordered. We will continue to be sloppy.)  E.g. To prepend Text A to Text B,
+&gt; one creates a Node (call it N1) with A as its left branch and B as its right.
+&gt; To further append Text C create a new Node N2 with its left branch pointing to
+&gt; N1 and its right to C.  Easy, right?  To find out more see Boehm, Atkinson and
+&gt; Plass &quot;Ropes: an Alternative to Strings&quot; at:
+
+&gt; http://rubyurl.com/2FRbO
+
+&gt; The task comes in three parts, each increasing in difficulty:
+
+&gt; Part one:
+
+&gt; Create a Rope class that can do the following:
+
+&gt;         a. 'append' or 'prepend' a String or another Rope
+&gt;            (alias the &lt;&lt; operator to the append function)
+&gt;         b. Return the fully concatenated text with 'to_s'
+&gt;         c. define 'slice' to call to_s.slice
+&gt;         d. provide a 'length' method
+
+&gt; Part two:
+
+&gt; Add the following:
+
+&gt;         a. Add the ability to 'index' a single character given a 0-based offset
+&gt;            from the beginning of the string.
+&gt;         b. Add the ability to 'shift' a single character from the front of a Rope.
+&gt;            (Remove and return the character)
+&gt;         c. Add your own 'slice' method that returns a String. Implement as many of
+&gt;            the String method's forms as possible.  To run the example code this
+&gt;            function will only need to understand the slice(offset,length) form.
+&gt;            Major Bonus for Regex and Substring forms.
+&gt;         d. &quot;Balance&quot; the tree with a 'normalize' method.
+&gt;            (see Boehm, Atkinson and Plass 1319 Rebalancing)
+
+&gt; Part three: (bonus)
+
+&gt; Add the following:
+
+&gt;         a. Change the 'slice' method to return a Rope. Ideally this method should
+&gt;            do as little string copying as possible. (Doing this will well
+&gt;            dramatically increase the speed of the example code)
+&gt;         b. Allow 'shift' to optionally accept an integer number of characters to
+&gt;            remove and return.
+&gt;         c. modify the '&lt;&lt;' operator so that can efficiently append a few
+&gt;            characters at a time. (see Boehm, Atkinson and Plass 1318 para. 4)
+&gt;         d. *Major Bonus* Add the ability to append and prepend IO classes in a
+&gt;            lazy fashion. (see Boehm, Atkinson and Plass 1318 para. 2)
+
+&gt; The following code may help you explore how efficient your code is and show
+&gt; where Ropes are useful.  `ruby -r /path/to/your/rope/class this_script.rb Rope`
+&gt; will run the test with your code.  Run the script without arguments to see how
+&gt; well String does.  Also play around with the SIZE and CHUNKS constants to get a
+&gt; feel for how they affect performance.
+
+&gt;         require 'benchmark'
+
+&gt;         #This code make a String/Rope of  CHUNCKS chunks of text
+&gt;         #each chunck is SIZE bytes long.  Each chunck starts with
+&gt;         #an 8 byte number.  Initially the chuncks are shuffled the
+&gt;         #qsort method sorts them into ascending order.
+&gt;         #
+&gt;         #pass the name of the class to use as a parameter
+&gt;         #ruby -r rope.rb this_file Rope
+
+&gt;         puts 'preparing data...'
+&gt;         TextClass = Object.const_get(ARGV.shift || :String)
+
+&gt;         def qsort(text)
+&gt;           return TextClass.new if text.length == 0
+&gt;           pivot = text.slice(0,8).to_s.to_i
+&gt;           less = TextClass.new
+&gt;           more = TextClass.new
+&gt;           offset = 8+SIZE
+&gt;           while (offset &lt; text.length)
+&gt;             i = text.slice(offset,8).to_s.to_i
+&gt;             (i &lt; pivot ? less : more) &lt;&lt; text.slice(offset,8+SIZE)
+&gt;             offset = offset + 8+SIZE
+&gt;           end
+&gt;           print &quot;*&quot;
+&gt;           return qsort(less) &lt;&lt; text.slice(0,8+SIZE) &lt;&lt; qsort(more)
+&gt;         end
+
+&gt;         SIZE  = 512 * 1024
+&gt;         CHUNCKS = 128
+&gt;         CHARS = %w[R O P E]
+&gt;         data = TextClass.new
+&gt;         bulk_string =
+&gt;           TextClass.new(Array.new(SIZE) { CHARS[rand(4)] }.join)
+&gt;         puts 'Building Text...'
+&gt;         build = Benchmark.measure do
+&gt;           (0..CHUNCKS).sort_by { rand }.each do |n|
+&gt;             data&lt;&lt; sprintf(&quot;%08i&quot;,n) &lt;&lt; bulk_string
+&gt;           end
+&gt;           data.normalize  if data.respond_to? :normalize
+&gt;         end
+&gt;         GC.start
+&gt;         sort = Benchmark.measure do
+&gt;           puts &quot;Sorting Text...&quot;
+&gt;           qsort(data)
+&gt;           puts&quot;\nEND&quot;
+&gt;         end
+
+&gt;         puts &quot;Build: #{build}Sort: #{sort}&quot;
+">
+</POST>
+<POST>
+<POSTER> &quot;Himadri Choudhury&quot; &lt;hcho...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-02T12:07:00 </POSTDATE>
+Hi All -
+
+I posted my solution in the 'rope.rb' file here:
+http://pastie.caboo.se/93242
+I slightly modified the nice benchmark tool because normalize doesn't work
+on the rope itself for me.
+
+I ran a few iterations with the benchmark with
+SIZE = 512 * 1024
+CHUNKS = 256.
+
+The following is pretty representative of what I observed:
+
+1) Normal strings:
+Build:   0.733000   0.406000   1.139000 (  1.193000)
+Sort:   7.800000   7.238000  15.038000 ( 15.924000)
+
+2) Ropes
+Build:   0.047000   0.016000   0.063000 (  0.060000)
+Sort:  10.686000   0.016000  10.702000 ( 10.902000)
+
+3) Ropes with the normalization function
+Build:   0.156000   0.000000   0.156000 (  0.156000)
+Sort:   5.741000   0.047000   5.788000 (  6.212000)
+
+Regards,
+Himadri
+</POST>
+<POST>
+<POSTER> Carl Porth &lt;badc...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-02T12:59:00 </POSTDATE>
+I've modified my Rope so it runs with the benchmark (and fixed some
+bugs).
+
+http://pastie.caboo.se/93256
+
+with the included benchmark:
+
+badcarl@navi&gt; ruby -r lib/rope.rb benchmark.rb String
+Build:   0.150000   0.080000   0.230000 (  0.234209)
+Sort:   1.700000   1.850000   3.550000 (  3.613295)
+
+badcarl@navi&gt; ruby -r lib/rope.rb benchmark.rb Rope
+Build:   0.000000   0.000000   0.000000 (  0.009324)
+Sort:   0.280000   0.080000   0.360000 (  0.372736)
+
+I'm getting around 10x speedup on sorting.
+
+On Sep 2, 7:26 am, Carl Porth &lt;badc ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I've done parts one and two so far.  I'll try to add more in the next
+&gt; few days.
+
+&gt; For simplicity and speed, append and prepend don't modify the
+&gt; receiver.
+
+&gt; If anyone has any questions about my code, I'll be happy to answer.
+
+&gt; Carl
+
+&gt; require &quot;rubygems&quot;
+&gt; require &quot;facets&quot;
+&gt; require &quot;kernel/with&quot;
+&gt; require &quot;symbol/to_proc&quot;
+
+&gt; class String
+&gt;   def shift
+&gt;     return nil if empty?
+&gt;     returning self[0].chr do
+&gt;       self[0] = &quot;&quot;
+&gt;     end
+&gt;   end
+&gt; end
+
+&gt; class Rope
+&gt;   attr_reader :left, :right, :length
+
+&gt;   def Rope.new(*args)
+&gt;     if args.size &lt;= 2
+&gt;       super
+&gt;     else # build balanced tree
+&gt;       mid = args.size / 2
+&gt;       args[mid,2] = Rope.new(*args[mid,2])
+&gt;       Rope.new(*args)
+&gt;     end
+&gt;   end
+
+&gt;   def initialize(left=&quot;&quot;,right=&quot;&quot;)
+&gt;     @left, @right = left, right
+&gt;     @length = @left.length + @right.length
+&gt;   end
+
+&gt;   def replace(rope)
+&gt;     initialize(rope.left,rope.right)
+&gt;     self
+&gt;   end
+
+&gt;   # clean out empty strings and rebuild tree
+&gt;   def normalize
+&gt;     Rope.new(*flat_strings.reject(&amp;:empty?))
+&gt;   end
+
+&gt;   def to_s
+&gt;     flat_strings.join('')
+&gt;   end
+
+&gt;   def append(str)
+&gt;     Rope.new(self,str)
+&gt;   end
+&gt;   alias_method :&lt;&lt;, :append
+
+&gt;   def prepend(str)
+&gt;     Rope.new(str,self)
+&gt;   end
+
+&gt;   def slice(start,length=@length-start)
+&gt;     if start &gt; left.length # right
+&gt;       right.slice(start-left.length,length-left.length)
+&gt;     elsif left.length &lt; length # left and right
+&gt;       left.slice(start,left.length) +
+&gt;       right.slice(start-left.length,length-left.length)
+&gt;     else # left
+&gt;       left.slice(start,length)
+&gt;     end
+&gt;   end
+
+&gt;   def shift
+&gt;     if letter = left.shift || right.shift
+&gt;       @length -= 1
+&gt;       letter
+&gt;     else
+&gt;       nil
+&gt;     end
+&gt;   end
+
+&gt;   def index(letter,start=0)
+&gt;     if start &gt; left.length # right
+&gt;       left.length + right.index(letter,start - left.length)
+&gt;     else # left
+&gt;       left.index(letter,start) || left.length + right.index(letter)
+&gt;     end
+&gt;   rescue
+&gt;     nil
+&gt;   end
+
+&gt;   # TODO implement rest of methods
+&gt;   def method_missing(method, *args, &amp;block)
+&gt;     result = to_s.send(method, *args, &amp;block)
+&gt;     if result.is_a?(String)
+&gt;       if method.to_s =~ /!$/
+&gt;         replace(Rope.new(result))
+&gt;       else
+&gt;         Rope.new(result)
+&gt;       end
+&gt;     else
+&gt;       result
+&gt;     end
+&gt;   end
+
+&gt; protected
+
+&gt;   # traverse the tree
+&gt;   def traverse(&amp;block)
+&gt;     @left.is_a?(Rope) ? @left.traverse(&amp;block) : block.call(@left)
+&gt;     @right.is_a?(Rope) ? @right.traverse(&amp;block) : block.call(@right)
+&gt;   end
+
+&gt;   # collect all the flat strings
+&gt;   def flat_strings
+&gt;     returning [] do |ary|
+&gt;       traverse { |str| ary &lt;&lt; str }
+&gt;     end
+&gt;   end
+
+&gt; end
+
+&gt; On Aug 31, 6:19 am, Ruby Quiz &lt;ja ... @grayproductions.net&gt; wrote:
+
+&gt; &gt; The three rules of Ruby Quiz:
+
+&gt; &gt; 1.  Please do not post any solutions or spoiler discussion for this quiz until
+&gt; &gt; 48 hours have passed from the time on this message.
+
+&gt; &gt; 2.  Support Ruby Quiz by submitting ideas as often as you can:
+
+&gt; &gt; http://www.rubyquiz.com/
+
+&gt; &gt; 3.  Enjoy!
+
+&gt; &gt; Suggestion:  A [QUIZ] in the subject of emails about the problem helps everyone
+&gt; &gt; on Ruby Talk follow the discussion.  Please reply to the original quiz message,
+&gt; &gt; if you can.
+
+&gt; &gt; -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- =-=-=
+
+&gt; &gt; by John Miller
+
+&gt; &gt; This week's task is to implement the Rope data structure as a Ruby class.  This
+&gt; &gt; topic comes out of the ICFP programming competition
+&gt; &gt; ( http://www.icfpcontest.com/ ) which had competitors manipulating a 7.5 million
+&gt; &gt; character string this year.
+
+&gt; &gt;         What is a Rope:
+
+&gt; &gt; You may not realize it, but for many changes the content to a String, Ruby
+&gt; &gt; creates a new copy of the original with the modifications applied.  For small
+&gt; &gt; strings that are created once and read often this is actually a very efficient
+&gt; &gt; way to do thing, but what happens when the string starts to get long, and is
+&gt; &gt; undergoing a lot of changes?  First, the program will spend more and more of its
+&gt; &gt; processing cycles just copying bits around.  Second, the garbage collector will
+&gt; &gt; be called more and more often to pick up the little stringy scraps you've left
+&gt; &gt; all over the memory.
+
+&gt; &gt; Ropes (the name is a pun for a heavy duty string) are tree structures where a
+&gt; &gt; node represents the concatenation of its left branch with its right, and leaves
+&gt; &gt; are flat strings. (This is a little sloppy. A rope may contain shared subtrees,
+&gt; &gt; and is thus really a directed acyclic graph, where the out-edges of each vertex
+&gt; &gt; are ordered. We will continue to be sloppy.)  E.g. To prepend Text A to Text B,
+&gt; &gt; one creates a Node (call it N1) with A as its left branch and B as its right.
+&gt; &gt; To further append Text C create a new Node N2 with its left branch pointing to
+&gt; &gt; N1 and its right to C.  Easy, right?  To find out more see Boehm, Atkinson and
+&gt; &gt; Plass &quot;Ropes: an Alternative to Strings&quot; at:
+
+&gt; &gt; http://rubyurl.com/2FRbO
+
+&gt; &gt; The task comes in three parts, each increasing in difficulty:
+
+&gt; &gt; Part one:
+
+&gt; &gt; Create a Rope class that can do the following:
+
+&gt; &gt;         a. 'append' or 'prepend' a String or another Rope
+&gt; &gt;            (alias the &lt;&lt; operator to the append function)
+&gt; &gt;         b. Return the fully concatenated text with 'to_s'
+&gt; &gt;         c. define 'slice' to call to_s.slice
+&gt; &gt;         d. provide a 'length' method
+
+&gt; &gt; Part two:
+
+&gt; &gt; Add the following:
+
+&gt; &gt;         a. Add the ability to 'index' a single character given a 0-based offset
+&gt; &gt;            from the beginning of the string.
+&gt; &gt;         b. Add the ability to 'shift' a single character from the front of a Rope.
+&gt; &gt;            (Remove and return the character)
+&gt; &gt;         c. Add your own 'slice' method that returns a String. Implement as many of
+&gt; &gt;            the String method's forms as possible.  To run the example code this
+&gt; &gt;            function will only need to understand the slice(offset,length) form.
+&gt; &gt;            Major Bonus for Regex and Substring forms.
+&gt; &gt;         d. &quot;Balance&quot; the tree with a 'normalize' method.
+&gt; &gt;            (see Boehm, Atkinson and Plass 1319 Rebalancing)
+
+&gt; &gt; Part three: (bonus)
+
+&gt; &gt; Add the following:
+
+&gt; &gt;         a. Change the 'slice' method to return a Rope. Ideally this method should
+&gt; &gt;            do as little string copying as possible. (Doing this will well
+&gt; &gt;            dramatically increase the speed of the example code)
+&gt; &gt;         b. Allow 'shift' to optionally accept an integer number of characters to
+&gt; &gt;            remove and return.
+&gt; &gt;         c. modify the '&lt;&lt;' operator so that can efficiently append a few
+&gt; &gt;            characters at a time. (see Boehm, Atkinson and Plass 1318 para. 4)
+&gt; &gt;         d. *Major Bonus* Add the ability to append and prepend IO classes in a
+&gt; &gt;            lazy fashion. (see Boehm, Atkinson and Plass 1318 para. 2)
+
+&gt; &gt; The following code may help you explore how efficient your code is and show
+&gt; &gt; where Ropes are useful.  `ruby -r /path/to/your/rope/class this_script.rb Rope`
+&gt; &gt; will run the test with your code.  Run the script without arguments to see how
+&gt; &gt; well String does.  Also play around with the SIZE and CHUNKS constants to get a
+&gt; &gt; feel for how they affect performance.
+
+&gt; &gt;         require 'benchmark'
+
+&gt; &gt;         #This code make a String/Rope of  CHUNCKS chunks of text
+&gt; &gt;         #each chunck is SIZE bytes long.  Each chunck starts with
+&gt; &gt;         #an 8 byte number.  Initially the chuncks are shuffled the
+&gt; &gt;         #qsort method sorts them into ascending order.
+&gt; &gt;         #
+&gt; &gt;         #pass the name of the class to use as a parameter
+&gt; &gt;         #ruby -r rope.rb this_file Rope
+
+&gt; &gt;         puts 'preparing data...'
+&gt; &gt;         TextClass = Object.const_get(ARGV.shift || :String)
+
+&gt; &gt;         def qsort(text)
+&gt; &gt;           return TextClass.new if text.length == 0
+&gt; &gt;           pivot = text.slice(0,8).to_s.to_i
+&gt; &gt;           less = TextClass.new
+&gt; &gt;           more = TextClass.new
+&gt; &gt;           offset = 8+SIZE
+&gt; &gt;           while (offset &lt; text.length)
+&gt; &gt;             i = text.slice(offset,8).to_s.to_i
+&gt; &gt;             (i &lt; pivot ? less : more) &lt;&lt; text.slice(offset,8+SIZE)
+&gt; &gt;             offset = offset + 8+SIZE
+&gt; &gt;           end
+&gt; &gt;           print &quot;*&quot;
+&gt; &gt;           return qsort(less) &lt;&lt; text.slice(0,8+SIZE) &lt;&lt; qsort(more)
+&gt; &gt;         end
+
+&gt; &gt;         SIZE  = 512 * 1024
+&gt; &gt;         CHUNCKS = 128
+&gt; &gt;         CHARS = %w[R O P E]
+&gt; &gt;         data = TextClass.new
+&gt; &gt;         bulk_string =
+&gt; &gt;           TextClass.new(Array.new(SIZE) { CHARS[rand(4)] }.join)
+&gt; &gt;         puts 'Building Text...'
+&gt; &gt;         build = Benchmark.measure do
+&gt; &gt;           (0..CHUNCKS).sort_by { rand }.each do |n|
+&gt; &gt;             data&lt;&lt; sprintf(&quot;%08i&quot;,n) &lt;&lt; bulk_string
+&gt; &gt;           end
+&gt; &gt;           data.normalize  if data.respond_to? :normalize
+&gt; &gt;         end
+&gt; &gt;         GC.start
+&gt; &gt;         sort = Benchmark.measure do
+&gt; &gt;           puts &quot;Sorting Text...&quot;
+&gt; &gt;           qsort(data)
+&gt; &gt;           puts&quot;\nEND&quot;
+&gt; &gt;         end
+
+&gt; &gt;         puts &quot;Build: #{build}Sort: #{sort}&quot;
+">
+</POST>
+<POST>
+<POSTER> &quot;Eric Mahurin&quot; &lt;eric.mahu...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-03T02:51:00 </POSTDATE>
+On 8/31/07, Ruby Quiz &lt;ja ... @grayproductions.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; This week's task is to implement the Rope data structure as a Ruby class.
+">
+
+My implementation is attached along with a modified test.  I made a
+few changes to what was asked, but this also gave more flexibility.
+Here is what I did:
+
+* Just as the implementation in the paper referenced in this quiz, my
+implementation gives immutable ropes.  #&lt;&lt; is non-destructive, so I
+had to change the test to do &lt;&lt;= instead of just &lt;&lt;.  Also, I didn't
+implement #shift, because it must be destructive.  The same
+functionality can be achieved with 2 calls to #slice (one could be #at
+if you only need to shift one element).  There are very good reasons
+to make ropes immutable.  I'd imagine almost every other
+implementation with modifiable ropes will fail when someone starts
+modifying a sub-rope that is shared.  You'd really need a good COW
+(copy-on-write) scheme to allow both transparent sharing and
+modification.  I didn't see that it was worth the
+effort/complexity/risk.  I chose the simple functional programming
+approach (immutable objects).
+
+* I chose to automatically balance the ropes during concatenation (no
+normalize).  I used the same tree rotations that are used with AVL
+trees.  Another option could be to treat these as red-black trees
+which might save on some rotations.  One reason I automatically
+balanced is that it simplifies the interface.  The user of the API
+doesn't have to worry about when to normalize.  A second reason is
+that every other rope operation is O(log(n)), so there probably isn't
+much benefit in making only concatenation O(1).
+
+* I don't allow ropes to directly use Strings.  Instead, a StringRope
+is used as a proxy for a String.  To use a String directly, I would
+have had to check the class, use respond_to, modify String to look
+like a rope, etc.  Instead, I just went with the pure duck-typing
+approach and made multiple Rope-like classes that use different types
+of data.  My basis for these is the class ArrayRope.  There is no
+reason why a rope data-structure can't be used with any sequence of
+objects instead of just characters.  ArrayRope takes an Array-like
+object.  An rope built out of these is to Array as a conventional rope
+is to String.  I also added an IORope class to lazily work with files.
+Using IORope you could make a text editor that didn't have to read
+the whole file in at once.  There is no reason you can't mix and match
+any of these leaf rope classes (depth 0) within a rope tree.
+
+* #each iterates through elements (i.e. characters) in the rope.  It
+annoys me that String#each (and IO#each for that matter) iterates over
+lines - it should be characters (not necessarily bytes).  All of the
+Enumerable methods are accessible too.
+
+* I used #at instead of #index because #index is used for searching in
+String/Array.  Array#at is an exact match.
+
+The main thing I didn't do was implement any regex stuff.  I don't see
+how this is doable since all of the regex methods are completely tied
+to String (not duck-typed).  You'd have to convert the whole rope to
+string to do anything (which defeats the purpose of the rope).
+
+quiz137.rb
+10K Download
+</POST>
+<POST>
+<POSTER> &quot;Eric Mahurin&quot; &lt;eric.mahu...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-03T03:11:00 </POSTDATE>
+On 9/3/07, Eric Mahurin &lt;eric.mahu ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 8/31/07, Ruby Quiz &lt;ja ... @grayproductions.net&gt; wrote:
+&gt; &gt; This week's task is to implement the Rope data structure as a Ruby class.
+
+&gt; My implementation is attached along with a modified test.  I made a
+&gt; few changes to what was asked, but this also gave more flexibility.
+">
+
+Forgot about the results.  Here's what I found on my machine:
+
+String
+Build:   0.120000   0.080000   0.200000 (  0.206264)
+Sort:   1.680000   0.420000   2.100000 (  2.112934)
+VmPeak:  1192112 kB
+VmSize:   493708 kB
+
+StringRope
+Build:   0.010000   0.000000   0.010000 (  0.014414)
+Sort:   0.150000   0.020000   0.170000 (  0.176734)
+VmPeak:    38940 kB
+VmSize:    37920 kB
+
+so, 20X faster for build and 12.4X faster for sort.  Memory looks to
+be 10-30X smaller.  I ran the build and sort 8 times during the
+benchmark and took the min.  The memory kept increasing for the String
+runs for each of these 8 iterations which doesn't make sense.
+</POST>
+<POST>
+<POSTER> Mauricio Fernandez &lt;m...@acm.org&gt; </POSTER>
+<POSTDATE> 2007-09-03T04:52:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Fri, Aug 31, 2007 at 10:19:54PM +0900, Ruby Quiz wrote:
+&gt; by John Miller
+
+&gt; This week's task is to implement the Rope data structure as a Ruby class.  This
+&gt; topic comes out of the ICFP programming competition
+&gt; ( http://www.icfpcontest.com/ ) which had competitors manipulating a 7.5 million
+&gt; character string this year.
+">
+
+I happened to have implemented ropes in OCaml recently, so I generated a Ruby
+extension using rocaml to see how well it would perform.
+
+Without further ado, here are the results I'm getting for SIZE = 512 * 1024,
+CHUNKS = 512:
+
+$ time ruby -r himadri_choudhury.rb bm.rb Rope
+Build:   0.130000   0.000000   0.130000 (  0.129476)
+Sort:  10.340000   0.050000  10.390000 ( 10.648223)
+
+$ time ruby -rocaml_rope bm.rb OCaml::Rope
+Build:   0.020000   0.000000   0.020000 (  0.018946)
+Sort:   0.100000   0.000000   0.100000 (  0.108499)
+
+$ ruby eric_mahurin.rb StringRope
+[...]
+Build:   0.060000   0.000000   0.060000 (  0.057299)
+Sort:   0.870000   0.000000   0.870000 (  0.896493)
+
+For SIZE = 1024, CHUNKS = 16384:
+
+$ ruby eric_mahurin.rb StringRope
+[...]
+Build:   3.470000   0.040000   3.510000 (  3.588875)
+Sort:  89.110000   0.700000  89.810000 ( 92.179962)
+
+$ time ruby -rocaml_rope bm.rb OCaml::Rope
+[...]
+Build:   0.360000   0.000000   0.360000 (  0.378352)
+Sort:   3.940000   0.040000   3.980000 (  4.079140)
+
+At that point the pure Ruby rope is taking over 6 times more memory than
+the OCaml one. I ascribe this to iv_tbls being very heavy and to memory
+fragmentation.
+
+I benchmarked Himadri's implementation first and was surprised by the
+exceedingly large speed difference --- I expected one, not two orders of
+magnitude for this code, as there's enough Ruby code in common in qsort to
+mask the speed gains in the rope operations. However, Eric's solution proved
+that it was just due to a slow Ruby implementation.
+
+Here's the interface definition (extconf.rb):
+
+EXT_NAME = &quot;ocaml_rope&quot;
+OCAML_PACKAGES = %w[]
+CAML_LIBS = %w[]
+CAML_OBJS = %w[]
+CAML_FLAGS = &quot;&quot;
+CAML_INCLUDES = []
+
+require 'rocaml'
+
+Interface.generate(&quot;ocaml_rope&quot;) do |iface|
+def_class(&quot;Rope&quot;, :under =&gt; &quot;OCaml&quot;) do |c|
+rope = c.abstract_type
+
+fun &quot;empty&quot;, UNIT =&gt; rope, :as =&gt; &quot;new_empty&quot;
+fun &quot;of_string&quot;, STRING =&gt; rope, :as =&gt; &quot;new_from_string&quot;
+
+method &quot;sub&quot;, [rope, INT, INT] =&gt; rope, :as =&gt; &quot;slice&quot;
+method &quot;concat&quot;, [rope, rope] =&gt; rope
+method &quot;length&quot;, rope =&gt; INT
+method &quot;get&quot;, [rope, INT] =&gt; INT
+method &quot;to_string&quot;, rope =&gt; STRING, :as =&gt; &quot;to_s&quot;
+end
+end
+
+require 'rocaml_extconf'
+
+As you can see, OCaml::Rope is purely functional, and the interface differs a
+bit from that expected by bm.rb (a modified version that works with immutable
+ropes is attached), so I adapted it with the following ocaml_rope.rb, which
+also loads the extension:
+
+module OCaml # Rope will be placed in this module
+end
+
+require &quot;ocaml_rope.so&quot;
+
+module OCaml
+class Rope
+def self.new(str = &quot;&quot;)
+case str
+when String; new_from_string str
+when Rope; str
+when &quot;&quot;; new_empty
+else new_from_string(str.to_str) rescue new_from_string(str.to_s)
+end
+end
+
+def prepend(rope)
+rope.append(self)
+end
+
+alias_method :append, :concat
+alias_method :&lt;&lt;, :append
+end
+end
+
+The OCaml code is attached, in case anybody wants to look at it.
+Incidentally, it weighs a bit under 220 lines, which is also the amount taken
+by Himadri's and Eric's solutions. Unlike them, rope.ml features O(1)
+concatenation for small elements; this accounts for a large part of the code
+and the complexity of some patterns. O(1) concatenation doesn't really affect
+performance in the use case exerted by bm.rb anyway.
+
+--
+Mauricio Fernandez  - http://eigenclass.org
+
+bm.rb
+1K Download
+rope.ml
+6K Download
+</POST>
+<POST>
+<POSTER> &quot;Gustav Munkby&quot; &lt;grd...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-03T05:42:00 </POSTDATE>
+On 8/31/07, Ruby Quiz &lt;ja ... @grayproductions.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; by John Miller
+
+&gt; This week's task is to implement the Rope data structure as a Ruby class.  This
+&gt; topic comes out of the ICFP programming competition
+&gt; ( http://www.icfpcontest.com/ ) which had competitors manipulating a 7.5 million
+&gt; character string this year.
+">
+
+My solution deviates slightly from the problem specification.
+The most important difference is that instead of implementing
+a binary tree to store the strings, they are all stored in an
+array instead.
+
+The class itself is quite long, since I wanted to implement
+many of the methods of the built-in String class. Some of the
+methods will require significant work to actually implement.
+Most notably the Regexp-related methods, since there is no
+way to instruct the Regexp matcher to ask for more characters
+once it has reached the end of a string.
+
+Actually, all String methods are implemented, by implementing
+method missing and delegating to the composed string if the
+string class can handle the method. After delegating to the
+string class, we convert any String result to a new rope and
+we also make sure to replace our content by the string we
+delegated to, to make sure that destructive methods works as
+expected.
+
+In fact, we replace the content of our rope as soon as to_s
+is called. since the reason for  lazy concatenation is to
+avoid the concatenation cost, we can just as well keep the
+concatenated string when we already had to pay the price.
+
+The benchmark results are:
+
+# String
+Build:   0.170000   0.150000   0.320000 (  0.324341)
+Sort:   3.470000   3.630000   7.100000 (  7.126741)
+
+# ArrayRope
+Build:   0.010000   0.010000   0.020000 (  0.009744)
+Sort:   0.130000   0.000000   0.130000 (  0.138330)
+
+# ArrayRope (with dup)
+Build:   0.240000   0.160000   0.400000 (  0.402201)
+Sort:   0.160000   0.000000   0.160000 (  0.163022)
+
+For the unprotected case, sorting was ~52 times faster,
+and building was ~33 times faster.
+
+However, since the string class is not immutable, there is a
+slight problem with this approach. The strings could added
+to the rope could be modified &quot;under the hood&quot;. We can easily
+protect against that by making copies of the strings when we
+add them to the rope. Since the built-in String shares the
+actual data between the two instances (until they change),
+this is not so much of a memory issue as one could expect.
+
+By adding dup (in initialize/append/prepend) we end up with
+the following times, which trades of some of our speed/memory
+for a bit of safety. (This is actually the submitted solution)
+
+Compared with the string approach, building is now (for obvious
+reasons) slower than the String, but only about 25%.
+Sorting is still much faster than the String case, namely ~44
+times as fast.
+
+!g
+
+array_rope.rb
+7K Download
+</POST>
+<POST>
+<POSTER> Mauricio Fernandez &lt;m...@acm.org&gt; </POSTER>
+<POSTDATE> 2007-09-03T06:14:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Mon, Sep 03, 2007 at 05:52:31PM +0900, Mauricio Fernandez wrote:
+&gt; I happened to have implemented ropes in OCaml recently, so I generated a Ruby
+&gt; extension using rocaml to see how well it would perform.
+
+[...]
+&gt; For SIZE = 1024, CHUNKS = 16384:
+
+&gt; $ ruby eric_mahurin.rb StringRope
+&gt; [...]
+&gt; Build:   3.470000   0.040000   3.510000 (  3.588875)
+&gt; Sort:  89.110000   0.700000  89.810000 ( 92.179962)
+
+&gt; $ time ruby -rocaml_rope bm.rb OCaml::Rope
+&gt; [...]
+&gt; Build:   0.360000   0.000000   0.360000 (  0.378352)
+&gt; Sort:   3.940000   0.040000   3.980000 (  4.079140)
+">
+
+Also for laughs, playing with the GC parameters and with a qsort implemented
+in OCaml:
+
+$ OCAMLRUNPARAM=s=512k ruby -rocaml_rope bm.rb OCaml::Rope
+[...]
+Build:    0.290000   0.000000   0.290000 (  0.290908)
+Sort:     3.410000   0.040000   3.450000 (  3.547792)
+Sort':    0.830000   0.000000   0.830000 (  0.845180)
+
+Yielding the expected &gt;100x gain over Ruby.
+
+The interface part:
+
+method &quot;qsort&quot;, [rope, INT] =&gt; rope
+method &quot;qsort2&quot;, [rope, INT] =&gt; rope
+
+I implemented the qsort function both in functional and imperative style, for
+the sake of those who prefer something that reads similarly to the Ruby
+version. The two variants are equally fast.
+
+let (&lt;&lt;) = concat (* OCaml allows you to define new operators *)
+let to_i = int_of_string
+let to_s = to_string
+
+let rec qsort' size = function
+Empty -&gt; Empty
+| rope -&gt;
+let pivot = to_i (to_s (sub 0 8 rope)) in
+let len = 8 + size in
+let less = ref Empty in
+let more = ref Empty in
+let off = ref len in
+while !off &lt; length rope do
+let slice = sub !off len rope in
+if to_i (to_s (sub !off 8 rope)) &lt; pivot then
+less := !less &lt;&lt; slice
+else
+more := !more &lt;&lt; slice;
+off := !off + len
+done;
+qsort' size !less &lt;&lt; sub 0 len rope &lt;&lt; qsort' size !more
+
+let rec qsort size = function
+Empty -&gt; Empty
+| rope -&gt;
+let rec loop r pivot off len max less more =
+if off &lt; max then begin
+if to_i (to_s (sub off 8 r)) &lt; pivot then
+loop r pivot (off+len) len max (less &lt;&lt; (sub off len r)) more
+else
+loop r pivot (off+len) len max less (more &lt;&lt; (sub off len r))
+end else (less, more) in
+
+let pivot = to_i (to_s (sub 0 8 rope)) in
+let len = 8 + size in
+let less, more = loop rope pivot len len (length rope) Empty Empty in
+qsort size less &lt;&lt; sub 0 len rope &lt;&lt; qsort size more
+
+--
+Mauricio Fernandez  - http://eigenclass.org
+</POST>
+<POST>
+<POSTER> Ari Brown &lt;a...@aribrown.com&gt; </POSTER>
+<POSTDATE> 2007-09-03T12:24:00 </POSTDATE>
+Ok, So I'm still trying to figure out what stores the characters in a
+Rope. A string or an array?
+
+Judging from the fact that you have ArrayRope, I'm thinking it might
+be an Array.
+
+On Sep 3, 2007, at 5:42 AM, Gustav Munkby wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; # ArrayRope
+&gt; Build:   0.010000   0.010000   0.020000 (  0.009744)
+&gt; Sort:   0.130000   0.000000   0.130000 (  0.138330)
+
+&gt; # ArrayRope (with dup)
+&gt; Build:   0.240000   0.160000   0.400000 (  0.402201)
+&gt; Sort:   0.160000   0.000000   0.160000 (  0.163022)
+">
+
+Help!
+Ari
+--------------------------------------------|
+If you're not living on the edge,
+then you're just wasting space.
+</POST>
+<POST>
+<POSTER> &quot;Gustav Munkby&quot; &lt;grd...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-03T14:46:00 </POSTDATE>
+On 9/3/07, Ari Brown &lt;a ... @aribrown.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Ok, So I'm still trying to figure out what stores the characters in a
+&gt; Rope. A string or an array?
+
+&gt; Judging from the fact that you have ArrayRope, I'm thinking it might
+&gt; be an Array.
+">
+
+The actual characters are stored in strings. The rope is an array of strings,
+stored in the @segments instance variable.
+
+!g
+</POST>
+<POST>
+<POSTER> &quot;Eugene Kalenkovich&quot; &lt;rub...@softover.com&gt; </POSTER>
+<POSTDATE> 2007-09-03T16:05:00 </POSTDATE>
+Here is my solution. As a side note, it was probably not the best idea to
+stick to the benchmarking code in the quiz, as it forced not the best design
+decisions (I'd rather not have default constructor for Rope, and for sure -
+no normalizing 'in place'). But - what's done is done.
+For slice variants I've decided to have two argument ones in #slice, and one
+arg  - in #[]
+
+Results:
+String
+
+Build:   0.188000   0.032000   0.220000 (  0.219000)
+Sort:   1.578000   0.843000   2.421000 (  2.422000)
+
+Rope
+
+Build:   0.031000   0.000000   0.031000 (  0.031000)
+Sort:   0.203000   0.000000   0.203000 (  0.234000)
+
+Code:
+--------------------------------------------------------------------------- ----------------------------------------------
+class NilClass
+def length; 0; end
+end
+
+class String
+def shift
+return nil if empty?
+res=self[0]
+self[0]=&quot;&quot;
+res
+end
+end
+
+class Rope
+attr_reader :length, :left, :right
+
+def initialize(left=nil,right=nil)
+@left=left if left
+@right=right if right
+@length=left.length+right.length
+end
+
+def append(what)
+len=what.length
+if (len&gt;0)
+@left=self.dup if @right.length&gt;0
+@right=what
+@length+=len
+end
+self
+end
+
+alias &lt;&lt; append
+
+def prepend(what)
+len=what.length
+if (len&gt;0)
+@right=self.dup if @left.length&gt;0
+@left=what
+@length+=len
+end
+self
+end
+
+def to_s
+@left.to ... @right.to_s
+end
+
+def [](i)
+return i.match(self.to_s)[0] if i.kind_of? Regexp
+if i.kind_of? Range
+pos,last=i.first,i.last
+pos=@length+pos if pos&lt;0
+last=@length+last if last&lt;0
+return nil if pos&lt;0 || last&lt;0
+return slice(pos,last-pos+1)
+end
+i=@length+i if i&lt;0
+return nil if i&lt;0 || i&gt;@length-1
+ll ... @left.length
+i&lt;llen ? @left[i] : @right[i-llen]
+end
+
+def []=(i,val)
+#fixnum only
+i=@length+i if i&lt;0
+&quot;&quot;[i]=0 if i&lt;0 || i&gt;@length-1
+@length+=val.length-1
+ll ... @left.length
+i&lt;llen ? @left[i]=val : @right[i-llen]=val
+end
+
+def slice(pos,len)
+return pos.match(self.to_s)[len] if pos.kind_of? Regexp
+pos=@length+pos if pos&lt;0
+return nil if pos&lt;0 || len&lt;0 || pos&gt;@length-1
+ll ... @left.length
+return @left.slice(pos,len) if pos+len&lt;=llen
+return @right.slice(pos-llen, len) if pos&gt;=llen
+Rope.new(@left.slice(pos,len),@right.slice(0,len+pos-llen))
+end
+
+def shift
+return nil if @length==0
+@length-=1
+r ... @left.length&gt;0 ? @left.shift : @right.shift
+@left=nil if @left.length==0
+@right=nil if @right.length==0
+res
+end
+
+def normalize
+r=Rebalancer.new(@length)
+self.traverse { |str| r.append(str) }
+@left,@right=r.get_ropes
+end
+
+def traverse(&amp;blck)
+@left.kind_of?(String) ? yield(@left) : @left.traverse(&amp;blck) if @left
+@right.kind_of?(String) ? yield(@right) : @right.traverse(&amp;blck) if
+@right
+end
+
+end
+
+class Rebalancer
+def initialize len
+@limits=[1,2]
+@slots=[]
+n=2
+@limits&lt;&lt;n=@limits[-2]+@limits[-1] while n&lt;len
+end
+
+def append str
+@slots[0]=@slots[0] ? Rope.new(@slots[0],str) : str
+i=0
+while @slots[i].length&gt;@limits[i]
+@slots[i+1]=@slots[i+1] ? Rope.new(@slots[i+1],@slots[i]) : @slots[i]
+@slots[i]=nil
+i+=1
+end
+end
+
+def get_ropes
+@slots.compact!
+(@slots.length-1).times { |i|
+@slots[i+1]=@slots[i+1] ? Rope.new(@slots[i+1],@slots[i]) : @slots[i]
+@slots[i]=nil
+i+=1
+}
+[@slots[-1].left,@slots[-1].right]
+end
+end
+</POST>
+<POST>
+<POSTER> &quot;Eric Mahurin&quot; &lt;eric.mahu...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-03T21:48:00 </POSTDATE>
+On 8/31/07, Ruby Quiz &lt;ja ... @grayproductions.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; This week's task is to implement the Rope data structure as a Ruby class.
+">
+
+I modified my implementation a bit more and provided results along
+with the other ruby implementations (sorry Mauricio) submitted.  The
+benchmark test I used is attached.  It can run the original build/sort
+that assumes mutable ropes and a build/sort that can also be used with
+immutable ropes (in addition to mutable ropes).  These tests assume
+that &lt;&lt; can only take another rope.  I included some testing to ensure
+the results are correct.  I also used the linux /proc/$$/status to get
+the memory.
+
+Mahurin::StringRope is almost the same as my previous submission.  The
+main change was handling a boundary case better so I don't
+unecessarily concat an empty rope (a &lt; should have been a &lt;=) - this
+almost doubled the performance.
+
+I added the class Mahurin::MutableStringRope which is a wrapper around
+an immutable rope.  I just reassign the instance variable (@rope) to
+make changes.  I implemented a bunch of String/Array mutable methods
+in this class.  This wrapper class hurt performance much more than I
+expected (double the run-time).
+
+I also tried out not auto-balancing and using an explicit normalize
+(Mahurin::DenormalStringRope).  This gave much faster build time as
+expected, but the sort time slowed down just as much.  I guess for
+this random data set (I use a fixed seed), qsort doesn't keep the tree
+balanced (pivot doesn't necessarily partition equally).  The larger
+depth for the non-auto-balanced rope hurts the slice time.  I think
+biting the bullet for auto-balancing is the better way to go.
+
+I added a subclass for handling flattening concatenations of short
+strings (Mahurin::ShortStringRope) just to be complete.  It isn't
+useful in this benchmark, but also doesn't hurt much (within the 0.01
+second error margin).
+
+CPU(user+sys,sec)   mem(peak,MB)
+------------------- ------------
+build  sort  total build  sort  class
+-----  ----  ----- -----  ----  -----
+0.10  1.70   1.80   287  1327  String
+0.01  0.27   0.28    22   153  Porth::Rope
+0.02  0.83   0.85    22    34  Choudhury::Rope *
+0.02  0.06   0.08    22    29  Mahurin::StringRope +
+0.00  0.08   0.08    22    30  Mahurin::DenormalStringRope +
+0.02  0.14   0.16    22    29  Mahurin::MutableStringRope
+0.07  0.10   0.17   151   151  Munkby::ArrayRope
+0.02  0.73   0.75    22   655  Kalenkovich::Rope *
+
+CPU : minimum from 40 iterations
+mem : peak over the 40 iterations
+
+* : self-checking failed
++ : immutable benchmark needed
+
+test2.rb
+4K Download
+mahurin.rb
+11K Download
+</POST>
+<POST>
+<POSTER> &quot;ara.t.howard&quot; &lt;ara.t.how...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-03T21:53:00 </POSTDATE>
+On Sep 3, 2007, at 7:48 PM, Eric Mahurin wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; CPU(user+sys,sec)   mem(peak,MB)
+&gt; ------------------- ------------
+&gt;  build  sort  total build  sort  class
+&gt;  -----  ----  ----- -----  ----  -----
+&gt;   0.10  1.70   1.80   287  1327  String
+&gt;   0.01  0.27   0.28    22   153  Porth::Rope
+&gt;   0.02  0.83   0.85    22    34  Choudhury::Rope *
+&gt;   0.02  0.06   0.08    22    29  Mahurin::StringRope +
+&gt;   0.00  0.08   0.08    22    30  Mahurin::DenormalStringRope +
+&gt;   0.02  0.14   0.16    22    29  Mahurin::MutableStringRope
+&gt;   0.07  0.10   0.17   151   151  Munkby::ArrayRope
+&gt;   0.02  0.73   0.75    22   655  Kalenkovich::Rope *
+
+&gt; CPU : minimum from 40 iterations
+&gt; mem : peak over the 40 iterations
+">
+
+enough of this nonsense already!  where is the gem!  ;)
+
+a @ http://drawohara.com/
+--
+we can deny everything, except that we have the possibility of being
+better. simply reflect on that.
+h.h. the 14th dalai lama
+</POST>
+<POST>
+<POSTER> Carl Porth &lt;badc...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-03T22:36:00 </POSTDATE>
+Eric, thanks for taking the time to run benchmarks for everyone's
+solutions.  It clears things up when they're run all on the same
+machine.
+
+Carl
+
+On Sep 3, 6:48 pm, &quot;Eric Mahurin&quot; &lt;eric.mahu ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 8/31/07, Ruby Quiz &lt;ja ... @grayproductions.net&gt; wrote:
+
+&gt; &gt; This week's task is to implement the Rope data structure as a Ruby class.
+
+&gt; I modified my implementation a bit more and provided results along
+&gt; with the other ruby implementations (sorry Mauricio) submitted.  The
+&gt; benchmark test I used is attached.  It can run the original build/sort
+&gt; that assumes mutable ropes and a build/sort that can also be used with
+&gt; immutable ropes (in addition to mutable ropes).  These tests assume
+&gt; that &lt;&lt; can only take another rope.  I included some testing to ensure
+&gt; the results are correct.  I also used the linux /proc/$$/status to get
+&gt; the memory.
+
+&gt; Mahurin::StringRope is almost the same as my previous submission.  The
+&gt; main change was handling a boundary case better so I don't
+&gt; unecessarily concat an empty rope (a &lt; should have been a &lt;=) - this
+&gt; almost doubled the performance.
+
+&gt; I added the class Mahurin::MutableStringRope which is a wrapper around
+&gt; an immutable rope.  I just reassign the instance variable (@rope) to
+&gt; make changes.  I implemented a bunch of String/Array mutable methods
+&gt; in this class.  This wrapper class hurt performance much more than I
+&gt; expected (double the run-time).
+
+&gt; I also tried out not auto-balancing and using an explicit normalize
+&gt; (Mahurin::DenormalStringRope).  This gave much faster build time as
+&gt; expected, but the sort time slowed down just as much.  I guess for
+&gt; this random data set (I use a fixed seed), qsort doesn't keep the tree
+&gt; balanced (pivot doesn't necessarily partition equally).  The larger
+&gt; depth for the non-auto-balanced rope hurts the slice time.  I think
+&gt; biting the bullet for auto-balancing is the better way to go.
+
+&gt; I added a subclass for handling flattening concatenations of short
+&gt; strings (Mahurin::ShortStringRope) just to be complete.  It isn't
+&gt; useful in this benchmark, but also doesn't hurt much (within the 0.01
+&gt; second error margin).
+
+&gt; CPU(user+sys,sec)   mem(peak,MB)
+&gt; ------------------- ------------
+&gt;  build  sort  total build  sort  class
+&gt;  -----  ----  ----- -----  ----  -----
+&gt;   0.10  1.70   1.80   287  1327  String
+&gt;   0.01  0.27   0.28    22   153  Porth::Rope
+&gt;   0.02  0.83   0.85    22    34  Choudhury::Rope *
+&gt;   0.02  0.06   0.08    22    29  Mahurin::StringRope +
+&gt;   0.00  0.08   0.08    22    30  Mahurin::DenormalStringRope +
+&gt;   0.02  0.14   0.16    22    29  Mahurin::MutableStringRope
+&gt;   0.07  0.10   0.17   151   151  Munkby::ArrayRope
+&gt;   0.02  0.73   0.75    22   655  Kalenkovich::Rope *
+
+&gt; CPU : minimum from 40 iterations
+&gt; mem : peak over the 40 iterations
+
+&gt; * : self-checking failed
+&gt; + : immutable benchmark needed
+
+&gt;  test2.rb
+&gt; 4KDownload
+
+&gt;  mahurin.rb
+&gt; 11KDownload
+">
+</POST>
+<POST>
+<POSTER> &quot;Eugene Kalenkovich&quot; &lt;rub...@softover.com&gt; </POSTER>
+<POSTDATE> 2007-09-04T02:55:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Eric Mahurin&quot;  wrote in message
+">
+
+news:29256ea00709031847ua14d891k810fe28236d6edd9@mail.gmail.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; CPU(user+sys,sec)   mem(peak,MB)
+&gt; ------------------- ------------
+&gt; build  sort  total build  sort  class
+&gt; -----  ----  ----- -----  ----  -----
+&gt;  0.10  1.70   1.80   287  1327  String
+&gt;  0.01  0.27   0.28    22   153  Porth::Rope
+&gt;  0.02  0.83   0.85    22    34  Choudhury::Rope *
+&gt;  0.02  0.06   0.08    22    29  Mahurin::StringRope +
+&gt;  0.00  0.08   0.08    22    30  Mahurin::DenormalStringRope +
+&gt;  0.02  0.14   0.16    22    29  Mahurin::MutableStringRope
+&gt;  0.07  0.10   0.17   151   151  Munkby::ArrayRope
+&gt;  0.02  0.73   0.75    22   655  Kalenkovich::Rope *
+
+&gt; CPU : minimum from 40 iterations
+&gt; mem : peak over the 40 iterations
+
+&gt; * : self-checking failed
+&gt; + : immutable benchmark needed
+">
+
+Eric, thanks a lot for your test, it helped me to find a bug in my solution.
+The only thing I do not understand - you've changed the game rules on flight
+by making &quot;data = data.normalize&quot; instead of &quot;data.normalize&quot;. I'm wondering
+how could you get sorting time &gt; 0 for my solution (as it played by old
+rules and would give you nothing for such assignment)? :)
+
+Anyway, I'm posting a fixed solution (for the bug and for your test) in the
+next message, and I'd appreciate if you can re-run it
+
+-- EK
+</POST>
+<POST>
+<POSTER> &quot;Eugene Kalenkovich&quot; &lt;rub...@softover.com&gt; </POSTER>
+<POSTDATE> 2007-09-04T03:10:00 </POSTDATE>
+Fixes for previously posted solution:
+- empty node guard in slice
+- normalize returning self for Eric's test
+
+<QUOTE PREVIOUSPOST="
+&gt;-------------------------------------------------------------------------- ----
+">
+
+class NilClass
+def length; 0; end
+end
+
+class String
+def shift
+return nil if empty?
+res=self[0]
+self[0]=&quot;&quot;
+res
+end
+end
+
+class Rope
+attr_reader :length, :left, :right
+
+def initialize(left=nil,right=nil)
+@left=left if left
+@right=right if right
+@length=left.length+right.length
+end
+
+def append(what)
+len=what.length
+if (len&gt;0)
+@left=self.dup if @right.length&gt;0
+@right=what
+@length+=len
+end
+self
+end
+
+alias &lt;&lt; append
+
+def prepend(what)
+len=what.length
+if (len&gt;0)
+@right=self.dup if @left.length&gt;0
+@left=what
+@length+=len
+end
+self
+end
+
+def to_s
+@left.to_s + @right.to_s
+end
+
+def [](i)
+return i.match(self.to_s)[0] if i.kind_of? Regexp
+if i.kind_of? Range
+pos,last=i.first,i.last
+pos = @length+pos if pos&lt;0
+last = @length+last if last&lt;0
+return nil if pos&lt;0 || last&lt;0
+return slice(pos,last-pos+1)
+end
+i = @length+i if i&lt;0
+return nil if i&lt;0 || i&gt;@length-1
+llen = @left.length
+i&lt;llen ? @left[i] : @right[i-llen]
+end
+
+def []=(i,val)
+#fixnum only
+i = @length+i if i&lt;0
+&quot;&quot;[i]=0 if i&lt;0 || i&gt; @length-1
+@length+=val.length-1
+llen = @left.length
+i&lt;llen ? @left[i]=val : @right[i-llen]=val
+end
+
+def slice(pos,len)
+return pos.match(self.to_s)[len] if pos.kind_of? Regexp
+pos = @length+pos if pos&lt;0
+return nil if pos&lt;0 || len&lt;0 || pos&gt;@length-1
+llen = @left.length
+return @left.slice(pos,len) if pos+len&lt;=llen || ! @right
+return @right.slice(pos-llen, len) if pos&gt;=llen
+Rope.new(@left.slice(pos,llen-pos),@right.slice(0,len+pos-llen))
+end
+
+def shift
+return nil if @length==0
+@length-=1
+res = @left.length&gt;0 ? @left.shift : @right.shift
+@left=nil if @left.length==0
+@right=nil if @right.length==0
+res
+end
+
+def normalize
+r=Rebalancer.new(@length)
+self.traverse { |str| r.append(str) }
+@left, @right=r.get_ropes
+self
+end
+
+def traverse(&amp;blck)
+@left.kind_of?(String) ? yield( @left) : @left.traverse(&amp;blck) if @left
+@right.kind_of?(String) ? yield( @right) : @right.traverse(&amp;blck) if
+@right
+end
+
+end
+
+class Rebalancer
+def initialize len
+@limits=[1,2]
+@slots=[]
+n=2
+@limits&lt;&lt; n = @limits[-2] + @limits[-1] while n&lt;len
+end
+
+def append str
+@slots[0] = @slots[0] ? Rope.new( @slots[0],str) : str
+i=0
+while @slots[i].length&gt;@limits[i]
+@slots[i+1] = @slots[i+1] ? Rope.new( @slots[i+1],@slots[i]) :
+@slots[i]
+@slots[i] = nil
+i+=1
+end
+end
+
+def get_ropes
+@slots.compact!
+(@slots.length-1).times { |i|
+@slots[i+1]=@slots[i+1] ? Rope.new(@slots[i+1],@slots[i]) : @slots[i]
+@slots[i]=nil
+i+=1
+}
+[@slots[-1].left,@slots[-1].right]
+end
+end
+</POST>
+<POST>
+<POSTER> &quot;Gustav Munkby&quot; &lt;grd...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-04T03:35:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; CPU(user+sys,sec)   mem(peak,MB)
+&gt; ------------------- ------------
+&gt;  build  sort  total build  sort  class
+&gt;  -----  ----  ----- -----  ----  -----
+&gt;   0.10  1.70   1.80   287  1327  String
+&gt;   0.01  0.27   0.28    22   153  Porth::Rope
+&gt;   0.02  0.83   0.85    22    34  Choudhury::Rope *
+&gt;   0.02  0.06   0.08    22    29  Mahurin::StringRope +
+&gt;   0.00  0.08   0.08    22    30  Mahurin::DenormalStringRope +
+&gt;   0.02  0.14   0.16    22    29  Mahurin::MutableStringRope
+&gt;   0.07  0.10   0.17   151   151  Munkby::ArrayRope
+&gt;   0.02  0.73   0.75    22   655  Kalenkovich::Rope *
+">
+
+Thanks for running the tests!  I do think it is a shame, however,
+that the table does not include the notion of safety that I mentioned
+in my submission. If any of these classes should every go into a
+gem as ara mentioned, the user of that gem at least ought to be
+able to choose the safe version.
+
+Here is a very simple scenario where such a problem is introduced.
+One could probably do worse changes to the source strings, but this
+was the first example I came up with.
+
+ss = %w[test append]
+r1, r2 = ss.map {|x| Mahurin::StringRope.new(x) }
+r1 &lt;&lt;= r2
+ss.first &lt;&lt; &quot;ing&quot;
+r1.length # =&gt; 10
+r1.to_s.length # =&gt; 13
+
+I have only tested Mahurin::StringRope, but would like to know for
+which other classes I need to be extra careful when adding strings
+to the rope. I did find, however, that by removing my &quot;safety dups&quot;,
+the combined running time (on my machine) is about the same for
+my solution as for Mahurin::StringRope.
+
+!g
+</POST>
+<POST>
+<POSTER> &quot;Eric Mahurin&quot; &lt;eric.mahu...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-04T09:46:00 </POSTDATE>
+On 9/4/07, Gustav Munkby &lt;grd ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; CPU(user+sys,sec)   mem(peak,MB)
+&gt; &gt; ------------------- ------------
+&gt; &gt;  build  sort  total build  sort  class
+&gt; &gt;  -----  ----  ----- -----  ----  -----
+&gt; &gt;   0.10  1.70   1.80   287  1327  String
+&gt; &gt;   0.01  0.27   0.28    22   153  Porth::Rope
+&gt; &gt;   0.02  0.83   0.85    22    34  Choudhury::Rope *
+&gt; &gt;   0.02  0.06   0.08    22    29  Mahurin::StringRope +
+&gt; &gt;   0.00  0.08   0.08    22    30  Mahurin::DenormalStringRope +
+&gt; &gt;   0.02  0.14   0.16    22    29  Mahurin::MutableStringRope
+&gt; &gt;   0.07  0.10   0.17   151   151  Munkby::ArrayRope
+&gt; &gt;   0.02  0.73   0.75    22   655  Kalenkovich::Rope *
+
+&gt; Thanks for running the tests!  I do think it is a shame, however,
+&gt; that the table does not include the notion of safety that I mentioned
+&gt; in my submission. If any of these classes should every go into a
+&gt; gem as ara mentioned, the user of that gem at least ought to be
+&gt; able to choose the safe version.
+
+&gt; Here is a very simple scenario where such a problem is introduced.
+&gt; One could probably do worse changes to the source strings, but this
+&gt; was the first example I came up with.
+
+&gt; ss = %w[test append]
+&gt; r1, r2 = ss.map {|x| Mahurin::StringRope.new(x) }
+&gt; r1 &lt;&lt;= r2
+&gt; ss.first &lt;&lt; &quot;ing&quot;
+&gt; r1.length # =&gt; 10
+&gt; r1.to_s.length # =&gt; 13
+
+&gt; I have only tested Mahurin::StringRope, but would like to know for
+&gt; which other classes I need to be extra careful when adding strings
+&gt; to the rope. I did find, however, that by removing my &quot;safety dups&quot;,
+&gt; the combined running time (on my machine) is about the same for
+&gt; my solution as for Mahurin::StringRope.
+">
+
+My classes that do the work are are immutable (there is a wrapper
+class that makes a mutable rope).  I assumed that original data you
+give (strings) won't change.  The caller should know whether the input
+data will change or not and dup if necessary.
+
+Some of the methods in your ArrayRope do modify the underlying
+strings.  Because of that, you really need to dup the input.  But, you
+could easily fix those few methods to dup when you want to make a
+change.  I made a version of your code that doesn't do the dups up
+front and benchmarked it.
+
+I assume most of the other mutable rope solutions have similar
+problems and need to implement a proper COW (copy-on-write) solution.
+
+At first I thought your solution was linear to do a slice, but then I
+noticed that you do a binary search.  I applaud your solution.  I
+think many C++ STL deque implementations use this same scheme (two
+level array).  Maybe that is why a rope isn't officially in STL -
+because deque is good enough.
+
+Here are the new results along with your non-dup solution and
+Kalenkovich's fixes:
+
+CPU(user+sys,sec)   mem(peak,MB)
+------------------- ------------
+build  sort  total build  sort  class
+-----  ----  ----- -----  ----  -----
+0.10  1.70   1.80   287  1327  String
+0.01  0.27   0.28    22   153  Porth::Rope
+0.02  0.83   0.85    22    34  Choudhury::Rope *
+0.02  0.06   0.08    22    29  Mahurin::StringRope +
+0.00  0.08   0.08    22    30  Mahurin::DenormalStringRope +
+0.02  0.14   0.16    22    29  Mahurin::MutableStringRope
+0.07  0.10   0.17   151   151  Munkby::ArrayRope
+0.00  0.09   0.09    22    22  Munkby::ArrayRope (no dup)
+0.01  0.12   0.13    22    22  Kalenkovich::Rope (fixed)
+
+CPU : minimum from 40 iterations
+mem : peak over the 40 iterations
+
+* : self-checking failed
++ : immutable benchmark needed
+
+As Eugene Kalenkovich mentioned my benchmark test shouldn't have
+excepted self to be returned from normalize for mutable ropes.  I
+fixed this in my test.
+</POST>
+<POST>
+<POSTER> &quot;Eugene Kalenkovich&quot; &lt;rub...@softover.com&gt; </POSTER>
+<POSTDATE> 2007-09-04T11:25:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Eric Mahurin&quot; &lt;eric.mahu ... @gmail.com&gt; wrote in message
+">
+
+news:29256ea00709040646n2052bc36ue64e0148331f0a77@mail.gmail.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt;  0.02  0.06   0.08    22    29  Mahurin::StringRope +
+&gt;  0.00  0.08   0.08    22    30  Mahurin::DenormalStringRope +
+&gt;  0.02  0.14   0.16    22    29  Mahurin::MutableStringRope
+&gt;  0.07  0.10   0.17   151   151  Munkby::ArrayRope
+&gt;  0.00  0.09   0.09    22    22  Munkby::ArrayRope (no dup)
+&gt;  0.01  0.12   0.13    22    22  Kalenkovich::Rope (fixed)
+">
+
+Eric, may I ask you to test one more thing: your #slice does not have any
+input checks. To make a fair comparison, could you please comment first 3
+lines of my #slice, making it:
+
+def slice(pos,len)
+#1    return pos.match(self.to_s)[len] if pos.kind_of? Regexp
+#2    pos = @length+pos if pos&lt;0
+#3    return nil if pos&lt;0 || len&lt;0 || pos&gt;@length-1
+llen = @left.length
+return @left.slice(pos,len) if pos+len&lt;=llen || ! @right
+return @right.slice(pos-llen, len) if pos&gt;=llen
+Rope.new(@left.slice(pos,llen-pos),@right.slice(0,len+pos-llen))
+end
+
+This code still satisfies your test, and I believe it will beat performance
+of yours (BTW, lines 2,3 show problems in your code)
+
+Thank you,
+-- EK
+</POST>
+<POST>
+<POSTER> &quot;Eric Mahurin&quot; &lt;eric.mahu...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-04T23:20:00 </POSTDATE>
+On 9/4/07, Eugene Kalenkovich &lt;rub ... @softover.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Eric, may I ask you to test one more thing: your #slice does not have any
+&gt; input checks. To make a fair comparison, could you please comment first 3
+&gt; lines of my #slice,
+">
+
+Sure.  I also did the same to Gustav Munkby's code.  Here are the new results:
+
+CPU(user+sys,sec)   mem(peak,MB)
+------------------- ------------
+build  sort  total build  sort  class
+-----  ----  ----- -----  ----  -----
+0.10  1.70   1.80   287  1327  String
+0.01  0.27   0.28    22   153  Porth::Rope
+0.02  0.83   0.85    22    34  Choudhury::Rope (failed)
+0.02  0.06   0.08    22    29  Mahurin::StringRope (immutable)
+0.00  0.08   0.08    22    30  Mahurin::DenormalStringRope (immutable)
+0.02  0.14   0.16    22    29  Mahurin::MutableStringRope
+0.07  0.10   0.17   151   151  Munkby::ArrayRope
+0.00  0.09   0.09    22    22  Munkby::ArrayRope (no dup)
+0.00  0.07   0.07    22    22  Munkby::ArrayRope (no dup, simple slice)
+0.01  0.12   0.13    22    22  Kalenkovich::Rope
+0.01  0.07   0.08    22    22  Kalenkovich::Rope (simple slice)
+
+Munkby::ArrayRope is marginally the fastest.  Upon closer inspection
+of the code, there is a pretty significant problem - concatenation is
+O(n) where n is the number of segments in the right rope of the
+concatenation.  A normal rope has O(1) concatenations and a
+self-balancing one (Mahurin::StringRope) has O(log(n)).  The reason
+this isn't a problem in this benchmark is that qsort iterates over the
+segments (n&gt;1) for the right rope of a concat right before the concat.
+So the big-O performance is the same for the qsort - O(n*log(n)).
+Munkby::ArrayRope may not look so good on other benchmarks.
+
+I'm surprised that the dup version of Munkby::ArrayRope takes so much
+memory.   I don't see anything that the benchmark uses that would
+modify the strings, so it looks like the COW in string.c doesn't work.
+I added dup on the input strings to Mahurin::StringRope, and it made
+no difference in run-time or memory.
+</POST>
+<POST>
+<POSTER> Carl Porth &lt;badc...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T03:02:00 </POSTDATE>
+Ok, here's my last submission (I hope).  I modified slice to return a
+Rope for a speed increase and cleaned up a bit.
+
+I never explained my design: I just have the Rope instances represent
+string concatenations such that only leaf nodes are strings.  This
+way, I can just recurse left and right without doing any type
+checking, resulting in fairly clean code.
+
+Oh, and I cheated to get full String functionality (but not completely
+tested).
+
+http://pastie.caboo.se/94118
+
+Eric, can I get a redo on those benchmarks? (I've always depended on
+the kindness of strangers.) Thanks!
+
+Carl
+
+On Sep 4, 8:20 pm, &quot;Eric Mahurin&quot; &lt;eric.mahu ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 9/4/07, Eugene Kalenkovich &lt;rub ... @softover.com&gt; wrote:
+
+&gt; &gt; Eric, may I ask you to test one more thing: your #slice does not have any
+&gt; &gt; input checks. To make a fair comparison, could you please comment first 3
+&gt; &gt; lines of my #slice,
+
+&gt; Sure.  I also did the same to Gustav Munkby's code.  Here are the new results:
+
+&gt; CPU(user+sys,sec)   mem(peak,MB)
+&gt; ------------------- ------------
+&gt;  build  sort  total build  sort  class
+&gt;  -----  ----  ----- -----  ----  -----
+&gt;   0.10  1.70   1.80   287  1327  String
+&gt;   0.01  0.27   0.28    22   153  Porth::Rope
+&gt;   0.02  0.83   0.85    22    34  Choudhury::Rope (failed)
+&gt;   0.02  0.06   0.08    22    29  Mahurin::StringRope (immutable)
+&gt;   0.00  0.08   0.08    22    30  Mahurin::DenormalStringRope (immutable)
+&gt;   0.02  0.14   0.16    22    29  Mahurin::MutableStringRope
+&gt;   0.07  0.10   0.17   151   151  Munkby::ArrayRope
+&gt;   0.00  0.09   0.09    22    22  Munkby::ArrayRope (no dup)
+&gt;   0.00  0.07   0.07    22    22  Munkby::ArrayRope (no dup, simple slice)
+&gt;   0.01  0.12   0.13    22    22  Kalenkovich::Rope
+&gt;   0.01  0.07   0.08    22    22  Kalenkovich::Rope (simple slice)
+
+&gt; Munkby::ArrayRope is marginally the fastest.  Upon closer inspection
+&gt; of the code, there is a pretty significant problem - concatenation is
+&gt; O(n) where n is the number of segments in the right rope of the
+&gt; concatenation.  A normal rope has O(1) concatenations and a
+&gt; self-balancing one (Mahurin::StringRope) has O(log(n)).  The reason
+&gt; this isn't a problem in this benchmark is that qsort iterates over the
+&gt; segments (n&gt;1) for the right rope of a concat right before the concat.
+&gt;  So the big-O performance is the same for the qsort - O(n*log(n)).
+&gt; Munkby::ArrayRope may not look so good on other benchmarks.
+
+&gt; I'm surprised that the dup version of Munkby::ArrayRope takes so much
+&gt; memory.   I don't see anything that the benchmark uses that would
+&gt; modify the strings, so it looks like the COW in string.c doesn't work.
+&gt;  I added dup on the input strings to Mahurin::StringRope, and it made
+&gt; no difference in run-time or memory.
+">
+</POST>
+<POST>
+<POSTER> &quot;Eric Mahurin&quot; &lt;eric.mahu...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T09:58:00 </POSTDATE>
+On 9/5/07, Carl Porth &lt;badc ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; http://pastie.caboo.se/94118
+
+&gt; Eric, can I get a redo on those benchmarks? (I've always depended on
+&gt; the kindness of strangers.) Thanks!
+">
+
+Here is the latest:
+
+CPU(user+sys,sec)   mem(peak,MB)
+------------------- ------------
+build  sort  total build  sort  class
+-----  ----  ----- -----  ----  -----
+0.10  1.70   1.80   287  1327  String
+0.00  0.27   0.27    22   153  Porth::Rope (no dup)
+0.00  0.19   0.19    22    22  Porth::Rope (no dup)
+0.02  0.83   0.85    22    34  Choudhury::Rope (failed)
+0.02  0.06   0.08    22    29  Mahurin::StringRope (immutable)
+0.00  0.08   0.08    22    30  Mahurin::DenormalStringRope (immutable)
+0.02  0.14   0.16    22    29  Mahurin::MutableStringRope (uses immutables)
+0.07  0.10   0.17   151   151  Munkby::ArrayRope
+0.00  0.09   0.09    22    22  Munkby::ArrayRope (no dup)
+0.00  0.07   0.07    22    22  Munkby::ArrayRope (no dup, simple slice)
+0.01  0.12   0.13    22    22  Kalenkovich::Rope (no dup)
+0.01  0.07   0.08    22    22  Kalenkovich::Rope (no dup, simple slice)
+
+With the exception of Munkby::ArrayRope (which has an O(n)
+concatenation problem), I don't trust any of the mutable &quot;no dup&quot;
+implementations.  This will be a problem:
+
+rope1 = ...
+rope2 = ...
+rope3 = ...
+rope4 = RopeClass.new(rope1, rope2)
+rope1 &lt;&lt; rope2
+rope2 &lt;&lt; rope3
+
+Without dups of the inputs (in initialize and #&lt;&lt;), rope4 and rope2
+will be screwed up.
+
+I only deal with immutable ropes, so dupping the ropes isn't
+necessary.  The only concern you might have would be with the leaf
+strings.  I added dups at that level and it didn't affect run-time or
+memory.  You could also just make a requirement - incoming strings
+should not be modified (externally dup if necessary).
+
+I added dups to Kalenkovich's code and saw the same 150+MB usage as
+Munkby's dup code.  I still don't understand this.
+</POST>
+<POST>
+<POSTER> &quot;Eugene Kalenkovich&quot; &lt;rub...@softover.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T22:15:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Eric Mahurin&quot; &lt;eric.mahu ... @gmail.com&gt; wrote in message &gt;
+&gt; I added dups to Kalenkovich's code and saw the same 150+MB usage as
+&gt; Munkby's dup code.  I still don't understand this.
+">
+
+I'm not sure about Gustav's code, but for my one memory in duping option is
+eaten by normalization, that do not really need any duping at all.
+
+--EK
+</POST>
+<POST>
+<POSTER> &quot;Eugene Kalenkovich&quot; &lt;rub...@softover.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T22:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Eugene Kalenkovich&quot; &lt;rub ... @softover.com&gt; wrote in message
+">
+
+news:JkJDi.3699$tY2.57@trndny01 ...
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Eric Mahurin&quot; &lt;eric.mahu ... @gmail.com&gt; wrote in message &gt;
+
+&gt;&gt; I added dups to Kalenkovich's code and saw the same 150+MB usage as
+&gt;&gt; Munkby's dup code.  I still don't understand this.
+
+&gt; I'm not sure about Gustav's code, but for my one memory in duping option
+&gt; is eaten by normalization, that do not really need any duping at all.
+
+&gt; --EK
+">
+
+I've modified my code to avoid duping in normalization - at a cost of
+ugliness :) (too ugly for quiz submission, and anyway, too late :)
+You can see that memory is fine now.
+
+class NilClass
+def length; 0; end
+end
+
+class String
+def shift
+return nil if empty?
+res=self[0]
+self[0]=&quot;&quot;
+res
+end
+end
+
+class Rope
+attr_reader :length, :left, :right
+
+def initialize(left=nil,right=nil,dup=true)
+@left = left ? left.kind_of?(Rope)&amp;&amp;dup ? left.dup : left : nil
+@right = right ? right.kind_of?(Rope)&amp;&amp;dup ? right.dup : right : nil
+@length=left.length+right.length
+end
+
+def append(what, dup=true)
+len=what.length
+if (len&gt;0)
+@left=self.dup if @right.length&gt;0
+@right=what.kind_of?(Rope)&amp;&amp;dup ? what.dup : what
+@length+=len
+end
+self
+end
+
+alias &lt;&lt; append
+
+def prepend(what, dup=true)
+len=what.length
+if (len&gt;0)
+@right=self.dup if @left.length&gt;0
+@left=what.kind_of?(Rope)&amp;&amp;dup ? what.dup : what
+@length+=len
+end
+self
+end
+
+def to_s
+@left.to_s + @right.to_s
+end
+
+def [](i)
+return i.match(self.to_s)[0] if i.kind_of? Regexp
+if i.kind_of? Range
+pos,last=i.first,i.last
+pos = @length+pos if pos&lt;0
+last = @length+last if last&lt;0
+return nil if pos&lt;0 || last&lt;0
+return slice(pos,last-pos+1)
+end
+i = @length+i if i&lt;0
+return nil if i&lt;0 || i&gt;@length-1
+llen = @left.length
+i&lt;llen ? @left[i] : @right[i-llen]
+end
+
+def []=(i,val)
+#fixnum only
+i = @length+i if i&lt;0
+&quot;&quot;[i]=0 if i&lt;0 || i&gt; @length-1
+@length+=val.length-1
+llen = @left.length
+i&lt;llen ? @left[i]=val : @right[i-llen]=val
+end
+
+def slice(pos,len)
+return pos.match(self.to_s)[len] if pos.kind_of? Regexp
+pos = @length+pos if pos&lt;0
+return nil if pos&lt;0 || len&lt;0 || pos&gt;@length-1
+llen = @left.length
+return @left.slice(pos,len) if pos+len&lt;=llen || ! @right
+return @right.slice(pos-llen, len) if pos&gt;=llen
+Rope.new(@left.slice(pos,llen-pos),@right.slice(0,len+pos-llen))
+end
+
+def shift
+return nil if @length==0
+@length-=1
+res = @left.length&gt;0 ? @left.shift : @right.shift
+@left=nil if @left.length==0
+@right=nil if @right.length==0
+res
+end
+
+def normalize
+r=Rebalancer.new(@length)
+self.traverse { |str| r.append(str) }
+@left, @right=r.get_ropes
+self
+end
+
+def traverse(&amp;blck)
+@left.kind_of?(String) ? yield( @left) : @left.traverse(&amp;blck) if @left
+@right.kind_of?(String) ? yield( @right) : @right.traverse(&amp;blck) if
+@right
+end
+
+end
+
+class Rebalancer
+def initialize len
+@limits=[1,2]
+@slots=[]
+n=2
+@limits&lt;&lt; n = @limits[-2] + @limits[-1] while n&lt;len
+end
+
+def append str
+@slots[0] = @slots[0] ? Rope.new( @slots[0],str, false) : str
+i=0
+while @slots[i].length&gt;@limits[i]
+@slots[i+1] = @slots[i+1] ? Rope.new( @slots[i+1],@slots[i],false) :
+@slots[i]
+@slots[i] = nil
+i+=1
+end
+end
+
+def get_ropes
+@slots.compact!
+(@slots.length-1).times { |i|
+@slots[i+1]=@slots[i+1] ? Rope.new(@slots[i+1],@slots[i],false) :
+@slots[i]
+@slots[i]=nil
+i+=1
+}
+[@slots[-1].left,@slots[-1].right]
+end
+end
+</POST>
+<POST>
+<POSTER> James Koppel &lt;jamesbkop...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T23:37:00 </POSTDATE>
+I had a little trouble debugging my solution, and thus I'm turning it in late. I'm also being forced to finish up early, so some of the lesser features sufferred. It implements all three parts (including part 3 subpart d), but I commented out part 3 subpart c, as I was having trouble with it in and earlier version, and did not have time to test whether it works now and debug. Additionally, part 3 subpart a is only kinda implemented, as I didn't have time to make the slices other than (start, length) and range return a rope.
+
+I had plans to implement a frequency-count-based substring slice (and partially did) that could know where it was possible for the substring to occur and where it was most likely, but, again, I ran out of time to implement the main part of that.
+
+My code runs pretty well, but it's extremely ugly due to all the optimizations I made, such as using a stack-based iterative normalization algorithm that tracks its path using binary instead of a recursive traversal.
+
+Lastly, in order to debug  normalize at one point, I wrote  a method that prints a minimalist but accurate  and readable tree representation of the Rope. I left that in there.
+
+$Fib = Hash.new{ |h, n| h[n] = h[n - 1] + h[n - 2] }
+$Fib[0] = 0
+$Fib[1] = 1
+
+CHUNK_SIZE = 16
+
+#Ropes cache frequency counts of characters in the rope, Lazily evaluated
+#Calling dup is faster than constantly creating new Hashes
+$blank_freq_count = Hash.new{|h,c|
+h[c] = @left.freq_count[c] + @right.freq_count[c]}
+
+class String
+
+alias at slice
+alias slice_offsetted_section slice
+
+def shift(n=1)
+slice!(0)
+end
+
+def freq_count
+if @freq_count
+@freq_count
+else
+@freq_count = [0]*128
+each_byte {|c| @freq_count[c] += 1}
+@freq_count
+end
+end
+
+def width; 1; end
+def depth; 1; end
+
+end
+
+ObjectSpace.each_object(Class) do |klass|
+if klass &lt;= IO and klass.private_method_defined? :initialize
+klass.class_eval &lt;&lt;-EOC
+alias old_initialize initialize
+def initialize(*args)
+@shifted_chars = 0
+old_initialize(*args)
+end
+EOC
+end
+end
+
+class IO
+
+def length
+if@length
+@length
+else
+seek(0, IO::SEEK_END)
+@length = pos
+end
+end
+
+#Pretends it's immutable
+def to_s
+if @text
+@text
+else
+$stdout.puts @shifted_chars
+$stdout.puts IO::SEEK_SET
+seek(@shifted_chars, IO::SEEK_SET)
+@text = read
+end
+end
+
+def shift
+seek(@shifted_chars, IO::SEEK_SET)
+@shifted_chars += 1
+getc
+end
+
+def freq_count
+to_s.freq_count
+end
+
+def slice_substring(str)
+if @text
+@text.slice(str)
+else #Avoid loading file into memory
+seek(@shifted_chars, IO::SEEK_SET)
+last_char = nil
+while true
+last_char = getc until last_char == str[0] or eof?
+return nil if eof?
+return str if read(str.length - 1) ==str[1..-1]
+end
+end
+end
+
+def slice_offsetted_section(start, length)
+seek(@shifted_chars + start, IO::SEEK_SET)
+read(length)
+end
+
+def at(ind)
+seek(@shifted_chars + ind, IO::SEEK_SET)
+getc
+end
+
+def width; 1; end
+def depth; 1; end
+end
+
+class Rope
+attr_accessor :left, :right, :length, :freq_count
+
+def width; @left.wid ... @right.width; end
+def depth; [@left.width,@right.width].max+1; end
+
+def initialize(left=&quot;&quot;, right=&quot;&quot;)
+@left, @right = left, right
+@length = @left.length + @right.length
+@freq_count = $blank_freq_count.dup
+end
+
+def append(strope)
+#if @right.length &lt; CHUNK_SIZE and strope.length &lt; CHUNK_SIZE
+#  @right = Rope.new(@right,strope)
+#  @length = left.length + right.length
+#  @freq_count = $blank_freq_count.dup
+#else
+@left = Rope.new(@left,@right)
+@right = strope
+@left.freq_count = @freq_count
+@length = @left.length + @right.length
+#end
+self
+end
+alias &lt;&lt; append
+
+def normalize
+###Stack based algorithm removes the overhead of method calls,
+###and the huge overhead of proc calls
+path = 0b0
+path_nodes = [self]
+cur_node = self
+
+seq = []
+while true
+if Rope === cur_node
+path = (path &lt;&lt; 1) | 1
+cur_node = cur_node.left
+path_nodes.push(cur_node)
+else
+if path &amp; 1 == 1
+path ^= 1 #flip the last bit
+path_nodes.pop
+cur_node = path_nodes.last.right
+path_nodes.push(cur_node)
+else
+break if path == 0 #Already visited all nodes
+until path&amp;1 == 1
+path &gt;&gt;= 1
+path_nodes.pop
+end
+path ^= 1 #flip the last bit
+path_nodes.pop
+cur_node = path_nodes.last.right
+path_nodes.push(cur_node)
+end
+end
+next if Rope === cur_node
+str = cur_node
+old_n = 0
+n = 0
+n += 1 until $Fib[n] &gt; str.length
+n -= 1
+smallers = seq[0..n].reject{|o| o.nil?|| o.length == 0}
+until [] == smallers
+seq[old_n..n] = [nil]*(n-old_n+1)
+bal_rope = (smallers[1..-1]).inject(smallers[0]) {|r,s|
+Rope.new(s,r)}
+bal_rope = Rope.new(bal_rope, str)
+old_n = n
+n += 1 until $Fib[n] &gt; bal_rope.length
+n -= 1
+str = bal_rope
+seq[n] = nil if n &gt;= seq.length
+smallers = seq[old_n..n].reject{|o| o.nil? || o.length == 0}
+end
+seq[n] = str
+end
+seq.compact!
+seq[1..-1].inject(seq[0]) {|r,s| r = Rope.new(s,r)}
+end
+
+def to_s
+@left.to_s + @right.to_s
+end
+
+def slice(*args)
+if 2 == args.length and Fixnum === args[0]
+#modulus for negative start
+slice_offsetted_section(args[0] % @length, args[1])
+elsif 1 == args.length and Fixnum === args[0]
+index(args.first % @length)
+elsif 1 == args.length and Range === args[0]
+rng = args[0]
+slice_offsetted_section(rng.begin % @length,
+(rng.end - rng.begin + (rng.exclude_end? ? 0 : 1)) % @length)
+else
+slice_substring(args[0])
+end
+end
+
+def slice_offsetted_section(start, length)
+if start &lt; @left.length
+if start + length &lt; @left.length
+@left.slice_offsetted_section(start,length)
+else
+Rope.new(@left.slice_offsetted_section(start, @left.length - start),
+@right.slice_offsetted_section(0,
+length - (@left.length - start)))
+end
+else
+@right.slice_offsetted_section(start - @left.length, length)
+end
+end
+
+#def slice_substring(str)
+#
+#end
+
+def index(offset)
+if offset &lt; (left_l ... @left.length)
+@left.at(offset)
+else
+@right.at(offset-left_len)
+end
+end
+alias at index
+
+def shift(n=1)
+([0]*n).map do
+@length -= 1
+@left.length &gt; 0 ? @left.shift : @right.shift
+end
+end
+end
+
+$x = 0
+$y = 0
+
+def sumupto(n)
+s = 0
+1.upto(n){|i| s+= i}
+s
+end
+
+def print_rope(tree,str=$stdout)
+arr = ([nil]*sumupto(tree.depth+1)).map{[nil] * (sumupto(tree.depth+1))}
+$y = 0
+$x = arr[0].length / 2
+coord_trav(tree) do |node|
+if Rope === node
+arr[$y][$x] = &quot;/ \\&quot;
+else
+arr[$y][$x] = node.to_s.inspect
+end
+end
+arr.each do |row|
+row.each do |cell|
+if cell == nil
+str.print &quot;   &quot;
+else
+str.print cell
+end
+end
+str.print &quot;\n&quot;
+end
+nil
+end
+
+def coord_trav(tree, &amp;block)
+unless Rope === tree
+block.call(tree)
+return
+end
+$x -= tree.depth
+$y +=tree.depth
+coord_trav(tree.left,&amp;block)
+$x +=tree.depth
+$y -=tree.depth
+block.call(tree)
+$x +=tree.depth
+$y +=tree.depth
+coord_trav(tree.right, &amp;block)
+$x -=tree.depth
+$y -=tree.depth
+end
+
+<QUOTE PREVIOUSPOST="
+----- Original Message ----
+From: Ruby Quiz &lt;ja ... @grayproductions.net&gt;
+To: ruby-talk ML &lt;ruby-t ... @ruby-lang.org&gt;
+Sent: Friday, August 31, 2007 8:19:54 AM
+Subject: [QUIZ] Twisting a Rope (#137)
+
+The three rules of Ruby Quiz:
+
+1.  Please do not post any solutions or spoiler discussion for this quiz until
+48 hours have passed from the time on this message.
+
+2.  Support Ruby Quiz by submitting ideas as often as you can:
+
+http://www.rubyquiz.com/
+
+3.  Enjoy!
+
+Suggestion:  A [QUIZ] in the subject of emails about the problem helps everyone
+on Ruby Talk follow the discussion.  Please reply to the original quiz message,
+if you can.
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- =-=-=
+
+by John Miller
+
+This week's task is to implement the Rope data structure as a Ruby class.  This
+topic comes out of the ICFP programming competition
+( http://www.icfpcontest.com/ ) which had competitors manipulating a 7.5 million
+character string this year.
+
+What is a Rope:
+
+You may not realize it, but for many changes the content to a String, Ruby
+creates a new copy of the original with the modifications applied.  For small
+strings that are created once and read often this is actually a very efficient
+way to do thing, but what happens when the string starts to get long, and is
+undergoing a lot of changes?  First, the program will spend more and more of its
+processing cycles just copying bits around.  Second, the garbage collector will
+be called more and more often to pick up the little stringy scraps you've left
+all over the memory.
+
+Ropes (the name is a pun for a heavy duty string) are tree structures where a
+node represents the concatenation of its left branch with its right, and leaves
+are flat strings. (This is a little sloppy. A rope may contain shared subtrees,
+and is thus really a directed acyclic graph, where the out-edges of each vertex
+are ordered. We will continue to be sloppy.)  E.g. To prepend Text A to Text B,
+one creates a Node (call it N1) with A as its left branch and B as its right.
+To further append Text C create a new Node N2 with its left branch pointing to
+N1 and its right to C.  Easy, right?  To find out more see Boehm, Atkinson and
+Plass &quot;Ropes: an Alternative to Strings&quot; at:
+
+http://rubyurl.com/2FRbO
+
+The task comes in three parts, each increasing in difficulty:
+
+Part one:
+">
+
+...
+read more »
+</POST>
+<POST>
+<POSTER> James Koppel &lt;jamesbkop...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T23:46:00 </POSTDATE>
+Sorry, forgot to mention:
+
+While append modifies the rope in place, normalize returns a new rope.
+
+___________________________________________________________________________ _________
+Yahoo! oneSearch: Finally, mobile search
+that gives answers, not web links.
+http://mobile.yahoo.com/mobileweb/onesearch?refer=1ONXIC
+</POST>
+<POST>
+<POSTER> &quot;Gustav Munkby&quot; &lt;grd...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-06T06:05:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Munkby::ArrayRope is marginally the fastest.  Upon closer inspection
+&gt; of the code, there is a pretty significant problem - concatenation is
+&gt; O(n) where n is the number of segments in the right rope of the
+&gt; concatenation.  A normal rope has O(1) concatenations and a
+&gt; self-balancing one (Mahurin::StringRope) has O(log(n)).  The reason
+&gt; this isn't a problem in this benchmark is that qsort iterates over the
+&gt; segments (n&gt;1) for the right rope of a concat right before the concat.
+&gt;  So the big-O performance is the same for the qsort - O(n*log(n)).
+&gt; Munkby::ArrayRope may not look so good on other benchmarks.
+">
+
+Whether to use a binary tree or an array is a classical decision, and one
+of the reasons that I implemented my rope using an array was because
+I suspected that it would not matter much for the benchmark.
+
+<QUOTE PREVIOUSPOST="
+&gt; I'm surprised that the dup version of Munkby::ArrayRope takes so much
+&gt; memory.   I don't see anything that the benchmark uses that would
+&gt; modify the strings, so it looks like the COW in string.c doesn't work.
+">
+
+The perhaps surprising, but oh so obvious solution here is that dup doesn't
+(always) do sharing. This was somewhat explained here:
+
+http://blade.nagaokaut.ac.jp/cgi-bin/scat.rb/ruby/ruby-talk/74742
+
+I've found out, that one can replace 's.dup' with 's[0..-1]' to enforce sharing.
+I've tried this and memory usage went down, without sacrificing the 'safety'.
+So apparently, the rule is; use dup if you want to modify the duplicate, or
+s[0..-1] if you want to protect the duplicate from changes to the original. =)
+
+<QUOTE PREVIOUSPOST="
+&gt;  I added dup on the input strings to Mahurin::StringRope, and it made
+&gt; no difference in run-time or memory.
+">
+
+This is easily explained by the fact that Mahurin::StringRope treats strings
+and ropes differently, and thereby only dups on first insertion, whereas my
+solution dups all the time.
+
+!g
+</POST>
+<POST>
+<POSTER> Ari Brown &lt;a...@aribrown.com&gt; </POSTER>
+<POSTDATE> 2007-09-06T07:29:00 </POSTDATE>
+Awesome quiz!
+
+Sorry, I have school, but am veeeeeery close to getting this done
+with! Need to debug my slice method.
+
+If you all want to help me fix it **hint hint**, make it faster, send
+hate mail, etc. the code is here:
+http://pastie.caboo.se/94560
+
+BTW, some of my code (just little lines and ideas) were.....
+borrowed..... from Gustav Munkby. Sorry!
+
+I swear it's coming in today!
+Ari
+--------------------------------------------|
+If you're not living on the edge,
+then you're just wasting space.
+</POST>
+<POST>
+<POSTER> Ruby Quiz &lt;ja...@grayproductions.net&gt; </POSTER>
+<POSTDATE> 2007-09-06T07:59:00 </POSTDATE>
+The discussion for this quiz was very interesting.  It's probably worth your
+time to go back and read those messages, if you haven't already.  Some points I
+got out of the discussion were:
+
+* It's tricky to get ropes right.  Clever implementations may loose key
+rope qualities, like the O(1) concatenation time.
+* The functional approach, building immutable ropes, is probably
+superior considering how ropes are intended to be used.
+* Autorebalancing didn't hurt much, at least in the quiz test case.
+* Copy-On-Write is helpful, when it works.
+
+Many of these points came out due to Eric Mahurin's work in benchmarking the
+submitted solutions.  Eric also submitted several variations of rope classes, a
+few of which I want to take a look at below.  Let's begin with the class Eric
+uses to build the rope trees:
+
+module Mahurin
+class Rope
+include Enumerable
+# form a binary tree from two ropes (possibly sub-trees)
+def initialize(left,right)
+@left = left
+@right = right
+@llength = @left.length
+@length = @lleng ... @right.length
+@depth = [left.depth, right.depth].max+1
+end
+# number of elements in this rope
+def length
+@length
+end
+# depth of the tree (to help keep the tree balanced)
+def depth
+@depth
+end
+# left rope (not needed when depth==0)
+def left
+@left
+end
+# right rope (not needed when depth==0)
+def right
+@right
+end
+
+# ...
+
+Here we see the setup and relevant attributes of Rope objects.  First we have
+the fact that they are binary trees, with left and right subtrees.  Next we see
+that Eric is going to track two lengths for Rope objects, both the total length
+and the length of just the left subtree.  The reasoning for that will become
+apparent when we examine indexing.  Finally, Eric tracks a depth, for use in
+rebalancing.
+
+There are really two major operations that are key to a Rope implementation:
+concatenation and indexing.  Here's the concatenation side of the puzzle:
+
+# ...
+
+# appended rope (non-modifying)
+def +(other)
+# balance as an AVL tree
+balance = other.depth-@depth
+if balance&gt;+1
+left = other.left
+right = other.right
+if left.depth&gt;right.depth
+# rotate other to right before rotating self+other to left
+(self + left.left) + (left.right + right)
+else
+# rotate self+other to left
+(self + left) + right
+end
+elsif balance&lt;-1
+if @right.depth&gt;@left.depth
+# rotate self to left before rotating self+other to right
+(@left + @right.left) + (@right.right + other)
+else
+# rotate self+other to right
+@left + (@right + other)
+end
+else
+self.class.new(self, other)
+end
+end
+alias_method(:&lt;&lt;, :+)
+
+# ...
+
+This method is only this long because it automatically rebalances the tree as
+needed.  In fact, if you glance down to the final else clause, you will see the
+trivial implementation, which is just to construct a new Rope from the current
+Rope and the concatenated element.
+
+The rebalancing done here is, as the comment suggests, a textbook AVL
+implementation.  With an AVL tree, you subtract the left depth from the right
+depth to get a tree's balance factor.  Anything in the range of -1 to 1 is a
+balanced tree.  If the factor is outside of that range, one or two rotations are
+required to rebalance the tree.
+
+I'm not going to go into the specific rotations.  If you would like to read up
+on them, I recommend:
+
+http://fortheloot.com/public/AVLTreeTutorial.rtf
+
+Let's move on to the indexing methods used to pull information back out of a
+Rope:
+
+# ...
+
+# slice of the rope
+def slice(start, len)
+return self if start.zero? and len==@length
+rstart = start-@llength
+return @right.slice(rstart, len) if rstart&gt;=0
+llen = @llength-start
+rlen = len-llen
+if rlen&gt;0
+@left.slice(start, llen) + @right.slice(0, rlen)
+else
+@left.slice(start, len)
+end
+end
+# element at a certain position in the rope
+def at(index)
+rindex = index-@llength
+if rindex&lt;0
+@left.at(index)
+else
+@right.at(rindex)
+end
+end
+
+# ...
+
+Have a look at the at() method first, because it's easier to digest and it shows
+the concept of indexing this tree structure.  Essentially, to index in the tree
+you check a position against the left length.  If it's less than, index the left
+side.  If it's greater than, index the right.  This search tactic is the
+hallmark attribute of binary trees.
+
+The slice() method works the same way.  It's just more complicated because it
+has to work with two indices instead of one.  Finding the start index is the
+same strategy we saw in at().  If that index is in the right subtree, the end
+will be as well and the code makes the recursive hand-off without further
+checks.  When it's in the left, the end must be located.  If that end point
+turns out to also be in the left, the hand-off is made to the left side.  When
+it is in the right, a partial slice() is made from both halves and combined.
+This covers all the cases.
+
+Eric added a couple more methods to the Rope class that cover iteration and
+converting to a String:
+
+# ...
+
+# iterate through the elements in the rope
+def each(&amp;block)
+@left.each(&amp;block)
+@right.each(&amp;block)
+end
+# flatten the rope into a string (optionally starting with a prefix)
+def to_s(s=&quot;&quot;)
+@right.to_s(@left.to_s(s))
+end
+end
+
+# ...
+
+That covers the tree implementation.  What we haven't seen yet though, are the
+leaf nodes.  We need two types for the implementation I want to examine,
+EmptyRope and StringRope.  Here's the first of those:
+
+# ...
+
+EmptyRope = Object.new
+class &lt;&lt; EmptyRope
+include Enumerable
+def length
+0
+end
+def depth
+0
+end
+def +(other)
+other
+end
+alias_method(:&lt;&lt;, :+)
+def slice(start, len)
+self
+end
+def each
+end
+def to_s
+&quot;&quot;
+end
+end
+
+# ...
+
+This implementation is kind of a poor man's singleton instance (the design
+pattern, not the Ruby concept, though we see both here).  There shouldn't be any
+surprises in this code.  The attributes are zeroed, concatenation results in
+whatever the concatenated element is, and slice()ing just returns self which
+doubles as an empty String.
+
+That leaves just one last leaf, StringRope:
+
+# ...
+
+class StringRope
+include Enumerable
+def self.new(*args)
+if args.empty?
+EmptyRope
+else
+super
+end
+end
+def initialize(data)
+@data = data
+end
+def length
+@data.length
+end
+def depth
+0
+end
+
+# ...
+
+This class just wraps a String to support the Rope API we've been examining.
+About the only interesting trick here is the is that the default new() for this
+class is overridden to allow returning an EmptyRope as needed.  Anytime the
+argument is provided though, this method does hand-off to the default new()
+implementation.
+
+Here's the concatenation method:
+
+# ...
+
+def +(other)
+balance = other.depth
+if balance&gt;1
+left = other.left
+right = other.right
+if left.depth&gt;right.depth
+# rotate other to right before rotating self+other to left
+(self + left.left) + (left.right + right)
+else
+# rotate self+other to left
+(self + left) + right
+end
+else
+Rope.new(self, other)
+end
+end
+alias_method(:&lt;&lt;, :+)
+
+# ...
+
+We see some more balance work here, but the algorithm is simplified since only
+the right side can be a subtree.  Beyond that, we've seen this code before.
+
+Here are the final few methods:
+
+# ..
+
+def slice(start, len)
+return self if start.zero? and le ... @data.length
+# depend on ruby's COW mechanism to just reference the slice data
+self.class.new(@data.slice(start, len))
+end
+def at(index)
+@data[index]
+end
+def each(&amp;block)
+@data.each_char(&amp;block)
+end
+def to_s(s=&quot;&quot;)
+s.concat(@data.to_s)
+end
+end
+end
+
+Note here that slice() was overridden to return a StringRope instead of a
+String.  As the comment says, Ruby internally uses some Copy On Write semantics
+to reference sliced Strings.  This should keep it from wildly duplicating the
+data, but it was found that a couple of solutions had problems with this for
+unknown reasons.
+
+That covers a basic Rope implementation.  We won't bother to go into the
+destructive methods as you are probably better off working without them.
+
+My thanks to all who explored this newly popular data structure with us.  It
+looks like there will be a talk on ropes at this year's Rubyconf, so hopefully
+we gave the speaker some extra material to work with.
+
+This week's Ruby Quiz will start a day early, to adjust for my Lone Star
+Rubyconf schedule this weekend.  The no-spoiler period is still 48 hours and I
+will still summarize it at the same time, you just get an extra day to work on
+it.  Stay tuned for that problem in just a few minutes...
+</POST>
+<POST>
+<POSTER> &quot;Eric Mahurin&quot; &lt;eric.mahu...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-06T17:11:00 </POSTDATE>
+On 9/6/07, Ruby Quiz &lt;ja ... @grayproductions.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; The discussion for this quiz was very interesting.  It's probably worth your
+&gt; time to go back and read those messages, if you haven't already.  Some points I
+&gt; got out of the discussion were:
+
+&gt;         * It's tricky to get ropes right.  Clever implementations may loose key
+&gt;           rope qualities, like the O(1) concatenation time.
+&gt;         * The functional approach, building immutable ropes, is probably
+&gt;           superior considering how ropes are intended to be used.
+&gt;         * Autorebalancing didn't hurt much, at least in the quiz test case.
+&gt;         * Copy-On-Write is helpful, when it works.
+
+&gt; Many of these points came out due to Eric Mahurin's work in benchmarking the
+&gt; submitted solutions.  Eric also submitted several variations of rope classes, a
+&gt; few of which I want to take a look at below.
+">
+
+I'm glad to see that you didn't let requests of the quiz get in the
+way.  There were a bunch of things that I didn't do that the quiz
+asked for (in the classes you presented):
+
+* be able to append/prepend/shift mutable ropes (made immutable ropes instead)
+* allow ropes to operate directly with strings (required a separate
+StringRope proxy class instead)
+* provide a normalize method (used auto-balancing concatenation instead)
+* O(1) concatenation - the max and average number of rotations for my
+auto-balancing concatenation is O(log(n)).  Slicing is also O(log(n)),
+so it isn't a big problem.
+
+Eric
+</POST>
+<POST>
+<POSTER> John Miller &lt;jfmille...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-09-06T18:01:00 </POSTDATE>
+Hi All,
+
+I'm very sorry that this quiz ended up coming out over the labor day
+weekend and the start of my semester,  I hardly had a chance to look at
+it all week, but I'm excited about what I've read.  I wanted to add a
+couple of comments based on trying to use these thing in practice.  The
+example was a good test case because it showed a large difference
+between strings and ropes.  Real situations are not quite as neat and
+clean.  In particular concatenating single characters to a string as it
+is build and removing them from the front as it is used are very common
+operations that the test case didn't measure.  No one really addressed
+these two operations because there was not a test case to show them.
+
+<QUOTE PREVIOUSPOST="
+James Gray wrote:
+&gt; The rebalancing done here is, as the comment suggests, a textbook AVL
+&gt; implementation.  With an AVL tree, you subtract the left depth from the
+&gt; right
+&gt; depth to get a tree's balance factor.  Anything in the range of -1 to 1
+&gt; is a
+&gt; balanced tree.  If the factor is outside of that range, one or two
+&gt; rotations are
+&gt; required to rebalance the tree.
+">
+
+This was the other interesting part of the quiz.  Every answer I saw
+balanced the tree giving each leaf the same weight.  The leaves on the
+other hand varied in length between 8 characters and 512k.  The
+suggested way to balance a Rope was based on the length of the leaves in
+such a way that longer leaves were nearer the root because presumably
+they will be accessed more often.
+
+This is to take nothing away from the solutions that came out.  They
+were very well written and I am most humbled by them.  More this is an
+address to the comment about &quot;Where is the Gem?&quot; If and when Ropes do
+become a general use library, these are things that I believe need to be
+addressed.  I also am looking forward to hearing about the presentation
+at RubyConf.
+
+Thanks to everybody who worked on this.  I wish I had more time to join
+in.
+
+John Miller
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> Ari Brown &lt;a...@aribrown.com&gt; </POSTER>
+<POSTDATE> 2007-09-06T18:34:00 </POSTDATE>
+Nyah!!!!
+
+Here it is. I tried to keep this sort of normalish, and each leaf(?)
+has a base limit of 15 characters. This makes searching for a
+specific character at a lengthy location pretty quick (i hope),
+however, my slice method uses a very unorthodox method, and I am
+BEGGING for help in making it better. I want to start using my Rope
+implementation regularly (for kicks), but am also hoping it can be
+fast. I envy Mahurin's speed.
+
+rope.rb
+3K Download
+
+---------------------------------------------------------------|
+~Ari
+&quot;I don't suffer from insanity. I enjoy every minute of it&quot; --1337est
+man alive
+</POST>
+<POST>
+<POSTER> &quot;Eric Mahurin&quot; &lt;eric.mahu...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-06T23:14:00 </POSTDATE>
+On 9/5/07, Eugene Kalenkovich &lt;rub ... @softover.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Eugene Kalenkovich&quot; &lt;rub ... @softover.com&gt; wrote in message
+&gt; news:JkJDi.3699$tY2.57@trndny01 ...
+&gt; &gt; &quot;Eric Mahurin&quot; &lt;eric.mahu ... @gmail.com&gt; wrote in message &gt;
+
+&gt; &gt;&gt; I added dups to Kalenkovich's code and saw the same 150+MB usage as
+&gt; &gt;&gt; Munkby's dup code.  I still don't understand this.
+
+&gt; &gt; I'm not sure about Gustav's code, but for my one memory in duping option
+&gt; &gt; is eaten by normalization, that do not really need any duping at all.
+
+&gt; &gt; --EK
+
+&gt; I've modified my code to avoid duping in normalization - at a cost of
+&gt; ugliness :) (too ugly for quiz submission, and anyway, too late :)
+">
+
+Here is another issue that is akin to the self-assignment problem in C++:
+
+r1 = Rope.new(&quot;A&quot;)
+r2 = Rope.new(&quot;B&quot;)
+r1&lt;&lt;r2
+puts r1
+r1&lt;&lt;r1
+puts r1
+
+When you are modifying self and an operand for that modification can
+be self, you have to be careful about the order in which you do
+things.  I imagine some of the other implementations have this
+problem.
+
+BTW, I sped up my code by another 20% by simply using
+attr_reader(:left,:right,:length,:depth) instead of defining the
+methods explicitly.  I always thought these attr* things were just a
+convenient way to define getter and setter methods.  Now, I'll be
+using them more since there is a significant run-time benefit.
+</POST>
+<POST>
+<POSTER> &quot;Eugene Kalenkovich&quot; &lt;rub...@softover.com&gt; </POSTER>
+<POSTDATE> 2007-09-07T01:45:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;John Miller&quot; &lt;jfmille ... @yahoo.com&gt; wrote in message
+">
+
+news:bc100c94508cad46e34a0d22e95334f8@ruby-forum.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi All,
+
+&gt; This was the other interesting part of the quiz.  Every answer I saw
+&gt; balanced the tree giving each leaf the same weight.  The leaves on the
+&gt; other hand varied in length between 8 characters and 512k.  The
+&gt; suggested way to balance a Rope was based on the length of the leaves in
+&gt; such a way that longer leaves were nearer the root because presumably
+&gt; they will be accessed more often.
+">
+
+At least two implementations did this (James Koppel's and mine). OTOH this
+added a lot of mess to the code, and a simple change on e.g. Eric's
+implementation (to use length instead of depth) will achieve practically the
+same.
+
+--EK
+</POST>
+<POST>
+<POSTER> &quot;Eric Mahurin&quot; &lt;eric.mahu...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-07T09:04:00 </POSTDATE>
+On 9/7/07, Eugene Kalenkovich &lt;rub ... @softover.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;John Miller&quot; &lt;jfmille ... @yahoo.com&gt; wrote in message
+&gt; news:bc100c94508cad46e34a0d22e95334f8@ruby-forum.com ...
+&gt; &gt; Hi All,
+
+&gt; &gt; This was the other interesting part of the quiz.  Every answer I saw
+&gt; &gt; balanced the tree giving each leaf the same weight.  The leaves on the
+&gt; &gt; other hand varied in length between 8 characters and 512k.  The
+&gt; &gt; suggested way to balance a Rope was based on the length of the leaves in
+&gt; &gt; such a way that longer leaves were nearer the root because presumably
+&gt; &gt; they will be accessed more often.
+
+&gt; At least two implementations did this (James Koppel's and mine). OTOH this
+&gt; added a lot of mess to the code, and a simple change on e.g. Eric's
+&gt; implementation (to use length instead of depth) will achieve practically the
+&gt; same.
+
+&gt; --EK
+">
+
+I'd think you'd treat depth as log2(length) and do something similar.
+Instead of this for concatenation:
+
+balance = other.depth-@depth
+if balance&gt;+1
+...
+elsif balance&lt;-1
+...
+
+You could do something like this (using depth=log2(length) and a little math):
+
+if other.length&gt;2*@length
+...
+elsif @length&gt;2*other.length
+...
+
+Maybe you'd also need some info about the smallest, largest, leftmost,
+and/or rightmost leaf lengths so that you aren't trying to balance
+something that can't be.  I haven't thought this all the way through.
+
+I think this is a good idea.  It increases the max run-time for
+slicing (but still O(log(n)), but hopefully reduces the average.
+
+On the other hand, I don't know that it is a good assumption that
+you'll be accessing longer leaves more often than shorter leaves.
+This assumes random access of the elements in the rope.  For example,
+if you are using a rope for a text editor buffer, there will be a
+you'll only be accessing a small part of the rope you'll be accessing
+while typing stuff in.  And at that point, you'll probably be dealing
+with short leaves since things are changing around where you are
+editing.  You may want the most recently used closer to the root of
+the tree.
+</POST>
+<POST>
+<POSTER> &quot;Eugene Kalenkovich&quot; &lt;rub...@softover.com&gt; </POSTER>
+<POSTDATE> 2007-09-07T12:35:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Eric Mahurin&quot; &lt;eric.mahu ... @gmail.com&gt; wrote in message &gt; Here is another
+">
+
+issue that is akin to the self-assignment problem in C++:
+
+<QUOTE PREVIOUSPOST="
+&gt; r1 = Rope.new(&quot;A&quot;)
+&gt; r2 = Rope.new(&quot;B&quot;)
+&gt; r1&lt;&lt;r2
+&gt; puts r1
+&gt; r1&lt;&lt;r1
+&gt; puts r1
+
+&gt; When you are modifying self and an operand for that modification can
+&gt; be self, you have to be careful about the order in which you do
+&gt; things.  I imagine some of the other implementations have this
+&gt; problem.
+">
+
+Good catch, will need to fix it.
+As a side note, I do not think that having ropes immutable is an acceptable
+requirement.
+Ultimate goal is to have a Rope behaving exactly as a String...
+
+--EK
+</POST>
+<POST>
+<POSTER> &quot;Eugene Kalenkovich&quot; &lt;rub...@softover.com&gt; </POSTER>
+<POSTDATE> 2007-09-07T12:35:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Eric Mahurin&quot; &lt;eric.mahu ... @gmail.com&gt; wrote in message
+">
+
+news:29256ea00709070604p65b34a6ex8cf147e8844e74cd@mail.gmail.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On 9/7/07, Eugene Kalenkovich &lt;rub ... @softover.com&gt; wrote:
+&gt;&gt; &quot;John Miller&quot; &lt;jfmille ... @yahoo.com&gt; wrote in message
+&gt;&gt; news:bc100c94508cad46e34a0d22e95334f8@ruby-forum.com ...
+&gt;&gt; &gt; Hi All,
+
+&gt;&gt; &gt; This was the other interesting part of the quiz.  Every answer I saw
+&gt;&gt; &gt; balanced the tree giving each leaf the same weight.  The leaves on the
+&gt;&gt; &gt; other hand varied in length between 8 characters and 512k.  The
+&gt;&gt; &gt; suggested way to balance a Rope was based on the length of the leaves
+&gt;&gt; &gt; in
+&gt;&gt; &gt; such a way that longer leaves were nearer the root because presumably
+&gt;&gt; &gt; they will be accessed more often.
+
+&gt;&gt; At least two implementations did this (James Koppel's and mine). OTOH
+&gt;&gt; this
+&gt;&gt; added a lot of mess to the code, and a simple change on e.g. Eric's
+&gt;&gt; implementation (to use length instead of depth) will achieve practically
+&gt;&gt; the
+&gt;&gt; same.
+
+&gt;&gt; --EK
+
+&gt; I'd think you'd treat depth as log2(length) and do something similar.
+&gt; Instead of this for concatenation:
+
+&gt; balance = other.depth-@depth
+&gt; if balance&gt;+1
+&gt;   ...
+&gt; elsif balance&lt;-1
+&gt;   ...
+
+&gt; You could do something like this (using depth=log2(length) and a little
+&gt; math):
+
+&gt; if other.length&gt;2*@length
+&gt;   ...
+&gt; elsif @length&gt;2*other.length
+&gt;   ...
+">
+
+In reality all in-time short-cut  rebalancings will perform worse than the
+full one. For now I do not see any algorithm better than in original
+article, though it  is also not ideal (but good on memory usage)
+
+<QUOTE PREVIOUSPOST="
+&gt; On the other hand, I don't know that it is a good assumption that
+&gt; you'll be accessing longer leaves more often than shorter leaves.
+&gt; This assumes random access of the elements in the rope.  For example,
+&gt; if you are using a rope for a text editor buffer, there will be a
+&gt; you'll only be accessing a small part of the rope you'll be accessing
+&gt; while typing stuff in.  And at that point, you'll probably be dealing
+&gt; with short leaves since things are changing around where you are
+&gt; editing.  You may want the most recently used closer to the root of
+&gt; the tree.
+">
+
+Everything is about probability of access to particular symbol. You can
+optimize for particular scenario (in this one - you do not want any
+rebalancing at all),  but these optimizations will behave miserably in any
+other cases
+
+--EK
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,1572 @@
+<DOC>
+<DOCID> eng-NG-31-126392-9136446 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-12T21:42:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Software memory management reengineering
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> jacob navia &lt;ja...@nospam.org&gt; </POSTER>
+<POSTDATE> 2007-10-12T21:42:00 </POSTDATE>
+Suppose that you have a module that always allocates
+memory without ever releasing it because the guy that
+wrote it was lazy, as lazy as me.
+
+Now, you want to reuse it in a loop. What do you do?
+
+Contrary to some people that will start crying to that
+&amp;@@&quot;&quot;#~ programmer that wrote this sh!!!! you keep
+your cool and you do the following:
+
+1) Since the program always call malloc and never free()
+you allocate a big chunk of memory and each time that the
+program calls malloc, you replace those calls with another
+that allocates from that memory heap.
+
+2) When the program finishes you free all memory witha single
+free() call.
+
+Caveats. The program should never call directly
+realloc. Watch for calloc too.
+
+I have done this many times. Actually  programs that use the
+lazy memory allocation strategy are very easy to convert to a heap
+based strategy if the need ever arises.
+
+Programs that leak memory but contain a lots of calls to free()
+are much harder to modify like this, since you would have to
+repeat the functionality of free().
+
+Of course, a lazy strategy is much easier to upgrade to a GC
+based one. In that case absolutely no code needs to be
+modified. malloc is replaced with GC_malloc or similar,
+and there is nothing else to do.
+
+--
+jacob navia
+jacob at jacob point remcomp point fr
+logiciels/informatique
+http://www.cs.virginia.edu/~lcc-win32
+</POST>
+<POST>
+<POSTER> Ian Collins &lt;ian-n...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-12T22:17:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+jacob navia wrote:
+&gt; Suppose that you have a module that always allocates
+&gt; memory without ever releasing it because the guy that
+&gt; wrote it was lazy, as lazy as me.
+
+&gt; Now, you want to reuse it in a loop. What do you do?
+
+&gt; Contrary to some people that will start crying to that
+&gt; &amp;@@&quot;&quot;#~ programmer that wrote this sh!!!! you keep
+&gt; your cool and you do the following:
+
+&gt; 1) Since the program always call malloc and never free()
+&gt;   you allocate a big chunk of memory and each time that the
+&gt;   program calls malloc, you replace those calls with another
+&gt;   that allocates from that memory heap.
+">
+
+How does that help if the new application calls leaky parts of the old
+one enough times to exhaust the heap?
+
+--
+Ian Collins.
+</POST>
+<POST>
+<POSTER> Richard Heathfield &lt;r...@see.sig.invalid&gt; </POSTER>
+<POSTDATE> 2007-10-12T22:30:00 </POSTDATE>
+Ian Collins said:
+
+<QUOTE PREVIOUSPOST="
+&gt; jacob navia wrote:
+&gt;&gt; Suppose that you have a module that always allocates
+&gt;&gt; memory without ever releasing it because the guy that
+&gt;&gt; wrote it was lazy, as lazy as me.
+
+&gt;&gt; Now, you want to reuse it in a loop. What do you do?
+
+&gt;&gt; Contrary to some people that will start crying to that
+&gt;&gt; &amp;@@&quot;&quot;#~ programmer that wrote this sh!!!! you keep
+&gt;&gt; your cool and you do the following:
+
+&gt;&gt; 1) Since the program always call malloc and never free()
+&gt;&gt;   you allocate a big chunk of memory and each time that the
+&gt;&gt;   program calls malloc, you replace those calls with another
+&gt;&gt;   that allocates from that memory heap.
+
+&gt; How does that help if the new application calls leaky parts of the old
+&gt; one enough times to exhaust the heap?
+">
+
+It doesn't, obviously. The correct fix is to plough through the code,
+working out the right places to free up the memory - which would have been
+a lot easier (and therefore cheaper) if it had been done at the time the
+original code was written. Writing your own memory manager is not a fix -
+it's an error-prone bodge that doesn't address the real issue, as you
+rightly point out.
+
+--
+Richard Heathfield &lt; http://www.cpax.org.uk &gt;
+Email: - http://www . +rjh@
+Google users: &lt; http://www.cpax.org.uk/prg/writings/googly.php &gt;
+&quot;Usenet is a strange place&quot; - dmr 29 July 1999
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-10-13T03:21:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Ian Collins&quot; &lt;ian-n ... @hotmail.com&gt; wrote in message
+&gt;&gt; 1) Since the program always call malloc and never free()
+&gt;&gt;   you allocate a big chunk of memory and each time that the
+&gt;&gt;   program calls malloc, you replace those calls with another
+&gt;&gt;   that allocates from that memory heap.
+
+&gt; How does that help if the new application calls leaky parts of the old
+&gt; one enough times to exhaust the heap?
+">
+
+int lifeandmeaningofuniverse(long problem)
+{
+malloc(1000);
+return 42;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+We need to call for lots of long problems, to get the list of results. But
+that means we will eventually run out of memory.
+
+So
+
+for(i=0;i&lt;LONG_MAX, i++)
+{
+makeheap(1024); /* enough memory for program to allocatate;
+x = lifeandmeaningofuniverse(i);
+printf(&quot;%ld %d\n&quot;, i, x);
+killheap();
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+Now we need to hack into lifeandmeaningof theuinverse() to replace every
+malloc() with a mymalloc().
+
+It's a bit of a hack, but presented with something like this function that
+is so badly written and documented that you can't follow the allocation
+logic, it might be a viable solution. The real answer is to put in the
+matching frees(), but that means really knowing what the function does.
+
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> Willem &lt;wil...@stack.nl&gt; </POSTER>
+<POSTDATE> 2007-10-13T11:01:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+jacob wrote:
+">
+
+) 1) Since the program always call malloc and never free()
+)    you allocate a big chunk of memory and each time that the
+)    program calls malloc, you replace those calls with another
+)    that allocates from that memory heap.
+) &lt;snip&gt;
+) Programs that leak memory but contain a lots of calls to free()
+) are much harder to modify like this, since you would have to
+) repeat the functionality of free().
+
+No, you just make free() a no-op.  That will make it leak a lot more
+memory, but you've already fixed that, right ?
+
+SaSW, Willem
+--
+Disclaimer: I am in no way responsible for any of the statements
+made in the above text. For all I know I might be
+drugged or something..
+No I'm not paranoid. You all think I'm paranoid, don't you !
+#EOT
+</POST>
+<POST>
+<POSTER> Ben Pfaff &lt;b...@cs.stanford.edu&gt; </POSTER>
+<POSTDATE> 2007-10-13T12:21:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Richard Heathfield &lt;r ... @see.sig.invalid&gt; writes:
+&gt; Writing your own memory manager is not a fix - it's an
+&gt; error-prone bodge that doesn't address the real issue, as you
+&gt; rightly point out.
+">
+
+I'm rather a fan of pool-based memory allocation, as done in
+e.g. Apache: add memory blocks (and other resources) to a list,
+for convenient freeing in a group.
+
+Would you contend that this is also an &quot;error-prone bodge&quot;?  If
+not, at what point does pool-based allocation descend to that
+level?
+--
+A competent C programmer knows how to write C programs correctly,
+a C expert knows enough to argue with Dan Pop, and a C expert
+expert knows not to bother.
+</POST>
+<POST>
+<POSTER> Richard Heathfield &lt;r...@see.sig.invalid&gt; </POSTER>
+<POSTDATE> 2007-10-13T13:22:00 </POSTDATE>
+Ben Pfaff said:
+
+<QUOTE PREVIOUSPOST="
+&gt; Richard Heathfield &lt;r ... @see.sig.invalid&gt; writes:
+
+&gt;&gt; Writing your own memory manager is not a fix - it's an
+&gt;&gt; error-prone bodge that doesn't address the real issue, as you
+&gt;&gt; rightly point out.
+
+&gt; I'm rather a fan of pool-based memory allocation, as done in
+&gt; e.g. Apache: add memory blocks (and other resources) to a list,
+&gt; for convenient freeing in a group.
+
+&gt; Would you contend that this is also an &quot;error-prone bodge&quot;?  If
+&gt; not, at what point does pool-based allocation descend to that
+&gt; level?
+">
+
+At the point where you try to retrofit it into a program (such as I
+described upthread) that was written without pool-based allocation in
+mind, in the hope of magically fixing the failure to deal with memory
+housekeeping properly. If pool-based allocation is part of a sensible,
+coherent design strategy that is part of the original program design,
+that's obviously a very different matter.
+
+The point is that you have to think about this stuff up front. To malloc
+all over the place and never bother to free is sloppy programming, and
+overlaying a customised memory manager on top of that mess is what I
+referred to as &quot;an error-prone bodge&quot;.
+
+--
+Richard Heathfield &lt; http://www.cpax.org.uk &gt;
+Email: - http://www . +rjh@
+Google users: &lt; http://www.cpax.org.uk/prg/writings/googly.php &gt;
+&quot;Usenet is a strange place&quot; - dmr 29 July 1999
+</POST>
+<POST>
+<POSTER> jacob navia &lt;ja...@nospam.org&gt; </POSTER>
+<POSTDATE> 2007-10-13T13:41:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Richard Heathfield wrote:
+&gt; Ben Pfaff said:
+
+[snip]
+&gt;&gt; ... at what point does pool-based allocation descend to that
+&gt;&gt; level?
+
+&gt; At the point where you try to retrofit it into a program (such as I
+&gt; described upthread) that was written without pool-based allocation in
+&gt; mind, in the hope of magically fixing the failure to deal with memory
+&gt; housekeeping properly. If pool-based allocation is part of a sensible,
+&gt; coherent design strategy that is part of the original program design,
+&gt; that's obviously a very different matter.
+">
+
+This is wrong.
+
+In a pool managed memory allocation strategy you make a lot of
+allocations that go into the same pool, then release the pool.
+
+This is exactly the same as a program that is &quot;retrofitted&quot; to
+do this because it never frees any memory. The only part that is
+changed is that at the end of the program, instead of leaving the
+freeing of the pool to the operating system, it is done
+explicitely.
+
+Note that lazy allocation is always actually a pool based allocation
+since the operating system maintains a pool for each process.
+
+<QUOTE PREVIOUSPOST="
+&gt; The point is that you have to think about this stuff up front.
+">
+
+This is wrong.
+
+There is absolutely no need to over engineer a program, making it manage
+memory up front. You allocate memory without freeing it. If this ever
+becomes a problem you add a pool based strategy or a garbage collector.
+
+The lazy allocation strategy is adapted to transient programs, where the
+memory pool is released by the operating system.
+
+Utilities that produce directory listings, linkers, compilers, filters,
+text searching tools, there are many examples of transient programs.
+In many of them, ignoring memory allocation problems makes them faster,
+leaner, and less error prone, since all the bugs associated with
+&quot;free()&quot; calls can be avoided.
+
+--
+jacob navia
+jacob at jacob point remcomp point fr
+logiciels/informatique
+http://www.cs.virginia.edu/~lcc-win32
+</POST>
+<POST>
+<POSTER> rosewa...@mailinator.com </POSTER>
+<POSTDATE> 2007-10-13T14:55:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+jacob navia wrote:
+&gt; Richard Heathfield wrote:
+&gt; &gt; The point is that you have to think about this stuff up front.
+
+&gt; This is wrong.
+
+&gt; There is absolutely no need to over engineer a program, making it manage
+&gt; memory up front. You allocate memory without freeing it. If this ever
+&gt; becomes a problem you add a pool based strategy or a garbage collector.
+">
+
+Navia really would make a fascinating subject for a psychologist. He
+makes himself look like a complete fool by taking some utterly
+ludicrous position, then when he gets called on it he just digs
+himself further and further into the hole.
+
+The killer is that he comes out with this incompetence and dribbling
+nonsense and then has the chutzpah to write a tutorial trying to teach
+other people how to write C!
+</POST>
+<POST>
+<POSTER> Ian Collins &lt;ian-n...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-13T14:56:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+jacob navia wrote:
+&gt; Richard Heathfield wrote:
+
+&gt;&gt; The point is that you have to think about this stuff up front.
+
+&gt; This is wrong.
+
+&gt; There is absolutely no need to over engineer a program, making it manage
+&gt; memory up front. You allocate memory without freeing it. If this ever
+&gt; becomes a problem you add a pool based strategy or a garbage collector.
+">
+
+I can see you have never worked on embedded systems.
+
+<QUOTE PREVIOUSPOST="
+&gt; Utilities that produce directory listings, linkers, compilers, filters,
+&gt; text searching tools, there are many examples of transient programs.
+&gt; In many of them, ignoring memory allocation problems makes them faster,
+&gt; leaner, and less error prone, since all the bugs associated with
+&gt; &quot;free()&quot; calls can be avoided.
+">
+
+You fail to realise that your leaky directory listing routine may get
+invoked recursively in something like a backup utility, or get called
+hundreds or even thousands of times in a test suite.  Just clean up your
+mess, it isn't that hard.
+
+--
+Ian Collins.
+</POST>
+<POST>
+<POSTER> Richard Heathfield &lt;r...@see.sig.invalid&gt; </POSTER>
+<POSTDATE> 2007-10-13T15:19:00 </POSTDATE>
+jacob navia said:
+
+<QUOTE PREVIOUSPOST="
+&gt; Richard Heathfield wrote:
+&gt;&gt; Ben Pfaff said:
+
+&gt; [snip]
+&gt;&gt;&gt; ... at what point does pool-based allocation descend to that
+&gt;&gt;&gt; level?
+
+&gt;&gt; At the point where you try to retrofit it into a program (such as I
+&gt;&gt; described upthread) that was written without pool-based allocation in
+&gt;&gt; mind, in the hope of magically fixing the failure to deal with memory
+&gt;&gt; housekeeping properly. If pool-based allocation is part of a sensible,
+&gt;&gt; coherent design strategy that is part of the original program design,
+&gt;&gt; that's obviously a very different matter.
+
+&gt; This is wrong.
+">
+
+No, it isn't. You need to learn to tell right from wrong. For the past few
+years, you appear to have got them mixed up with monotonous regularity.
+
+<QUOTE PREVIOUSPOST="
+&gt; In a pool managed memory allocation strategy you make a lot of
+&gt; allocations that go into the same pool, then release the pool.
+">
+
+Fine, provided there's enough memory, which - in the example I gave - there
+wasn't.
+
+--
+Richard Heathfield &lt; http://www.cpax.org.uk &gt;
+Email: - http://www . +rjh@
+Google users: &lt; http://www.cpax.org.uk/prg/writings/googly.php &gt;
+&quot;Usenet is a strange place&quot; - dmr 29 July 1999
+</POST>
+<POST>
+<POSTER> jacob navia &lt;ja...@nospam.org&gt; </POSTER>
+<POSTDATE> 2007-10-13T15:18:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Ian Collins wrote:
+&gt; jacob navia wrote:
+&gt;&gt; Richard Heathfield wrote:
+
+&gt;&gt;&gt; The point is that you have to think about this stuff up front.
+&gt;&gt; This is wrong.
+
+&gt;&gt; There is absolutely no need to over engineer a program, making it manage
+&gt;&gt; memory up front. You allocate memory without freeing it. If this ever
+&gt;&gt; becomes a problem you add a pool based strategy or a garbage collector.
+
+&gt; I can see you have never worked on embedded systems.
+">
+
+I am speaking of transient programs, i.e. programs that do
+something, then exit. Embedded systems do have transient programs
+if they have an OS. Otherwise they don't.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Utilities that produce directory listings, linkers, compilers, filters,
+&gt;&gt; text searching tools, there are many examples of transient programs.
+&gt;&gt; In many of them, ignoring memory allocation problems makes them faster,
+&gt;&gt; leaner, and less error prone, since all the bugs associated with
+&gt;&gt; &quot;free()&quot; calls can be avoided.
+
+&gt; You fail to realise that your leaky directory listing routine may get
+&gt; invoked recursively in something like a backup utility, or get called
+&gt; hundreds or even thousands of times in a test suite.
+">
+
+A transient program, as I have explained several times already, leaves
+its cleanup to the operating system. Thus, it can be called thousands
+of times, it will always cleanup implicitly.
+
+I can repeat this again and again and apparently there will be always
+the same &quot;argument&quot;...
+
+Even in a recursive call if you call my program with some way like
+system(&quot;dodir&quot;); or whatever, it will always cleanup! And this will not
+change even if it is called hundred billion times!
+
+--
+jacob navia
+jacob at jacob point remcomp point fr
+logiciels/informatique
+http://www.cs.virginia.edu/~lcc-win32
+</POST>
+<POST>
+<POSTER> Richard Heathfield &lt;r...@see.sig.invalid&gt; </POSTER>
+<POSTDATE> 2007-10-13T15:25:00 </POSTDATE>
+jacob navia said:
+
+&lt;snip&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; A transient program, as I have explained several times already, leaves
+&gt; its cleanup to the operating system. Thus, it can be called thousands
+&gt; of times, it will always cleanup implicitly.
+">
+
+I have already given an example, upthread, of what you call a &quot;transient&quot;
+program which became a &quot;non-transient&quot; program five years later. Skimp on
+the housekeeping now, and pay for it many times over in the future.
+
+<QUOTE PREVIOUSPOST="
+&gt; I can repeat this again and again and apparently there will be always
+&gt; the same &quot;argument&quot;...
+">
+
+No matter how many times you repeat an incorrect argument, it remains
+incorrect.
+
+--
+Richard Heathfield &lt; http://www.cpax.org.uk &gt;
+Email: - http://www . +rjh@
+Google users: &lt; http://www.cpax.org.uk/prg/writings/googly.php &gt;
+&quot;Usenet is a strange place&quot; - dmr 29 July 1999
+</POST>
+<POST>
+<POSTER> Ian Collins &lt;ian-n...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-13T15:39:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+jacob navia wrote:
+&gt; Ian Collins wrote:
+&gt;&gt; jacob navia wrote:
+&gt;&gt;&gt; Richard Heathfield wrote:
+
+&gt;&gt;&gt;&gt; The point is that you have to think about this stuff up front.
+&gt;&gt;&gt; This is wrong.
+
+&gt;&gt;&gt; There is absolutely no need to over engineer a program, making it manage
+&gt;&gt;&gt; memory up front. You allocate memory without freeing it. If this ever
+&gt;&gt;&gt; becomes a problem you add a pool based strategy or a garbage collector.
+
+&gt;&gt; I can see you have never worked on embedded systems.
+
+&gt; I am speaking of transient programs, i.e. programs that do
+&gt; something, then exit. Embedded systems do have transient programs
+&gt; if they have an OS. Otherwise they don't.
+">
+
+&quot;Transient programs&quot; contain components.  Those components, if they are
+any use, will get reused.  Unless you stick a great big fluorescent
+label on them &quot;Danger, the authour was too slack to free memory&quot; the
+component may be reused in something other than a &quot;transient programs&quot;.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; You fail to realise that your leaky directory listing routine may get
+&gt;&gt; invoked recursively in something like a backup utility, or get called
+&gt;&gt; hundreds or even thousands of times in a test suite.
+
+&gt; A transient program, as I have explained several times already, leaves
+&gt; its cleanup to the operating system. Thus, it can be called thousands
+&gt; of times, it will always cleanup implicitly.
+">
+
+I wasn't talking about the program, I was talking about the leaky
+routine that reads a directory.  Or do you write all of you code in main?
+
+--
+Ian Collins.
+</POST>
+<POST>
+<POSTER> jacob navia &lt;ja...@nospam.org&gt; </POSTER>
+<POSTDATE> 2007-10-13T16:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Ian Collins wrote:
+&gt; I wasn't talking about the program, I was talking about the leaky
+&gt; routine that reads a directory.  Or do you write all of you code in main?
+">
+
+This is the problem. I am always talking about transient
+*program* and you are talking about some routine!
+
+I repeat:
+
+Lazy allocation can be done only at the program level. I have
+always maintained this.
+
+--
+jacob navia
+jacob at jacob point remcomp point fr
+logiciels/informatique
+http://www.cs.virginia.edu/~lcc-win32
+</POST>
+<POST>
+<POSTER> Ian Collins &lt;ian-n...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-13T17:06:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+jacob navia wrote:
+&gt; Ian Collins wrote:
+&gt;&gt; I wasn't talking about the program, I was talking about the leaky
+&gt;&gt; routine that reads a directory.  Or do you write all of you code in main?
+
+&gt; This is the problem. I am always talking about transient
+&gt; *program* and you are talking about some routine!
+
+&gt; I repeat:
+
+&gt; Lazy allocation can be done only at the program level. I have
+&gt; always maintained this.
+">
+
+But what is is program if it isn't a collection of routines?
+
+--
+Ian Collins.
+</POST>
+<POST>
+<POSTER> jacob navia &lt;ja...@nospam.org&gt; </POSTER>
+<POSTDATE> 2007-10-13T17:12:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Ian Collins wrote:
+&gt; jacob navia wrote:
+&gt;&gt; I repeat:
+
+&gt;&gt; Lazy allocation can be done only at the program level. I have
+&gt;&gt; always maintained this.
+
+&gt; But what is is program if it isn't a collection of routines?
+">
+
+Maybe you haven't noticed it yet, but after a program finishes the
+operating system cleans up. Not so for a routine.
+
+And you know what?
+
+&quot;There is no blinder person as the one that doesn't want to see&quot;.
+
+--
+jacob navia
+jacob at jacob point remcomp point fr
+logiciels/informatique
+http://www.cs.virginia.edu/~lcc-win32
+</POST>
+<POST>
+<POSTER> Ian Collins &lt;ian-n...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-13T17:18:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+jacob navia wrote:
+&gt; Ian Collins wrote:
+&gt;&gt; jacob navia wrote:
+&gt;&gt;&gt; I repeat:
+
+&gt;&gt;&gt; Lazy allocation can be done only at the program level. I have
+&gt;&gt;&gt; always maintained this.
+
+&gt;&gt; But what is is program if it isn't a collection of routines?
+
+&gt; Maybe you haven't noticed it yet, but after a program finishes the
+&gt; operating system cleans up. Not so for a routine.
+">
+
+So?  Enough of this, I'm off to find an open pub and celebrate England's
+victory over France in the wold cup....
+
+--
+Ian Collins.
+</POST>
+<POST>
+<POSTER> rosewa...@mailinator.com </POSTER>
+<POSTDATE> 2007-10-13T17:27:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+jacob navia wrote:
+&gt; And you know what?
+
+&gt; &quot;There is no blinder person as the one that doesn't want to see&quot;.
+">
+
+Said without the slightest trace of irony...
+</POST>
+<POST>
+<POSTER> Willem &lt;wil...@stack.nl&gt; </POSTER>
+<POSTDATE> 2007-10-13T17:39:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+jacob wrote:
+">
+
+) This is the problem. I am always talking about transient
+) *program* and you are talking about some routine!
+)
+) I repeat:
+)
+) Lazy allocation can be done only at the program level. I have
+) always maintained this.
+
+Maybe I should butt in and also repeat:
+
+Programs often get reused and turned (partly) into routines.
+
+SaSW, Willem
+--
+Disclaimer: I am in no way responsible for any of the statements
+made in the above text. For all I know I might be
+drugged or something..
+No I'm not paranoid. You all think I'm paranoid, don't you !
+#EOT
+</POST>
+<POST>
+<POSTER> Eric Sosman &lt;esos...@ieee-dot-org.invalid&gt; </POSTER>
+<POSTDATE> 2007-10-13T17:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Richard Heathfield wrote:
+&gt; jacob navia said:
+
+&gt; &lt;snip&gt;
+
+&gt;&gt; A transient program, as I have explained several times already, leaves
+&gt;&gt; its cleanup to the operating system. Thus, it can be called thousands
+&gt;&gt; of times, it will always cleanup implicitly.
+
+&gt; I have already given an example, upthread, of what you call a &quot;transient&quot;
+&gt; program which became a &quot;non-transient&quot; program five years later. Skimp on
+&gt; the housekeeping now, and pay for it many times over in the future.
+">
+
+Engineering is about balancing considerations that are
+sometimes in conflict.  No one consideration or goal is always
+paramount.  Besides, even when &quot;The program must be easy to
+modify&quot; is important, the designer faces the challenge of
+trying to anticipate the likely modifications.  Sometimes
+the crystal ball works, sometimes it's cloudy, and hindsight
+is always twenty-twenty.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; I can repeat this again and again and apparently there will be always
+&gt;&gt; the same &quot;argument&quot;...
+
+&gt; No matter how many times you repeat an incorrect argument, it remains
+&gt; incorrect.
+">
+
+&quot;Incorrect&quot; is too absolute a term to apply here.  Can
+you think of a good reason for the Unix `shutdown' program
+to free() its allocated memory before returning?  Yes, a
+leaky `shutdown' would be hard to use in a loop, but ...
+
+For what it's worth, many of my own programs follow the
+general line Jacob describes, at least in part.  &quot;Library&quot;
+or &quot;utility&quot; functions are scrupulous about their memory
+bookkeeping because they don't know the context they run in;
+they're careful about memory for the same reasons they don't
+call abort().  But if there's a bunch of long-lived data
+that represents the program's &quot;global state,&quot; I see nothing
+wrong with letting exit() clean it up.
+
+--
+Eric Sosman
+esos ... @ieee-dot-org.invalid
+</POST>
+<POST>
+<POSTER> Richard Heathfield &lt;r...@see.sig.invalid&gt; </POSTER>
+<POSTDATE> 2007-10-13T18:04:00 </POSTDATE>
+Eric Sosman said:
+
+<QUOTE PREVIOUSPOST="
+&gt; Richard Heathfield wrote:
+&gt;&gt; jacob navia said:
+
+&gt;&gt; &lt;snip&gt;
+
+&gt;&gt;&gt; A transient program, as I have explained several times already, leaves
+&gt;&gt;&gt; its cleanup to the operating system. Thus, it can be called thousands
+&gt;&gt;&gt; of times, it will always cleanup implicitly.
+
+&gt;&gt; I have already given an example, upthread, of what you call a
+&gt;&gt; &quot;transient&quot; program which became a &quot;non-transient&quot; program five years
+&gt;&gt; later. Skimp on the housekeeping now, and pay for it many times over in
+&gt;&gt; the future.
+
+&gt;      Engineering is about balancing considerations that are
+&gt; sometimes in conflict.  No one consideration or goal is always
+&gt; paramount.
+">
+
+Certainly true, but I would not classify &quot;can't be bothered to manage
+resources properly&quot; as an engineering consideration, any more than I would
+classify &quot;can't be bothered to wash the dishes&quot; as being a household
+management consideration.
+
+&lt;snip&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; No matter how many times you repeat an incorrect argument, it remains
+&gt;&gt; incorrect.
+
+&gt;      &quot;Incorrect&quot; is too absolute a term to apply here.
+">
+
+Sorry, Eric, but I can't agree. I consider the argument he is making to be
+incorrect.
+
+<QUOTE PREVIOUSPOST="
+&gt; Can
+&gt; you think of a good reason for the Unix `shutdown' program
+&gt; to free() its allocated memory before returning?
+">
+
+Actually, I can't even think of a good reason for 'shutdown' to allocate
+memory dynamically.
+
+&lt;snip&gt;
+
+--
+Richard Heathfield &lt; http://www.cpax.org.uk &gt;
+Email: - http://www . +rjh@
+Google users: &lt; http://www.cpax.org.uk/prg/writings/googly.php &gt;
+&quot;Usenet is a strange place&quot; - dmr 29 July 1999
+</POST>
+<POST>
+<POSTER> c...@tiac.net (Richard Harter) </POSTER>
+<POSTDATE> 2007-10-13T18:03:00 </POSTDATE>
+On Sun, 14 Oct 2007 07:56:40 +1300, Ian Collins
+
+<QUOTE PREVIOUSPOST="
+&lt;ian-n ... @hotmail.com&gt; wrote:
+&gt;jacob navia wrote:
+&gt;&gt; Richard Heathfield wrote:
+
+&gt;&gt;&gt; The point is that you have to think about this stuff up front.
+
+&gt;&gt; This is wrong.
+
+&gt;&gt; There is absolutely no need to over engineer a program, making it manage
+&gt;&gt; memory up front. You allocate memory without freeing it. If this ever
+&gt;&gt; becomes a problem you add a pool based strategy or a garbage collector.
+
+&gt;I can see you have never worked on embedded systems.
+
+&gt;&gt; Utilities that produce directory listings, linkers, compilers, filters,
+&gt;&gt; text searching tools, there are many examples of transient programs.
+&gt;&gt; In many of them, ignoring memory allocation problems makes them faster,
+&gt;&gt; leaner, and less error prone, since all the bugs associated with
+&gt;&gt; &quot;free()&quot; calls can be avoided.
+
+&gt;You fail to realise that your leaky directory listing routine may get
+&gt;invoked recursively in something like a backup utility, or get called
+&gt;hundreds or even thousands of times in a test suite.  Just clean up your
+&gt;mess, it isn't that hard.
+">
+
+While what you say is quite true, you are talking about something
+different than what Jacob is talking about.  Jacob is talking
+about transient *programs*, which you changed into *routines*.
+If I write a program that lists a single directory specified in
+its calling sequence then it can't be &quot;invoked recursively&quot;.  The
+backup utility executes the program multiple times, each
+execution being a separate process (or equivalent concept in the
+OS of your choice).
+
+Jacob's notion is plausible on the surface - if you have a
+collection of utilities that are bounded in their own right and
+you connecting them in scripts, then one could save execution
+time by not bothering to free storage.  That said, there are
+several objections that occur to me.
+
+The first is that people do take standalone programs and convert
+them to internal functions.  What was acceptable in the original
+is not in the conversion.  Secondly, it is not necessarily the
+case that a simple standalone program will have bounded memory
+usage.  For example, a program that reads lines from stdin and
+prints will exhaust memory if a new buffer is allocated for each
+line.  Thirdly the savings in execution time are strictly
+nominal; the costs of starting up and terminating these little
+transient programs dominates the cost of freeing storage.
+
+Richard Harter, c ... @tiac.net
+http://home.tiac.net/~cri , http://www.varinoma.com
+But the rhetoric of holistic harmony can generate into a kind of
+dotty, Prince Charles-style mysticism.  -- Richard Dawkins
+</POST>
+<POST>
+<POSTER> Eric Sosman &lt;esos...@ieee-dot-org.invalid&gt; </POSTER>
+<POSTDATE> 2007-10-13T18:29:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Richard Heathfield wrote:
+&gt; Eric Sosman said:
+&gt;&gt; [...]
+&gt;&gt; Can
+&gt;&gt; you think of a good reason for the Unix `shutdown' program
+&gt;&gt; to free() its allocated memory before returning?
+
+&gt; Actually, I can't even think of a good reason for 'shutdown' to allocate
+&gt; memory dynamically.
+">
+
+Whether the reason is &quot;good&quot; or not I can't say, but
+at least one version certainly does allocate dynamic memory
+and does not free it.  See line 711 of
+
+http://cvs.opensolaris.org/source/xref/onnv/onnv-gate/usr/src/ucbcmd/...
+
+From the copyright notices it appears that this module
+is at least twenty-three years old; there are also stylistic
+suggestions that its origins antedate the C Standard.  Yet in
+all that time, it seems no one has felt impelled to embed
+`shutdown' as a routine in a larger program that could call
+it in a loop!  Maybe they would have, were it not for the
+memory leak?  What an awful thought: a `shutdown' that gobbled
+up all the swap space and crashed the system ...
+
+--
+Eric Sosman
+esos ... @ieee-dot-org.invalid
+</POST>
+<POST>
+<POSTER> Richard Heathfield &lt;r...@see.sig.invalid&gt; </POSTER>
+<POSTDATE> 2007-10-13T19:06:00 </POSTDATE>
+Eric Sosman said:
+
+<QUOTE PREVIOUSPOST="
+&gt; Richard Heathfield wrote:
+&gt;&gt; Eric Sosman said:
+&gt;&gt;&gt; [...]
+&gt;&gt;&gt; Can
+&gt;&gt;&gt; you think of a good reason for the Unix `shutdown' program
+&gt;&gt;&gt; to free() its allocated memory before returning?
+
+&gt;&gt; Actually, I can't even think of a good reason for 'shutdown' to allocate
+&gt;&gt; memory dynamically.
+
+&gt;      Whether the reason is &quot;good&quot; or not I can't say, but
+&gt; at least one version certainly does allocate dynamic memory
+&gt; and does not free it.  See line 711 of
+">
+
+http://cvs.opensolaris.org/source/xref/onnv/onnv-gate/usr/src/ucbcmd/...
+
+&lt;cough&gt; :-)
+
+<QUOTE PREVIOUSPOST="
+&gt;      From the copyright notices it appears that this module
+&gt; is at least twenty-three years old; there are also stylistic
+&gt; suggestions that its origins antedate the C Standard.  Yet in
+&gt; all that time, it seems no one has felt impelled to embed
+&gt; `shutdown' as a routine in a larger program that could call
+&gt; it in a loop!
+">
+
+I can't imagine why...
+
+<QUOTE PREVIOUSPOST="
+&gt; Maybe they would have, were it not for the
+&gt; memory leak?  What an awful thought: a `shutdown' that gobbled
+&gt; up all the swap space and crashed the system ...
+">
+
+Yes, it's very bad practice - if you're unlucky, it might even shut down
+the machine. Tut tut.
+
+--
+Richard Heathfield &lt; http://www.cpax.org.uk &gt;
+Email: - http://www . +rjh@
+Google users: &lt; http://www.cpax.org.uk/prg/writings/googly.php &gt;
+&quot;Usenet is a strange place&quot; - dmr 29 July 1999
+</POST>
+<POST>
+<POSTER> Keith Thompson &lt;ks...@mib.org&gt; </POSTER>
+<POSTDATE> 2007-10-13T19:21:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Richard Heathfield &lt;r ... @see.sig.invalid&gt; writes:
+">
+
+[...]
+
+<QUOTE PREVIOUSPOST="
+&gt; Certainly true, but I would not classify &quot;can't be bothered to manage
+&gt; resources properly&quot; as an engineering consideration, any more than I would
+&gt; classify &quot;can't be bothered to wash the dishes&quot; as being a household
+&gt; management consideration.
+">
+
+[...]
+
+I don't wash paper plates before I throw them away.
+
+--
+Keith Thompson (The_Other_Keith) ks ... @mib.org  &lt; http://www.ghoti.net/~kst &gt;
+San Diego Supercomputer Center             &lt;*&gt;  &lt; http://users.sdsc.edu/~kst &gt;
+&quot;We must do something.  This is something.  Therefore, we must do this.&quot;
+-- Antony Jay and Jonathan Lynn, &quot;Yes Minister&quot;
+</POST>
+<POST>
+<POSTER> Richard Heathfield &lt;r...@see.sig.invalid&gt; </POSTER>
+<POSTDATE> 2007-10-13T20:25:00 </POSTDATE>
+Keith Thompson said:
+
+<QUOTE PREVIOUSPOST="
+&gt; Richard Heathfield &lt;r ... @see.sig.invalid&gt; writes:
+&gt; [...]
+&gt;&gt; Certainly true, but I would not classify &quot;can't be bothered to manage
+&gt;&gt; resources properly&quot; as an engineering consideration, any more than I
+&gt;&gt; would classify &quot;can't be bothered to wash the dishes&quot; as being a
+&gt;&gt; household management consideration.
+&gt; [...]
+
+&gt; I don't wash paper plates before I throw them away.
+">
+
+That's the thing about analogies - they are illustrations, not proofs.
+
+--
+Richard Heathfield &lt; http://www.cpax.org.uk &gt;
+Email: - http://www . +rjh@
+Google users: &lt; http://www.cpax.org.uk/prg/writings/googly.php &gt;
+&quot;Usenet is a strange place&quot; - dmr 29 July 1999
+</POST>
+<POST>
+<POSTER> &quot;cr88192&quot; &lt;cr88...@nospam.hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-13T21:38:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;jacob navia&quot; &lt;ja ... @nospam.org&gt; wrote in message
+">
+
+news:471022e9$0$5095$ba4acef3@news.orange.fr ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Suppose that you have a module that always allocates
+&gt; memory without ever releasing it because the guy that
+&gt; wrote it was lazy, as lazy as me.
+
+&gt; Now, you want to reuse it in a loop. What do you do?
+
+&gt; Contrary to some people that will start crying to that
+&gt; &amp;@@&quot;&quot;#~ programmer that wrote this sh!!!! you keep
+&gt; your cool and you do the following:
+
+&gt; 1) Since the program always call malloc and never free()
+&gt;   you allocate a big chunk of memory and each time that the
+&gt;   program calls malloc, you replace those calls with another
+&gt;   that allocates from that memory heap.
+
+&gt; 2) When the program finishes you free all memory witha single
+&gt;   free() call.
+">
+
+actually, this is more or less what I do in my &quot;lower compiler&quot; (converts my
+RPN-IL or RIL language to assembler).
+it is convinient since the memory in question is not shared between runs.
+so, I run the basic parts of the compiler, and simply &quot;rewind&quot; the heap when
+I am done.
+
+note that my &quot;upper compiler&quot;, which works with ASTs, is garbage collected,
+and my assembler/linker core, does its own (manual) memory management.
+
+for anyone that knows:
+this was also a major memory-management technique in Quake 1 and 2 (maybe Q3
+and later, but I have not really investigated this). these engines actually
+had 2 memory managers: the hunk (as above), and Z_Malloc (from what I
+remember, a circular linked-list, rover, and memory-block based system,
+basically, we scan along until we find a free block, and maybe split and
+merge as needed, and a rover keeps track of where in the heap we are). the
+hunk was used for most game data (maps, models, textures, wordstate, ...),
+wheras the Z_Malloc system was used for longer-lived data (such as the
+'cvars', or engine variables).
+
+major cost:
+one up-front commits a decent-sized chunk of memory to be used in this
+manner, and &quot;overflowing&quot; is a potentially fatal condition (in my case, for
+example if someone tries to compile some obscenely large source file...).
+
+<QUOTE PREVIOUSPOST="
+&gt; Caveats. The program should never call directly
+&gt; realloc. Watch for calloc too.
+">
+
+the way to deal with realloc, is simply to relocate the object to the end of
+the heap...
+this can be done much the same as above, a wrapper to the custom allocator
+and a memcpy (downsizing though can be made into a no-op).
+
+<QUOTE PREVIOUSPOST="
+&gt; I have done this many times. Actually  programs that use the
+&gt; lazy memory allocation strategy are very easy to convert to a heap
+&gt; based strategy if the need ever arises.
+">
+
+maybe, maybe not.
+
+<QUOTE PREVIOUSPOST="
+&gt; Programs that leak memory but contain a lots of calls to free()
+&gt; are much harder to modify like this, since you would have to
+&gt; repeat the functionality of free().
+">
+
+or, very more the case: code that actually needs to keep track of the memory
+after it finishes...
+if we need to create, pass around, and return objects, then this approach is
+totally ill-suited.
+
+<QUOTE PREVIOUSPOST="
+&gt; Of course, a lazy strategy is much easier to upgrade to a GC
+&gt; based one. In that case absolutely no code needs to be
+&gt; modified. malloc is replaced with GC_malloc or similar,
+&gt; and there is nothing else to do.
+">
+
+ok.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; --
+&gt; jacob navia
+&gt; jacob at jacob point remcomp point fr
+&gt; logiciels/informatique
+&gt; http://www.cs.virginia.edu/~lcc-win32
+">
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-10-14T02:58:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Eric Sosman&quot; &lt;esos ... @ieee-dot-org.invalid&gt; wrote in message
+
+&gt; But if there's a bunch of long-lived data
+&gt; that represents the program's &quot;global state,&quot; I see nothing
+&gt; wrong with letting exit() clean it up.
+">
+
+Writing a clean-up function forces you to keep track of that global data's
+pointer structure. If you can't do this easily it is a useful warning that
+the program might be getting out of control.
+
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> &quot;Joachim Schmitz&quot; &lt;nospam.j...@schmitz-digital.de&gt; </POSTER>
+<POSTDATE> 2007-10-14T05:14:00 </POSTDATE>
+&quot;Richard Heathfield&quot; &lt;r ... @see.sig.invalid&gt; schrieb im Newsbeitrag
+news:CZadnUQOZZYL_IzanZ2dneKdnZydnZ2d@bt.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Keith Thompson said:
+
+&gt;&gt; Richard Heathfield &lt;r ... @see.sig.invalid&gt; writes:
+&gt;&gt; [...]
+&gt;&gt;&gt; Certainly true, but I would not classify &quot;can't be bothered to manage
+&gt;&gt;&gt; resources properly&quot; as an engineering consideration, any more than I
+&gt;&gt;&gt; would classify &quot;can't be bothered to wash the dishes&quot; as being a
+&gt;&gt;&gt; household management consideration.
+&gt;&gt; [...]
+
+&gt;&gt; I don't wash paper plates before I throw them away.
+
+&gt; That's the thing about analogies - they are illustrations, not proofs.
+">
+
+It's not a bad analogy though: if you want to reuse the dish (or code), do
+the washing (or free()ing), if you don't, just dump it.
+
+It's quite easy to tell the difference between paper plates and china, it's
+not equally easy to tell reusable code from non-reusable though.
+
+Of course I see what you're getting at and I also do have an example were
+proper houskeeping would have helped a lot: it was webserver (the NCSA one I
+think), which in it's classical form did a fork() on an incoming request,
+let the child deal with the reqest and that child just exits when done, not
+explicitly free()ing it's memory. Now ao another platform fork() was rather
+expensive so the webserver got rewtittion into a long running service,
+handling all the request itself (actually a bunch of processes). What
+happened then was, that it was leaking memory all over the place and had
+largly to be rewritten and redesigned.
+
+Bye, Jojo
+</POST>
+<POST>
+<POSTER> Richard Heathfield &lt;r...@see.sig.invalid&gt; </POSTER>
+<POSTDATE> 2007-10-14T08:40:00 </POSTDATE>
+Joachim Schmitz said:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Richard Heathfield&quot; &lt;r ... @see.sig.invalid&gt; schrieb im Newsbeitrag
+&gt; news:CZadnUQOZZYL_IzanZ2dneKdnZydnZ2d@bt.com ...
+&gt;&gt; Keith Thompson said:
+
+&gt;&gt;&gt; Richard Heathfield &lt;r ... @see.sig.invalid&gt; writes:
+&gt;&gt;&gt; [...]
+&gt;&gt;&gt;&gt; Certainly true, but I would not classify &quot;can't be bothered to manage
+&gt;&gt;&gt;&gt; resources properly&quot; as an engineering consideration, any more than I
+&gt;&gt;&gt;&gt; would classify &quot;can't be bothered to wash the dishes&quot; as being a
+&gt;&gt;&gt;&gt; household management consideration.
+&gt;&gt;&gt; [...]
+
+&gt;&gt;&gt; I don't wash paper plates before I throw them away.
+
+&gt;&gt; That's the thing about analogies - they are illustrations, not proofs.
+&gt; It's not a bad analogy though: if you want to reuse the dish (or code),
+&gt; do the washing (or free()ing), if you don't, just dump it.
+
+&gt; It's quite easy to tell the difference between paper plates and china,
+&gt; it's not equally easy to tell reusable code from non-reusable though.
+">
+
+Right. The Principle of Conservatism applies.
+
+&lt;good example snipped&gt;
+
+--
+Richard Heathfield &lt; http://www.cpax.org.uk &gt;
+Email: - http://www . +rjh@
+Google users: &lt; http://www.cpax.org.uk/prg/writings/googly.php &gt;
+&quot;Usenet is a strange place&quot; - dmr 29 July 1999
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-10-14T10:25:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Joachim Schmitz&quot; &lt;nospam.j ... @schmitz-digital.de&gt; wrote in message
+">
+
+news:fesmmg$194$1@online.de ...
+
+<QUOTE PREVIOUSPOST="
+&gt; It's quite easy to tell the difference between paper plates and china,
+&gt; it's not equally easy to tell reusable code from non-reusable though.
+">
+
+The writer should decide. &quot;Is this routine sufficiently general to be of use
+in more program than one?&quot; There is a grey area - code to print out a car
+park ticket might be reusable if you work for a parking ticket vending
+company, not if you work for an embedded systems company and they are just
+one client - and not everything designated a reusable will actually be
+reused.
+
+However often the answer will be yes or yes possibly, in which case write
+the code in such a way that it is likely to be reused. In particular,
+parameterise assumptions and don't make it depend on anything it doesn't
+need to depend upon.
+
+For example, we've got a list of records in the form
+
+typedef struct
+{
+char id[32];
+double salary;
+
+<QUOTE PREVIOUSPOST="
+} RECORD;
+">
+
+Typical ids
+Fred123, Fred1234, Fred1230, Jim100
+
+We want to sort so that the the names are alphabetical, the numbers in
+order.
+
+The function we pass to qsort() takes two RECORD *s and is unlikely to be
+useful elsewhere. However the problem of sorting strings containing embedded
+numbers is quite general. So write a routine to do that which takes char *s
+and doesn't depend on RECORD. The qsort() comparator then becomes a trivial
+wrapper to it.
+
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> Erik Trulsson &lt;ertr1...@student.uu.se&gt; </POSTER>
+<POSTDATE> 2007-10-14T14:18:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Richard Heathfield &lt;r ... @see.sig.invalid&gt; wrote:
+&gt; jacob navia said:
+
+&gt; &lt;snip&gt;
+
+&gt;&gt; A transient program, as I have explained several times already, leaves
+&gt;&gt; its cleanup to the operating system. Thus, it can be called thousands
+&gt;&gt; of times, it will always cleanup implicitly.
+
+&gt; I have already given an example, upthread, of what you call a &quot;transient&quot;
+&gt; program which became a &quot;non-transient&quot; program five years later. Skimp on
+&gt; the housekeeping now, and pay for it many times over in the future.
+">
+
+And besides, there is no guarantee that the operating system will clean up
+after the program.  Depending on the OS doing that is a bad idea if you want
+your programs to be portable.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; I can repeat this again and again and apparently there will be always
+&gt;&gt; the same &quot;argument&quot;...
+
+&gt; No matter how many times you repeat an incorrect argument, it remains
+&gt; incorrect.
+">
+
+--
+&lt;Insert your favourite quote here.&gt;
+Erik Trulsson
+ertr1 ... @student.uu.se
+</POST>
+<POST>
+<POSTER> Erik Trulsson &lt;ertr1...@student.uu.se&gt; </POSTER>
+<POSTDATE> 2007-10-14T14:21:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+jacob navia &lt;ja ... @nospam.org&gt; wrote:
+&gt; Ian Collins wrote:
+&gt;&gt; jacob navia wrote:
+&gt;&gt;&gt; I repeat:
+
+&gt;&gt;&gt; Lazy allocation can be done only at the program level. I have
+&gt;&gt;&gt; always maintained this.
+
+&gt;&gt; But what is is program if it isn't a collection of routines?
+
+&gt; Maybe you haven't noticed it yet, but after a program finishes the
+&gt; operating system cleans up.
+">
+
+Not all operating systems will do that.
+
+<QUOTE PREVIOUSPOST="
+&gt; Not so for a routine.
+
+&gt; And you know what?
+
+&gt; &quot;There is no blinder person as the one that doesn't want to see&quot;.
+">
+
+--
+&lt;Insert your favourite quote here.&gt;
+Erik Trulsson
+ertr1 ... @student.uu.se
+</POST>
+<POST>
+<POSTER> Harald van Dĳk &lt;true...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-14T14:30:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sun, 14 Oct 2007 18:21:04 +0000, Erik Trulsson wrote:
+&gt; jacob navia &lt;ja ... @nospam.org&gt; wrote:
+&gt;&gt; Ian Collins wrote:
+&gt;&gt;&gt; jacob navia wrote:
+&gt;&gt;&gt;&gt; I repeat:
+
+&gt;&gt;&gt;&gt; Lazy allocation can be done only at the program level. I have always
+&gt;&gt;&gt;&gt; maintained this.
+
+&gt;&gt;&gt; But what is is program if it isn't a collection of routines?
+
+&gt;&gt; Maybe you haven't noticed it yet, but after a program finishes the
+&gt;&gt; operating system cleans up.
+
+&gt; Not all operating systems will do that.
+">
+
+True, but the operating systems that don't do that aren't necessarily
+operating systems the software might ever be ported to. Another reason to
+clean up everything, one that is more interesting to me personally, is
+because if I ignore memory leaks that don't cause problems in practice,
+tools such as valgrind have no way of warning me of memory leaks that do
+cause problems in practice.
+</POST>
+<POST>
+<POSTER> Peter Pichler &lt;use...@pichler.co.uk&gt; </POSTER>
+<POSTDATE> 2007-10-14T16:09:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+jacob navia wrote:
+&gt; 1) Since the program always call malloc and never free()
+&gt;   you allocate a big chunk of memory and each time that the
+&gt;   program calls malloc, you replace those calls with another
+&gt;   that allocates from that memory heap.
+
+&gt; 2) When the program finishes you free all memory witha single
+&gt;   free() call.
+">
+
+If you're already diverting malloc to your own replacement, then why not
+making it do something useful? Such as trace where they are called from,
+how much they allocate etc - and your final free equivalent can then
+dump the statistics to aid you in fixing the source. There are
+ready-made tools for that, but so are malloc and free :-)
+</POST>
+<POST>
+<POSTER> &quot;cr88192&quot; &lt;cr88...@nospam.hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-14T17:44:00 </POSTDATE>
+&quot;Harald van Dĳk&quot; &lt;true ... @gmail.com&gt; wrote in message
+news:fetn7v$pjb$1@news6.zwoll1.ov.home.nl ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sun, 14 Oct 2007 18:21:04 +0000, Erik Trulsson wrote:
+&gt;&gt; jacob navia &lt;ja ... @nospam.org&gt; wrote:
+&gt;&gt;&gt; Ian Collins wrote:
+&gt;&gt;&gt;&gt; jacob navia wrote:
+&gt;&gt;&gt;&gt;&gt; I repeat:
+
+&gt;&gt;&gt;&gt;&gt; Lazy allocation can be done only at the program level. I have always
+&gt;&gt;&gt;&gt;&gt; maintained this.
+
+&gt;&gt;&gt;&gt; But what is is program if it isn't a collection of routines?
+
+&gt;&gt;&gt; Maybe you haven't noticed it yet, but after a program finishes the
+&gt;&gt;&gt; operating system cleans up.
+
+&gt;&gt; Not all operating systems will do that.
+
+&gt; True, but the operating systems that don't do that aren't necessarily
+&gt; operating systems the software might ever be ported to. Another reason to
+&gt; clean up everything, one that is more interesting to me personally, is
+&gt; because if I ignore memory leaks that don't cause problems in practice,
+&gt; tools such as valgrind have no way of warning me of memory leaks that do
+&gt; cause problems in practice.
+">
+
+one idea, as a means for detecting memory leaks:
+you make a wrapper that wraps malloc, and calls a wrapper function which
+also accepts a source file and line number (__FILE__ and __LINE__ or
+such...);
+this wrapper function keeps track of allocations (what, how many, and where
+they were from);
+we can periodically display the number of allocations, and info about the
+new (remaining) allocations.
+
+(note that 'free' will also be wrapped, and remove an object from the
+listing).
+
+we then run the code in question in a loop, and watch for new objects to
+appear.
+if we have an unexpected accumulation of allocs, then we know at least where
+they are comming from, and can try to work out the details from there.
+
+for example, similar code (though more rigged up for detecting memory damage
+than leaks), was fairly useful in tracking down certain bugs in my lower
+compiler.
+</POST>
+<POST>
+<POSTER> &quot;cr88192&quot; &lt;cr88...@nospam.hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-14T18:17:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Peter Pichler&quot; &lt;use ... @pichler.co.uk&gt; wrote in message
+">
+
+news:4712778a$1_1@mk-nntp-2.news.uk.tiscali.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; jacob navia wrote:
+
+&gt;&gt; 1) Since the program always call malloc and never free()
+&gt;&gt;   you allocate a big chunk of memory and each time that the
+&gt;&gt;   program calls malloc, you replace those calls with another
+&gt;&gt;   that allocates from that memory heap.
+
+&gt;&gt; 2) When the program finishes you free all memory witha single
+&gt;&gt;   free() call.
+
+&gt; If you're already diverting malloc to your own replacement, then why not
+&gt; making it do something useful? Such as trace where they are called from,
+&gt; how much they allocate etc - and your final free equivalent can then dump
+&gt; the statistics to aid you in fixing the source. There are ready-made tools
+&gt; for that, but so are malloc and free :-)
+">
+
+though this is true, this does not rule out the original idea as a
+possibility.
+there are some cases where variations on the original idea are sensible.
+
+however, usually one does not free and re-allocated the memory, rather it is
+kept around and re-used each time.
+the main advantages: it can offer better performance, and can help avoid
+fragmenting the main heap.
+basically, we create garbage yes, but one can simply forget about it and it
+is gone.
+
+this is useful for temporary-use situations (such as in a dynamic compiler,
+where once the output is produced, most of the intermediate state is,
+simply, no longer relevant, even to the level of being properly freed).
+
+so, we produce a mass of small objects defining the various declared
+functions and variables (consider all the crap contained in a typical set of
+system headers...), small chunks of intermediate bytecoded blocks,
+register-allocator info, various stacks and contexts, ... easily tearing
+through a good number of MB in a matter of milliseconds.
+
+and on to the next source file, where we forget it all and start all over
+again...
+
+a tradeoff (more memory conservative at least), is to keep track of all the
+allocations (say, in an array), or maybe to implement a segmented pool, and
+then to free everything in the array/pool.
+
+this is not to say all this is all that good of an idea (or even at all
+relevant for most 'general' situations), but in certain cases, it works
+pretty well...
+
+or such...
+</POST>
+<POST>
+<POSTER> CBFalconer &lt;cbfalco...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-10-14T11:37:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+cr88192 wrote:
+&gt; &quot;jacob navia&quot; &lt;ja ... @nospam.org&gt; wrote in message
+
+&gt;&gt; Suppose that you have a module that always allocates
+&gt;&gt; memory without ever releasing it because the guy that
+&gt;&gt; wrote it was lazy, as lazy as me.
+
+&gt;&gt; Now, you want to reuse it in a loop. What do you do?
+
+&gt;&gt; Contrary to some people that will start crying to that
+&gt;&gt; &amp;@@&quot;&quot;#~ programmer that wrote this sh!!!! you keep
+&gt;&gt; your cool and you do the following:
+
+&gt;&gt; 1) Since the program always call malloc and never free()
+&gt;&gt;   you allocate a big chunk of memory and each time that the
+&gt;&gt;   program calls malloc, you replace those calls with another
+&gt;&gt;   that allocates from that memory heap.
+
+&gt;&gt; 2) When the program finishes you free all memory witha single
+&gt;&gt;   free() call.
+">
+
+This is reminiscent of the mark/release used on SOME versions of
+p-code interpreters for Pascal.  It was sufficient to handle the
+symbol tables of the compiler, but was sadly wanting for general
+use.  One of the unique features of PascalP was that it allowed
+mark/release to be mixed with new/dispose, and all functioned
+correctly.
+
+I.e. experience shows that this is not a satisfactory technique.
+
+--
+Chuck F (cbfalconer at maineline dot net)
+Available for consulting/temporary embedded and systems.
+&lt; http://cbfalconer.home.att.net &gt;
+
+--
+Posted via a free Usenet account from http://www.teranews.com
+</POST>
+<POST>
+<POSTER> karthikbalaguru &lt;karthikbalagur...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-24T01:50:00 </POSTDATE>
+On Oct 15, 2:44 am, &quot;cr88192&quot; &lt;cr88 ... @nospam.hotmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Harald van D k&quot; &lt;true ... @gmail.com&gt; wrote in message news:fetn7v$pjb$1@news6.zwoll1.ov.home.nl ...
+
+&gt; &gt; On Sun, 14 Oct 2007 18:21:04 +0000, Erik Trulsson wrote:
+&gt; &gt;&gt; jacob navia &lt;ja ... @nospam.org&gt; wrote:
+&gt; &gt;&gt;&gt; Ian Collins wrote:
+&gt; &gt;&gt;&gt;&gt; jacob navia wrote:
+&gt; &gt;&gt;&gt;&gt;&gt; I repeat:
+
+&gt; &gt;&gt;&gt;&gt;&gt; Lazy allocation can be done only at the program level. I have always
+&gt; &gt;&gt;&gt;&gt;&gt; maintained this.
+
+&gt; &gt;&gt;&gt;&gt; But what is is program if it isn't a collection of routines?
+
+&gt; &gt;&gt;&gt; Maybe you haven't noticed it yet, but after a program finishes the
+&gt; &gt;&gt;&gt; operating system cleans up.
+
+&gt; &gt;&gt; Not all operating systems will do that.
+
+&gt; &gt; True, but the operating systems that don't do that aren't necessarily
+&gt; &gt; operating systems the software might ever be ported to. Another reason to
+&gt; &gt; clean up everything, one that is more interesting to me personally, is
+&gt; &gt; because if I ignore memory leaks that don't cause problems in practice,
+&gt; &gt; tools such as valgrind have no way of warning me of memory leaks that do
+&gt; &gt; cause problems in practice.
+
+&gt; one idea, as a means for detecting memory leaks:
+&gt; you make a wrapper that wraps malloc, and calls a wrapper function which
+&gt; also accepts a source file and line number (__FILE__ and __LINE__ or
+&gt; such...);
+&gt; this wrapper function keeps track of allocations (what, how many, and where
+&gt; they were from);
+&gt; we can periodically display the number of allocations, and info about the
+&gt; new (remaining) allocations.
+
+&gt; (note that 'free' will also be wrapped, and remove an object from the
+&gt; listing).
+
+&gt; we then run the code in question in a loop, and watch for new objects to
+&gt; appear.
+&gt; if we have an unexpected accumulation of allocs, then we know at least where
+&gt; they are comming from, and can try to work out the details from there.
+
+&gt; for example, similar code (though more rigged up for detecting memory damage
+&gt; than leaks), was fairly useful in tracking down certain bugs in my lower
+&gt; compiler.- Hide quoted text -
+
+&gt; - Show quoted text -
+">
+
+Interesting Idea !! :):)
+
+Karthik Balaguru
+</POST>
+</TEXT>
+</BODY>
+</DOC>

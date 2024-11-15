@@ -1,0 +1,145 @@
+<DOC>
+<DOCID> eng-NG-31-135598-8599735 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-30T07:41:00 </DATETIME>
+<BODY>
+<HEADLINE>
+CALL/CC and the Y Combinator
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> David Rush &lt;kumoy...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-30T07:41:00 </POSTDATE>
+Hi y'all,
+
+This probably qualifies as old news to many of you, but I just noticed
+this example from LiSP:
+
+(define (fact n)
+(let ((r 1) (k 'void))
+(call/cc (lambda (c) (set! k c) 'void))
+(set! r (* r n))
+(set! n (- n 1))
+(if (= n 1) r (k 'recurse))
+))
+
+where is sure looks to me like CALL/CC + SET! is being used to
+implement the Y Combinator. In fact, I vaguely remember commentary
+from Oleg Kiselyov to this effect several years ago. I imagine that
+some of this oddity derives from the untyped nature of Scheme's lambda
+calculus, but I'm wondering about paradigms for expressing binding
+mutation at the moment. Every description of Y (and by extension
+LETREC) that I have read defines their practical implementation with
+exactly this kind of binding mutation. Is there a corresponding way to
+define binding mutations from these operators?
+
+I suppose I'm looking for a fixed-point or maybe some equivalence
+classes in the category algebra on namespaces. Or something like
+that :)
+
+david rush
+--
+http://scheme-punks.cyber-rush.org
+</POST>
+<POST>
+<POSTER> Andru Luvisi &lt;luv...@sonoma.edu&gt; </POSTER>
+<POSTDATE> 2007-08-30T20:17:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt;&gt;&gt; &quot;David&quot; == David Rush &lt;kumoy ... @gmail.com&gt; writes:
+">
+
+David&gt; where is sure looks to me like CALL/CC + SET! is being used
+David&gt; to implement the Y Combinator.
+
+I don't see a Y Combinator in there, but I may not be squinting hard
+enough.  It looks a lot more like iteration to me.
+
+(define (fact n)                         int fact(int n) {
+(let ((r 1) (k 'void))                   int r = 1;
+(call/cc
+(lambda (c) (set! k c) 'void))     iterate:
+(set! r (* r n))                       r = r * n;
+(set! n (- n 1))                       n = n - 1;
+(if (= n 1) r (k 'recurse))))          if(n == 1)
+return r;
+else
+goto iterate;
+}
+
+Andru
+--
+Andru Luvisi
+
+Quote Of The Moment:
+You are in a maze of twisty little relative jumps, all alike.
+</POST>
+<POST>
+<POSTER> o...@pobox.com </POSTER>
+<POSTDATE> 2007-08-30T22:48:00 </POSTDATE>
+One can indeed express the Y combinator via call/cc:
+
+http://okmij.org/ftp/Computation/Continuations.html#fix-callcc
+
+There is no need for assignment. Incidentally, call/cc cannot by
+itself express mutation. The trick of obtaining a mutable cell using
+letrec and call/cc works only because R5RS required letrec to be
+implemented in terms of assignment; call/cc merely pries out that
+hidden mutation open. The Y combinator and letrec of course can be
+implemented with no mutations whatsoever: cf. the well-known
+expression for Y in untyped lambda calculus. Simply typed (and even
+polymorphically typed, System F) lambda calculus is strongly
+normalizing, and so Y is not expressible. Adding mutation destroys
+strong normalization and makes Y expressible (and so the resulting
+calculus cannot model a consistent logic). Even adding dynamic binding
+to the simply typed lambda-calculus destroys strong normalization.
+
+http://okmij.org/ftp/Computation/dynamic-binding.html#non-termination
+
+Delimited continuations, which are _qualitatively_ different from
+call/cc, can express mutation.
+</POST>
+<POST>
+<POSTER> David Rush &lt;kumoy...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-31T05:47:00 </POSTDATE>
+On Aug 31, 1:17 am, Andru Luvisi &lt;luv ... @sonoma.edu&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;&gt;&gt;&gt;&gt; &quot;David&quot; == David Rush &lt;kumoy ... @gmail.com&gt; writes:
+&gt;     David&gt; where is sure looks to me like CALL/CC + SET! is being used
+&gt;     David&gt; to implement the Y Combinator.
+
+&gt; I don't see a Y Combinator in there, but I may not be squinting hard
+&gt; enough.  It looks a lot more like iteration to me.
+">
+
+Iterative processes are a subset of the recursive processes.
+</POST>
+<POST>
+<POSTER> David Rush &lt;kumoy...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-31T05:49:00 </POSTDATE>
+On Aug 31, 3:48 am, o ... @pobox.com wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Delimited continuations, which are _qualitatively_ different from
+&gt; call/cc, can express mutation.
+">
+
+I am beginning to see that as I continue to graze my way through LiSP.
+Do you know of any focussed papers on the topic?
+
+david rush
+</POST>
+<POST>
+<POSTER> o...@pobox.com </POSTER>
+<POSTDATE> 2007-09-01T05:14:00 </POSTDATE>
+Perhaps the most comprehensive reference on various delimited control
+operators, their applications, similarities, and differences from
+undelimited continuations is the paper
+
+A static simulation of dynamic delimited control
+by Chung-chieh Shan
+http://www.cs.rutgers.edu/~ccshan/recur/recur-hosc-final.pdf
+</POST>
+</TEXT>
+</BODY>
+</DOC>

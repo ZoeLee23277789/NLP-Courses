@@ -1,0 +1,218 @@
+<DOC>
+<DOCID> groups.google.com_GoogleMapsAPI_700455bc035f487f_ENG_20050908_152400 </DOCID>
+<DOCTYPE SOURCE="usenet">USENET TEXT</DOCTYPE>
+<DATETIME>2005-09-08T15:24:00</DATETIME>
+<BODY>
+<HEADLINE>
+only one marker&#39;s info window will open
+</HEADLINE>
+<TEXT>
+
+<POST>
+<POSTER> Super Aardvark </POSTER>
+<POSTDATE> 2005-09-08T15:24:00 </POSTDATE>
+
+I'm experiencing some strange behavior: I have 2 (or more) markers,
+call them A and B. I can click on marker A, and the info window opens
+normally. I can close it and open it again by clicking on A again.
+However, as soon as I click on marker B, marker A stops responding.
+Marker B's info window now works correctly, but A's info window won't
+appear when I click on A.
+
+Trying to use Venkman to figure out what's going on, I see this
+exception:
+
+Exception ``[Exception... &quot;Component returned failure code: 0x80004003
+(NS_ERROR_INVALID_POINTER) [nsIDOMHTMLDivElement.appendChild]&quot;
+nsresult: &quot;0x80004003 (NS_ERROR_INVALID_POINTER)&quot; location: &quot;JS frame
+::   :: anonymous :: line
+235&quot; data: no]'' thrown from function anonymous(a=Object:{2},
+b=null:null, c=Object:{2}, d=function:anonymous, e=function:anonymous)
+in &lt;&gt; line 235.
+
+Here's the offending line of code:
+
+235:
+;m.prototype.openInfoWindow=function(a,b,c,d,e){if(!this.infoWindowEnabled( ))return;
+if(!this.infoWindow){this.createInfoWindow()}var
+f=this.spec.getBitmapCoordinate(a.y,a.x,this.zoomLevel); var
+g=this.getDivCoordinate(f.x,f.y);
+if(this.infoWindow.isVisible()){j.trigger(this,&quot;infowindowclose&quot;);
+if(this.infoWindow.onCloseFn){this.infoWindow.onCloseFn()}}this.infoWindow. point=a;
+this.infoWindow.pixelOffset=c; this.infoWindow.onOpenFn=d;
+this.infoWindow.onCloseFn=e;
+this.infoWindow.offscreenArea.innerHTML=&quot;&quot;;
+this.infoWindow.offscreenArea.appendChild(b);
+this.showSizedInfoWindow(g.x,g.y,c)}
+
+Not sure what to do about this, since this is all Google's code and I
+can't make heads or tails of it anyway.
+
+Here's the code I'm using to create the marker:
+
+&lt;script&gt;
+function createMarker(point, number) {
+var icon = new GIcon(baseicon);
+icon.image =
+&quot;/MyApp/images/icons/icon&quot; + number + &quot;.gif&quot;;
+
+var marker = new GMarker(point, icon);
+
+GEvent.addListener(marker, &quot;click&quot;, function() {
+var dom1 = document.getElementById(&quot;info&quot; + number);
+marker.openInfoWindow(dom1);
+});
+
+return marker;
+<QUOTE PREVIOUSPOST="
+}
+
+"/>
+
+&lt;/script&gt;
+
+and then, for example:
+
+&lt;script&gt;
+marker = createMarker(
+new GPoint(-100.0, 50.0),
+201);
+points.push(marker);
+map.addOverlay(marker);
+&lt;/script&gt;
+&lt;table id=&quot;info201&quot;&gt;
+&lt;!--blah blah blah--&gt;
+&lt;/table&gt;
+
+Again, this works for each marker until I click on a different marker.
+Any help would be greatly appreciated.
+
+</POST>
+
+
+
+<POST>
+<POSTER> d_henderson </POSTER>
+<POSTDATE> 2005-09-08T16:31:00 </POSTDATE>
+
+Please post a link to your page so we can try it ourselves.
+
+</POST>
+
+
+
+<POST>
+<POSTER> Super Aardvark </POSTER>
+<POSTDATE> 2005-09-08T17:31:00 </POSTDATE>
+
+
+Thanks.
+
+</POST>
+
+
+
+<POST>
+<POSTER> ceremona@gmail.com </POSTER>
+<POSTDATE> 2005-09-08T20:24:00 </POSTDATE>
+
+I've seen this problem for myself. For me it was due to an error in
+one of my js variables that was being fed into the mini page. Check
+your minipage variables with alerts() on the second loop. You will
+likely find that the code never gets to the second loop.
+
+-Cere
+
+</POST>
+
+
+
+<POST>
+<POSTER> d_henderson </POSTER>
+<POSTDATE> 2005-09-08T20:28:00 </POSTDATE>
+
+Thanks for posting a link.
+
+First, there is not doctype, and the html element is missing critical
+attributes. The API doc does recommend using xhtml 1.0. This is a
+requirement if you wish to draw polylines in Internet Explorer. Since
+all the API examples use this, I consider this an implied part of the
+specification. YMMV.
+
+Second, I think I see what you are trying to do with the info window
+content. The problem here is that the DOM element you are passing to
+openInfoWindow() has already been rendered at another location on the
+page. You pass a reference to something that already has sizes and
+positions set. (I think) that rendering the info window destroys the
+information that rendered that element below the map. Notice that the
+number vanishes when the info window pops up. When the info window is
+closed (or perhaps when the second info window is opened), I think that
+bit of DOM gets destroyed, so it is not available for re-use.
+
+If you could use a copy the DOM tree that you are currently passing to
+the info window, this might work, but as far as I know, you are
+breaking new ground here.
+
+I have always used the openInfoWindowHtml() function with a string
+containing all the html for my info window content.
+
+</POST>
+
+
+
+<POST>
+<POSTER> Super Aardvark </POSTER>
+<POSTDATE> 2005-09-09T10:26:00 </POSTDATE>
+
+Thanks for your response. Unfortunately, when I included the
+&lt;!DOCTYPE&gt; for XHTML 1.0 Strict, and changed a couple of things so it
+validates, the map stopped displaying at all! See
+. (Leaving
+those other changes and removing the doctype element causes it to work
+again.)
+
+Your theory about the DOM element being destroyed is interesting, and
+would explain the behavior.... I had thought the elements were simply
+being repositioned and made invisible. If they're being destroyed, I
+wonder how openInfoWindow() is supposed to be used? (I'd like to avoid
+using openInfoWindowHtml(), because I'd have to re-write the custom JSP
+tag that produces what I'm really trying to display.)
+
+</POST>
+
+
+
+<POST>
+<POSTER> Mike Williams </POSTER>
+<POSTDATE> 2005-09-09T24:43:00 </POSTDATE>
+
+Wasn't it Super Aardvark who wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;I wonder how openInfoWindow() is supposed to be used?
+
+"/>
+
+My guess is that you're supposed to use it when you create the contents
+using things like document.createElement(). A good example would be the
+code in map.openWindowHtml() itself, which creates a &lt;div&gt; to contain
+the HTML and calls map.openWindow().
+
+prototype.openInfoWindowHtml = function(a,b,c,d,e) {
+var f=document.createElement(&quot;div&quot;);
+f.innerHTML=b;
+this.openInfoWindow(a,f,c,d,e)
+
+<QUOTE PREVIOUSPOST="
+}
+
+"/>
+
+
+</POST>
+
+
+
+</TEXT>
+</BODY>
+</DOC>

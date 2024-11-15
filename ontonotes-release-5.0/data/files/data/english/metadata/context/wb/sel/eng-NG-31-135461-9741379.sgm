@@ -1,0 +1,496 @@
+<DOC>
+<DOCID> eng-NG-31-135461-9741379 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-11-20T16:02:00 </DATETIME>
+<BODY>
+<HEADLINE>
+p9p mk issue
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> bakul+pl...@bitblocks.com (Bakul Shah) </POSTER>
+<POSTDATE> 2007-11-20T16:02:00 </POSTDATE>
+Don't laugh but I am trying to use identical mkfiles on
+FreeBSD &amp; plan9 for some programs and it seems this is
+impossible.
+
+Consider a simple mkfile like this:
+
+all:
+for (i in a b c)
+echo $i
+
+9 mk fails with
+Syntax error: Bad for loop variable
+mk:    ...  : exit status=exit(2)
+
+On rereading the p9p mk man page I discover MKSHELL.  So next
+I add MKSHELL=... line at top of the above mkfile and now it
+works.  Since I want most mkfiles to be portable, I add this
+line in a mkfile included with &lt; but it uses its own copy of
+MKSHELL.  So then I tried
+
+MKSHELL=$PLAN9/bin/rc 9 mk
+
+but that doesn't help either.  Change mkfile to this now
+
+MKSHELL=$PLAN9/bin/rc
+FOO=fum
+all:
+for (i in a b c)
+echo $i $MKSHELL $FOO
+
+But echo shows &quot;a sh fum&quot; etc. which is rather surprising.
+
+Rather than try this hard to please sh users, would it make
+sense to just use rc?  After all this is *plan9* mk!  To be
+nice mk can pay attention to MKSHELL env. variable but that's
+about it.  Even as a non-unix-hater I'd be perfectly happy
+with that!
+
+-- bakul
+</POST>
+<POST>
+<POSTER> pietr...@mac.com (Pietro Gagliardi) </POSTER>
+<POSTDATE> 2007-11-20T16:13:00 </POSTDATE>
+On Nov 20, 2007, at 4:01 PM, Bakul Shah wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Don't laugh but I am trying to use identical mkfiles on
+&gt; FreeBSD &amp; plan9 for some programs and it seems this is
+&gt; impossible.
+
+&gt; Consider a simple mkfile like this:
+
+&gt; all:
+&gt;    for (i in a b c)
+&gt;            echo $i
+
+&gt; 9 mk fails with
+&gt; Syntax error: Bad for loop variable
+&gt; mk:    ...  : exit status=exit(2)
+
+&gt; On rereading the p9p mk man page I discover MKSHELL.  So next
+&gt; I add MKSHELL=... line at top of the above mkfile and now it
+&gt; works.  Since I want most mkfiles to be portable, I add this
+&gt; line in a mkfile included with &lt; but it uses its own copy of
+&gt; MKSHELL.  So then I tried
+
+&gt; MKSHELL=$PLAN9/bin/rc 9 mk
+
+&gt; but that doesn't help either.  Change mkfile to this now
+
+&gt; MKSHELL=$PLAN9/bin/rc
+&gt; FOO=fum
+&gt; all:
+&gt;    for (i in a b c)
+&gt;            echo $i $MKSHELL $FOO
+
+&gt; But echo shows &quot;a sh fum&quot; etc. which is rather surprising.
+
+&gt; Rather than try this hard to please sh users, would it make
+&gt; sense to just use rc?  After all this is *plan9* mk!  To be
+&gt; nice mk can pay attention to MKSHELL env. variable but that's
+&gt; about it.  Even as a non-unix-hater I'd be perfectly happy
+&gt; with that!
+
+&gt; -- bakul
+">
+
+/sys/doc/mk.ps: read section 5 on variables. It might help :-)
+</POST>
+<POST>
+<POSTER> pietr...@mac.com (Pietro Gagliardi) </POSTER>
+<POSTDATE> 2007-11-20T16:46:00 </POSTDATE>
+On Nov 20, 2007, at 4:01 PM, Bakul Shah wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Don't laugh but I am trying to use identical mkfiles on
+&gt; FreeBSD &amp; plan9 for some programs and it seems this is
+&gt; impossible.
+">
+
+PS - In my version of hoc(1), which is pure ANSI C, I use a makefile
+for UNIX systems and an mkfile for Plan 9.
+</POST>
+<POST>
+<POSTER> j...@corpus-callosum.com (Jeff Sickel) </POSTER>
+<POSTDATE> 2007-11-20T17:21:00 </POSTDATE>
+On Nov 20, 2007, at 3:44 PM, Pietro Gagliardi wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Nov 20, 2007, at 4:01 PM, Bakul Shah wrote:
+
+&gt;&gt; Don't laugh but I am trying to use identical mkfiles on
+&gt;&gt; FreeBSD &amp; plan9 for some programs and it seems this is
+&gt;&gt; impossible.
+
+&gt; PS - In my version of hoc(1), which is pure ANSI C, I use a makefile
+&gt; for UNIX systems and an mkfile for Plan 9.
+">
+
+you should be able to do some sort of magic like:
+
+&lt;!cat $PLAN9/$objtype/mkfile.$SYSNAME
+
+though you may have to do a little tweaking to get environment set
+correctly
+</POST>
+<POST>
+<POSTER> bakul+pl...@bitblocks.com (Bakul Shah) </POSTER>
+<POSTDATE> 2007-11-20T17:49:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; On Nov 20, 2007, at 3:44 PM, Pietro Gagliardi wrote:
+
+&gt; &gt; On Nov 20, 2007, at 4:01 PM, Bakul Shah wrote:
+
+&gt; &gt;&gt; Don't laugh but I am trying to use identical mkfiles on
+&gt; &gt;&gt; FreeBSD &amp; plan9 for some programs and it seems this is
+&gt; &gt;&gt; impossible.
+
+&gt; &gt; PS - In my version of hoc(1), which is pure ANSI C, I use a makefile
+&gt; &gt; for UNIX systems and an mkfile for Plan 9.
+
+&gt; you should be able to do some sort of magic like:
+
+&gt; &lt;!cat $PLAN9/$objtype/mkfile.$SYSNAME
+">
+
+For now I just changed default MKSHELL to rc in src/cmd/mk.
+What I was really arguing for was for simplifying MKSHELL
+semantics or getting rid of it altogether since it only
+exists in p9p mk.
+</POST>
+<POST>
+<POSTER> stal...@maths.tcd.ie (John Stalker) </POSTER>
+<POSTDATE> 2007-11-21T03:24:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; For now I just changed default MKSHELL to rc in src/cmd/mk.
+&gt; What I was really arguing for was for simplifying MKSHELL
+&gt; semantics or getting rid of it altogether since it only
+&gt; exists in p9p mk.
+">
+
+I would keep MKSHELL.  I use mk a lot under FreeBSD.  They're
+mostly things I originally used bmake for, but I got annoyed
+with various of its oddities.  Having MKSHELL=/bin/sh means
+less work in converting Makefiles to mkfiles.  You can
+always set MKSHELL=$PLAN9/bin/rc.  If I remember, your
+original problem was in inheriting MKSHELL in recursive use.
+Getting rid of MKSHELL seems like a drastic solution to
+that problem.
+--
+John Stalker
+School of Mathematics
+Trinity College Dublin
+tel +353 1 896 1983
+fax +353 1 896 2282
+</POST>
+<POST>
+<POSTER> r...@swtch.com (Russ Cox) </POSTER>
+<POSTDATE> 2007-11-21T11:02:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; &gt;&gt; Don't laugh but I am trying to use identical mkfiles on
+&gt; &gt;&gt; FreeBSD &amp; plan9 for some programs and it seems this is
+&gt; &gt;&gt; impossible.
+
+&gt; For now I just changed default MKSHELL to rc in src/cmd/mk.
+&gt; What I was really arguing for was for simplifying MKSHELL
+&gt; semantics or getting rid of it altogether since it only
+&gt; exists in p9p mk.
+">
+
+if you want to use rc in both places, then setting MKSHELL=rc is enough.
+the plan 9 mk will ignore it.
+
+MKSHELL is here to stay.  the unix versions of mk have
+traditionally used sh not rc, and there are users who
+depend on that.
+
+also, while using sh by default is a little annoying,
+it simplifies the plan9port build process considerably,
+since rc doesn't have to get bootstrapped just to get
+mk running.
+
+russ
+</POST>
+<POST>
+<POSTER> bakul+pl...@bitblocks.com (Bakul Shah) </POSTER>
+<POSTDATE> 2007-11-21T13:04:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; &gt; &gt;&gt; Don't laugh but I am trying to use identical mkfiles on
+&gt; &gt; &gt;&gt; FreeBSD &amp; plan9 for some programs and it seems this is
+&gt; &gt; &gt;&gt; impossible.
+
+&gt; &gt; For now I just changed default MKSHELL to rc in src/cmd/mk.
+&gt; &gt; What I was really arguing for was for simplifying MKSHELL
+&gt; &gt; semantics or getting rid of it altogether since it only
+&gt; &gt; exists in p9p mk.
+
+&gt; if you want to use rc in both places, then setting MKSHELL=rc is enough.
+&gt; the plan 9 mk will ignore it.
+">
+
+Yeah that is one solution except that pretty much every
+mkfile will need this line and I hate having to litter
+mkfiles.
+
+<QUOTE PREVIOUSPOST="
+&gt; MKSHELL is here to stay.  the unix versions of mk have
+&gt; traditionally used sh not rc, and there are users who
+&gt; depend on that.
+
+&gt; also, while using sh by default is a little annoying,
+&gt; it simplifies the plan9port build process considerably,
+&gt; since rc doesn't have to get bootstrapped just to get
+&gt; mk running.
+">
+
+OK, how about this?  If env. var MKSHELL is set to rc, then
+set the default value of make variable MKSHELL to rc else to
+sh.  You get exactly the same effect as now and I get what I
+want by setting MKSHELL env. var to rc.
+
+I just reran $PLAN9/INSTALL with this change and it works
+like before (as expected).
+
+diff -r 976b3130f4f8 src/cmd/mk/shell.c
+--- a/src/cmd/mk/shell.c        Wed Nov 07 17:30:51 2007 -0500
++++ b/src/cmd/mk/shell.c        Wed Nov 21 09:38:50 2007 -0800
+@@ -5,7 +5,7 @@ static Shell *shells[] = {
+&amp;shshell
+};
+
+-Shell *shelldefault = &amp;shshell;
++Shell *shelldefault;
+
+Shell *shellt;
+Word *shellcmd;
+@@ -41,6 +41,10 @@ void
+void
+initshell(void)
+{
++       if(shelldefault == nil){
++               char* sh = getenv(&quot;MKSHELL&quot;);
++               shelldefault = sh &amp;&amp; strcmp(sh, &quot;rc&quot;) == 0? &amp;rcshell : &amp;shshell;
++       }
+shellcmd = stow(shelldefault-&gt;name);
+shellt = shelldefault;
+setvar(&quot;MKSHELL&quot;, shellcmd);
+</POST>
+<POST>
+<POSTER> pietr...@mac.com (Pietro Gagliardi) </POSTER>
+<POSTDATE> 2007-11-21T15:00:00 </POSTDATE>
+I think the thing we need to fix is that mk is ignoring an assignment
+if a system variable is already defined in the environment. However,
+this doesn't apply to normal variables:
+
+term% cat mkfile
+x=3
+default:V:
+echo $x
+term% mk
+echo 3
+3
+term% x=4 mk
+echo 3
+4
+term% ed - mkfile
+1d
+w
+q
+term% x=4 mk
+echo $x
+4
+term%
+</POST>
+<POST>
+<POSTER> r...@swtch.com (Russ Cox) </POSTER>
+<POSTDATE> 2007-11-22T10:48:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; OK, how about this?  If env. var MKSHELL is set to rc, then
+&gt; set the default value of make variable MKSHELL to rc else to
+&gt; sh.  You get exactly the same effect as now and I get what I
+&gt; want by setting MKSHELL env. var to rc.
+">
+
+No.  The fact is that some mkfiles are written with rc
+recipes and some with sh recipes.  Setting a global default
+is going to break one or the other.  It is just not that hard
+to write
+
+MKSHELL=rc
+
+if you start using complicated rc constructs.  The vast
+majority of recipes one writes in mkfiles tend to be
+valid sh and rc syntax anyway, so I would not expect
+that you'd have to put that in many mkfiles.
+
+Also, if you have lots of complicated scripts in all your
+mkfiles, maybe you are missing a chance to refactor
+the complication into a single included mkfile that
+can have MKSHELL=rc in it.  Then you've only got one.
+
+Russ
+</POST>
+<POST>
+<POSTER> bakul+pl...@bitblocks.com (Bakul Shah) </POSTER>
+<POSTDATE> 2007-11-22T12:44:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Also, if you have lots of complicated scripts in all your
+&gt; mkfiles, maybe you are missing a chance to refactor
+&gt; the complication into a single included mkfile that
+&gt; can have MKSHELL=rc in it.  Then you've only got one.
+">
+
+That was the first thing I tried -- didn't I mention that in
+my original email on this?  But setting MKSHELL in an
+included file works for only that file and then we are back
+to sh.
+
+Try this and watch it fail:
+
+echo MKSHELL=rc &gt; mkshell
+echo '
+&lt;mkshell
+all:
+for (i in a b)
+echo $i
+' &gt; mkfile
+mk
+
+I didn't consider this behavior to be a bug because the man
+page says
+
+Mkfiles included via &lt; or &lt;| (q.v.) see their own private
+copy of MKSHELL, which always starts set to sh .
+
+But if you expect the above script to work, then consider
+this email exchange a tortured bug report!
+
+Actually I don't really care what change you make.  As long
+as I can limit MKSHELL=rc to one file I am happy!
+
+Thanks for all the great software and your patience responses.
+
+Have a great tofurkey day!
+</POST>
+<POST>
+<POSTER> m...@gmx.net (Martin Neubauer) </POSTER>
+<POSTDATE> 2007-11-22T13:21:00 </POSTDATE>
+I think what Russ meant was to put all complicated stuff that uses rc syntax
+into a separate file with MKSHELL=rc on top and include that in yor mkfiles
+(cf. mkone/mkmany on Plan 9).
+
+Martin
+</POST>
+<POST>
+<POSTER> r...@swtch.com (Russ Cox) </POSTER>
+<POSTDATE> 2007-11-22T14:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; That was the first thing I tried -- didn't I mention that in
+&gt; my original email on this?  But setting MKSHELL in an
+&gt; included file works for only that file and then we are back
+&gt; to sh.
+
+&gt; Try this and watch it fail:
+
+&gt; echo MKSHELL=rc &gt; mkshell
+&gt; echo '
+&gt; &lt;mkshell
+&gt; all:
+&gt;    for (i in a b)
+&gt;            echo $i
+&gt; ' &gt; mkfile
+&gt; mk
+">
+
+That's not what I meant.  I meant that if you have
+complicated things like loops then you can put those
+recipes all in one file (that also contains MKSHELL=rc)
+and just include it.  Essentially all the Plan 9 mkfiles
+set HFILES, OFILES, TARG, and then include mkone,
+mkmany, and mksyslib.  Only those would possibly
+need to declare a MKSHELL.
+
+As another example, p9p goes farther than Plan 9 in this
+respect and has a $PLAN9/src/mkdirs that contains
+the typical loop over directories and defines not just
+&quot;all&quot; but &quot;clean&quot; and &quot;nuke&quot; and the rest.  Clients just
+define a variable and then include mkdirs:
+
+&lt;$PLAN9/src/mkhdr
+
+LIBS=common
+PROGS=smtp alias fs ned q send marshal vf
+
+# libs must be made first
+DIRS=$LIBS $PROGS
+
+&lt;$PLAN9/src/mkdirs
+
+If you were going to use rc syntax in mkdirs, then it would
+be the only file that needs to say MKSHELL=rc.
+
+Russ
+
+P. S.  I realize it's suboptimal to have to set MKSHELL in each mkfile
+that uses rc-specific features, but it's the only way that scales.
+</POST>
+<POST>
+<POSTER> bakul+pl...@bitblocks.com (Bakul Shah) </POSTER>
+<POSTDATE> 2007-11-30T13:12:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; That's not what I meant.  I meant that if you have
+&gt; complicated things like loops then you can put those
+&gt; recipes all in one file (that also contains MKSHELL=rc)
+&gt; and just include it.  Essentially all the Plan 9 mkfiles
+&gt; set HFILES, OFILES, TARG, and then include mkone,
+&gt; mkmany, and mksyslib.  Only those would possibly
+&gt; need to declare a MKSHELL.
+">
+
+Thanks for the clarification.  Yes that works for things like
+running mk in subdir etc. but will require better abstraction
+when one has code like
+
+for (a in ...)
+if (&lt;some condition&gt;)
+...
+
+<QUOTE PREVIOUSPOST="
+&gt; P. S.  I realize it's suboptimal to have to set MKSHELL in each mkfile
+&gt; that uses rc-specific features, but it's the only way that scales.
+">
+
+To me what is suboptimal is that the default shell is
+*different* on plan9 mk and p9p mk.  If ever p9p is ported to
+Windows will you make cmd.com the default shell?  It
+certainly does not have as much of a compatible subset with
+rc as /bin/sh does.  The patch I supplied keeps mk behavior
+exactly the same as now *unless* you set an env variable.
+But I suspect we won't agree on this point!
+</POST>
+<POST>
+<POSTER> r...@swtch.com (Russ Cox) </POSTER>
+<POSTDATE> 2007-11-30T14:18:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; To me what is suboptimal is that the default shell is
+&gt; *different* on plan9 mk and p9p mk.
+">
+
+Mk has run on Unix for a very long time,
+much longer than p9p has existed, and its
+default shell there has always been /bin/sh.
+On Plan 9 the default has always been /bin/rc.
+The p9p mk straddles both worlds.
+Either choice of default would have bothered
+some of mk's users.
+
+I'm sorry the one I picked bothers you.
+
+Russ
+</POST>
+</TEXT>
+</BODY>
+</DOC>

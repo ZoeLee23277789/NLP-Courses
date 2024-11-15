@@ -1,0 +1,314 @@
+<DOC>
+<DOCID> eng-NG-31-126414-7122423 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-03-03T06:37:00 </DATETIME>
+<BODY>
+<HEADLINE>
+USB stick mount
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Janice &lt;Janice.Newman...@xyz.com&gt; </POSTER>
+<POSTDATE> 2007-03-03T06:37:00 </POSTDATE>
+Hello, I have freebsd release 6.2 and gnome is my desktop.
+
+I want to use a usb stick for file transfer between boxes.
+Is this right/am I missing anything?
+
+Add user to operator group.
+
+edit /etc/devfs.rules:
+
+add --> "path 'da' mode 0600 group operator"
+
+edit /etc/sysctl.conf:
+
+add --> "vfs.usermount=1"
+
+then mkdir for the user
+
+then "mount_msdosfs -m 644 -M 755 /dev/da0s1 /users mount point dir"
+
+END
+
+Is this ok for a stick?
+
+Thanks.
+</POST>
+<POST>
+<POSTER> Torfinn Ingolfsen &lt;t...@start.no&gt; </POSTER>
+<POSTDATE> 2007-03-03T08:10:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Janice wrote:
+> Hello, I have freebsd release 6.2 and gnome is my desktop.
+
+> I want to use a usb stick for file transfer between boxes.
+> Is this right/am I missing anything?
+
+> [...snip...]
+
+> Is this ok for a stick?
+">
+
+Yes it is.
+There is one caveat; you can't be sure that the stick will show up as
+da0 every time, unless the user _never_ attaches anything else that can
+be detected as a scsi device.
+HTH
+--
+Torfinn Ingolfsen,
+Norway
+</POST>
+<POST>
+<POSTER> &quot;Max Files&quot; &lt;maxfi...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-03-03T18:04:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Janice&quot; <Janice.Newman ... @xyz.com> wrote in message
+">
+
+news:esbmkr$mso$1@news.datemas.de ...
+
+<QUOTE PREVIOUSPOST="
+> Hello, I have freebsd release 6.2 and gnome is my desktop.
+
+> I want to use a usb stick for file transfer between boxes.
+> Is this right/am I missing anything?
+
+> Add user to operator group.
+
+> edit /etc/devfs.rules:
+
+> add --> &quot;path 'da' mode 0600 group operator&quot;
+
+> edit /etc/sysctl.conf:
+
+> add --> &quot;vfs.usermount=1&quot;
+
+> then mkdir for the user
+
+> then &quot;mount_msdosfs -m 644 -M 755 /dev/da0s1 /users mount point dir&quot;
+
+> END
+
+> Is this ok for a stick?
+
+> Thanks.
+">
+
+I don't know about all the other stuff you did up there, but this is what
+worked for me on every try:
+
+mount_msdosfs -o longnames /dev/da0s1 /mnt
+</POST>
+<POST>
+<POSTER> tony broughton &lt;tonybDELETE_THIS_SPAM_BLOCKER...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-03-03T18:53:00 </POSTDATE>
+Hi Janice, here's how I've done it:-
+
+You need to su to root then do the following two commands:-
+
+1. Make a mount point directory under the /mnt directory:
+
+mkdir /mnt/usbstick
+
+You only have to do this once.
+
+2. Then add this line to the file "/etc/fstab":
+
+/dev/da0s1              /mnt/usbstick   msdos   rw,noauto       0       0
+
+Again, you only have to do this once.
+
+(That's assuming your usb stick is formatted with the msdos fat file system.
+If you create a new ufs filesystem on it using "newfs" then replace
+the "msdos" with "ufs").
+
+After running those two commands, whenever you you put your usbstick
+into the pc, just run this command as root:
+
+mount /mnt/usbstick
+
+You will then be able to cd to /mnt/usbstick and treat it as a normal
+part of the directory tree.  Before you pull the usbstick out,
+always remember to unmount it with the command:-
+
+umount /mnt/usbstick
+
+NB Never forget to unmount it before pulling it out, or the data on the
+usbstick could get corrupted.
+
+- Tony
+</POST>
+<POST>
+<POSTER> Henri Hennebert &lt;h...@restart.be&gt; </POSTER>
+<POSTDATE> 2007-03-04T06:10:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Torfinn Ingolfsen wrote:
+> Janice wrote:
+>> Hello, I have freebsd release 6.2 and gnome is my desktop.
+
+>> I want to use a usb stick for file transfer between boxes.
+>> Is this right/am I missing anything?
+
+>  > [...snip...]
+
+>> Is this ok for a stick?
+
+> Yes it is.
+> There is one caveat; you can't be sure that the stick will show up as
+> da0 every time, unless the user _never_ attaches anything else that can
+> be detected as a scsi device.
+">
+
+Yes but if you load the module `geom_label' (kldload geom_label),
+everytime you plug your msdos formated stick you get an entry in
+/dev/msdosfs that is more useful and stable.
+
+eg
+
+if I plug a "memorybird" (from Fujitsu Siemens) formated in msdos I get
+
+/dev/msdosfs/MEMORYBIRD and I can
+
+mount -t msdosfs /dev/msdosfs/MEMORYBIRD /mnt
+
+if it is sliced and formated in ufs I get:
+
+/dev/ufs/memorybird
+/dev/ufs/memorybirdc
+/dev/ufs/memorybirdd
+
+I never try with 2 sticks of the same make.
+
+Henri
+
+<QUOTE PREVIOUSPOST="
+> HTH
+">
+</POST>
+<POST>
+<POSTER> Mike Clarke &lt;UCEbl...@milibyte.co.uk&gt; </POSTER>
+<POSTDATE> 2007-03-04T07:15:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Torfinn Ingolfsen wrote:
+> There is one caveat; you can't be sure that the stick will show up as
+> da0 every time, unless the user _never_ attaches anything else that can
+> be detected as a scsi device.
+">
+
+I worked round it on my machine by writing a perl script invoked bu usbd to
+detect the stick when it's inserted and set up a link (/dev/usbstick-1)
+pointing to the relevant device. If my camera is already attached
+on /dev/da0s1 it links /dev/usbstick-1 to /dev/da1s1. All I have to do is
+mount /dev/usbstick-1 on a mount point of my choice after inserting the
+stick.
+
+Add the following to /etc/usbd.conf
+
+###########################################################
+device "USB memory stick"
+devname "umass[0-9]+"
+vendor 0x13fe
+product 0x1d00
+attach "sleep 2; /root/bin/usbstick_attach > /dev/console"
+###########################################################
+
+You'll need to change the vendor value (and perhaps product) to match your
+stick. I've tried 2 different sticks here, they both have product ID 0x1d00
+and different vendor IDs. You can get the values from usbdevs -v. You can
+add multiple device sections if you have sticks with different values.
+
+create the perl script /root/bin/usbstick (chmod 755)
+
+###########################################################
+#! /usr/bin/perl -w
+
+use strict;
+
+my $device_description = " 2.0 PMAP>";
+my $device_link = "usbstick-1";
+my $debug = 0;
+my @devices = `/sbin/camcontrol devlist`;
+my ($device, $device_path);
+
+print @devices if $debug;
+chdir "/dev";
+foreach (@devices) {
+print "Testing $_" if $debug;
+if  (/$device_description/) {
+chomp;
+($device) = /.*\((da\d+),pass\d+\)/;
+if ($device) {
+$device = "${device}s1";
+print "Device is $device\n" if $debug;
+if (-l $device_link) {
+print "Warning - /dev/$device_link already exists as a link and
+will be deleted\n" if $debug;
+die "Unable to delete /dev/$device_link" if !
+unlink "/dev/$device_link";
+print "/dev/$device_link deleted\n" if $debug;
+}
+if (chmod 0660, $device) {
+print "Permission set to 0660 on $device\n" if $debug;
+} else {
+print "Warning - unable to chmod $device\n";
+}
+print "Creating $device_link as a link to $device\n" if $debug;
+die "Unable to link $device_link to $device" if not symlink
+$device, $device_link;;
+}
+print  "Done\n" if $debug;
+last;
+}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+###########################################################
+
+You might need to change the value of $device_description to suit your
+stick(s). Changing $debug to 1 should help to identify a suitable string.
+
+The script can only handle one stick at a time but there's scope to adapt it
+to use a pool of links and link any devices not already accounted for.
+
+--
+Mike Clarke
+</POST>
+<POST>
+<POSTER> Torfinn Ingolfsen &lt;t...@start.no&gt; </POSTER>
+<POSTDATE> 2007-03-04T08:04:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Henri Hennebert wrote:
+> Yes but if you load the module `geom_label' (kldload geom_label),
+> everytime you plug your msdos formated stick you get an entry in
+> /dev/msdosfs that is more useful and stable.
+">
+
+Nice! I didn't know  about geom_label.
+There isn't a man page for it on my 6.x system, but 'man glabel'
+explains most of it.
+Very useful info. Thanks!
+--
+Torfinn Ingolfsen,
+Norway
+</POST>
+<POST>
+<POSTER> Janice &lt;Janice.Newman...@xyz.com&gt; </POSTER>
+<POSTDATE> 2007-03-05T07:00:00 </POSTDATE>
+Thanks everybody.
+</POST>
+<POST>
+<POSTER> &quot;michaelrmgr...@yahoo.co.uk&quot; &lt;michaelrmgr...@yahoo.co.uk&gt; </POSTER>
+<POSTDATE> 2007-03-11T18:32:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+> NB Never forget to unmount it before pulling it out, or the data on the
+> usbstick could get corrupted.
+">
+
+Very very sound advice. Which is why I use mtools.
+</POST>
+</TEXT>
+</BODY>
+</DOC>

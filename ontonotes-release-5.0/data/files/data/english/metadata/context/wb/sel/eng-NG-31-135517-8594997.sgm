@@ -1,0 +1,178 @@
+<DOC>
+<DOCID> eng-NG-31-135517-8594997 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-08T16:19:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Can I create an event that's like an alarm, but can be reset?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Eric Hanchrow &lt;off...@blarg.net&gt; </POSTER>
+<POSTDATE> 2007-08-08T16:19:00 </POSTDATE>
+Here's what I'd like: an event that I create just like an alarm (i.e.,
+by calling, say (define a (resettable-alarm-evt 1234))).  It acts just
+like an alarm, _except_ if, before it is ready, I call (reset-alarm!
+a), then it will now be another 1234 milliseconds before it goes off
+(assuming I don't reset it yet again).
+
+Is there some way I can create such a thing?  Or perhaps I can use an
+existing synchronizeable event, but to be blunt the docs for events
+make my eyes glaze over -- I don't understand what half of the event
+types are for.
+--
+'The energy capacity of batteries is increasing 5 percent to
+8 percent annually, but demand is increasing exponentially,'
+Mr. Cooper said.
+-- New York Times
+_________________________________________________
+For list-related administrative tasks:
+http://list.cs.brown.edu/mailman/listinfo/plt-scheme
+</POST>
+<POST>
+<POSTER> &quot;Robby Findler&quot; &lt;ro...@cs.uchicago.edu&gt; </POSTER>
+<POSTDATE> 2007-08-08T17:18:00 </POSTDATE>
+I think you can code that up with threads and channels. If you want a
+GUI event (instead of an evt) you might want to check out timer%.
+
+Robby
+
+On 8/8/07, Eric Hanchrow &lt;off ... @blarg.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Here's what I'd like: an event that I create just like an alarm (i.e.,
+&gt; by calling, say (define a (resettable-alarm-evt 1234))).  It acts just
+&gt; like an alarm, _except_ if, before it is ready, I call (reset-alarm!
+&gt; a), then it will now be another 1234 milliseconds before it goes off
+&gt; (assuming I don't reset it yet again).
+
+&gt; Is there some way I can create such a thing?  Or perhaps I can use an
+&gt; existing synchronizeable event, but to be blunt the docs for events
+&gt; make my eyes glaze over -- I don't understand what half of the event
+&gt; types are for.
+&gt; --
+&gt; 'The energy capacity of batteries is increasing 5 percent to
+&gt; 8 percent annually, but demand is increasing exponentially,'
+&gt; Mr. Cooper said.
+&gt;         -- New York Times
+&gt; _________________________________________________
+&gt;   For list-related administrative tasks:
+&gt; http://list.cs.brown.edu/mailman/listinfo/plt-scheme
+">
+
+_________________________________________________
+For list-related administrative tasks:
+http://list.cs.brown.edu/mailman/listinfo/plt-scheme
+</POST>
+<POST>
+<POSTER> &quot;Jacob Matthews&quot; &lt;jac...@cs.uchicago.edu&gt; </POSTER>
+<POSTDATE> 2007-08-08T18:19:00 </POSTDATE>
+On 8/8/07, Eric Hanchrow &lt;off ... @blarg.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Here's what I'd like: an event that I create just like an alarm (i.e.,
+&gt; by calling, say (define a (resettable-alarm-evt 1234))).  It acts just
+&gt; like an alarm, _except_ if, before it is ready, I call (reset-alarm!
+&gt; a), then it will now be another 1234 milliseconds before it goes off
+&gt; (assuming I don't reset it yet again).
+
+&gt; Is there some way I can create such a thing?
+">
+
+Yes. Here's a bare-bones implementation.
+
+;; ---
+;; make-resettable-alarm : nat -&gt; (values evt (-&gt; void))
+;; WARNING: not well-tested
+
+(define (make-resettable-alarm delta)
+(let ([internal-comm-channel (make-channel)]
+[external-evt (make-channel)])
+(begin
+(thread
+(λ ()
+(let loop ()
+(sync
+
+;; the first event is for the case where the alarm goes off
+(handle-evt (alarm-evt (+ (current-inexact-milliseconds) delta))
+(λ (_) (channel-put external-evt external-evt)))
+
+;; the second event handles the case where someone
+resets the alarm.
+;; the strategy is to listen on an internal communications channel
+;; for reset requests; if they come in then abandon the original
+;; alarm and restart the loop with a new one
+(handle-evt internal-comm-channel (λ (_) (loop))))))))
+(values
+external-evt
+(λ ()
+;; asynchronously register a reset request. If we don't do
+this asynchronously
+;; then there's a race condition: if the alarm goes off and
+then somebody
+;; tries to reset the counter then the reset attempt will
+block forever.
+(thread (λ () (channel-put internal-comm-channel #t)))))))
+
+;; example usage
+(begin
+(define the-time (current-seconds))
+(define-values (c r) (make-resettable-alarm (* 5 1000)))
+(sleep 4)
+(r)
+(sync c)
+(printf &quot;done! elapsed time: ~a seconds\n&quot; (- (current-seconds) the-time)))
+
+;; after 9 seconds, prints: done! elapsed time: 9 seconds
+
+;; ---
+make-resettable-alarm consumes a timeout (some number of milliseconds)
+and produces two values: an event that becomes enabled when the
+timeout is passed (barring resets) and a function that you call to
+reset the timer. When you call (make-resettable-alarm delta), it
+spawns a new thread that syncs on two separate events: an alarm event
+set to go off delta milliseconds in the future, and the event of
+something being put onto an internal channel called
+internal-comm-channel. If the alarm event goes off, we're done: enable
+the external-evt channel, which the rest of the world will interpret
+as meaning that the alarm has gone off. On the other hand, if the
+internal-comm-channel event goes off, it means somebody wants to reset
+us; we implement that just by trying the same thing again. Now the
+alarm event is just external-evt, and resetting is just putting any
+old value (I chose #t arbitrarily) on the internal-comm-channel.
+
+CML-style primitives (sync, channels, etc) are very good for building
+up new concurrency abstractions. Generally speaking you can use them
+to build just about any kind of concurrency widget you want, and in my
+experience the implementation often looks pretty much like what I've
+got above: a main loop that does some task in its own thread, and
+other accessors that use channels to communicate that main loop.
+
+-jacob
+
+_________________________________________________
+For list-related administrative tasks:
+http://list.cs.brown.edu/mailman/listinfo/plt-scheme
+</POST>
+<POST>
+<POSTER> Eric Hanchrow &lt;off...@blarg.net&gt; </POSTER>
+<POSTDATE> 2007-08-09T12:06:00 </POSTDATE>
+Yikes!  Thanks for doing my homework for me :-)
+
+Seriously, thanks; I've already written my own thing which I'm happy
+with, and which I'll show anyone who's interested.  (It looks like you
+and I approached it pretty much the same way, although I'd describe
+mine as &quot;simpler but cruder&quot;).
+--
+There is such a thing as American-ness.  ... [H]ackers ... come
+closest of any group I know to embodying it.  Closer, probably, than
+the men running our government.
+-- Paul Graham
+_________________________________________________
+For list-related administrative tasks:
+http://list.cs.brown.edu/mailman/listinfo/plt-scheme
+</POST>
+</TEXT>
+</BODY>
+</DOC>

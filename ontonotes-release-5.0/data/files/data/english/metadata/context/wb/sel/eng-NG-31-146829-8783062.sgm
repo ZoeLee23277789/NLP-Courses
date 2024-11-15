@@ -1,0 +1,353 @@
+<DOC>
+<DOCID> eng-NG-31-146829-8783062 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-29T13:48:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Lions and Tigers and Menus, Oh-My
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Jeff &lt;jw.gro...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-29T13:48:00 </POSTDATE>
+I like that you can define menus for a form, but is there any way to
+get the top menus to behave like they do in the forms designer, i.e.
+as a PROCESS.EVENTSOURCE for the current active form?
+
+The reason I ask is because I'd like to use the left panel for
+navigation and the top menu like a typical expanding/collapsing
+command bar like you see in Windows Apps:
+
+File | Tools | Help
+-------
+New
+Save
+Save As
+
+or
+
+File | Tools | Help
+-------
+About
+
+I just can't get my head around how to make this happen with the
+current design.
+
+Any ideas? Am I missing something obvious?
+
+Regards,
+Jeff
+</POST>
+<POST>
+<POSTER> Jeff &lt;jw.gro...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-30T13:07:00 </POSTDATE>
+Well, I'm closer. I figured out how to hack a properly layered
+embedded frame into the form so that it expands over the form's
+contents (see screenshot embedded_menu.jpg in the forum's files) . If
+I stick with this I can just hide the top frame.
+
+Next step: replace the embedded menu with my own CSS-based frame and
+have it get its items (probably in JSON) from a hidden field on the
+parent form.
+
+JW
+</POST>
+<POST>
+<POSTER> &quot;Tony G&quot; &lt;1f6xum...@sneakemail.com&gt; </POSTER>
+<POSTDATE> 2007-09-30T21:54:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jeff W wrote:
+&gt; I like that you can define menus for a form, but is there any way to
+&gt; get the top menus to behave like they do in the forms designer, i.e.
+&gt; as a PROCESS.EVENTSOURCE for the current active form?
+">
+
+Interesting question!
+
+Unless DBI says otherwise I think they're cheating when they do this.  :)
+I took a look at the XML in the DBIXMLLOG and then I used a binary editor
+to peek into the BAWEBEXEC object code.  (David M is probably cringing at
+this - LOL)
+
+It seems DBI has created some of their menus by hardcoding XML into their
+code and passing it into the stream of components that need to get rendered
+by the HTML generation engine.  When we click a menu item it fires a custom
+event back to BAWEBEXEC, which is neither a request for a form nor a menu.
+They take the ID of the menu item clicked, and look down a CASE structure
+to see which function needs to be invoked.  The event which is fired for a
+menu click is not exposed to us poor folk who write apps with DesignBais.
+:)
+
+I tried to modify standard menus in various ways to execute a subroutine
+rather than load a form, but I was unsucessful.  In all cases DB seems to
+generate an IERR.TEXT with a message that the specified form can't be
+loaded.  If we do insert some bogus form name I don't know of a way to get
+the form load process to cancel.
+
+The idea here is that we request a form that has no components, a Before
+Screen or Get Screen event loads a DBStore value with something we can use
+and then the request for the new form is &quot;somehow&quot; cancelled, thus
+preventing the screen refresh, and making it look like the menu click is
+intended for the current form.  I don't think this can be done in v4.1.4.
+First, to cancel the event, I think we can use IERR.TEXT, but that might
+cause a dialog to display for the user, which is not good.  Second, I think
+the form will refresh no matter what, maybe to a blank form if IERR.TEXT is
+set.
+
+Side note: I made a request a while back to allow us to cancel an event or
+flag the failure of a Validation using IERR.TEXT - without that variable
+being used for the dual purpose of popping up a dialog for the user.  To
+advise a user that something is wrong I might prefer to bold the text input
+box, display a red label next to the input box, or use some other mechanism
+that doesn't require the user to grab the mouse if they typed in something
+invalid.  I don't know if we'll get that in v4.2 but I don't think so.
+
+As a solution to the problem Jeff describes, I suspect it wouldn't take
+much to get DBI to document a standard menu-click event such as the one
+that they use, and rather than handling _all_ of these events themselves
+they can set PROCESS.EVENT and PROCESS.EVENTSOURCE and pass the event out
+to us like all of the others.  Now that v4.2 is approaching final
+development though, again I don't think we'll get this for a while if at
+all.
+
+HTH
+
+Tony Gravagno
+Nebula Research and Development
+Worldwide sales and development services for
+DesignBais and other developer tools
+TG@ removethisNebula-RnD.com
+http:// removethispleaseNebula-RnD.com/products
+</POST>
+<POST>
+<POSTER> Jeff &lt;jw.gro...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-30T23:38:00 </POSTDATE>
+Hi Tony,
+
+Thanks for this very thorough answer. I'm glad to see somebody else
+out there digging. I was looking at the BAWEBEXEC binary myself
+yesterday and I came to the same conclusion. But it's just a browser
+app, so I will make this happen come hell or high water. In spite of
+the Deep Blue victories I have a rule: Never Let the Computer Win.
+
+So I keep falling back on the notion of indirection, especially since
+that seems to be our lot in life. I was hoping I might be able to do
+something without resorting to client-side scripting but it looks like
+I'm probably stuck with that too. These devious script injection
+techniques have made me realize just how dangerous it is to surf the
+internet these days.  ;)
+
+JW
+</POST>
+<POST>
+<POSTER> &quot;Tony G&quot; &lt;1f6xum...@sneakemail.com&gt; </POSTER>
+<POSTDATE> 2007-10-01T00:31:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jeff W wrote:
+&gt;... so I will make this happen come hell or high water. In spite of
+&gt; the Deep Blue victories I have a rule: Never Let the Computer Win.
+">
+
+Being a geek I obviously get excited about breaking the barriers of the
+tools we have.  However, my &quot;geek bit&quot; temporarily got toggled off with
+references to JSON, script injection, and the determination expressed
+above.
+
+I encourage you keep in mind the intended audience for both DesignBais
+developers and end-users.
+- DesignBais was created to allow developers to do great things with very
+little fuss - the kind of stuff you and I live on.
+- DesignBais was created to allow these developers to get to market quickly
+with a new front-end for their application.
+- The target audience requires a business-professional interface that's
+attractive and certainly more than a glorified green screen, but it must be
+fast, easy to use, and not too complicated.
+- The ultimate goal here is to allow these business software companies to
+quickly make lots of money by selling software and services to new and
+existing clients.
+
+If we spend too much time hacking into this tool, or too much time making
+screens that have lots of popups and pulldowns and click-this and
+hide-that, we will almost certainly miss some of these objectives.  The
+code may become unmaintainable for &quot;the next&quot; developer, and the product
+may not get to market as fast as it should.
+
+As you continue to look into getting the most from this great product,
+please ensure that your efforts are guided by the primary goals.  Will your
+enhancements help your company to accomplish our common goals of:
+
+- selling quality software
+- quickly
+- to more new sites
+- with a minimal amount of development effort
+
+If your company continues to sell the software, and you can add features
+which truly add value, and you can do this relatively quickly, and you are
+not creating a maintenance problem for later ... then go for it dude.  If
+there is any doubt about whether your efforts conflict with one or more of
+the stated goals, please check with your manager and make sure your goals
+coincide with company goals.  :)
+
+HTH
+T
+
+Yes, a geek, but also a business owner.
+</POST>
+<POST>
+<POSTER> Jeff &lt;jw.gro...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-01T02:16:00 </POSTDATE>
+Tony,
+
+Where to start? The &quot;dude&quot; reference? No, that's ok... dude (what are
+we now, twelve?). The assumption that I need to be reminded to focus
+on quality, timeliness, reach, maintainability, etc.? Maybe later. The
+assumption that my determination might be in spite of business goals?
+I think that comes now.
+
+Did you notice the hours I typically post on this site? I work in the
+eastern time zone of North America. I tend to &quot;hack&quot; DesignBais on
+evenings and weekends. My extra-curricular research on DesignBais is
+certainly not for direct remuneration but neither is it for indirect
+financial gain. Can you say the same?
+
+So why do I bother at all? I believe that people buy software they
+love to use and then they tell people about it. I want to help produce
+that kind of software. I want do do that because I think that will
+make my employers some money and of course by extention, I might
+eventually make some too.
+
+Another reason I do after hours work is because when life throws me
+lemons I try like hell to make lemonade. And I post about it here
+because I figure others might appreciate the desire rise above their
+frustrations and ask, &quot;I know it's not designed to do this, but is it
+possible?&quot;
+
+You have seen my post on the tab dialog, so you know I'm willing to
+share my ideas. That solution took far too long to achieve, and I had
+to go down a lot of blind alleys to achieve it. This time I thought I
+might make public notes along the way in case people might shorten he
+research or else benefit from the thinking process. Isn't this what
+discussion forums are for?
+
+I appreciate the spirit of the lecture, Tony, but ask anybody who has
+worked with or for me and you'll find that on most points you're
+preaching to the choir.
+
+Regards,
+Jeff
+
+P.S. has anybody got an answer to Jay's question about testing? If
+we're encouraging people to get to market quickly, we probably want to
+foster a fully testable and refactorable product.
+</POST>
+<POST>
+<POSTER> &quot;Tony G&quot; &lt;1f6xum...@sneakemail.com&gt; </POSTER>
+<POSTDATE> 2007-10-01T03:50:00 </POSTDATE>
+Sigh, Jeff, I'm sorry.  Of course something that one person writes will
+prompt my response but I try to frame my responses to be more inclusive of
+the sheer number of people who subscribe to these forums.  My notes are
+frequently not intended toward one person but for a general audience.  The
+less focused the message the more someone will think all points relate to
+them.  In this medium it's difficult for people to read these subtleties,
+and being human I occasionally don't do a good job of making all of my
+intents clear.  Again, sorry.
+
+My comments were for anyone who goes down this path, to clarify how this
+extra curricular activity fits into the big picure.  I know DesignBais
+developers who sometimes lose sight of the forest because they're focusing
+on trees - even without hacking the default environment.  If you &quot;get it&quot;
+(and you obviously do, Jeff), great, please let it roll off.  If these
+notes cause others to re-think their development approach, then I've
+annoyed some but helped others.  I shoot for the numbers - if I lose once
+in a while and other people win, I'm still happy.
+
+Of course I appreciate your after-hour efforts, as I hope some people
+appreciate and have benefit from mine.  I'm tickled to know that someone
+else out there is having fun poking into this product like I do.
+(Seriously, how many people take a binary editor to object code?)  And I
+hope more people join us as this product grows in popularity.
+(I can just hear David McLean groaning... ;)  )
+
+No, no one pays me for my blog, my forum comments, or for poking into this
+or any other product.  (Though I'm sure some people would pay me to stop
+doing all of these things.)  My &quot;pay off&quot; comes when I'm teaching a DB
+class, someone asks me how to do something, and I know exactly what they
+can and should do (and I've been reminded recently that I should take more
+time to advise people on what they should Not do).  My pay off comes when I
+can write code to generate a massive DB environment in a minute and save my
+client a month of development time.  And when someone wants to add special
+value to their nice new DB front-end, my pay off is when they remember that
+I and others associated with my company have the knowledge to do it.  I
+tend to invest in the future, but until then I'm pretty much in the same
+boat as you.
+
+And once in a while I try to break up these dry discussions with just a
+little bit of levity, and I can only hope most people will appreciate my
+brand of humour... dude... ;)
+
+Looking forward to more technical discussions, eh?
+My best,
+T
+
+<QUOTE PREVIOUSPOST="
+Jeff wrote:
+&gt; Tony,
+
+&gt; Where to start? The &quot;dude&quot; reference? No, that's ok... dude (what are
+&gt; we now, twelve?). The assumption that I need to be reminded to focus
+&gt; on quality, timeliness, reach, maintainability, etc.? Maybe later. The
+&gt; assumption that my determination might be in spite of business goals?
+&gt; I think that comes now.
+
+&gt; Did you notice the hours I typically post on this site? I work in the
+&gt; eastern time zone of North America. I tend to &quot;hack&quot; DesignBais on
+&gt; evenings and weekends. My extra-curricular research on DesignBais is
+&gt; certainly not for direct remuneration but neither is it for indirect
+&gt; financial gain. Can you say the same?
+
+&gt; So why do I bother at all? I believe that people buy software they
+&gt; love to use and then they tell people about it. I want to help produce
+&gt; that kind of software. I want do do that because I think that will
+&gt; make my employers some money and of course by extention, I might
+&gt; eventually make some too.
+
+&gt; Another reason I do after hours work is because when life throws me
+&gt; lemons I try like hell to make lemonade. And I post about it here
+&gt; because I figure others might appreciate the desire rise above their
+&gt; frustrations and ask, &quot;I know it's not designed to do this, but is it
+&gt; possible?&quot;
+
+&gt; You have seen my post on the tab dialog, so you know I'm willing to
+&gt; share my ideas. That solution took far too long to achieve, and I had
+&gt; to go down a lot of blind alleys to achieve it. This time I thought I
+&gt; might make public notes along the way in case people might shorten he
+&gt; research or else benefit from the thinking process. Isn't this what
+&gt; discussion forums are for?
+
+&gt; I appreciate the spirit of the lecture, Tony, but ask anybody who has
+&gt; worked with or for me and you'll find that on most points you're
+&gt; preaching to the choir.
+
+&gt; Regards,
+&gt; Jeff
+
+&gt; P.S. has anybody got an answer to Jay's question about testing? If
+&gt; we're encouraging people to get to market quickly, we probably want to
+&gt; foster a fully testable and refactorable product.
+">
+</POST>
+<POST>
+<POSTER> Jeff &lt;jw.gro...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-01T08:17:00 </POSTDATE>
+Thanks, Tony.
+
+Apology gratefully accepted. Definitely looking forward to more...
+dude.
+
+Keep up the good work.
+
+JW
+</POST>
+</TEXT>
+</BODY>
+</DOC>

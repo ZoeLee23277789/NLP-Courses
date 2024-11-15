@@ -1,0 +1,371 @@
+<DOC>
+<DOCID> eng-NG-31-146828-7895304 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-07-31T14:27:00 </DATETIME>
+<BODY>
+<HEADLINE>
+REMOTE_USER change
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Stephen A. Cochran Lists&quot; &lt;stephen.a.cochran.li...@cahir.net&gt; </POSTER>
+<POSTDATE> 2007-07-31T14:27:00 </POSTDATE>
+I'm looking to modify the default trac install to pull a different
+ENV variable from Apache instead of REMOTE_USER. Trac is installed
+and running under mod_python.
+
+I've found the auth routines in web/auth.py as well as the lines
+setting stuff in modpython_frontend.py. I haven't found exactly where
+the REMOTE_USER is accessed. I admit to not being an expect with
+Python, so I might be missing something that happens in mod_python
+automatically.
+
+Thanks,
+Steve Cochran
+</POST>
+<POST>
+<POSTER> Noah Kantrowitz &lt;kan...@rpi.edu&gt; </POSTER>
+<POSTDATE> 2007-07-31T14:43:00 </POSTDATE>
+What exactly is your goal?
+
+--Noah
+
+On Jul 31, 2007, at 2:27 PM, Stephen A. Cochran Lists wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I'm looking to modify the default trac install to pull a different
+&gt; ENV variable from Apache instead of REMOTE_USER. Trac is installed
+&gt; and running under mod_python.
+
+&gt; I've found the auth routines in web/auth.py as well as the lines
+&gt; setting stuff in modpython_frontend.py. I haven't found exactly where
+&gt; the REMOTE_USER is accessed. I admit to not being an expect with
+&gt; Python, so I might be missing something that happens in mod_python
+&gt; automatically.
+
+&gt; Thanks,
+&gt; Steve Cochran
+">
+</POST>
+<POST>
+<POSTER> &quot;Stephen A. Cochran Lists&quot; &lt;stephen.a.cochran.li...@cahir.net&gt; </POSTER>
+<POSTDATE> 2007-07-31T14:49:00 </POSTDATE>
+On Jul 31, 2007, at 2:43 PM, Noah Kantrowitz wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; What exactly is your goal?
+">
+
+I'm simply looking to pull the user name from the
+REMOTE_USER_FULLNAME env variable, which is being set by a custom
+apache module we use.
+
+So I'm hoping to substitute that var for REMOTE_USER.
+
+Steve
+</POST>
+<POST>
+<POSTER> Noah Kantrowitz &lt;kan...@rpi.edu&gt; </POSTER>
+<POSTDATE> 2007-07-31T14:54:00 </POSTDATE>
+On Jul 31, 2007, at 2:49 PM, Stephen A. Cochran Lists wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jul 31, 2007, at 2:43 PM, Noah Kantrowitz wrote:
+
+&gt;&gt; What exactly is your goal?
+
+&gt; I'm simply looking to pull the user name from the
+&gt; REMOTE_USER_FULLNAME env variable, which is being set by a custom
+&gt; apache module we use.
+
+&gt; So I'm hoping to substitute that var for REMOTE_USER.
+
+&gt; Steve
+">
+</POST>
+<POST>
+<POSTER> Noah Kantrowitz &lt;kan...@rpi.edu&gt; </POSTER>
+<POSTDATE> 2007-07-31T15:00:00 </POSTDATE>
+The easiest way will be to make a plugin that has a new
+IAuthenticator. Specifically you want to inherit from
+trac.web.auth.LoginModule and override _do_login. s/req.remote_user/
+req.environ['REMOTE_USER_FULLNAME'].
+
+--Noah
+
+On Jul 31, 2007, at 2:49 PM, Stephen A. Cochran Lists wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jul 31, 2007, at 2:43 PM, Noah Kantrowitz wrote:
+
+&gt;&gt; What exactly is your goal?
+
+&gt; I'm simply looking to pull the user name from the
+&gt; REMOTE_USER_FULLNAME env variable, which is being set by a custom
+&gt; apache module we use.
+
+&gt; So I'm hoping to substitute that var for REMOTE_USER.
+
+&gt; Steve
+">
+</POST>
+<POST>
+<POSTER> &quot;Stephen A. Cochran Lists&quot; &lt;stephen.a.cochran.li...@cahir.net&gt; </POSTER>
+<POSTDATE> 2007-07-31T15:18:00 </POSTDATE>
+On Jul 31, 2007, at 3:00 PM, Noah Kantrowitz wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; The easiest way will be to make a plugin that has a new
+&gt; IAuthenticator. Specifically you want to inherit from
+&gt; trac.web.auth.LoginModule and override _do_login. s/req.remote_user/
+&gt; req.environ['REMOTE_USER_FULLNAME'].
+
+&gt; --Noah
+">
+
+So I tried something similar, I'm simply modifying web/auth.py in
+_do_login. I tried your change:
+
+req.environ['REMOTE_USER_FULLNAME']
+
+but I'm getting a &quot;'ModPythonRequest' object has no attribute
+'environ'&quot; error.
+
+I also wasn't sure if req.remote_user was a standard Python thing or
+if that was being set somewhere else like in modpython_frontend.py.
+
+Steve Cochran
+Dartmouth College
+</POST>
+<POST>
+<POSTER> Graham Dumpleton &lt;Graham.Dumple...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-31T18:42:00 </POSTDATE>
+On Aug 1, 5:18 am, &quot;Stephen A. Cochran Lists&quot;
+
+<QUOTE PREVIOUSPOST="
+&lt;stephen.a.cochran.li ... @cahir.net&gt; wrote:
+&gt; On Jul 31, 2007, at 3:00 PM, Noah Kantrowitz wrote:
+
+&gt; &gt; The easiest way will be to make a plugin that has a new
+&gt; &gt; IAuthenticator. Specifically you want to inherit from
+&gt; &gt; trac.web.auth.LoginModule and override _do_login. s/req.remote_user/
+&gt; &gt; req.environ['REMOTE_USER_FULLNAME'].
+
+&gt; &gt; --Noah
+
+&gt; So I tried something similar, I'm simply modifying web/auth.py in
+&gt; _do_login. I tried your change:
+
+&gt; req.environ['REMOTE_USER_FULLNAME']
+">
+
+Should be:
+
+req.subprocess_env['REMOTE_USER_FULLNAME']
+
+if it is passed as equivalent of SetEnv directive, or:
+
+req.notes['REMOTE_USER_FULLNAME']
+
+if other modules is using notes table for request.
+
+<QUOTE PREVIOUSPOST="
+&gt; but I'm getting a &quot;'ModPythonRequest' object has no attribute
+&gt; 'environ'&quot; error.
+
+&gt; I also wasn't sure if req.remote_user was a standard Python thing or
+&gt; if that was being set somewhere else like in modpython_frontend.py.
+">
+
+The user as determined by standard authentication modules is stored in
+req.user.
+
+Note that the standard way that Apache authentication modules are
+supposed to work is that they set req.user to the authenticated user
+id. This is also turned into REMOTE_USER variable in
+req.subprocess_env when req.add_common_vars() is called. If
+add_common_vars() isn't being called by a mod_python handler you will
+thus not have access to REMOTE_USER and would have to use req.user.
+
+FWIW, you seem to deliberately doing things to break how Apache
+normally works. Why can't your other module simply set req.user in the
+correct manner to what you want rather than using the request
+environment variables. If the module is a C module it is the 'user'
+attribute of request_rec structure. If you need whether this is done
+to be selectable then add a directive to enable passing full name in
+req.user. Do note though that your full names better be unique
+otherwise you might have issues in Trac.
+
+Perhaps provide more explanation of the reasons for wanting to so
+this, rather than simply what you want to achieve. It may be the case
+that you shouldn't be changing Trac but that the other module should
+be changed to do things in a more customisable way inline with how
+Apache should be used.
+
+Graham
+</POST>
+<POST>
+<POSTER> &quot;Stephen A. Cochran Lists&quot; &lt;stephen.a.cochran.li...@cahir.net&gt; </POSTER>
+<POSTDATE> 2007-07-31T21:39:00 </POSTDATE>
+On Jul 31, 2007, at 6:42 PM, Graham Dumpleton wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Note that the standard way that Apache authentication modules are
+&gt; supposed to work is that they set req.user to the authenticated user
+&gt; id. This is also turned into REMOTE_USER variable in
+&gt; req.subprocess_env when req.add_common_vars() is called. If
+&gt; add_common_vars() isn't being called by a mod_python handler you will
+&gt; thus not have access to REMOTE_USER and would have to use req.user.
+
+&gt; FWIW, you seem to deliberately doing things to break how Apache
+&gt; normally works. Why can't your other module simply set req.user in the
+&gt; correct manner to what you want rather than using the request
+&gt; environment variables. If the module is a C module it is the 'user'
+&gt; attribute of request_rec structure. If you need whether this is done
+&gt; to be selectable then add a directive to enable passing full name in
+&gt; req.user. Do note though that your full names better be unique
+&gt; otherwise you might have issues in Trac.
+
+&gt; Perhaps provide more explanation of the reasons for wanting to so
+&gt; this, rather than simply what you want to achieve. It may be the case
+&gt; that you shouldn't be changing Trac but that the other module should
+&gt; be changed to do things in a more customisable way inline with how
+&gt; Apache should be used.
+">
+
+Actually our module is setting REMOTE_USER correctly, but to provide
+backwards compatibility the name being put into that field is missing
+some important information. Our web authentication system was
+recently upgraded to support multiple realms of users, for example
+alumni, pre-admission students, and general community members.
+
+To differentiate between users in different realms, the username is
+concatenated with '@REALM'. So for example my username would be
+
+Stephen A. Coch ... @DARTMOUTH.EDU
+
+whereas my old username would have just been
+
+Stephen A. Cochran
+
+To prevent breaking all the old applications that were already
+looking at REMOTE_USER and didn't know anything about the realm, I
+wrote the apache module (written in c) to put the old version in
+REMOTE_USER, and added a new ENV variable called REMOTE_USER_FULLNAME
+with the new form. Users can simply use an htaccess directive to
+limit access to a certain realm to prevent problems with the new
+realms. That way applications can be upgraded at their own pace.
+
+Steve Cochran
+</POST>
+<POST>
+<POSTER> Graham Dumpleton &lt;Graham.Dumple...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-31T21:53:00 </POSTDATE>
+On Aug 1, 11:39 am, &quot;Stephen A. Cochran Lists&quot;
+
+<QUOTE PREVIOUSPOST="
+&lt;stephen.a.cochran.li ... @cahir.net&gt; wrote:
+&gt; On Jul 31, 2007, at 6:42 PM, Graham Dumpleton wrote:
+
+&gt; &gt; Note that the standard way that Apache authentication modules are
+&gt; &gt; supposed to work is that they set req.user to the authenticated user
+&gt; &gt; id. This is also turned into REMOTE_USER variable in
+&gt; &gt; req.subprocess_env when req.add_common_vars() is called. If
+&gt; &gt; add_common_vars() isn't being called by a mod_python handler you will
+&gt; &gt; thus not have access to REMOTE_USER and would have to use req.user.
+
+&gt; &gt; FWIW, you seem to deliberately doing things to break how Apache
+&gt; &gt; normally works. Why can't your other module simply set req.user in the
+&gt; &gt; correct manner to what you want rather than using the request
+&gt; &gt; environment variables. If the module is a C module it is the 'user'
+&gt; &gt; attribute of request_rec structure. If you need whether this is done
+&gt; &gt; to be selectable then add a directive to enable passing full name in
+&gt; &gt; req.user. Do note though that your full names better be unique
+&gt; &gt; otherwise you might have issues in Trac.
+
+&gt; &gt; Perhaps provide more explanation of the reasons for wanting to so
+&gt; &gt; this, rather than simply what you want to achieve. It may be the case
+&gt; &gt; that you shouldn't be changing Trac but that the other module should
+&gt; &gt; be changed to do things in a more customisable way inline with how
+&gt; &gt; Apache should be used.
+
+&gt; Actually our module is setting REMOTE_USER correctly, but to provide
+&gt; backwards compatibility the name being put into that field is missing
+&gt; some important information. Our web authentication system was
+&gt; recently upgraded to support multiple realms of users, for example
+&gt; alumni, pre-admission students, and general community members.
+
+&gt; To differentiate between users in different realms, the username is
+&gt; concatenated with '@REALM'. So for example my username would be
+
+&gt; Stephen A. Coch ... @DARTMOUTH.EDU
+
+&gt; whereas my old username would have just been
+
+&gt; Stephen A. Cochran
+
+&gt; To prevent breaking all the old applications that were already
+&gt; looking at REMOTE_USER and didn't know anything about the realm, I
+&gt; wrote the apache module (written in c) to put the old version in
+&gt; REMOTE_USER, and added a new ENV variable called REMOTE_USER_FULLNAME
+&gt; with the new form.
+">
+
+As I mentioned briefly in my comments, would you be able to implement
+a directive for your module which can be set to enable/disable
+req.user being set to the full name with realm.
+
+Presuming that Trac user database has full name with realm in it, you
+could then say:
+
+&lt;Location /trac&gt;
+StuffFullNameInUser On
+&lt;/Location&gt;
+
+Ie., turn on passing of full name just for URL Trac is under.
+
+This will allow you to selectively pass through the extra information
+to applications as user databases are updated.
+
+Not sure I have got this round the right way, so I hope you understand
+what I am talking about. Or am I missing something.
+
+Graham
+</POST>
+<POST>
+<POSTER> &quot;Stephen A. Cochran Lists&quot; &lt;stephen.a.cochran.li...@cahir.net&gt; </POSTER>
+<POSTDATE> 2007-07-31T21:56:00 </POSTDATE>
+On Jul 31, 2007, at 9:53 PM, Graham Dumpleton wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; As I mentioned briefly in my comments, would you be able to implement
+&gt; a directive for your module which can be set to enable/disable
+&gt; req.user being set to the full name with realm.
+
+&gt; Presuming that Trac user database has full name with realm in it, you
+&gt; could then say:
+
+&gt;   &lt;Location /trac&gt;
+&gt;   StuffFullNameInUser On
+&gt;   &lt;/Location&gt;
+
+&gt; Ie., turn on passing of full name just for URL Trac is under.
+
+&gt; This will allow you to selectively pass through the extra information
+&gt; to applications as user databases are updated.
+
+&gt; Not sure I have got this round the right way, so I hope you understand
+&gt; what I am talking about. Or am I missing something.
+">
+
+Yep, I think I understand. Basically adding the option to the apache
+module to set REMOTE_USER to the username@realm form via directive.
+It's not a bad feature to add to the module, I just thought it would
+be easier to change the spot in trac that was pulling the REMOTE_USER
+param, I just couldn't find it or figure out the new form.
+
+Steve
+</POST>
+</TEXT>
+</BODY>
+</DOC>

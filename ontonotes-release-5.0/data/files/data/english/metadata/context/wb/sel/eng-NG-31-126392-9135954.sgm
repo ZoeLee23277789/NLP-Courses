@@ -1,0 +1,1783 @@
+<DOC>
+<DOCID> eng-NG-31-126392-9135954 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-11-16T12:04:00 </DATETIME>
+<BODY>
+<HEADLINE>
+why the usage of gets() is dangerous.
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> jayapal &lt;jayapal...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-16T12:04:00 </POSTDATE>
+Hi all,
+
+Whenever I use the gets() function, the gnu c compiler gives a
+warning that it is dangerous to use gets(). why...?
+
+regards,
+jayapal.
+</POST>
+<POST>
+<POSTER> John Gordon &lt;gor...@panix.com&gt; </POSTER>
+<POSTDATE> 2007-11-16T12:10:00 </POSTDATE>
+In &lt;2f9b7c42-2b21-4bfa-9dbc-4b2981a9e ... @n20g2000hsh.googlegroups.com&gt; jayapal &lt;jayapal ... @gmail.com&gt; writes:
+
+<QUOTE PREVIOUSPOST="
+&gt; Whenever I use the gets() function, the gnu c compiler gives a
+&gt; warning that it is dangerous to use gets(). why...?
+">
+
+gets() does not allow you limit the amount of input, which means it
+can potentially overflow the buffer into which the input is placed.
+
+--
+John Gordon                   A is for Amy, who fell down the stairs
+gor ... @panix.com              B is for Basil, assaulted by bears
+-- Edward Gorey, &quot;The Gashlycrumb Tinies&quot;
+</POST>
+<POST>
+<POSTER> jayapal &lt;jayapal...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-16T12:18:00 </POSTDATE>
+On Nov 16, 10:10 pm, John Gordon &lt;gor ... @panix.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; gets() does not allow you limit the amount of input, which means it
+&gt; can potentially overflow the buffer into which the input is placed.
+">
+
+Can u explain the differences b/w the scanf() and gets() ..?
+
+Thanks,
+Jayapal
+</POST>
+<POST>
+<POSTER> Ben Bacarisse &lt;ben.use...@bsb.me.uk&gt; </POSTER>
+<POSTDATE> 2007-11-16T13:15:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+jayapal &lt;jayapal ... @gmail.com&gt; writes:
+&gt; On Nov 16, 10:10 pm, John Gordon &lt;gor ... @panix.com&gt; wrote:
+
+&gt;&gt; gets() does not allow you limit the amount of input, which means it
+&gt;&gt; can potentially overflow the buffer into which the input is placed.
+
+&gt; Can u explain the differences b/w the scanf() and gets() ..?
+">
+
+Presumably you mean for string input?  Using 'scanf(&quot;%[^\n]&quot;, buf)'
+has the same problem as 'gets'.  But scanf can be saved (just about)
+since it permits a bounded input operation:
+
+char buf[100];
+...
+if (scanf(&quot;%99[^\n]&quot;, buf) == 1) ...
+
+--
+Ben.
+</POST>
+<POST>
+<POSTER> jacob navia &lt;ja...@nospam.com&gt; </POSTER>
+<POSTDATE> 2007-11-16T13:41:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+jayapal wrote:
+&gt; Hi all,
+
+&gt; Whenever I use the gets() function, the gnu c compiler gives a
+&gt; warning that it is dangerous to use gets(). why...?
+
+&gt; regards,
+&gt; jayapal.
+">
+
+That function is deprecated and will disappear shortly.
+Its usage is not recommended because there is no way to
+limit the input that it will receive, and it can overflow
+the input buffer.
+
+--
+jacob navia
+jacob at jacob point remcomp point fr
+logiciels/informatique
+http://www.cs.virginia.edu/~lcc-win32
+</POST>
+<POST>
+<POSTER> CJ &lt;nos...@nospam.com&gt; </POSTER>
+<POSTDATE> 2007-11-16T13:49:00 </POSTDATE>
+On 16 Nov 2007 at 18:41, jacob navia wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; jayapal wrote:
+&gt;&gt; Hi all,
+
+&gt;&gt; Whenever I use the gets() function, the gnu c compiler gives a
+&gt;&gt; warning that it is dangerous to use gets(). why...?
+
+&gt;&gt; regards,
+&gt;&gt; jayapal.
+
+&gt; That function is deprecated and will disappear shortly.
+&gt; Its usage is not recommended because there is no way to
+&gt; limit the input that it will receive, and it can overflow
+&gt; the input buffer.
+">
+
+This sort of absolute prohibition on gets() is completely wrong-headed.
+It's completely fine to use gets(), as long as you use it properly. To
+use it properly, *you* need to be in control of the data that gets()
+reads. For throwaway utility routines this will often be the case, and
+there's no problem using gets() in this case.
+</POST>
+<POST>
+<POSTER> dj3va...@csclub.uwaterloo.ca.invalid </POSTER>
+<POSTDATE> 2007-11-16T13:57:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+In article &lt;slrnfjrpid.htg.nos ... @nospam.com&gt;, CJ  &lt;nos ... @nospam.com&gt; wrote:
+&gt;This sort of absolute prohibition on gets() is completely wrong-headed.
+&gt;It's completely fine to use gets(), as long as you use it properly. To
+&gt;use it properly, *you* need to be in control of the data that gets()
+&gt;reads. For throwaway utility routines this will often be the case, and
+&gt;there's no problem using gets() in this case.
+">
+
+Except that throwaway code has an annoying habit of not getting thrown
+away.  If you make a habit of using gets in your throwaway code, sooner
+or later it WILL escape into the wild, and once that happens it's only
+a matter of time before it becomes an exploitable bug.
+
+dave
+</POST>
+<POST>
+<POSTER> Flash Gordon &lt;s...@flash-gordon.me.uk&gt; </POSTER>
+<POSTDATE> 2007-11-16T13:45:00 </POSTDATE>
+jayapal wrote, On 16/11/07 17:18:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Nov 16, 10:10 pm, John Gordon &lt;gor ... @panix.com&gt; wrote:
+
+&gt;&gt; gets() does not allow you limit the amount of input, which means it
+&gt;&gt; can potentially overflow the buffer into which the input is placed.
+
+&gt; Can u explain the differences b/w the scanf() and gets() ..?
+">
+
+Please don't use contractions like &quot;u&quot; for &quot;you&quot; or &quot;b/w&quot; for &quot;between&quot;.
+They make it far harder to read your posts. For example, a lot of people
+will be more likely to read &quot;b/w&quot; as &quot;black and white&quot; then &quot;between&quot;
+and then have to work out what you actually meant.
+
+As to your question, it is almost easier to say what the similarities
+are. The main similarity is that they both get input from stdin, after
+that they are very different. gets just keep reading input in to the
+memory you provide a pointer to until either a newline is encountered or
+your program crashes. scanf reads input as specified by the format
+specifier you provide. With work, scanf *can* be used safely (although
+it is not easy for a novice) but it is virtually impossible to use gets
+safely and it definitely cannot be used safely for user input.
+
+I would recommend you learn to use fgets and getc and build your input
+routines using these function and separate passing. You can use sscanf
+for the passing if you like, although you have to be careful, since it
+is not as hard to use sscanf correctly as it is to use scanf or fscanf
+correctly.
+--
+Flash Gordon
+</POST>
+<POST>
+<POSTER> Richard Heathfield &lt;r...@see.sig.invalid&gt; </POSTER>
+<POSTDATE> 2007-11-16T14:06:00 </POSTDATE>
+CJ said:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 16 Nov 2007 at 18:41, jacob navia wrote:
+&gt;&gt; jayapal wrote:
+&gt;&gt;&gt; Hi all,
+
+&gt;&gt;&gt; Whenever I use the gets() function, the gnu c compiler gives a
+&gt;&gt;&gt; warning that it is dangerous to use gets(). why...?
+
+&gt;&gt;&gt; regards,
+&gt;&gt;&gt; jayapal.
+
+&gt;&gt; That function is deprecated and will disappear shortly.
+&gt;&gt; Its usage is not recommended because there is no way to
+&gt;&gt; limit the input that it will receive, and it can overflow
+&gt;&gt; the input buffer.
+
+&gt; This sort of absolute prohibition on gets() is completely wrong-headed.
+">
+
+No, it isn't. (Even a stopped clock is right twice a day.) There is never a
+good reason to use the gets function.
+
+<QUOTE PREVIOUSPOST="
+&gt; It's completely fine to use gets(), as long as you use it properly.
+">
+
+To use it properly, precede it with an 'f', and modify the syntax of the
+call accordingly.
+
+<QUOTE PREVIOUSPOST="
+&gt; To
+&gt; use it properly, *you* need to be in control of the data that gets()
+&gt; reads. For throwaway utility routines this will often be the case, and
+&gt; there's no problem using gets() in this case.
+">
+
+That would be fine, if it were not for the facts that (a) you're not
+necessarily as much in control of the data as you think you are, and (b)
+throwaway routines have a bad habit of not being thrown away.
+
+--
+Richard Heathfield &lt; http://www.cpax.org.uk &gt;
+Email: - http://www . +rjh@
+Google users: &lt; http://www.cpax.org.uk/prg/writings/googly.php &gt;
+&quot;Usenet is a strange place&quot; - dmr 29 July 1999
+</POST>
+<POST>
+<POSTER> karthikbalaguru &lt;karthikbalagur...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-16T14:19:00 </POSTDATE>
+On Nov 16, 10:04 pm, jayapal &lt;jayapal ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi all,
+
+&gt; Whenever I use the gets() function, the gnu c compiler gives a
+&gt; warning that it is dangerous to use gets(). why...?
+">
+
+gets is very very dangerous. Handle with care :):)
+It has buffer related worries.(Expects newline in its pocket to
+work without causing any harm !)
+
+Karthik Balaguru
+</POST>
+<POST>
+<POSTER> user923005 &lt;dcor...@connx.com&gt; </POSTER>
+<POSTDATE> 2007-11-16T14:31:00 </POSTDATE>
+On Nov 16, 9:04 am, jayapal &lt;jayapal ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi all,
+
+&gt; Whenever I use the gets() function, the gnu c compiler gives a
+&gt; warning that it is dangerous to use gets(). why...?
+">
+
+For the same reason that failure to read the C-FAQ is dangerous.
+Because you will look like a nincompoop due to the omission of common
+sense.
+
+12.23:  Why does everyone say not to use gets()?
+
+A:      Unlike fgets(), gets() cannot be told the size of the buffer
+it's to read into, so it cannot be prevented from overflowing
+that buffer.  As a general rule, always use fgets().  See
+question 7.1 for a code fragment illustrating the replacement
+of
+gets() with fgets().
+
+References: Rationale Sec. 4.9.7.2; H&amp;S Sec. 15.7 p. 356.
+</POST>
+<POST>
+<POSTER> Paul Hsieh &lt;websn...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-16T14:43:00 </POSTDATE>
+On Nov 16, 9:04 am, jayapal &lt;jayapal ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Whenever I use the gets() function, the gnu c compiler gives a
+&gt; warning that it is dangerous to use gets(). why...?
+">
+
+No set of program control can prevent gets() from having undefined
+behavior.  In fact, basically all C compilers implement gets() to have
+undefined behavior.  Because of this, the function has been slated to
+be deprecated in the next C standard.  I have made a safe
+implementation of gets() that you can find as the first example here:
+
+http://www.pobox.com/~qed/userInput.html
+
+Please feel free to use it in lieu of the upcoming standard which will
+make its usage obsolete.
+
+--
+Paul Hsieh
+http://www.pobox.com/~qed/
+http://bstring.sf.net/
+</POST>
+<POST>
+<POSTER> Eric Sosman &lt;Eric.Sos...@sun.com&gt; </POSTER>
+<POSTDATE> 2007-11-16T15:20:00 </POSTDATE>
+Paul Hsieh wrote On 11/16/07 14:43,:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Nov 16, 9:04 am, jayapal &lt;jayapal ... @gmail.com&gt; wrote:
+
+&gt;&gt;Whenever I use the gets() function, the gnu c compiler gives a
+&gt;&gt;warning that it is dangerous to use gets(). why...?
+
+&gt; No set of program control can prevent gets() from having undefined
+&gt; behavior.  In fact, basically all C compilers implement gets() to have
+&gt; undefined behavior.  Because of this, the function has been slated to
+&gt; be deprecated in the next C standard.  I have made a safe
+&gt; implementation of gets() that you can find as the first example here:
+
+&gt; http://www.pobox.com/~qed/userInput.html
+
+&gt; Please feel free to use it in lieu of the upcoming standard which will
+&gt; make its usage obsolete.
+">
+
+Isn't there a buffer overrun vulnerability in the
+fgetstralloc() function?  Look carefully at the second
+argument of the first call to getInputFrag().
+
+--
+Eric.Sos ... @sun.com
+</POST>
+<POST>
+<POSTER> jameskuy...@verizon.net </POSTER>
+<POSTDATE> 2007-11-16T15:47:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+CJ wrote:
+&gt; On 16 Nov 2007 at 18:41, jacob navia wrote:
+&gt; &gt; jayapal wrote:
+&gt; &gt;&gt; Hi all,
+
+&gt; &gt;&gt; Whenever I use the gets() function, the gnu c compiler gives a
+&gt; &gt;&gt; warning that it is dangerous to use gets(). why...?
+
+&gt; &gt;&gt; regards,
+&gt; &gt;&gt; jayapal.
+
+&gt; &gt; That function is deprecated and will disappear shortly.
+&gt; &gt; Its usage is not recommended because there is no way to
+&gt; &gt; limit the input that it will receive, and it can overflow
+&gt; &gt; the input buffer.
+
+&gt; This sort of absolute prohibition on gets() is completely wrong-headed.
+&gt; It's completely fine to use gets(), as long as you use it properly. To
+&gt; use it properly, *you* need to be in control of the data that gets()
+&gt; reads.
+">
+
+Keep in mind, of course, that there's absolutely nothing you can do
+within strictly conforming C code that would give you the kind of
+control you need to have to use gets() safely. The safety of such
+usage depends upon something outside the C standard, and more likely
+than not, something outside of the program itself.
+
+It's trivial to replace any call to gets() with a similar call to
+fgets() with minor modifications to the surrounding code, and that
+change is sufficient to completely avoid the buffer overruns. I don't
+know of any legitimate reason for not doing so.
+</POST>
+<POST>
+<POSTER> CJ &lt;nos...@nospam.com&gt; </POSTER>
+<POSTDATE> 2007-11-16T16:08:00 </POSTDATE>
+On 16 Nov 2007 at 20:47, jameskuy ... @verizon.net wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; CJ wrote:
+&gt;&gt; On 16 Nov 2007 at 18:41, jacob navia wrote:
+&gt;&gt; &gt; jayapal wrote:
+&gt;&gt; &gt;&gt; Hi all,
+
+&gt;&gt; &gt;&gt; Whenever I use the gets() function, the gnu c compiler gives a
+&gt;&gt; &gt;&gt; warning that it is dangerous to use gets(). why...?
+
+&gt;&gt; &gt;&gt; regards,
+&gt;&gt; &gt;&gt; jayapal.
+
+&gt;&gt; &gt; That function is deprecated and will disappear shortly.
+&gt;&gt; &gt; Its usage is not recommended because there is no way to
+&gt;&gt; &gt; limit the input that it will receive, and it can overflow
+&gt;&gt; &gt; the input buffer.
+
+&gt;&gt; This sort of absolute prohibition on gets() is completely wrong-headed.
+&gt;&gt; It's completely fine to use gets(), as long as you use it properly. To
+&gt;&gt; use it properly, *you* need to be in control of the data that gets()
+&gt;&gt; reads.
+
+&gt; Keep in mind, of course, that there's absolutely nothing you can do
+&gt; within strictly conforming C code that would give you the kind of
+&gt; control you need to have to use gets() safely. The safety of such
+&gt; usage depends upon something outside the C standard, and more likely
+&gt; than not, something outside of the program itself.
+
+&gt; It's trivial to replace any call to gets() with a similar call to
+&gt; fgets() with minor modifications to the surrounding code, and that
+&gt; change is sufficient to completely avoid the buffer overruns. I don't
+&gt; know of any legitimate reason for not doing so.
+">
+
+It's much more typing!
+</POST>
+<POST>
+<POSTER> Ben Pfaff &lt;b...@cs.stanford.edu&gt; </POSTER>
+<POSTDATE> 2007-11-16T16:06:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+jacob navia &lt;ja ... @nospam.com&gt; writes:
+&gt; jayapal wrote:
+&gt;&gt; Whenever I use the gets() function, the gnu c compiler gives a
+&gt;&gt; warning that it is dangerous to use gets(). why...?
+
+&gt; That function is deprecated and will disappear shortly.
+">
+
+It is not listed in the current C standard as deprecated.
+--
+&quot;A lesson for us all: Even in trivia there are traps.&quot;
+--Eric Sosman
+</POST>
+<POST>
+<POSTER> Harald van Dĳk &lt;true...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-16T16:21:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Fri, 16 Nov 2007 13:06:52 -0800, Ben Pfaff wrote:
+&gt; jacob navia &lt;ja ... @nospam.com&gt; writes:
+&gt;&gt; jayapal wrote:
+&gt;&gt;&gt; Whenever I use the gets() function, the gnu c compiler gives a warning
+&gt;&gt;&gt; that it is dangerous to use gets(). why...?
+
+&gt;&gt; That function is deprecated and will disappear shortly.
+
+&gt; It is not listed in the current C standard as deprecated.
+">
+
+http://open-std.org/JTC1/SC22/WG14/www/docs/dr_332.htm
+
+The status from the summary page is &quot;closed, published in TC 3&quot;, and you
+can find the added paragraph in n1256. Admittedly, I'm not sure if TC 3
+is official just yet.
+
+However, of course being deprecated does not mean it will actually be
+removed any time soon.
+</POST>
+<POST>
+<POSTER> Paul Hsieh &lt;websn...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-16T16:53:00 </POSTDATE>
+On Nov 16, 12:20 pm, Eric Sosman &lt;Eric.Sos ... @sun.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Paul Hsieh wrote On 11/16/07 14:43,:
+&gt; &gt; On Nov 16, 9:04 am, jayapal &lt;jayapal ... @gmail.com&gt; wrote:
+
+&gt; &gt;&gt;Whenever I use the gets() function, the gnu c compiler gives a
+&gt; &gt;&gt;warning that it is dangerous to use gets(). why...?
+
+&gt; &gt; No set of program control can prevent gets() from having undefined
+&gt; &gt; behavior.  In fact, basically all C compilers implement gets() to have
+&gt; &gt; undefined behavior.  Because of this, the function has been slated to
+&gt; &gt; be deprecated in the next C standard.  I have made a safe
+&gt; &gt; implementation of gets() that you can find as the first example here:
+
+&gt; &gt; http://www.pobox.com/~qed/userInput.html
+
+&gt; &gt; Please feel free to use it in lieu of the upcoming standard which will
+&gt; &gt; make its usage obsolete.
+
+&gt;     Isn't there a buffer overrun vulnerability in the
+&gt; fgetstralloc() function?  Look carefully at the second
+&gt; argument of the first call to getInputFrag().
+">
+
+Its 64.  getInputFrag(*,64,*,*,*) never writes to more than 64 chars
+(the extra '\0' only comes when the input is &lt;= 64 in length; unlike
+strncat, this is ok because the length read is always explicitly
+returned), and the buffer passed (char blk[64]) in is 64 chars in
+length.  So ... what am I missing?
+
+--
+Paul Hsieh
+http://www.pobox.com/~qed/
+http://bstring.sf.net/
+</POST>
+<POST>
+<POSTER> Keith Thompson &lt;ks...@mib.org&gt; </POSTER>
+<POSTDATE> 2007-11-16T17:42:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+jacob navia wrote:
+&gt; jayapal wrote:
+&gt;&gt; Whenever I use the gets() function, the gnu c compiler gives a
+&gt;&gt; warning that it is dangerous to use gets(). why...?
+
+&gt; That function is deprecated and will disappear shortly.
+&gt; Its usage is not recommended because there is no way to
+&gt; limit the input that it will receive, and it can overflow
+&gt; the input buffer.
+">
+
+It's true that gets() has been declared obsolescent and deprecated.
+This is reflected in TC3 and in the latest standard draft, n1256.pdf.
+This just happened within the last couple of months.
+
+But please don't make the mistake of thinking that it &quot;will disappear
+shortly&quot;.  It has not been removed from the C99 standard.  In fact, any
+conforming C99 implementation *must* provide gets(), undefined behavior
+and all (though any implementation is free to warn about it).
+
+Deprecation means that it will most likely be removed from the *next* C
+standard, which is still a number of years away.  Consider that the C99
+standard is 8 years old, and still has not been fully implemented by the
+vast majority of compilers.  It will likely be decades, if ever, before
+a significant number of implementations conform to a new C20YZ standard.
+And even then, compilers will be free to continue to provide it in a
+non-conforming mode, perhaps for backward compatibility.
+
+I'm afraid that gets() is going to be around for a very long time.  It's
+still up to each of us, as programmers, to avoid using it.
+
+jacob, if you really thing gets() will &quot;disappear shortly&quot;, I'd be
+interested in your reasoning.
+
+--
+Keith Thompson (The_Other_Keith) &lt;ks ... @mib.org&gt;
+Looking for software development work in the San Diego area.
+&quot;We must do something.  This is something.  Therefore, we must do this.&quot;
+-- Antony Jay and Jonathan Lynn, &quot;Yes Minister&quot;
+</POST>
+<POST>
+<POSTER> jacob navia &lt;ja...@nospam.com&gt; </POSTER>
+<POSTDATE> 2007-11-16T17:49:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Keith Thompson wrote:
+&gt; jacob navia wrote:
+&gt;&gt; jayapal wrote:
+&gt;&gt;&gt; Whenever I use the gets() function, the gnu c compiler gives a
+&gt;&gt;&gt; warning that it is dangerous to use gets(). why...?
+
+&gt;&gt; That function is deprecated and will disappear shortly.
+&gt;&gt; Its usage is not recommended because there is no way to
+&gt;&gt; limit the input that it will receive, and it can overflow
+&gt;&gt; the input buffer.
+
+&gt; It's true that gets() has been declared obsolescent and deprecated. This
+&gt; is reflected in TC3 and in the latest standard draft, n1256.pdf. This
+&gt; just happened within the last couple of months.
+
+&gt; But please don't make the mistake of thinking that it &quot;will disappear
+&gt; shortly&quot;.  It has not been removed from the C99 standard.  In fact, any
+&gt; conforming C99 implementation *must* provide gets(), undefined behavior
+&gt; and all (though any implementation is free to warn about it).
+
+&gt; Deprecation means that it will most likely be removed from the *next* C
+&gt; standard, which is still a number of years away.  Consider that the C99
+&gt; standard is 8 years old, and still has not been fully implemented by the
+&gt; vast majority of compilers.  It will likely be decades, if ever, before
+&gt; a significant number of implementations conform to a new C20YZ standard.
+&gt;  And even then, compilers will be free to continue to provide it in a
+&gt; non-conforming mode, perhaps for backward compatibility.
+
+&gt; I'm afraid that gets() is going to be around for a very long time.  It's
+&gt; still up to each of us, as programmers, to avoid using it.
+
+&gt; jacob, if you really thing gets() will &quot;disappear shortly&quot;, I'd be
+&gt; interested in your reasoning.
+">
+
+Nothing, just hopes that now that is deprecated, people will
+stop using it, and it will disappear in a few years.
+
+--
+jacob navia
+jacob at jacob point remcomp point fr
+logiciels/informatique
+http://www.cs.virginia.edu/~lcc-win32
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-11-16T17:56:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Paul Hsieh&quot; &lt;websn ... @gmail.com&gt; wrote in message
+&gt; On Nov 16, 9:04 am, jayapal &lt;jayapal ... @gmail.com&gt; wrote:
+&gt;&gt; Whenever I use the gets() function, the gnu c compiler gives a
+&gt;&gt; warning that it is dangerous to use gets(). why...?
+
+&gt; No set of program control can prevent gets() from having undefined
+&gt; behavior.  In fact, basically all C compilers implement gets() to have
+&gt; undefined behavior.
+">
+
+Undefined behaviour means &quot;undefined by the standard&quot;. It is possible,
+though rather difficult, to implement a safe gets(), that is to say one that
+always terminates the program with an error message if the buffer is
+exceeded.
+
+What is not possible to is implement is a safe fgets(), that is to say, one
+that can be used safely given the limitations of the average human
+programmer.
+
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> Eric Sosman &lt;Eric.Sos...@sun.com&gt; </POSTER>
+<POSTDATE> 2007-11-16T18:01:00 </POSTDATE>
+Paul Hsieh wrote On 11/16/07 16:53,:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Nov 16, 12:20 pm, Eric Sosman &lt;Eric.Sos ... @sun.com&gt; wrote:
+
+&gt;&gt;Paul Hsieh wrote On 11/16/07 14:43,:
+
+&gt;&gt;&gt;On Nov 16, 9:04 am, jayapal &lt;jayapal ... @gmail.com&gt; wrote:
+
+&gt;&gt;&gt;&gt;Whenever I use the gets() function, the gnu c compiler gives a
+&gt;&gt;&gt;&gt;warning that it is dangerous to use gets(). why...?
+
+&gt;&gt;&gt;No set of program control can prevent gets() from having undefined
+&gt;&gt;&gt;behavior.  In fact, basically all C compilers implement gets() to have
+&gt;&gt;&gt;undefined behavior.  Because of this, the function has been slated to
+&gt;&gt;&gt;be deprecated in the next C standard.  I have made a safe
+&gt;&gt;&gt;implementation of gets() that you can find as the first example here:
+
+&gt;&gt;&gt; http://www.pobox.com/~qed/userInput.html
+
+&gt;&gt;&gt;Please feel free to use it in lieu of the upcoming standard which will
+&gt;&gt;&gt;make its usage obsolete.
+
+&gt;&gt;    Isn't there a buffer overrun vulnerability in the
+&gt;&gt;fgetstralloc() function?  Look carefully at the second
+&gt;&gt;argument of the first call to getInputFrag().
+
+&gt; Its 64.  getInputFrag(*,64,*,*,*) never writes to more than 64 chars
+&gt; (the extra '\0' only comes when the input is &lt;= 64 in length; unlike
+&gt; strncat, this is ok because the length read is always explicitly
+&gt; returned), and the buffer passed (char blk[64]) in is 64 chars in
+&gt; length.  So ... what am I missing?
+">
+
+Nothing, I guess.  I must have been confused by the
+convoluted style.  (Well, if it confuses me then it *must*
+be convoluted, right?)
+
+Still seems an awfully arcane way to skip and count
+characters, though.
+
+--
+Eric.Sos ... @sun.com
+</POST>
+<POST>
+<POSTER> Richard Heathfield &lt;r...@see.sig.invalid&gt; </POSTER>
+<POSTDATE> 2007-11-16T18:10:00 </POSTDATE>
+Malcolm McLean said:
+
+&lt;snip&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; It is possible,
+&gt; though rather difficult, to implement a safe gets(), that is to say one
+&gt; that always terminates the program with an error message if the buffer is
+&gt; exceeded.
+">
+
+Show me.
+
+<QUOTE PREVIOUSPOST="
+&gt; What is not possible to is implement is a safe fgets(), that is to say,
+&gt; one that can be used safely given the limitations of the average human
+&gt; programmer.
+">
+
+The fgets function is very easy to use safely.
+
+--
+Richard Heathfield &lt; http://www.cpax.org.uk &gt;
+Email: - http://www . +rjh@
+Google users: &lt; http://www.cpax.org.uk/prg/writings/googly.php &gt;
+&quot;Usenet is a strange place&quot; - dmr 29 July 1999
+</POST>
+<POST>
+<POSTER> dj3va...@csclub.uwaterloo.ca.invalid </POSTER>
+<POSTDATE> 2007-11-16T18:09:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+In article &lt;slrnfjs1lg.5a2.nos ... @nospam.com&gt;, CJ  &lt;nos ... @nospam.com&gt; wrote:
+&gt;On 16 Nov 2007 at 20:47, jameskuy ... @verizon.net wrote:
+&gt;&gt; It's trivial to replace any call to gets() with a similar call to
+&gt;&gt; fgets() with minor modifications to the surrounding code, and that
+&gt;&gt; change is sufficient to completely avoid the buffer overruns. I don't
+&gt;&gt; know of any legitimate reason for not doing so.
+
+&gt;It's much more typing!
+">
+
+If that's what you're worried about, why aren't you using Perl?
+
+dave
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-11-16T18:19:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Richard Heathfield&quot; &lt;r ... @see.sig.invalid&gt; wrote in message
+&gt;&gt; It is possible,
+&gt;&gt; though rather difficult, to implement a safe gets(), that is to say one
+&gt;&gt; that always terminates the program with an error message if the buffer is
+&gt;&gt; exceeded.
+
+&gt; Show me.
+">
+
+We'll declare that pointer cosist of three values - the address, the start
+of the object, and the end of the object.
+Now in the write to array code we specify that if the address execceds the
+end of the object, the program is to terminate with an error meaage.
+
+With this device we have a perfectly safe gets() fucntion. It cannot return
+an incorrect string, or corrupt another variable, or put little elves on
+screen. It can only fill the buffer correctly or report that it has been
+exceeded.
+&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; What is not possible to is implement is a safe fgets(), that is to say,
+&gt;&gt; one that can be used safely given the limitations of the average human
+&gt;&gt; programmer.
+
+&gt; The fgets function is very easy to use safely.
+">
+
+Time after time it has been shown that this is not the case. Very often
+people treat incomplete reads as full lines. So if the line contains a drug
+dose your fgets() - enabled machine might deliver only one tenth of the
+amount needed, given an off by one line length error.
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> Richard Heathfield &lt;r...@see.sig.invalid&gt; </POSTER>
+<POSTDATE> 2007-11-16T18:36:00 </POSTDATE>
+Malcolm McLean said:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Richard Heathfield&quot; &lt;r ... @see.sig.invalid&gt; wrote in message
+&gt;&gt;&gt; It is possible,
+&gt;&gt;&gt; though rather difficult, to implement a safe gets(), that is to say one
+&gt;&gt;&gt; that always terminates the program with an error message if the buffer
+&gt;&gt;&gt; is exceeded.
+
+&gt;&gt; Show me.
+
+&gt; We'll declare that pointer cosist of three values - the address, the
+&gt; start of the object, and the end of the object.
+">
+
+I look forward to your reference implementation.
+
+&lt;snip&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; What is not possible to is implement is a safe fgets(), that is to say,
+&gt;&gt;&gt; one that can be used safely given the limitations of the average human
+&gt;&gt;&gt; programmer.
+
+&gt;&gt; The fgets function is very easy to use safely.
+
+&gt; Time after time it has been shown that this is not the case.
+">
+
+You can misuse *anything* if you try hard enough. You have to try
+reasonably hard to misuse fgets, whereas to misuse gets you only need call
+it.
+
+<QUOTE PREVIOUSPOST="
+&gt; Very often
+&gt; people treat incomplete reads as full lines.
+">
+
+Very often people drive at 40 in a 30. That does not mean it is difficult
+to drive at 30.
+
+--
+Richard Heathfield &lt; http://www.cpax.org.uk &gt;
+Email: - http://www . +rjh@
+Google users: &lt; http://www.cpax.org.uk/prg/writings/googly.php &gt;
+&quot;Usenet is a strange place&quot; - dmr 29 July 1999
+</POST>
+<POST>
+<POSTER> Harald van Dĳk &lt;true...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-16T20:04:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Fri, 16 Nov 2007 23:19:12 +0000, Malcolm McLean wrote:
+&gt; &quot;Richard Heathfield&quot; &lt;r ... @see.sig.invalid&gt; wrote in message
+&gt;&gt;&gt; It is possible,
+&gt;&gt;&gt; though rather difficult, to implement a safe gets(), that is to say
+&gt;&gt;&gt; one that always terminates the program with an error message if the
+&gt;&gt;&gt; buffer is exceeded.
+
+&gt;&gt; Show me.
+
+&gt; We'll declare that pointer cosist of three values - the address, the
+&gt; start of the object, and the end of the object.
+">
+
+So, in
+
+struct S {
+char c[10];
+int i;
+
+<QUOTE PREVIOUSPOST="
+} s;
+">
+
+does a pointer to s.c store the end as &amp;s.c[10]? Or does it store the end
+as &amp;s + 1? If the former, there are cases where it's simply not clear at
+all where the buffer ends. If the latter, it doesn't prevent writing past
+the end of the buffer.
+
+I do agree that bounded pointers would be useful, but C being what it is,
+I don't believe it's possible to make it completely safe.
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-11-16T19:28:00 </POSTDATE>
+&quot;Harald van Dĳk&quot; &lt;true ... @gmail.com&gt; wrote in message
+
+<QUOTE PREVIOUSPOST="
+&gt; On Fri, 16 Nov 2007 23:19:12 +0000, Malcolm McLean wrote:
+&gt;&gt; &quot;Richard Heathfield&quot; &lt;r ... @see.sig.invalid&gt; wrote in message
+&gt;&gt;&gt;&gt; It is possible,
+&gt;&gt;&gt;&gt; though rather difficult, to implement a safe gets(), that is to say
+&gt;&gt;&gt;&gt; one that always terminates the program with an error message if the
+&gt;&gt;&gt;&gt; buffer is exceeded.
+
+&gt;&gt;&gt; Show me.
+
+&gt;&gt; We'll declare that pointer cosist of three values - the address, the
+&gt;&gt; start of the object, and the end of the object.
+
+&gt; So, in
+
+&gt; struct S {
+&gt;  char c[10];
+&gt;  int i;
+&gt; } s;
+
+&gt; does a pointer to s.c store the end as &amp;s.c[10]? Or does it store the end
+&gt; as &amp;s + 1? If the former, there are cases where it's simply not clear at
+&gt; all where the buffer ends. If the latter, it doesn't prevent writing past
+&gt; the end of the buffer.
+">
+
+A pointer to s.c would have to store the end as &amp;s.c[10].
+It is illegal to convert from a struct S * to a char *, except in the niggly
+case of a char or char array being the first member, in which case it must
+have the same address as the whole struct. So the compiler does in fact have
+to be very clever.
+
+however char *ptr = (char *) (void *) &amp;s;
+
+is I think still illegal. So you cannot defeat the system with a intricate
+list of void * intermediates.
+
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> Harald van Dĳk &lt;true...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-16T19:41:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sat, 17 Nov 2007 00:28:43 +0000, Malcolm McLean wrote:
+&gt; &quot;Harald van Dĳk&quot; &lt;true ... @gmail.com&gt; wrote in message
+&gt;&gt; On Fri, 16 Nov 2007 23:19:12 +0000, Malcolm McLean wrote:
+&gt;&gt;&gt; &quot;Richard Heathfield&quot; &lt;r ... @see.sig.invalid&gt; wrote in message
+&gt;&gt;&gt;&gt;&gt; It is possible,
+&gt;&gt;&gt;&gt;&gt; though rather difficult, to implement a safe gets(), that is to say
+&gt;&gt;&gt;&gt;&gt; one that always terminates the program with an error message if the
+&gt;&gt;&gt;&gt;&gt; buffer is exceeded.
+
+&gt;&gt;&gt;&gt; Show me.
+
+&gt;&gt;&gt; We'll declare that pointer cosist of three values - the address, the
+&gt;&gt;&gt; start of the object, and the end of the object.
+
+&gt;&gt; So, in
+
+&gt;&gt; struct S {
+&gt;&gt;  char c[10];
+&gt;&gt;  int i;
+&gt;&gt; } s;
+
+&gt;&gt; does a pointer to s.c store the end as &amp;s.c[10]? Or does it store the
+&gt;&gt; end as &amp;s + 1? If the former, there are cases where it's simply not
+&gt;&gt; clear at all where the buffer ends. If the latter, it doesn't prevent
+&gt;&gt; writing past the end of the buffer.
+
+&gt; A pointer to s.c would have to store the end as &amp;s.c[10].
+">
+
+Okay, so then you can't get back the original &amp;s?
+
+struct S {
+char c[10];
+int i;
+
+<QUOTE PREVIOUSPOST="
+} s[2];
+">
+
+char *p = &amp;s[1].c[0];
+
+The range for p would be &amp;s[1].c[0] through &amp;s[1].c[10], but I don't
+believe there's anything non-standard about casting p to struct S *, and
+subtracting 1. (With a stricter reading of the standard, you might need
+to cast p to char(*)[10], and only then to struct S, but this doesn't
+change anything important.)
+
+<QUOTE PREVIOUSPOST="
+&gt; It is illegal
+&gt; to convert from a struct S * to a char *,
+">
+
+It's allowed for two reasons here. Firstly, *any* object can be addressed
+as an array of char. Given int i, ((char *) &amp;i) through (char *) &amp;i +
+sizeof i are all valid pointers. Given struct S s, (char *) &amp;s + sizeof s
+are all valid pointers. The second reason you mention below.
+
+<QUOTE PREVIOUSPOST="
+&gt; except in the niggly case of a
+&gt; char or char array being the first member, in which case it must have
+&gt; the same address as the whole struct. So the compiler does in fact have
+&gt; to be very clever.
+">
+
+It has to be able to construct data that is no longer available.
+
+<QUOTE PREVIOUSPOST="
+&gt; however char *ptr = (char *) (void *) &amp;s;
+
+&gt; is I think still illegal. So you cannot defeat the system with a
+&gt; intricate list of void * intermediates.
+">
+
+Well, this specific example is legal, but I think I get the point you're
+making here, and I agreed already that bounded pointers, even while not
+perfect, are useful.
+</POST>
+<POST>
+<POSTER> Keith Thompson &lt;ks...@mib.org&gt; </POSTER>
+<POSTDATE> 2007-11-16T20:32:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+jacob navia wrote:
+&gt; Keith Thompson wrote:
+[...]
+&gt;&gt; I'm afraid that gets() is going to be around for a very long time.
+&gt;&gt; It's still up to each of us, as programmers, to avoid using it.
+
+&gt;&gt; jacob, if you really thing gets() will &quot;disappear shortly&quot;, I'd be
+&gt;&gt; interested in your reasoning.
+
+&gt; Nothing, just hopes that now that is deprecated, people will
+&gt; stop using it, and it will disappear in a few years.
+">
+
+Alas, hoping won't make it happen.  As I said, any implementation that
+claims to conform to any C standard, up to and including C99, *must*
+provide gets().
+
+--
+Keith Thompson (The_Other_Keith) &lt;ks ... @mib.org&gt;
+Looking for software development work in the San Diego area.
+&quot;We must do something.  This is something.  Therefore, we must do this.&quot;
+-- Antony Jay and Jonathan Lynn, &quot;Yes Minister&quot;
+</POST>
+<POST>
+<POSTER> &quot;Bill Reid&quot; &lt;hormelf...@happyhealthy.net&gt; </POSTER>
+<POSTDATE> 2007-11-16T21:54:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+CJ &lt;nos ... @nospam.com&gt; wrote in message
+">
+
+news:slrnfjs1lg.5a2.nospam@nospam.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On 16 Nov 2007 at 20:47, jameskuy ... @verizon.net wrote:
+
+&gt; &gt; It's trivial to replace any call to gets() with a similar call to
+&gt; &gt; fgets() with minor modifications to the surrounding code, and that
+&gt; &gt; change is sufficient to completely avoid the buffer overruns. I don't
+&gt; &gt; know of any legitimate reason for not doing so.
+
+&gt; It's much more typing!
+">
+
+Leading to increased carpal tunnel syndrome!
+
+Here's how to avoid some of the typing:
+
+#define GET_INPUT_STRING(string_array) \
+get_input_string(string_array,sizeof(string_array))
+
+char *get_input_string(char *string_array,int array_size) {
+int string_size;
+
+GetInput :
+
+fgets(string_array,array_size,stdin);
+
+string_size=strlen(string_array);
+
+if(string_array[string_size-1]!='\n') {
+fflush(stdin); /* NOT PORTABLE!!!  */
+printf
+(&quot;\nCAUTION: input too long, should be less than %d characters&quot;,
+array_size);
+printf(&quot;\nTry again:  &quot;);
+goto GetInput;
+}
+
+else string_array[string_size-1]='\0';
+
+return string_array;
+}
+
+Stick that in a little library that you link into all the programs that
+require getting standard input (along with some automatic menu
+generation routines, etc.), and if GET_INPUT_STRING is too much
+typing you can just call it GIS() or something.  The only problems
+are: 1) you could wind up in an endless user idiocy loop, but it
+beats crashing your program when the same idiot types too much
+stuff into gets(), and 2) the fflush(stdin) works for my compiler but
+of course is not guaranteed for yours...
+
+---
+William Ernest Reid
+</POST>
+<POST>
+<POSTER> santosh &lt;santosh....@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-16T23:01:00 </POSTDATE>
+In article
+&lt;315141c6-d44e-4265-84c9-32c8884a8 ... @a28g2000hsc.googlegroups.com&gt;,
+jayapal &lt;jayapal ... @gmail.com&gt; wrote on Friday 16 Nov 2007 10:48 pm:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Nov 16, 10:10 pm, John Gordon &lt;gor ... @panix.com&gt; wrote:
+
+&gt;&gt; gets() does not allow you limit the amount of input, which means it
+&gt;&gt; can potentially overflow the buffer into which the input is placed.
+
+&gt; Can u explain the differences b/w the scanf() and gets() ..?
+">
+
+scanf() reads input and tries to do conversions according to any format
+specifiers in it's format string argument. gets() merely reads a line
+from stdin and stores it in the buffer given to it.
+
+The construct:
+
+scanf(&quot;%s&quot;, foo);
+
+has the same weakness as a call to gets(). Both can potentially write
+past their buffers and their is _no_ way to stop it, if it happens.
+
+Using Standard functions the preferred way to read a line from a stream
+is with fgets().
+
+fgets(buffer, BUFFER_SIZE, stream);
+
+Once you have got the entire line, (the presence of a '\n' before the
+terminating '\0' indicates that fgets() was able to read the entire
+line. Otherwise further calls to fgets() can read the remaining
+portions. Obviously, 'buffer' has to grow somehow to accommodate the
+full line), functions like sscanf(), strtod(), strtol(), strtoul() etc.
+can be used to reliably convert the data.
+
+Refer to your Standard C library's documentation or see:
+
+&lt; http://www.dinkumware.com/manuals/ &gt;
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-11-17T05:05:00 </POSTDATE>
+&quot;Harald van Dĳk&quot; &lt;true ... @gmail.com&gt; wrote in message
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; It is illegal
+&gt;&gt; to convert from a struct S * to a char *,
+
+&gt; It's allowed for two reasons here. Firstly, *any* object can be addressed
+&gt; as an array of char. Given int i, ((char *) &amp;i) through (char *) &amp;i +
+&gt; sizeof i are all valid pointers. Given struct S s, (char *) &amp;s + sizeof s
+&gt; are all valid pointers. The second reason you mention below.
+">
+
+I nodded. Yes, it is illegal to convert from  type x * to type y *, except
+
+when x or y is void.
+when y is unsigned char - char yes and no, you may trap when you dereference
+the pointer.
+when y is the first member of  a struct of type x.
+when y is a struct of which x is the first member.
+
+<QUOTE PREVIOUSPOST="
+
+">
+
+[ problem is ]
+struct S s[2];
+char *ptr = &amp;s1.firstmember;
+struct S *ptr2 = (struct S *) ptr;
+ptr2--;
+
+<QUOTE PREVIOUSPOST="
+&gt; It has to be able to construct data that is no longer available.
+">
+
+I think you have managed to defeat it using the last rule. We can give the
+ptr2 the bounds of s[1], not easily but not with too many problems. However
+it is virtually impossible to give it the bounds of s. You'd have to store a
+fourth pointer with every pointer giving the &quot;mother&quot; object. It becomes
+totally unwieldy.
+
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> Flash Gordon &lt;s...@flash-gordon.me.uk&gt; </POSTER>
+<POSTDATE> 2007-11-17T06:07:00 </POSTDATE>
+Malcolm McLean wrote, On 16/11/07 23:19:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Richard Heathfield&quot; &lt;r ... @see.sig.invalid&gt; wrote in message
+&gt;&gt;&gt; It is possible,
+&gt;&gt;&gt; though rather difficult, to implement a safe gets(), that is to say one
+&gt;&gt;&gt; that always terminates the program with an error message if the
+&gt;&gt;&gt; buffer is
+&gt;&gt;&gt; exceeded.
+
+&gt;&gt; Show me.
+
+&gt; We'll declare that pointer cosist of three values - the address, the
+&gt; start of the object, and the end of the object.
+&gt; Now in the write to array code we specify that if the address execceds
+&gt; the end of the object, the program is to terminate with an error meaage.
+
+&gt; With this device we have a perfectly safe gets() fucntion. It cannot
+&gt; return an incorrect string, or corrupt another variable, or put little
+&gt; elves on screen. It can only fill the buffer correctly or report that it
+&gt; has been exceeded.
+">
+
+However, unless you manage to get all hosted C implementations changed
+to use this it is *still* not safe to call gets because your code might
+be ported to an implementation that does not do this.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; What is not possible to is implement is a safe fgets(), that is to say,
+&gt;&gt;&gt; one that can be used safely given the limitations of the average human
+&gt;&gt;&gt; programmer.
+
+&gt;&gt; The fgets function is very easy to use safely.
+
+&gt; Time after time it has been shown that this is not the case. Very often
+&gt; people treat incomplete reads as full lines. So if the line contains a
+&gt; drug dose your fgets() - enabled machine might deliver only one tenth of
+&gt; the amount needed, given an off by one line length error.
+">
+
+As pointed out the last time you raised this example:
+1) It would get spotted in a properly performed code review
+2) It would get caught by properly done testing
+
+So it would not hit production like that. Input validation is one of the
+basics of safety-critical programming, it is even one of the basics in
+writing SW for non-critical test equipment!
+
+In any case, that people can use a function incorrectly does not mean it
+cannot be used correctly easily.
+
+Now let us take your use of gets with an implementation guaranteed to
+abort the program in to a similar situation...
+
+The drug dispenser reads a file on a regular basis to check what it
+should be dispensing. At 3AM it come across an over-length line and the
+program abort. The patient then does not get the drugs keeping him/her
+alive and dies.
+
+So by using a &quot;safe&quot; gets you have just made it impossible to safely
+handle out-of-range input whereas it is easy to do with fgets.
+--
+Flash Gordon
+</POST>
+<POST>
+<POSTER> CBFalconer &lt;cbfalco...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-16T13:25:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+jayapal wrote:
+
+&gt; Whenever I use the gets() function, the gnu c compiler gives a
+&gt; warning that it is dangerous to use gets(). why...?
+">
+
+Because it cannot be used safely.  There is no length control.  Two
+possible replacements for it are fgets() (a C standard function)
+and ggets() (a non-standard function).  ggets is available in
+source form, with no restrictions, as ggets.zip at:
+
+&lt; http://cbfalconer.home.att.net/download/ &gt;
+
+--
+Chuck F (cbfalconer at maineline dot net)
+&lt; http://cbfalconer.home.att.net &gt;
+Try the download section.
+
+--
+Posted via a free Usenet account from http://www.teranews.com
+</POST>
+<POST>
+<POSTER> CBFalconer &lt;cbfalco...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-16T19:56:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Malcolm McLean wrote:
+
+... snip ...
+
+&gt; Undefined behaviour means &quot;undefined by the standard&quot;. It is
+&gt; possible, though rather difficult, to implement a safe gets(),
+&gt; that is to say one that always terminates the program with an
+&gt; error message if the buffer is exceeded.
+">
+
+Consider yourself challenged to post the appropriate code, in
+standard C.
+
+--
+Chuck F (cbfalconer at maineline dot net)
+&lt; http://cbfalconer.home.att.net &gt;
+Try the download section.
+
+--
+Posted via a free Usenet account from http://www.teranews.com
+</POST>
+<POST>
+<POSTER> CBFalconer &lt;cbfalco...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-16T20:00:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Malcolm McLean wrote:
+&gt; &quot;Richard Heathfield&quot; &lt;r ... @see.sig.invalid&gt; wrote:
+
+&gt;&gt;&gt; It is possible, though rather difficult, to implement a safe
+&gt;&gt;&gt; gets(), that is to say one that always terminates the program
+&gt;&gt;&gt; with an error message if the buffer is exceeded.
+
+&gt;&gt; Show me.
+
+&gt; We'll declare that pointer cosist of three values - the address,
+&gt; the start of the object, and the end of the object.  Now in the
+&gt; write to array code we specify that if the address execceds the
+&gt; end of the object, the program is to terminate with an error
+&gt; meaage.
+">
+
+No good.  Pointers do not necessarily contain those components.
+You have to make it safe within the guarantees provided by the C
+standard.
+
+--
+Chuck F (cbfalconer at maineline dot net)
+&lt; http://cbfalconer.home.att.net &gt;
+Try the download section.
+
+--
+Posted via a free Usenet account from http://www.teranews.com
+</POST>
+<POST>
+<POSTER> Harald van Dĳk &lt;true...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-17T15:10:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Fri, 16 Nov 2007 19:56:39 -0500, CBFalconer wrote:
+&gt; Malcolm McLean wrote:
+
+&gt; ... snip ...
+
+&gt;&gt; Undefined behaviour means &quot;undefined by the standard&quot;. It is possible,
+&gt;&gt; though rather difficult, to implement a safe gets(), that is to say one
+&gt;&gt; that always terminates the program with an error message if the buffer
+&gt;&gt; is exceeded.
+
+&gt; Consider yourself challenged to post the appropriate code, in standard
+&gt; C.
+">
+
+gets is a standard library function. Standard library functions need not
+be written in standard C, and may make use of highly implementation-
+specific features.
+
+If you disagree, please give even just a single example of an
+implementation of fopen or longjmp written purely in standard C.
+</POST>
+<POST>
+<POSTER> Keith Thompson &lt;ks...@mib.org&gt; </POSTER>
+<POSTDATE> 2007-11-17T16:25:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+CBFalconer wrote:
+&gt; Malcolm McLean wrote:
+&gt;&gt; &quot;Richard Heathfield&quot; &lt;r ... @see.sig.invalid&gt; wrote:
+
+&gt;&gt;&gt;&gt; It is possible, though rather difficult, to implement a safe
+&gt;&gt;&gt;&gt; gets(), that is to say one that always terminates the program
+&gt;&gt;&gt;&gt; with an error message if the buffer is exceeded.
+&gt;&gt;&gt; Show me.
+&gt;&gt; We'll declare that pointer cosist of three values - the address,
+&gt;&gt; the start of the object, and the end of the object.  Now in the
+&gt;&gt; write to array code we specify that if the address execceds the
+&gt;&gt; end of the object, the program is to terminate with an error
+&gt;&gt; meaage.
+
+&gt; No good.  Pointers do not necessarily contain those components.
+&gt; You have to make it safe within the guarantees provided by the C
+&gt; standard.
+">
+
+No, he doesn't.  You're asking for more than Malcolm claimed.
+
+Malcolm didn't claim that it could be made safe within the gaurantees
+provided by the C standard.  His claim is a much more modest one,
+that it's possible for a (hypothetical) C implementation to provide a
+&quot;safe&quot; gets() function, and I believe he's correct.
+
+His solution requires the use of &quot;fat pointers&quot;, which are not
+widely implemented but are reasonably well understood.  In such an
+implementation, the char* parameter to gets() provides information
+about the size of the buffer to which it points.  (Portable C code
+cannot make use of this information, but gets() needn't be implemented
+in portable C.)  If the size of the input line exceeds the size of the
+buffer, the behavior is undefined.  This means the implementation is
+free to do whatever it likes, including terminating the program with
+an error message (or discarding the remainder of the line, or leaving
+the remainder of the line on the input stream).
+
+I know of no C implementations that actually use fat pointers; even if
+there were, the possibility of making gets() safe in one implementation
+does no good for code that is to be used with other implementations.
+
+I believe Malcolm's claim as stated is correct.  It's not particularly
+useful, but he didn't claim that it was; I believe it was merely an
+intellectual excercise, not a serious proposal.
+
+--
+Keith Thompson (The_Other_Keith) &lt;ks ... @mib.org&gt;
+Looking for software development work in the San Diego area.
+&quot;We must do something.  This is something.  Therefore, we must do this.&quot;
+-- Antony Jay and Jonathan Lynn, &quot;Yes Minister&quot;
+</POST>
+<POST>
+<POSTER> Hallvard B Furuseth &lt;h.b.furus...@usit.uio.no&gt; </POSTER>
+<POSTDATE> 2007-11-17T17:21:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Harald van Dijk writes:
+&gt;Sat, 17 Nov 2007 00:28:43 +0000, Malcolm McLean wrote:
+&gt;&gt;&gt;&gt; We'll declare that pointer cosist of three values - the address, the
+&gt;&gt;&gt;&gt; start of the object, and the end of the object.
+&gt;&gt;&gt; (..)
+&gt;&gt;&gt; struct S {
+&gt;&gt;&gt;  char c[10];
+&gt;&gt;&gt;  int i;
+&gt;&gt;&gt; } s;
+&gt;&gt;&gt; (...)
+&gt;&gt; A pointer to s.c would have to store the end as &amp;s.c[10].
+
+&gt; Okay, so then you can't get back the original &amp;s?
+">
+
+If I remember correctly, (struct S *)s.c is indeed undefined.  Or it
+is defined but ((struct S *)s.c)-&gt;i and (struct S *)s.c + 1 are not.
+Probably for similar reasons that the 'struct hack' is undefined.
+
+--
+Regards,
+Hallvard
+</POST>
+<POST>
+<POSTER> Harald van Dĳk &lt;true...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-17T17:44:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sat, 17 Nov 2007 23:21:19 +0100, Hallvard B Furuseth wrote:
+&gt; Harald van Dijk writes:
+&gt;&gt;Sat, 17 Nov 2007 00:28:43 +0000, Malcolm McLean wrote:
+&gt;&gt;&gt;&gt;&gt; We'll declare that pointer cosist of three values - the address, the
+&gt;&gt;&gt;&gt;&gt; start of the object, and the end of the object.
+&gt;&gt;&gt;&gt; (..)
+&gt;&gt;&gt;&gt; struct S {
+&gt;&gt;&gt;&gt;  char c[10];
+&gt;&gt;&gt;&gt;  int i;
+&gt;&gt;&gt;&gt; } s;
+&gt;&gt;&gt;&gt; (...)
+&gt;&gt;&gt; A pointer to s.c would have to store the end as &amp;s.c[10].
+
+&gt;&gt; Okay, so then you can't get back the original &amp;s?
+
+&gt; If I remember correctly, (struct S *)s.c is indeed undefined.  Or it is
+&gt; defined but ((struct S *)s.c)-&gt;i and (struct S *)s.c + 1 are not.
+&gt; Probably for similar reasons that the 'struct hack' is undefined.
+">
+
+Quoting from 6.7.2.1p13:
+&quot;A pointer to a structure object, suitably converted, points to its
+initial member (or if that member is a bit-field, then to the unit in
+which it resides), and vice versa.&quot;
+
+The &quot;and vice versa&quot; means that a pointer to the initial member of a
+structure can be converted back to a pointer to that structure object,
+does it not? Technically, the initial member of the structure is an array
+of char, not a char, but I believe I addressed that in my previous
+message.
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-11-17T18:11:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Flash Gordon&quot; &lt;s ... @flash-gordon.me.uk&gt; wrote in message
+&gt; The drug dispenser reads a file on a regular basis to check what it should
+&gt; be dispensing. At 3AM it come across an over-length line and the program
+&gt; abort. The patient then does not get the drugs keeping him/her alive and
+&gt; dies.
+
+&gt; So by using a &quot;safe&quot; gets you have just made it impossible to safely
+&gt; handle out-of-range input whereas it is easy to do with fgets.
+">
+
+The computer blows a fuse. The patient dies. No different to aborting with
+an error message. All safety critical systems have to consider the
+possibility of components failing. As long as they fail, it should be OK.
+The danger comes when they work wrongly.
+
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> Flash Gordon &lt;s...@flash-gordon.me.uk&gt; </POSTER>
+<POSTDATE> 2007-11-17T19:54:00 </POSTDATE>
+Malcolm McLean wrote, On 17/11/07 23:11:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Flash Gordon&quot; &lt;s ... @flash-gordon.me.uk&gt; wrote in message
+&gt;&gt; The drug dispenser reads a file on a regular basis to check what it
+&gt;&gt; should be dispensing. At 3AM it come across an over-length line and
+&gt;&gt; the program abort. The patient then does not get the drugs keeping
+&gt;&gt; him/her alive and dies.
+
+&gt;&gt; So by using a &quot;safe&quot; gets you have just made it impossible to safely
+&gt;&gt; handle out-of-range input whereas it is easy to do with fgets.
+
+&gt; The computer blows a fuse. The patient dies. No different to aborting
+&gt; with an error message.
+">
+
+The big difference is that one can easily be avoided in SW by the simple
+expedient of ignoring your advice and using fgets instead of gets.
+
+<QUOTE PREVIOUSPOST="
+&gt; All safety critical systems have to consider the
+&gt; possibility of components failing.
+">
+
+They also have to minimise the probability of any given component
+failing. Part of doing this is doing your best to avoid the SW failing,
+and part of that is using not using gets, another part is testing
+out-of-bounds input which will catch incorrect usage of fgets.
+
+<QUOTE PREVIOUSPOST="
+&gt; As long as they fail, it should be
+&gt; OK. The danger comes when they work wrongly.
+">
+
+Which is an excellent reason for not using gets.
+
+I assume that as you did not object to my points about fgets being safe
+to use in a safety critical application you agree that it is safe? If
+not why did you snip my points without addressing them?
+--
+Flash Gordon
+</POST>
+<POST>
+<POSTER> CBFalconer &lt;cbfalco...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-17T04:13:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+jayapal wrote:
+&gt; John Gordon &lt;gor ... @panix.com&gt; wrote:
+
+&gt;&gt; gets() does not allow you limit the amount of input, which means it
+&gt;&gt; can potentially overflow the buffer into which the input is placed.
+
+&gt; Can u explain the differences b/w the scanf() and gets() ..?
+">
+
+u hasn't posted here for some time.  And black is basically the
+lack of illumination, while white requires illumination.  That
+handles b/w.  scanf() and gets() are specified in the C standard.
+
+--
+Chuck F (cbfalconer at maineline dot net)
+&lt; http://cbfalconer.home.att.net &gt;
+Try the download section.
+
+--
+Posted via a free Usenet account from http://www.teranews.com
+</POST>
+<POST>
+<POSTER> CBFalconer &lt;cbfalco...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-18T01:10:00 </POSTDATE>
+$)CHarald van D )&amp; k wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Fri, 16 Nov 2007 19:56:39 -0500, CBFalconer wrote:
+&gt;&gt; Malcolm McLean wrote:
+
+&gt;&gt; ... snip ...
+
+&gt;&gt;&gt; Undefined behaviour means &quot;undefined by the standard&quot;. It is
+&gt;&gt;&gt; possible, though rather difficult, to implement a safe gets(),
+&gt;&gt;&gt; that is to say one that always terminates the program with an
+&gt;&gt;&gt; error message if the buffer is exceeded.
+
+&gt;&gt; Consider yourself challenged to post the appropriate code, in
+&gt;&gt; standard C.
+
+&gt; gets is a standard library function. Standard library functions
+&gt; need not be written in standard C, and may make use of highly
+&gt; implementation-specific features.
+
+&gt; If you disagree, please give even just a single example of an
+&gt; implementation of fopen or longjmp written purely in standard C.
+">
+
+Need not, not must not.  gets() (and any replacement) can be
+written in standard C and fully satisfy all the specifications.  As
+evidenced by my ggets() and others.
+
+I wish the library had been divided into things implementable
+within the language, and things requiring extensions.  Although
+actually doing it might have been a horrendous task, and it is now
+too late to try.
+
+--
+Chuck F (cbfalconer at maineline dot net)
+&lt; http://cbfalconer.home.att.net &gt;
+Try the download section.
+
+--
+Posted via a free Usenet account from http://www.teranews.com
+</POST>
+<POST>
+<POSTER> Keith Thompson &lt;ks...@mib.org&gt; </POSTER>
+<POSTDATE> 2007-11-18T03:33:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+CBFalconer wrote:
+&gt;  $)CHarald van D )&amp; k wrote:
+&gt;&gt; On Fri, 16 Nov 2007 19:56:39 -0500, CBFalconer wrote:
+&gt;&gt;&gt; Malcolm McLean wrote:
+&gt;&gt;&gt; ... snip ...
+&gt;&gt;&gt;&gt; Undefined behaviour means &quot;undefined by the standard&quot;. It is
+&gt;&gt;&gt;&gt; possible, though rather difficult, to implement a safe gets(),
+&gt;&gt;&gt;&gt; that is to say one that always terminates the program with an
+&gt;&gt;&gt;&gt; error message if the buffer is exceeded.
+&gt;&gt;&gt; Consider yourself challenged to post the appropriate code, in
+&gt;&gt;&gt; standard C.
+&gt;&gt; gets is a standard library function. Standard library functions
+&gt;&gt; need not be written in standard C, and may make use of highly
+&gt;&gt; implementation-specific features.
+
+&gt;&gt; If you disagree, please give even just a single example of an
+&gt;&gt; implementation of fopen or longjmp written purely in standard C.
+
+&gt; Need not, not must not.  gets() (and any replacement) can be
+&gt; written in standard C and fully satisfy all the specifications.  As
+&gt; evidenced by my ggets() and others.
+">
+
+Yes, a conforming gets() can be written in standard C.  A &quot;safe&quot; gets()
+cannot, but in theory a &quot;safe&quot; gets *could* be written in non-standard
+C, or in non-C (for example, as Malcolm suggests, using fat pointers to
+avoid writing past the end of the buffer).
+
+This is not a defense of gets(), just an observation that a safe gets()
+might be theoretically possible in some circumstances.
+
+<QUOTE PREVIOUSPOST="
+&gt; I wish the library had been divided into things implementable
+&gt; within the language, and things requiring extensions.  Although
+&gt; actually doing it might have been a horrendous task, and it is now
+&gt; too late to try.
+">
+
+What would be the benefit of this division?  Programmers don't really
+need to know how standard library functions are implemented, or at least
+shouldn't depend on such knowledge.  Implementers can figure out easily
+enough which functions can be implemented in standard C, but are allowed
+to use non-standard C for greater efficiency, or for any other reason.
+
+--
+Keith Thompson (The_Other_Keith) &lt;ks ... @mib.org&gt;
+Looking for software development work in the San Diego area.
+&quot;We must do something.  This is something.  Therefore, we must do this.&quot;
+-- Antony Jay and Jonathan Lynn, &quot;Yes Minister&quot;
+</POST>
+<POST>
+<POSTER> Richard Heathfield &lt;r...@see.sig.invalid&gt; </POSTER>
+<POSTDATE> 2007-11-18T03:40:00 </POSTDATE>
+Keith Thompson said:
+
+&lt;snip&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; This is not a defense of gets(), just an observation that a safe gets()
+&gt; might be theoretically possible in some circumstances.
+">
+
+Not in portable code, since portable code cannot assume that it is only
+ported to implementations where a buffer-protecting gets implementation
+exists.
+
+&lt;snip&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; Programmers don't really
+&gt; need to know how standard library functions are implemented, or at least
+&gt; shouldn't depend on such knowledge.
+">
+
+Precisely my point. And yet they would have to depend on such knowledge if
+they wished to use the proposed &quot;safe gets&quot;.
+
+--
+Richard Heathfield &lt; http://www.cpax.org.uk &gt;
+Email: - http://www . +rjh@
+Google users: &lt; http://www.cpax.org.uk/prg/writings/googly.php &gt;
+&quot;Usenet is a strange place&quot; - dmr 29 July 1999
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-11-18T03:39:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;CBFalconer&quot; &lt;cbfalco ... @yahoo.com&gt; wrote in message
+&gt; Need not, not must not.  gets() (and any replacement) can be
+&gt; written in standard C and fully satisfy all the specifications.  As
+&gt; evidenced by my ggets() and others.
+
+On top of fgetc().
+
+&gt; I wish the library had been divided into things implementable
+&gt; within the language, and things requiring extensions.  Although
+&gt; actually doing it might have been a horrendous task, and it is now
+&gt; too late to try.
+">
+
+The standard library fits into a small book. I don't think it would take
+more than a few minutes to go through ticking each one.
+
+assert (portable)
+the isxxxx character macros (portable*)
+tolower (portable*)
+toupper (portable*)
+math.h functions (portable but)
+setjmp (compiler-specific)
+longjmp (compiler-specific)
+stdarg,h (compiler-specific)
+stdio.h - all functions that take a FILE parameter need system calls, as do
+those whicht ake an implicit stdin / stdout.
+sprintf, vsprintf - (portable with one niggle)
+remove, rename, tmpname - (system call)
+tmpfile - interesting one. Needs either a malloc(0 call or access tot he
+filesystem.
+atof, atoi, atol, strtod, strtol, strtoul (portable)
+rand, srand (portable)
+malloc family (in reality system, but theoretically portable except for a
+niggle)
+abort, exit (system / compiler-specific|)
+atexit - (portable)
+system - (system)
+getenv - (system)
+bsearch, qsort - (portable)
+abs, labs - (portable)
+div, ldiv - (anyone heard of these? compiler-specific)
+string functions - (portable, in reality compiler-specific)
+clock - (system)
+time - (system)
+difftime, mktime, ctime, gmtime, localtime, strftime - (portable as logn as
+you know the internal time structure)
+
+There, more or less done it.
+
+The problem is the division doesn't really work. sqrt() was originally a
+portable function. Now most larger machines have dedicated root-finding
+hardware, which in practise you must use.
+tolower and toupper, and the isxxxx macros can be written in C, but to
+implement with any efficiency you need to know the execution character
+encoding.
+Some functions, like longjmp(), do not need to make system calls, but cannot
+be implemented without an intimate knowledge of the compiler. sprinf() can
+be written completely portably, except for the %p field. The string
+functions can be portable, in reality you'd want to take advantage of the
+alignment. malloc() realistically needs a system call on all but the
+smallest machines that run only one program, but you can write using a
+global arena, except that there is no cast iron way of ensuring correct
+alignment in portable C.
+
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-11-18T04:30:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Richard Heathfield&quot; &lt;r ... @see.sig.invalid&gt; wrote in message
+&gt; Keith Thompson said:
+
+&gt;&gt; Programmers don't really
+&gt;&gt; need to know how standard library functions are implemented, or at least
+&gt;&gt; shouldn't depend on such knowledge.
+
+&gt; Precisely my point. And yet they would have to depend on such knowledge &gt;
+&gt; if they wished to use the proposed &quot;safe gets&quot;.
+">
+
+You mean to say that you don't trust your compiler vendor to provide a safe
+function, if such can be implemented?
+
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> Richard Heathfield &lt;r...@see.sig.invalid&gt; </POSTER>
+<POSTDATE> 2007-11-18T04:38:00 </POSTDATE>
+Malcolm McLean said:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Richard Heathfield&quot; &lt;r ... @see.sig.invalid&gt; wrote in message
+&gt;&gt; Keith Thompson said:
+
+&gt;&gt;&gt; Programmers don't really
+&gt;&gt;&gt; need to know how standard library functions are implemented, or at
+&gt;&gt;&gt; least shouldn't depend on such knowledge.
+
+&gt;&gt; Precisely my point. And yet they would have to depend on such knowledge
+&gt;&gt; &gt; if they wished to use the proposed &quot;safe gets&quot;.
+
+&gt; You mean to say that you don't trust your compiler vendor to provide a
+&gt; safe function, if such can be implemented?
+">
+
+I trust my standard library supplier (which may or may not be the same
+entity as that which supplies the compiler or interpreter) to recognise
+that nobody with a brain uses gets anyway, so there's no point in his or
+her wasting time implementing a safe version, and his or her time would be
+better spent on something more productive.
+
+--
+Richard Heathfield &lt; http://www.cpax.org.uk &gt;
+Email: - http://www . +rjh@
+Google users: &lt; http://www.cpax.org.uk/prg/writings/googly.php &gt;
+&quot;Usenet is a strange place&quot; - dmr 29 July 1999
+</POST>
+</TEXT>
+</BODY>
+</DOC>

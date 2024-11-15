@@ -1,0 +1,409 @@
+<DOC>
+<DOCID> eng-NG-31-134985-8583424 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-02T17:35:00 </DATETIME>
+<BODY>
+<HEADLINE>
+How to create a transparent watermark that only displays when printed?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Support &lt;supp...@pdftron.com&gt; </POSTER>
+<POSTDATE> 2007-08-02T17:35:00 </POSTDATE>
+Q:
+
+We need to create a text watermark that only displays when printed.  I
+have looked through the demo and there is an option to do this,
+however I also need to set the opacity level on the text. Is there a
+way to do this?
+
+-----
+A:
+
+<QUOTE PREVIOUSPOST="
+&gt; We need to create a text watermark that only displays when printed.
+">
+
+PDF format does not have a property or a flag that can be used to
+selectively print page content (i.e. it is not possible to have page
+content that only displays when printed).
+
+Still, using PDFNet SDK you have couple of options to implement this
+functionality.
+
+You could selectively add content to the existing page just before it
+is printed (e.g. search for &quot;How can I stamp all PDF pages&quot; in PDFNet
+Knowledge Base). For this you can either open a new instance of PDFDoc
+(which would not be saved after modifications). Alternatively you can
+'undo' PDFNet append operation as follows:
+page.GetContents().EraseAt(page.GetContents().Size()-1).
+
+Another approach is using PDF annotations objects. PDF annotations are
+not part of the content stream and they have extra flags controlling
+whether the annotation is printed, is hidden, etc. After creating an
+annotation object you can set flags (e.g. PDF.Annot.Flag.e_print,
+PDF.Annot.Flag.e_no_view) so that the annotation can be printed but
+hidden for purposes of on-screen display.
+
+To create transparent text you can adjust the opacity level in the
+graphics state when creating text elements. For example:
+
+Element element = eb.CreateTextBegin
+(Font.Create(doc, Font.StandardType1Font.e_times_roman), 100);
+writer.WriteElement(element);
+
+element = eb.CreateTextRun(&quot;Hello World!&quot;);
+GState gs = element.GetGState();
+gs.SetTextKnockout(false);
+gs.SetBlendMode(GState.BlendMode.e_bl_normal);
+...
+element.SetTextMatrix(1, 0, 0, 1, 30, 30);
+gs.SetFillColorSpace(ColorSpace.CreateDeviceRGB());
+gs.SetFillColor(new ColorPt(1, 0, 0));
+gs.SetFillOpacity(0.5);
+writer.WritePlacedElement(element);
+...
+writer.WriteElement(eb.CreateTextEnd());
+...
+</POST>
+<POST>
+<POSTER> Support &lt;supp...@pdftron.com&gt; </POSTER>
+<POSTDATE> 2007-08-08T15:24:00 </POSTDATE>
+Q:
+
+I have tried using the flags on the annotation, and it works.  However
+I can't get the annotation to be transparent. Maybe I am using the
+wrong annotation? I couldn't find an example for creating watermark
+annotations.
+
+The feature I am trying to duplicate can be done in Acrobat Pro by
+adding a watermark, and selecting the &quot;Show when printing&quot; option. I
+also set the opacity, size, etc. as shown below.
+
+-----
+A:
+
+Attached to this article are couple of solutions to the problem of
+creating a transparent watermark that only displays when printed.
+
+The first approach is using optional content groups (OCGs) and the
+stamp is represented using Form XObject. This approach is used in
+Acrobat Professional when adding a watermark (i.e. when using &quot;Show
+when printing&quot; option enabled, and &quot;Show when displaying on screen&quot;
+disabled).
+
+The second approach achieves similar effect by creating
+'Annot.Type.e_Watermark' annotation. Printing and screen visibility is
+in this case controlled using standard annotation flags
+(Annot.Flag.e_print and Annot.Flag.e_no_view).
+
+The opacity in both cases can be set using
+element.GetGState().SetFillOpacity(..) method.
+
+// Example 1 -------------------------------
+
+using System;
+using pdftron;
+using pdftron.Common;
+using pdftron.Filters;
+using pdftron.SDF;
+using pdftron.PDF;
+
+namespace StampTestCS
+{
+class Class1
+{
+//----------------------------------------------------------
+// Add a rotated and centered text stamp to the given page.
+//
+// @param pdfdoc - A document to stamp.
+// @param text - A text string used to stamp pages.
+// @param font_sz - The font size.
+// @param rot_angle - The rotation angle, in degrees.
+// @param fill_color - The fill color represented in RGB color space
+where each
+//        color component is in the range [0..1].
+//----------------------------------------------------------
+static void Stamp(Page page, PDFDoc pdfdoc, string text, double
+font_sz,
+ColorPt fill_color, double rot_angle, double opacity, Obj
+optional_content)
+{
+ElementBuilder eb = new ElementBuilder();
+ElementWriter writer = new ElementWriter();
+pdftron.PDF.Font myFont = pdftron.PDF.Font.Create(pdfdoc,
+pdftron.PDF.Font.StandardType1Font.e_times_roman);
+pdftron.PDF.ColorSpace fill_cs = ColorSpace.CreateDeviceRGB();
+
+double deg2rad = 3.1415926535 / 180.0;
+Matrix2D rot_mtx = Matrix2D.RotationMatrix(rot_angle * deg2rad);
+
+writer.Begin(pdfdoc);
+Element element = eb.CreateTextBegin(myFont, font_sz);
+writer.WriteElement(element);
+element = eb.CreateTextRun(text);
+GState gs = element.GetGState();
+gs.SetFillColorSpace(fill_cs);
+gs.SetFillColor(fill_color);
+
+// Position the text run
+Matrix2D mtx = new Matrix2D(rot_mtx);
+// scale the stamp relative to standard 'letter' page.
+double scale_factor = page.GetPageWidth() / 612.0;
+mtx.Scale(scale_factor, scale_factor);
+mtx.Translate((page.GetPageWidth() - element.GetTextLength() *
+Math.Cos(rot_angle * deg2rad)) / 2,
+(page.GetPageHeight() + element.GetTextLength() *
+Math.Sin(rot_angle * deg2rad)) / 2);
+
+element.SetTextMatrix(mtx);
+
+Rect bbox = new Rect();
+element.GetBBox(bbox);
+
+writer.WriteElement(element);
+writer.WriteElement(eb.CreateTextEnd());
+Obj form = writer.End();
+form.Put(&quot;Subtype&quot;, Obj.CreateName(&quot;Form&quot;));
+form.Put(&quot;BBox&quot;, Rect.CreateSDFRect(bbox));
+if (optional_content != null)
+{
+form.Put(&quot;OC&quot;, optional_content);
+}
+
+// Place the form on the original page
+writer.Begin(page);
+element = eb.CreateForm(form);
+
+// Set transparency level for the stamp
+element.GetGState().SetFillOpacity(opacity);
+
+writer.WritePlacedElement(element);
+writer.End();
+}
+
+static Obj CreateOCGState(PDFDoc doc)
+{
+Obj oc = doc.CreateIndirectDict();
+oc.Put(&quot;Type&quot;, Obj.CreateName(&quot;OCMD&quot;));
+
+Obj ocgs = doc.CreateIndirectDict();
+oc.Put(&quot;OCGs&quot;, ocgs);
+ocgs.Put(&quot;Name&quot;, Obj.CreateString(&quot;Watermark&quot;));
+ocgs.Put(&quot;Type&quot;, Obj.CreateName(&quot;OCG&quot;));
+Obj usage = Obj.CreateDict();
+ocgs.Put(&quot;Usage&quot;, usage);
+
+Obj export = Obj.CreateDict();
+usage.Put(&quot;Export&quot;, export);
+export.Put(&quot;ExportState&quot;, Obj.CreateName(&quot;ON&quot;));
+
+Obj pg_elem = Obj.CreateDict();
+usage.Put(&quot;PageElement&quot;, pg_elem);
+pg_elem.Put(&quot;Subtype&quot;, Obj.CreateName(&quot;FG&quot;));
+
+Obj print = Obj.CreateDict();
+usage.Put(&quot;Print&quot;, print);
+print.Put(&quot;PrintState&quot;, Obj.CreateName(&quot;ON&quot;));
+
+Obj view = Obj.CreateDict();
+usage.Put(&quot;View&quot;, view);
+view.Put(&quot;ViewState&quot;, Obj.CreateName(&quot;OFF&quot;));
+
+//
+Obj root = doc.GetRoot();
+Obj oc_props = Obj.CreateDict();
+root.Put(&quot;OCProperties&quot;, oc_props);
+
+Obj ocgs_arr = Obj.CreateArray();
+oc_props.Put(&quot;OCGs&quot;, ocgs_arr);
+ocgs_arr.PushBack(ocgs);
+
+Obj defs = Obj.CreateDict();
+oc_props.Put(&quot;D&quot;, defs);
+
+Obj on_arr = Obj.CreateArray();
+on_arr.PushBack(ocgs);
+defs.Put(&quot;ON&quot;, on_arr);
+
+Obj astate = Obj.CreateArray();
+Obj print_st = Obj.CreateDict();
+astate.PushBack(print_st);
+Obj print_cat = Obj.CreateArray();
+print_st.Put(&quot;Category&quot;, print_cat);
+print_cat.PushBack(Obj.CreateName(&quot;Print&quot;));
+print_st.Put(&quot;Event&quot;, Obj.CreateName(&quot;Print&quot;));
+Obj print_ocgs = Obj.CreateArray();
+print_ocgs.PushBack(ocgs);
+print_st.Put(&quot;OCGs&quot;, print_ocgs);
+
+Obj view_st = Obj.CreateDict();
+astate.PushBack(view_st);
+Obj view_cat = Obj.CreateArray();
+view_st.Put(&quot;Category&quot;, view_cat);
+view_cat.PushBack(Obj.CreateName(&quot;View&quot;));
+view_st.Put(&quot;Event&quot;, Obj.CreateName(&quot;View&quot;));
+Obj view_ocgs = Obj.CreateArray();
+view_ocgs.PushBack(ocgs);
+view_st.Put(&quot;OCGs&quot;, view_ocgs);
+
+Obj export_st = Obj.CreateDict();
+astate.PushBack(export_st);
+Obj export_cat = Obj.CreateArray();
+export_st.Put(&quot;Category&quot;, export_cat);
+export_cat.PushBack(Obj.CreateName(&quot;Export&quot;));
+export_st.Put(&quot;Event&quot;, Obj.CreateName(&quot;Export&quot;));
+Obj export_ocgs = Obj.CreateArray();
+export_ocgs.PushBack(ocgs);
+export_st.Put(&quot;OCGs&quot;, export_ocgs);
+
+defs.Put(&quot;AS&quot;, astate);
+return oc;
+}
+
+// Relative path to the folder containing test files.
+const string input_path = &quot;../../../../TestFiles/&quot;;
+const string output_path = &quot;../../../../TestFiles/Output/&quot;;
+
+[STAThread]
+static void Main(string[] args)
+{
+PDFNet.Initialize();
+PDFNet.SetResourcesPath(&quot;../../../../../resources&quot;);
+
+try
+{
+PDFDoc doc = new PDFDoc(input_path + &quot;numbered.pdf&quot;);
+doc.InitSecurityHandler();
+
+Page first_page = doc.PageBegin().Current();
+
+// Uncomment the following lines to set OCG state when creating
+the stamp.
+// Obj optional_content_state = CreateOCGState(doc);
+Obj optional_content_state = null;
+
+Stamp(first_page, doc, &quot;Hello World!!!&quot;, 72, new ColorPt(1, 0, 0),
+45, 0.5, optional_content_state);
+
+doc.Save(output_path + &quot;output.pdf&quot;,
+Doc.SaveOptions.e_linearized);
+
+doc.Close();
+Console.WriteLine(&quot;Done.&quot;);
+}
+catch (PDFNetException e)
+{
+Console.WriteLine(e.Message);
+}
+}
+}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+// Example 2 -------------------------------
+
+using System;
+using pdftron;
+using pdftron.Common;
+using pdftron.Filters;
+using pdftron.SDF;
+using pdftron.PDF;
+
+namespace StampTestCS
+{
+class Class1
+{
+static Obj CreateWatermarkAppearance(PDFDoc doc)
+{
+// See ElementBuilder sample for more code examples.
+ElementWriter writer = new ElementWriter();
+ElementBuilder eb = new ElementBuilder();
+
+writer.Begin(doc);
+
+// Begin writing a block of text
+Element element = eb.CreateTextBegin(Font.Create(doc,
+Font.StandardType1Font.e_times_roman), 100);
+writer.WriteElement(element);
+element = eb.CreateTextRun(&quot;Hello World!!!&quot;);
+element.GetGState().SetFillOpacity(0.5);
+// element.SetTextMatrix(1, 0, 0, 1, 0, 0);
+writer.WriteElement(element);
+writer.WriteElement(eb.CreateTextEnd());
+
+Obj stm = writer.End();
+stm.Put(&quot;BBox&quot;, Rect.CreateSDFRect(-100, -100, 1000, 1000)); //
+Bounding box
+return stm;
+}
+
+static Annot CreateWatermarkAnnotation(PDFDoc doc)
+{
+Annot annot = Annot.Create(doc.GetSDFDoc(), Annot.Type.e_Watermark,
+new Rect(0, 0, 300, 200));
+
+Obj annot_dict = annot.GetSDFObj();
+
+// Optional, create FixedPrint dictionary...
+Obj fixed_print = Obj.CreateDict();
+fixed_print.Put(&quot;Type&quot;, Obj.CreateName(&quot;FixedPrint&quot;));
+
+// Create Matrix entry: 1 0 0 1 72 -72]
+// that translates one inch right and one inch down
+Obj fixed_print_mtx = Obj.CreateArray();
+fixed_print_mtx.PushBack(Obj.CreateNumber(1));
+fixed_print_mtx.PushBack(Obj.CreateNumber(0));
+fixed_print_mtx.PushBack(Obj.CreateNumber(0));
+fixed_print_mtx.PushBack(Obj.CreateNumber(1));
+fixed_print_mtx.PushBack(Obj.CreateNumber(72));
+fixed_print_mtx.PushBack(Obj.CreateNumber(-72));
+fixed_print.Put(&quot;Matrix&quot;, fixed_print_mtx);
+
+// The amount to translate the associated content vertically,
+// as a percentage of the height of the target media (or if
+// unknown, the height of the page's MediaBox). 1.0 represents
+// 100% and 0.0 represents 0%.
+fixed_print.Put(&quot;V&quot;, Obj.CreateNumber(1));  // Translate the full
+height of the page vertically
+
+annot_dict.Put(&quot;FixedPrint&quot;, fixed_print);
+
+// Create annotation appearance.
+annot.SetAppearance(CreateWatermarkAppearance(doc));
+
+return annot;
+}
+
+// Relative path to the folder containing test files.
+const string input_path = &quot;../../../../TestFiles/&quot;;
+const string output_path = &quot;../../../../TestFiles/Output/&quot;;
+
+[STAThread]
+static void Main(string[] args)
+{
+PDFNet.Initialize();
+PDFNet.SetResourcesPath(&quot;../../../../../resources&quot;);
+
+try
+{
+PDFDoc doc = new PDFDoc(input_path + &quot;numbered.pdf&quot;);
+doc.InitSecurityHandler();
+
+Page first_page = doc.PageBegin().Current();
+Annot watermak = CreateWatermarkAnnotation(doc);
+
+watermak.SetFlag(Annot.Flag.e_print, true);
+watermak.SetFlag(Annot.Flag.e_no_view, true);
+
+first_page.AnnotPushBack(watermak);
+
+doc.Save(output_path + &quot;output.pdf&quot;,
+...
+read more »
+</POST>
+</TEXT>
+</BODY>
+</DOC>

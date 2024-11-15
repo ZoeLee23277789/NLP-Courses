@@ -1,0 +1,331 @@
+<DOC>
+<DOCID> eng-NG-31-135604-9762539 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2008-01-31T07:55:00 </DATETIME>
+<BODY>
+<HEADLINE>
+CURVEFIT for multiple datasets
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> chloesharro...@gmail.com </POSTER>
+<POSTDATE> 2008-01-31T07:55:00 </POSTDATE>
+Dear all
+
+I'm trying to fit an exponential curve to multiple data sets which
+have been overplotted on a graph.  To get a feel for CURVEFIT (as I'm
+a novice at IDL and CURVEFIT), I wrote the following 2 programs (based
+on the one given in IDL help), which produce a nice exponential curve
+when there's only ONE dataset:
+
+=====
+PRO gfunct, x, t_a, f_t, PDER
+
+t_bx = EXP(t_a[1]*x)
+f_t = t_a[0] * (t_bx) + t_a[2]
+
+;If the procedure is called with four parameters, calculate the
+partial derivatives
+IF N_PARAMS() GE 4 THEN $
+pder = [[t_bx], [t_a[0]*x*t_bx], [replicate(1.0, N_ELEMENTS(x))]]
+
+END
+=====
+and
+=====
+PRO CURVE_FITTING
+x=FLOAT(indgen(10))
+y=[12.0, 11.0, 10.2, 9.4, 8.7, 8.1, 7.5, 6.9, 6.5, 6.1]
+weights=1.0/y ;Define a vector of weights
+A=[10.0, -0.1, 2.0] ;Provide an initial guess of the function's
+parameters
+
+yfit=CURVEFIT(x,y,weights, A, FUNCTION_NAME='gfunct') ;Compute the
+parameters
+print, 'Function parameters: ', A
+
+loadcolors
+pson, filename='Curve_fitting.ps'
+plot, x, y, yrange=[5,13], ystyle=1, xrange=[0, 11], xstyle=1, psym=1,
+color=0
+oplot, x, yfit, linestyle=1, color=5
+psoff
+END
+=====
+
+How can I extend this for the case when I have say 2data sets, ie:
+x=[[indgen(10)], [indgen(10)]]
+y=[[12.0, 11.0, 10.2, 9.4, 8.7, 8.1, 7.5, 6.9, 6.5, 6.1], [11.5, 10.8,
+10.3, 9.5, 8.6, 7.8, 7.5, 6.4, 6.4, 5.9]
+and I want to plot an exponential curve through all of this data?
+Eventually, I would like my program to be able to plot an exponential
+curve through 2000+ data sets all of which have been plotted on the
+same graph and seem to show an exponential trend.
+
+Thanks very much
+Chloé
+</POST>
+<POST>
+<POSTER> Spon &lt;christoph.b...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-31T09:15:00 </POSTDATE>
+On Jan 31, 12:55 pm, chloesharro ... @gmail.com wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Dear all
+
+&gt; I'm trying to fit an exponential curve to multiple data sets which
+&gt; have been overplotted on a graph.  To get a feel for CURVEFIT (as I'm
+&gt; a novice at IDL and CURVEFIT), I wrote the following 2 programs (based
+&gt; on the one given in IDL help), which produce a nice exponential curve
+&gt; when there's only ONE dataset:
+
+&gt; =====
+&gt; PRO gfunct, x, t_a, f_t, PDER
+
+&gt; t_bx = EXP(t_a[1]*x)
+&gt; f_t = t_a[0] * (t_bx) + t_a[2]
+
+&gt; ;If the procedure is called with four parameters, calculate the
+&gt; partial derivatives
+&gt;         IF N_PARAMS() GE 4 THEN $
+&gt;                 pder = [[t_bx], [t_a[0]*x*t_bx], [replicate(1.0, N_ELEMENTS(x))]]
+
+&gt; END
+&gt; =====
+&gt; and
+&gt; =====
+&gt; PRO CURVE_FITTING
+&gt; x=FLOAT(indgen(10))
+&gt; y=[12.0, 11.0, 10.2, 9.4, 8.7, 8.1, 7.5, 6.9, 6.5, 6.1]
+&gt; weights=1.0/y ;Define a vector of weights
+&gt; A=[10.0, -0.1, 2.0] ;Provide an initial guess of the function's
+&gt; parameters
+
+&gt; yfit=CURVEFIT(x,y,weights, A, FUNCTION_NAME='gfunct') ;Compute the
+&gt; parameters
+&gt; print, 'Function parameters: ', A
+
+&gt; loadcolors
+&gt; pson, filename='Curve_fitting.ps'
+&gt; plot, x, y, yrange=[5,13], ystyle=1, xrange=[0, 11], xstyle=1, psym=1,
+&gt; color=0
+&gt; oplot, x, yfit, linestyle=1, color=5
+&gt; psoff
+&gt; END
+&gt; =====
+
+&gt; How can I extend this for the case when I have say 2data sets, ie:
+&gt; x=[[indgen(10)], [indgen(10)]]
+&gt; y=[[12.0, 11.0, 10.2, 9.4, 8.7, 8.1, 7.5, 6.9, 6.5, 6.1], [11.5, 10.8,
+&gt; 10.3, 9.5, 8.6, 7.8, 7.5, 6.4, 6.4, 5.9]
+&gt; and I want to plot an exponential curve through all of this data?
+&gt; Eventually, I would like my program to be able to plot an exponential
+&gt; curve through 2000+ data sets all of which have been plotted on the
+&gt; same graph and seem to show an exponential trend.
+
+&gt; Thanks very much
+&gt; Chloé
+">
+
+This doesn't really answer your question in any way, but if you're
+going to do a lot of curvefitting, I'd suggest having a look at Craig
+Markwardt's site:
+http://cow.physics.wisc.edu/~craigm/idl/idl.html
+
+His fitting programmes are faster and more robust than CURVEFIT in my
+(admittedly limited) experience, and it's certainly true that they
+don't crash and burn as easily as CURVEFIT does.
+
+To try and answer your question, there's no way I can see of fitting
+more than one datapoint at a time using the method you describe. The
+brute force way involves wrapping the lot in (slow) FOR loops. The
+elegant and efficient way, if there is one, eludes me.
+
+There may well be a way to use Craig's mpfit to help you here, but I
+don't know - perhaps someone else does?
+
+<QUOTE PREVIOUSPOST="
+&gt; Eventually, I would like my program to be able to plot an exponential
+&gt; curve through 2000+ data sets all of which have been plotted on the
+&gt; same graph and seem to show an exponential trend.
+">
+
+It may also be worthwhile asking yourself if you really need a fitted
+curve to every single data set; or one curve that best fits the whole
+data (in which case I'd suggest looking at MOMENT or TOTAL, for
+example, before you do any curve fitting at all.) Maybe even something
+in between?
+
+Hope this helps,
+Chris
+</POST>
+<POST>
+<POSTER> chloesharro...@gmail.com </POSTER>
+<POSTDATE> 2008-01-31T09:28:00 </POSTDATE>
+Hi Chris
+
+Thanks for your reply.  I'm reluctant to use advanced fitting
+programmes as I'm an undergraduate trying to do an MPhys Project and
+I'd rather try and code as much as possible myself so I can get credit
+for it.
+
+Luckily, I have found a way to do a fit for 2datasets now - by
+puttting them all into one big array, so hopefully I can extend this
+further so I put 2000+ datasets in one array and then fit an
+exponential to that new array.
+
+Thanks for all your help
+Chloé
+</POST>
+<POST>
+<POSTER> David Fanning &lt;n...@dfanning.com&gt; </POSTER>
+<POSTDATE> 2008-01-31T09:37:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+chloesharro ... @gmail.com writes:
+&gt; Thanks for your reply.  I'm reluctant to use advanced fitting
+&gt; programmes as I'm an undergraduate trying to do an MPhys Project and
+&gt; I'd rather try and code as much as possible myself so I can get credit
+&gt; for it.
+">
+
+Oohh, totally the wrong attitude. You should try to steal the
+best ideas you can, build on those, and become famous for giving
+ideas away. Much better karma that way. :-)
+
+Cheers,
+
+David
+--
+David Fanning, Ph.D.
+Fanning Software Consulting, Inc.
+Coyote's Guide to IDL Programming: http://www.dfanning.com/
+Sepore ma de ni thui. (&quot;Perhaps thou speakest truth.&quot;)
+</POST>
+<POST>
+<POSTER> Paul van Delst &lt;Paul.vanDe...@noaa.gov&gt; </POSTER>
+<POSTDATE> 2008-01-31T11:13:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+chloesharro ... @gmail.com wrote:
+&gt; Hi Chris
+
+&gt; Thanks for your reply.  I'm reluctant to use advanced fitting
+&gt; programmes as I'm an undergraduate trying to do an MPhys Project and
+&gt; I'd rather try and code as much as possible myself so I can get credit
+&gt; for it.
+">
+
+Strange approach. Your ultimate goal should be to get the correct answer. That's much
+easier to do using software you can trust.
+
+Besides, regardless of whether you use IDL's CURVEFIT, or Criag's MPFIT, you're still
+using &quot;advanced fitting programmes&quot; that you can't take credit for. You can take credit
+for writing the code that feeds those procedures the data, I guess.
+
+<QUOTE PREVIOUSPOST="
+&gt; Luckily, I have found a way to do a fit for 2datasets now - by
+&gt; puttting them all into one big array, so hopefully I can extend this
+&gt; further so I put 2000+ datasets in one array and then fit an
+&gt; exponential to that new array.
+">
+
+What about taking the average of all your datasets (assume the same abscissa values) and
+fit that using the std dev's of each point as an error estimate?
+
+cheers,
+
+paulv
+</POST>
+<POST>
+<POSTER> Spon &lt;christoph.b...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-31T13:32:00 </POSTDATE>
+On Jan 31, 4:13 pm, Paul van Delst &lt;Paul.vanDe ... @noaa.gov&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; chloesharro ... @gmail.com wrote:
+&gt; &gt; I'm an undergraduate trying to do an MPhys Project and
+&gt; &gt; I'd rather try and code as much as possible myself so I can get credit
+&gt; &gt; for it.
+
+&gt; Strange approach. Your ultimate goal should be to get the correct answer. That's much
+&gt; easier to do using software you can trust.
+
+&gt; Besides, regardless of whether you use IDL's CURVEFIT, or Criag's MPFIT, you're still
+&gt; using &quot;advanced fitting programmes&quot; that you can't take credit for. You can take credit
+&gt; for writing the code that feeds those procedures the data, I guess.
+">
+
+I completely agree - surely whether you use mpfitfun as programmed by
+Craig or curvefit as programmed by the guys at RSI (as it probably was
+when it was coded) makes no difference to how much credit you can take
+for it? The only difference is that the RSI guys probably got paid for
+their work!
+Plus, as David mentioned, it's good for the soul, or something...
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Luckily, I have found a way to do a fit for 2datasets now - by
+&gt; &gt; puttting them all into one big array, so hopefully I can extend this
+&gt; &gt; further so I put 2000+ datasets in one array and then fit an
+&gt; &gt; exponential to that new array.
+">
+
+Could you expand please? I'm intrigued.
+I only got as far as realising the elliptical input parameters to
+GAUSS2DFIT were not what I was looking for before stumbling upon mpfit
+which works very well for 2-dimensional datasets so long as you're
+*really sure* you know what you're asking it to do. Never looked
+back ;-)
+
+<QUOTE PREVIOUSPOST="
+&gt; What about taking the average of all your datasets (assume the same abscissa values) and
+&gt; fit that using the std dev's of each point as an error estimate?
+
+&gt; cheers,
+
+&gt; paulv
+">
+
+take care,
+Chris
+</POST>
+<POST>
+<POSTER> Wox &lt;nom...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2008-02-01T04:14:00 </POSTDATE>
+On Thu, 31 Jan 2008 04:55:11 -0800 (PST), chloesharro ... @gmail.com
+wrote:
+
+&lt;snip&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt;How can I extend this for the case when I have say 2data sets, ie:
+&gt;x=[[indgen(10)], [indgen(10)]]
+&gt;y=[[12.0, 11.0, 10.2, 9.4, 8.7, 8.1, 7.5, 6.9, 6.5, 6.1], [11.5, 10.8,
+&gt;10.3, 9.5, 8.6, 7.8, 7.5, 6.4, 6.4, 5.9]
+&gt;and I want to plot an exponential curve through all of this data?
+">
+
+Euhm, I must be missing something here, but what's wrong with just
+doing it. You are trying to fit 1 curve which fits best to all
+datasets right? I.e. 3 parameters and not 3n parameters?
+
+PRO CURVE_FITTING
+x=[findgen(10),findgen(10)]
+y=[12.0, 11.0, 10.2, 9.4, 8.7, 8.1, 7.5, 6.9, 6.5, 6.1, 11.5, 10.8,$
+10.3, 9.5, 8.6, 7.8, 7.5, 6.4, 6.4, 5.9]
+
+weights=1.0/y ;Define a vector of weights
+A=[10.0, -0.1, 2.0] ;Provide an initial guess of the function's
+parameters
+
+yfit=CURVEFIT(x,y,weights, A, FUNCTION_NAME='gfunct') ;Compute the
+parameters
+print, 'Function parameters: ', A
+
+plot, x, y, yrange=[5,13], ystyle=1, xrange=[0, 11], xstyle=1, psym=1
+
+ind=sort(x)
+oplot, x[ind], yfit[ind], linestyle=1, color=5
+END;PRO CURVE_FITTING
+</POST>
+</TEXT>
+</BODY>
+</DOC>

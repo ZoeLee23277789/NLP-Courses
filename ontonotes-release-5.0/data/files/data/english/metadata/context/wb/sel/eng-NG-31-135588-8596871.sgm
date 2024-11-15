@@ -1,0 +1,277 @@
+<DOC>
+<DOCID> eng-NG-31-135588-8596871 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-09T00:13:00 </DATETIME>
+<BODY>
+<HEADLINE>
+(setq a ... ) vs (set 'a ... )
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> quadraticformula &lt;dawnofdigi...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-09T00:13:00 </POSTDATE>
+Hi, I'm beginning to learn common lisp, and I wrote a pointless
+function makereallybig to help me understand how some things work.
+Unfortunately It's made me more confused.
+
+Why is it that when I use this version of the function
+--------------------------------------------------------------------------- ---
+(defun makereallybig (number)
+(print (set 'number (* number number) ) )
+(print number)
+)
+--------------------------------------------------------------------------- ---
+and I execute (makereallybig 3)
+the first number printed is 9, as I would expect
+but then when it prints &quot;number&quot; again, it goes back to being 3, even
+though it seems as though &quot;number&quot; should have been set to nine
+However when I do this:
+--------------------------------------------------------------------------- ---
+(defun makereallybig (number)
+(print (setq number (* number number) ) )
+(print number)
+)
+--------------------------------------------------------------------------- ----
+(makereallybig 3) prints 9 and then 9 like I would expect. Everything
+I've read has said that (setq a ...) is just short for (set 'a ...).
+If that is the case, why doesn't the change from 3 to 9 stick in the
+first version of this function. How could it make such a difference?
+</POST>
+<POST>
+<POSTER> David Trudgett &lt;dtrudg...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-09-09T01:16:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+quadraticformula writes:
+&gt; (defun makereallybig (number)
+&gt;         (print (set 'number (* number number) ) )
+&gt;         (print number))
+&gt; )
+&gt; Everything I've read has said that (setq a ...) is just short for
+&gt; (set 'a ...). If that is the case, why doesn't the change from 3 to
+&gt; 9 stick in the first version of this function. How could it make
+&gt; such a difference?
+">
+
+Warning: some of the terminology I use below, such as &quot;lexically
+bound,&quot; might not be precisely technically correct. If so, I'm sure
+the resident language lawyers will correct me! ;-)
+
+When you use (set 'number (* number number)), you are saying the same
+as (setf (symbol-value 'number) (* number number)). That is done via
+the symbol table.
+
+The NUMBER parameter in the function definition is a lexically bound
+variable and does not appear in the symbol table. Therefore, (set
+'number (* number number)) does not set the NUMBER that is the
+function's parameter, but sets the value associated with the NUMBER
+symbol in the current symbol table.
+
+Changing the function to read:
+
+(defun makereallybig (number)
+(print (set 'number (* number number)))
+(print (symbol-value 'number)))
+
+will print two nines when given 3 as the argument.
+
+So, it would seem that (set 'var n) is only the same as (setq var n)
+when VAR is in the symbol table.
+
+Regards,
+David Trudgett
+
+--
+These are not the droids you are looking for. Move along.
+</POST>
+<POST>
+<POSTER> D Herring &lt;dherr...@at.tentpost.dot.com&gt; </POSTER>
+<POSTDATE> 2007-09-09T01:19:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+quadraticformula wrote:
+&gt; Hi, I'm beginning to learn common lisp, and I wrote a pointless
+&gt; function makereallybig to help me understand how some things work.
+&gt; Unfortunately It's made me more confused.
+...
+&gt; (defun makereallybig (number)
+&gt;         (print (set 'number (* number number) ) )
+&gt;         (print number)
+&gt; )
+">
+
+Here, &quot;'number&quot; represents &quot;the symbol named number&quot;; whereas &quot;number&quot;
+represents the value passed as the parameter to the function.  During
+the compilation process, parameters and other symbols defined inside
+functions all lose their names; this enables better optimizations.
+
+<QUOTE PREVIOUSPOST="
+&gt; (defun makereallybig (number)
+&gt;         (print (setq number (* number number) ) )
+&gt;         (print number)
+&gt; )
+">
+
+Here, setq is directly modifying the function parameter; it isn't
+doing any lookup to find out &quot;which symbol is currently known as number&quot;.
+
+<QUOTE PREVIOUSPOST="
+&gt; Everything I've read has said that (setq a ...) is just short for (set 'a ...).
+&gt; If that is the case, why doesn't the change from 3 to 9 stick in the
+&gt; first version of this function. How could it make such a difference?
+">
+
+One of the differences between Lisp and other languages is the concept
+of time -- when something is evaluated.  For most languages, a
+compiler converts source code into an executable; except for macros,
+everything happens at runtime.   With Common Lisp, the source code
+adds functionality to the compiler/core system; you can change how the
+compiler operates and control when the core system evaluates each
+instruction.  Several evaluation times are available -- at file read,
+macroexpansion, compilation, function execution.  Most of this is
+explained in Chapter 3 of the CLHS[1].
+
+- Daniel
+
+[1] http://www.lisp.org/HyperSpec/FrontMatter/Chapter-Index.html
+</POST>
+<POST>
+<POSTER> Geoff Wozniak &lt;geoff.wozn...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-09T01:24:00 </POSTDATE>
+On Sep 9, 12:13 am, quadraticformula &lt;dawnofdigi ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi, I'm beginning to learn common lisp, and I wrote a pointless
+&gt; function makereallybig to help me understand how some things work.
+&gt; Unfortunately It's made me more confused.
+
+&gt; Why is it that when I use this version of the function
+&gt; --------------------------------------------------------------------------- ---
+&gt; (defun makereallybig (number)
+&gt;         (print (set 'number (* number number) ) )
+&gt;         (print number)
+&gt; )
+&gt; --------------------------------------------------------------------------- ---
+&gt; and I execute (makereallybig 3)
+&gt; the first number printed is 9, as I would expect
+&gt; but then when it prints &quot;number&quot; again, it goes back to being 3, even
+&gt; though it seems as though &quot;number&quot; should have been set to nine
+">
+
+Because the (SET 'NUMBER ...) code is setting the value of the symbol
+NUMBER, which is not the same as the parameter NUMBER given in the
+function.  The former form is setting the value cell of the dynamic
+variable NUMBER whereas the latter form is printing the value of the
+lexical variable NUMBER.
+
+<QUOTE PREVIOUSPOST="
+&gt; However when I do this:
+&gt; --------------------------------------------------------------------------- ---
+&gt; (defun makereallybig (number)
+&gt;         (print (setq number (* number number) ) )
+&gt;         (print number)
+&gt; )
+&gt; --------------------------------------------------------------------------- ----
+&gt; (makereallybig 3) prints 9 and then 9 like I would expect. Everything
+&gt; I've read has said that (setq a ...) is just short for (set 'a ...).
+&gt; If that is the case, why doesn't the change from 3 to 9 stick in the
+&gt; first version of this function. How could it make such a difference?
+">
+
+SET changes the value cell of the dynamic variable named by the
+symbol, which is not the lexical version, as in your example.  Also,
+note that
+
+(set 'a value) == (setf (symbol-value 'a) value)
+
+which is not as you have outlined.  SYMBOL-VALUE accesses the value
+cell of the dynamic variable named by symbol, which is why NUMBER
+apparently doesn't equal NUMBER in your first case.
+
+If you want this to work the same way, you have to use SETQ instead of
+SET (and you don't have to quote the symbol).  However, it generally
+considered good style to just use SETF (which probably expands into
+SETQ anyway).
+
+Check out the HypserSpec for all the gory details.
+
+http://www.lispworks.com/documentation/HyperSpec/Body/f_set.htm
+http://www.lispworks.com/documentation/HyperSpec/Body/s_setq.htm
+http://www.lispworks.com/documentation/HyperSpec/Body/m_setf_.htm
+</POST>
+<POST>
+<POSTER> dix...@gmail.com </POSTER>
+<POSTDATE> 2007-09-09T05:22:00 </POSTDATE>
+On Sep 9, 7:13 am, quadraticformula &lt;dawnofdigi ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi, I'm beginning to learn common lisp,
+">
+
+You're just starting to learn CL and you're using SET? Please find
+whoever told you to use SET (and SETQ for that matter) and beat him
+with a copy of Practical Common Lisp.
+</POST>
+<POST>
+<POSTER> Cameron &lt;cam...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-09T19:18:00 </POSTDATE>
+On Sep 8, 11:13 pm, quadraticformula &lt;dawnofdigi ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; (defun makereallybig (number)
+&gt;         (print (set 'number (* number number) ) )
+&gt;         (print number)
+&gt; )
+">
+
+As an addendum to the other responses, here's a concise approximation
+of an answer:
+* Don't use SET until you are experienced (and probably not then
+either).
+* SETQ is probably not appropriate for you either.  Look into LET.
+* You probably want to make a habit of using PRINC instead of PRINT.
+* Indent like a Lisp programmer (better yet let your editor do it
+for you! Try emacs):
+(defun makereallybig (number)
+(print (set 'number (* number number)))
+(print number))
+
+I hope my answer doesn't sound rude, it's really not meant to be.
+
+When you come from the land of imperative programming, lisp looks
+weird.  But it doesn't just LOOK weird, it really IS weird. It's not
+just a new syntax; things are done in a fundamentally different way.
+Definitely pick up a book on lisp programming, don't just look up
+functions and compare them to your favorite Java/C++ methods/functions
+because you'll likely miss the real point (and power) of lisp and
+you'll just end up writing imperative code in funny parenthesis
+syntax.
+--
+Cameron Desautels &lt;cam ... @gmail.com&gt;
+</POST>
+<POST>
+<POSTER> Matthias Buelow &lt;m...@incubus.de&gt; </POSTER>
+<POSTDATE> 2007-09-09T19:26:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+quadraticformula wrote:
+&gt; Everything
+&gt; I've read has said that (setq a ...) is just short for (set 'a ...).
+">
+
+Then you've only been reading texts that predate lexical variables in Lisp.
+</POST>
+<POST>
+<POSTER> Cameron &lt;cam...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-09T19:29:00 </POSTDATE>
+Oh, and here's a lispier version of your function:
+
+(defun make-really-big (n)
+&quot;Takes a number, N, makes it really big and prints it.&quot;
+(let ((big-n (expt n 2)))
+(princ big-n)))
+
+Happy hacking!
+--
+Cameron Desautels &lt;cam ... @gmail.com&gt;
+</POST>
+</TEXT>
+</BODY>
+</DOC>

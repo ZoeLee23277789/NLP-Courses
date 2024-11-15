@@ -1,0 +1,1550 @@
+<DOC>
+<DOCID> eng-NG-31-135593-9758844 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-25T20:19:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Portability of comparing pointers to void
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Matthias Hofmann&quot; &lt;hofm...@anvil-soft.com&gt; </POSTER>
+<POSTDATE> 2007-10-25T20:19:00 </POSTDATE>
+Hello everyone,
+
+I am implementating a memory tracker and need to map pointer values to
+allocation information. I am therefore using a std::map with void* being
+the
+key_type. However, I remember that the standard permits comparison of
+pointers only under certain circumstances. If I recall correctly, it is
+legal to compare two pointers that point to members of the same array, for
+example. I think it is also legal to compare pointers for equality, or for
+nullness.
+
+But std::map uses std::less by default to sort its elements, and as far
+as I
+know, it is not allowed to apply operator&lt;() to pointers that point to heap
+objects. As far as I know, this is because some systems do not use a flat
+memory model, but rather work with segments, and two near pointers (unlike
+far pointers) might compare equal although they point into different
+segments.
+
+As I want to keep my code as portable as possible, I wonder what the best
+way is to map pointer values to allocation information. Is there a portable
+way to turn a near pointer (on systems where such exist)  into a far
+pointer
+and store it as an unsigned long, for example?
+
+--
+Matthias Hofmann
+Anvil-Soft, CEO
+http://www.anvil-soft.com - The Creators of Toilet Tycoon
+http://www.anvil-soft.de - Die Macher des Klomanagers
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Hyman Rosen &lt;hyro...@mail.com&gt; </POSTER>
+<POSTDATE> 2007-10-26T04:29:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Matthias Hofmann wrote:
+&gt; But std::map uses std::less by default to sort its elements
+">
+
+And std::less is explicitly required to provide a strict weak
+ordering for pointers, regardless of whether you would be able
+to compare them with operator&lt;. The implementation may choose
+to implement std::less with operator&lt;, because implementations
+may do anything at all.
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;lhy...@princeton.edu&quot; &lt;lhy...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-26T04:34:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; As I want to keep my code as portable as possible, I wonder what the best
+&gt; way is to map pointer values to allocation information. Is there a portable
+&gt; way to turn a near pointer (on systems where such exist)  into a far
+&gt; pointer
+&gt; and store it as an unsigned long, for example?
+">
+
+It is true that you can't rely on operator&lt; for pointers, but
+std::less is guaranteed by the standard to do the right thing for you.
+
+-Lewis
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Lance Diduck &lt;lancedid...@nyc.rr.com&gt; </POSTER>
+<POSTDATE> 2007-10-26T04:30:00 </POSTDATE>
+On Oct 25, 8:19 pm, &quot;Matthias Hofmann&quot; &lt;hofm ... @anvil-soft.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; As I want to keep my code as portable as possible, I wonder what the best
+&gt; way is to map pointer values to allocation information. Is there a portable
+&gt; way to turn a near pointer (on systems where such exist)  into a far
+&gt; pointer
+&gt; and store it as an unsigned long, for example?
+
+&gt; --
+&gt; Matthias Hofmann
+&gt; Anvil-Soft, CEO http://www.anvil-soft.com- The Creators of Toilet Tycoon http://www.anvil-soft.de- Die Macher des Klomanagers
+">
+
+There is no portable way, since segmented memory itself is platform
+specific. Each compiler and OS that can handle the conversion has non-
+standard identifiers to do this.
+
+The best apporach to to write a class, that can take a void * as an
+ctor arguent, and porvides its own operator&lt; and operator&lt;.
+
+class MapPtr{
+MapPtr(void *);
+bool operator&lt;(MapPtr  const&amp;)const;
+bool operator==(MapPtr  const&amp;)const;
+private:
+storage_type m_val;
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+On the vast majority of systems,&quot;storage_type&quot; is just going to be
+void*, with the usual implementation of the other fucntions.
+On segmenteted systems, then of course you are going to to something
+platform, OS, and compiler dependendent.
+
+I would like to hear of segmented systems still in regular use. I
+suppose they are still out there.
+
+Lance
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Carl Barron &lt;cbarron...@adelphia.net&gt; </POSTER>
+<POSTDATE> 2007-10-26T04:33:00 </POSTDATE>
+In article &lt;5obaolFm4ph ... @mid.individual.net&gt;, Matthias Hofmann
+
+<QUOTE PREVIOUSPOST="
+&lt;hofm ... @anvil-soft.com&gt; wrote:
+&gt; Hello everyone,
+
+&gt; But std::map uses std::less by default to sort its elements, and as far
+&gt; as I
+&gt; know, it is not allowed to apply operator&lt;() to pointers that point to heap
+&gt; objects. As far as I know, this is because some systems do not use a flat
+&gt; memory model, but rather work with segments, and two near pointers (unlike
+&gt; far pointers) might compare equal although they point into different
+&gt; segments.
+">
+
+As far as I know the standard is silient on 'near' and 'far' ptrs
+[like those from ms] and does not forbid comparing ptrs via operator &lt;,
+regardless of where they point.
+
+std  associative containers require a weak ordering be provided
+[default is std::less&lt;KeyType&gt; ]  if the provided ordering is not
+weak ordering, the behavior is undefined.
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Martin Bonner &lt;martinfro...@yahoo.co.uk&gt; </POSTER>
+<POSTDATE> 2007-10-26T22:23:00 </POSTDATE>
+On Oct 26, 9:33 am, Carl Barron &lt;cbarron ... @adelphia.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In article &lt;5obaolFm4ph ... @mid.individual.net&gt;, Matthias Hofmann
+
+&gt; &lt;hofm ... @anvil-soft.com&gt; wrote:
+&gt; &gt; Hello everyone,
+
+&gt; &gt; But std::map uses std::less by default to sort its elements, and as far
+&gt; &gt; as I
+&gt; &gt; know, it is not allowed to apply operator&lt;() to pointers that point to heap
+&gt; &gt; objects. As far as I know, this is because some systems do not use a flat
+&gt; &gt; memory model, but rather work with segments, and two near pointers (unlike
+&gt; &gt; far pointers) might compare equal although they point into different
+&gt; &gt; segments.
+
+&gt;   As far as I know the standard is silent on 'near' and 'far' ptrs
+&gt; [like those from ms]
+">
+
+True.
+
+<QUOTE PREVIOUSPOST="
+&gt; and does not forbid comparing ptrs via operator &lt;,
+&gt; regardless of where they point.
+">
+
+Well it doesn't forbid it, but it doesn't promise you'll get anything
+useful if the pointers are not to elements of the same array.
+(Specifically, the standard says the results of such a comparison are
+unspecified).
+
+<QUOTE PREVIOUSPOST="
+&gt; std  associative containers require a weak ordering be provided
+&gt; [default is std::less&lt;KeyType&gt; ]  if the provided ordering is not
+&gt; weak ordering, the behavior is undefined.
+">
+
+But as others have said, the good news is that std::less /is/ required
+to Do the Right Thing.  If the implementation has a flat memory model
+that's easy; if the implementation uses segmented memory model, it has
+to do more work - but it still has to get it right.
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;Matthias Hofmann&quot; &lt;hofm...@anvil-soft.com&gt; </POSTER>
+<POSTDATE> 2007-10-26T22:25:00 </POSTDATE>
+&quot;Carl Barron&quot; &lt;cbarron ... @adelphia.net&gt; schrieb im Newsbeitrag
+news:251020072224165325%cbarron413@adelphia.net ...
+
+<QUOTE PREVIOUSPOST="
+&gt; In article &lt;5obaolFm4ph ... @mid.individual.net&gt;, Matthias Hofmann
+&gt; &lt;hofm ... @anvil-soft.com&gt; wrote:
+
+&gt;&gt; Hello everyone,
+
+&gt;&gt; But std::map uses std::less by default to sort its elements, and as far
+&gt;&gt; as I
+&gt;&gt; know, it is not allowed to apply operator&lt;() to pointers that point to
+&gt;&gt; heap
+&gt;&gt; objects. As far as I know, this is because some systems do not use a flat
+&gt;&gt; memory model, but rather work with segments, and two near pointers
+&gt;&gt; (unlike
+&gt;&gt; far pointers) might compare equal although they point into different
+&gt;&gt; segments.
+
+&gt;  As far as I know the standard is silient on 'near' and 'far' ptrs
+&gt; [like those from ms] and does not forbid comparing ptrs via operator &lt;,
+&gt; regardless of where they point.
+">
+
+Yes, but 5.9/2 says the result of operator&lt; is unspecified &quot;if two pointers
+p and q of the same type point to different objects that are not members of
+the same object or elements of the same array or to different functions, or
+if only one of them is null&quot;.
+
+--
+Matthias Hofmann
+Anvil-Soft, CEO
+http://www.anvil-soft.com - The Creators of Toilet Tycoon
+http://www.anvil-soft.de - Die Macher des Klomanagers
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Hyman Rosen &lt;hyro...@mail.com&gt; </POSTER>
+<POSTDATE> 2007-10-26T22:26:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Carl Barron wrote:
+&gt; As far as I know the standard ... does not forbid comparing ptrs
+&gt; via operator &lt;, regardless of where they point.
+">
+
+5.9/2 does not forbid this, but says that the results are
+unspecified. That makes such usage unportable, and indeed,
+in the presence of near and far pointers, would not produce
+a strict weak ordering.
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Ron Natalie &lt;r...@spamcop.net&gt; </POSTER>
+<POSTDATE> 2007-10-26T22:25:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Carl Barron wrote:
+&gt;   As far as I know the standard is silient on 'near' and 'far' ptrs
+&gt; [like those from ms] and does not forbid comparing ptrs via operator &lt;,
+&gt; regardless of where they point.
+">
+
+But it doesn't make any guarantees that it will work.   The relational
+operators apply only to pointers that point into the same array/object
+(or one past the end of an array).
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;Matthias Hofmann&quot; &lt;hofm...@anvil-soft.com&gt; </POSTER>
+<POSTDATE> 2007-10-26T22:24:00 </POSTDATE>
+&quot;lhy ... @princeton.edu&quot; &lt;lhy ... @gmail.com&gt; schrieb im Newsbeitrag
+news:1193367038.833668.101080@v3g2000hsg.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; As I want to keep my code as portable as possible, I wonder what the best
+&gt;&gt; way is to map pointer values to allocation information. Is there a
+&gt;&gt; portable
+&gt;&gt; way to turn a near pointer (on systems where such exist)  into a far
+&gt;&gt; pointer
+&gt;&gt; and store it as an unsigned long, for example?
+
+&gt; It is true that you can't rely on operator&lt; for pointers, but
+&gt; std::less is guaranteed by the standard to do the right thing for you.
+">
+
+That's good news! So this means that although the ability to meaningfully
+compare pointers is platform dependent, that is no problem for std::less
+because its implementation itself is platform specific. This also means that
+std::less does indeed provide a portable way to compare pointers of any
+type:
+
+#include &lt;functional&gt;
+#include &lt;iostream&gt;
+
+int main()
+{
+int* p1 = new int;
+int* p2 = new int;
+
+// Unspecified according to
+// 5.9/2 of the C++ standard.
+std::cout &lt;&lt; &quot;p1 &lt; p2: &quot;
+&lt;&lt; ( p1 &lt; p2 ) &lt;&lt; std::endl;
+
+// Total ordering according to
+// 20.3.3/8 of the C++ standard.
+std::cout &lt;&lt; &quot;p1 &lt; p2: &quot;
+&lt;&lt; std::less&lt;void*&gt;()( p1, p2 )
+&lt;&lt; std::endl;
+
+delete p1;
+delete p2;
+
+return 0;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+--
+Matthias Hofmann
+Anvil-Soft, CEO
+http://www.anvil-soft.com - The Creators of Toilet Tycoon
+http://www.anvil-soft.de - Die Macher des Klomanagers
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Bart van Ingen Schenau &lt;b...@ingen.ddns.info&gt; </POSTER>
+<POSTDATE> 2007-10-26T22:31:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Matthias Hofmann wrote:
+&gt; Hello everyone,
+
+&gt; I am implementating a memory tracker and need to map pointer values to
+&gt; allocation information. I am therefore using a std::map with void*
+&gt; being the
+&gt; key_type. However, I remember that the standard permits comparison of
+&gt; pointers only under certain circumstances. If I recall correctly, it
+&gt; is legal to compare two pointers that point to members of the same
+&gt; array, for example. I think it is also legal to compare pointers for
+&gt; equality, or for nullness.
+
+&gt; But std::map uses std::less by default to sort its elements, and as
+&gt; far as I
+&gt; know, it is not allowed to apply operator&lt;() to pointers that point to
+&gt; heap objects.
+">
+
+That is right, but std::less&lt;T*&gt; is required to use whatever
+compiler-magic it needs to provide a proper ordering of pointers, so
+you can freely use a pointer type as KeyType in an associative
+container.
+
+<QUOTE PREVIOUSPOST="
+&gt; As far as I know, this is because some systems do not
+&gt; use a flat memory model, but rather work with segments, and two near
+&gt; pointers (unlike far pointers) might compare equal although they point
+&gt; into different segments.
+
+&gt; As I want to keep my code as portable as possible, I wonder what the
+&gt; best way is to map pointer values to allocation information. Is there
+&gt; a portable
+&gt; way to turn a near pointer (on systems where such exist)  into a far
+&gt; pointer
+&gt; and store it as an unsigned long, for example?
+">
+
+There is not. That is why std::less&lt;T*&gt; is required to do the right
+thing.
+
+Bart v Ingen Schenau
+--
+a.c.l.l.c-c++ FAQ: http://www.comeaucomputing.com/learn/faq
+c.l.c FAQ: http://c-faq.com/
+c.l.c++ FAQ: http://www.parashift.com/c++-faq-lite/
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;Matthias Hofmann&quot; &lt;hofm...@anvil-soft.com&gt; </POSTER>
+<POSTDATE> 2007-10-26T22:36:00 </POSTDATE>
+&quot;Hyman Rosen&quot; &lt;hyro ... @mail.com&gt; schrieb im Newsbeitrag
+news:eobUi.22974$Qj3.7738@trndny01 ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Matthias Hofmann wrote:
+&gt;&gt; But std::map uses std::less by default to sort its elements
+
+&gt; And std::less is explicitly required to provide a strict weak
+&gt; ordering for pointers, regardless of whether you would be able
+&gt; to compare them with operator&lt;. The implementation may choose
+&gt; to implement std::less with operator&lt;, because implementations
+&gt; may do anything at all.
+">
+
+20.3.3/8 even requires std::less to provide a total ordering, but I don't
+understand what that means in this context. Why does the standard sometimes
+require a strict weak ordering, and sometimes a total ordering? I have just
+read some definitions of those terms on Wikipedia, and it sounds to me like
+strict weak ordering only differs from a partial ordering in as much as
+equivalence is transitive. So for pointers, a streak weak ordering would
+mean that if two pointers cannot be compared with each other, then no
+pointers can be compared with each other? But what does it mean in terms of
+C++ if two pointers cannot be compared in a strict weak ordering?
+
+I have also learned that a total ordering is a strict weak ordering where
+the equivalence is equality. But a total ordering can be strict or
+non-strict - which one is the standard talking about in 20.3.3/8? And what
+does that mean for the comparison of pointers?
+
+--
+Matthias Hofmann
+Anvil-Soft, CEO
+http://www.anvil-soft.com - The Creators of Toilet Tycoon
+http://www.anvil-soft.de - Die Macher des Klomanagers
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;Matthias Hofmann&quot; &lt;hofm...@anvil-soft.com&gt; </POSTER>
+<POSTDATE> 2007-10-28T14:02:00 </POSTDATE>
+&quot;Matthias Hofmann&quot; &lt;hofm ... @anvil-soft.com&gt; schrieb im Newsbeitrag
+news:5ofg50Fmfjn1U1@mid.individual.net ...
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Hyman Rosen&quot; &lt;hyro ... @mail.com&gt; schrieb im Newsbeitrag
+&gt; news:eobUi.22974$Qj3.7738@trndny01 ...
+&gt;&gt; Matthias Hofmann wrote:
+">
+
+Meanwhile I did some further research on partial ordering, strict weak
+ordering and total ordering and things are a little clearer for me now, but
+there are still two things that keep me wondering:
+
+1.) As far as I understand strict weak ordering, two elements of a set may
+be incomparable as long as this incomparability relation is transitive. If
+this is true, then the following should be fine?
+
+#include &lt;set&gt;
+
+template &lt;class T&gt; struct strict_weak_less;
+
+template &lt;&gt; struct strict_weak_less&lt;int&gt;
+{
+bool operator()( int a, int b )
+{
+// Define any two elements
+// to be incomparable unless
+// they are equal.
+return a != b;
+}
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+int main()
+{
+std::set&lt;int, strict_weak_less&lt;int&gt; &gt; intset;
+
+intset.insert( 2 );
+intset.insert( 4 );
+
+return 0;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+This creates a set where all elements are incomparable with each other. (I
+have searched for a real life example for a strict weak ordering that is
+not
+a total ordering, but I have not found any. Does anyone know an example?)
+
+2.) Why does the standard require a strict weak ordering for associative
+containers, but guarantee a total ordering for std::less&lt;T*&gt; in
+20.3.3/8? In
+a strict weak ordering, the relation &quot;neither a &lt; b nor b &lt; a&quot; is
+transitive, but does not mean equality. Incomparability only means equality
+in a total ordering, but doesn't an associative container need to know
+whether two elements are equal in order to determine whether the element
+already exists? Shouldn't the standard require a total ordering for
+std::less for *any* type, not just for pointers?
+
+--
+Matthias Hofmann
+Anvil-Soft, CEO
+http://www.anvil-soft.com - The Creators of Toilet Tycoon
+http://www.anvil-soft.de - Die Macher des Klomanagers
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;Matthias Hofmann&quot; &lt;hofm...@anvil-soft.com&gt; </POSTER>
+<POSTDATE> 2007-10-28T14:02:00 </POSTDATE>
+&quot;Ron Natalie&quot; &lt;r ... @spamcop.net&gt; schrieb im Newsbeitrag
+news:4721cd5b$0$608$9a6e19ea@news.newshosting.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Carl Barron wrote:
+
+&gt;&gt;   As far as I know the standard is silient on 'near' and 'far' ptrs
+&gt;&gt; [like those from ms] and does not forbid comparing ptrs via operator &lt;,
+&gt;&gt; regardless of where they point.
+
+&gt; But it doesn't make any guarantees that it will work.   The relational
+&gt; operators apply only to pointers that point into the same array/object
+&gt; (or one past the end of an array).
+">
+
+Interestingly, the 5.9/2 guarantees a meaningful result for the relational
+operators only if *both* pointers point past the end of the same array:
+
+&quot;If two pointers p and q of the same type point to the same object or
+function, or both point one past the end of the same array, or are both
+null, then p&lt;=q and p&gt;=q both yield true and p&lt;q and p&gt;q both yield false.&quot;
+
+According to my reading of the standard, comparing a pointer to an element
+of an array and a pointer to one past the end of the same array is
+unspecified.
+
+--
+Matthias Hofmann
+Anvil-Soft, CEO
+http://www.anvil-soft.com - The Creators of Toilet Tycoon
+http://www.anvil-soft.de - Die Macher des Klomanagers
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Jiri Palecek &lt;jpale...@web.de&gt; </POSTER>
+<POSTDATE> 2007-10-28T21:24:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Matthias Hofmann wrote:
+&gt; &quot;Ron Natalie&quot; &lt;r ... @spamcop.net&gt; schrieb im Newsbeitrag
+&gt; news:4721cd5b$0$608$9a6e19ea@news.newshosting.com ...
+&gt;&gt; Carl Barron wrote:
+
+&gt; Interestingly, the 5.9/2 guarantees a meaningful result for the relational
+&gt; operators only if *both* pointers point past the end of the same array:
+
+&gt; &quot;If two pointers p and q of the same type point to the same object or
+&gt; function, or both point one past the end of the same array, or are both
+&gt; null, then p&lt;=q and p&gt;=q both yield true and p&lt;q and p&gt;q both yield
+&gt; false.&quot;
+
+&gt; According to my reading of the standard, comparing a pointer to an element
+&gt; of an array and a pointer to one past the end of the same array is
+&gt; unspecified.
+">
+
+It is specified:
+
+&quot;... If two pointers point to elements of the same array or one beyond the
+end of the array, the pointer to the object with the higher subscript
+compares higher.&quot;
+
+Jiri Palecek
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Jiri Palecek &lt;jpale...@web.de&gt; </POSTER>
+<POSTDATE> 2007-10-28T21:23:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Matthias Hofmann wrote:
+&gt; &quot;Matthias Hofmann&quot; &lt;hofm ... @anvil-soft.com&gt; schrieb im Newsbeitrag
+&gt; news:5ofg50Fmfjn1U1@mid.individual.net ...
+&gt;&gt; &quot;Hyman Rosen&quot; &lt;hyro ... @mail.com&gt; schrieb im Newsbeitrag
+&gt;&gt; news:eobUi.22974$Qj3.7738@trndny01 ...
+&gt;&gt;&gt; Matthias Hofmann wrote:
+
+&gt; Meanwhile I did some further research on partial ordering, strict weak
+&gt; ordering and total ordering and things are a little clearer for me now,
+&gt; but there are still two things that keep me wondering:
+
+&gt; 1.) As far as I understand strict weak ordering, two elements of a set may
+&gt; be incomparable as long as this incomparability relation is transitive. If
+&gt; this is true, then the following should be fine?
+
+&gt; #include &lt;set&gt;
+
+&gt; template &lt;class T&gt; struct strict_weak_less;
+
+&gt; template &lt;&gt; struct strict_weak_less&lt;int&gt;
+&gt; {
+&gt;      bool operator()( int a, int b )
+&gt;      {
+&gt;          // Define any two elements
+&gt;          // to be incomparable unless
+&gt;          // they are equal.
+&gt;          return a != b;
+">
+
+No. What you have written is not a strict weak ordering, because it lacks
+antisymmetry (you say &quot;a is less then b whenever they are not equal&quot;). What
+you have in mind would probably mean &quot;return false&quot; here.
+
+<QUOTE PREVIOUSPOST="
+&gt;      }
+&gt; };
+
+&gt; int main()
+&gt; {
+&gt;      std::set&lt;int, strict_weak_less&lt;int&gt; &gt; intset;
+
+&gt;      intset.insert( 2 );
+&gt;      intset.insert( 4 );
+
+&gt;      return 0;
+&gt; }
+
+&gt; This creates a set where all elements are incomparable with each other. (I
+">
+
+If you created such a set, it would only consist of one element (in this
+example, 2, AFAIK).
+
+<QUOTE PREVIOUSPOST="
+&gt; have searched for a real life example for a strict weak ordering that is
+&gt; not
+&gt; a total ordering, but I have not found any. Does anyone know an example?)
+">
+
+Sure. For example, ordering of strings or sets by their sizes. Note, that if
+you take your strict-weakly-ordered universe and partition it to classes
+induced by the &quot;incomparability&quot; relation, you always get a linearly
+ordered universe.
+
+<QUOTE PREVIOUSPOST="
+&gt; 2.) Why does the standard require a strict weak ordering for associative
+&gt; containers, but guarantee a total ordering for std::less&lt;T*&gt; in
+&gt; 20.3.3/8? In
+&gt; a strict weak ordering, the relation &quot;neither a &lt; b nor b &lt; a&quot; is
+&gt; transitive, but does not mean equality. Incomparability only means
+&gt; equality in a total ordering, but doesn't an associative container need to
+&gt; know whether two elements are equal in order to determine whether the
+">
+
+No, the containers treat such two elements as equal, without calling
+operator==.
+
+<QUOTE PREVIOUSPOST="
+&gt; element already exists? Shouldn't the standard require a total ordering
+&gt; for std::less for *any* type, not just for pointers?
+">
+
+It would be impossible to guarantee that for user types.
+
+Regards
+Jiri Palecek
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Greg Herlihy &lt;gre...@mac.com&gt; </POSTER>
+<POSTDATE> 2007-10-28T21:30:00 </POSTDATE>
+On Oct 28, 11:02 am, &quot;Matthias Hofmann&quot; &lt;hofm ... @anvil-soft.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Interestingly, the 5.9/2 guarantees a meaningful result for the relational
+&gt; operators only if *both* pointers point past the end of the same array:
+
+&gt; &quot;If two pointers p and q of the same type point to the same object or
+&gt; function, or both point one past the end of the same array, or are both
+&gt; null, then p&lt;=q and p&gt;=q both yield true and p&lt;q and p&gt;q both yield false.&quot;
+
+&gt; According to my reading of the standard, comparing a pointer to an element
+&gt; of an array and a pointer to one past the end of the same array is
+&gt; unspecified.
+">
+
+Not at all. The next-to-last bullet point in that same list covers a
+comparison between an array element pointer and either: a pointer to
+an different element in the same array -or- a pointer to the one-past-
+the-end element of the same array:
+
+&quot;If two pointers point to elements of the same array or one beyond the
+end of the array, the pointer to the object with the higher subscript
+compares higher.&quot; [§5.9/2-9]
+
+Greg
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Greg Herlihy &lt;gre...@mac.com&gt; </POSTER>
+<POSTDATE> 2007-10-29T16:57:00 </POSTDATE>
+On Oct 28, 11:02 am, &quot;Matthias Hofmann&quot; &lt;hofm ... @anvil-soft.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Matthias Hofmann&quot; &lt;hofm ... @anvil-soft.com&gt; schrieb im Newsbeitrag news:5ofg50Fmfjn1U1@mid.individual.net ...
+
+&gt; Meanwhile I did some further research on partial ordering, strict weak
+&gt; ordering and total ordering and things are a little clearer for me now, but
+&gt; there are still two things that keep me wondering:
+
+&gt; 1.) As far as I understand strict weak ordering, two elements of a set may
+&gt; be incomparable as long as this incomparability relation is transitive. If
+&gt; this is true, then the following should be fine?
+
+&gt; #include &lt;set&gt;
+
+&gt; template &lt;class T&gt; struct strict_weak_less;
+
+&gt; template &lt;&gt; struct strict_weak_less&lt;int&gt;
+&gt; {
+&gt;      bool operator()( int a, int b )
+&gt;      {
+&gt;          // Define any two elements
+&gt;          // to be incomparable unless
+&gt;          // they are equal.
+&gt;          return a != b;
+&gt;      }
+
+&gt; };
+">
+
+No, the above functor provides no ordering at all between a and b. For
+a and b to be ordered, the result of evaluating a &lt; b and b &lt; a must
+match one of the three cases listed below:
+
+a &lt; b    b &lt; a
+1.    true     false
+2.    false    true
+3.    false    false
+
+The above functor (when a != b) reports:
+
+a &lt; b    b &lt; a
+1.    true     true
+
+a truth table which clearly makes it impossible to decide which of the
+two objects (&quot;a&quot; or &quot;b&quot;) should be ordered before the other.
+
+<QUOTE PREVIOUSPOST="
+&gt; (I
+&gt; have searched for a real life example for a strict weak ordering that is
+&gt; not
+&gt; a total ordering, but I have not found any. Does anyone know an example?)
+">
+
+Just define a class that implements less-than comparisons between
+class objects but does not implement equality comparisons between
+class objects.
+
+The existence of a strict weak ordering for a set of objects, means
+that it is possible to tell whether one object precedes another (or
+whether the two objects have the same precedence). But a strict weak
+ordering does not guarantee that it is possible to tell whether two
+objects are &quot;equivalent&quot;.
+
+<QUOTE PREVIOUSPOST="
+&gt; 2.) Why does the standard require a strict weak ordering for associative
+&gt; containers, but guarantee a total ordering for std::less&lt;T*&gt; in
+&gt; 20.3.3/8?
+">
+
+Because pointers can be compared for equality (with the equality
+operator: ==). So a strict weak ordering for pointers becomes a total
+ordering because an equality comparison is defined. (Note that a
+strict weak ordering also imposes a total ordering, if
+
+(not(a &lt; b) and not(b &lt; a))
+
+defines an equivalence relation between a and b.)
+
+<QUOTE PREVIOUSPOST="
+&gt; Shouldn't the standard require a total ordering for
+&gt; std::less for *any* type, not just for pointers?
+">
+
+Then a type would have to support equality comparisons in addition to
+relational comparisons, in order to qualify as a type parameter to
+std::less&lt;&gt;. Yet equality comparisons may not make much sense for
+certains classes - nor is it clear what imposing this additional
+requirement would accomplish.
+
+Greg
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;Matthias Hofmann&quot; &lt;hofm...@anvil-soft.com&gt; </POSTER>
+<POSTDATE> 2007-10-29T17:41:00 </POSTDATE>
+&quot;Jiri Palecek&quot; &lt;jpale ... @web.de&gt; schrieb im Newsbeitrag
+news:fg2lrn$2sar$1@ns.felk.cvut.cz ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Matthias Hofmann wrote:
+&gt;&gt; template &lt;&gt; struct strict_weak_less&lt;int&gt;
+&gt;&gt; {
+&gt;&gt;      bool operator()( int a, int b )
+&gt;&gt;      {
+&gt;&gt;          // Define any two elements
+&gt;&gt;          // to be incomparable unless
+&gt;&gt;          // they are equal.
+&gt;&gt;          return a != b;
+
+&gt; No. What you have written is not a strict weak ordering, because it lacks
+&gt; antisymmetry (you say &quot;a is less then b whenever they are not equal&quot;).
+&gt; What
+&gt; you have in mind would probably mean &quot;return false&quot; here.
+">
+
+With &quot;return false&quot;, I end up with only a single element in the set: 2.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; int main()
+&gt;&gt; {
+&gt;&gt;      std::set&lt;int, strict_weak_less&lt;int&gt; &gt; intset;
+
+&gt;&gt;      intset.insert( 2 );
+&gt;&gt;      intset.insert( 4 );
+
+&gt;&gt;      return 0;
+&gt;&gt; }
+
+&gt;&gt; This creates a set where all elements are incomparable with each other.
+&gt;&gt; (I
+
+&gt; If you created such a set, it would only consist of one element (in this
+&gt; example, 2, AFAIK).
+">
+
+I just learned that my program crashes with 'a != b'. It seems like a strict
+weak ordering cannot be implemented, only a total ordering. Otherwise, how
+do you create a set of elements that are both distinct and incomparable?
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; have searched for a real life example for a strict weak ordering that is
+&gt;&gt; not
+&gt;&gt; a total ordering, but I have not found any. Does anyone know an example?)
+
+&gt; Sure. For example, ordering of strings or sets by their sizes. Note, that
+&gt; if
+&gt; you take your strict-weakly-ordered universe and partition it to classes
+&gt; induced by the &quot;incomparability&quot; relation, you always get a linearly
+&gt; ordered universe.
+">
+
+But ordering strings is a total ordering, isn't it? Because for strings, if
+neither x &lt; y nor y &lt; x, the strings are equal. What about defining the
+relation &quot;&lt;&quot; as &quot;is a descendant of&quot; in a familiy tree? It satisfies the
+condition that if x is incomparable with y and y is incomparable with z,
+then x is incomparable with z. In other words, if x and y are siblings and y
+and z are siblings, then x and z are siblings. It's also not a total
+ordering because being siblings does not mean being equal.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; 2.) Why does the standard require a strict weak ordering for associative
+&gt;&gt; containers, but guarantee a total ordering for std::less&lt;T*&gt; in
+&gt;&gt; 20.3.3/8? In
+&gt;&gt; a strict weak ordering, the relation &quot;neither a &lt; b nor b &lt; a&quot; is
+&gt;&gt; transitive, but does not mean equality. Incomparability only means
+&gt;&gt; equality in a total ordering, but doesn't an associative container need
+&gt;&gt; to
+&gt;&gt; know whether two elements are equal in order to determine whether the
+
+&gt; No, the containers treat such two elements as equal, without calling
+&gt; operator==.
+">
+
+Yes, it uses operator&lt; to find out wether two elements are equal. But that's
+just my point: In a strict weak ordering, the relation &quot;neither a &lt; b nor b
+&lt; a&quot; does not mean equality. Equality requires a total ordering, so how come
+the standard requires only a strict weak ordering for associative
+containers?
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; element already exists? Shouldn't the standard require a total ordering
+&gt;&gt; for std::less for *any* type, not just for pointers?
+
+&gt; It would be impossible to guarantee that for user types.
+">
+
+Well, giving guarantees for user types is generally difficult. It is up to
+the user to design their types to comply with the standard requirements.
+
+--
+Matthias Hofmann
+Anvil-Soft, CEO
+http://www.anvil-soft.com - The Creators of Toilet Tycoon
+http://www.anvil-soft.de - Die Macher des Klomanagers
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Daniel Krügler &lt;daniel.krueg...@googlemail.com&gt; </POSTER>
+<POSTDATE> 2007-10-30T08:28:00 </POSTDATE>
+On 29 Okt., 21:57, Greg Herlihy &lt;gre ... @mac.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; (I
+&gt; &gt; have searched for a real life example for a strict weak ordering that is
+&gt; &gt; not
+&gt; &gt; a total ordering, but I have not found any. Does anyone know an example?)
+
+&gt; Just define a class that implements less-than comparisons between
+&gt; class objects but does not implement equality comparisons between
+&gt; class objects.
+
+&gt; The existence of a strict weak ordering for a set of objects, means
+&gt; that it is possible to tell whether one object precedes another (or
+&gt; whether the two objects have the same precedence). But a strict weak
+&gt; ordering does not guarantee that it is possible to tell whether two
+&gt; objects are &quot;equivalent&quot;.
+">
+
+This is incorrect. A strict weak ordering is a refined ordering
+which adds the concept of equivalence. Each equivalence class is
+totally-ordered, but in contrast to total ordering there is no
+requirement that each equivalence class contains exactly one member.
+
+So a typical example of a strict weak ordering is a comparison
+of character sequences that does ignore the case, e.g.
+&quot;aBcd&quot;, &quot;ABCD&quot;, &quot;abCD&quot;, .. belong to the same equivalence class.
+
+Another example for a strict weak ordering exists for floating
+point types supporting NaN's, where the ordering makes all
+NaN's equivalent (usually there exist more than one representation
+for a NaN).
+
+<QUOTE PREVIOUSPOST="
+&gt; (Note that a
+&gt; strict weak ordering also imposes a total ordering, if
+
+&gt;       (not(a &lt; b) and not(b &lt; a))
+
+&gt; defines an equivalence relation between a and b.)
+">
+
+Same definition problem as above.
+
+Greetings from Bremen,
+
+Daniel Krügler
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Jiri Palecek &lt;jpale...@web.de&gt; </POSTER>
+<POSTDATE> 2007-10-30T08:41:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Matthias Hofmann wrote:
+&gt; &quot;Jiri Palecek&quot; &lt;jpale ... @web.de&gt; schrieb im Newsbeitrag
+&gt; news:fg2lrn$2sar$1@ns.felk.cvut.cz ...
+&gt;&gt; Matthias Hofmann wrote:
+
+&gt;&gt;&gt; template &lt;&gt; struct strict_weak_less&lt;int&gt;
+&gt;&gt;&gt; {
+&gt;&gt;&gt;      bool operator()( int a, int b )
+&gt;&gt;&gt;      {
+&gt;&gt;&gt;          // Define any two elements
+&gt;&gt;&gt;          // to be incomparable unless
+&gt;&gt;&gt;          // they are equal.
+&gt;&gt;&gt;          return a != b;
+
+&gt;&gt; No. What you have written is not a strict weak ordering, because it lacks
+&gt;&gt; antisymmetry (you say &quot;a is less then b whenever they are not equal&quot;).
+&gt;&gt; What
+&gt;&gt; you have in mind would probably mean &quot;return false&quot; here.
+
+&gt; With &quot;return false&quot;, I end up with only a single element in the set: 2.
+">
+
+That's OK. The set considers 2 and 4 equal if they are incomparable,
+and &quot;return false&quot; renders any two integers incomparable.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; int main()
+&gt;&gt;&gt; {
+&gt;&gt;&gt;      std::set&lt;int, strict_weak_less&lt;int&gt; &gt; intset;
+
+&gt;&gt;&gt;      intset.insert( 2 );
+&gt;&gt;&gt;      intset.insert( 4 );
+
+&gt;&gt;&gt;      return 0;
+&gt;&gt;&gt; }
+
+&gt;&gt;&gt; This creates a set where all elements are incomparable with each other.
+&gt;&gt;&gt; (I
+
+&gt;&gt; If you created such a set, it would only consist of one element (in this
+&gt;&gt; example, 2, AFAIK).
+
+&gt; I just learned that my program crashes with 'a != b'. It seems like a
+">
+
+This is because &quot;a!=b&quot; is not a strict weak ordering, not even a partial
+ordering at all.
+
+<QUOTE PREVIOUSPOST="
+&gt; strict weak ordering cannot be implemented, only a total ordering.
+&gt; Otherwise, how do you create a set of elements that are both distinct and
+&gt; incomparable?
+">
+
+You cannot. A set considers two incomparable elements as equal, although you
+can distinguish them. For example, if you take a pair of integers and
+define less by &quot;a.first&lt;b.first&quot;. This is not a total ordering (because
+(1,2) and (1,3) are incomparable) but is a strict weak ordering. So if you
+insert these two incomparable entities in a set, only one will remain
+there. And this is exactly what map does.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; have searched for a real life example for a strict weak ordering that is
+&gt;&gt;&gt; not
+&gt;&gt;&gt; a total ordering, but I have not found any. Does anyone know an
+&gt;&gt;&gt; example?)
+
+&gt;&gt; Sure. For example, ordering of strings or sets by their sizes. Note, that
+&gt;&gt; if
+&gt;&gt; you take your strict-weakly-ordered universe and partition it to classes
+&gt;&gt; induced by the &quot;incomparability&quot; relation, you always get a linearly
+&gt;&gt; ordered universe.
+
+&gt; But ordering strings is a total ordering, isn't it? Because for strings,
+&gt; if neither x &lt; y nor y &lt; x, the strings are equal. What about defining the
+">
+
+Well, there are many orderings of strings. For example, lexicographic (which
+is total), prefix ordering &quot;strstr(a, b)==a&quot; and substring
+ordering &quot;strstr(a, b)!=0&quot; (which are both partial, but not strict weak
+orderings) and finally, you can order them by their
+sizes &quot;strlen(a)&lt;strlen(b)&quot; which is a strict weak ordering (and not
+total), and this was what I referred to.
+
+<QUOTE PREVIOUSPOST="
+&gt; relation &quot;&lt;&quot; as &quot;is a descendant of&quot; in a familiy tree? It satisfies the
+&gt; condition that if x is incomparable with y and y is incomparable with z,
+&gt; then x is incomparable with z. In other words, if x and y are siblings and
+&gt; y and z are siblings, then x and z are siblings. It's also not a total
+&gt; ordering because being siblings does not mean being equal.
+">
+
+This is not a strict weak ordering, because I am incomparable with my aunt,
+my aunt is incomparable with my mother, which would imply I am incomparable
+with my mother, and that is a contradiction. (no incest, please :-) )
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; 2.) Why does the standard require a strict weak ordering for associative
+&gt;&gt;&gt; containers, but guarantee a total ordering for std::less&lt;T*&gt; in
+&gt;&gt;&gt; 20.3.3/8? In
+&gt;&gt;&gt; a strict weak ordering, the relation &quot;neither a &lt; b nor b &lt; a&quot; is
+&gt;&gt;&gt; transitive, but does not mean equality. Incomparability only means
+&gt;&gt;&gt; equality in a total ordering, but doesn't an associative container need
+&gt;&gt;&gt; to
+&gt;&gt;&gt; know whether two elements are equal in order to determine whether the
+
+&gt;&gt; No, the containers treat such two elements as equal, without calling
+&gt;&gt; operator==.
+
+&gt; Yes, it uses operator&lt; to find out wether two elements are equal. But
+&gt; that's just my point: In a strict weak ordering, the relation &quot;neither a &lt;
+&gt; b nor b &lt; a&quot; does not mean equality. Equality requires a total ordering,
+">
+
+But it does define an equivalence.
+
+<QUOTE PREVIOUSPOST="
+&gt; so how come the standard requires only a strict weak ordering for
+&gt; associative containers?
+">
+
+It's useful, because it means there's only one function to be implemented
+and only 1.5 tests are needed in order to descend one level in a binary
+tree, it's useful because it lets you define equivalence used by the
+container even if it's different from operator==, and it is sufficient to
+implement any algorithm which requires a total ordering.
+
+Please, note once again that for every strict weak ordering on a set S,
+there is an equivalence ~ on S and S/~ (S factored by ~) is totally
+ordered. And conversely, for every set S, equivalence on S ~ and totally
+ordered set T of cardinality equal to S/~, if you take a bijection f
+between T and S/~ and define an ordering on S: a&lt;b iff f([a]_~)&lt;f([b]_~)
+then you'll get a strict weak ordering (much, MUCH better to draw the
+images than describe with the words). So, strict weak orderings do not
+really add a new quality beyond total orderings, it is just a convenience.
+
+Regards
+Jiri Palecek
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;Matthias Hofmann&quot; &lt;hofm...@anvil-soft.com&gt; </POSTER>
+<POSTDATE> 2007-10-30T15:46:00 </POSTDATE>
+&quot;Greg Herlihy&quot; &lt;gre ... @mac.com&gt; schrieb im Newsbeitrag
+news:1193650107.835281.196600@t8g2000prg.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Oct 28, 11:02 am, &quot;Matthias Hofmann&quot; &lt;hofm ... @anvil-soft.com&gt;
+&gt; wrote:
+&gt;&gt; &quot;Matthias Hofmann&quot; &lt;hofm ... @anvil-soft.com&gt; schrieb im
+&gt;&gt; Newsbeitrag news:5ofg50Fmfjn1U1@mid.individual.net ...
+&gt; The existence of a strict weak ordering for a set of objects, means
+&gt; that it is possible to tell whether one object precedes another (or
+&gt; whether the two objects have the same precedence).
+">
+
+But how can you insert two distinct objects that have the same precedence
+into an associative container like std::set? How is std::less (or your own
+comparison object) supposed to know that &quot;neither a &lt; b nor b &lt; a&quot; does not
+mean that both objects are equal? If an associative container can't tell
+which one of two objects precedes the other, it only keeps the one that has
+been inserted first, as the other one &quot;already exists&quot;.
+
+<QUOTE PREVIOUSPOST="
+&gt; But a strict weak
+&gt; ordering does not guarantee that it is possible to tell whether two
+&gt; objects are &quot;equivalent&quot;.
+">
+
+Well, you can tell whether they are &quot;equivalent&quot;, but not whether they are
+&quot;equal&quot;. See how the standard defines the &quot;equivalence&quot; of keys in 23.1.2/3:
+&quot;The phrase 'equivalence of keys' means the equivalence relation imposed by
+the comparison and not the operator== on keys. That is, two keys k1 and k2
+are considered to be equivalent if for the comparison object comp, comp(k1,
+k2) == false &amp;&amp; comp(k2, k1) == false.&quot;
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Shouldn't the standard require a total ordering for
+&gt;&gt; std::less for *any* type, not just for pointers?
+
+&gt; Then a type would have to support equality comparisons in addition to
+&gt; relational comparisons, in order to qualify as a type parameter to
+&gt; std::less&lt;&gt;. Yet equality comparisons may not make much sense for
+&gt; certains classes - nor is it clear what imposing this additional
+&gt; requirement would accomplish.
+">
+
+I see, but associative containers still &quot;emulate&quot; equality comparisons with
+relational comparisons. They interpret &quot;neither a &lt; b nor b &lt; a&quot; as
+equality. Table 69 of the standard (on page 472) says that for associative
+containers that may contain at most one element for each key, insert()
+treats equivalence as equality, effectively requiring a total ordering.
+
+So std::set requires a total ordering, while std::multiset requires a strict
+weak ordering. This also answers my first question above: You cannot insert
+two distinct objects that have the same precedence into  std::set, but into
+std::multiset.
+
+--
+Matthias Hofmann
+Anvil-Soft, CEO
+http://www.anvil-soft.com - The Creators of Toilet Tycoon
+http://www.anvil-soft.de - Die Macher des Klomanagers
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Francis Glassborow &lt;francis.glassbo...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-10-30T15:48:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Matthias Hofmann wrote:
+
+&gt; Yes, it uses operator&lt; to find out wether two elements are equal. But that's
+&gt; just my point: In a strict weak ordering, the relation &quot;neither a &lt; b nor b
+&gt; &lt; a&quot; does not mean equality. Equality requires a total ordering, so how come
+&gt; the standard requires only a strict weak ordering for associative
+&gt; containers?
+">
+
+Because it treats such cases as equivalence sets. I.e. they may not be
+strictly equal but they form a set of objects that are, in some sense,
+equivalent and the ordering does not matter.
+
+--
+Note that robinton.demon.co.uk addresses are no longer valid.
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;Matthias Hofmann&quot; &lt;hofm...@anvil-soft.com&gt; </POSTER>
+<POSTDATE> 2007-10-30T15:52:00 </POSTDATE>
+&quot;Daniel Krügler&quot; &lt;daniel.krueg ... @googlemail.com&gt; schrieb im Newsbeitrag
+news:1193697542.851359.16020@o38g2000hse.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On 29 Okt., 21:57, Greg Herlihy &lt;gre ... @mac.com&gt; wrote:
+&gt; So a typical example of a strict weak ordering is a comparison
+&gt; of character sequences that does ignore the case, e.g.
+&gt; &quot;aBcd&quot;, &quot;ABCD&quot;, &quot;abCD&quot;, .. belong to the same equivalence class.
+">
+
+Good example! :-) And you would have to insert the strings into a
+std::multiset in order to keep them all, as a std::set would only accept the
+one that is inserted first. So std::set requires a total ordering of its
+elements.
+
+--
+Matthias Hofmann
+Anvil-Soft, CEO
+http://www.anvil-soft.com - The Creators of Toilet Tycoon
+http://www.anvil-soft.de - Die Macher des Klomanagers
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;Matthias Hofmann&quot; &lt;hofm...@anvil-soft.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T12:39:00 </POSTDATE>
+&quot;Jiri Palecek&quot; &lt;jpale ... @web.de&gt; schrieb im Newsbeitrag
+news:fg6v4t$20ve$1@ns.felk.cvut.cz ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Matthias Hofmann wrote:
+
+&gt;&gt; &quot;Jiri Palecek&quot; &lt;jpale ... @web.de&gt; schrieb im Newsbeitrag
+&gt;&gt; news:fg2lrn$2sar$1@ns.felk.cvut.cz ...
+&gt;&gt;&gt; Matthias Hofmann wrote:
+&gt;&gt; relation &quot;&lt;&quot; as &quot;is a descendant of&quot; in a familiy tree? It satisfies the
+&gt;&gt; condition that if x is incomparable with y and y is incomparable with z,
+&gt;&gt; then x is incomparable with z. In other words, if x and y are siblings
+&gt;&gt; and
+&gt;&gt; y and z are siblings, then x and z are siblings. It's also not a total
+&gt;&gt; ordering because being siblings does not mean being equal.
+
+&gt; This is not a strict weak ordering, because I am incomparable with my
+&gt; aunt,
+&gt; my aunt is incomparable with my mother, which would imply I am
+&gt; incomparable
+&gt; with my mother, and that is a contradiction. (no incest, please :-) )
+">
+
+I see. So this is just an example of partial ordering.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt;&gt; 2.) Why does the standard require a strict weak ordering for
+&gt;&gt;&gt;&gt; associative
+&gt;&gt;&gt;&gt; containers, but guarantee a total ordering for std::less&lt;T*&gt; in
+&gt;&gt;&gt;&gt; 20.3.3/8? In
+&gt;&gt;&gt;&gt; a strict weak ordering, the relation &quot;neither a &lt; b nor b &lt; a&quot; is
+&gt;&gt;&gt;&gt; transitive, but does not mean equality. Incomparability only means
+&gt;&gt;&gt;&gt; equality in a total ordering, but doesn't an associative container need
+&gt;&gt;&gt;&gt; to
+&gt;&gt;&gt;&gt; know whether two elements are equal in order to determine whether the
+
+&gt;&gt;&gt; No, the containers treat such two elements as equal, without calling
+&gt;&gt;&gt; operator==.
+
+&gt;&gt; Yes, it uses operator&lt; to find out wether two elements are equal. But
+&gt;&gt; that's just my point: In a strict weak ordering, the relation &quot;neither a
+&gt;&gt; &lt;
+&gt;&gt; b nor b &lt; a&quot; does not mean equality. Equality requires a total ordering,
+
+&gt; But it does define an equivalence.
+">
+
+I found out yesterday that the standard only says that std::set::insert()
+will not insert an element if an *equivalent* element already exists. It
+does not say that those two elements need to be *equal*, so requiring a
+strict weak ordering seems to suffice.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; so how come the standard requires only a strict weak ordering for
+&gt;&gt; associative containers?
+
+&gt; It's useful, because it means there's only one function to be implemented
+&gt; and only 1.5 tests are needed in order to descend one level in a binary
+&gt; tree, it's useful because it lets you define equivalence used by the
+&gt; container even if it's different from operator==, and it is sufficient to
+&gt; implement any algorithm which requires a total ordering.
+">
+
+As far as I understand things, it is in the eye of the beholder whether
+equivalence means equality for an associative container.
+
+<QUOTE PREVIOUSPOST="
+&gt; Please, note once again that for every strict weak ordering on a set S,
+&gt; there is an equivalence ~ on S and S/~ (S factored by ~) is totally
+&gt; ordered. And conversely, for every set S, equivalence on S ~ and totally
+&gt; ordered set T of cardinality equal to S/~, if you take a bijection f
+&gt; between T and S/~ and define an ordering on S: a&lt;b iff f([a]_~)&lt;f([b]_~)
+&gt; then you'll get a strict weak ordering (much, MUCH better to draw the
+&gt; images than describe with the words). So, strict weak orderings do not
+&gt; really add a new quality beyond total orderings, it is just a convenience.
+">
+
+So does this mean that a total ordering is also a strict weak ordering, but
+not the other way round? Or does this mean that there's really no
+difference
+between the two, at least not more than a formal one?
+
+--
+Matthias Hofmann
+Anvil-Soft, CEO
+http://www.anvil-soft.com - The Creators of Toilet Tycoon
+http://www.anvil-soft.de - Die Macher des Klomanagers
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;Matthias Hofmann&quot; &lt;hofm...@anvil-soft.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T12:40:00 </POSTDATE>
+&quot;Matthias Hofmann&quot; &lt;hofm ... @anvil-soft.com&gt; schrieb im Newsbeitrag
+news:5ooo7eFnpq0nU1@mid.individual.net ...
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Then a type would have to support equality comparisons in addition to
+&gt;&gt; relational comparisons, in order to qualify as a type parameter to
+&gt;&gt; std::less&lt;&gt;. Yet equality comparisons may not make much sense for
+&gt;&gt; certains classes - nor is it clear what imposing this additional
+&gt;&gt; requirement would accomplish.
+
+&gt; I see, but associative containers still &quot;emulate&quot; equality comparisons
+&gt; with
+&gt; relational comparisons. They interpret &quot;neither a &lt; b nor b &lt; a&quot; as
+&gt; equality. Table 69 of the standard (on page 472) says that for associative
+&gt; containers that may contain at most one element for each key, insert()
+&gt; treats equivalence as equality, effectively requiring a total ordering.
+
+&gt; So std::set requires a total ordering, while std::multiset requires a
+&gt; strict
+&gt; weak ordering. This also answers my first question above: You cannot
+&gt; insert
+&gt; two distinct objects that have the same precedence into  std::set, but
+&gt; into
+&gt; std::multiset.
+">
+
+Meanwhile I think my interpretation was wrong. The standard does not say
+that equivalence means equality for a std::set. It only says that a
+std::set
+will not contain to elements that are equivalent with each other.
+
+--
+Matthias Hofmann
+Anvil-Soft, CEO
+http://www.anvil-soft.com - The Creators of Toilet Tycoon
+http://www.anvil-soft.de - Die Macher des Klomanagers
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;Matthias Hofmann&quot; &lt;hofm...@anvil-soft.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T12:41:00 </POSTDATE>
+&quot;Matthias Hofmann&quot; &lt;hofm ... @anvil-soft.com&gt; schrieb im Newsbeitrag
+news:5oor11FnovpqU1@mid.individual.net ...
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Daniel Krügler&quot; &lt;daniel.krueg ... @googlemail.com&gt; schrieb im Newsbeitrag
+&gt; news:1193697542.851359.16020@o38g2000hse.googlegroups.com ...
+&gt;&gt; On 29 Okt., 21:57, Greg Herlihy &lt;gre ... @mac.com&gt; wrote:
+
+&gt;&gt; So a typical example of a strict weak ordering is a comparison
+&gt;&gt; of character sequences that does ignore the case, e.g.
+&gt;&gt; &quot;aBcd&quot;, &quot;ABCD&quot;, &quot;abCD&quot;, .. belong to the same equivalence class.
+
+&gt; Good example! :-) And you would have to insert the strings into a
+&gt; std::multiset in order to keep them all, as a std::set would only accept
+&gt; the
+&gt; one that is inserted first. So std::set requires a total ordering of its
+&gt; elements.
+">
+
+I think I now understand that both std::set and std::multiset require
+only a
+weak ordering. The standard does not say anything about *equality*, it only
+mentions *equivalence* and that std::set will not contain two elements that
+are equivalent with each other.
+
+--
+Matthias Hofmann
+Anvil-Soft, CEO
+http://www.anvil-soft.com - The Creators of Toilet Tycoon
+http://www.anvil-soft.de - Die Macher des Klomanagers
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;Matthias Hofmann&quot; &lt;hofm...@anvil-soft.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T12:40:00 </POSTDATE>
+&quot;Francis Glassborow&quot; &lt;francis.glassbo ... @btinternet.com&gt; schrieb im
+Newsbeitrag news:Gbmdne6y0KKrtLranZ2dnUVZ8tvinZ2d@bt.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Matthias Hofmann wrote:
+
+&gt;&gt; Yes, it uses operator&lt; to find out wether two elements are equal. But
+&gt;&gt; that's
+&gt;&gt; just my point: In a strict weak ordering, the relation &quot;neither a &lt; b nor
+&gt;&gt; b
+&gt;&gt; &lt; a&quot; does not mean equality. Equality requires a total ordering, so how
+&gt;&gt; come
+&gt;&gt; the standard requires only a strict weak ordering for associative
+&gt;&gt; containers?
+
+&gt; Because it treats such cases as equivalence sets. I.e. they may not be
+&gt; strictly equal but they form a set of objects that are, in some sense,
+&gt; equivalent and the ordering does not matter.
+">
+
+Well, the ordering need not matter as, at least in a std::set, only one
+object can exist for each equivalence class. There's nothing to be ordered
+if you only have a single object. This is different with a std::multiset of
+course. But I think I now understand that a strict weak ordering is enough
+for associative containers to work and that requiring a total ordering
+would
+mean that every type would need to have a defined concept of equality.
+
+--
+Matthias Hofmann
+Anvil-Soft, CEO
+http://www.anvil-soft.com - The Creators of Toilet Tycoon
+http://www.anvil-soft.de - Die Macher des Klomanagers
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Jiří Paleček &lt;jpale...@web.de&gt; </POSTER>
+<POSTDATE> 2007-11-02T18:51:00 </POSTDATE>
+On Wed, 31 Oct 2007 17:39:41 +0100, Matthias Hofmann
+
+<QUOTE PREVIOUSPOST="
+&lt;hofm ... @anvil-soft.com&gt; wrote:
+&gt; &quot;Jiri Palecek&quot; &lt;jpale ... @web.de&gt; schrieb im Newsbeitrag
+&gt; news:fg6v4t$20ve$1@ns.felk.cvut.cz ...
+&gt;&gt; Matthias Hofmann wrote:
+
+&gt;&gt; Please, note once again that for every strict weak ordering on a set S,
+&gt;&gt; there is an equivalence ~ on S and S/~ (S factored by ~) is totally
+&gt;&gt; ordered. And conversely, for every set S, equivalence on S ~ and totally
+&gt;&gt; ordered set T of cardinality equal to S/~, if you take a bijection f
+&gt;&gt; between T and S/~ and define an ordering on S: a&lt;b iff f([a]_~)&lt;f([b]_~)
+&gt;&gt; then you'll get a strict weak ordering (much, MUCH better to draw the
+&gt;&gt; images than describe with the words). So, strict weak orderings do not
+&gt;&gt; really add a new quality beyond total orderings, it is just a
+&gt;&gt; convenience.
+
+&gt; So does this mean that a total ordering is also a strict weak ordering,
+&gt; but
+&gt; not the other way round? Or does this mean that there's really no
+&gt; difference
+&gt; between the two, at least not more than a formal one?
+">
+
+More or less the latter. They are not really the same, because of the
+reflexivity/irreflexivity axioms etc. (which is because total ordering is
+ususally defined in terms of &quot;&lt;=&quot;, whereas strict weak orderings in terms
+of &quot;&lt;&quot;). But if you have a total ordering defined by &quot;&lt;=&quot; and define
+
+a &lt; b  iff  !(a &gt;= b)
+
+you'll get a strict weak ordering. Conversely, if you have a strict weak
+ordering &quot;&lt;&quot; and define
+
+a &lt;= b  iff  !(a &gt; b)
+
+you'll get a total ordering (however, equality in this total ordering
+might mean any equivalence). So they are interchangeable.
+
+You can see this in this real life example: Imagine someone gives you a
+sequence of some objects and wants you to sort them. If he gives you a
+total ordering or a strict weak ordering, you can employ any of the
+sorting alogorithms you know (and what will happen to
+equivalent/incomparable items depends on the algorithm - stable/instable
+etc.). But if he gives you only a partial ordering you can only do a
+topological sort which means for example bigger time complexity.
+
+Regards
+Jiri Palecek
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Old Wolf &lt;oldw...@inspire.net.nz&gt; </POSTER>
+<POSTDATE> 2007-11-05T03:11:00 </POSTDATE>
+On Oct 26, 1:19 pm, &quot;Matthias Hofmann&quot; &lt;hofm ... @anvil-soft.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; However, I remember that the standard permits comparison of
+&gt; pointers only under certain circumstances. If I recall correctly, it is
+&gt; legal to compare two pointers that point to members of the same array, for
+&gt; example. I think it is also legal to compare pointers for equality, or for
+&gt; nullness.
+">
+
+In C it is undefined to compare pointers other than the cases
+you list. However, in C++ it is unspecified. (Meaning that the
+comparison must evaluate to either true or false).
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,813 @@
+<DOC>
+<DOCID> eng-NG-31-135518-9742868 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-12-09T23:01:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Is this a memory problem?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;benjaminfjo...@gmail.com&quot; &lt;benjaminfjo...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-09T23:01:00 </POSTDATE>
+I'm trying to use the combinatorics features in Sage to do some Chern
+class calculations. When I run the commands below, I get exceptions
+that I don't know how to interpret.
+
+The same calculation in Maple using John Stembridge's SF package
+completes successfully using roughly 149 MB and 7.08 s CPU time.
+
+Is this just an issue of memory limitation? If so, can (and how do) I
+lift the limitation to access more of the 2 GB I have on the machine
+I'm running this on?
+
+code follows:
+I'm using Sage 2.8.15 on an i386 Linux platform. I also tried this on
+an Intel OS X 10.5 machine with the same result. Also, all the powers
+of &quot;f&quot; from 1 to 7 work fine. f^8 and higher powers fail.
+-----------------------------------
+
+sage: s=SFASchur(QQ)
+sage: f=s([2,1]); f
+s[2, 1]
+sage: f^8
+---------------------------------------------------------------------------
+&lt;type 'exceptions.NotImplementedError'&gt;   Traceback (most recent call
+last)
+
+/Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&lt;ipython console&gt; in &lt;module&gt;()
+
+/Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+local/lib/python2.5/site-packages/sage/combinat/sfa.py in
+__pow__(self, n)
+881         z = A(Integer(1))
+882         for i in range(n):
+--&gt; 883             z *= self
+884         return z
+885
+
+/Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+element.pyx in sage.structure.element.RingElement.__imul__()
+
+.
+.
+.
+.
+
+/Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+symmetrica.pxi in sage.libs.symmetrica.symmetrica._py()
+
+&lt;type 'exceptions.NotImplementedError'&gt;: 22
+sage:
+</POST>
+<POST>
+<POSTER> &quot;William Stein&quot; &lt;wst...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-09T23:20:00 </POSTDATE>
+On Dec 9, 2007 8:01 PM, benjaminfjo ... @gmail.com
+
+<QUOTE PREVIOUSPOST="
+&lt;benjaminfjo ... @gmail.com&gt; wrote:
+
+&gt; I'm trying to use the combinatorics features in Sage to do some Chern
+&gt; class calculations. When I run the commands below, I get exceptions
+&gt; that I don't know how to interpret.
+
+&gt; The same calculation in Maple using John Stembridge's SF package
+&gt; completes successfully using roughly 149 MB and 7.08 s CPU time.
+
+&gt; Is this just an issue of memory limitation? If so, can (and how do) I
+&gt; lift the limitation to access more of the 2 GB I have on the machine
+&gt; I'm running this on?
+
+&gt; code follows:
+&gt; I'm using Sage 2.8.15 on an i386 Linux platform. I also tried this on
+&gt; an Intel OS X 10.5 machine with the same result. Also, all the powers
+&gt; of &quot;f&quot; from 1 to 7 work fine. f^8 and higher powers fail.
+&gt; -----------------------------------
+
+&gt; sage: s=SFASchur(QQ)
+&gt; sage: f=s([2,1]); f
+&gt; s[2, 1]
+&gt; sage: f^8
+&gt; ---------------------------------------------------------------------------
+&gt; &lt;type 'exceptions.NotImplementedError'&gt;   Traceback (most recent call
+&gt; last)
+
+&gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; &lt;ipython console&gt; in &lt;module&gt;()
+
+&gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; local/lib/python2.5/site-packages/sage/combinat/sfa.py in
+&gt; __pow__(self, n)
+&gt;     881         z = A(Integer(1))
+&gt;     882         for i in range(n):
+&gt; --&gt; 883             z *= self
+&gt;     884         return z
+&gt;     885
+
+&gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; element.pyx in sage.structure.element.RingElement.__imul__()
+
+&gt; .
+&gt; .
+&gt; .
+&gt; .
+
+&gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; symmetrica.pxi in sage.libs.symmetrica.symmetrica._py()
+
+&gt; &lt;type 'exceptions.NotImplementedError'&gt;: 22
+&gt; sage:
+">
+
+Mike Hansen -- who wrote the code you're using --
+will likely have to answer this question better than me.    I suspect
+perhaps Symmetrica was compiled with certain hard-coded
+options set, and they were only set to allow up to something
+of &quot;degree 7&quot;, i.e., this works:
+
+sage: s=SFASchur(QQ); f=s([2,1]); f
+s[2, 1]
+sage: time g=f^7
+CPU times: user 0.17 s, sys: 0.00 s, total: 0.17 s
+Wall time: 0.17
+sage: time g=f^6
+CPU times: user 0.07 s, sys: 0.00 s, total: 0.07 s
+Wall time: 0.07
+sage: time g=f^5
+CPU times: user 0.03 s, sys: 0.00 s, total: 0.03 s
+Wall time: 0.03
+
+Notice by the way that the time goes up by about 2.5 every
+time, so it would likely take about 0.42 seconds to do
+the calculation you want will likely be nearly 17 times
+faster in Sage than in John Stembridge's SF package
+one the above issue gets resolved.
+
+Important note: There is a brand new Symmetrica release
+(maybe 4 years in the making):
+http://trac.sagemath.org/sage_trac/ticket/1417
+This might fix the above issue, etc.   I'm going to try
+that new spkg out along with the corresponding patch
+to see if it fixes the problem...
+
+William
+</POST>
+<POST>
+<POSTER> mabshoff &lt;Michael.Absh...@fsmath.mathematik.uni-dortmund.de&gt; </POSTER>
+<POSTDATE> 2007-12-09T23:23:00 </POSTDATE>
+On Dec 10, 5:20 am, &quot;William Stein&quot; &lt;wst ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 9, 2007 8:01 PM, benjaminfjo ... @gmail.com
+
+&gt; &lt;benjaminfjo ... @gmail.com&gt; wrote:
+
+&gt; &gt; I'm trying to use the combinatorics features in Sage to do some Chern
+&gt; &gt; class calculations. When I run the commands below, I get exceptions
+&gt; &gt; that I don't know how to interpret.
+
+&gt; &gt; The same calculation in Maple using John Stembridge's SF package
+&gt; &gt; completes successfully using roughly 149 MB and 7.08 s CPU time.
+
+&gt; &gt; Is this just an issue of memory limitation? If so, can (and how do) I
+&gt; &gt; lift the limitation to access more of the 2 GB I have on the machine
+&gt; &gt; I'm running this on?
+
+&gt; &gt; code follows:
+&gt; &gt; I'm using Sage 2.8.15 on an i386 Linux platform. I also tried this on
+&gt; &gt; an Intel OS X 10.5 machine with the same result. Also, all the powers
+&gt; &gt; of &quot;f&quot; from 1 to 7 work fine. f^8 and higher powers fail.
+&gt; &gt; -----------------------------------
+
+&gt; &gt; sage: s=SFASchur(QQ)
+&gt; &gt; sage: f=s([2,1]); f
+&gt; &gt; s[2, 1]
+&gt; &gt; sage: f^8
+&gt; &gt; ---------------------------------------------------------------------------
+&gt; &gt; &lt;type 'exceptions.NotImplementedError'&gt;   Traceback (most recent call
+&gt; &gt; last)
+
+&gt; &gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; &gt; &lt;ipython console&gt; in &lt;module&gt;()
+
+&gt; &gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; &gt; local/lib/python2.5/site-packages/sage/combinat/sfa.py in
+&gt; &gt; __pow__(self, n)
+&gt; &gt;     881         z = A(Integer(1))
+&gt; &gt;     882         for i in range(n):
+&gt; &gt; --&gt; 883             z *= self
+&gt; &gt;     884         return z
+&gt; &gt;     885
+
+&gt; &gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; &gt; element.pyx in sage.structure.element.RingElement.__imul__()
+
+&gt; &gt; .
+&gt; &gt; .
+&gt; &gt; .
+&gt; &gt; .
+
+&gt; &gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; &gt; symmetrica.pxi in sage.libs.symmetrica.symmetrica._py()
+
+&gt; &gt; &lt;type 'exceptions.NotImplementedError'&gt;: 22
+&gt; &gt; sage:
+
+&gt; Mike Hansen -- who wrote the code you're using --
+&gt; will likely have to answer this question better than me.    I suspect
+&gt; perhaps Symmetrica was compiled with certain hard-coded
+&gt; options set, and they were only set to allow up to something
+&gt; of &quot;degree 7&quot;, i.e., this works:
+
+&gt; sage: s=SFASchur(QQ); f=s([2,1]); f
+&gt; s[2, 1]
+&gt; sage: time g=f^7
+&gt; CPU times: user 0.17 s, sys: 0.00 s, total: 0.17 s
+&gt; Wall time: 0.17
+&gt; sage: time g=f^6
+&gt; CPU times: user 0.07 s, sys: 0.00 s, total: 0.07 s
+&gt; Wall time: 0.07
+&gt; sage: time g=f^5
+&gt; CPU times: user 0.03 s, sys: 0.00 s, total: 0.03 s
+&gt; Wall time: 0.03
+
+&gt; Notice by the way that the time goes up by about 2.5 every
+&gt; time, so it would likely take about 0.42 seconds to do
+&gt; the calculation you want will likely be nearly 17 times
+&gt; faster in Sage than in John Stembridge's SF package
+&gt; one the above issue gets resolved.
+
+&gt; Important note: There is a brand new Symmetrica release
+&gt; (maybe 4 years in the making):
+&gt; http://trac.sagemath.org/sage_trac/ticket/1417
+&gt; This might fix the above issue, etc.   I'm going to try
+&gt; that new spkg out along with the corresponding patch
+&gt; to see if it fixes the problem...
+">
+
+So numbers from 2.9.alpha3:
+
+sage: time r=f^9
+CPU times: user 0.98 s, sys: 0.01 s, total: 0.99 s
+Wall time: 0.99
+
+But at f^10 it fails again also with the new symmetrica.spkg. Mike:
+any idea how to fix this?
+
+<QUOTE PREVIOUSPOST="
+&gt; William
+">
+
+Cheers,
+
+Michael
+</POST>
+<POST>
+<POSTER> &quot;Mike Hansen&quot; &lt;mhan...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-09T23:34:00 </POSTDATE>
+Hello,
+
+The actual issue was that I forgot to covert symmetrica's LONGINT type
+( 22 ) over to the correct Sage type.  I hadn't actually tested it
+with calculations that got up to numbers that big.  I made a ticket
+for this and posted a patch: http://sagetrac.org/sage_trac/ticket/1445
+It will be in the next version ( 2.9 ) which will come out in about 3
+days.
+
+--Mike
+
+On Dec 9, 2007 10:01 PM, benjaminfjo ... @gmail.com
+
+<QUOTE PREVIOUSPOST="
+&lt;benjaminfjo ... @gmail.com&gt; wrote:
+
+&gt; I'm trying to use the combinatorics features in Sage to do some Chern
+&gt; class calculations. When I run the commands below, I get exceptions
+&gt; that I don't know how to interpret.
+
+&gt; The same calculation in Maple using John Stembridge's SF package
+&gt; completes successfully using roughly 149 MB and 7.08 s CPU time.
+
+&gt; Is this just an issue of memory limitation? If so, can (and how do) I
+&gt; lift the limitation to access more of the 2 GB I have on the machine
+&gt; I'm running this on?
+
+&gt; code follows:
+&gt; I'm using Sage 2.8.15 on an i386 Linux platform. I also tried this on
+&gt; an Intel OS X 10.5 machine with the same result. Also, all the powers
+&gt; of &quot;f&quot; from 1 to 7 work fine. f^8 and higher powers fail.
+&gt; -----------------------------------
+
+&gt; sage: s=SFASchur(QQ)
+&gt; sage: f=s([2,1]); f
+&gt; s[2, 1]
+&gt; sage: f^8
+&gt; ---------------------------------------------------------------------------
+&gt; &lt;type 'exceptions.NotImplementedError'&gt;   Traceback (most recent call
+&gt; last)
+
+&gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; &lt;ipython console&gt; in &lt;module&gt;()
+
+&gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; local/lib/python2.5/site-packages/sage/combinat/sfa.py in
+&gt; __pow__(self, n)
+&gt;     881         z = A(Integer(1))
+&gt;     882         for i in range(n):
+&gt; --&gt; 883             z *= self
+&gt;     884         return z
+&gt;     885
+
+&gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; element.pyx in sage.structure.element.RingElement.__imul__()
+
+&gt; .
+&gt; .
+&gt; .
+&gt; .
+
+&gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; symmetrica.pxi in sage.libs.symmetrica.symmetrica._py()
+
+&gt; &lt;type 'exceptions.NotImplementedError'&gt;: 22
+&gt; sage:
+">
+</POST>
+<POST>
+<POSTER> &quot;William Stein&quot; &lt;wst...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-09T23:39:00 </POSTDATE>
+On Dec 9, 2007 8:34 PM, Mike Hansen &lt;mhan ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hello,
+
+&gt; The actual issue was that I forgot to covert symmetrica's LONGINT type
+&gt; ( 22 ) over to the correct Sage type.  I hadn't actually tested it
+&gt; with calculations that got up to numbers that big.  I made a ticket
+&gt; for this and posted a patch: http://sagetrac.org/sage_trac/ticket/1445
+&gt; It will be in the next version ( 2.9 ) which will come out in about 3
+&gt; days.
+">
+
+And moreover, it can do f^10 in &lt; 7 seconds. :-)
+
+William
+</POST>
+<POST>
+<POSTER> BFJ &lt;benjaminfjo...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-09T23:44:00 </POSTDATE>
+That was fast!
+
+Thanks for looking into the problem. I'll be doing more extensive
+calculations over the next couple of weeks (I'm porting some Maple
+code). I'll let you know if I run into any other problems. I'm excited
+about the prospect of a 17-fold performance increase.
+
+Thanks very much,
+
+--
+benjaminfjo ... @gmail.com
+
+On Dec 9, 11:34 pm, &quot;Mike Hansen&quot; &lt;mhan ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hello,
+
+&gt; The actual issue was that I forgot to covert symmetrica's LONGINT type
+&gt; ( 22 ) over to the correct Sage type.  I hadn't actually tested it
+&gt; with calculations that got up to numbers that big.  I made a ticket
+&gt; for this and posted a patch: http://sagetrac.org/sage_trac/ticket/1445
+&gt; It will be in the next version ( 2.9 ) which will come out in about 3
+&gt; days.
+
+&gt; --Mike
+
+&gt; On Dec 9, 2007 10:01 PM, benjaminfjo ... @gmail.com
+
+&gt; &lt;benjaminfjo ... @gmail.com&gt; wrote:
+
+&gt; &gt; I'm trying to use the combinatorics features in Sage to do some Chern
+&gt; &gt; class calculations. When I run the commands below, I get exceptions
+&gt; &gt; that I don't know how to interpret.
+
+&gt; &gt; The same calculation in Maple using John Stembridge's SF package
+&gt; &gt; completes successfully using roughly 149 MB and 7.08 s CPU time.
+
+&gt; &gt; Is this just an issue of memory limitation? If so, can (and how do) I
+&gt; &gt; lift the limitation to access more of the 2 GB I have on the machine
+&gt; &gt; I'm running this on?
+
+&gt; &gt; code follows:
+&gt; &gt; I'm using Sage 2.8.15 on an i386 Linux platform. I also tried this on
+&gt; &gt; an Intel OS X 10.5 machine with the same result. Also, all the powers
+&gt; &gt; of &quot;f&quot; from 1 to 7 work fine. f^8 and higher powers fail.
+&gt; &gt; -----------------------------------
+
+&gt; &gt; sage: s=SFASchur(QQ)
+&gt; &gt; sage: f=s([2,1]); f
+&gt; &gt; s[2, 1]
+&gt; &gt; sage: f^8
+&gt; &gt; ---------------------------------------------------------------------------
+&gt; &gt; &lt;type 'exceptions.NotImplementedError'&gt;   Traceback (most recent call
+&gt; &gt; last)
+
+&gt; &gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; &gt; &lt;ipython console&gt; in &lt;module&gt;()
+
+&gt; &gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; &gt; local/lib/python2.5/site-packages/sage/combinat/sfa.py in
+&gt; &gt; __pow__(self, n)
+&gt; &gt;     881         z = A(Integer(1))
+&gt; &gt;     882         for i in range(n):
+&gt; &gt; --&gt; 883             z *= self
+&gt; &gt;     884         return z
+&gt; &gt;     885
+
+&gt; &gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; &gt; element.pyx in sage.structure.element.RingElement.__imul__()
+
+&gt; &gt; .
+&gt; &gt; .
+&gt; &gt; .
+&gt; &gt; .
+
+&gt; &gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; &gt; symmetrica.pxi in sage.libs.symmetrica.symmetrica._py()
+
+&gt; &gt; &lt;type 'exceptions.NotImplementedError'&gt;: 22
+&gt; &gt; sage:
+">
+</POST>
+<POST>
+<POSTER> &quot;William Stein&quot; &lt;wst...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-10T00:02:00 </POSTDATE>
+On Dec 9, 2007 8:44 PM, BFJ &lt;benjaminfjo ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; That was fast!
+
+&gt; Thanks for looking into the problem. I'll be doing more extensive
+&gt; calculations over the next couple of weeks (I'm porting some Maple
+&gt; code). I'll let you know if I run into any other problems. I'm excited
+&gt; about the prospect of a 17-fold performance increase.
+
+&gt; Thanks very much,
+">
+
+You're welcome.  Keep us posted.  And of course, please consider
+contributing your code to Sage if it is of at all general interest, or
+would be a good example.
+
+William
+
+<QUOTE PREVIOUSPOST="
+&gt; --
+&gt; benjaminfjo ... @gmail.com
+
+&gt; On Dec 9, 11:34 pm, &quot;Mike Hansen&quot; &lt;mhan ... @gmail.com&gt; wrote:
+&gt; &gt; Hello,
+
+&gt; &gt; The actual issue was that I forgot to covert symmetrica's LONGINT type
+&gt; &gt; ( 22 ) over to the correct Sage type.  I hadn't actually tested it
+&gt; &gt; with calculations that got up to numbers that big.  I made a ticket
+&gt; &gt; for this and posted a patch: http://sagetrac.org/sage_trac/ticket/1445
+&gt; &gt; It will be in the next version ( 2.9 ) which will come out in about 3
+&gt; &gt; days.
+
+&gt; &gt; --Mike
+
+&gt; &gt; On Dec 9, 2007 10:01 PM, benjaminfjo ... @gmail.com
+
+&gt; &gt; &lt;benjaminfjo ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; I'm trying to use the combinatorics features in Sage to do some Chern
+&gt; &gt; &gt; class calculations. When I run the commands below, I get exceptions
+&gt; &gt; &gt; that I don't know how to interpret.
+
+&gt; &gt; &gt; The same calculation in Maple using John Stembridge's SF package
+&gt; &gt; &gt; completes successfully using roughly 149 MB and 7.08 s CPU time.
+
+&gt; &gt; &gt; Is this just an issue of memory limitation? If so, can (and how do) I
+&gt; &gt; &gt; lift the limitation to access more of the 2 GB I have on the machine
+&gt; &gt; &gt; I'm running this on?
+
+&gt; &gt; &gt; code follows:
+&gt; &gt; &gt; I'm using Sage 2.8.15 on an i386 Linux platform. I also tried this on
+&gt; &gt; &gt; an Intel OS X 10.5 machine with the same result. Also, all the powers
+&gt; &gt; &gt; of &quot;f&quot; from 1 to 7 work fine. f^8 and higher powers fail.
+&gt; &gt; &gt; -----------------------------------
+
+&gt; &gt; &gt; sage: s=SFASchur(QQ)
+&gt; &gt; &gt; sage: f=s([2,1]); f
+&gt; &gt; &gt; s[2, 1]
+&gt; &gt; &gt; sage: f^8
+&gt; &gt; &gt; ---------------------------------------------------------------------------
+&gt; &gt; &gt; &lt;type 'exceptions.NotImplementedError'&gt;   Traceback (most recent call
+&gt; &gt; &gt; last)
+
+&gt; &gt; &gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; &gt; &gt; &lt;ipython console&gt; in &lt;module&gt;()
+
+&gt; &gt; &gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; &gt; &gt; local/lib/python2.5/site-packages/sage/combinat/sfa.py in
+&gt; &gt; &gt; __pow__(self, n)
+&gt; &gt; &gt;     881         z = A(Integer(1))
+&gt; &gt; &gt;     882         for i in range(n):
+&gt; &gt; &gt; --&gt; 883             z *= self
+&gt; &gt; &gt;     884         return z
+&gt; &gt; &gt;     885
+
+&gt; &gt; &gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; &gt; &gt; element.pyx in sage.structure.element.RingElement.__imul__()
+
+&gt; &gt; &gt; .
+&gt; &gt; &gt; .
+&gt; &gt; &gt; .
+&gt; &gt; &gt; .
+
+&gt; &gt; &gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; &gt; &gt; symmetrica.pxi in sage.libs.symmetrica.symmetrica._py()
+
+&gt; &gt; &gt; &lt;type 'exceptions.NotImplementedError'&gt;: 22
+&gt; &gt; &gt; sage:
+">
+
+--
+William Stein
+Associate Professor of Mathematics
+University of Washington
+http://wstein.org
+</POST>
+<POST>
+<POSTER> &quot;Mike Hansen&quot; &lt;mhan...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-10T00:46:00 </POSTDATE>
+In case you're curious, here are some timings for higher powers along
+with memory usage.
+
+sage: s = SFASchur(QQ)
+sage: f = s([2,1])
+sage: get_memory_usage()
+515.17578125
+
+sage: time a = f^10
+CPU times: user 6.64 s, sys: 0.03 s, total: 6.67 s
+Wall time: 6.74
+sage: get_memory_usage()
+526.26171875  #11MB
+
+sage: time a = f^11
+CPU times: user 30.18 s, sys: 0.05 s, total: 30.23 s
+Wall time: 30.98
+sage: get_memory_usage()
+536.171875 #21MB
+
+sage: time a = f^12
+CPU times: user 116.47 s, sys: 0.13 s, total: 116.60 s
+Wall time: 119.75
+sage: get_memory_usage()
+554.5 #39MB
+
+sage: time a = f^13
+CPU times: user 437.49 s, sys: 0.44 s, total: 437.94 s
+Wall time: 444.04
+sage: get_memory_usage()
+585.796875  #70MB
+sage: len(a)
+30641
+
+I believe that there is eventual room for improvement in the memory usage.
+
+--Mike
+
+On Dec 9, 2007 10:44 PM, BFJ &lt;benjaminfjo ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; That was fast!
+
+&gt; Thanks for looking into the problem. I'll be doing more extensive
+&gt; calculations over the next couple of weeks (I'm porting some Maple
+&gt; code). I'll let you know if I run into any other problems. I'm excited
+&gt; about the prospect of a 17-fold performance increase.
+
+&gt; Thanks very much,
+
+&gt; --
+&gt; benjaminfjo ... @gmail.com
+
+&gt; On Dec 9, 11:34 pm, &quot;Mike Hansen&quot; &lt;mhan ... @gmail.com&gt; wrote:
+&gt; &gt; Hello,
+
+&gt; &gt; The actual issue was that I forgot to covert symmetrica's LONGINT type
+&gt; &gt; ( 22 ) over to the correct Sage type.  I hadn't actually tested it
+&gt; &gt; with calculations that got up to numbers that big.  I made a ticket
+&gt; &gt; for this and posted a patch: http://sagetrac.org/sage_trac/ticket/1445
+&gt; &gt; It will be in the next version ( 2.9 ) which will come out in about 3
+&gt; &gt; days.
+
+&gt; &gt; --Mike
+
+&gt; &gt; On Dec 9, 2007 10:01 PM, benjaminfjo ... @gmail.com
+
+&gt; &gt; &lt;benjaminfjo ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; I'm trying to use the combinatorics features in Sage to do some Chern
+&gt; &gt; &gt; class calculations. When I run the commands below, I get exceptions
+&gt; &gt; &gt; that I don't know how to interpret.
+
+&gt; &gt; &gt; The same calculation in Maple using John Stembridge's SF package
+&gt; &gt; &gt; completes successfully using roughly 149 MB and 7.08 s CPU time.
+
+&gt; &gt; &gt; Is this just an issue of memory limitation? If so, can (and how do) I
+&gt; &gt; &gt; lift the limitation to access more of the 2 GB I have on the machine
+&gt; &gt; &gt; I'm running this on?
+
+&gt; &gt; &gt; code follows:
+&gt; &gt; &gt; I'm using Sage 2.8.15 on an i386 Linux platform. I also tried this on
+&gt; &gt; &gt; an Intel OS X 10.5 machine with the same result. Also, all the powers
+&gt; &gt; &gt; of &quot;f&quot; from 1 to 7 work fine. f^8 and higher powers fail.
+&gt; &gt; &gt; -----------------------------------
+
+&gt; &gt; &gt; sage: s=SFASchur(QQ)
+&gt; &gt; &gt; sage: f=s([2,1]); f
+&gt; &gt; &gt; s[2, 1]
+&gt; &gt; &gt; sage: f^8
+&gt; &gt; &gt; ---------------------------------------------------------------------------
+&gt; &gt; &gt; &lt;type 'exceptions.NotImplementedError'&gt;   Traceback (most recent call
+&gt; &gt; &gt; last)
+
+&gt; &gt; &gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; &gt; &gt; &lt;ipython console&gt; in &lt;module&gt;()
+
+&gt; &gt; &gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; &gt; &gt; local/lib/python2.5/site-packages/sage/combinat/sfa.py in
+&gt; &gt; &gt; __pow__(self, n)
+&gt; &gt; &gt;     881         z = A(Integer(1))
+&gt; &gt; &gt;     882         for i in range(n):
+&gt; &gt; &gt; --&gt; 883             z *= self
+&gt; &gt; &gt;     884         return z
+&gt; &gt; &gt;     885
+
+&gt; &gt; &gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; &gt; &gt; element.pyx in sage.structure.element.RingElement.__imul__()
+
+&gt; &gt; &gt; .
+&gt; &gt; &gt; .
+&gt; &gt; &gt; .
+&gt; &gt; &gt; .
+
+&gt; &gt; &gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; &gt; &gt; symmetrica.pxi in sage.libs.symmetrica.symmetrica._py()
+
+&gt; &gt; &gt; &lt;type 'exceptions.NotImplementedError'&gt;: 22
+&gt; &gt; &gt; sage:
+">
+</POST>
+<POST>
+<POSTER> mabshoff &lt;Michael.Absh...@fsmath.mathematik.uni-dortmund.de&gt; </POSTER>
+<POSTDATE> 2007-12-10T05:48:00 </POSTDATE>
+On Dec 10, 6:46 am, &quot;Mike Hansen&quot; &lt;mhan ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In case you're curious, here are some timings for higher powers along
+&gt; with memory usage.
+
+&gt; sage: s = SFASchur(QQ)
+&gt; sage: f = s([2,1])
+&gt; sage: get_memory_usage()
+&gt; 515.17578125
+
+&gt; sage: time a = f^10
+&gt; CPU times: user 6.64 s, sys: 0.03 s, total: 6.67 s
+&gt; Wall time: 6.74
+&gt; sage: get_memory_usage()
+&gt; 526.26171875  #11MB
+
+&gt; sage: time a = f^11
+&gt; CPU times: user 30.18 s, sys: 0.05 s, total: 30.23 s
+&gt; Wall time: 30.98
+&gt; sage: get_memory_usage()
+&gt; 536.171875 #21MB
+
+&gt; sage: time a = f^12
+&gt; CPU times: user 116.47 s, sys: 0.13 s, total: 116.60 s
+&gt; Wall time: 119.75
+&gt; sage: get_memory_usage()
+&gt; 554.5 #39MB
+
+&gt; sage: time a = f^13
+&gt; CPU times: user 437.49 s, sys: 0.44 s, total: 437.94 s
+&gt; Wall time: 444.04
+&gt; sage: get_memory_usage()
+&gt; 585.796875  #70MB
+&gt; sage: len(a)
+&gt; 30641
+
+&gt; I believe that there is eventual room for improvement in the memory usage.
+
+&gt; --Mike
+
+&gt; On Dec 9, 2007 10:44 PM, BFJ &lt;benjaminfjo ... @gmail.com&gt; wrote:
+
+&gt; &gt; That was fast!
+
+&gt; &gt; Thanks for looking into the problem. I'll be doing more extensive
+&gt; &gt; calculations over the next couple of weeks (I'm porting some Maple
+&gt; &gt; code). I'll let you know if I run into any other problems. I'm excited
+&gt; &gt; about the prospect of a 17-fold performance increase.
+
+&gt; &gt; Thanks very much,
+">
+
+You can test those improvements yourself by building
+
+http://sage.math.washington.edu/home/mabshoff/sage-2.9.alpha4.tar
+
+[182 MB]. Assuming you have the standard build tools it should build
+in about two hours. You can also wait for 2 days and 2.9 should be
+released in binary form.
+
+Cheers,
+
+Michael
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; --
+&gt; &gt; benjaminfjo ... @gmail.com
+
+&gt; &gt; On Dec 9, 11:34 pm, &quot;Mike Hansen&quot; &lt;mhan ... @gmail.com&gt; wrote:
+&gt; &gt; &gt; Hello,
+
+&gt; &gt; &gt; The actual issue was that I forgot to covert symmetrica's LONGINT type
+&gt; &gt; &gt; ( 22 ) over to the correct Sage type.  I hadn't actually tested it
+&gt; &gt; &gt; with calculations that got up to numbers that big.  I made a ticket
+&gt; &gt; &gt; for this and posted a patch: http://sagetrac.org/sage_trac/ticket/1445
+&gt; &gt; &gt; It will be in the next version ( 2.9 ) which will come out in about 3
+&gt; &gt; &gt; days.
+
+&gt; &gt; &gt; --Mike
+
+&gt; &gt; &gt; On Dec 9, 2007 10:01 PM, benjaminfjo ... @gmail.com
+
+&gt; &gt; &gt; &lt;benjaminfjo ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; &gt; I'm trying to use the combinatorics features in Sage to do some Chern
+&gt; &gt; &gt; &gt; class calculations. When I run the commands below, I get exceptions
+&gt; &gt; &gt; &gt; that I don't know how to interpret.
+
+&gt; &gt; &gt; &gt; The same calculation in Maple using John Stembridge's SF package
+&gt; &gt; &gt; &gt; completes successfully using roughly 149 MB and 7.08 s CPU time.
+
+&gt; &gt; &gt; &gt; Is this just an issue of memory limitation? If so, can (and how do) I
+&gt; &gt; &gt; &gt; lift the limitation to access more of the 2 GB I have on the machine
+&gt; &gt; &gt; &gt; I'm running this on?
+
+&gt; &gt; &gt; &gt; code follows:
+&gt; &gt; &gt; &gt; I'm using Sage 2.8.15 on an i386 Linux platform. I also tried this on
+&gt; &gt; &gt; &gt; an Intel OS X 10.5 machine with the same result. Also, all the powers
+&gt; &gt; &gt; &gt; of &quot;f&quot; from 1 to 7 work fine. f^8 and higher powers fail.
+&gt; &gt; &gt; &gt; -----------------------------------
+
+&gt; &gt; &gt; &gt; sage: s=SFASchur(QQ)
+&gt; &gt; &gt; &gt; sage: f=s([2,1]); f
+&gt; &gt; &gt; &gt; s[2, 1]
+&gt; &gt; &gt; &gt; sage: f^8
+&gt; &gt; &gt; &gt; ---------------------------------------------------------------------------
+&gt; &gt; &gt; &gt; &lt;type 'exceptions.NotImplementedError'&gt;   Traceback (most recent call
+&gt; &gt; &gt; &gt; last)
+
+&gt; &gt; &gt; &gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; &gt; &gt; &gt; &lt;ipython console&gt; in &lt;module&gt;()
+
+&gt; &gt; &gt; &gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; &gt; &gt; &gt; local/lib/python2.5/site-packages/sage/combinat/sfa.py in
+&gt; &gt; &gt; &gt; __pow__(self, n)
+&gt; &gt; &gt; &gt;     881         z = A(Integer(1))
+&gt; &gt; &gt; &gt;     882         for i in range(n):
+&gt; &gt; &gt; &gt; --&gt; 883             z *= self
+&gt; &gt; &gt; &gt;     884         return z
+&gt; &gt; &gt; &gt;     885
+
+&gt; &gt; &gt; &gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; &gt; &gt; &gt; element.pyx in sage.structure.element.RingElement.__imul__()
+
+&gt; &gt; &gt; &gt; .
+&gt; &gt; &gt; &gt; .
+&gt; &gt; &gt; &gt; .
+&gt; &gt; &gt; &gt; .
+
+&gt; &gt; &gt; &gt; /Users/benjaminjones/Desktop/sage-2.8.15-osx10.5-intel-i386-Darwin/
+&gt; &gt; &gt; &gt; symmetrica.pxi in sage.libs.symmetrica.symmetrica._py()
+
+&gt; &gt; &gt; &gt; &lt;type 'exceptions.NotImplementedError'&gt;: 22
+&gt; &gt; &gt; &gt; sage:
+">
+</POST>
+</TEXT>
+</BODY>
+</DOC>

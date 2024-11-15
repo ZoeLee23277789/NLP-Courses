@@ -1,0 +1,469 @@
+<DOC>
+<DOCID> eng-NG-31-104294-6420698 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-03-13T18:29:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Gpolygon from encoded
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> "Kromkowski" &lt;kromkow...@aol.com&gt; </POSTER>
+<POSTDATE> 2007-03-13T18:29:00 </POSTDATE>
+There was a request for Gpolygons from encoded.  Would something like
+this do it?
+Would you actually have to add the polyline? It seems like this then
+is already in the API?
+
+//create a POLYLINE from encoded points
+var color = "red"
+var weight = 1
+var encodedPoints = "whateverthisis"
+var ecodedLevels = "somethingelse"
+var encodedPolyline = new GPolyline.fromEncoded({
+color: color,
+weight: weight,
+points: encodedPoints,
+levels: encodedLevels,
+zoomFactor: 1,
+numLevels: 1});
+map.addOverlay(poly);
+
+//get points for POLYGON
+for (var v=0; v&lt;poly.getVertexCount(); v++) {
+var points =[];
+var lat = poly.getVertex(v).getPoint().lat();
+var lng = poly.getVertex(v).getPoint().lng();
+var polyPoint =new GLatLng(lat,lng)
+//probably could do above in one step
+points.push(polyPoint);
+}
+var strokeOpac = .5
+var fillOpac = .5
+
+//REMOVE THE POLYLINE
+map.removeOverlay(poly);
+
+//ADD THE POLYGON which can now be filled
+var Polygon =
+createPolygon(points,color,weight,strokeOpac,color,fillOpac)
+map.addOverlay(polygon);
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+function createPolygon(points,color,weight,strokeOpac,color,fillOpac)
+{
+var polygon = new
+GPolygon(points,color,weight,strokeOpac,color,fillOpac);
+return polygon;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+</POST>
+<POST>
+<POSTER> "J." &lt;jwornowit...@googlemail.com&gt; </POSTER>
+<POSTDATE> 2007-03-13T18:46:00 </POSTDATE>
+Something like this would do it. getVertex() returns a GLatLng, and it
+can be called without actually adding the polyline to the map.
+
+-- J.
+</POST>
+<POST>
+<POSTER> "J." &lt;jwornowit...@googlemail.com&gt; </POSTER>
+<POSTDATE> 2007-03-13T19:05:00 </POSTDATE>
+Unlike the encoded polyline, though, the derived polygon wouldn't
+loose detail when zooming out; so it could still make sense to have a
+dedicated function for it.
+
+-- J.
+</POST>
+<POST>
+<POSTER> "Kromkowski" &lt;kromkow...@aol.com&gt; </POSTER>
+<POSTDATE> 2007-03-14T09:38:00 </POSTDATE>
+Yeah, I knew that getVertex() returned a GLatLng, but I was cribbing
+from some code Mike Williams had posted, in a different context.
+http://groups.google.com/group/Google-Maps-API/browse_thread/thread/6...
+In that thread, Marcel had also mention using:
+
+var poly = new GPolyline(points,'#B62DFD',2,1);
+var polypoints= poly.z
+
+There was some question about potential changes to .z, which made that
+potentially unsafe.
+But that would seem to imply that the API already contains the
+necessary stuff for the "Gpolygon from encoded"
+that has been requested as a feature. It just need to be documented.
+
+In any case,  as I understand your post:
+
+var encodedPolyline = new GPolyline.fromEncoded({
+color: color,
+weight: weight,
+points: encodedPoints,
+levels: encodedLevels,
+zoomFactor: zoomFactor,
+numLevels: numLevels});
+
+creates a POLYLINE sufficient to then extract vertices, necessary to
+create a POLYGON, without actually adding and then removing.
+
+I suppose I should test but theory is sufficient for me at this time,
+but do you even need to have values set for
+color, weight, zoomFactor, or numLevels, or even levels?  (I.e. can
+they just be null ) to suffiecient create a POLYLINE whose vertices
+can be read?
+
+In other words, can you do just this:
+
+var encodedPoints = "some@#$%encodedstring"
+var encodedPolyline = new GPolyline.fromEncoded({
+color: null,
+weight: null,
+points: encodedPoints,
+levels: null,
+zoomFactor: null,
+numLevels: null});
+
+or even just
+
+var encodedPoints = "some@#$%encodedstring"
+var encodedPolyline = new GPolyline.fromEncoded({points:
+encodedPoints});
+
+and still have a sufficiently formed POLYLINE, such that vertices can
+be obtained for
+use in creating a POLYGON?
+
+JDK
+
+On Mar 13, 6:46 pm, "J." &lt;jwornowit ... @googlemail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Something like this would do it. getVertex() returns a GLatLng, and it
+&gt; can be called without actually adding the polyline to the map.
+
+&gt; -- J.
+">
+</POST>
+<POST>
+<POSTER> "J." &lt;jwornowit...@googlemail.com&gt; </POSTER>
+<POSTDATE> 2007-03-14T10:15:00 </POSTDATE>
+According to the API documentation, fromEncoded() requires four
+parameters: points, zoomFactor, levels, and numLevels, points and
+levels being Strings and the other two integer numbers. Supplying
+these four should be sufficient for instantiating a GPolyline and
+obtaining its vertices.
+
+-- J.
+</POST>
+<POST>
+<POSTER> "Kromkowski" &lt;kromkow...@aol.com&gt; </POSTER>
+<POSTDATE> 2007-03-14T10:42:00 </POSTDATE>
+On Mar 14, 10:15 am, "J." &lt;jwornowit ... @googlemail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; According to the API documentation, fromEncoded() requires four
+&gt; parameters: points, zoomFactor, levels, and numLevels, points and
+&gt; levels being Strings and the other two integer numbers. Supplying
+&gt; these four should be sufficient for instantiating a GPolyline and
+&gt; obtaining its vertices.
+
+&gt; -- J.
+">
+
+But does it really matter what the values are (other than the encoded
+points (which is just basically a compression algorithm, right?)?
+And the documentation, I think presumes that that you want
+to put the polyline on the map, not just use it as a bodge for
+creating polygons from encoded.
+
+I suppose theory now requires praxis.
+
+var levels = "foo"
+var encodedPoints = "some@#$%encodedstring"
+var encodedPolyline = new GPolyline.fromEncoded({
+points: encodedPoints,
+levels: levels,
+zoomFactor: 1,
+numLevels: 1});
+
+Thanks for your thoughts.
+</POST>
+<POST>
+<POSTER> "Crescent Fresh" &lt;i.jay...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-03-19T14:23:00 </POSTDATE>
+You indeed prove that one can go from encoded points to construct a
+GPolygon instance.
+
+However the api feature request in question is trying to go from
+encoded points to an "encoded polygon", i.e. a polygon whose
+individual line segments change their detail in response to changes in
+the map's zoom level. The GPolygon your code produces does not do this
+so there is no gain.
+
+The api team are the only ones who can properly make this possible.
+The first parameter to "new GPolygon" is a list of points, but a list
+of GPolylines instead would be even better:
+
+// create a normal polygon from a list of polylines
+var normalPolygon = new GPolygon([new GPolyline(...)]);
+
+// create an "encoded polygon" from a list of decoded polylines
+var encodedPolygon = new GPolygon([GPolyline.fromEncoded(...),
+GPolyline.fromEncoded(...)]);
+
+The above would be nice to have in the api.
+
+On Mar 14, 10:42 am, "Kromkowski" &lt;kromkow ... @aol.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; But does it really matter what the values are (other than the encoded
+&gt; points (which is just basically a compression algorithm, right?)?
+">
+
+The "levels" parameter is what makes it work at all. Without it the
+api cannot know what zoom levels to switch vertices off/on. The
+"points" parameter is just a compressed list of points, presumably
+easier to transfer across the wire.
+</POST>
+<POST>
+<POSTER> "J." &lt;jwornowit...@googlemail.com&gt; </POSTER>
+<POSTDATE> 2007-03-19T16:19:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; The api team are the only ones who can properly make this possible.
+">
+
+You can make it possible, too (perhaps not "as well" though ;) You'll
+need just a function isVertexVisible(ix, zoom) which should decide
+whether a polyline.getVertex(ix) is visible at the specified zoom
+level [according to its encoded levels] and an event listener for
+zoomend to remove your old polygon and add a new one built from
+vertices visible at the new zoom level.
+
+-- J.
+</POST>
+<POST>
+<POSTER> "Crescent Fresh" &lt;i.jay...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-03-19T17:09:00 </POSTDATE>
+On Mar 19, 4:19 pm, "J." &lt;jwornowit ... @googlemail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; You can make it possible, too (perhaps not &quot;as well&quot; though ;) You'll
+&gt; need just a function isVertexVisible(ix, zoom) which should decide
+&gt; whether a polyline.getVertex(ix) is visible at the specified zoom
+&gt; level [according to its encoded levels] and an event listener for
+&gt; zoomend to remove your old polygon and add a new one built from
+&gt; vertices visible at the new zoom level.
+">
+
+Yes that would work. Also would need to do it for each polyline that
+makes up the polygon (eg outer + inner rings). Plus you would lose the
+current ability of an encoded polyline to hide vertices that aren't
+near the viewport. We can of course build that into a 'moveend' event
+listener too, adding more overhead to a problem the api already partly
+solves.
+
+There are many ways to get it to work. At my company we did finally
+manage to hack this functionality into the api on the fly, and it's
+reeaally ugly but works with the existing functionality of encoded
+polylines. All i'm saying is +1 for the api team to get this into the
+core properly, once and for all.
+</POST>
+<POST>
+<POSTER> "Kromkowski" &lt;kromkow...@aol.com&gt; </POSTER>
+<POSTDATE> 2007-03-19T18:08:00 </POSTDATE>
+Well, I spent a very little time trying to put theory into practice.
+First cut, it doesn't look like .getVertex() is returning what I
+thought it
+was supposed to return.
+
+Of course, my problem was that I was using encodedPoints from someone
+else.
+
+I don't understand CrescentFresh:
+
+"However the api feature request in question is trying to go from
+encoded points to an "encoded polygon", i.e. a polygon whose
+individual line segments change their detail in response to changes in
+the map's zoom level. The GPolygon your code produces does not do this
+so there is no gain."
+
+You seem to be implying that the rationale for polyline.fromencoded is
+that
+line segments change their detail based up the zoom. (But I thought,
+now for
+reasons unclear, that polygons actual did that automatically, which is
+how the
+fill works.  In other words, there is some kind of translation for
+lats and longs
+to pixels that is going on.  Because you fill by pixels not by a lat/
+long, right?).
+So I am only thinking the benefit of encoding polygons is really the
+compression,
+i.e. that you can use a string instead of a list of points.
+
+In my view polygons are more useful than polylines when you actual
+want
+to have a closed shape and want to be able to shade the shape.
+
+Reasonably speaking:
+
+One uses a line when one needs to use a line (from A to B by some
+route)
+
+One uses a shape (polgon) when one needs to define a geographic area.
+
+I would have gathered that the basic windows hack for drawing and
+filling shapes
+is basically part of the open domain (because its just math), which is
+why MS put it into
+paintbrush so many many years ago, and hence was easy (relatively) for
+Google to
+add into the Maps API.
+</POST>
+<POST>
+<POSTER> "Crescent Fresh" &lt;i.jay...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-03-19T20:33:00 </POSTDATE>
+On Mar 19, 5:08 pm, "Kromkowski" &lt;kromkow ... @aol.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; fill works.  In other words, there is some kind of translation for
+&gt; lats and longs
+&gt; to pixels that is going on.  Because you fill by pixels not by a lat/
+&gt; long, right?).
+">
+
+Not in the case of GPoly*. GPoly* uses vectors to draw the lines/fills
+(in those browsers that are capable of vector rendering). Now there is
+some translation of lat/lng to pixels in the sense that the api needs
+to know where in your map div (pixel-wise) to offset the vectors. But
+otherwise your lat/lngs are mapped to a local coordinate system
+(specific to the vector rendering mechanism, e.g vml for IE, svg for
+firefox), as far as I understand.
+
+<QUOTE PREVIOUSPOST="
+&gt; So I am only thinking the benefit of encoding polygons is really the
+&gt; compression,
+&gt; i.e. that you can use a string instead of a list of points.
+">
+
+That is a benefit, yes. But the main benefit comes from the levels,
+numLevels and zoomFactor combination of parameters that (taken from
+the api docs): "allows you to specify groups of zoom levels that
+should be ignored when drawing line segments; doing so allows you to
+specify how detailed a polyline should be at a given zoom level".
+
+So lets say you have 1600 points ("vertices") in some GPolyline, and
+they are for the most part fairly close together when you zoom in all
+the way. If you encode your points and levels appropriately, you gain
+the ability (using GPolyline.fromEncoded) to tell the map that at say,
+zoom level 17 (the furthest away zoom level), "only draw these 3
+vertices instead of all 1600, cuz that's good enough to convey the
+shape to the viewer", and then as you zoom in some more you tell the
+map "okay now draw these 50 vertices instead of all 1600", ... etc etc
+increasing the number of vertices drawn the more you zoom in. This
+does *not* happen automatically with normal (non-encoded) GPolylines.
+At zoom level 17 all 1600 points would be drawn (99% waste).
+
+The automatic thing I think your thinking of when you zoom in/out is
+that the vertices are redrawn in such a way to give the impression of
+a shrinking/expanding polyline/polygon. But this is not the same as
+reducing the vertex count at further away zoom levels.
+
+Hope that helps clear things up a bit.
+</POST>
+<POST>
+<POSTER> "Kromkowski" &lt;kromkow...@aol.com&gt; </POSTER>
+<POSTDATE> 2007-03-24T13:10:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; That is a benefit, yes. But the main benefit comes from the levels,
+&gt; numLevels and zoomFactor combination of parameters that (taken from
+&gt; the api docs): &quot;allows you to specify groups of zoom levels that
+&gt; should be ignored when drawing line segments; doing so allows you to
+&gt; specify how detailed a polyline should be at a given zoom level&quot;.
+">
+
+I fully understand that this is the benefit of encoded GPolylines.
+But I just didn't think
+that GPolygons worked that way.
+
+<QUOTE PREVIOUSPOST="
+&gt; So lets say you have 1600 points (&quot;vertices&quot;) in some GPolyline, and
+&gt; they are for the most part fairly close together when you zoom in all
+&gt; the way. If you encode your points and levels appropriately, you gain
+&gt; the ability (using GPolyline.fromEncoded) to tell the map that at say,
+&gt; zoom level 17 (the furthest away zoom level), &quot;only draw these 3
+&gt; vertices instead of all 1600, cuz that's good enough to convey the
+&gt; shape to the viewer&quot;, and then as you zoom in some more you tell the
+&gt; map &quot;okay now draw these 50 vertices instead of all 1600&quot;, ... etc etc
+&gt; increasing the number of vertices drawn the more you zoom in. This
+&gt; does *not* happen automatically with normal (non-encoded) GPolylines.
+&gt; At zoom level 17 all 1600 points would be drawn (99% waste).
+">
+
+Understand and agree with all this.  But as I said it is not clear to
+me at least that
+GPolygons actually are working the same way.
+
+You seem to be saying that a GPolygon is exactly the same thing as an
+equivalent
+GPolyline not encoded (except for the fill part).
+
+Maybe it's the "fill" part that has me a bit confused.
+
+<QUOTE PREVIOUSPOST="
+&gt; The automatic thing I think your thinking of when you zoom in/out is
+&gt; that the vertices are redrawn in such a way to give the impression of
+&gt; a shrinking/expanding polyline/polygon. But this is not the same as
+&gt; reducing the vertex count at further away zoom levels.
+
+&gt; Hope that helps clear things up a bit.
+">
+
+Is there documentation directly on this point?
+
+What if you have a Gpolygon whose outside lines are transparent but
+the fill part is opaque?
+</POST>
+<POST>
+<POSTER> "Crescent Fresh" &lt;i.jay...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-03-28T15:20:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; You seem to be saying that a GPolygon is exactly the same thing as an
+&gt; equivalent
+&gt; GPolyline not encoded (except for the fill part).
+">
+
+As far as the api goes, GPolygon == array of GPolylines + fill info
+(color, opacity).
+
+[side note: as far as browser-level vector rendering goes, a polyline
+as well as a polygon is a series of 'moveto x y, lineto x1 y1, lineto
+x2 y2, moveto x3 y3, lineto x4 y4 ...' commands (for example) that
+specify a path to draw. In GPolyline's case there would be no "moveto
+x3 y3" in the above (i.e. no movetos in the middle of the path, only
+at the start), but in the case of GPolygon there is a "moveto" for
+every GPolyline it contains. But in essence they are the same: a
+series of "moveto"+"lineto" type commands.]
+
+So you see? Less vertices in each of the polylines that make up a
+polygon (as is the case when you zoom out on an encoded polyline)
+would mean the polygon is drawn faster. Thus we have an "encoded
+polygon". If this is implemented at the api level, the benefits of
+encoded polylines would automatically be present for the polygon that
+contains them.
+
+<QUOTE PREVIOUSPOST="
+&gt; What if you have a Gpolygon whose outside lines are transparent but
+&gt; the fill part is opaque?
+">
+
+It would look like a colored shape with no border if I understand you
+correctly.
+</POST>
+</TEXT>
+</BODY>
+</DOC>

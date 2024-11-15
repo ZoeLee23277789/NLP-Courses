@@ -1,0 +1,143 @@
+<DOC>
+<DOCID> eng-NG-31-126417-9149132 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-11-03T09:08:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Newforms validation error not displayed:
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> crybaby &lt;joemystery...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T09:08:00 </POSTDATE>
+Validation checks the number entered by the user is between the range
+and this check is done in &quot;def clean_guess_the_number&quot;.  This is not
+working.
+
+Seems like &quot;def clean_guess_the_number(self)&quot; never executed when you
+post the data and when form.is_valid() called.
+
+class GuessForm(forms.Form):
+
+guess_the_number= forms.RegexField(r'^\d+$',
+max_length = 10,
+min_length = 1,
+error_message = 'Must be 1-10 numeric
+characters.'
+)
+
+def __init__(self, *args, **kwargs):
+try:
+self.id = kwargs.pop('id')
+
+except:
+pass
+
+super(GuessForm, self).__init__(*args, **kwargs)
+
+number = get_object_or_404(Number,
+pk=self.id
+)
+
+increment = Increment.objects.all()
+self.max_number = number.value + increment[0].value
+self.min_number = number.value + increment[1].value
+
+def clean_guess_the_number(self):
+if self.max_number &gt; self.cleaned_data['guess_the_number']:
+raise forms.ValidationError('Your Number have to be lower
+or equal to Max Number.')
+if self.min_number &lt; self.cleaned_data['guess_the_number']:
+raise forms.ValidationError('Your Number have to be higer
+or equal to Min Number.')
+return self.cleaned_data['guess_the_number']
+
+html:
+&lt;p&gt;
+&lt;label for=&quot;id_guess_the_number&quot;&gt;Guess The Number( Number must be
+between {{form.min_number}} and {{form.max_number}}):&lt;/label&gt;
+{{ form.guess_the_number }}
+{% if form.guess_the_number.errors %}***
+{{ form.guess_the_number.errors|join:&quot;, &quot; }}{% endif %}
+&lt;/p&gt;
+</POST>
+<POST>
+<POSTER> &quot;Karen Tracey&quot; &lt;kmtra...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T10:14:00 </POSTDATE>
+On 11/3/07, crybaby &lt;joemystery ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Validation checks the number entered by the user is between the range
+&gt; and this check is done in &quot;def clean_guess_the_number&quot;.  This is not
+&gt; working.
+
+&gt; Seems like &quot;def clean_guess_the_number(self)&quot; never executed when you
+&gt; post the data and when form.is_valid() called.
+">
+
+Seems like?  How do you know it is not being called instead of its code is
+not doing what you expect?  Try  putting a print statement in it, I'll bet
+you'll see it is being called.  For more enlightenment, set yourself up with
+a debugging environment that lets you set breakpoints and step through the
+code whilst showing you the values of variables, etc.  If you are going to
+be doing anything beyond trivial bits of programming it is really worth the
+investment in time to learn how to debug.
+
+Karen
+</POST>
+<POST>
+<POSTER> RajeshD &lt;rajesh.dha...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T15:25:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt;     def clean_guess_the_number(self):
+&gt;         if self.max_number &gt; self.cleaned_data['guess_the_number']:
+">
+
+Change that to:
+if self.max_number &lt; self.cleaned_data['guess_the_number']:
+
+<QUOTE PREVIOUSPOST="
+&gt;             raise forms.ValidationError('Your Number have to be lower
+&gt; or equal to Max Number.')
+&gt;         if self.min_number &lt; self.cleaned_data['guess_the_number']:
+">
+
+And this one to:
+if self.min_number &gt; self.cleaned_data['guess_the_number']:
+
+<QUOTE PREVIOUSPOST="
+&gt;             raise forms.ValidationError('Your Number have to be higer
+&gt; or equal to Min Number.')
+&gt;         return self.cleaned_data['guess_the_number']
+">
+</POST>
+<POST>
+<POSTER> crybaby &lt;joemystery...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-04T08:58:00 </POSTDATE>
+That seems to be a silly question now.  I have another related
+question regarding  type of &quot;self.cleaned_data['guess_the_number']&quot;,
+string or integer or float?
+</POST>
+<POST>
+<POSTER> &quot;Karen Tracey&quot; &lt;kmtra...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-04T09:27:00 </POSTDATE>
+On 11/4/07, crybaby &lt;joemystery ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; That seems to be a silly question now.  I have another related
+&gt; question regarding  type of &quot;self.cleaned_data['guess_the_number']&quot;,
+&gt; string or integer or float?
+">
+
+In general it depends on the type of field.  In this case it's a RegExField,
+so per:
+
+http://www.djangoproject.com/documentation/newforms/#regexfield
+
+it normalizes to a Unicode object.
+
+Karen
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,2760 @@
+<DOC>
+<DOCID> eng-NG-31-135587-9748085 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-11-03T16:21:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Better way to program this?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T16:21:00 </POSTDATE>
+Hi.
+
+(posted to both newsgroups since I was not sure of which would be
+appropriate for this question or how specific to the given language it
+is. If one of them is inappropriate, just don't send replies to it.)
+
+I'm making a bignum package for use in a program I've got (this is
+something different from the pi program you may have heard about). The
+package is going to support manipulating long floating point numbers.
+
+The way I have this set up right now is that there is a &quot;raw&quot; unsigned
+integer package, from which the floating point package is built on top
+of. The questions I have are about coding that lower-level package.
+
+See, I have a routine here that adds up two unsigned integers, but it
+also must be able to add so many digits of one starting at one point
+in it's data, to so many digits of the other starting at a different
+point in it's data, and finally store so many digits of the result at
+yet another point in the data buffer holding the result.
+
+This is what I've got (it's in C++, not C, by the way). The problem is
+it just doesn't seem like a &quot;neat&quot;, or &quot;nice&quot; piece of code. Anyone
+know of a better way to approach this?:
+
+/* Add two RawInts.
+* Parameters:
+*      a: First RawInt
+*      b: Second RawInt
+*      rOrigin: offset of digit in this to store result at
+*      rLength: length of region in this to store result in
+*      aOrigin: offset of digit in a to start addition at
+*      aLength: length of region in a to add
+*      bOrigin: offset of digit in b to start addition at
+*      bLength: length of region in b to add
+*
+* Returns: carry.
+*
+* Operation: *this = a + b.
+*
+* Use ?Origin = 0 and ?Length = -1 for a simple integer addition
+* operation.
+*/
+DIGIT RawInt::rawAdd(const RawInt &amp;a,
+const RawInt &amp;b,
+int rOrigin, int rLength,
+int aOrigin, int aLength,
+int bOrigin, int bLength)
+{
+int i;
+DIGIT tmp, carry = 0;
+int rlen2, alen2, blen2;
+std::vector&lt;DIGIT&gt;::iterator di, de;
+std::vector&lt;DIGIT&gt;::const_iterator ai, ae;
+std::vector&lt;DIGIT&gt;::const_iterator bi, be;
+
+/* Make sure we don't exceed the boundaries
+* of the digit arrays.
+*/
+if(rLength != -1)
+{
+rlen2 = rLength;
+if(rlen2 &gt; (length - rOrigin))
+rlen2 = (length - rOrigin);
+} else {
+rlen2 = (length - rOrigin);
+}
+
+if(aLength != -1)
+{
+alen2 = aLength;
+if(alen2 &gt; (a.length - aOrigin))
+alen2 = (a.length - aOrigin);
+} else {
+alen2 = (a.length - aOrigin);
+}
+
+if(bLength != -1)
+{
+blen2 = bLength;
+if(blen2 &gt; (b.length - bOrigin))
+blen2 = (b.length - bOrigin);
+} else {
+blen2 = (b.length - bOrigin);
+}
+
+if(rOrigin+alen2 &gt;= length)
+alen2 = length-rOrigin;
+if(rOrigin+blen2 &gt;= length)
+blen2 = length-rOrigin;
+
+if(alen2 &gt; rlen2) alen2 = rlen2;
+if(blen2 &gt; rlen2) blen2 = rlen2;
+
+if(alen2 &lt; 0) alen2 = 0;
+if(blen2 &lt; 0) blen2 = 0;
+
+/* Set up the iterators */
+di = digits.begin()+rOrigin; de = digits.end();
+ai = a.digits.begin()+aOrigin; ae = a.digits.end();
+bi = b.digits.begin()+bOrigin; be = b.digits.end();
+
+/* Now do the addition */
+if(alen2 &gt;= blen2)
+{
+/* Case 1: a is at least as long as b */
+
+/* Add up a's and b's digits */
+for(i=0;i&lt;blen2;i++,++di,++ai,++bi)
+{
+tmp = *ai + *bi + carry;
+if(carry) carry = (tmp &lt;= *bi) ? 1 : 0;
+else      carry = (tmp &lt;  *bi) ? 1 : 0;
+*di = tmp;
+}
+
+/* Now tackle the part of a that is longer than b */
+for(i=blen2;i&lt;alen2;i++,++di,++ai)
+{
+tmp = *ai + carry;
+if(carry)
+carry = (tmp == 0) ? 1 : 0;
+*di = tmp;
+}
+
+/* Zeroize the rest of this. */
+for(i=alen2;i&lt;rlen2;i++,++di)
+{
+*di = carry;
+carry = 0;
+}
+} else {
+/* Case 2: b is longer than a */
+
+/* Add up a's and b's digits */
+for(i=0;i&lt;alen2;i++,++di,++ai,++bi)
+{
+tmp = *ai + *bi + carry;
+if(carry) carry = (tmp &lt;= *bi) ? 1 : 0;
+else      carry = (tmp &lt;  *bi) ? 1 : 0;
+*di = tmp;
+}
+
+/* Now tackle the part of b that is longer than a */
+for(i=alen2;i&lt;blen2;i++,++di,++bi)
+{
+tmp = *bi + carry;
+if(carry) carry = (tmp &lt;= *bi) ? 1 : 0;
+else      carry = (tmp &lt;  *bi) ? 1 : 0;
+*di = tmp;
+}
+
+/* Zeroize the rest of this. */
+for(i=blen2;i&lt;rlen2;i++,++di)
+{
+*di = carry;
+carry = 0;
+}
+}
+
+/* Done! Return any leftover carry. */
+return(carry);
+
+<QUOTE PREVIOUSPOST="
+}
+">
+</POST>
+<POST>
+<POSTER> CBFalconer &lt;cbfalco...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T18:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+mike3 wrote:
+
+... snip ...
+
+&gt; I'm making a bignum package for use in a program I've got (this is
+&gt; something different from the pi program you may have heard about).
+&gt; The package is going to support manipulating long floating point
+&gt; numbers.
+">
+
+Why?  Do you want more significant digits?  Do you want a larger
+range?  What are you trying to do.
+
+--
+Chuck F (cbfalconer at maineline dot net)
+&lt; http://cbfalconer.home.att.net &gt;
+Try the download section.
+
+--
+Posted via a free Usenet account from http://www.teranews.com
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T18:58:00 </POSTDATE>
+On Nov 3, 3:40 pm, CBFalconer &lt;cbfalco ... @yahoo.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; mike3 wrote:
+
+&gt; ... snip ...
+
+&gt; &gt; I'm making a bignum package for use in a program I've got (this is
+&gt; &gt; something different from the pi program you may have heard about).
+&gt; &gt; The package is going to support manipulating long floating point
+&gt; &gt; numbers.
+
+&gt; Why?  Do you want more significant digits?  Do you want a larger
+&gt; range?  What are you trying to do.
+">
+
+That's right -- more precision. More significant digits. It's for a
+fractal generator, so you can zoom real deep down.
+
+<QUOTE PREVIOUSPOST="
+&gt; --
+&gt;  Chuck F (cbfalconer at maineline dot net)
+&gt;    &lt; http://cbfalconer.home.att.net &gt;
+&gt;    Try the download section.
+
+&gt; --
+&gt; Posted via a free Usenet account from http://www.teranews.com
+">
+</POST>
+<POST>
+<POSTER> &quot;BobR&quot; &lt;removeBadB...@worldnet.att.net&gt; </POSTER>
+<POSTDATE> 2007-11-03T19:04:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+mike3 wrote in message...
+
+&gt; DIGIT RawInt::rawAdd(const RawInt &amp;a,
+&gt;           const RawInt &amp;b, int rOrigin, int rLength,
+&gt;           int aOrigin, int aLength, int bOrigin, int bLength){
+">
+
+// &gt;     int i;
+
+<QUOTE PREVIOUSPOST="
+&gt;     DIGIT tmp, carry = 0;
+&gt;     int rlen2, alen2, blen2;
+">
+
+// &gt;     std::vector&lt;DIGIT&gt;::iterator di, de;
+// &gt;     std::vector&lt;DIGIT&gt;::const_iterator ai, ae;
+// &gt;     std::vector&lt;DIGIT&gt;::const_iterator bi, be;
+
+[ note 'commented' above ]
+You seem to have a 'C' background &lt;G&gt;. Declare and initialize those where
+you use them. See 'di', 'de' below.
+
+<QUOTE PREVIOUSPOST="
+&gt;     /* Make sure we don't exceed the boundaries
+&gt;      * of the digit arrays. */
+&gt;     if(rLength != -1){
+&gt;       rlen2 = rLength;
+&gt;       if(rlen2 &gt; (length - rOrigin))
+&gt;         rlen2 = (length - rOrigin);
+&gt;     } else {
+&gt;       rlen2 = (length - rOrigin);
+&gt;     }
+
+&gt;     if(aLength != -1){
+&gt;       alen2 = aLength;
+&gt;       if(alen2 &gt; (a.length - aOrigin))
+&gt;         alen2 = (a.length - aOrigin);
+&gt;     } else {
+&gt;       alen2 = (a.length - aOrigin);
+&gt;     }
+
+&gt;     if(bLength != -1){
+&gt;       blen2 = bLength;
+&gt;       if(blen2 &gt; (b.length - bOrigin))
+&gt;         blen2 = (b.length - bOrigin);
+&gt;     } else {
+&gt;       blen2 = (b.length - bOrigin);
+&gt;     }
+">
+
+Those three if-else blocks are identical. I'd move them into their own
+little function. Then you'd just call them something like:
+
+// make 'MyFunc()' return an type int.
+int rlen2( MyFunc( rLength, length, rOrigin ) );
+int alen2( MyFunc( aLength, a.length, aOrigin ) );
+int blen2( MyFunc( bLength, b.length, bOrigin ) );
+
+<QUOTE PREVIOUSPOST="
+&gt;     if(rOrigin+alen2 &gt;= length)
+&gt;       alen2 = length-rOrigin;
+&gt;     if(rOrigin+blen2 &gt;= length)
+&gt;       blen2 = length-rOrigin;
+
+&gt;     if(alen2 &gt; rlen2) alen2 = rlen2;
+&gt;     if(blen2 &gt; rlen2) blen2 = rlen2;
+&gt;     if(alen2 &lt; 0) alen2 = 0;
+&gt;     if(blen2 &lt; 0) blen2 = 0;
+
+&gt;     /* Set up the iterators */
+&gt;     di = digits.begin()+rOrigin; de = digits.end();
+">
+
+This is the first place you use 'di', 'de'. I'd do it this way.
+
+std::vector&lt;DIGIT&gt;::iterator di( digits.begin() + rOrigin ),
+de( digits.end() );
+
+<QUOTE PREVIOUSPOST="
+&gt;     ai = a.digits.begin()+aOrigin; ae = a.digits.end();
+">
+
+std::vector&lt;DIGIT&gt;::const_iterator ai( a.digits.begin() + aOrigin ),
+ae( a.digits.end() );
+
+<QUOTE PREVIOUSPOST="
+&gt;     bi = b.digits.begin()+bOrigin; be = b.digits.end();
+">
+
+std::vector&lt;DIGIT&gt;::const_iterator bi( b.digits.begin() + bOrigin ),
+be( b.digits.end() );
+
+<QUOTE PREVIOUSPOST="
+&gt;     /* Now do the addition */
+&gt;     if(alen2 &gt;= blen2){
+&gt;       /* Case 1: a is at least as long as b */
+
+&gt;       /* Add up a's and b's digits */
+">
+
+// &gt;       for(i=0;i&lt;blen2;i++,++di,++ai,++bi){
+
+You do not use 'int i' outside the for() loops, so, declare them *in* the
+for():
+
+for( int i(0); i &lt; blen2; ++i, ++di, ++ai, ++bi ){
+
+<QUOTE PREVIOUSPOST="
+&gt;          tmp = *ai + *bi + carry;
+&gt;          if(carry) carry = (tmp &lt;= *bi) ? 1 : 0;
+&gt;          else      carry = (tmp &lt;  *bi) ? 1 : 0;
+&gt;          *di = tmp;
+&gt;       }
+
+&gt;       /* Now tackle the part of a that is longer than b */
+">
+
+// &gt;       for(i=blen2;i&lt;alen2;i++,++di,++ai){
+
+for( int i( blen2 ); i &lt; alen2; ++i, ++di, ++ai ){
+
+<QUOTE PREVIOUSPOST="
+&gt;          tmp = *ai + carry;
+&gt;          if(carry)
+&gt;            carry = (tmp == 0) ? 1 : 0;
+&gt;          *di = tmp;
+&gt;       }
+
+&gt;       /* Zeroize the rest of this. */
+">
+
+// &gt;       for(i=alen2;i&lt;rlen2;i++,++di){
+
+for( int i( alen2 ); i &lt; rlen2; ++i, ++di ){
+.... etc.
+
+That's just my suggestion(s). Maybe with less clutter you'll see other
+places to 'clean up'.
+--
+Bob R
+POVrookie
+</POST>
+<POST>
+<POSTER> LR &lt;lr...@superlink.net&gt; </POSTER>
+<POSTDATE> 2007-11-03T19:07:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+mike3 wrote:
+">
+
+[snippage]
+
+<QUOTE PREVIOUSPOST="
+&gt; This is what I've got (it's in C++, not C, by the way). The problem is
+&gt; it just doesn't seem like a &quot;neat&quot;, or &quot;nice&quot; piece of code. Anyone
+&gt; know of a better way to approach this?:
+">
+
+Better is a rather open ended term.  But I'll take a stab at what might
+appeal to me.
+
+<QUOTE PREVIOUSPOST="
+&gt; DIGIT RawInt::rawAdd(const RawInt &amp;a,
+&gt;                      const RawInt &amp;b,
+&gt;                      int rOrigin, int rLength,
+&gt;                      int aOrigin, int aLength,
+&gt;                      int bOrigin, int bLength)
+">
+
+The seeming repetition of those parameters suggests to me that you may
+want to make some kind of class that wraps a RawInt an origin and a length.
+
+Then maybe you might want to write code that will let you:
+const RawIntWrapper aw(a,aOrigin,aLength,maxLength);
+const RawIntWrapper bw(a,bOrigin,bLength,maxLength);
+and then
+const RawIntWrapper t = add(aw,bw);
+or
+const RawInt t = add(aw,bw); // cast operator?
+or
+const RawIntWrapper t = aw + bw;
+or
+const RawInt t = aw.add(bw);
+
+or whatever form will please you.
+
+If you do decide to implement a RawIntWrapper, maybe give it a better
+name.  I'd be careful about the implementation details.
+
+<QUOTE PREVIOUSPOST="
+&gt; {
+&gt;     int i;
+&gt;     DIGIT tmp, carry = 0;
+&gt;     int rlen2, alen2, blen2;
+&gt;     std::vector&lt;DIGIT&gt;::iterator di, de;
+&gt;     std::vector&lt;DIGIT&gt;::const_iterator ai, ae;
+&gt;     std::vector&lt;DIGIT&gt;::const_iterator bi, be;
+">
+
+In C++ I believe it it preferable as a matter of style to declare near use.
+
+<QUOTE PREVIOUSPOST="
+&gt;     /* Make sure we don't exceed the boundaries
+&gt;      * of the digit arrays.
+&gt;      */
+">
+
+Over and over again it seems.
+
+<QUOTE PREVIOUSPOST="
+&gt;     if(rLength != -1)
+&gt;     {
+&gt;       rlen2 = rLength;
+&gt;       if(rlen2 &gt; (length - rOrigin))
+&gt;         rlen2 = (length - rOrigin);
+&gt;     } else {
+&gt;       rlen2 = (length - rOrigin);
+&gt;     }
+
+&gt;     if(aLength != -1)
+&gt;     {
+&gt;       alen2 = aLength;
+&gt;       if(alen2 &gt; (a.length - aOrigin))
+&gt;         alen2 = (a.length - aOrigin);
+&gt;     } else {
+&gt;       alen2 = (a.length - aOrigin);
+&gt;     }
+
+&gt;     if(bLength != -1)
+&gt;     {
+&gt;       blen2 = bLength;
+&gt;       if(blen2 &gt; (b.length - bOrigin))
+&gt;         blen2 = (b.length - bOrigin);
+&gt;     } else {
+&gt;       blen2 = (b.length - bOrigin);
+&gt;     }
+">
+
+The above might be a member function in some class like the
+RawIntWrapper I suggested above or maybe part of a ctor.
+
+<QUOTE PREVIOUSPOST="
+&gt;     if(rOrigin+alen2 &gt;= length)
+&gt;       alen2 = length-rOrigin;
+&gt;     if(rOrigin+blen2 &gt;= length)
+&gt;       blen2 = length-rOrigin;
+
+&gt;     if(alen2 &gt; rlen2) alen2 = rlen2;
+&gt;     if(blen2 &gt; rlen2) blen2 = rlen2;
+
+&gt;     if(alen2 &lt; 0) alen2 = 0;
+&gt;     if(blen2 &lt; 0) blen2 = 0;
+">
+
+And here again.  Over and over. And again, maybe part of a ctor for
+RawIntWrapper.
+
+<QUOTE PREVIOUSPOST="
+&gt;     /* Set up the iterators */
+&gt;     di = digits.begin()+rOrigin; de = digits.end();
+&gt;     ai = a.digits.begin()+aOrigin; ae = a.digits.end();
+&gt;     bi = b.digits.begin()+bOrigin; be = b.digits.end();
+
+&gt;     /* Now do the addition */
+&gt;     if(alen2 &gt;= blen2)
+&gt;     {
+&gt;       /* Case 1: a is at least as long as b */
+">
+
+It's not really clear to me since I didn't look very carefully that Case
+1 and Case 2 are really different from each other.
+
+Suppose we have this little pointless snippet:
+void f(int asize, int bsize) {
+if(asize &gt;= bsize) {
+// do something complicated to asize and bsize
+}
+else {
+// do something complicated to bsize and asize
+}
+}
+
+Might be better as:
+void f(int asize, int bsize) {
+if(asize &lt; bside) {
+std::swap(asize,bsize); //cost of swap, since it's not about int.
+}
+// do something complicated to asize and bsize
+}
+
+I also probably would want the 'carry' information to be kept as a
+member of some class and not just returned.  YMWV.
+
+HTH.
+
+LR
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T19:42:00 </POSTDATE>
+On Nov 3, 4:07 pm, LR &lt;lr ... @superlink.net&gt; wrote:
+&lt;snip&gt;
+
+Interesting ideas, and it got me thinking about this approach:
+What if instead of making this odd &quot;wrapper&quot; thingy, one were
+to just integrate the parameters &quot;length&quot;, &quot;origin&quot; right into the
+RawInt? So you'd have the maximum length (allocated space),
+the used length, the origin, and finally the vector containing the
+digits/limbs of the number.
+
+Then when one wants to change them, all one needs is a simple
+member function or two, like this:
+
+--- begin snippet ---
+/* Reset the length of used part and origin
+* (position of initial digit) of a RawInt.
+*/
+void RawInt::SetLengthOrigin(int newlength, int neworigin)
+{
+if(neworigin &gt;= length_max)
+neworigin = length_max-1; /* safety */
+
+if(newlength &gt; length_max-neworigin)
+newlength = length_max-neworigin; /* another safety */
+
+length_used = newlength;
+origin = neworigin;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+/* Reset the used-part length/origin to defaults. */
+void RawInt::DefaultLengthOrigin()
+{
+length_used = length_max;
+origin = 0;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+--- end snippet ---
+
+Then one does not need to fuss around with those funny
+&quot;origin&quot; checks in the routines -- all that is handled by those
+two member functions. All one needs to do is just set up
+use the ready-made parameters &quot;origin&quot; and &quot;length_max&quot;,
+and go! I'll give this a try, and post the results.
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T19:44:00 </POSTDATE>
+On Nov 3, 4:04 pm, &quot;BobR&quot; &lt;removeBadB ... @worldnet.att.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; mike3 wrote in message...
+
+&gt; &gt; DIGIT RawInt::rawAdd(const RawInt &amp;a,
+&gt; &gt;           const RawInt &amp;b, int rOrigin, int rLength,
+&gt; &gt;           int aOrigin, int aLength, int bOrigin, int bLength){
+
+&gt; // &gt;     int i;&gt;     DIGIT tmp, carry = 0;
+&gt; &gt;     int rlen2, alen2, blen2;
+
+&gt; // &gt;     std::vector&lt;DIGIT&gt;::iterator di, de;
+&gt; // &gt;     std::vector&lt;DIGIT&gt;::const_iterator ai, ae;
+&gt; // &gt;     std::vector&lt;DIGIT&gt;::const_iterator bi, be;
+
+&gt; [ note 'commented' above ]
+&gt; You seem to have a 'C' background &lt;G&gt;. Declare and initialize those where
+&gt; you use them. See 'di', 'de' below.
+
+&gt; &gt;     /* Make sure we don't exceed the boundaries
+&gt; &gt;      * of the digit arrays. */
+&gt; &gt;     if(rLength != -1){
+&gt; &gt;       rlen2 = rLength;
+&gt; &gt;       if(rlen2 &gt; (length - rOrigin))
+&gt; &gt;         rlen2 = (length - rOrigin);
+&gt; &gt;     } else {
+&gt; &gt;       rlen2 = (length - rOrigin);
+&gt; &gt;     }
+
+&gt; &gt;     if(aLength != -1){
+&gt; &gt;       alen2 = aLength;
+&gt; &gt;       if(alen2 &gt; (a.length - aOrigin))
+&gt; &gt;         alen2 = (a.length - aOrigin);
+&gt; &gt;     } else {
+&gt; &gt;       alen2 = (a.length - aOrigin);
+&gt; &gt;     }
+
+&gt; &gt;     if(bLength != -1){
+&gt; &gt;       blen2 = bLength;
+&gt; &gt;       if(blen2 &gt; (b.length - bOrigin))
+&gt; &gt;         blen2 = (b.length - bOrigin);
+&gt; &gt;     } else {
+&gt; &gt;       blen2 = (b.length - bOrigin);
+&gt; &gt;     }
+
+&gt; Those three if-else blocks are identical. I'd move them into their own
+&gt; little function. Then you'd just call them something like:
+
+&gt; // make 'MyFunc()' return an type int.
+&gt;       int rlen2( MyFunc( rLength, length, rOrigin ) );
+&gt;       int alen2( MyFunc( aLength, a.length, aOrigin ) );
+&gt;       int blen2( MyFunc( bLength, b.length, bOrigin ) );
+
+&gt; &gt;     if(rOrigin+alen2 &gt;= length)
+&gt; &gt;       alen2 = length-rOrigin;
+&gt; &gt;     if(rOrigin+blen2 &gt;= length)
+&gt; &gt;       blen2 = length-rOrigin;
+
+&gt; &gt;     if(alen2 &gt; rlen2) alen2 = rlen2;
+&gt; &gt;     if(blen2 &gt; rlen2) blen2 = rlen2;
+&gt; &gt;     if(alen2 &lt; 0) alen2 = 0;
+&gt; &gt;     if(blen2 &lt; 0) blen2 = 0;
+
+&gt; &gt;     /* Set up the iterators */
+&gt; &gt;     di = digits.begin()+rOrigin; de = digits.end();
+
+&gt; This is the first place you use 'di', 'de'. I'd do it this way.
+
+&gt;      std::vector&lt;DIGIT&gt;::iterator di( digits.begin() + rOrigin ),
+&gt;                de( digits.end() );
+
+&gt; &gt;     ai = a.digits.begin()+aOrigin; ae = a.digits.end();
+
+&gt;      std::vector&lt;DIGIT&gt;::const_iterator ai( a.digits.begin() + aOrigin ),
+&gt;                ae( a.digits.end() );
+
+&gt; &gt;     bi = b.digits.begin()+bOrigin; be = b.digits.end();
+
+&gt;      std::vector&lt;DIGIT&gt;::const_iterator bi( b.digits.begin() + bOrigin ),
+&gt;                be( b.digits.end() );
+
+&gt; &gt;     /* Now do the addition */
+&gt; &gt;     if(alen2 &gt;= blen2){
+&gt; &gt;       /* Case 1: a is at least as long as b */
+
+&gt; &gt;       /* Add up a's and b's digits */
+
+&gt; // &gt;       for(i=0;i&lt;blen2;i++,++di,++ai,++bi){
+
+&gt; You do not use 'int i' outside the for() loops, so, declare them *in* the
+&gt; for():
+
+&gt;        for( int i(0); i &lt; blen2; ++i, ++di, ++ai, ++bi ){
+
+&gt; &gt;          tmp = *ai + *bi + carry;
+&gt; &gt;          if(carry) carry = (tmp &lt;= *bi) ? 1 : 0;
+&gt; &gt;          else      carry = (tmp &lt;  *bi) ? 1 : 0;
+&gt; &gt;          *di = tmp;
+&gt; &gt;       }
+
+&gt; &gt;       /* Now tackle the part of a that is longer than b */
+
+&gt; // &gt;       for(i=blen2;i&lt;alen2;i++,++di,++ai){
+
+&gt;        for( int i( blen2 ); i &lt; alen2; ++i, ++di, ++ai ){
+
+&gt; &gt;          tmp = *ai + carry;
+&gt; &gt;          if(carry)
+&gt; &gt;            carry = (tmp == 0) ? 1 : 0;
+&gt; &gt;          *di = tmp;
+&gt; &gt;       }
+
+&gt; &gt;       /* Zeroize the rest of this. */
+
+&gt; // &gt;       for(i=alen2;i&lt;rlen2;i++,++di){
+
+&gt;        for( int i( alen2 ); i &lt; rlen2; ++i, ++di ){
+&gt; .... etc.
+
+&gt; That's just my suggestion(s). Maybe with less clutter you'll see other
+&gt; places to 'clean up'.
+&gt; --
+&gt; Bob R
+&gt; POVrookie
+">
+
+Thanks for the answers. I'll see how it goes.
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T20:35:00 </POSTDATE>
+Well, here's my newest attempt, using the ideas you presented.
+What do you think? Is it any better (nicer, cleaner, clearer, less
+messy) than the original one?
+
+---
+/* Add two RawInts.
+* Parameters:
+*      a: First RawInt
+*      b: Second RawInt
+*
+* Returns: carry.
+*
+* Operation: *this = a + b.
+*/
+DIGIT RawInt::rawAdd(const RawInt &amp;a, const RawInt &amp;b)
+{
+DIGIT tmp, carry(0);
+
+/* Set up the iterators */
+std::vector&lt;DIGIT&gt;::iterator ri(digits.begin()+origin);
+std::vector&lt;DIGIT&gt;::const_iterator ai(a.digits.begin()+a.origin);
+std::vector&lt;DIGIT&gt;::const_iterator bi(b.digits.begin()+b.origin);
+
+/* Make sure we don't overrun this's digit buffer */
+int alen2(MinInt(a.length_used, length_used));
+int blen2(MinInt(b.length_used, length_used));
+
+/* Now do the addition */
+if(alen2 &gt;= blen2)
+{
+/* Add up a's and b's digits */
+for(int i(0);i&lt;blen2;i++,++ri,++ai,++bi)
+{
+tmp = *ai + *bi + carry;
+if(carry) carry = (tmp &lt;= *bi) ? 1 : 0;
+else      carry = (tmp &lt;  *bi) ? 1 : 0;
+*ri = tmp;
+}
+
+/* Now tackle the part of a that is longer than b */
+for(int i(blen2);i&lt;alen2;i++,++ri,++ai)
+{
+tmp = *ai + carry;
+if(carry)
+carry = (tmp == 0) ? 1 : 0;
+*ri = tmp;
+}
+
+/* Zeroize the rest of this. */
+for(int i(alen2);i&lt;length_used;i++,++ri)
+{
+*ri = carry;
+carry = 0;
+}
+} else {
+/* Swap so that the first operand is larger than the second. */
+return(this-&gt;rawAdd(b, a));
+}
+
+/* Done! Return any leftover carry. */
+return(carry);
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+---
+
+(Here, &quot;MinInt&quot; is a little macro that returns the smaller of
+two integers.)
+
+I have one extra question. There's also a subtraction routine,
+which will be similar to the above. However, it is not so easy
+to do the swap for when b is longer than a, as if one simply
+were to call &quot;rawSub(b, a)&quot; that would give a 2's-complement
+negative of the difference (because subtraction is not
+commutative like addition, a - b != b - a in general), which
+would then need to be negated, which takes longer. So then
+wouldn't it be better to repeat the code in the first half of the
+if?
+</POST>
+<POST>
+<POSTER> werasm &lt;wer...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-04T12:12:00 </POSTDATE>
+On Nov 4, 1:35 am, mike3 &lt;mike4 ... @yahoo.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Well, here's my newest attempt, using the ideas you presented.
+&gt; What do you think? Is it any better (nicer, cleaner, clearer, less
+&gt; messy) than the original one?
+">
+
+I may have this one totally wrong, but this looks
+like a possible candidate for transform, where
+what you do with the carry could be encapsulated
+in your function object. I still can't figure
+out exactly what the rules are concerning the
+carry, despite reading your comments, but perhaps
+I'm just I bad observer :-). If I were you
+I would draw a little diagram explaining what
+the algo should do e.g:
+
+Sequence (or digit a):
+5 2 [9 7] 1 4
+Sequence (or digit b):
+8 [1 4] 2 9 0
+Should give result:
+...
+[] indicative of the ranges concerned.
+
+With regards to the code presented, see below:
+
+<QUOTE PREVIOUSPOST="
+&gt; DIGIT RawInt::rawAdd(const RawInt &amp;a, const RawInt &amp;b)
+&gt; {
+&gt;     DIGIT tmp, carry(0);
+">
+
+Why is DIGIT in caps? I presume its a macro. If it
+is a macro, why use a macro, if not, then you should
+not use caps.
+
+<QUOTE PREVIOUSPOST="
+&gt;     /* Set up the iterators */
+&gt;     std::vector&lt;DIGIT&gt;::iterator ri(digits.begin()+origin);
+&gt;     std::vector&lt;DIGIT&gt;::const_iterator ai(a.digits.begin()+a.origin);
+&gt;     std::vector&lt;DIGIT&gt;::const_iterator bi(b.digits.begin()+b.origin);
+">
+
+Perhaps use a member function that returns the origin (2
+versions, one returning const_iterator for constant RawInt
+and the other returning non const for non constant ...:
+
+<QUOTE PREVIOUSPOST="
+&gt;     /* Make sure we don't overrun this's digit buffer */
+&gt;     int alen2(MinInt(a.length_used, length_used));
+&gt;     int blen2(MinInt(b.length_used, length_used));
+">
+
+Why not use std::min over here - I'll have to presume
+MinInt does something special that differs from std::min.
+
+<QUOTE PREVIOUSPOST="
+&gt;     /* Now do the addition */
+&gt;     if(alen2 &gt;= blen2)
+&gt;     {
+">
+
+I would declare tmp and carry here, not at the top.
+
+<QUOTE PREVIOUSPOST="
+&gt;       /* Add up a's and b's digits */
+&gt;       for(int i(0);i&lt;blen2;i++,++ri,++ai,++bi)
+">
+
+Horizontal space makes things more readable, but opinions
+may differ.
+
+<QUOTE PREVIOUSPOST="
+&gt;          if(carry) carry = (tmp &lt;= *bi) ? 1 : 0;
+&gt;          else      carry = (tmp &lt;  *bi) ? 1 : 0;
+">
+
+Above could look like this:
+
+if( carry ){ carry = (tmp &lt;= *bi); }
+else { carry = (tmp &lt;  *bi); }
+
+or even:
+carry = carry ? (tmp &lt;= *bi) : (tmp &lt;  *bi);
+
+Rationale:
+the boolean expression is already sufficient for the assignment
+
+<QUOTE PREVIOUSPOST="
+&gt;       /* Now tackle the part of a that is longer than b */
+&gt;       for(int i(blen2);i&lt;alen2;i++,++ri,++ai)
+&gt;       {
+&gt;          tmp = *ai + carry;
+&gt;          if(carry)
+&gt;            carry = (tmp == 0) ? 1 : 0;
+">
+
+Ditto -&gt; simply: carry = (tmp == 0) would do.
+
+<QUOTE PREVIOUSPOST="
+&gt;       /* Zeroize the rest of this. */
+&gt;       for(int i(alen2);i&lt;length_used;i++,++ri)
+&gt;       {
+&gt;          *ri = carry;
+&gt;          carry = 0;
+&gt;       }
+">
+
+How about using std::fill here? Its perfect for zeroing.
+In that case you would have to first carry carry over, then
+fill the remainder. Regardless, the above is simple enough
+to not require fill.
+
+The idea that I've had (out of the box) was something in
+the line of:
+
+std::transform(
+s1_digit_pos, s1_end,
+s2_digit_pos,
+result_digit_pos,
+Op ); //Where Op is a binary operator.
+
+&lt;Op&gt; could store the carry and implement it on the next item
+in the sequence. &lt;Op&gt; could also contain state to indicate
+whether an item should be added to the destination (or
+result) sequence. transform makes a copy of &lt;Op&gt;, but
+this does not matter as you could use something like
+boost::ref to make the algo only use a reference to
+Op. Eventually you have something like this (off
+the top of my head). I'll use normal vectors for
+simplicity.
+
+#include &lt;vector&gt;
+#include &lt;functional&gt;
+#include &lt;algorithm&gt;
+#include &lt;boost/cref.hpp&gt;
+
+struct Op : std::binary_function&lt;int, int, int&gt;
+{
+Op( int digMax )
+: digMax_( digMax ), carry_( 0 ){ }
+int operator()( int s1v, int s2v )
+{
+int result( s1v + s2v + carry_ );
+//I'm still not sure about when
+// carry has effect, but for example
+// lets assume when s1v + s2v &gt; n
+carry_ = (s1v + s2v) &gt; digMax_;
+return result;
+}
+const int digMax_;
+int carry_;
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+struct RawDigit
+{
+void add(
+const std::vector&lt;int&gt;&amp; s1,
+const std::vector&lt;int&gt; &amp;s2 );
+std::vector&lt;int&gt; mySeq_;
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+void RawDigit::add(
+const std::vector&lt;int&gt;&amp; s1, const std::vector&lt;int&gt; &amp;s2 )
+{
+Op op( 10 );
+//For simplicity, lets assume s1 and s2 has
+// same amount of items and this has more.
+std::transform( s1.begin(), s1.end(), s2.begin(),
+mySeq_.begin(), boost::ref( op ) );
+//Add the carry...
+mySeq.push_back( op.carry_ );
+//or perhaps... addCarry( op.carry_ );
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+All said, one needs to evaluate whether the algorithmic
+approach is necessarily simpler (more clear). I feel
+it does isolate the transformation better. Nevertheless,
+as someone has often pointed out, there is nothing wrong
+with non-algorithmic approach, as long as the intent is
+clear (you should not even need comments IMO, but that's
+another argument).
+
+Regards,
+
+Werner
+</POST>
+<POST>
+<POSTER> &quot;BobR&quot; &lt;removeBadB...@worldnet.att.net&gt; </POSTER>
+<POSTDATE> 2007-11-04T13:39:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+mike3 wrote in message...
+&gt; Well, here's my newest attempt, using the ideas you presented.
+&gt; What do you think? Is it any better (nicer, cleaner, clearer, less
+&gt; messy) than the original one?
+">
+
+In my opinion it is better. More important, do *you* see improvement?
+
+<QUOTE PREVIOUSPOST="
+&gt; ---
+&gt; /* Add two RawInts.
+&gt;  * Parameters:
+&gt;  *      a: First RawInt
+&gt;  *      b: Second RawInt
+&gt;  * Returns: carry.
+&gt;  * Operation: *this = a + b.
+&gt;  */
+&gt; DIGIT RawInt::rawAdd(const RawInt &amp;a, const RawInt &amp;b){
+&gt;     DIGIT tmp, carry(0);
+
+&gt;     /* Set up the iterators */
+&gt;     std::vector&lt;DIGIT&gt;::iterator ri(digits.begin()+origin);
+">
+
+Review this and the use of 'ri' in the rest of this code. Is 'digits' a
+member of RawInt', or &lt;choke&gt; global?
+
+<QUOTE PREVIOUSPOST="
+&gt;     std::vector&lt;DIGIT&gt;::const_iterator ai(a.digits.begin()+a.origin);
+&gt;     std::vector&lt;DIGIT&gt;::const_iterator bi(b.digits.begin()+b.origin);
+
+&gt;     /* Make sure we don't overrun this's digit buffer */
+&gt;     int alen2(MinInt(a.length_used, length_used));
+&gt;     int blen2(MinInt(b.length_used, length_used));
+
+&gt;     /* Now do the addition */
+&gt;     if(alen2 &gt;= blen2){
+&gt;       /* Add up a's and b's digits */
+&gt;       for(int i(0);i&lt;blen2;i++,++ri,++ai,++bi){
+">
+
+I notice you post-inc the 'i'. Why?
+[ if you test it, you'll see that you get the same result with pre-inc for
+that situation. Pre-increment is faster, but, you would not even be able to
+measure the diff on such a short loop (as above).]
+
+<QUOTE PREVIOUSPOST="
+&gt;          tmp = *ai + *bi + carry;
+&gt;          if(carry) carry = (tmp &lt;= *bi) ? 1 : 0;
+&gt;          else      carry = (tmp &lt;  *bi) ? 1 : 0;
+&gt;          *ri = tmp;
+&gt;       }
+
+&gt;       /* Now tackle the part of a that is longer than b */
+&gt;       for(int i(blen2);i&lt;alen2;i++,++ri,++ai){
+&gt;          tmp = *ai + carry;
+&gt;          if(carry)
+&gt;            carry = (tmp == 0) ? 1 : 0;
+&gt;          *ri = tmp;
+&gt;       }
+
+&gt;       /* Zeroize the rest of this. */
+&gt;       for(int i(alen2);i&lt;length_used;i++,++ri){
+&gt;          *ri = carry;
+&gt;          carry = 0;
+&gt;       }
+">
+
+You might look into using std::fill() in place of that last loop. Or, if as
+I suspect, you are not using 'ri', eliminate it from your code.  [?? replace
+'tmp' with '*ri'. ??]
+[ example, taken from earlier...
+Maybe?:
+for( int i( blen2 ); i &lt; alen2; ++i,++ri,++ai ){
+*ri = *ai + carry;
+if( carry )
+carry = ( *ri == 0) ? 1 : 0;
+// *ri = tmp;
+}
+]
+
+For std::fill() it might look something like:
+std::fill( ri, ri + ( length_used - alen2 - 1 ), 0 );
+or:
+std::fill( ri, digits.end(), 0 );
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;     } else {
+&gt;       /* Swap so that the first operand is larger than the second. */
+&gt;       return(this-&gt;rawAdd(b, a));
+&gt;     }
+
+&gt;     /* Done! Return any leftover carry. */
+&gt;     return(carry);
+&gt; }
+&gt; ---
+
+&gt; (Here, &quot;MinInt&quot; is a little macro that returns the smaller of
+&gt; two integers.)
+
+&gt; I have one extra question. There's also a subtraction routine,
+&gt; which will be similar to the above. However, it is not so easy
+&gt; to do the swap for when b is longer than a, as if one simply
+&gt; were to call &quot;rawSub(b, a)&quot; that would give a 2's-complement
+&gt; negative of the difference (because subtraction is not
+&gt; commutative like addition, a - b != b - a in general), which
+&gt; would then need to be negated, which takes longer. So then
+&gt; wouldn't it be better to repeat the code in the first half of the
+&gt; if?
+">
+
+I'd get the code above working well, *and tested*, then concentrate on the
+'subtraction routine', using what you've learned.
+
+[ corrections welcome ]
+--
+Bob R
+POVrookie
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-04T14:25:00 </POSTDATE>
+On Nov 4, 10:12 am, werasm &lt;wer ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Nov 4, 1:35 am, mike3 &lt;mike4 ... @yahoo.com&gt; wrote:
+
+&gt; &gt; Well, here's my newest attempt, using the ideas you presented.
+&gt; &gt; What do you think? Is it any better (nicer, cleaner, clearer, less
+&gt; &gt; messy) than the original one?
+
+&gt; I may have this one totally wrong, but this looks
+&gt; like a possible candidate for transform, where
+&gt; what you do with the carry could be encapsulated
+&gt; in your function object. I still can't figure
+&gt; out exactly what the rules are concerning the
+&gt; carry, despite reading your comments, but perhaps
+&gt; I'm just I bad observer :-). If I were you
+&gt; I would draw a little diagram explaining what
+&gt; the algo should do e.g:
+
+&gt; Sequence (or digit a):
+&gt; 5 2 [9 7] 1 4
+&gt; Sequence (or digit b):
+&gt; 8 [1 4] 2 9 0
+&gt; Should give result:
+&gt; ...
+&gt; [] indicative of the ranges concerned.
+">
+
+What the thing does is take a.length_used worth of
+digits starting at a.origin from a's buffer, adds that to
+b.length_used worth of digits starting at b.origin from
+b's buffer, and finally stores the result at &quot;origin&quot; (which
+is in &quot;this&quot;), padding if necessary to make it as long as
+&quot;length_used&quot; (also in &quot;this&quot;). So if you have
+a = 12345 (NOT in base 10 in the real program, of course,
+that is just for purposes of illustration), and b = 2241,
+and &quot;this&quot; = 1111111, and you have a.length_used = 2,
+a.origin = 1, b.length_used = 3, b.origin = 1,
+this-&gt;length_used = 3, this-&gt;origin = 2, you get:
+
+a + b = 12[34]5 + [224]1 = [34] + [224] = [34 + 224] = [258],
+
+&quot;this&quot; = 11[111]11 -&gt; 11[258]11 -&gt; 1125811 =
+&quot;this&quot; after the operation.
+
+The parameters &quot;origin&quot; and &quot;length_used&quot; are never set
+directly but instead by a special member function that
+checks to ensure they don't exceed the bounds of the
+buffer.
+
+Why is the &quot;carry&quot; determination so odd? Because the
+&quot;base&quot; is actually the maximum size of the type &quot;DIGIT&quot;
+plus one, which should be a power of two, as this is
+binary. So to find the carry, we have to find the wraparound
+overflow.
+
+<QUOTE PREVIOUSPOST="
+&gt; With regards to the code presented, see below:
+
+&gt; &gt; DIGIT RawInt::rawAdd(const RawInt &amp;a, const RawInt &amp;b)
+&gt; &gt; {
+&gt; &gt;     DIGIT tmp, carry(0);
+
+&gt; Why is DIGIT in caps? I presume its a macro. If it
+&gt; is a macro, why use a macro, if not, then you should
+&gt; not use caps.
+">
+
+&quot;DIGIT&quot; is just a data type (in this case unsigned 32-bit).
+I use caps for emphasis.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;     /* Set up the iterators */
+&gt; &gt;     std::vector&lt;DIGIT&gt;::iterator ri(digits.begin()+origin);
+&gt; &gt;     std::vector&lt;DIGIT&gt;::const_iterator ai(a.digits.begin()+a.origin);
+&gt; &gt;     std::vector&lt;DIGIT&gt;::const_iterator bi(b.digits.begin()+b.origin);
+
+&gt; Perhaps use a member function that returns the origin (2
+&gt; versions, one returning const_iterator for constant RawInt
+&gt; and the other returning non const for non constant ...:
+">
+
+That returns the origin? What's the point of that? The addition
+routine is a member of RawInt, so why bother when you can
+just access &quot;origin&quot; directly?
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;     /* Make sure we don't overrun this's digit buffer */
+&gt; &gt;     int alen2(MinInt(a.length_used, length_used));
+&gt; &gt;     int blen2(MinInt(b.length_used, length_used));
+
+&gt; Why not use std::min over here - I'll have to presume
+&gt; MinInt does something special that differs from std::min.
+">
+
+No, it doesn't do anything different, just takes the minimum
+of the two integers.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;     /* Now do the addition */
+&gt; &gt;     if(alen2 &gt;= blen2)
+&gt; &gt;     {
+
+&gt; I would declare tmp and carry here, not at the top.
+">
+
+OK.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;       /* Add up a's and b's digits */
+&gt; &gt;       for(int i(0);i&lt;blen2;i++,++ri,++ai,++bi)
+
+&gt; Horizontal space makes things more readable, but opinions
+&gt; may differ.
+">
+
+Well, I guess I have a habit of making compact, short
+lines.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;          if(carry) carry = (tmp &lt;= *bi) ? 1 : 0;
+&gt; &gt;          else      carry = (tmp &lt;  *bi) ? 1 : 0;
+
+&gt; Above could look like this:
+
+&gt; if( carry ){ carry = (tmp &lt;= *bi); }
+&gt; else { carry = (tmp &lt;  *bi); }
+
+&gt; or even:
+&gt; carry = carry ? (tmp &lt;= *bi) : (tmp &lt;  *bi);
+">
+
+That's a lot neater.
+
+<QUOTE PREVIOUSPOST="
+&gt; Rationale:
+&gt; the boolean expression is already sufficient for the assignment
+
+&gt; &gt;       /* Now tackle the part of a that is longer than b */
+&gt; &gt;       for(int i(blen2);i&lt;alen2;i++,++ri,++ai)
+&gt; &gt;       {
+&gt; &gt;          tmp = *ai + carry;
+&gt; &gt;          if(carry)
+&gt; &gt;            carry = (tmp == 0) ? 1 : 0;
+
+&gt; Ditto -&gt; simply: carry = (tmp == 0) would do.
+">
+
+Oh, since &quot;true&quot; = 1, and &quot;false&quot; = 0, so comparison
+operators already return the required 1/0 we need,
+right?
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;       /* Zeroize the rest of this. */
+&gt; &gt;       for(int i(alen2);i&lt;length_used;i++,++ri)
+&gt; &gt;       {
+&gt; &gt;          *ri = carry;
+&gt; &gt;          carry = 0;
+&gt; &gt;       }
+
+&gt; How about using std::fill here? Its perfect for zeroing.
+&gt; In that case you would have to first carry carry over, then
+&gt; fill the remainder. Regardless, the above is simple enough
+&gt; to not require fill.
+
+&gt; The idea that I've had (out of the box) was something in
+&gt; the line of:
+
+&gt; std::transform(
+&gt;   s1_digit_pos, s1_end,
+&gt;   s2_digit_pos,
+&gt;   result_digit_pos,
+&gt;   Op ); //Where Op is a binary operator.
+
+&gt; &lt;Op&gt; could store the carry and implement it on the next item
+&gt; in the sequence. &lt;Op&gt; could also contain state to indicate
+&gt; whether an item should be added to the destination (or
+&gt; result) sequence. transform makes a copy of &lt;Op&gt;, but
+&gt; this does not matter as you could use something like
+&gt; boost::ref to make the algo only use a reference to
+&gt; Op. Eventually you have something like this (off
+&gt; the top of my head). I'll use normal vectors for
+&gt; simplicity.
+">
+
+&lt;snip snippet for brevity&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; All said, one needs to evaluate whether the algorithmic
+&gt; approach is necessarily simpler (more clear). I feel
+&gt; it does isolate the transformation better. Nevertheless,
+&gt; as someone has often pointed out, there is nothing wrong
+&gt; with non-algorithmic approach, as long as the intent is
+&gt; clear (you should not even need comments IMO, but that's
+&gt; another argument).
+">
+
+Also, looking at your code, what happened to the &quot;origin&quot;
+thing, anyway? I need that if I want to add bits and pieces
+of the digit buffers, as is needed in my implementation
+of huge floating point arithmetic using this.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; Regards,
+
+&gt; Werner
+">
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-04T14:30:00 </POSTDATE>
+On Nov 4, 11:39 am, &quot;BobR&quot; &lt;removeBadB ... @worldnet.att.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; mike3 wrote in message...
+&gt; &gt; Well, here's my newest attempt, using the ideas you presented.
+&gt; &gt; What do you think? Is it any better (nicer, cleaner, clearer, less
+&gt; &gt; messy) than the original one?
+
+&gt; In my opinion it is better. More important, do *you* see improvement?
+">
+
+To me it looks better. I was just wondering what you thought.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; ---
+&gt; &gt; /* Add two RawInts.
+&gt; &gt;  * Parameters:
+&gt; &gt;  *      a: First RawInt
+&gt; &gt;  *      b: Second RawInt
+&gt; &gt;  * Returns: carry.
+&gt; &gt;  * Operation: *this = a + b.
+&gt; &gt;  */
+&gt; &gt; DIGIT RawInt::rawAdd(const RawInt &amp;a, const RawInt &amp;b){
+&gt; &gt;     DIGIT tmp, carry(0);
+
+&gt; &gt;     /* Set up the iterators */
+&gt; &gt;     std::vector&lt;DIGIT&gt;::iterator ri(digits.begin()+origin);
+
+&gt; Review this and the use of 'ri' in the rest of this code. Is 'digits' a
+&gt; member of RawInt', or &lt;choke&gt; global?
+">
+
+It's a member, of course. A global? No way.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;     std::vector&lt;DIGIT&gt;::const_iterator ai(a.digits.begin()+a.origin);
+&gt; &gt;     std::vector&lt;DIGIT&gt;::const_iterator bi(b.digits.begin()+b.origin);
+
+&gt; &gt;     /* Make sure we don't overrun this's digit buffer */
+&gt; &gt;     int alen2(MinInt(a.length_used, length_used));
+&gt; &gt;     int blen2(MinInt(b.length_used, length_used));
+
+&gt; &gt;     /* Now do the addition */
+&gt; &gt;     if(alen2 &gt;= blen2){
+&gt; &gt;       /* Add up a's and b's digits */
+&gt; &gt;       for(int i(0);i&lt;blen2;i++,++ri,++ai,++bi){
+
+&gt; I notice you post-inc the 'i'. Why?
+&gt; [ if you test it, you'll see that you get the same result with pre-inc for
+&gt; that situation. Pre-increment is faster, but, you would not even be able to
+&gt; measure the diff on such a short loop (as above).]
+">
+
+'Cause I've gotten into the habit of post-incing in loops.
+Like you said, the diff can't really be measured, since
+the loop is going to be so short.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;          tmp = *ai + *bi + carry;
+&gt; &gt;          if(carry) carry = (tmp &lt;= *bi) ? 1 : 0;
+&gt; &gt;          else      carry = (tmp &lt;  *bi) ? 1 : 0;
+&gt; &gt;          *ri = tmp;
+&gt; &gt;       }
+
+&gt; &gt;       /* Now tackle the part of a that is longer than b */
+&gt; &gt;       for(int i(blen2);i&lt;alen2;i++,++ri,++ai){
+&gt; &gt;          tmp = *ai + carry;
+&gt; &gt;          if(carry)
+&gt; &gt;            carry = (tmp == 0) ? 1 : 0;
+&gt; &gt;          *ri = tmp;
+&gt; &gt;       }
+
+&gt; &gt;       /* Zeroize the rest of this. */
+&gt; &gt;       for(int i(alen2);i&lt;length_used;i++,++ri){
+&gt; &gt;          *ri = carry;
+&gt; &gt;          carry = 0;
+&gt; &gt;       }
+
+&gt; You might look into using std::fill() in place of that last loop. Or, if as
+&gt; I suspect, you are not using 'ri', eliminate it from your code.  [?? replace
+&gt; 'tmp' with '*ri'. ??]
+">
+
+I suppose I could.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; [ example, taken from earlier...
+&gt; Maybe?:
+&gt;        for( int i( blen2 ); i &lt; alen2; ++i,++ri,++ai ){
+&gt;           *ri = *ai + carry;
+&gt;           if( carry )
+&gt;             carry = ( *ri == 0) ? 1 : 0;
+&gt;           // *ri = tmp;
+&gt;           }
+&gt; ]
+
+&gt; For std::fill() it might look something like:
+&gt;     std::fill( ri, ri + ( length_used - alen2 - 1 ), 0 );
+&gt; or:
+&gt;     std::fill( ri, digits.end(), 0 );
+
+&gt; &gt;     } else {
+&gt; &gt;       /* Swap so that the first operand is larger than the second. */
+&gt; &gt;       return(this-&gt;rawAdd(b, a));
+&gt; &gt;     }
+
+&gt; &gt;     /* Done! Return any leftover carry. */
+&gt; &gt;     return(carry);
+&gt; &gt; }
+&gt; &gt; ---
+
+&gt; &gt; (Here, &quot;MinInt&quot; is a little macro that returns the smaller of
+&gt; &gt; two integers.)
+
+&gt; &gt; I have one extra question. There's also a subtraction routine,
+&gt; &gt; which will be similar to the above. However, it is not so easy
+&gt; &gt; to do the swap for when b is longer than a, as if one simply
+&gt; &gt; were to call &quot;rawSub(b, a)&quot; that would give a 2's-complement
+&gt; &gt; negative of the difference (because subtraction is not
+&gt; &gt; commutative like addition, a - b != b - a in general), which
+&gt; &gt; would then need to be negated, which takes longer. So then
+&gt; &gt; wouldn't it be better to repeat the code in the first half of the
+&gt; &gt; if?
+
+&gt; I'd get the code above working well, *and tested*, then concentrate on the
+&gt; 'subtraction routine', using what you've learned.
+">
+
+It does work already now, by the way.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; [ corrections welcome ]
+&gt; --
+&gt; Bob R
+&gt; POVrookie
+">
+</POST>
+<POST>
+<POSTER> LR &lt;lr...@superlink.net&gt; </POSTER>
+<POSTDATE> 2007-11-04T16:20:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+mike3 wrote:
+&gt; Well, here's my newest attempt, using the ideas you presented.
+&gt; What do you think? Is it any better (nicer, cleaner, clearer, less
+&gt; messy) than the original one?
+">
+
+A little bit, yes.
+
+<QUOTE PREVIOUSPOST="
+&gt;     /* Now do the addition */
+&gt;     if(alen2 &gt;= blen2)
+&gt;     {
+&gt;       /* Add up a's and b's digits */
+&gt;       for(int i(0);i&lt;blen2;i++,++ri,++ai,++bi)
+&gt;       {
+&gt;          tmp = *ai + *bi + carry;
+&gt;          if(carry) carry = (tmp &lt;= *bi) ? 1 : 0;
+&gt;          else      carry = (tmp &lt;  *bi) ? 1 : 0;
+&gt;          *ri = tmp;
+&gt;       }
+
+&gt;       /* Now tackle the part of a that is longer than b */
+&gt;       for(int i(blen2);i&lt;alen2;i++,++ri,++ai)
+&gt;       {
+&gt;          tmp = *ai + carry;
+&gt;          if(carry)
+&gt;            carry = (tmp == 0) ? 1 : 0;
+&gt;          *ri = tmp;
+&gt;       }
+
+&gt;       /* Zeroize the rest of this. */
+&gt;       for(int i(alen2);i&lt;length_used;i++,++ri)
+&gt;       {
+&gt;          *ri = carry;
+&gt;          carry = 0;
+&gt;       }
+&gt;     } else {
+&gt;       /* Swap so that the first operand is larger than the second. */
+&gt;       return(this-&gt;rawAdd(b, a));
+&gt;     }
+
+&gt;     /* Done! Return any leftover carry. */
+&gt;     return(carry);
+&gt; }
+&gt; I have one extra question. There's also a subtraction routine,
+&gt; which will be similar to the above. However, it is not so easy
+&gt; to do the swap for when b is longer than a, as if one simply
+&gt; were to call &quot;rawSub(b, a)&quot; that would give a 2's-complement
+&gt; negative of the difference (because subtraction is not
+&gt; commutative like addition, a - b != b - a in general), which
+&gt; would then need to be negated, which takes longer. So then
+&gt; wouldn't it be better to repeat the code in the first half of the
+&gt; if?
+">
+
+No.  I don't think so.
+
+// do that first loop
+const int start0 = 0;
+const int end0 = alen &lt; blen ? alen : blen;
+for(int i=start0; i&lt;end0; i++, ..... ) ....
+
+// second loop
+const int start1 = alen &lt; blen ? alen : blen;
+const int end1 = alen &lt; blen ? blen : alen;
+std::vector&lt;DIGIT&gt;::const_iterator &amp;xi = alen &lt; blen ? bi : ai;
+for(int i=start1; i&lt;end1; i++,xi++) ....
+or
+for(int i=start1; i&lt;end1; ++i,++xi) ....
+
+// third loop
+... etc...
+
+I'm pretty certain that I don't have all those right. You'll have to
+figure out the correct values.
+
+And I agree with whomever wrote that you ought to change all those
+if(carry) things to something like..
+carry = (carry == 1 &amp;&amp; tmp == 0) ? 0 : 1
+
+Another approach to the above, but perhaps less efficient would be to
+normalize the numbers first and then add or subtract them.
+
+But of course, YMWV.
+
+LR
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-04T19:32:00 </POSTDATE>
+On Nov 4, 11:39 am, &quot;BobR&quot; &lt;removeBadB ... @worldnet.att.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; mike3 wrote in message...
+">
+
+&lt;snip&gt;
+
+Alright, now all the suggestions have been put into effect, and
+this is the final result:
+
+---
+/* Add two RawInts.
+* Parameters:
+*      a: First RawInt
+*      b: Second RawInt
+*
+* Returns: carry.
+*
+* Operation: *this = a + b.
+*/
+DIGIT RawInt::rawAdd(const RawInt &amp;a, const RawInt &amp;b)
+{
+/* Set up the iterators */
+std::vector&lt;DIGIT&gt;::iterator ri(digits.begin()+origin);
+std::vector&lt;DIGIT&gt;::const_iterator ai(a.digits.begin()+a.origin);
+std::vector&lt;DIGIT&gt;::const_iterator bi(b.digits.begin()+b.origin);
+
+/* Make sure we don't overrun this's digit buffer */
+int alen2(min(a.length_used, length_used));
+int blen2(min(b.length_used, length_used));
+
+/* Now do the addition */
+if(alen2 &gt;= blen2)
+{
+DIGIT tmp, carry(0);
+
+/* Add up a's and b's digits */
+for(int i(0);i&lt;blen2;++i,++ri,++ai,++bi)
+{
+tmp = *ai + *bi + carry;
+carry = carry ? (tmp &lt;= *bi) : (tmp &lt; *bi);
+*ri = tmp;
+}
+
+/* Now tackle the part of a that is longer than b */
+for(int i(blen2);i&lt;alen2;++i,++ri,++ai)
+{
+tmp = *ai + carry;
+carry = carry ? (tmp == 0) : 0;
+*ri = tmp;
+}
+
+/* Zeroize the rest of this and carry over the remaining
+* carry.
+*/
+if(alen2 &lt; length_used)
+{
+std::fill(ri, ri + (length_used - alen2 - 1), 0);
+*ri = carry; carry = 0;
+}
+
+/* Return carry */
+return(carry);
+} else {
+/* Swap and use the above code */
+return(this-&gt;rawAdd(b, a));
+}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+---
+
+That's pretty good, now ain't it? I think so. It's been
+tested, and it seems to work OK.
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-05T00:21:00 </POSTDATE>
+On Nov 4, 2:20 pm, LR &lt;lr ... @superlink.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; mike3 wrote:
+">
+
+&lt;snip&gt;
+
+Well, here's the subtraction routine:
+
+---
+
+/* Subtract two RawInts.
+* Parameters:
+*      a: First RawInt
+*      b: Second RawInt
+*      dss_r: Pointer to a DSS that specifies the digit substring of
+*             this to store diff in. If NULL, this's full digit
+string
+*             is used.
+*      dss_a: Pointer to a DSS that specifies the digit substring of
+*             a to have b subtracted from. If NULL, a's full digit
+string
+*             is used.
+*      dss_b: Pointer to a DSS that specifies the digit substring of
+*             b to be subtracted from a. If NULL, b's full digit
+string is
+*             used.
+*
+* Returns: borrow.
+*
+* Operation: *this = a - b.
+*/
+DIGIT RawInt::rawSub(const RawInt &amp;a, const RawInt &amp;b,
+DSS *dss_r, DSS *dss_a, DSS *dss_b)
+{
+/* Set up the iterators */
+std::vector&lt;DIGIT&gt;::iterator ri(digits.begin());
+std::vector&lt;DIGIT&gt;::const_iterator ai(a.digits.begin());
+std::vector&lt;DIGIT&gt;::const_iterator bi(b.digits.begin());
+
+/* Use information in the DSSes, if applicable,
+* to restrict the operation to the specified substrings
+* of this's, a's, and b's digits.
+*/
+int rlen(length), alen(a.length), blen(b.length);
+if(dss_r) dss_r-&gt;Apply(&amp;ri, &amp;rlen);
+if(dss_a) dss_a-&gt;Apply(&amp;ai, &amp;alen);
+if(dss_b) dss_b-&gt;Apply(&amp;bi, &amp;blen);
+
+/* Make sure we don't overrun this's digit buffer */
+int alen2(min(alen, rlen));
+int blen2(min(blen, rlen));
+
+/* Figure out which of a or b is longer. */
+int smallerlen(min(alen2, blen2));
+int largerlen(max(alen2, blen2));
+std::vector&lt;DIGIT&gt;::const_iterator xi = alen &lt; blen ? bi : ai;
+int larger = (alen &lt; blen) ? 1 : 0;
+
+/* Now do the subtraction */
+DIGIT tmp, borrow(0);
+
+/* Subtract a's and b's digits */
+for(int i(0);i&lt;smallerlen;++i,++ri,++ai,++bi,++xi)
+{
+tmp = *ai - *bi - borrow;
+borrow = borrow ? (*ai &lt;= *bi) : (*ai &lt; *bi);
+*ri = tmp;
+}
+
+/* Now tackle the part of a/b that is longer than b/a */
+for(int i(smallerlen);i&lt;largerlen;++i,++ri,++xi)
+{
+if(larger == 0) /* a is larger */
+{
+tmp = *xi - borrow;
+borrow = borrow ? (*xi == 0) : 0;
+} else { /* b is larger */
+tmp = 0 - *xi - borrow;
+borrow = borrow ? (0 &lt;= *xi) : (0 &lt; *xi);
+}
+
+*ri = tmp;
+}
+
+/* Ripple borrow */
+if(rlen &gt; largerlen)
+std::fill(ri, ri + (rlen - largerlen - 1), 0 - borrow);
+
+/* Return borrow */
+return(borrow);
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+---
+
+I've broke the habit of using that awful &quot;if carry&quot; block, as you
+can see.
+
+As you might notice, I've changed the location of the &quot;origin&quot;/
+&quot;length_used&quot; parameters from being inside the RawInts to
+being in a little wrapper class of their own called &quot;DSS&quot; (for &quot;digit
+substring specifier&quot;). That allows one to keep the input BigFloats
+as &quot;const&quot; in the floating point implementation, since one
+does not need to tinker with internal pointers. This helps make
+it more foolproof. It allows the routines to be able to handle
+in-place arithmetic without buffering, which saves a little time
+and makes the code a little nicer. And it avoids constantly having
+to call a special routine to reset the pointers after we get done.
+Finally, it guards against forgetting to reset internal pointers when
+one needs to use a different part of the numbers, or even
+the numbers &quot;as is&quot; without using partial strings of their
+digits, further foolproofing the raw integer package. One can just
+specify which parts one needs to use on every operation. Overall,
+I just think it's better that way and easier to use. Was this a good
+decision?
+</POST>
+<POST>
+<POSTER> werasm &lt;wer...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-05T03:30:00 </POSTDATE>
+On Nov 4, 8:25 pm, mike3 &lt;mike4 ... @yahoo.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; a + b = 12[34]5 + [224]1 = [34] + [224] = [34 + 224] = [258],
+
+&gt; &quot;this&quot; = 11[111]11 -&gt; 11[258]11 -&gt; 1125811 =
+&gt; &quot;this&quot; after the operation.
+">
+
+OK, thanks.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; With regards to the code presented, see below:
+
+&gt; &gt; &gt; DIGIT RawInt::rawAdd(const RawInt &amp;a, const RawInt &amp;b)
+&gt; &gt; &gt; {
+&gt; &gt; &gt;     DIGIT tmp, carry(0);
+
+&gt; &gt; Why is DIGIT in caps? I presume its a macro. If it
+&gt; &gt; is a macro, why use a macro, if not, then you should
+&gt; &gt; not use caps.
+
+&gt; &quot;DIGIT&quot; is just a data type (in this case unsigned 32-bit).
+&gt; I use caps for emphasis.
+">
+
+Then I accept you made it caps for the example, as even to
+emphasize using CAPS is a no-no in C++ as it is reserved for
+macros.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; &gt;     /* Set up the iterators */
+&gt; &gt; &gt;     std::vector&lt;DIGIT&gt;::iterator ri(digits.begin()+origin);
+&gt; &gt; &gt;     std::vector&lt;DIGIT&gt;::const_iterator ai(a.digits.begin()+a.origin);
+&gt; &gt; &gt;     std::vector&lt;DIGIT&gt;::const_iterator bi(b.digits.begin()+b.origin);
+
+&gt; &gt; Perhaps use a member function that returns the origin (2
+&gt; &gt; versions, one returning const_iterator for constant RawInt
+&gt; &gt; and the other returning non const for non constant ...:
+
+&gt; That returns the origin? What's the point of that? The addition
+&gt; routine is a member of RawInt, so why bother when you can
+&gt; just access &quot;origin&quot; directly?
+">
+
+By calling an inline member you can make a small improvement that
+prevents you from duplicating the exact code three times. Therefore
+instead of using...
+
+std::vector&lt;DIGIT&gt;::iterator ri(digits.begin()+origin);
+std::vector&lt;DIGIT&gt;::const_iterator ai(a.digits.begin()+a.origin);
+std::vector&lt;DIGIT&gt;::const_iterator bi(b.digits.begin()+b.origin);
+
+...use:
+
+std::vector&lt;DIGIT&gt;::iterator ri( originIter() );
+std::vector&lt;DIGIT&gt;::const_iterator ai( a.originIter() );
+std::vector&lt;DIGIT&gt;::const_iterator bi( b.originIter() );
+
+where originIter is simply defined like this:
+
+std::vector&lt;DIGIT&gt;::iterator originIter() const{ return digits.begin()
++origin; }
+
+- It looks less cluttered and is clearer.
+- If you decide to change something later, you change it
+in one place( not that you would, but this is stylistic
+answer to your question of making it better.
+
+<QUOTE PREVIOUSPOST="
+&gt; No, it doesn't do anything different, just takes the minimum
+&gt; of the two integers.
+">
+
+The use std::min.
+
+<QUOTE PREVIOUSPOST="
+&gt; Well, I guess I have a habit of making compact, short
+&gt; lines.
+">
+
+I'm not to phased about this, but certain bureaucrats
+would be ;-).
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Ditto -&gt; simply: carry = (tmp == 0) would do.
+
+&gt; Oh, since &quot;true&quot; = 1, and &quot;false&quot; = 0, so comparison
+&gt; operators already return the required 1/0 we need,
+&gt; right?
+">
+
+Exactly.
+
+<QUOTE PREVIOUSPOST="
+&gt; Also, looking at your code, what happened to the &quot;origin&quot;
+&gt; thing, anyway? I need that if I want to add bits and pieces
+&gt; of the digit buffers, as is needed in my implementation
+&gt; of huge floating point arithmetic using this.
+">
+
+I did not duplicate your code (or even requirements).
+I presented another idea. It is up to you to use
+it if you want to. The idea is to use transform
+to do the transformation, and then simply carry
+the carry over after the transformations were performed.
+Obviously, the iterators in the transformation would
+be obtained from getOrigin(). The idea was out of the
+box and just a presentation of what you could do as
+alternative. What I like about the alternative is that
+it emphasizes (or localizes) the translation to the
+overloaded op(), but I think this is debatable. You
+would have to post the alternative implementation if
+you want us to scrutinize more. All said, what you've
+ended up with already looks much better than what you've
+started with.
+
+Kind regards,
+
+Werner
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-05T16:03:00 </POSTDATE>
+On Nov 5, 1:30 am, werasm &lt;wer ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Nov 4, 8:25 pm, mike3 &lt;mike4 ... @yahoo.com&gt; wrote:
+
+&gt; &gt; a + b = 12[34]5 + [224]1 = [34] + [224] = [34 + 224] = [258],
+
+&gt; &gt; &quot;this&quot; = 11[111]11 -&gt; 11[258]11 -&gt; 1125811 =
+&gt; &gt; &quot;this&quot; after the operation.
+
+&gt; OK, thanks.
+
+&gt; &gt; &gt; With regards to the code presented, see below:
+
+&gt; &gt; &gt; &gt; DIGIT RawInt::rawAdd(const RawInt &amp;a, const RawInt &amp;b)
+&gt; &gt; &gt; &gt; {
+&gt; &gt; &gt; &gt;     DIGIT tmp, carry(0);
+
+&gt; &gt; &gt; Why is DIGIT in caps? I presume its a macro. If it
+&gt; &gt; &gt; is a macro, why use a macro, if not, then you should
+&gt; &gt; &gt; not use caps.
+
+&gt; &gt; &quot;DIGIT&quot; is just a data type (in this case unsigned 32-bit).
+&gt; &gt; I use caps for emphasis.
+
+&gt; Then I accept you made it caps for the example, as even to
+&gt; emphasize using CAPS is a no-no in C++ as it is reserved for
+&gt; macros.
+">
+
+Geez, I guess I didn't know of all these Conventions they've
+got for naming/capitalization. What should it be? &quot;Digit&quot;, &quot;digit&quot;,
+&quot;digiT&quot;? I was actually using &quot;DIGIT&quot; in my program, a
+real program, by the way! Now that you mentioned it I guess
+I'd better change it. But what should it be?
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; &gt; &gt;     /* Set up the iterators */
+&gt; &gt; &gt; &gt;     std::vector&lt;DIGIT&gt;::iterator ri(digits.begin()+origin);
+&gt; &gt; &gt; &gt;     std::vector&lt;DIGIT&gt;::const_iterator ai(a.digits.begin()+a.origin);
+&gt; &gt; &gt; &gt;     std::vector&lt;DIGIT&gt;::const_iterator bi(b.digits.begin()+b.origin);
+
+&gt; &gt; &gt; Perhaps use a member function that returns the origin (2
+&gt; &gt; &gt; versions, one returning const_iterator for constant RawInt
+&gt; &gt; &gt; and the other returning non const for non constant ...:
+
+&gt; &gt; That returns the origin? What's the point of that? The addition
+&gt; &gt; routine is a member of RawInt, so why bother when you can
+&gt; &gt; just access &quot;origin&quot; directly?
+
+&gt; By calling an inline member you can make a small improvement that
+&gt; prevents you from duplicating the exact code three times. Therefore
+&gt; instead of using...
+
+&gt; std::vector&lt;DIGIT&gt;::iterator ri(digits.begin()+origin);
+&gt; std::vector&lt;DIGIT&gt;::const_iterator ai(a.digits.begin()+a.origin);
+&gt; std::vector&lt;DIGIT&gt;::const_iterator bi(b.digits.begin()+b.origin);
+
+&gt; ...use:
+
+&gt; std::vector&lt;DIGIT&gt;::iterator ri( originIter() );
+&gt; std::vector&lt;DIGIT&gt;::const_iterator ai( a.originIter() );
+&gt; std::vector&lt;DIGIT&gt;::const_iterator bi( b.originIter() );
+
+&gt; where originIter is simply defined like this:
+
+&gt; std::vector&lt;DIGIT&gt;::iterator originIter() const{ return digits.begin()
+&gt; +origin; }
+
+&gt; - It looks less cluttered and is clearer.
+&gt; - If you decide to change something later, you change it
+&gt;  in one place( not that you would, but this is stylistic
+&gt;  answer to your question of making it better.
+">
+
+Now I've done that. I also moved the &quot;origin&quot;/&quot;length_used&quot;
+parameters into a separate wrapper class (considerations
+of the floating point library this is for suggested this approach
+was better) and one of it's functions applies the origin value
+to an iterator.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; No, it doesn't do anything different, just takes the minimum
+&gt; &gt; of the two integers.
+
+&gt; The use std::min.
+">
+
+I've done that now, too.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Well, I guess I have a habit of making compact, short
+&gt; &gt; lines.
+
+&gt; I'm not to phased about this, but certain bureaucrats
+&gt; would be ;-).
+">
+
+Who's that, anyway? You mean whoever comes up with
+all these conventions?
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; &gt; Ditto -&gt; simply: carry = (tmp == 0) would do.
+
+&gt; &gt; Oh, since &quot;true&quot; = 1, and &quot;false&quot; = 0, so comparison
+&gt; &gt; operators already return the required 1/0 we need,
+&gt; &gt; right?
+
+&gt; Exactly.
+">
+
+And that's standard, right? That's why I was a
+little weary of using it -- I wasn't sure if it was
+standard or not.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Also, looking at your code, what happened to the &quot;origin&quot;
+&gt; &gt; thing, anyway? I need that if I want to add bits and pieces
+&gt; &gt; of the digit buffers, as is needed in my implementation
+&gt; &gt; of huge floating point arithmetic using this.
+
+&gt; I did not duplicate your code (or even requirements).
+&gt; I presented another idea. It is up to you to use
+&gt; it if you want to. The idea is to use transform
+&gt; to do the transformation, and then simply carry
+&gt; the carry over after the transformations were performed.
+&gt; Obviously, the iterators in the transformation would
+&gt; be obtained from getOrigin(). The idea was out of the
+&gt; box and just a presentation of what you could do as
+&gt; alternative. What I like about the alternative is that
+&gt; it emphasizes (or localizes) the translation to the
+&gt; overloaded op(), but I think this is debatable. You
+&gt; would have to post the alternative implementation if
+&gt; you want us to scrutinize more. All said, what you've
+&gt; ended up with already looks much better than what you've
+&gt; started with.
+">
+
+Alright. Is the &quot;std::transform&quot; method preferred though
+because it allows one to package the little addition/
+subtraction cores into neat little functions that you can
+simply reference when you need to use those operations?
+But I'd like to know: Is using &quot;std::transform&quot; slower than
+using the &quot;hardwired&quot; approach I've got there now? If
+not, it shouldn't really matter since I'm going to have
+special &quot;hardwired&quot; functions for the time-critical parts
+of the program, but I'm still curious.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; Kind regards,
+
+&gt; Werner
+">
+</POST>
+<POST>
+<POSTER> werasm &lt;wer...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-06T03:31:00 </POSTDATE>
+On Nov 5, 10:03 pm, mike3 &lt;mike4 ... @yahoo.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Geez, I guess I didn't know of all these Conventions they've
+&gt; got for naming/capitalization. What should it be? &quot;Digit&quot;, &quot;digit&quot;,
+&gt; &quot;digiT&quot;? I was actually using &quot;DIGIT&quot; in my program, a
+&gt; real program, by the way! Now that you mentioned it I guess
+&gt; I'd better change it. But what should it be?
+">
+
+There has been long discussions in this group about naming
+conventions, and especially using capitals in the past.
+It boils down to CAPITALS being reserved for macros, and
+that is inherited from &quot;C&quot;, if I understood correctly.
+
+I think the standards says you may not prefix with
+_ (underscore), and the capital reservation for macros
+are just known convention - I'm not sure whether the standard
+mentions anything about that.
+
+I usually use CamelCase for class names. For function
+and variable names I have my first syllable lower case,
+but this is not that important, as long as you are
+consistent. I more or less follow the convention spelled
+out by Andrei Alexandrescu and Herb Sutter, but not all
+people like that (I'm sure you'll find it if you look it up).
+
+It is partially described in Andrei's book &quot;Modern C++ Design&quot;.
+
+<QUOTE PREVIOUSPOST="
+&gt; Now I've done that. I also moved the &quot;origin&quot;/&quot;length_used&quot;
+&gt; parameters into a separate wrapper class (considerations
+&gt; of the floating point library this is for suggested this approach
+&gt; was better) and one of it's functions applies the origin value
+&gt; to an iterator.
+">
+
+As long as you believe it is better :-).
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; &gt; &gt; Ditto -&gt; simply: carry = (tmp == 0) would do.
+&gt; And that's standard, right? That's why I was a
+&gt; little weary of using it -- I wasn't sure if it was
+&gt; standard or not.
+">
+
+Of course.
+
+<QUOTE PREVIOUSPOST="
+&gt; Alright. Is the &quot;std::transform&quot; method preferred though
+&gt; because it allows one to package the little addition/
+&gt; subtraction cores into neat little functions that you can
+&gt; simply reference when you need to use those operations?
+">
+
+Not necessarily, but that is why I prefer it.
+
+<QUOTE PREVIOUSPOST="
+&gt; But I'd like to know: Is using &quot;std::transform&quot; slower than
+&gt; using the &quot;hardwired&quot; approach I've got there now?
+">
+
+I don't know, I've not tested it, but perhaps it could be
+as transform returns by value. It all depends on how the
+compiler generates the code, but I would imagine it to
+be slightly slower. All said, speed of execution is rarely
+a measure of how good code is. Maintainability, clarity and
+scalability is most often more important. Speed only becomes
+a factor when it becomes an issue. Other topic, though.
+
+Also, you have to believe it's better. If you think your
+approach is better, good. I just gave you an out of the
+box thought - a different approach. I did not find your
+initial approach attractive because it was not obvious.
+OTOH, some things need not be obvious.
+
+<QUOTE PREVIOUSPOST="
+&gt; If
+&gt; not, it shouldn't really matter since I'm going to have
+&gt; special &quot;hardwired&quot; functions for the time-critical parts
+&gt; of the program, but I'm still curious.
+">
+
+Yes, 80/20 rule. 20 % of the code executes 80% of the time
+(perhaps even less, I'd imagine).
+
+Regards,
+
+Werner
+</POST>
+<POST>
+<POSTER> James Kanze &lt;james.ka...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-06T05:29:00 </POSTDATE>
+On Nov 6, 9:31 am, werasm &lt;wer ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Nov 5, 10:03 pm, mike3 &lt;mike4 ... @yahoo.com&gt; wrote:
+&gt; &gt; Geez, I guess I didn't know of all these Conventions they've
+&gt; &gt; got for naming/capitalization. What should it be? &quot;Digit&quot;, &quot;digit&quot;,
+&gt; &gt; &quot;digiT&quot;? I was actually using &quot;DIGIT&quot; in my program, a
+&gt; &gt; real program, by the way! Now that you mentioned it I guess
+&gt; &gt; I'd better change it. But what should it be?
+&gt; There has been long discussions in this group about naming
+&gt; conventions, and especially using capitals in the past.
+&gt; It boils down to CAPITALS being reserved for macros, and
+&gt; that is inherited from &quot;C&quot;, if I understood correctly.
+&gt; I think the standards says you may not prefix with _
+&gt; (underscore), and the capital reservation for macros are just
+&gt; known convention - I'm not sure whether the standard mentions
+&gt; anything about that.
+">
+
+First, it *is* a convention.  As far as the language goes,
+there's no problem.  But it seems to be a more or less universal
+convention, so it's better to stick with it.  (Traditionally,
+some conventions also used all caps for constants.  But one
+man's constant is another man's variable, and you really do want
+a convention in which macro names are distinct, so it's probably
+better to avoid that tradition.)
+
+<QUOTE PREVIOUSPOST="
+&gt; I usually use CamelCase for class names. For function
+&gt; and variable names I have my first syllable lower case,
+&gt; but this is not that important, as long as you are
+&gt; consistent. I more or less follow the convention spelled
+&gt; out by Andrei Alexandrescu and Herb Sutter, but not all
+&gt; people like that (I'm sure you'll find it if you look it up).
+">
+
+Naming conventions are used to establish (meta-)namespaces.  As
+a general rule:
+
+-- macros must be separate, since they don't follow any of the
+rules other symbols follow, and
+
+-- it's probably best if type names are different from other
+things as well, since C++ parses differently depending on
+whether a symbol is a type name or not.
+
+I'd pretty much consider the first an absolute.  And I'd add
+that macro names normally require some sort of library specific
+prefix, to avoid conflicts.
+
+In an ideal world, the convention for the rest would be more or
+less:
+
+-- type names are unqualified nouns,
+-- variable and constant names are qualified nouns, or in some
+cases adjectives, and
+-- function names are verbs or verb phrases, predicate
+functions use the verb &quot;to be&quot;.
+
+Thus, &quot;color&quot; is a type, since it is an unqualified noun,
+&quot;background_color&quot; or &quot;red&quot; are variables or constants, and
+&quot;set_color&quot; or &quot;is_red&quot; would be functions.
+
+In practice, it's rarely that clear: if the functions represent
+an attribute of the class, for example, I'll use the qualified
+noun for them (which means I need something else for the actual
+member they set or get).  Is automate_state a qualified noun, or
+an unqualified one?  Is &quot;start&quot; or &quot;empty&quot; a verb, or an
+adjective?
+
+So I tend to recommend an additional typographical convention to
+distinguish types and non-types.  An initial capital seems to be
+quasi universal for types.  (Some conventions use it for
+functions as well: I don't particularly like it, but since
+function names are generally verbs, and typenames nouns, it
+probably doesn't cause too many problems in practice.)
+
+The remaining point is how to separate words in a symbol: the
+two conventions are camel case and using an underscore.  Camel
+case is ugly, and less readable, but it seems to be by far the
+most used.
+
+<QUOTE PREVIOUSPOST="
+&gt; It is partially described in Andrei's book &quot;Modern C++ Design&quot;.
+">
+
+It goes back a lot further than that.  It was used in the CCITT
+standards, long before 1990.  (The fact that it was used in the
+CCITT standards meant that it was quasi-universal in European
+telecoms.)  It's also the Java standard (although Java uses all
+caps for constants---they don't have to worry about macros, but
+of course, when the constant becomes a variable, as constants
+are wont to do, you have the choice of modifying everywhere or
+being inconsistent).  I find it esthetically very disagreeable,
+but having worked for many, many years in telecoms (in Europe),
+it's more or less second nature to me.
+
+Of course, on any given contract, I use the conventions my
+client has adopted.
+
+--
+James Kanze (GABI Software)             email:james.ka ... @gmail.com
+Conseils en informatique orientée objet/
+Beratung in objektorientierter Datenverarbeitung
+9 place Sémard, 78210 St.-Cyr-l'École, France, +33 (0)1 30 23 00 34
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-06T15:24:00 </POSTDATE>
+On Nov 6, 1:31 am, werasm &lt;wer ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Nov 5, 10:03 pm, mike3 &lt;mike4 ... @yahoo.com&gt; wrote:
+
+&gt; &gt; Geez, I guess I didn't know of all these Conventions they've
+&gt; &gt; got for naming/capitalization. What should it be? &quot;Digit&quot;, &quot;digit&quot;,
+&gt; &gt; &quot;digiT&quot;? I was actually using &quot;DIGIT&quot; in my program, a
+&gt; &gt; real program, by the way! Now that you mentioned it I guess
+&gt; &gt; I'd better change it. But what should it be?
+
+&gt; There has been long discussions in this group about naming
+&gt; conventions, and especially using capitals in the past.
+&gt; It boils down to CAPITALS being reserved for macros, and
+&gt; that is inherited from &quot;C&quot;, if I understood correctly.
+
+&gt; I think the standards says you may not prefix with
+&gt; _ (underscore), and the capital reservation for macros
+&gt; are just known convention - I'm not sure whether the standard
+&gt; mentions anything about that.
+">
+
+But other than that, what should one use for the type?
+Would any of &quot;digit&quot;, &quot;Digit&quot;, &quot;DigiT&quot;, &quot;digiT&quot; be
+acceptable, then? And should ALL macros be named
+with CAPITALS, then?
+
+<QUOTE PREVIOUSPOST="
+&gt; I usually use CamelCase for class names. For function
+&gt; and variable names I have my first syllable lower case,
+&gt; but this is not that important, as long as you are
+&gt; consistent. I more or less follow the convention spelled
+&gt; out by Andrei Alexandrescu and Herb Sutter, but not all
+&gt; people like that (I'm sure you'll find it if you look it up).
+
+&gt; It is partially described in Andrei's book &quot;Modern C++ Design&quot;.
+">
+
+$50 for that book?! I need a good source of money... Heh,
+which is why I'm trying to make these programs.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Now I've done that. I also moved the &quot;origin&quot;/&quot;length_used&quot;
+&gt; &gt; parameters into a separate wrapper class (considerations
+&gt; &gt; of the floating point library this is for suggested this approach
+&gt; &gt; was better) and one of it's functions applies the origin value
+&gt; &gt; to an iterator.
+
+&gt; As long as you believe it is better :-).
+">
+
+It helped, since it makes it easier to program the floating
+point stuff, and it is also makes it a lot harder to forget
+resetting internal pointers in the RawInts when you
+want to use different parts of the numbers or even use
+all of 'em just like in &quot;ordinary&quot; arithmetic.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; &gt; &gt; &gt; Ditto -&gt; simply: carry = (tmp == 0) would do.
+&gt; &gt; And that's standard, right? That's why I was a
+&gt; &gt; little weary of using it -- I wasn't sure if it was
+&gt; &gt; standard or not.
+
+&gt; Of course.
+">
+
+Good.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Alright. Is the &quot;std::transform&quot; method preferred though
+&gt; &gt; because it allows one to package the little addition/
+&gt; &gt; subtraction cores into neat little functions that you can
+&gt; &gt; simply reference when you need to use those operations?
+
+&gt; Not necessarily, but that is why I prefer it.
+">
+
+I suppose so. It does sound like it would make it easier,
+as then you can change how you do those often-used functions
+without changing everything that uses them.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; But I'd like to know: Is using &quot;std::transform&quot; slower than
+&gt; &gt; using the &quot;hardwired&quot; approach I've got there now?
+
+&gt; I don't know, I've not tested it, but perhaps it could be
+&gt; as transform returns by value. It all depends on how the
+&gt; compiler generates the code, but I would imagine it to
+&gt; be slightly slower. All said, speed of execution is rarely
+&gt; a measure of how good code is. Maintainability, clarity and
+&gt; scalability is most often more important. Speed only becomes
+&gt; a factor when it becomes an issue. Other topic, though.
+">
+
+Well, in my application, it needs to be very fast. However,
+there's only one place where the speed matters -- actually
+drawing the fractals. That's where the calculations have to
+be really, really fast. But for that, I have a separate set of
+&quot;fast&quot; routines with various restrictions (ex. all operands
+*and* the output buffer must have the same length (precision)).
+However this (what I've been discussing right now) is for
+the general bignum package used for all other bignum
+manipulations.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; Also, you have to believe it's better. If you think your
+&gt; approach is better, good. I just gave you an out of the
+&gt; box thought - a different approach. I did not find your
+&gt; initial approach attractive because it was not obvious.
+&gt; OTOH, some things need not be obvious.
+
+&gt; &gt; If
+&gt; &gt; not, it shouldn't really matter since I'm going to have
+&gt; &gt; special &quot;hardwired&quot; functions for the time-critical parts
+&gt; &gt; of the program, but I'm still curious.
+
+&gt; Yes, 80/20 rule. 20 % of the code executes 80% of the time
+&gt; (perhaps even less, I'd imagine).
+
+&gt; Regards,
+
+&gt; Werner
+">
+</POST>
+<POST>
+<POSTER> werasm &lt;wer...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-06T17:05:00 </POSTDATE>
+On Nov 6, 9:24 pm, mike3 &lt;mike4 ... @yahoo.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; But other than that, what should one use for the type?
+&gt; Would any of &quot;digit&quot;, &quot;Digit&quot;, &quot;DigiT&quot;, &quot;digiT&quot; be
+&gt; acceptable, then? And should ALL macros be named
+&gt; with CAPITALS, then?
+">
+
+I presume by the type you mean the class (or is
+DIGIT in actual fact a template argument). It
+did not seem like a template argument to me.
+
+e.g:
+
+Your function did not look like this:
+
+template &lt;class DigitT&gt;
+void SomeObject( /*...*/ )
+{
+std::vector&lt;DigitT&gt; blah;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+As I understood it DIGIT was a class. If that is the
+case (it being a class), refer to James's detailed
+(and sound) reply. If it was indeed a template argument
+like DigitT here above, I personally would have called it
+DigitT (or Digit_T). All caps are reserved for macros. A
+capital here and there does no harm, as long as the identifier
+does not only consist of capitals (just in case you misunderstood).
+
+<QUOTE PREVIOUSPOST="
+&gt; $50 for that book?! I need a good source of money... Heh,
+&gt; which is why I'm trying to make these programs.
+">
+
+Good book - worth the money (IMHO).
+
+<QUOTE PREVIOUSPOST="
+&gt; I suppose so. It does sound like it would make it easier,
+&gt; as then you can change how you do those often-used functions
+&gt; without changing everything that uses them.
+">
+
+That is more or less my rationale too. If you have an
+implementation where you've used transform, please post it
+(under the previous topic) for interest sake (or mail me).
+
+Regards,
+
+Werner
+</POST>
+<POST>
+<POSTER> red floyd &lt;no.s...@here.dude&gt; </POSTER>
+<POSTDATE> 2007-11-06T17:37:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+werasm wrote:
+
+&gt; All caps are reserved for macros. A
+&gt; capital here and there does no harm, as long as the identifier
+&gt; does not only consist of capitals (just in case you misunderstood).
+">
+
+No, there is no such restriction.  An argument can be made that all caps
+*SHOULD BE* reserved for macros (an argument that I agree with), but
+there is no such restriction defined in the language.
+</POST>
+<POST>
+<POSTER> werasm &lt;wer...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-07T03:13:00 </POSTDATE>
+On Nov 6, 11:37 pm, red floyd &lt;no.s ... @here.dude&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; werasm wrote:
+
+&gt; &gt; All caps are reserved for macros. A
+&gt; &gt; capital here and there does no harm, as long as the identifier
+&gt; &gt; does not only consist of capitals (just in case you misunderstood).
+
+&gt; No, there is no such restriction.  An argument can be made that all caps
+&gt; *SHOULD BE* reserved for macros (an argument that I agree with), but
+&gt; there is no such restriction defined in the language.
+">
+
+The point was from the start that it is generally accepted as
+convention. Because of this, not adhering to this convention
+makes you run the risk. All said, lowercase macros also exists,
+but it is quite rare (min being one irritating one). I recently
+came across a macro named &quot;index&quot; in a library that gave me some
+problems. The argument is therefore indeed &quot;SHOULD BE&quot;.
+
+Regards,
+
+Werner
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-08T15:03:00 </POSTDATE>
+On Nov 7, 1:13 am, werasm &lt;wer ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Nov 6, 11:37 pm, red floyd &lt;no.s ... @here.dude&gt; wrote:
+
+&gt; &gt; werasm wrote:
+
+&gt; &gt; &gt; All caps are reserved for macros. A
+&gt; &gt; &gt; capital here and there does no harm, as long as the identifier
+&gt; &gt; &gt; does not only consist of capitals (just in case you misunderstood).
+
+&gt; &gt; No, there is no such restriction.  An argument can be made that all caps
+&gt; &gt; *SHOULD BE* reserved for macros (an argument that I agree with), but
+&gt; &gt; there is no such restriction defined in the language.
+
+&gt; The point was from the start that it is generally accepted as
+&gt; convention. Because of this, not adhering to this convention
+&gt; makes you run the risk. All said, lowercase macros also exists,
+&gt; but it is quite rare (min being one irritating one). I recently
+&gt; came across a macro named &quot;index&quot; in a library that gave me some
+&gt; problems. The argument is therefore indeed &quot;SHOULD BE&quot;.
+
+&gt; Regards,
+
+&gt; Werner
+">
+
+And that's why I want to know what all these conventions are.
+What therefore should be used instead of all caps?
+</POST>
+<POST>
+<POSTER> &quot;Victor Bazarov&quot; &lt;v.Abaza...@comAcast.net&gt; </POSTER>
+<POSTDATE> 2007-11-08T15:12:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+mike3 wrote:
+&gt; On Nov 7, 1:13 am, werasm &lt;wer ... @gmail.com&gt; wrote:
+&gt;&gt; On Nov 6, 11:37 pm, red floyd &lt;no.s ... @here.dude&gt; wrote:
+
+&gt;&gt;&gt; werasm wrote:
+
+&gt;&gt;&gt;&gt; All caps are reserved for macros. A
+&gt;&gt;&gt;&gt; capital here and there does no harm, as long as the identifier
+&gt;&gt;&gt;&gt; does not only consist of capitals (just in case you misunderstood).
+
+&gt;&gt;&gt; No, there is no such restriction.  An argument can be made that all
+&gt;&gt;&gt; caps *SHOULD BE* reserved for macros (an argument that I agree
+&gt;&gt;&gt; with), but there is no such restriction defined in the language.
+
+&gt;&gt; The point was from the start that it is generally accepted as
+&gt;&gt; convention. Because of this, not adhering to this convention
+&gt;&gt; makes you run the risk. All said, lowercase macros also exists,
+&gt;&gt; but it is quite rare (min being one irritating one). I recently
+&gt;&gt; came across a macro named &quot;index&quot; in a library that gave me some
+&gt;&gt; problems. The argument is therefore indeed &quot;SHOULD BE&quot;.
+
+&gt;&gt; Regards,
+
+&gt;&gt; Werner
+
+&gt; And that's why I want to know what all these conventions are.
+&gt; What therefore should be used instead of all caps?
+">
+
+There are several.  All-lowercase is one (the Standard Library has
+that one).  All-lowercase with spaces separating words (also part
+of the Standard Library convention).  TitleCase is another.  Then
+you get your Title_Case (words separated by an underscore), which
+I personally don't like.  Then there is one with the name followed
+by '_t' for all types (Standard library does not really follow it,
+only for primitive types, like size_t, wchar_t, ptrdiff_t, etc.)
+
+Essentially you need to pick one and follow it religiously.  Then
+it's very easy for somebody else to understand and use it.
+
+V
+--
+Please remove capital 'A's when replying by e-mail
+I do not respond to top-posted replies, please don't ask
+</POST>
+<POST>
+<POSTER> Ben Pfaff &lt;b...@cs.stanford.edu&gt; </POSTER>
+<POSTDATE> 2007-11-08T17:38:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Victor Bazarov&quot; &lt;v.Abaza ... @comAcast.net&gt; writes:
+&gt; There are several.  All-lowercase is one (the Standard Library has
+&gt; that one).  All-lowercase with spaces separating words (also part
+&gt; of the Standard Library convention).  TitleCase is another.  Then
+&gt; you get your Title_Case (words separated by an underscore), which
+&gt; I personally don't like.  Then there is one with the name followed
+&gt; by '_t' for all types (Standard library does not really follow it,
+&gt; only for primitive types, like size_t, wchar_t, ptrdiff_t, etc.)
+">
+
+If you ever might find yourself working in a POSIX environment,
+using a _t suffix for all your types is a bad idea, because POSIX
+explicitly reserves all names that end in _t if any POSIX header
+(including any C header) is included.
+--
+Ben Pfaff
+http://benpfaff.org
+</POST>
+<POST>
+<POSTER> &quot;Victor Bazarov&quot; &lt;v.Abaza...@comAcast.net&gt; </POSTER>
+<POSTDATE> 2007-11-08T17:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Ben Pfaff wrote:
+&gt; &quot;Victor Bazarov&quot; &lt;v.Abaza ... @comAcast.net&gt; writes:
+
+&gt;&gt; There are several.  All-lowercase is one (the Standard Library has
+&gt;&gt; that one).  All-lowercase with spaces separating words (also part
+&gt;&gt; of the Standard Library convention).  TitleCase is another.  Then
+&gt;&gt; you get your Title_Case (words separated by an underscore), which
+&gt;&gt; I personally don't like.  Then there is one with the name followed
+&gt;&gt; by '_t' for all types (Standard library does not really follow it,
+&gt;&gt; only for primitive types, like size_t, wchar_t, ptrdiff_t, etc.)
+
+&gt; If you ever might find yourself working in a POSIX environment,
+&gt; using a _t suffix for all your types is a bad idea, because POSIX
+&gt; explicitly reserves all names that end in _t if any POSIX header
+&gt; (including any C header) is included.
+">
+
+I don't doubt there are other environments where some limitations or
+conventions are imposed.  You either live with them or violate them
+hoping nothing bad's gonna happen.
+
+For example, in MFC while there aren't any reserved names (not
+officially, anyway), all classes begin with a C and have TitleCase.
+Similarly, in OWL they begin with a T.
+
+I am yet to see a compiler that would actually enforce the reserved
+name rule.  AFAIK, the Standard does not say that the use of any
+reserved name makes your code ill-formed.
+
+V
+--
+Please remove capital 'A's when replying by e-mail
+I do not respond to top-posted replies, please don't ask
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-08T18:52:00 </POSTDATE>
+On Nov 8, 1:12 pm, &quot;Victor Bazarov&quot; &lt;v.Abaza ... @comAcast.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; mike3 wrote:
+&gt; &gt; On Nov 7, 1:13 am, werasm &lt;wer ... @gmail.com&gt; wrote:
+&gt; &gt;&gt; On Nov 6, 11:37 pm, red floyd &lt;no.s ... @here.dude&gt; wrote:
+
+&gt; &gt;&gt;&gt; werasm wrote:
+
+&gt; &gt;&gt;&gt;&gt; All caps are reserved for macros. A
+&gt; &gt;&gt;&gt;&gt; capital here and there does no harm, as long as the identifier
+&gt; &gt;&gt;&gt;&gt; does not only consist of capitals (just in case you misunderstood).
+
+&gt; &gt;&gt;&gt; No, there is no such restriction.  An argument can be made that all
+&gt; &gt;&gt;&gt; caps *SHOULD BE* reserved for macros (an argument that I agree
+&gt; &gt;&gt;&gt; with), but there is no such restriction defined in the language.
+
+&gt; &gt;&gt; The point was from the start that it is generally accepted as
+&gt; &gt;&gt; convention. Because of this, not adhering to this convention
+&gt; &gt;&gt; makes you run the risk. All said, lowercase macros also exists,
+&gt; &gt;&gt; but it is quite rare (min being one irritating one). I recently
+&gt; &gt;&gt; came across a macro named &quot;index&quot; in a library that gave me some
+&gt; &gt;&gt; problems. The argument is therefore indeed &quot;SHOULD BE&quot;.
+
+&gt; &gt;&gt; Regards,
+
+&gt; &gt;&gt; Werner
+
+&gt; &gt; And that's why I want to know what all these conventions are.
+&gt; &gt; What therefore should be used instead of all caps?
+
+&gt; There are several.  All-lowercase is one (the Standard Library has
+&gt; that one).  All-lowercase with spaces separating words (also part
+&gt; of the Standard Library convention).  TitleCase is another.  Then
+&gt; you get your Title_Case (words separated by an underscore), which
+&gt; I personally don't like.  Then there is one with the name followed
+&gt; by '_t' for all types (Standard library does not really follow it,
+&gt; only for primitive types, like size_t, wchar_t, ptrdiff_t, etc.)
+
+&gt; Essentially you need to pick one and follow it religiously.  Then
+&gt; it's very easy for somebody else to understand and use it.
+">
+
+Alright. Thanks for the answer.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; V
+&gt; --
+&gt; Please remove capital 'A's when replying by e-mail
+&gt; I do not respond to top-posted replies, please don't ask
+">
+</POST>
+<POST>
+<POSTER> James Kanze &lt;james.ka...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-09T05:42:00 </POSTDATE>
+On Nov 8, 9:12 pm, &quot;Victor Bazarov&quot; &lt;v.Abaza ... @comAcast.net&gt; wrote:
+
+[...]
+
+<QUOTE PREVIOUSPOST="
+&gt;                           Then there is one with the name followed
+&gt; by '_t' for all types (Standard library does not really follow it,
+&gt; only for primitive types, like size_t, wchar_t, ptrdiff_t, etc.)
+">
+
+The C standard uses _t for typedef's.  The C++ uses it for
+compatibility with C (even in the case of wchar_t, which isn't a
+typedef in C++).
+
+Because the only way in C to get a user symbol which is the name
+of a type is with a typedef, some people interpret the _t in C
+as the convention for a user defined type.
+
+--
+James Kanze (GABI Software)             email:james.ka ... @gmail.com
+Conseils en informatique orientée objet/
+Beratung in objektorientierter Datenverarbeitung
+9 place Sémard, 78210 St.-Cyr-l'École, France, +33 (0)1 30 23 00 34
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,1569 @@
+<DOC>
+<DOCID> eng-NG-31-126418-8212005 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-07-28T01:17:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Multiple field values in select box?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Beertigger &lt;qst...@cox.net&gt; </POSTER>
+<POSTDATE> 2007-07-28T01:17:00 </POSTDATE>
+Is there any way to get values from multiple fields into a select box?
+
+After much searching, I've come to the conclusion I'm not going to
+find the answer without appealing to those far wiser than myself...
+
+Here's an old thread for reference, which discusses, w/o resolution,
+exactly what I'm looking for:
+
+&quot;* Is it possible to use multiple fields to make up the value of the
+select box?  Such that it would come out looking something like
+
+&lt;option value='field1value'&gt;field2value - field3value&lt;/option&gt;&quot;
+
+http://groups.google.com/group/cake-php/browse_thread/thread/50a2ecaf...
+
+So, just wondering if anyone ever made any progress on this. Saw the
+code in trac, but it seems to be for 1.2 (?). Couldn't get it to work,
+anyway. I'd find this functionality very valuable....
+
+Thanks to anyone for any help!
+</POST>
+<POST>
+<POSTER> cauld &lt;chada...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-28T11:35:00 </POSTDATE>
+Not exactly a cake solution, but in the past I've created a database
+view an concatenated the two columns I want in the SQL (ex)
+concat(last_name, ', ', first_name) and then passed the view results
+to generateList().  Perhpas you could do the same with query() and
+pass those results to generateList(), but I've not tried that method
+so can't say it would work, just thinking out loud.  Hope that is
+helpful.
+
+On Jul 27, 11:17 pm, Beertigger &lt;qst ... @cox.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Is there any way to get values from multiple fields into a select box?
+
+&gt; After much searching, I've come to the conclusion I'm not going to
+&gt; find the answer without appealing to those far wiser than myself...
+
+&gt; Here's an old thread for reference, which discusses, w/o resolution,
+&gt; exactly what I'm looking for:
+
+&gt; &quot;* Is it possible to use multiple fields to make up the value of the
+&gt; select box?  Such that it would come out looking something like
+
+&gt; &lt;option value='field1value'&gt;field2value - field3value&lt;/option&gt;&quot;
+
+&gt; http://groups.google.com/group/cake-php/browse_thread/thread/50a2ecaf ...
+
+&gt; So, just wondering if anyone ever made any progress on this. Saw the
+&gt; code in trac, but it seems to be for 1.2 (?). Couldn't get it to work,
+&gt; anyway. I'd find this functionality very valuable....
+
+&gt; Thanks to anyone for any help!
+">
+</POST>
+<POST>
+<POSTER> Beertigger &lt;qst...@cox.net&gt; </POSTER>
+<POSTDATE> 2007-08-01T12:38:00 </POSTDATE>
+Multiple model fields in generatelist... ?
+
+Moving this one along a bit....
+I've tried every which way to get this one to work, and I'm stumped.
+Using afterFind on info from one table works just fine; putting this
+in the Player model:
+function afterFind($results) {
+foreach ($results as $key =&gt; $val) {
+$results[$key]['Player']['fullname'] =
+$val['Player']['fname'] . ' ' . $val['Player']['lname'];
+}
+return $results;
+}
+lets me use 'fullname' in controllers easily enough.
+How do I get something from another table to concat nicely.
+Code like
+function afterFind($results) {
+foreach ($results as $key =&gt; $val) {
+$results[$key]['Team']['teamsport'] =
+$val['Team']['team'] . ' ' . $val['Sport']['sport'];
+}
+return $results;
+}
+only gets me the field from the Team table when it's in the Team
+model, and throws a Notice: Undefined index: Sport in...blahblahblah
+error.
+Team belongsto Sport, Sport hasmany Team
+What kinda hoops do I need to jump threw to get this info in a Cake-y
+manner? I need to generate a select in another controller. If
+somebody'd hold my hand on this one, it'd be greatly appreciated...
+Thanks!
+
+On Jul 28, 8:35 am, cauld &lt;chada ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Not exactly a cake solution, but in the past I've created a database
+&gt; view an concatenated the two columns I want in the SQL (ex)
+&gt; concat(last_name, ', ', first_name) and then passed the view results
+&gt; to generateList().  Perhpas you could do the same with query() and
+&gt; pass those results to generateList(), but I've not tried that method
+&gt; so can't say it would work, just thinking out loud.  Hope that is
+&gt; helpful.
+
+&gt; On Jul 27, 11:17 pm,Beertigger&lt;qst ... @cox.net&gt; wrote:
+
+&gt; &gt; Is there any way to get values from multiple fields into a select box?
+
+&gt; &gt; After much searching, I've come to the conclusion I'm not going to
+&gt; &gt; find the answer without appealing to those far wiser than myself...
+
+&gt; &gt; Here's an old thread for reference, which discusses, w/o resolution,
+&gt; &gt; exactly what I'm looking for:
+
+&gt; &gt; &quot;* Is it possible to use multiple fields to make up the value of the
+&gt; &gt; select box?  Such that it would come out looking something like
+
+&gt; &gt; &lt;option value='field1value'&gt;field2value - field3value&lt;/option&gt;&quot;
+
+&gt; &gt; http://groups.google.com/group/cake-php/browse_thread/thread/50a2ecaf ...
+
+&gt; &gt; So, just wondering if anyone ever made any progress on this. Saw the
+&gt; &gt; code in trac, but it seems to be for 1.2 (?). Couldn't get it to work,
+&gt; &gt; anyway. I'd find this functionality very valuable....
+
+&gt; &gt; Thanks to anyone for any help!
+">
+</POST>
+<POST>
+<POSTER> Beertigger &lt;qst...@cox.net&gt; </POSTER>
+<POSTDATE> 2007-08-02T00:51:00 </POSTDATE>
+Anyone? I'm pulling my hair out here. This is something that should be
+basic, shouldn't it? I'll freely admit I'm an idiot, but I'm just not
+understanding this.... ; (
+
+Thanks to anyone willing to point me in the right direction.
+
+On Aug 1, 9:38 am, Beertigger &lt;qst ... @cox.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Multiple model fields in generatelist... ?
+
+&gt; Moving this one along a bit....
+&gt; I've tried every which way to get this one to work, and I'm stumped.
+&gt; Using afterFind on info from one table works just fine; putting this
+&gt; in the Player model:
+&gt;     function afterFind($results) {
+&gt;          foreach ($results as $key =&gt; $val) {
+&gt;             $results[$key]['Player']['fullname'] =
+&gt; $val['Player']['fname'] . ' ' . $val['Player']['lname'];
+&gt;         }
+&gt;         return $results;
+&gt;     }
+&gt; lets me use 'fullname' in controllers easily enough.
+&gt; How do I get something from another table to concat nicely.
+&gt; Code like
+&gt;     function afterFind($results) {
+&gt;          foreach ($results as $key =&gt; $val) {
+&gt;             $results[$key]['Team']['teamsport'] =
+&gt; $val['Team']['team'] . ' ' . $val['Sport']['sport'];
+&gt;         }
+&gt;         return $results;
+&gt;     }
+&gt; only gets me the field from the Team table when it's in the Team
+&gt; model, and throws a Notice: Undefined index: Sport in...blahblahblah
+&gt; error.
+&gt; Team belongsto Sport, Sport hasmany Team
+&gt; What kinda hoops do I need to jump threw to get this info in a Cake-y
+&gt; manner? I need to generate a select in another controller. If
+&gt; somebody'd hold my hand on this one, it'd be greatly appreciated...
+&gt; Thanks!
+
+&gt; On Jul 28, 8:35 am, cauld &lt;chada ... @gmail.com&gt; wrote:
+
+&gt; &gt; Not exactly a cake solution, but in the past I've created a database
+&gt; &gt; view an concatenated the two columns I want in the SQL (ex)
+&gt; &gt; concat(last_name, ', ', first_name) and then passed the view results
+&gt; &gt; to generateList().  Perhpas you could do the same with query() and
+&gt; &gt; pass those results to generateList(), but I've not tried that method
+&gt; &gt; so can't say it would work, just thinking out loud.  Hope that is
+&gt; &gt; helpful.
+
+&gt; &gt; On Jul 27, 11:17 pm,Beertigger&lt;qst ... @cox.net&gt; wrote:
+
+&gt; &gt; &gt; Is there any way to get values from multiple fields into a select box?
+
+&gt; &gt; &gt; After much searching, I've come to the conclusion I'm not going to
+&gt; &gt; &gt; find the answer without appealing to those far wiser than myself...
+
+&gt; &gt; &gt; Here's an old thread for reference, which discusses, w/o resolution,
+&gt; &gt; &gt; exactly what I'm looking for:
+
+&gt; &gt; &gt; &quot;* Is it possible to use multiple fields to make up the value of the
+&gt; &gt; &gt; select box?  Such that it would come out looking something like
+
+&gt; &gt; &gt; &lt;option value='field1value'&gt;field2value - field3value&lt;/option&gt;&quot;
+
+&gt; &gt; &gt; http://groups.google.com/group/cake-php/browse_thread/thread/50a2ecaf ...
+
+&gt; &gt; &gt; So, just wondering if anyone ever made any progress on this. Saw the
+&gt; &gt; &gt; code in trac, but it seems to be for 1.2 (?). Couldn't get it to work,
+&gt; &gt; &gt; anyway. I'd find this functionality very valuable....
+
+&gt; &gt; &gt; Thanks to anyone for any help!
+">
+</POST>
+<POST>
+<POSTER> Beertigger &lt;qst...@cox.net&gt; </POSTER>
+<POSTDATE> 2007-08-08T02:37:00 </POSTDATE>
+I must be far more retarded than the average bear, b/c this is
+something I just can't get working in Cake.
+
+I can get the results I want with a basic sql query:
+
+SELECT CONCAT(team, ' - ', sport)
+AS teamsport FROM `teams` , `sports` WHERE `teams`.`sport_id` =
+`sports`.`id`
+
+when I run it on the db.
+
+But I can't for the life of me suss out how to frost this up. Should I
+put the query in the model, or the controller. How do I set things up
+to use generateList with a findBySql or query? I've searched high and
+low and  high again and can't find any clear-cut code examples for
+this.
+
+If you've got the patience to help me out, I will at the least owe you
+a virtual pint!
+
+Slainte!
+
+On Aug 1, 9:51 pm, Beertigger &lt;qst ... @cox.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Anyone? I'm pulling my hair out here. This is something that should be
+&gt; basic, shouldn't it? I'll freely admit I'm an idiot, but I'm just not
+&gt; understanding this.... ; (
+
+&gt; Thanks to anyone willing to point me in the right direction.
+
+&gt; On Aug 1, 9:38 am,Beertigger&lt;qst ... @cox.net&gt; wrote:
+
+&gt; &gt; Multiple model fields in generatelist... ?
+
+&gt; &gt; Moving this one along a bit....
+&gt; &gt; I've tried every which way to get this one to work, and I'm stumped.
+&gt; &gt; Using afterFind on info from one table works just fine; putting this
+&gt; &gt; in the Player model:
+&gt; &gt;     function afterFind($results) {
+&gt; &gt;          foreach ($results as $key =&gt; $val) {
+&gt; &gt;             $results[$key]['Player']['fullname'] =
+&gt; &gt; $val['Player']['fname'] . ' ' . $val['Player']['lname'];
+&gt; &gt;         }
+&gt; &gt;         return $results;
+&gt; &gt;     }
+&gt; &gt; lets me use 'fullname' in controllers easily enough.
+&gt; &gt; How do I get something from another table to concat nicely.
+&gt; &gt; Code like
+&gt; &gt;     function afterFind($results) {
+&gt; &gt;          foreach ($results as $key =&gt; $val) {
+&gt; &gt;             $results[$key]['Team']['teamsport'] =
+&gt; &gt; $val['Team']['team'] . ' ' . $val['Sport']['sport'];
+&gt; &gt;         }
+&gt; &gt;         return $results;
+&gt; &gt;     }
+&gt; &gt; only gets me the field from the Team table when it's in the Team
+&gt; &gt; model, and throws a Notice: Undefined index: Sport in...blahblahblah
+&gt; &gt; error.
+&gt; &gt; Team belongsto Sport, Sport hasmany Team
+&gt; &gt; What kinda hoops do I need to jump threw to get this info in a Cake-y
+&gt; &gt; manner? I need to generate a select in another controller. If
+&gt; &gt; somebody'd hold my hand on this one, it'd be greatly appreciated...
+&gt; &gt; Thanks!
+
+&gt; &gt; On Jul 28, 8:35 am, cauld &lt;chada ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; Not exactly a cake solution, but in the past I've created a database
+&gt; &gt; &gt; view an concatenated the two columns I want in the SQL (ex)
+&gt; &gt; &gt; concat(last_name, ', ', first_name) and then passed the view results
+&gt; &gt; &gt; to generateList().  Perhpas you could do the same with query() and
+&gt; &gt; &gt; pass those results to generateList(), but I've not tried that method
+&gt; &gt; &gt; so can't say it would work, just thinking out loud.  Hope that is
+&gt; &gt; &gt; helpful.
+
+&gt; &gt; &gt; On Jul 27, 11:17 pm,Beertigger&lt;qst ... @cox.net&gt; wrote:
+
+&gt; &gt; &gt; &gt; Is there any way to get values from multiple fields into a select box?
+
+&gt; &gt; &gt; &gt; After much searching, I've come to the conclusion I'm not going to
+&gt; &gt; &gt; &gt; find the answer without appealing to those far wiser than myself...
+
+&gt; &gt; &gt; &gt; Here's an old thread for reference, which discusses, w/o resolution,
+&gt; &gt; &gt; &gt; exactly what I'm looking for:
+
+&gt; &gt; &gt; &gt; &quot;* Is it possible to use multiple fields to make up the value of the
+&gt; &gt; &gt; &gt; select box?  Such that it would come out looking something like
+
+&gt; &gt; &gt; &gt; &lt;option value='field1value'&gt;field2value - field3value&lt;/option&gt;&quot;
+
+&gt; &gt; &gt; &gt; http://groups.google.com/group/cake-php/browse_thread/thread/50a2ecaf ...
+
+&gt; &gt; &gt; &gt; So, just wondering if anyone ever made any progress on this. Saw the
+&gt; &gt; &gt; &gt; code in trac, but it seems to be for 1.2 (?). Couldn't get it to work,
+&gt; &gt; &gt; &gt; anyway. I'd find this functionality very valuable....
+
+&gt; &gt; &gt; &gt; Thanks to anyone for any help!
+">
+</POST>
+<POST>
+<POSTER> Geoff Ford &lt;geoff.f...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-08T06:05:00 </POSTDATE>
+Forget generateList(). Create the array yourself to pass to
+Form::select() using a custom query if necessary.
+
+Sometimes when you are doing something that is a little bit out of the
+ordinary it can be too hard to make it &quot;Cakeish&quot; and it is easier and
+simpler to do the old php way. :)
+
+Geoff
+--
+http://lemoncake.wordpress.com
+
+On Aug 8, 4:37 pm, Beertigger &lt;qst ... @cox.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I must be far more retarded than the average bear, b/c this is
+&gt; something I just can't get working in Cake.
+
+&gt; I can get the results I want with a basic sql query:
+
+&gt; SELECT CONCAT(team, ' - ', sport)
+&gt; AS teamsport FROM `teams` , `sports` WHERE `teams`.`sport_id` =
+&gt; `sports`.`id`
+
+&gt; when I run it on the db.
+
+&gt; But I can't for the life of me suss out how to frost this up. Should I
+&gt; put the query in the model, or the controller. How do I set things up
+&gt; to use generateList with a findBySql or query? I've searched high and
+&gt; low and  high again and can't find any clear-cut code examples for
+&gt; this.
+
+&gt; If you've got the patience to help me out, I will at the least owe you
+&gt; a virtual pint!
+
+&gt; Slainte!
+
+&gt; On Aug 1, 9:51 pm, Beertigger &lt;qst ... @cox.net&gt; wrote:
+
+&gt; &gt; Anyone? I'm pulling my hair out here. This is something that should be
+&gt; &gt; basic, shouldn't it? I'll freely admit I'm an idiot, but I'm just not
+&gt; &gt; understanding this.... ; (
+
+&gt; &gt; Thanks to anyone willing to point me in the right direction.
+
+&gt; &gt; On Aug 1, 9:38 am,Beertigger&lt;qst ... @cox.net&gt; wrote:
+
+&gt; &gt; &gt; Multiple model fields in generatelist... ?
+
+&gt; &gt; &gt; Moving this one along a bit....
+&gt; &gt; &gt; I've tried every which way to get this one to work, and I'm stumped.
+&gt; &gt; &gt; Using afterFind on info from one table works just fine; putting this
+&gt; &gt; &gt; in the Player model:
+&gt; &gt; &gt;     function afterFind($results) {
+&gt; &gt; &gt;          foreach ($results as $key =&gt; $val) {
+&gt; &gt; &gt;             $results[$key]['Player']['fullname'] =
+&gt; &gt; &gt; $val['Player']['fname'] . ' ' . $val['Player']['lname'];
+&gt; &gt; &gt;         }
+&gt; &gt; &gt;         return $results;
+&gt; &gt; &gt;     }
+&gt; &gt; &gt; lets me use 'fullname' in controllers easily enough.
+&gt; &gt; &gt; How do I get something from another table to concat nicely.
+&gt; &gt; &gt; Code like
+&gt; &gt; &gt;     function afterFind($results) {
+&gt; &gt; &gt;          foreach ($results as $key =&gt; $val) {
+&gt; &gt; &gt;             $results[$key]['Team']['teamsport'] =
+&gt; &gt; &gt; $val['Team']['team'] . ' ' . $val['Sport']['sport'];
+&gt; &gt; &gt;         }
+&gt; &gt; &gt;         return $results;
+&gt; &gt; &gt;     }
+&gt; &gt; &gt; only gets me the field from the Team table when it's in the Team
+&gt; &gt; &gt; model, and throws a Notice: Undefined index: Sport in...blahblahblah
+&gt; &gt; &gt; error.
+&gt; &gt; &gt; Team belongsto Sport, Sport hasmany Team
+&gt; &gt; &gt; What kinda hoops do I need to jump threw to get this info in a Cake-y
+&gt; &gt; &gt; manner? I need to generate a select in another controller. If
+&gt; &gt; &gt; somebody'd hold my hand on this one, it'd be greatly appreciated...
+&gt; &gt; &gt; Thanks!
+
+&gt; &gt; &gt; On Jul 28, 8:35 am, cauld &lt;chada ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; &gt; Not exactly a cake solution, but in the past I've created a database
+&gt; &gt; &gt; &gt; view an concatenated the two columns I want in the SQL (ex)
+&gt; &gt; &gt; &gt; concat(last_name, ', ', first_name) and then passed the view results
+&gt; &gt; &gt; &gt; to generateList().  Perhpas you could do the same with query() and
+&gt; &gt; &gt; &gt; pass those results to generateList(), but I've not tried that method
+&gt; &gt; &gt; &gt; so can't say it would work, just thinking out loud.  Hope that is
+&gt; &gt; &gt; &gt; helpful.
+
+&gt; &gt; &gt; &gt; On Jul 27, 11:17 pm,Beertigger&lt;qst ... @cox.net&gt; wrote:
+
+&gt; &gt; &gt; &gt; &gt; Is there any way to get values from multiple fields into a select box?
+
+&gt; &gt; &gt; &gt; &gt; After much searching, I've come to the conclusion I'm not going to
+&gt; &gt; &gt; &gt; &gt; find the answer without appealing to those far wiser than myself...
+
+&gt; &gt; &gt; &gt; &gt; Here's an old thread for reference, which discusses, w/o resolution,
+&gt; &gt; &gt; &gt; &gt; exactly what I'm looking for:
+
+&gt; &gt; &gt; &gt; &gt; &quot;* Is it possible to use multiple fields to make up the value of the
+&gt; &gt; &gt; &gt; &gt; select box?  Such that it would come out looking something like
+
+&gt; &gt; &gt; &gt; &gt; &lt;option value='field1value'&gt;field2value - field3value&lt;/option&gt;&quot;
+
+&gt; &gt; &gt; &gt; &gt; http://groups.google.com/group/cake-php/browse_thread/thread/50a2ecaf ...
+
+&gt; &gt; &gt; &gt; &gt; So, just wondering if anyone ever made any progress on this. Saw the
+&gt; &gt; &gt; &gt; &gt; code in trac, but it seems to be for 1.2 (?). Couldn't get it to work,
+&gt; &gt; &gt; &gt; &gt; anyway. I'd find this functionality very valuable....
+
+&gt; &gt; &gt; &gt; &gt; Thanks to anyone for any help!
+">
+</POST>
+<POST>
+<POSTER> Beertigger &lt;qst...@cox.net&gt; </POSTER>
+<POSTDATE> 2007-08-08T16:24:00 </POSTDATE>
+Isn't form::select for 1.2? I'm using 1.1 on this project...
+
+On Aug 8, 3:05 am, Geoff Ford &lt;geoff.f ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Forget generateList(). Create the array yourself to pass to
+&gt; Form::select() using a custom query if necessary.
+
+&gt; Sometimes when you are doing something that is a little bit out of the
+&gt; ordinary it can be too hard to make it &quot;Cakeish&quot; and it is easier and
+&gt; simpler to do the old php way. :)
+
+&gt; Geoff
+&gt; -- http://lemoncake.wordpress.com
+
+&gt; On Aug 8, 4:37 pm, Beertigger &lt;qst ... @cox.net&gt; wrote:
+
+&gt; &gt; I must be far more retarded than the average bear, b/c this is
+&gt; &gt; something I just can't get working in Cake.
+
+&gt; &gt; I can get the results I want with a basic sql query:
+
+&gt; &gt; SELECT CONCAT(team, ' - ', sport)
+&gt; &gt; AS teamsport FROM `teams` , `sports` WHERE `teams`.`sport_id` =
+&gt; &gt; `sports`.`id`
+
+&gt; &gt; when I run it on the db.
+
+&gt; &gt; But I can't for the life of me suss out how to frost this up. Should I
+&gt; &gt; put the query in the model, or the controller. How do I set things up
+&gt; &gt; to use generateList with a findBySql or query? I've searched high and
+&gt; &gt; low and  high again and can't find any clear-cut code examples for
+&gt; &gt; this.
+
+&gt; &gt; If you've got the patience to help me out, I will at the least owe you
+&gt; &gt; a virtual pint!
+
+&gt; &gt; Slainte!
+
+&gt; &gt; On Aug 1, 9:51 pm, Beertigger &lt;qst ... @cox.net&gt; wrote:
+
+&gt; &gt; &gt; Anyone? I'm pulling my hair out here. This is something that should be
+&gt; &gt; &gt; basic, shouldn't it? I'll freely admit I'm an idiot, but I'm just not
+&gt; &gt; &gt; understanding this.... ; (
+
+&gt; &gt; &gt; Thanks to anyone willing to point me in the right direction.
+
+&gt; &gt; &gt; On Aug 1, 9:38 am,Beertigger&lt;qst ... @cox.net&gt; wrote:
+
+&gt; &gt; &gt; &gt; Multiple model fields in generatelist... ?
+
+&gt; &gt; &gt; &gt; Moving this one along a bit....
+&gt; &gt; &gt; &gt; I've tried every which way to get this one to work, and I'm stumped.
+&gt; &gt; &gt; &gt; Using afterFind on info from one table works just fine; putting this
+&gt; &gt; &gt; &gt; in the Player model:
+&gt; &gt; &gt; &gt;     function afterFind($results) {
+&gt; &gt; &gt; &gt;          foreach ($results as $key =&gt; $val) {
+&gt; &gt; &gt; &gt;             $results[$key]['Player']['fullname'] =
+&gt; &gt; &gt; &gt; $val['Player']['fname'] . ' ' . $val['Player']['lname'];
+&gt; &gt; &gt; &gt;         }
+&gt; &gt; &gt; &gt;         return $results;
+&gt; &gt; &gt; &gt;     }
+&gt; &gt; &gt; &gt; lets me use 'fullname' in controllers easily enough.
+&gt; &gt; &gt; &gt; How do I get something from another table to concat nicely.
+&gt; &gt; &gt; &gt; Code like
+&gt; &gt; &gt; &gt;     function afterFind($results) {
+&gt; &gt; &gt; &gt;          foreach ($results as $key =&gt; $val) {
+&gt; &gt; &gt; &gt;             $results[$key]['Team']['teamsport'] =
+&gt; &gt; &gt; &gt; $val['Team']['team'] . ' ' . $val['Sport']['sport'];
+&gt; &gt; &gt; &gt;         }
+&gt; &gt; &gt; &gt;         return $results;
+&gt; &gt; &gt; &gt;     }
+&gt; &gt; &gt; &gt; only gets me the field from the Team table when it's in the Team
+&gt; &gt; &gt; &gt; model, and throws a Notice: Undefined index: Sport in...blahblahblah
+&gt; &gt; &gt; &gt; error.
+&gt; &gt; &gt; &gt; Team belongsto Sport, Sport hasmany Team
+&gt; &gt; &gt; &gt; What kinda hoops do I need to jump threw to get this info in a Cake-y
+&gt; &gt; &gt; &gt; manner? I need to generate a select in another controller. If
+&gt; &gt; &gt; &gt; somebody'd hold my hand on this one, it'd be greatly appreciated...
+&gt; &gt; &gt; &gt; Thanks!
+
+&gt; &gt; &gt; &gt; On Jul 28, 8:35 am, cauld &lt;chada ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; &gt; &gt; Not exactly a cake solution, but in the past I've created a database
+&gt; &gt; &gt; &gt; &gt; view an concatenated the two columns I want in the SQL (ex)
+&gt; &gt; &gt; &gt; &gt; concat(last_name, ', ', first_name) and then passed the view results
+&gt; &gt; &gt; &gt; &gt; to generateList().  Perhpas you could do the same with query() and
+&gt; &gt; &gt; &gt; &gt; pass those results to generateList(), but I've not tried that method
+&gt; &gt; &gt; &gt; &gt; so can't say it would work, just thinking out loud.  Hope that is
+&gt; &gt; &gt; &gt; &gt; helpful.
+
+&gt; &gt; &gt; &gt; &gt; On Jul 27, 11:17 pm,Beertigger&lt;qst ... @cox.net&gt; wrote:
+
+&gt; &gt; &gt; &gt; &gt; &gt; Is there any way to get values from multiple fields into a select box?
+
+&gt; &gt; &gt; &gt; &gt; &gt; After much searching, I've come to the conclusion I'm not going to
+&gt; &gt; &gt; &gt; &gt; &gt; find the answer without appealing to those far wiser than myself...
+
+&gt; &gt; &gt; &gt; &gt; &gt; Here's an old thread for reference, which discusses, w/o resolution,
+&gt; &gt; &gt; &gt; &gt; &gt; exactly what I'm looking for:
+
+&gt; &gt; &gt; &gt; &gt; &gt; &quot;* Is it possible to use multiple fields to make up the value of the
+&gt; &gt; &gt; &gt; &gt; &gt; select box?  Such that it would come out looking something like
+
+&gt; &gt; &gt; &gt; &gt; &gt; &lt;option value='field1value'&gt;field2value - field3value&lt;/option&gt;&quot;
+
+&gt; &gt; &gt; &gt; &gt; &gt; http://groups.google.com/group/cake-php/browse_thread/thread/50a2ecaf ...
+
+&gt; &gt; &gt; &gt; &gt; &gt; So, just wondering if anyone ever made any progress on this. Saw the
+&gt; &gt; &gt; &gt; &gt; &gt; code in trac, but it seems to be for 1.2 (?). Couldn't get it to work,
+&gt; &gt; &gt; &gt; &gt; &gt; anyway. I'd find this functionality very valuable....
+
+&gt; &gt; &gt; &gt; &gt; &gt; Thanks to anyone for any help!
+">
+</POST>
+<POST>
+<POSTER> &quot;Geoff Ford&quot; &lt;geoff.f...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-08T18:48:00 </POSTDATE>
+OK so use HtmlHelper::select() or selectTag() - I can't remember of the top
+of my head which one it is.  My solutions is still the same - creat the
+array that you want to display in the listbox manually.
+
+Again not sure of the exact array format but something like
+
+$data = $this-&gt;Model-&gt;getListData(); // a function in your model that does
+the custom query to pull the three fields you wnat to use
+$mylist = array();
+foreach ($data as $item){
+$mylist[$data['Model']['field1]] = $data['Model']['field2] . '-' .
+$data['Model']['field3];
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+$this-&gt;set(&quot;mylist&quot;, $mylist);
+
+Then in your view something like (again double check the format)
+
+$html-&gt;select(&quot;SelectName&quot;, $mylist, $selectedItems);
+
+I hope this helps :)
+
+Geoff
+
+On 8/9/07, Beertigger &lt;qst ... @cox.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Isn't form::select for 1.2? I'm using 1.1 on this project...
+
+&gt; On Aug 8, 3:05 am, Geoff Ford &lt;geoff.f ... @gmail.com&gt; wrote:
+&gt; &gt; Forget generateList(). Create the array yourself to pass to
+&gt; &gt; Form::select() using a custom query if necessary.
+
+&gt; &gt; Sometimes when you are doing something that is a little bit out of the
+&gt; &gt; ordinary it can be too hard to make it &quot;Cakeish&quot; and it is easier and
+&gt; &gt; simpler to do the old php way. :)
+
+&gt; &gt; Geoff
+&gt; &gt; -- http://lemoncake.wordpress.com
+
+&gt; &gt; On Aug 8, 4:37 pm, Beertigger &lt;qst ... @cox.net&gt; wrote:
+
+&gt; &gt; &gt; I must be far more retarded than the average bear, b/c this is
+&gt; &gt; &gt; something I just can't get working in Cake.
+
+&gt; &gt; &gt; I can get the results I want with a basic sql query:
+
+&gt; &gt; &gt; SELECT CONCAT(team, ' - ', sport)
+&gt; &gt; &gt; AS teamsport FROM `teams` , `sports` WHERE `teams`.`sport_id` =
+&gt; &gt; &gt; `sports`.`id`
+
+&gt; &gt; &gt; when I run it on the db.
+
+&gt; &gt; &gt; But I can't for the life of me suss out how to frost this up. Should I
+&gt; &gt; &gt; put the query in the model, or the controller. How do I set things up
+&gt; &gt; &gt; to use generateList with a findBySql or query? I've searched high and
+&gt; &gt; &gt; low and  high again and can't find any clear-cut code examples for
+&gt; &gt; &gt; this.
+
+&gt; &gt; &gt; If you've got the patience to help me out, I will at the least owe you
+&gt; &gt; &gt; a virtual pint!
+
+&gt; &gt; &gt; Slainte!
+
+&gt; &gt; &gt; On Aug 1, 9:51 pm, Beertigger &lt;qst ... @cox.net&gt; wrote:
+
+&gt; &gt; &gt; &gt; Anyone? I'm pulling my hair out here. This is something that should
+&gt; be
+&gt; &gt; &gt; &gt; basic, shouldn't it? I'll freely admit I'm an idiot, but I'm just
+&gt; not
+&gt; &gt; &gt; &gt; understanding this.... ; (
+
+&gt; &gt; &gt; &gt; Thanks to anyone willing to point me in the right direction.
+
+&gt; &gt; &gt; &gt; On Aug 1, 9:38 am,Beertigger&lt;qst ... @cox.net&gt; wrote:
+
+&gt; &gt; &gt; &gt; &gt; Multiple model fields in generatelist... ?
+
+&gt; &gt; &gt; &gt; &gt; Moving this one along a bit....
+&gt; &gt; &gt; &gt; &gt; I've tried every which way to get this one to work, and I'm
+&gt; stumped.
+&gt; &gt; &gt; &gt; &gt; Using afterFind on info from one table works just fine; putting
+&gt; this
+&gt; &gt; &gt; &gt; &gt; in the Player model:
+&gt; &gt; &gt; &gt; &gt;     function afterFind($results) {
+&gt; &gt; &gt; &gt; &gt;          foreach ($results as $key =&gt; $val) {
+&gt; &gt; &gt; &gt; &gt;             $results[$key]['Player']['fullname'] =
+&gt; &gt; &gt; &gt; &gt; $val['Player']['fname'] . ' ' . $val['Player']['lname'];
+&gt; &gt; &gt; &gt; &gt;         }
+&gt; &gt; &gt; &gt; &gt;         return $results;
+&gt; &gt; &gt; &gt; &gt;     }
+&gt; &gt; &gt; &gt; &gt; lets me use 'fullname' in controllers easily enough.
+&gt; &gt; &gt; &gt; &gt; How do I get something from another table to concat nicely.
+&gt; &gt; &gt; &gt; &gt; Code like
+&gt; &gt; &gt; &gt; &gt;     function afterFind($results) {
+&gt; &gt; &gt; &gt; &gt;          foreach ($results as $key =&gt; $val) {
+&gt; &gt; &gt; &gt; &gt;             $results[$key]['Team']['teamsport'] =
+&gt; &gt; &gt; &gt; &gt; $val['Team']['team'] . ' ' . $val['Sport']['sport'];
+&gt; &gt; &gt; &gt; &gt;         }
+&gt; &gt; &gt; &gt; &gt;         return $results;
+&gt; &gt; &gt; &gt; &gt;     }
+&gt; &gt; &gt; &gt; &gt; only gets me the field from the Team table when it's in the Team
+&gt; &gt; &gt; &gt; &gt; model, and throws a Notice: Undefined index: Sport
+&gt; in...blahblahblah
+&gt; &gt; &gt; &gt; &gt; error.
+&gt; &gt; &gt; &gt; &gt; Team belongsto Sport, Sport hasmany Team
+&gt; &gt; &gt; &gt; &gt; What kinda hoops do I need to jump threw to get this info in a
+&gt; Cake-y
+&gt; &gt; &gt; &gt; &gt; manner? I need to generate a select in another controller. If
+&gt; &gt; &gt; &gt; &gt; somebody'd hold my hand on this one, it'd be greatly
+&gt; appreciated...
+&gt; &gt; &gt; &gt; &gt; Thanks!
+
+&gt; &gt; &gt; &gt; &gt; On Jul 28, 8:35 am, cauld &lt;chada ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; &gt; &gt; &gt; Not exactly a cake solution, but in the past I've created a
+&gt; database
+&gt; &gt; &gt; &gt; &gt; &gt; view an concatenated the two columns I want in the SQL (ex)
+&gt; &gt; &gt; &gt; &gt; &gt; concat(last_name, ', ', first_name) and then passed the view
+&gt; results
+&gt; &gt; &gt; &gt; &gt; &gt; to generateList().  Perhpas you could do the same with query()
+&gt; and
+&gt; &gt; &gt; &gt; &gt; &gt; pass those results to generateList(), but I've not tried that
+&gt; method
+&gt; &gt; &gt; &gt; &gt; &gt; so can't say it would work, just thinking out loud.  Hope that
+&gt; is
+&gt; &gt; &gt; &gt; &gt; &gt; helpful.
+
+&gt; &gt; &gt; &gt; &gt; &gt; On Jul 27, 11:17 pm,Beertigger&lt;qst ... @cox.net&gt; wrote:
+
+&gt; &gt; &gt; &gt; &gt; &gt; &gt; Is there any way to get values from multiple fields into a
+&gt; select box?
+
+&gt; &gt; &gt; &gt; &gt; &gt; &gt; After much searching, I've come to the conclusion I'm not
+&gt; going to
+&gt; &gt; &gt; &gt; &gt; &gt; &gt; find the answer without appealing to those far wiser than
+&gt; myself...
+
+&gt; &gt; &gt; &gt; &gt; &gt; &gt; Here's an old thread for reference, which discusses, w/o
+&gt; resolution,
+&gt; &gt; &gt; &gt; &gt; &gt; &gt; exactly what I'm looking for:
+
+&gt; &gt; &gt; &gt; &gt; &gt; &gt; &quot;* Is it possible to use multiple fields to make up the value
+&gt; of the
+&gt; &gt; &gt; &gt; &gt; &gt; &gt; select box?  Such that it would come out looking something
+&gt; like
+
+&gt; &gt; &gt; &gt; &gt; &gt; &gt; &lt;option value='field1value'&gt;field2value -
+&gt; field3value&lt;/option&gt;&quot;
+
+&gt; http://groups.google.com/group/cake-php/browse_thread/thread/50a2ecaf ...
+
+&gt; &gt; &gt; &gt; &gt; &gt; &gt; So, just wondering if anyone ever made any progress on this.
+&gt; Saw the
+&gt; &gt; &gt; &gt; &gt; &gt; &gt; code in trac, but it seems to be for 1.2 (?). Couldn't get it
+&gt; to work,
+&gt; &gt; &gt; &gt; &gt; &gt; &gt; anyway. I'd find this functionality very valuable....
+
+&gt; &gt; &gt; &gt; &gt; &gt; &gt; Thanks to anyone for any help!
+">
+
+--
+http://lemoncake.wordpress.com
+</POST>
+<POST>
+<POSTER> Beertigger &lt;qst...@cox.net&gt; </POSTER>
+<POSTDATE> 2007-08-08T21:48:00 </POSTDATE>
+Somehow, this seems on the right track, but I couldn't get things to
+work. Played around with a lot of different variations, but
+*something* is not quite kosher, yet.
+
+Thanks much for the guidance thus far.
+
+Should the entire
+
+$data = $this-&gt;Model-&gt;getListData(); // a function in your model that
+does
+the custom query to pull the three fields you wnat to use
+$mylist = array();
+foreach ($data as $item){
+$mylist[$data['Model']['field1]] = $data['Model']['field2] . '-' .
+$data['Model']['field3];
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+be in the Model?
+
+And the this-&gt;set in the controller?
+
+Sorry for my blatant stupidity. Wrapping what I know of php up with
+Cake is proving to be troublesome, at best. The masterbake script
+provides such a sweet basic framework that a bit of pain getting
+things 'just right' is worth it, but this one thing is really killing
+me... ; )
+
+On Aug 8, 3:48 pm, &quot;Geoff Ford&quot; &lt;geoff.f ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; OK so use HtmlHelper::select() or selectTag() - I can't remember of the top
+&gt; of my head which one it is.  My solutions is still the same - creat the
+&gt; array that you want to display in the listbox manually.
+
+&gt; Again not sure of the exact array format but something like
+
+&gt; $data = $this-&gt;Model-&gt;getListData(); // a function in your model that does
+&gt; the custom query to pull the three fields you wnat to use
+&gt; $mylist = array();
+&gt; foreach ($data as $item){
+&gt;   $mylist[$data['Model']['field1]] = $data['Model']['field2] . '-' .
+&gt; $data['Model']['field3];
+
+&gt; }
+
+&gt; $this-&gt;set(&quot;mylist&quot;, $mylist);
+
+&gt; Then in your view something like (again double check the format)
+
+&gt; $html-&gt;select(&quot;SelectName&quot;, $mylist, $selectedItems);
+
+&gt; I hope this helps :)
+
+&gt; Geoff
+">
+</POST>
+<POST>
+<POSTER> &quot;Geoff Ford&quot; &lt;geoff.f...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-08T21:59:00 </POSTDATE>
+All the code I outlined would be in the controller.  You could put the loop
+in the getListData() function in the model if you like to keep the
+controller cleaner.  The controller would then just be
+$this-&gt;set('listdata', $this-&gt;Model-&gt;getListData());
+
+Geoff
+
+On 8/9/07, Beertigger &lt;qst ... @cox.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Somehow, this seems on the right track, but I couldn't get things to
+&gt; work. Played around with a lot of different variations, but
+&gt; *something* is not quite kosher, yet.
+
+&gt; Thanks much for the guidance thus far.
+
+&gt; Should the entire
+
+&gt; $data = $this-&gt;Model-&gt;getListData(); // a function in your model that
+&gt; does
+&gt; the custom query to pull the three fields you wnat to use
+&gt; $mylist = array();
+&gt; foreach ($data as $item){
+&gt;   $mylist[$data['Model']['field1]] = $data['Model']['field2] . '-' .
+&gt; $data['Model']['field3];
+
+&gt; }
+
+&gt; be in the Model?
+
+&gt; And the this-&gt;set in the controller?
+
+&gt; Sorry for my blatant stupidity. Wrapping what I know of php up with
+&gt; Cake is proving to be troublesome, at best. The masterbake script
+&gt; provides such a sweet basic framework that a bit of pain getting
+&gt; things 'just right' is worth it, but this one thing is really killing
+&gt; me... ; )
+
+&gt; On Aug 8, 3:48 pm, &quot;Geoff Ford&quot; &lt;geoff.f ... @gmail.com&gt; wrote:
+&gt; &gt; OK so use HtmlHelper::select() or selectTag() - I can't remember of the
+&gt; top
+&gt; &gt; of my head which one it is.  My solutions is still the same - creat the
+&gt; &gt; array that you want to display in the listbox manually.
+
+&gt; &gt; Again not sure of the exact array format but something like
+
+&gt; &gt; $data = $this-&gt;Model-&gt;getListData(); // a function in your model that
+&gt; does
+&gt; &gt; the custom query to pull the three fields you wnat to use
+&gt; &gt; $mylist = array();
+&gt; &gt; foreach ($data as $item){
+&gt; &gt;   $mylist[$data['Model']['field1]] = $data['Model']['field2] . '-' .
+&gt; &gt; $data['Model']['field3];
+
+&gt; &gt; }
+
+&gt; &gt; $this-&gt;set(&quot;mylist&quot;, $mylist);
+
+&gt; &gt; Then in your view something like (again double check the format)
+
+&gt; &gt; $html-&gt;select(&quot;SelectName&quot;, $mylist, $selectedItems);
+
+&gt; &gt; I hope this helps :)
+
+&gt; &gt; Geoff
+">
+
+--
+http://lemoncake.wordpress.com
+</POST>
+<POST>
+<POSTER> Beertigger &lt;qst...@cox.net&gt; </POSTER>
+<POSTDATE> 2007-08-10T00:23:00 </POSTDATE>
+Still trying to concat data from two models into a select list in a
+third.
+
+Thanks for the help thus far, Geoff. Taking your advice, and some
+input from IRC, after much trying, I'm at:
+
+In controller:
+
+function getListData($data){
+$data = $this-&gt;Model-&gt;query(&quot;SELECT CONCAT(bar, ' - ', barbar) AS
+foobar
+FROM `bars` , `barbars` WHERE `bar`.`barbar_id` =     `barbar`.`id`&quot;);
+return $data;
+}
+
+$listdata = array();
+foreach ($data as $item) {
+$listdata[$data]['Model']['foo'] = $data['Model2']['bar'] .
+'-' .
+$data['Model3']['barbar'];
+}
+
+and later, in the 'add' function:
+
+$this-&gt;set('listdata', $this-&gt;Model-&gt;getListData());
+
+In the view:
+
+echo $html-&gt;selectTag(&quot;Player/team&quot;, $teamsportlist, $selectedItems);
+
+None of this seems to be working, no matter how I jigger things about.
+Aargh!
+
+--Beertigger
+
+On Aug 8, 6:59 pm, &quot;Geoff Ford&quot; &lt;geoff.f ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; All the code I outlined would be in the controller.  You could put the loop
+&gt; in the getListData() function in the model if you like to keep the
+&gt; controller cleaner.  The controller would then just be
+&gt; $this-&gt;set('listdata', $this-&gt;Model-&gt;getListData());
+
+&gt; Geoff
+
+&gt; On 8/9/07, Beertigger &lt;qst ... @cox.net&gt; wrote:
+
+&gt; &gt; Somehow, this seems on the right track, but I couldn't get things to
+&gt; &gt; work. Played around with a lot of different variations, but
+&gt; &gt; *something* is not quite kosher, yet.
+
+&gt; &gt; Thanks much for the guidance thus far.
+
+&gt; &gt; Should the entire
+
+&gt; &gt; $data = $this-&gt;Model-&gt;getListData(); // a function in your model that
+&gt; &gt; does
+&gt; &gt; the custom query to pull the three fields you wnat to use
+&gt; &gt; $mylist = array();
+&gt; &gt; foreach ($data as $item){
+&gt; &gt;   $mylist[$data['Model']['field1]] = $data['Model']['field2] . '-' .
+&gt; &gt; $data['Model']['field3];
+
+&gt; &gt; }
+
+&gt; &gt; be in the Model?
+
+&gt; &gt; And the this-&gt;set in the controller?
+
+&gt; &gt; Sorry for my blatant stupidity. Wrapping what I know of php up with
+&gt; &gt; Cake is proving to be troublesome, at best. The masterbake script
+&gt; &gt; provides such a sweet basic framework that a bit of pain getting
+&gt; &gt; things 'just right' is worth it, but this one thing is really killing
+&gt; &gt; me... ; )
+
+&gt; &gt; On Aug 8, 3:48 pm, &quot;Geoff Ford&quot; &lt;geoff.f ... @gmail.com&gt; wrote:
+&gt; &gt; &gt; OK so use HtmlHelper::select() or selectTag() - I can't remember of the
+&gt; &gt; top
+&gt; &gt; &gt; of my head which one it is.  My solutions is still the same - creat the
+&gt; &gt; &gt; array that you want to display in the listbox manually.
+
+&gt; &gt; &gt; Again not sure of the exact array format but something like
+
+&gt; &gt; &gt; $data = $this-&gt;Model-&gt;getListData(); // a function in your model that
+&gt; &gt; does
+&gt; &gt; &gt; the custom query to pull the three fields you wnat to use
+&gt; &gt; &gt; $mylist = array();
+&gt; &gt; &gt; foreach ($data as $item){
+&gt; &gt; &gt;   $mylist[$data['Model']['field1]] = $data['Model']['field2] . '-' .
+&gt; &gt; &gt; $data['Model']['field3];
+
+&gt; &gt; &gt; }
+
+&gt; &gt; &gt; $this-&gt;set(&quot;mylist&quot;, $mylist);
+
+&gt; &gt; &gt; Then in your view something like (again double check the format)
+
+&gt; &gt; &gt; $html-&gt;select(&quot;SelectName&quot;, $mylist, $selectedItems);
+
+&gt; &gt; &gt; I hope this helps :)
+
+&gt; &gt; &gt; Geoff
+
+&gt; -- http://lemoncake.wordpress.com
+">
+</POST>
+<POST>
+<POSTER> &quot;Geoff Ford&quot; &lt;geoff.f...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-10T02:20:00 </POSTDATE>
+function getListData($data){
+$data = $this-&gt;Model-&gt;query(&quot;SELECT Model1.field1 as `Model1`,`field1` ,
+Model1.field2 as `Model1`,`field2` , Model2.field1 as `Model2`,`field1`
+FROM `bars` as Model1, `barbars` as Model2, WHERE `Model2`.`barbar_id` =
+`Model1`.`id`&quot;);
+}
+
+$listdata = array();
+foreach ($data as $item) {
+$listdata[$data['Model1']['field1'] = $data['Model1']['field1'] . '-'
+. $data['Model2']['field1'];
+}
+
+return $listdata;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+and later, in the 'add' function:
+
+$this-&gt;set('listdata', $this-&gt;Model-&gt;getListData());
+
+In the view:
+
+echo $html-&gt;selectTag(&quot;Player/team&quot;, $teamsportlist);
+
+Not tested but should work.
+
+Geoff
+--
+http://lemoncake.wordpress.com
+
+On 8/10/07, Beertigger &lt;qst ... @cox.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Still trying to concat data from two models into a select list in a
+&gt; third.
+
+&gt; Thanks for the help thus far, Geoff. Taking your advice, and some
+&gt; input from IRC, after much trying, I'm at:
+
+&gt; In controller:
+
+&gt;                  function getListData($data){
+&gt;     $data = $this-&gt;Model-&gt;query(&quot;SELECT CONCAT(bar, ' - ', barbar) AS
+&gt; foobar
+&gt; FROM `bars` , `barbars` WHERE `bar`.`barbar_id` =     `barbar`.`id`&quot;);
+&gt;     return $data;
+&gt;       }
+
+&gt;     $listdata = array();
+&gt;         foreach ($data as $item) {
+&gt;         $listdata[$data]['Model']['foo'] = $data['Model2']['bar'] .
+&gt; '-' .
+&gt; $data['Model3']['barbar'];
+&gt;         }
+
+&gt; and later, in the 'add' function:
+
+&gt; $this-&gt;set('listdata', $this-&gt;Model-&gt;getListData());
+
+&gt; In the view:
+
+&gt; echo $html-&gt;selectTag(&quot;Player/team&quot;, $teamsportlist, $selectedItems);
+
+&gt; None of this seems to be working, no matter how I jigger things about.
+&gt; Aargh!
+
+&gt; --Beertigger
+
+&gt; On Aug 8, 6:59 pm, &quot;Geoff Ford&quot; &lt;geoff.f ... @gmail.com&gt; wrote:
+&gt; &gt; All the code I outlined would be in the controller.  You could put the
+&gt; loop
+&gt; &gt; in the getListData() function in the model if you like to keep the
+&gt; &gt; controller cleaner.  The controller would then just be
+&gt; &gt; $this-&gt;set('listdata', $this-&gt;Model-&gt;getListData());
+
+&gt; &gt; Geoff
+
+&gt; &gt; On 8/9/07, Beertigger &lt;qst ... @cox.net&gt; wrote:
+
+&gt; &gt; &gt; Somehow, this seems on the right track, but I couldn't get things to
+&gt; &gt; &gt; work. Played around with a lot of different variations, but
+&gt; &gt; &gt; *something* is not quite kosher, yet.
+
+&gt; &gt; &gt; Thanks much for the guidance thus far.
+
+&gt; &gt; &gt; Should the entire
+
+&gt; &gt; &gt; $data = $this-&gt;Model-&gt;getListData(); // a function in your model that
+&gt; &gt; &gt; does
+&gt; &gt; &gt; the custom query to pull the three fields you wnat to use
+&gt; &gt; &gt; $mylist = array();
+&gt; &gt; &gt; foreach ($data as $item){
+&gt; &gt; &gt;   $mylist[$data['Model']['field1]] = $data['Model']['field2] . '-' .
+&gt; &gt; &gt; $data['Model']['field3];
+
+&gt; &gt; &gt; }
+
+&gt; &gt; &gt; be in the Model?
+
+&gt; &gt; &gt; And the this-&gt;set in the controller?
+
+&gt; &gt; &gt; Sorry for my blatant stupidity. Wrapping what I know of php up with
+&gt; &gt; &gt; Cake is proving to be troublesome, at best. The masterbake script
+&gt; &gt; &gt; provides such a sweet basic framework that a bit of pain getting
+&gt; &gt; &gt; things 'just right' is worth it, but this one thing is really killing
+&gt; &gt; &gt; me... ; )
+
+&gt; &gt; &gt; On Aug 8, 3:48 pm, &quot;Geoff Ford&quot; &lt;geoff.f ... @gmail.com&gt; wrote:
+&gt; &gt; &gt; &gt; OK so use HtmlHelper::select() or selectTag() - I can't remember of
+&gt; the
+&gt; &gt; &gt; top
+&gt; &gt; &gt; &gt; of my head which one it is.  My solutions is still the same - creat
+&gt; the
+&gt; &gt; &gt; &gt; array that you want to display in the listbox manually.
+
+&gt; &gt; &gt; &gt; Again not sure of the exact array format but something like
+
+&gt; &gt; &gt; &gt; $data = $this-&gt;Model-&gt;getListData(); // a function in your model
+&gt; that
+&gt; &gt; &gt; does
+&gt; &gt; &gt; &gt; the custom query to pull the three fields you wnat to use
+&gt; &gt; &gt; &gt; $mylist = array();
+&gt; &gt; &gt; &gt; foreach ($data as $item){
+&gt; &gt; &gt; &gt;   $mylist[$data['Model']['field1]] = $data['Model']['field2] . '-' .
+&gt; &gt; &gt; &gt; $data['Model']['field3];
+
+&gt; &gt; &gt; &gt; }
+
+&gt; &gt; &gt; &gt; $this-&gt;set(&quot;mylist&quot;, $mylist);
+
+&gt; &gt; &gt; &gt; Then in your view something like (again double check the format)
+
+&gt; &gt; &gt; &gt; $html-&gt;select(&quot;SelectName&quot;, $mylist, $selectedItems);
+
+&gt; &gt; &gt; &gt; I hope this helps :)
+
+&gt; &gt; &gt; &gt; Geoff
+
+&gt; &gt; -- http://lemoncake.wordpress.com
+">
+
+--
+http://lemoncake.wordpress.com
+</POST>
+<POST>
+<POSTER> Beertigger &lt;qst...@cox.net&gt; </POSTER>
+<POSTDATE> 2007-08-13T15:00:00 </POSTDATE>
+Back at this after a coupla days away - thanks much for all the input.
+
+Still having trouble with something entirely too basic. Based on
+Geoff's last input, here's my current code:
+
+In controller:
+
+function getListData($data){
+$data = $this-&gt;Model-&gt;query(&quot;SELECT Team.team as `Team`,`team` ,
+Team.id as `Team`,`id` , Sport.sport as `Sport`,`sport` FROM `Teams`
+as Team, `Sports` as Sport, WHERE `Team`.`sport_id` = `Sport`.`id`&quot;);
+}
+
+$listdata = array();
+foreach ($data as $item) {
+$listdata[$data['Team']['team'] = $data['Sport']['sport'] . '-' .
+$data['Team']['team'];
+}
+return $listdata;
+}
+
+In 'add' function:
+
+$this-&gt;set('listdata', $this-&gt;Player-&gt;getListData());
+
+In the view:
+
+echo $html-&gt;selectTag(&quot;Player/team&quot;, $listdata);
+
+I get:
+
+With the $listdata = array section:
+
+Parse error: syntax error, unexpected T_VARIABLE, expecting
+T_OLD_FUNCTION or T_FUNCTION or T_VAR or '}' in /home/xxxxxxxxxx/
+controllers/players_controller.php on line 371 ($listdata = array)
+
+Comment that bit out, and:
+
+SQL Error: 1064: You have an error in your SQL syntax; check the
+manual that corresponds to your MySQL server version for the right
+syntax to use near 'getlistdata' at line 1 in /home/xxxxx/cake/libs/
+model/datasources/dbo_source.php on line 463
+
+On Aug 9, 11:20 pm, &quot;Geoff Ford&quot; &lt;geoff.f ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; function getListData($data){
+&gt;    $data = $this-&gt;Model-&gt;query(&quot;SELECT Model1.field1 as `Model1`,`field1` ,
+&gt; Model1.field2 as `Model1`,`field2` , Model2.field1 as `Model2`,`field1`
+&gt; FROM `bars` as Model1, `barbars` as Model2, WHERE `Model2`.`barbar_id` =
+&gt; `Model1`.`id`&quot;);
+&gt;      }
+
+&gt;    $listdata = array();
+&gt;        foreach ($data as $item) {
+&gt;        $listdata[$data['Model1']['field1'] = $data['Model1']['field1'] . '-'
+&gt; . $data['Model2']['field1'];
+&gt;        }
+
+&gt;  return $listdata;
+
+&gt; }
+
+&gt; and later, in the 'add' function:
+
+&gt; $this-&gt;set('listdata', $this-&gt;Model-&gt;getListData());
+
+&gt; In the view:
+
+&gt; echo $html-&gt;selectTag(&quot;Player/team&quot;, $teamsportlist);
+
+&gt; Not tested but should work.
+
+&gt; Geoff
+&gt; -- http://lemoncake.wordpress.com
+
+&gt; On 8/10/07, Beertigger &lt;qst ... @cox.net&gt; wrote:
+
+&gt; &gt; Still trying to concat data from two models into a select list in a
+&gt; &gt; third.
+
+&gt; &gt; Thanks for the help thus far, Geoff. Taking your advice, and some
+&gt; &gt; input from IRC, after much trying, I'm at:
+
+&gt; &gt; In controller:
+
+&gt; &gt;                  function getListData($data){
+&gt; &gt;     $data = $this-&gt;Model-&gt;query(&quot;SELECT CONCAT(bar, ' - ', barbar) AS
+&gt; &gt; foobar
+&gt; &gt; FROM `bars` , `barbars` WHERE `bar`.`barbar_id` =     `barbar`.`id`&quot;);
+&gt; &gt;     return $data;
+&gt; &gt;       }
+
+&gt; &gt;     $listdata = array();
+&gt; &gt;         foreach ($data as $item) {
+&gt; &gt;         $listdata[$data]['Model']['foo'] = $data['Model2']['bar'] .
+&gt; &gt; '-' .
+&gt; &gt; $data['Model3']['barbar'];
+&gt; &gt;         }
+
+&gt; &gt; and later, in the 'add' function:
+
+&gt; &gt; $this-&gt;set('listdata', $this-&gt;Model-&gt;getListData());
+
+&gt; &gt; In the view:
+
+&gt; &gt; echo $html-&gt;selectTag(&quot;Player/team&quot;, $teamsportlist, $selectedItems);
+
+&gt; &gt; None of this seems to be working, no matter how I jigger things about.
+&gt; &gt; Aargh!
+
+&gt; &gt; --Beertigger
+
+&gt; &gt; On Aug 8, 6:59 pm, &quot;Geoff Ford&quot; &lt;geoff.f ... @gmail.com&gt; wrote:
+&gt; &gt; &gt; All the code I outlined would be in the controller.  You could put the
+&gt; &gt; loop
+&gt; &gt; &gt; in the getListData() function in the model if you like to keep the
+&gt; &gt; &gt; controller cleaner.  The controller would then just be
+&gt; &gt; &gt; $this-&gt;set('listdata', $this-&gt;Model-&gt;getListData());
+
+&gt; &gt; &gt; Geoff
+
+&gt; &gt; &gt; On 8/9/07, Beertigger &lt;qst ... @cox.net&gt; wrote:
+
+&gt; &gt; &gt; &gt; Somehow, this seems on the right track, but I couldn't get things to
+&gt; &gt; &gt; &gt; work. Played around with a lot of different variations, but
+&gt; &gt; &gt; &gt; *something* is not quite kosher, yet.
+
+&gt; &gt; &gt; &gt; Thanks much for the guidance thus far.
+
+&gt; &gt; &gt; &gt; Should the entire
+
+&gt; &gt; &gt; &gt; $data = $this-&gt;Model-&gt;getListData(); // a function in your model that
+&gt; &gt; &gt; &gt; does
+&gt; &gt; &gt; &gt; the custom query to pull the three fields you wnat to use
+&gt; &gt; &gt; &gt; $mylist = array();
+&gt; &gt; &gt; &gt; foreach ($data as $item){
+&gt; &gt; &gt; &gt;   $mylist[$data['Model']['field1]] = $data['Model']['field2] . '-' .
+&gt; &gt; &gt; &gt; $data['Model']['field3];
+
+&gt; &gt; &gt; &gt; }
+
+&gt; &gt; &gt; &gt; be in the Model?
+
+&gt; &gt; &gt; &gt; And the this-&gt;set in the controller?
+
+&gt; &gt; &gt; &gt; Sorry for my blatant stupidity. Wrapping what I know of php up with
+&gt; &gt; &gt; &gt; Cake is proving to be troublesome, at best. The masterbake script
+&gt; &gt; &gt; &gt; provides such a sweet basic framework that a bit of pain getting
+&gt; &gt; &gt; &gt; things 'just right' is worth it, but this one thing is really killing
+&gt; &gt; &gt; &gt; me... ; )
+
+&gt; &gt; &gt; &gt; On Aug 8, 3:48 pm, &quot;Geoff Ford&quot; &lt;geoff.f ... @gmail.com&gt; wrote:
+&gt; &gt; &gt; &gt; &gt; OK so use HtmlHelper::select() or selectTag() - I can't remember of
+&gt; &gt; the
+&gt; &gt; &gt; &gt; top
+&gt; &gt; &gt; &gt; &gt; of my head which one it is.  My solutions is still the same - creat
+&gt; &gt; the
+&gt; &gt; &gt; &gt; &gt; array that you want to display in the listbox manually.
+
+&gt; &gt; &gt; &gt; &gt; Again not sure of the exact array format but something like
+
+&gt; &gt; &gt; &gt; &gt; $data = $this-&gt;Model-&gt;getListData(); // a function in your model
+&gt; &gt; that
+&gt; &gt; &gt; &gt; does
+&gt; &gt; &gt; &gt; &gt; the custom query to pull the three fields you wnat to use
+&gt; &gt; &gt; &gt; &gt; $mylist = array();
+&gt; &gt; &gt; &gt; &gt; foreach ($data as $item){
+&gt; &gt; &gt; &gt; &gt;   $mylist[$data['Model']['field1]] = $data['Model']['field2] . '-' .
+&gt; &gt; &gt; &gt; &gt; $data['Model']['field3];
+
+&gt; &gt; &gt; &gt; &gt; }
+
+&gt; &gt; &gt; &gt; &gt; $this-&gt;set(&quot;mylist&quot;, $mylist);
+
+&gt; &gt; &gt; &gt; &gt; Then in your view something like (again double check the format)
+
+&gt; &gt; &gt; &gt; &gt; $html-&gt;select(&quot;SelectName&quot;, $mylist, $selectedItems);
+
+&gt; &gt; &gt; &gt; &gt; I hope this helps :)
+
+&gt; &gt; &gt; &gt; &gt; Geoff
+
+&gt; &gt; &gt; -- http://lemoncake.wordpress.com
+
+&gt; -- http://lemoncake.wordpress.com
+">
+</POST>
+<POST>
+<POSTER> cdomigan &lt;cdomi...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-13T17:58:00 </POSTDATE>
+http://php-coding-practices.com/cakephp-specific/how-to-put-combined-...
+</POST>
+<POST>
+<POSTER> Beertigger &lt;qst...@cox.net&gt; </POSTER>
+<POSTDATE> 2007-08-13T20:59:00 </POSTDATE>
+Found this one earlier. What myGenerateList does, it does very well,
+much easier than using an afterFind to concat things. But, from what I
+can tell thus far, it has the same limitation, in that it can't
+combine data across two models and display it in a third.
+
+On Aug 13, 2:58 pm, cdomigan &lt;cdomi ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; http://php-coding-practices.com/cakephp-specific/how-to-put-combined- ...
+">
+</POST>
+<POST>
+<POSTER> &quot;Geoff Ford&quot; &lt;geoff.f...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-13T22:30:00 </POSTDATE>
+You've got a error in the getListData function - remove the curly barce
+between the end of the query and $listdata = array();
+
+Geoff
+
+On 8/14/07, Beertigger &lt;qst ... @cox.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Found this one earlier. What myGenerateList does, it does very well,
+&gt; much easier than using an afterFind to concat things. But, from what I
+&gt; can tell thus far, it has the same limitation, in that it can't
+&gt; combine data across two models and display it in a third.
+
+&gt; On Aug 13, 2:58 pm, cdomigan &lt;cdomi ... @gmail.com&gt; wrote:
+&gt; &gt; http://php-coding-practices.com/cakephp-specific/how-to-put-combined- ...
+">
+
+--
+http://lemoncake.wordpress.com
+</POST>
+<POST>
+<POSTER> Beertigger &lt;qst...@cox.net&gt; </POSTER>
+<POSTDATE> 2007-08-13T23:08:00 </POSTDATE>
+Thanks, Geoff,
+
+I caught that one earlier, also found what I think was a missing ] to
+close the
+
+$listdata[$data['Team']['team'] = $data['Sport']['sport'] . '-' .
+$data['Team']['team'];
+
+now: $listdata[$data['Team']['team'] = $data['Sport']['sport'] . '-' .
+$data['Team']['team']];
+
+Still no smiles from heaven for this one....
+
+Beertigger
+
+On Aug 13, 7:30 pm, &quot;Geoff Ford&quot; &lt;geoff.f ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; You've got a error in the getListData function - remove the curly barce
+&gt; between the end of the query and $listdata = array();
+
+&gt; Geoff
+
+&gt; On 8/14/07, Beertigger &lt;qst ... @cox.net&gt; wrote:
+
+&gt; &gt; Found this one earlier. What myGenerateList does, it does very well,
+&gt; &gt; much easier than using an afterFind to concat things. But, from what I
+&gt; &gt; can tell thus far, it has the same limitation, in that it can't
+&gt; &gt; combine data across two models and display it in a third.
+
+&gt; &gt; On Aug 13, 2:58 pm, cdomigan &lt;cdomi ... @gmail.com&gt; wrote:
+&gt; &gt; &gt; http://php-coding-practices.com/cakephp-specific/how-to-put-combined- ...
+
+&gt; -- http://lemoncake.wordpress.com
+">
+</POST>
+<POST>
+<POSTER> &quot;Geoff Ford&quot; &lt;geoff.f...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-14T07:11:00 </POSTDATE>
+Try $listdata[$data['Team']['team']] = $data['Sport']['sport'] . '-' .
+$data['Team']['team'];
+
+This missing square bracket you put in the wrong place.
+
+Geoff
+
+On 8/14/07, Beertigger &lt;qst ... @cox.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Thanks, Geoff,
+
+&gt; I caught that one earlier, also found what I think was a missing ] to
+&gt; close the
+
+&gt; $listdata[$data['Team']['team'] = $data['Sport']['sport'] . '-' .
+&gt; $data['Team']['team'];
+
+&gt; now: $listdata[$data['Team']['team'] = $data['Sport']['sport'] . '-' .
+&gt; $data['Team']['team']];
+
+&gt; Still no smiles from heaven for this one....
+
+&gt; Beertigger
+
+&gt; On Aug 13, 7:30 pm, &quot;Geoff Ford&quot; &lt;geoff.f ... @gmail.com&gt; wrote:
+&gt; &gt; You've got a error in the getListData function - remove the curly barce
+&gt; &gt; between the end of the query and $listdata = array();
+
+&gt; &gt; Geoff
+
+&gt; &gt; On 8/14/07, Beertigger &lt;qst ... @cox.net&gt; wrote:
+
+&gt; &gt; &gt; Found this one earlier. What myGenerateList does, it does very well,
+&gt; &gt; &gt; much easier than using an afterFind to concat things. But, from what I
+&gt; &gt; &gt; can tell thus far, it has the same limitation, in that it can't
+&gt; &gt; &gt; combine data across two models and display it in a third.
+
+&gt; &gt; &gt; On Aug 13, 2:58 pm, cdomigan &lt;cdomi ... @gmail.com&gt; wrote:
+
+&gt; http://php-coding-practices.com/cakephp-specific/how-to-put-combined- ...
+
+&gt; &gt; -- http://lemoncake.wordpress.com
+">
+
+--
+http://lemoncake.wordpress.com
+</POST>
+<POST>
+<POSTER> Beertigger &lt;qst...@cox.net&gt; </POSTER>
+<POSTDATE> 2007-08-14T09:34:00 </POSTDATE>
+Not... enough... caffeine...
+
+Thanks &lt;/chagrin&gt;
+
+On Aug 14, 4:11 am, &quot;Geoff Ford&quot; &lt;geoff.f ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Try $listdata[$data['Team']['team']] = $data['Sport']['sport'] . '-' .
+&gt; $data['Team']['team'];
+
+&gt; This missing square bracket you put in the wrong place.
+
+&gt; Geoff
+
+&gt; On 8/14/07, Beertigger &lt;qst ... @cox.net&gt; wrote:
+
+&gt; &gt; Thanks, Geoff,
+
+&gt; &gt; I caught that one earlier, also found what I think was a missing ] to
+&gt; &gt; close the
+
+&gt; &gt; $listdata[$data['Team']['team'] = $data['Sport']['sport'] . '-' .
+&gt; &gt; $data['Team']['team'];
+
+&gt; &gt; now: $listdata[$data['Team']['team'] = $data['Sport']['sport'] . '-' .
+&gt; &gt; $data['Team']['team']];
+
+&gt; &gt; Still no smiles from heaven for this one....
+
+&gt; &gt; Beertigger
+
+&gt; &gt; On Aug 13, 7:30 pm, &quot;Geoff Ford&quot; &lt;geoff.f ... @gmail.com&gt; wrote:
+&gt; &gt; &gt; You've got a error in the getListData function - remove the curly barce
+&gt; &gt; &gt; between the end of the query and $listdata = array();
+
+&gt; &gt; &gt; Geoff
+
+&gt; &gt; &gt; On 8/14/07, Beertigger &lt;qst ... @cox.net&gt; wrote:
+
+&gt; &gt; &gt; &gt; Found this one earlier. What myGenerateList does, it does very well,
+&gt; &gt; &gt; &gt; much easier than using an afterFind to concat things. But, from what I
+&gt; &gt; &gt; &gt; can tell thus far, it has the same limitation, in that it can't
+&gt; &gt; &gt; &gt; combine data across two models and display it in a third.
+
+&gt; &gt; &gt; &gt; On Aug 13, 2:58 pm, cdomigan &lt;cdomi ... @gmail.com&gt; wrote:
+
+&gt; &gt; http://php-coding-practices.com/cakephp-specific/how-to-put-combined- ...
+
+&gt; &gt; &gt; -- http://lemoncake.wordpress.com
+
+&gt; -- http://lemoncake.wordpress.com
+">
+</POST>
+<POST>
+<POSTER> Beertigger &lt;qst...@cox.net&gt; </POSTER>
+<POSTDATE> 2007-08-14T11:48:00 </POSTDATE>
+Excellent!
+
+Contrary to my earlier post, &lt;a href=&quot; http://php-coding-practices.com/
+cakephp-specific/how-to-put-combined-fields-into-cakephps-model-
+generatelist/&quot;&gt;myGenerateList&lt;/a&gt; does work across Models!
+
+Tim Koschützki has really come up with a great one here.
+
+Thanks to all who helped me out with this one!
+
+Beertigger
+
+On Aug 14, 6:34 am, Beertigger &lt;qst ... @cox.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Not... enough... caffeine...
+
+&gt; Thanks &lt;/chagrin&gt;
+
+&gt; On Aug 14, 4:11 am, &quot;Geoff Ford&quot; &lt;geoff.f ... @gmail.com&gt; wrote:
+
+&gt; &gt; Try $listdata[$data['Team']['team']] = $data['Sport']['sport'] . '-' .
+&gt; &gt; $data['Team']['team'];
+
+&gt; &gt; This missing square bracket you put in the wrong place.
+
+&gt; &gt; Geoff
+
+&gt; &gt; On 8/14/07, Beertigger &lt;qst ... @cox.net&gt; wrote:
+
+&gt; &gt; &gt; Thanks, Geoff,
+
+&gt; &gt; &gt; I caught that one earlier, also found what I think was a missing ] to
+&gt; &gt; &gt; close the
+
+&gt; &gt; &gt; $listdata[$data['Team']['team'] = $data['Sport']['sport'] . '-' .
+&gt; &gt; &gt; $data['Team']['team'];
+
+&gt; &gt; &gt; now: $listdata[$data['Team']['team'] = $data['Sport']['sport'] . '-' .
+&gt; &gt; &gt; $data['Team']['team']];
+
+&gt; &gt; &gt; Still no smiles from heaven for this one....
+
+&gt; &gt; &gt; Beertigger
+
+&gt; &gt; &gt; On Aug 13, 7:30 pm, &quot;Geoff Ford&quot; &lt;geoff.f ... @gmail.com&gt; wrote:
+&gt; &gt; &gt; &gt; You've got a error in the getListData function - remove the curly barce
+&gt; &gt; &gt; &gt; between the end of the query and $listdata = array();
+
+&gt; &gt; &gt; &gt; Geoff
+
+&gt; &gt; &gt; &gt; On 8/14/07, Beertigger &lt;qst ... @cox.net&gt; wrote:
+
+&gt; &gt; &gt; &gt; &gt; Found this one earlier. What myGenerateList does, it does very well,
+&gt; &gt; &gt; &gt; &gt; much easier than using an afterFind to concat things. But, from what I
+&gt; &gt; &gt; &gt; &gt; can tell thus far, it has the same limitation, in that it can't
+&gt; &gt; &gt; &gt; &gt; combine data across two models and display it in a third.
+
+&gt; &gt; &gt; &gt; &gt; On Aug 13, 2:58 pm, cdomigan &lt;cdomi ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; http://php-coding-practices.com/cakephp-specific/how-to-put-combined- ...
+
+&gt; &gt; &gt; &gt; -- http://lemoncake.wordpress.com
+
+&gt; &gt; -- http://lemoncake.wordpress.com
+">
+</POST>
+</TEXT>
+</BODY>
+</DOC>

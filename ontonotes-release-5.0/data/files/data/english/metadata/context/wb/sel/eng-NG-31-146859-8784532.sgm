@@ -1,0 +1,203 @@
+<DOC>
+<DOCID> eng-NG-31-146859-8784532 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-27T23:26:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Gettin' SOAPy with PHP5
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Muthu Ramadoss &lt;muthu.ramad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-27T23:26:00 </POSTDATE>
+Gettin' SOAPy with PHP5
+http://blog.phpdeveloper.org/?p=73
+
+Recently, with our company's update to PHP5 (yeah yeah, I know) we
+were looking to replace the software we use on our web service to
+handle real-time payments and customer lookups. Since we've been
+running PHP4, our natural choice was the NuSOAP framework. It gave us
+a (relatively) simple way to create the service and was easy to use.
+Unfortunately, with the move to PHP5, we couldn't really use it
+anymore - and yes, I've seen the &quot;change this line to this&quot; fix for it
+but that kind of stuff makes me nervous. So, I decided that using
+PHP5's SOAP extension was the way to go. Thankfully, it's been pretty
+smooth sailing so far, and I thought I'd share some of it to maybe
+help anyone else out there looking to do something similar.
+
+First off, my goal for creating this new service was to make it as
+flexible as possible. I wanted to make the main server portion of it
+smart enough to call what was needed to make the request without
+having to load the functionality for everything into each server
+request. The general idea, then, is to have the main server assigned
+to the SOAP object that dynamically loads in a class for that type of
+request. Thankfully, PHP5 has some features that make this pretty
+simple.
+
+Here's some sample code for the server portion:
+PLAIN TEXT
+PHP:
+
+1.      header(&quot;Content-Type: text/xml&quot;);
+2.
+3.      function __autoload($class){
+4.          $path='/path/to/webservice/libs/'.$class;
+5.          if(is_file($path)){ include_once($path); }
+6.      }
+7.
+8.      class MyServer {
+9.
+10.          var $_valid  = null;
+11.          var $_action    = null;
+12.          var $_msg      = null;
+13.          var $_pars    = array();
+14.
+15.          function __construct($msg){
+16.              $this-&gt;_msg=$msg;
+17.          }
+18.          function __parse($msg,$args){
+19.              $dom = DOMDocument::loadXML($msg);
+20.              $xpath = new DOMXPath($dom);
+21.              $result = $xpath-&gt;query(&quot;//SOAP-ENV:Envelope/SOAP-
+ENV:Body/*&quot;);
+22.              foreach($result-&gt;item(0)-&gt;childNodes as $key =&gt;
+$value){
+23.                  $this-&gt;_action  = $value-&gt;parentNode-&gt;tagName;
+24.                  $this-&gt;_pars[$value-&gt;tagName] = $args[$key];
+25.              }
+26.              unset($dom,$xpath,$result);
+27.          }
+28.          function __call($func,$args){
+29.              $obj = new $func($args,$this-&gt;_msg);
+30.              if(isset($obj-&gt;xsd_type)){
+31.                  switch($obj-&gt;xsd_type){
+32.                      case 'array':   return new SoapVar($obj-
+
+<QUOTE PREVIOUSPOST="
+&gt;data,SOAP_ENC_OBJECT,$obj-&gt;type); break;
+">
+
+33.                      case 'string':  return new SoapVar($obj-
+
+<QUOTE PREVIOUSPOST="
+&gt;data,XSD_STRING,$obj-&gt;type); break;
+">
+
+34.                      case 'xml':  return new SoapVar($obj-
+
+<QUOTE PREVIOUSPOST="
+&gt;data,XSD_ANYXML,$obj-&gt;type); break;
+">
+
+35.                      default:
+36.                          return new SoapVar($obj-
+
+<QUOTE PREVIOUSPOST="
+&gt;data,SOAP_ENC_OBJECT,$obj-&gt;type);
+">
+
+37.                  }
+38.              }else{ return new SoapVar($obj-
+
+<QUOTE PREVIOUSPOST="
+&gt;data,SOAP_ENC_OBJECT,$obj-&gt;type); }
+">
+
+39.          }
+40.
+41.      }
+42.
+43.
+44.      //Now we start up our server...
+45.      $input  = file_get_contents(&quot;php://input&quot;);
+46.      $server = new SoapServer(' http://www.example.com/my.wsdl');
+47.      $server-&gt;setClass(&quot;MyServer&quot;,$input);
+48.      $server-&gt;handle($input);
+
+It's not the simplest script, but I wanted to show you all of the
+parts first and then break it down into more manageable chunks. Let's
+start where the flow starts - the bottom of the script. This chunk of
+code allows the script to intercept the incoming request and assigns
+the class to handle it. Our MyServer class is where the real fun
+starts.
+
+Moving along the flow line, we hit the constructor of the class. The
+only thing we do here is assign the incoming message to the _msg
+property of the class. This is so that later, when we need to parse
+it, we can get at it. Some of the magic with the SOAP PHP
+functionality happens next - it tries to look for a function named the
+same as the request type (so if the SOAPAction is &quot;getFoo&quot; it looks
+for the &quot;function getFoo()&quot; in the class). I went a different route
+here, though - I didn't define any of the methods it would need in the
+server class itself. Instead, I made use of the __call magic function
+to handle things.
+
+When the __call catches the action, it gets the function name that was
+called and the arguments it was called with. Unfortunately, this
+argument array has numeric keys which made it hard for me to tell what
+the real order of the inputs was (they could have the &quot;acct_num&quot; in
+front of &quot;last_name&quot; in one request and after it in another). More on
+that later, though. Right inside the __call method, you'll see the key
+to it all - the dynamic call to an object, based on the type of
+request, being created and called with the arguments and a copy of the
+message. Since the classes aren't included yet - we only wanted what
+we needed - the __autoload kicks in and pulls in the file.
+
+This brings us to one of our &quot;action classes&quot; - here's an example:
+PLAIN TEXT
+PHP:
+
+1.      class MyTestRequest extends MyServer {
+2.          function __construct($args=null,$msg){
+3.              parent::__parse($msg,$args);
+4.
+5.              $arr=array('testing'=&gt;'1,2,3');
+6.
+7.              $this-&gt;type='Account';
+8.              $this-&gt;data=$arr;
+9.          }
+10.      }
+
+This is the simplest kind of request we can have - it lives off in the
+directory (defined in the __autoload of the server) as a file called
+MyTestRequest.php. All of the action happens in the constructor and
+other functionality should probably be relegated to other methods on
+the class. Our server class calls this constructor with the two
+parameters which are then passed back to a function in the server
+class, __parse. This does something that's a bit optional, but I
+wanted it to be sure I knew which parameter was which when they were
+passing it it. As it stood, I only had numeric indexes on the
+arguments array and was left to guess which order they were in (not
+good). To remedy the situation, I pass it off to this function for
+processing.
+
+The __parse function loads the message into a DOM document and, using
+an XPath query, finds the node for the action inside the SOAP:BODY.
+Each of its child nodes are then pulled out and the tag names are
+assigned to the _pars array and the action to the _action property.
+With these set, we can come back and, instead of just assuming that
+$args[0] is the account number, we can know for a fact that $this-
+
+<QUOTE PREVIOUSPOST="
+&gt;_pars['acct_num'] is the right information.
+">
+
+The $arr inside of the __construct in MyTestRequest is then passed
+back out to the script via the $this-&gt;data property (shared between
+the parent and child since it extends it) and the type for the
+response (from the WSDL) in $this-&gt;type.
+
+Hopping back over to the MyServer class, we're back inside the __call
+still and there's just one last thing to do - echo out the response in
+a SOAP-friendly way. That's what all of the SoapVar calls are for. The
+switch() call looks at an optional $this-&gt;type property and, of set,
+tries to match the output with the right data format. In our example,
+though, it just falls down to the &quot;else&quot; and calls it as an object.
+
+And, voila - it's done. The output is a formatted SOAP response!
+
+http://blog.phpdeveloper.org/?p=73
+</POST>
+</TEXT>
+</BODY>
+</DOC>

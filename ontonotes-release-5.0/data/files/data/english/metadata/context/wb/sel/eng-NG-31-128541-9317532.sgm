@@ -1,0 +1,1619 @@
+<DOC>
+<DOCID> eng-NG-31-128541-9317532 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-27T17:46:00 </DATETIME>
+<BODY>
+<HEADLINE>
+New-bus unit wiring via hints..
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> 韓家標 Bill Hacker &lt;askb...@conducive.net&gt; </POSTER>
+<POSTDATE> 2007-10-27T17:46:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Kevin Oberman wrote:
+&gt;&gt; From: Marcel Moolenaar &lt;xcl ... @mac.com&gt;
+&gt;&gt; Date: Sat, 27 Oct 2007 12:09:29 -0700
+&gt;&gt; Sender: owner-freebsd-curr ... @freebsd.org
+
+&gt;&gt; On Oct 27, 2007, at 10:58 AM, John-Mark Gurney wrote:
+
+&gt;&gt;&gt; Yeh, you're solution was to simply declare that anyone who knows that
+&gt;&gt;&gt; COM1 is at 0x3f8 is wrong, and to use a different, yet again arbitrary
+&gt;&gt;&gt; solution which is which is listed first in ACPI...
+&gt;&gt; Exactly. Anyone who &quot;knows&quot; that COM1 is at 0x3f8 while
+&gt;&gt; the computer right in front of them clearly states that
+&gt;&gt; COM1 is at 0x2f8 is in denial.
+
+&gt;&gt;&gt; So, if one ACPI implementation puts _UID = 0 at 0x3f8, but lists it
+&gt;&gt;&gt; after _UID = 1 at 0x2f8, that it's fine for sio0 to be _UID = 1?
+&gt;&gt; Yes. sio0 is nothing more than the first serial port found during
+&gt;&gt; enumeration.
+
+&gt;&gt;&gt; So, why are you continuing to argue about a simple thing that you
+&gt;&gt;&gt; on your
+&gt;&gt;&gt; machines can simply remove the hints?
+&gt;&gt; The ability to wire is good. Implementing it right
+&gt;&gt; is important.
+
+&gt;&gt;&gt;  What are your technical arguments
+&gt;&gt;&gt; for mandating a different, non-historical, based arbitrary selection?
+&gt;&gt; I'm not mandating anything. I'm merely pointing out how
+&gt;&gt; reality has changed and that it's important to adapt,
+&gt;&gt; adopt and improve...
+
+&gt;&gt; Where are your technical arguments, putting aside the
+&gt;&gt; mere technically of the statement that you consider
+&gt;&gt; yourself an old fart?
+
+&gt; &quot;Reality has changed&quot;? Yes, it has, at least a bit, but not to the
+&gt; point where we want to confuse serial ports.
+">
+
+You are exhibiting are very 'selective' memory (the wetware one).
+
+<QUOTE PREVIOUSPOST="
+&gt; Back in the days of v3 and v4, adding an IDE disk to a system could
+&gt; cause existing drives to change their device names. This meant that the
+&gt; fstab was unexpectedly wrong and things sometimes got messy. The option
+&gt; to fix this was added in V4 and moved to GENERIC after a while. Now the
+&gt; order in which IDE ports is scanned does not break the device names.
+">
+
+That would be nice - if only it were true.
+
+<QUOTE PREVIOUSPOST="
+&gt; If I update my BIOS, the port marked '1' on the back of my system should
+&gt; not abruptly change from sio0 to sio1. (Or, because some kernel change
+&gt; does this.)  If I have a system with scripts to talk to a device on a
+&gt; given port, I would be very annoyed if it suddenly changed.
+
+&gt; In my case, I am only talking to a data logger and not actually
+&gt; controlling something, but I should not have to worry about having a port
+&gt; name change or finding that _UID1 was no longer the same device if I
+&gt; move to a new mother board.
+">
+
+Write it in forth or asm such that the hex address of the base port can be
+specified, and you *don't* have to worry about it.
+
+If you want to use a higher-level 'COM(n)' abstraction for script et al
+convenience, then you'll have to pre-assign the base port.
+
+Address decoders, solder, Berg jumpers, DIP swiches, BIOS - one way or another.
+
+<QUOTE PREVIOUSPOST="
+&gt; COM1 (or whatever you choose to call it) has been at 0x3f8 since at
+&gt; least the IBM-AT and probably was there in the IBM-PC back at the dawn
+&gt; of time.
+">
+
+Not so. That's what is pointless about this whole exercise.
+
+You're wanting something nailed-down that you choose to remember as 'fixed' for
+lack of need to have changed it as often as others may have done.
+
+And still do.
+
+But it was never 'fixed'.
+
+Mapping to COM(n) was, and still is, changed of *necessity* to accomodate
+limited hardware and conflicts with other hardware that may have hard-wired
+addressing at ONE end, and 'inflexible' software that expects COM&lt;whatever&gt; at
+the OTHER end. Debugger output, to name one.
+
+Deal with it at whichever end suits your resources. Or in the middle.
+
+But deal with it we must, as the environment is never as 'standard' as we might
+wish.
+
+<QUOTE PREVIOUSPOST="
+&gt; (Yes, I had been working with computers for several years
+&gt; before then and I suspect many of the others in this discussion had
+&gt; been, too.) Please don't break it! Talk about POLA!
+">
+
+Not that it will matter for much longer. Not only laptops, but several 'modern'
+commodity MB have not only shed the DB-9 connector, they don't even ship with a
+cable for the legacy serial header buried on the PCB somewhere.
+
+Boot, and other *storage* device numbering moving about depending on mode, ACPI,
+AHCI BIOS settings is a great deal larger inconvenience.
+
+YOMD, of course... but 'wrong bikeshed'.
+
+Bill Hacker
+_______________________________________________
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+<POST>
+<POSTER> &quot;Kevin Oberman&quot; &lt;ober...@es.net&gt; </POSTER>
+<POSTDATE> 2007-10-28T03:07:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Date: Sat, 27 Oct 2007 17:46:34 -0400
+&gt; From: =?UTF-8?B?6Z+T5a625qiZIEJpbGwgSGFja2Vy?= &lt;askb ... @conducive.net&gt;
+&gt; Sender: owner-freebsd-curr ... @freebsd.org
+
+&gt; Kevin Oberman wrote:
+&gt; &gt;&gt; From: Marcel Moolenaar &lt;xcl ... @mac.com&gt;
+&gt; &gt;&gt; Date: Sat, 27 Oct 2007 12:09:29 -0700
+&gt; &gt;&gt; Sender: owner-freebsd-curr ... @freebsd.org
+
+&gt; &gt;&gt; On Oct 27, 2007, at 10:58 AM, John-Mark Gurney wrote:
+
+&gt; &gt;&gt;&gt; Yeh, you're solution was to simply declare that anyone who knows that
+&gt; &gt;&gt;&gt; COM1 is at 0x3f8 is wrong, and to use a different, yet again arbitrary
+&gt; &gt;&gt;&gt; solution which is which is listed first in ACPI...
+&gt; &gt;&gt; Exactly. Anyone who &quot;knows&quot; that COM1 is at 0x3f8 while
+&gt; &gt;&gt; the computer right in front of them clearly states that
+&gt; &gt;&gt; COM1 is at 0x2f8 is in denial.
+
+&gt; &gt;&gt;&gt; So, if one ACPI implementation puts _UID = 0 at 0x3f8, but lists it
+&gt; &gt;&gt;&gt; after _UID = 1 at 0x2f8, that it's fine for sio0 to be _UID = 1?
+&gt; &gt;&gt; Yes. sio0 is nothing more than the first serial port found during
+&gt; &gt;&gt; enumeration.
+
+&gt; &gt;&gt;&gt; So, why are you continuing to argue about a simple thing that you
+&gt; &gt;&gt;&gt; on your
+&gt; &gt;&gt;&gt; machines can simply remove the hints?
+&gt; &gt;&gt; The ability to wire is good. Implementing it right
+&gt; &gt;&gt; is important.
+
+&gt; &gt;&gt;&gt;  What are your technical arguments
+&gt; &gt;&gt;&gt; for mandating a different, non-historical, based arbitrary selection?
+&gt; &gt;&gt; I'm not mandating anything. I'm merely pointing out how
+&gt; &gt;&gt; reality has changed and that it's important to adapt,
+&gt; &gt;&gt; adopt and improve...
+
+&gt; &gt;&gt; Where are your technical arguments, putting aside the
+&gt; &gt;&gt; mere technically of the statement that you consider
+&gt; &gt;&gt; yourself an old fart?
+
+&gt; &gt; &quot;Reality has changed&quot;? Yes, it has, at least a bit, but not to the
+&gt; &gt; point where we want to confuse serial ports.
+
+&gt; You are exhibiting are very 'selective' memory (the wetware one).
+">
+
+My wetware is subject to too many errors, but I don't think this is one.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Back in the days of v3 and v4, adding an IDE disk to a system could
+&gt; &gt; cause existing drives to change their device names. This meant that the
+&gt; &gt; fstab was unexpectedly wrong and things sometimes got messy. The option
+&gt; &gt; to fix this was added in V4 and moved to GENERIC after a while. Now the
+&gt; &gt; order in which IDE ports is scanned does not break the device names.
+
+&gt; That would be nice - if only it were true.
+">
+
+It is very true and I didn't find it nice. It was fixed in  head on
+Dec. 8, 1999 with the new ATA driver. Prior to that, if you had two
+drives, one on each IDE bus as master, they were numbered 0 and 1. If
+you added a slave disk on the first bus, it became drive 1 and the
+master on the second bus became drive 2.  You still get the same
+behavior today if you remove the ATA_STATIC_ID option from your kernel.
+
+While I found most of your arguments rather weak, Marcel has me pretty
+much convinced that he is right, so I will not waste everyone's time
+with countering them.
+--
+R. Kevin Oberman, Network Engineer
+Energy Sciences Network (ESnet)
+Ernest O. Lawrence Berkeley National Laboratory (Berkeley Lab)
+E-mail: ober ... @es.net                   Phone: +1 510 486-8634
+Key fingerprint:059B 2DDF 031C 9BA3 14A4  EADA 927D EBB3 987B 3751
+
+application_pgp-signature_part
+1K Download
+</POST>
+<POST>
+<POSTER> 韓家標 Bill Hacker &lt;askb...@conducive.net&gt; </POSTER>
+<POSTDATE> 2007-10-28T04:16:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Kevin Oberman wrote:
+">
+
+*snip*
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; You are exhibiting are very 'selective' memory (the wetware one).
+
+&gt; My wetware is subject to too many errors, but I don't think this is one.
+">
+
+Sorry - that was meant in re Marcel's belief that the mapping of logical name to
+hex baseport addr of serial ports had [at some point in time | ever] been 'fixed'.
+
+They never were.
+
+Though from IBM ISA onward they were at least a smaller 'pool' of two, three, or
+four.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; Back in the days of v3 and v4, adding an IDE disk to a system could
+&gt;&gt;&gt; cause existing drives to change their device names. This meant that the
+&gt;&gt;&gt; fstab was unexpectedly wrong and things sometimes got messy. The option
+&gt;&gt;&gt; to fix this was added in V4 and moved to GENERIC after a while. Now the
+&gt;&gt;&gt; order in which IDE ports is scanned does not break the device names.
+&gt;&gt; That would be nice - if only it were true.
+
+&gt; It is very true and I didn't find it nice. It was fixed in  head on
+&gt; Dec. 8, 1999 with the new ATA driver.
+">
+
+That's only a partial 'fix'.
+
+<QUOTE PREVIOUSPOST="
+&gt; Prior to that, if you had two
+&gt; drives, one on each IDE bus as master, they were numbered 0 and 1. If
+&gt; you added a slave disk on the first bus, it became drive 1 and the
+&gt; master on the second bus became drive 2.
+">
+
+An improvement, certainly.
+
+<QUOTE PREVIOUSPOST="
+&gt; You still get the same
+&gt; behavior today if you remove the ATA_STATIC_ID option from your kernel.
+">
+
+Sorry - it is more complex than that, and for (at least) two reasons:
+
+1) Presence of at least two, often three or more *onboard* controllers, not to
+mention those commonly added to the bus.
+
+The entire controller 'block' may be inserted before as well as after the
+'legacy' one(s). Likewise some environments place a bus-attached controller
+before, others after the onboard one(s) in the ordering.
+
+This also changes with BIOS rev &amp; 'race', specifics of the add-on gear, and even
+PCI slot-order. Has done since pre-ISA days, (jumpers, DIP).
+
+Still does so in current MB, such as ASUS P5K and Gigagbyte GA G33-DS3R.
+
+2) Then there are the BIOS options, including 'mode' as in 'IDE', 'Native',
+'Compatible', 'RAID' and/or  'AHCI' enable/disable choices.
+
+Result: Citing just those two newest boards, is that the 'legacy' IDE block
+retains sequence-order, reserving 'seats' 0 thru 3 for devices - attached or
+absent - just as you noted.
+
+That IS 'nice'. But no longer 'enough', and absent PATA devices, perhaps not
+even relevant.
+
+- Supplementary SATA controllers may logically enumerate their 'seats' in EITHER
+forward OR reverse order vs the hardware / MB silkscreen labels, AND may insert
+the resulting block either after or BEFORE the legacy IDE block (0 thru 3) -
+renumber it in the process. /dev/ad0 becoming /dev/ad9, for example.
+
+A casual user is likely to have to deal with at least *part* of that menage, if
+only once... An R&amp;D shop experimenting with the BIOS settings has to keep
+multiple /fstab and paper 'cheat sheets' just to go multi..
+
+That is part of the same 'mapping' issue as serial ports, but is a growing
+problem, whereas serial ports have all but disappeared in any case.
+
+<QUOTE PREVIOUSPOST="
+&gt; While I found most of your arguments rather weak, Marcel has me pretty
+&gt; much convinced that he is right, so I will not waste everyone's time
+&gt; with countering them.
+">
+
+Not interested in 'argument'.
+
+Just pointing out the assumptions about immutability of hex-addr to logical
+device ID are flawed.  Historical OR recent.
+
+That is not going away.
+
+A better 'fix' needs steering options adopted by the BIOS-provider(s).
+Don't hold your breath while waiting on those to arrive OR be consistent.
+
+Beyond our control. Plan to adapt.
+
+Bill
+_______________________________________________
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+<POST>
+<POSTER> &quot;Daniel O&#39;Connor&quot; &lt;docon...@gsoft.com.au&gt; </POSTER>
+<POSTDATE> 2007-10-29T23:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Mon, 29 Oct 2007, John Baldwin wrote:
+&gt; You could easily extend it to USB if you can come up with a
+&gt; reasonable way to specify the wiring.  You could possibly wire units
+&gt; via hints that specify serial numbers or manfacturer and model
+&gt; strings, etc. However, I'm less familiar with USB so I'm less unsure
+&gt; what specific attributes would be suitable for wiring or not.
+">
+
+Serial numbers can be OK.
+
+Bus/port number would be good too - a lot of cheap stuff doesn't have a
+serial number (that is real) where as bus/port number would give you a
+way to differentiate (eg cheap serial adapters)
+
+--
+Daniel O'Connor software and network engineer
+for Genesis Software - http://www.gsoft.com.au
+&quot;The nice thing about standards is that there
+are so many of them to choose from.&quot;
+-- Andrew Tanenbaum
+GPG Fingerprint - 5596 B766 97C0 0E94 4347 295E E593 DC20 7B3F CE8C
+
+signature.asc
+1K Download
+</POST>
+<POST>
+<POSTER> John Baldwin &lt;j...@freebsd.org&gt; </POSTER>
+<POSTDATE> 2007-10-30T10:15:00 </POSTDATE>
+On Saturday 27 October 2007 06:04:40 pm Marcel Moolenaar wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Oct 27, 2007, at 2:24 PM, Kevin Oberman wrote:
+
+&gt; &gt;&gt; From: Marcel Moolenaar &lt;xcl ... @mac.com&gt;
+&gt; &gt;&gt; Date: Sat, 27 Oct 2007 13:57:25 -0700
+
+&gt; &gt;&gt; On Oct 27, 2007, at 12:40 PM, Kevin Oberman wrote:
+
+&gt; &gt;&gt;&gt;&gt; I'm not mandating anything. I'm merely pointing out how
+&gt; &gt;&gt;&gt;&gt; reality has changed and that it's important to adapt,
+&gt; &gt;&gt;&gt;&gt; adopt and improve...
+
+&gt; &gt;&gt;&gt; &quot;Reality has changed&quot;? Yes, it has, at least a bit, but not to the
+&gt; &gt;&gt;&gt; point where we want to confuse serial ports.
+
+&gt; &gt;&gt; Are you saying that &quot;we&quot; should accept reality's change
+&gt; &gt;&gt; only for as far as it doesn't confuse &quot;us&quot; ???
+
+&gt; &gt; Just in case I don't understand the issue, feel free to correct me,
+&gt; &gt; but
+&gt; &gt; it sounds like you are saying that there will not be a clear link
+&gt; &gt; between the serial port (sio) number and the port marked '1' on most
+&gt; &gt; systems.  If I am wrong about this, please tell me and I climb back
+&gt; &gt; under my rock.
+
+&gt; That is not what I'm saying. What I'm saying is:
+&gt; If the firmware tells the OS that the port marked
+&gt; &quot;1&quot; on the back corresponds to a UART that has a
+&gt; base I/O port address of 0x2e8, then who are we
+&gt; to disagree and demand that it should be 0x3f8?
+">
+
+That isn't what is happening though.  The port marked &quot;1&quot; is at 0x3f8
+and happens to be &quot;later&quot; in the namespace than the port marked &quot;2&quot;
+which is at 0x2e8.  The BIOS may _optionally_ decide to communicate
+this to the OS via the _UID method, but the _UID is only guaranteed
+to be a string that it suitable for use in a label in a GUI dialog box.
+The BIOS may use _UID's of &quot;0&quot; and &quot;1&quot;, or &quot;1&quot; and &quot;2&quot;, or &quot;COMA&quot; and
+&quot;COMB&quot;.  And it may not even supply any _UID values at all.
+
+If you want to bind by _UID I already have support for having:
+
+hint.sio.0.at=&quot;acpi0&quot;
+hint.sio.0.uid=&quot;COMA&quot;
+
+However, that 1) does not work out of the box since there is no
+&quot;standard&quot; format of _UID, so there aren't any default _UID values
+we can use and 2) does not work on the many boxes where the BIOS
+does not provide a _UID to begin with.  Matching on resources does work
+for any off-the-shelf x86 box you can go buy at the store though.
+
+Even if a PC has non-standard resources for COM1 and COM2, the serial
+ports will show up as sio2 and sio3.  Since you don't care what sio0
+means at all why not let other people who _do_ care have it work on their
+systems?  In the case of that system if someone really wants to fix it
+they can always adjust their hints, and they can even do so in the
+loader before the kernel is booted if it matters for install, etc.
+
+<QUOTE PREVIOUSPOST="
+&gt; You rightly point out that what it really boils
+&gt; down to is how devX maps to a port on the back or
+&gt; front of the machine. This mapping should not
+&gt; change gratuitously. Device wiring achieves that.
+">
+
+But on what basis will you wire things?  The only currently reliable
+way I can see to wire things on x86 for an ISA device (and yes, the
+COM port on a PC is ISA even if ACPI is what enumerates it rather than
+PNPBIOS) is I/O resources or the name of the device in the ACPI
+namespace (ACPI-only).  The latter is hard to get right as well since
+there is no standardized format for device names.  Shoot, my laptop
+I have for work intentionally obfuscates all method/device/etc. names
+in the namespace that aren't using a standardized name like _SB_ or
+_PRS to be Cxxx where 'xxx' is a hexadecimal value so you end up with
+locations like \_SB_.C003.C026.C02A.  ACPI's _UID is unreliable as
+mentioned above.  For uart console wiring you use I/O resources for
+wiring even.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; The new system has, to the typical user's eyes, the same
+&gt; &gt; configuration.
+
+&gt; Yes. this means there's a gap between what the user sees
+&gt; (the chassis) and what FreeBSD sees (the mainboard). As
+&gt; long as the mainboard is designed for the chassis, that
+&gt; gap is mostly non-existent or insignificant and what the
+&gt; firmware tells the OS is what you see on the back (or
+&gt; front). Otherwise, all bets are off...
+">
+
+FYI, on many systems the '1' and '2' (or 'A' and 'B') labels are actually on
+the mobo, not on the chassis.
+
+--
+John Baldwin
+_______________________________________________
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+<POST>
+<POSTER> Marcel Moolenaar &lt;xcl...@mac.com&gt; </POSTER>
+<POSTDATE> 2007-10-30T13:07:00 </POSTDATE>
+On Oct 30, 2007, at 7:15 AM, John Baldwin wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; That is not what I'm saying. What I'm saying is:
+&gt;&gt; If the firmware tells the OS that the port marked
+&gt;&gt; &quot;1&quot; on the back corresponds to a UART that has a
+&gt;&gt; base I/O port address of 0x2e8, then who are we
+&gt;&gt; to disagree and demand that it should be 0x3f8?
+
+&gt; That isn't what is happening though.  The port marked &quot;1&quot; is at 0x3f8
+&gt; and happens to be &quot;later&quot; in the namespace than the port marked &quot;2&quot;
+&gt; which is at 0x2e8.  The BIOS may _optionally_ decide to communicate
+&gt; this to the OS via the _UID method, but the _UID is only guaranteed
+&gt; to be a string that it suitable for use in a label in a GUI dialog
+&gt; box.
+">
+
+Doesn't this imply that enumerating on the lexicographical ordering
+of the (optional) _UID method would help us do what firmware writers
+intend?
+
+In other words, we don't need a number. We just need a means to
+determine the relative order and we enumerate in that relative
+order. Isn't that how it is now (and if not shouldn't it be that
+way)?
+
+<QUOTE PREVIOUSPOST="
+&gt; Even if a PC has non-standard resources for COM1 and COM2, the serial
+&gt; ports will show up as sio2 and sio3.
+">
+
+This is another sio(4) bug that uart(4) doesn't have, yes :-)
+
+<QUOTE PREVIOUSPOST="
+&gt;  Since you don't care what sio0
+&gt; means at all why not let other people who _do_ care have it work on
+&gt; their
+&gt; systems?
+">
+
+&quot;I&quot; may not care what sio0 means, but that doesn't mean &quot;I&quot; don't
+care that &quot;my&quot; serial ports aren't numbered starting with 0.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; You rightly point out that what it really boils
+&gt;&gt; down to is how devX maps to a port on the back or
+&gt;&gt; front of the machine. This mapping should not
+&gt;&gt; change gratuitously. Device wiring achieves that.
+
+&gt; But on what basis will you wire things?
+">
+
+Correcting the mapping of device instances to physical/visible
+ports will need to be based on user input. A default mapping,
+based on the self-enumerating ability of hardware/firmware, may
+not get it just right in all cases. But may provide a good and
+reliable starting point that may end up 90+% correct.
+
+<QUOTE PREVIOUSPOST="
+&gt;  The only currently reliable
+&gt; way I can see to wire things on x86 for an ISA device (and yes, the
+&gt; COM port on a PC is ISA even if ACPI is what enumerates it rather than
+&gt; PNPBIOS) is I/O resources or the name of the device in the ACPI
+&gt; namespace (ACPI-only).
+">
+
+I disagree. Since the firmware describes the legacy devices present
+in the system, the only reliable way is to trust that information.
+Sure, bugs may exist but 95+% of the FreeBSD code assumes correctness
+of hardware as it is, so why not in this respect?
+
+Anyway, when ACPI describes the hardware, I prefer not to call the
+legacy hardware ISA devices. It's important to make a clear distinction
+between enumerating and non-enumerating hardware, because that allows
+you to create mechanisms for dealing with non-enumerating hardware (i.e.
+hints) without creating conflicts or ambiguity with enumerating HW.
+We have convoluted this and mistakenly accepted this convolution as a
+property of ISA hardware.
+
+I've been advocating that our bus-abstraction is a good one. Devices
+enumerated by ACPI can be said to be attached to an ACPI bus. At least
+it's not more wrong than saying that they are ISA devices when it's
+obvious that there's no ISA bus to be found in modern hardware and all
+the legacy hardware is really on the chipsets LPC bus.
+
+<QUOTE PREVIOUSPOST="
+&gt;  For uart console wiring you use I/O resources for
+&gt; wiring even.
+">
+
+Yes, but not &quot;even&quot;. Since bus-enumeration hasn't happened yet,
+we can not describe the serial console by name+unit, because we
+have no way of knowing upfront what unit number will be assigned
+to the UART. The only way you can describe the serial console
+is by hardware resources or by firmware-level names (such as is
+the case on powerpc &amp; sparc64).
+
+This is why using hints to &quot;mark&quot; the console is wrong.
+
+Note also that on ia64 (at least) ACPI tables exist that describe
+the serial console (and debug port) and those tables use hardware
+resources. So, the common denominator is I/O resources (even for
+OFW-based machines) and as it is, it's really the only thing you
+need (module hardware type) to make a low-level console work.
+
+The only correct way to identify hardware for use as low-level
+console is by it's location in I/O space (module hardware type).
+This is what uart(4) does and it's one of the reasons uart(4)
+works on all platforms even though low-level console support is
+highly machine dependent. It's the right way of doing it and
+as such it just works.
+
+Do not mistake low-level console identification with bus-enumeration
+device wiring or it being similar to hints.
+
+To re-iterate:
+We should reserve hints for describing non-enumerating hardware
+(which means device.hints should be non-existent OOTB) and we
+should add other mechanisms to wire devices to hardware, making
+use of the fact that underneath it mechanisms exist to enumerate
+the hardware (incl. hints for non-enumerating hardware). In the
+future we can replace hints with a more flexible and expressive
+means to describe hardware so that it better meets the needs of
+embedded environments and without it impacting device wiring.
+
+--
+Marcel Moolenaar
+xcl ... @mac.com
+
+_______________________________________________
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+<POST>
+<POSTER> John Baldwin &lt;j...@freebsd.org&gt; </POSTER>
+<POSTDATE> 2007-10-30T13:48:00 </POSTDATE>
+On Tuesday 30 October 2007 01:07:44 pm Marcel Moolenaar wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Oct 30, 2007, at 7:15 AM, John Baldwin wrote:
+
+&gt; &gt;&gt; That is not what I'm saying. What I'm saying is:
+&gt; &gt;&gt; If the firmware tells the OS that the port marked
+&gt; &gt;&gt; &quot;1&quot; on the back corresponds to a UART that has a
+&gt; &gt;&gt; base I/O port address of 0x2e8, then who are we
+&gt; &gt;&gt; to disagree and demand that it should be 0x3f8?
+
+&gt; &gt; That isn't what is happening though.  The port marked &quot;1&quot; is at 0x3f8
+&gt; &gt; and happens to be &quot;later&quot; in the namespace than the port marked &quot;2&quot;
+&gt; &gt; which is at 0x2e8.  The BIOS may _optionally_ decide to communicate
+&gt; &gt; this to the OS via the _UID method, but the _UID is only guaranteed
+&gt; &gt; to be a string that it suitable for use in a label in a GUI dialog
+&gt; &gt; box.
+
+&gt; Doesn't this imply that enumerating on the lexicographical ordering
+&gt; of the (optional) _UID method would help us do what firmware writers
+&gt; intend?
+
+&gt; In other words, we don't need a number. We just need a means to
+&gt; determine the relative order and we enumerate in that relative
+&gt; order. Isn't that how it is now (and if not shouldn't it be that
+&gt; way)?
+">
+
+No.  They are strings that have no implied ordering.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Even if a PC has non-standard resources for COM1 and COM2, the serial
+&gt; &gt; ports will show up as sio2 and sio3.
+
+&gt; This is another sio(4) bug that uart(4) doesn't have, yes :-)
+">
+
+Hmmm, I don't think you parsed what I meant, but maybe you mean that uart(4)
+doesn't have the poorly-implemented &quot;feature&quot; in sio(4) to make sure that all
+non-ISA serial ports start at unit 2 to &quot;reserve&quot; sio0 and sio1 for COM1 and
+COM2?  Just look in sio_pci.c for 'device_set_unit()' which the current
+wiring patches remove with a vengance by making hints always reserve a given
+(name, unit) tuple.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;  Since you don't care what sio0
+&gt; &gt; means at all why not let other people who _do_ care have it work on
+&gt; &gt; their
+&gt; &gt; systems?
+
+&gt; &quot;I&quot; may not care what sio0 means, but that doesn't mean &quot;I&quot; don't
+&gt; care that &quot;my&quot; serial ports aren't numbered starting with 0.
+">
+
+And you could have an empty hints file and be happy.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;&gt; You rightly point out that what it really boils
+&gt; &gt;&gt; down to is how devX maps to a port on the back or
+&gt; &gt;&gt; front of the machine. This mapping should not
+&gt; &gt;&gt; change gratuitously. Device wiring achieves that.
+
+&gt; &gt; But on what basis will you wire things?
+
+&gt; Correcting the mapping of device instances to physical/visible
+&gt; ports will need to be based on user input. A default mapping,
+&gt; based on the self-enumerating ability of hardware/firmware, may
+&gt; not get it just right in all cases. But may provide a good and
+&gt; reliable starting point that may end up 90+% correct.
+">
+
+Oof.  See, here is where I think we hit a snag. :(  I'm thinking in terms of
+automated installations to a wide variety of server boxes that don't have
+a GUI with a mouse and monitor hooked up so a user can clicky-clicky to set
+which serial port is sio0. :(
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;  The only currently reliable
+&gt; &gt; way I can see to wire things on x86 for an ISA device (and yes, the
+&gt; &gt; COM port on a PC is ISA even if ACPI is what enumerates it rather than
+&gt; &gt; PNPBIOS) is I/O resources or the name of the device in the ACPI
+&gt; &gt; namespace (ACPI-only).
+
+&gt; I disagree. Since the firmware describes the legacy devices present
+&gt; in the system, the only reliable way is to trust that information.
+&gt; Sure, bugs may exist but 95+% of the FreeBSD code assumes correctness
+&gt; of hardware as it is, so why not in this respect?
+">
+
+You've missed the point of this entirely then. :(  Yes, the firmware is
+authoritative, and part of the goal is to fix a long-standing weakness where
+the OS is presented with two different enumerations of hardware: one supplied
+by the user via hints and one supplied by the firmware.  The idea is to trust
+the firmware's notion of resources since it probably knows better while
+allowing for other non-resource information provided by the user to be tied
+to the correct piece of hardware.
+
+<QUOTE PREVIOUSPOST="
+&gt; Anyway, when ACPI describes the hardware, I prefer not to call the
+&gt; legacy hardware ISA devices. It's important to make a clear distinction
+&gt; between enumerating and non-enumerating hardware, because that allows
+&gt; you to create mechanisms for dealing with non-enumerating hardware (i.e.
+&gt; hints) without creating conflicts or ambiguity with enumerating HW.
+&gt; We have convoluted this and mistakenly accepted this convolution as a
+&gt; property of ISA hardware.
+
+&gt; I've been advocating that our bus-abstraction is a good one. Devices
+&gt; enumerated by ACPI can be said to be attached to an ACPI bus. At least
+&gt; it's not more wrong than saying that they are ISA devices when it's
+&gt; obvious that there's no ISA bus to be found in modern hardware and all
+&gt; the legacy hardware is really on the chipsets LPC bus.
+">
+
+You continue to ignore that ACPI is not just a simple bus, but is a namespace
+that enumerates devices on multiple busses such as ISA/LPC, SMBus (e.g. an
+IPMI SSIF interface can be enumerated via ACPI), etc.  It is much more
+generic than just an ISA enumerator like PNPBIOS.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;  For uart console wiring you use I/O resources for
+&gt; &gt; wiring even.
+
+&gt; Yes, but not &quot;even&quot;. Since bus-enumeration hasn't happened yet,
+&gt; we can not describe the serial console by name+unit, because we
+&gt; have no way of knowing upfront what unit number will be assigned
+&gt; to the UART. The only way you can describe the serial console
+&gt; is by hardware resources or by firmware-level names (such as is
+&gt; the case on powerpc &amp; sparc64).
+
+&gt; This is why using hints to &quot;mark&quot; the console is wrong.
+
+&gt; Note also that on ia64 (at least) ACPI tables exist that describe
+&gt; the serial console (and debug port) and those tables use hardware
+&gt; resources. So, the common denominator is I/O resources (even for
+&gt; OFW-based machines) and as it is, it's really the only thing you
+&gt; need (module hardware type) to make a low-level console work.
+
+&gt; The only correct way to identify hardware for use as low-level
+&gt; console is by it's location in I/O space (module hardware type).
+&gt; This is what uart(4) does and it's one of the reasons uart(4)
+&gt; works on all platforms even though low-level console support is
+&gt; highly machine dependent. It's the right way of doing it and
+&gt; as such it just works.
+
+&gt; Do not mistake low-level console identification with bus-enumeration
+&gt; device wiring or it being similar to hints.
+
+&gt; To re-iterate:
+&gt; We should reserve hints for describing non-enumerating hardware
+&gt; (which means device.hints should be non-existent OOTB) and we
+&gt; should add other mechanisms to wire devices to hardware, making
+&gt; use of the fact that underneath it mechanisms exist to enumerate
+&gt; the hardware (incl. hints for non-enumerating hardware). In the
+&gt; future we can replace hints with a more flexible and expressive
+&gt; means to describe hardware so that it better meets the needs of
+&gt; embedded environments and without it impacting device wiring.
+">
+
+So what do you want: 'wire.sio.0.*?'  Or do you want XML or some binary
+registery like Windows that can't be modified by the user w/o first booting
+the OS (which is real handy when it gets corrupted).
+
+Right now the current &quot;solution&quot; results in various places (like my employer)
+just turning off the ACPI support for sio(4) because hints are more reliable
+for us than ACPI when it comes to enumerating serial ports in _real_ _world_
+_x86_ server-class machines.  I'd much rather be trusting ACPI myself hence
+my attempts to make the two sets of information enumerating the same hardware
+agree on what they are talking about.
+
+--
+John Baldwin
+_______________________________________________
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+<POST>
+<POSTER> Marcel Moolenaar &lt;xcl...@mac.com&gt; </POSTER>
+<POSTDATE> 2007-10-30T16:00:00 </POSTDATE>
+On Oct 30, 2007, at 10:48 AM, John Baldwin wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; That isn't what is happening though.  The port marked &quot;1&quot; is at
+&gt;&gt;&gt; 0x3f8
+&gt;&gt;&gt; and happens to be &quot;later&quot; in the namespace than the port marked &quot;2&quot;
+&gt;&gt;&gt; which is at 0x2e8.  The BIOS may _optionally_ decide to communicate
+&gt;&gt;&gt; this to the OS via the _UID method, but the _UID is only guaranteed
+&gt;&gt;&gt; to be a string that it suitable for use in a label in a GUI dialog
+&gt;&gt;&gt; box.
+
+&gt;&gt; Doesn't this imply that enumerating on the lexicographical ordering
+&gt;&gt; of the (optional) _UID method would help us do what firmware writers
+&gt;&gt; intend?
+
+&gt;&gt; In other words, we don't need a number. We just need a means to
+&gt;&gt; determine the relative order and we enumerate in that relative
+&gt;&gt; order. Isn't that how it is now (and if not shouldn't it be that
+&gt;&gt; way)?
+
+&gt; No.  They are strings that have no implied ordering.
+">
+
+Then there's no problem, for if _UID is designed as a user-visible
+label and there's no ordering then no-one can claim that one is
+to be before the other and thus that the logical ordering in the
+AML is in fact the right ordering. This of course means that the
+user can see COM2 before COM1 in some user-interface. This of course
+is exactly in accordance with the firmware and as such correct.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; Even if a PC has non-standard resources for COM1 and COM2, the
+&gt;&gt;&gt; serial
+&gt;&gt;&gt; ports will show up as sio2 and sio3.
+
+&gt;&gt; This is another sio(4) bug that uart(4) doesn't have, yes :-)
+
+&gt; Hmmm, I don't think you parsed what I meant, but maybe you mean that
+&gt; uart(4)
+&gt; doesn't have the poorly-implemented &quot;feature&quot; in sio(4) to make sure
+&gt; that all
+&gt; non-ISA serial ports start at unit 2 to &quot;reserve&quot; sio0 and sio1 for
+&gt; COM1 and
+&gt; COM2?
+">
+
+Exactly.
+
+<QUOTE PREVIOUSPOST="
+&gt;  Just look in sio_pci.c for 'device_set_unit()' which the current
+&gt; wiring patches remove with a vengance by making hints always reserve
+&gt; a given
+&gt; (name, unit) tuple.
+">
+
+And since hints are shipped by us with default values, what
+we did is remove the poorly-implemented &quot;feature&quot; from sio(4)
+only to bank on hints to yield the same result, which makes
+hints nothing more than a different poorly-implemented
+&quot;feature&quot; :-)
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; Since you don't care what sio0
+&gt;&gt;&gt; means at all why not let other people who _do_ care have it work on
+&gt;&gt;&gt; their
+&gt;&gt;&gt; systems?
+
+&gt;&gt; &quot;I&quot; may not care what sio0 means, but that doesn't mean &quot;I&quot; don't
+&gt;&gt; care that &quot;my&quot; serial ports aren't numbered starting with 0.
+
+&gt; And you could have an empty hints file and be happy.
+">
+
+With the exception of course of having an OS that does the
+wrong thing OOTB and that requires extensive fiddling to
+behave correctly, increasing the amount of maintenance and
+upgrade hassle.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt;&gt; You rightly point out that what it really boils
+&gt;&gt;&gt;&gt; down to is how devX maps to a port on the back or
+&gt;&gt;&gt;&gt; front of the machine. This mapping should not
+&gt;&gt;&gt;&gt; change gratuitously. Device wiring achieves that.
+
+&gt;&gt;&gt; But on what basis will you wire things?
+
+&gt;&gt; Correcting the mapping of device instances to physical/visible
+&gt;&gt; ports will need to be based on user input. A default mapping,
+&gt;&gt; based on the self-enumerating ability of hardware/firmware, may
+&gt;&gt; not get it just right in all cases. But may provide a good and
+&gt;&gt; reliable starting point that may end up 90+% correct.
+
+&gt; Oof.  See, here is where I think we hit a snag. :(  I'm thinking in
+&gt; terms of
+&gt; automated installations to a wide variety of server boxes that don't
+&gt; have
+&gt; a GUI with a mouse and monitor hooked up so a user can clicky-clicky
+&gt; to set
+&gt; which serial port is sio0. :(
+">
+
+I don't see a snag. But maybe that's because I use
+uart(4) on my machines and I have a serial consoles
+no matter how things are enumerated...
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; The only currently reliable
+&gt;&gt;&gt; way I can see to wire things on x86 for an ISA device (and yes, the
+&gt;&gt;&gt; COM port on a PC is ISA even if ACPI is what enumerates it rather
+&gt;&gt;&gt; than
+&gt;&gt;&gt; PNPBIOS) is I/O resources or the name of the device in the ACPI
+&gt;&gt;&gt; namespace (ACPI-only).
+
+&gt;&gt; I disagree. Since the firmware describes the legacy devices present
+&gt;&gt; in the system, the only reliable way is to trust that information.
+&gt;&gt; Sure, bugs may exist but 95+% of the FreeBSD code assumes correctness
+&gt;&gt; of hardware as it is, so why not in this respect?
+
+&gt; You've missed the point of this entirely then. :(  Yes, the firmware
+&gt; is
+&gt; authoritative, and part of the goal is to fix a long-standing
+&gt; weakness where
+&gt; the OS is presented with two different enumerations of hardware: one
+&gt; supplied
+&gt; by the user via hints and one supplied by the firmware.
+">
+
+The &quot;weakness&quot; you mention is really the OSes own failure by
+&quot;presenting&quot; itself with hardware information that has no
+relation to the machine that it runs on, because it's
+actually fixated by virtue of being part of the OSes source
+code. It isn't supplied by the user at all. We supply it to
+ourselves. Don't go blaming the user for that...
+
+<QUOTE PREVIOUSPOST="
+&gt;  The idea is to trust
+&gt; the firmware's notion of resources since it probably knows better
+&gt; while
+&gt; allowing for other non-resource information provided by the user to
+&gt; be tied
+&gt; to the correct piece of hardware.
+">
+
+Agreed...
+
+He, that's what I said previously and you responded to with
+saying that we hit a snag. I guess we don't then; or do we?
+I'm confused now :-)
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Anyway, when ACPI describes the hardware, I prefer not to call the
+&gt;&gt; legacy hardware ISA devices. It's important to make a clear
+&gt;&gt; distinction
+&gt;&gt; between enumerating and non-enumerating hardware, because that allows
+&gt;&gt; you to create mechanisms for dealing with non-enumerating hardware
+&gt;&gt; (i.e.
+&gt;&gt; hints) without creating conflicts or ambiguity with enumerating HW.
+&gt;&gt; We have convoluted this and mistakenly accepted this convolution as a
+&gt;&gt; property of ISA hardware.
+
+&gt;&gt; I've been advocating that our bus-abstraction is a good one. Devices
+&gt;&gt; enumerated by ACPI can be said to be attached to an ACPI bus. At
+&gt;&gt; least
+&gt;&gt; it's not more wrong than saying that they are ISA devices when it's
+&gt;&gt; obvious that there's no ISA bus to be found in modern hardware and
+&gt;&gt; all
+&gt;&gt; the legacy hardware is really on the chipsets LPC bus.
+
+&gt; You continue to ignore that ACPI is not just a simple bus, but is a
+&gt; namespace
+&gt; that enumerates devices on multiple busses such as ISA/LPC, SMBus
+&gt; (e.g. an
+&gt; IPMI SSIF interface can be enumerated via ACPI), etc.  It is much more
+&gt; generic than just an ISA enumerator like PNPBIOS.
+">
+
+No, I don't ignore anything. I explicitly and deliberately use
+the term &quot;abstraction&quot;. It's a simplified representation of
+reality. An &quot;idea&quot;. My choice of calling ACPI a bus is probably
+what confuses you. I'm fully aware that it is much more than a
+bus, but it still &quot;quacks&quot; like one WRT legacy hardware...
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; For uart console wiring you use I/O resources for
+&gt;&gt;&gt; wiring even.
+
+&gt;&gt; Yes, but not &quot;even&quot;. Since bus-enumeration hasn't happened yet,
+&gt;&gt; we can not describe the serial console by name+unit, because we
+&gt;&gt; have no way of knowing upfront what unit number will be assigned
+&gt;&gt; to the UART. The only way you can describe the serial console
+&gt;&gt; is by hardware resources or by firmware-level names (such as is
+&gt;&gt; the case on powerpc &amp; sparc64).
+
+&gt;&gt; This is why using hints to &quot;mark&quot; the console is wrong.
+
+&gt;&gt; Note also that on ia64 (at least) ACPI tables exist that describe
+&gt;&gt; the serial console (and debug port) and those tables use hardware
+&gt;&gt; resources. So, the common denominator is I/O resources (even for
+&gt;&gt; OFW-based machines) and as it is, it's really the only thing you
+&gt;&gt; need (module hardware type) to make a low-level console work.
+
+&gt;&gt; The only correct way to identify hardware for use as low-level
+&gt;&gt; console is by it's location in I/O space (module hardware type).
+&gt;&gt; This is what uart(4) does and it's one of the reasons uart(4)
+&gt;&gt; works on all platforms even though low-level console support is
+&gt;&gt; highly machine dependent. It's the right way of doing it and
+&gt;&gt; as such it just works.
+
+&gt;&gt; Do not mistake low-level console identification with bus-enumeration
+&gt;&gt; device wiring or it being similar to hints.
+
+&gt;&gt; To re-iterate:
+&gt;&gt; We should reserve hints for describing non-enumerating hardware
+&gt;&gt; (which means device.hints should be non-existent OOTB) and we
+&gt;&gt; should add other mechanisms to wire devices to hardware, making
+&gt;&gt; use of the fact that underneath it mechanisms exist to enumerate
+&gt;&gt; the hardware (incl. hints for non-enumerating hardware). In the
+&gt;&gt; future we can replace hints with a more flexible and expressive
+&gt;&gt; means to describe hardware so that it better meets the needs of
+&gt;&gt; embedded environments and without it impacting device wiring.
+
+&gt; So what do you want: 'wire.sio.0.*?'  Or do you want XML or some
+&gt; binary
+&gt; registery like Windows that can't be modified by the user w/o first
+&gt; booting
+&gt; the OS (which is real handy when it gets corrupted).
+">
+
+What I want is something that is appropriate. If we want to wire
+hardware to devices, then we need to be able to uniquely identify
+a device in hardware. A path if you will that mentions busses,
+bridges devices and functions therein. Look at ACPI, EFI and OFW
+for example. Such an identification is the keying entity. Data
+that corresponds to that key can be complex or compound so that
+you can actually specify which driver you want to use above and
+beyond simply wiring it to a unit number. This also also allows
+us to add other pieces of information.
+
+I'm not going to give concrete examples, because I foresee that
+the discussion will then be about how my &quot;solution&quot; sucks rather
+than it being treated for what it is: an illustration -- something
+to explain what I said and in no way complete or even usable.
+
+Ok, what the heck. For better or for worse:
+
+\begin{/boot/hardware.conf}
+# Lines starting with '#' are comments
+[pci0.0.18.0]
+# First function: standard UART
+# We use this for remote GDB
+driver=&quot;sio&quot;
+unit=2
+dbgport=&quot;9600,n,8,1&quot;
+[pci0.0.18.1]
+# Second function: standard but memory-mapped UART
+# doesn't work with sio(4) -- needs uart(4)
+# We use this one as console.
+...
+read more »
+</POST>
+<POST>
+<POSTER> John Baldwin &lt;j...@freebsd.org&gt; </POSTER>
+<POSTDATE> 2007-10-30T16:56:00 </POSTDATE>
+On Tuesday 30 October 2007 04:00:28 pm Marcel Moolenaar wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Oct 30, 2007, at 10:48 AM, John Baldwin wrote:
+
+&gt; &gt;&gt;&gt; That isn't what is happening though.  The port marked &quot;1&quot; is at
+&gt; &gt;&gt;&gt; 0x3f8
+&gt; &gt;&gt;&gt; and happens to be &quot;later&quot; in the namespace than the port marked &quot;2&quot;
+&gt; &gt;&gt;&gt; which is at 0x2e8.  The BIOS may _optionally_ decide to communicate
+&gt; &gt;&gt;&gt; this to the OS via the _UID method, but the _UID is only guaranteed
+&gt; &gt;&gt;&gt; to be a string that it suitable for use in a label in a GUI dialog
+&gt; &gt;&gt;&gt; box.
+
+&gt; &gt;&gt; Doesn't this imply that enumerating on the lexicographical ordering
+&gt; &gt;&gt; of the (optional) _UID method would help us do what firmware writers
+&gt; &gt;&gt; intend?
+
+&gt; &gt;&gt; In other words, we don't need a number. We just need a means to
+&gt; &gt;&gt; determine the relative order and we enumerate in that relative
+&gt; &gt;&gt; order. Isn't that how it is now (and if not shouldn't it be that
+&gt; &gt;&gt; way)?
+
+&gt; &gt; No.  They are strings that have no implied ordering.
+
+&gt; Then there's no problem, for if _UID is designed as a user-visible
+&gt; label and there's no ordering then no-one can claim that one is
+&gt; to be before the other and thus that the logical ordering in the
+&gt; AML is in fact the right ordering. This of course means that the
+&gt; user can see COM2 before COM1 in some user-interface. This of course
+&gt; is exactly in accordance with the firmware and as such correct.
+">
+
+It would be interesting to see what Windows does since it still
+maintains 'COM1:' and 'COM2:' device aliases (if those are the correct DOS
+device names).
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;&gt;&gt; Even if a PC has non-standard resources for COM1 and COM2, the
+&gt; &gt;&gt;&gt; serial
+&gt; &gt;&gt;&gt; ports will show up as sio2 and sio3.
+
+&gt; &gt;&gt; This is another sio(4) bug that uart(4) doesn't have, yes :-)
+
+&gt; &gt; Hmmm, I don't think you parsed what I meant, but maybe you mean that
+&gt; &gt; uart(4)
+&gt; &gt; doesn't have the poorly-implemented &quot;feature&quot; in sio(4) to make sure
+&gt; &gt; that all
+&gt; &gt; non-ISA serial ports start at unit 2 to &quot;reserve&quot; sio0 and sio1 for
+&gt; &gt; COM1 and
+&gt; &gt; COM2?
+
+&gt; Exactly.
+
+&gt; &gt;  Just look in sio_pci.c for 'device_set_unit()' which the current
+&gt; &gt; wiring patches remove with a vengance by making hints always reserve
+&gt; &gt; a given
+&gt; &gt; (name, unit) tuple.
+
+&gt; And since hints are shipped by us with default values, what
+&gt; we did is remove the poorly-implemented &quot;feature&quot; from sio(4)
+&gt; only to bank on hints to yield the same result, which makes
+&gt; hints nothing more than a different poorly-implemented
+&gt; &quot;feature&quot; :-)
+">
+
+So you are missing that 1) our users really want this feature, and 2) by
+making hints do the reservation instead of _hard-coding_ it into the driver
+we know let users dictate how it should work since they can adjust the hints
+to suit their needs but still satisfy what users expect on off-the-shelf
+hardware with the default hints that ship.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;&gt;&gt; Since you don't care what sio0
+&gt; &gt;&gt;&gt; means at all why not let other people who _do_ care have it work on
+&gt; &gt;&gt;&gt; their
+&gt; &gt;&gt;&gt; systems?
+
+&gt; &gt;&gt; &quot;I&quot; may not care what sio0 means, but that doesn't mean &quot;I&quot; don't
+&gt; &gt;&gt; care that &quot;my&quot; serial ports aren't numbered starting with 0.
+
+&gt; &gt; And you could have an empty hints file and be happy.
+
+&gt; With the exception of course of having an OS that does the
+&gt; wrong thing OOTB and that requires extensive fiddling to
+&gt; behave correctly, increasing the amount of maintenance and
+&gt; upgrade hassle.
+">
+
+?  For the vast majority of x86 boxes (including all the varied boxes we
+have at work) the default hints will work just fine OOTB.  Users are free to
+edit this, so it remains under user control and doesn't require a recompile.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;&gt;&gt;&gt; You rightly point out that what it really boils
+&gt; &gt;&gt;&gt;&gt; down to is how devX maps to a port on the back or
+&gt; &gt;&gt;&gt;&gt; front of the machine. This mapping should not
+&gt; &gt;&gt;&gt;&gt; change gratuitously. Device wiring achieves that.
+
+&gt; &gt;&gt;&gt; But on what basis will you wire things?
+
+&gt; &gt;&gt; Correcting the mapping of device instances to physical/visible
+&gt; &gt;&gt; ports will need to be based on user input. A default mapping,
+&gt; &gt;&gt; based on the self-enumerating ability of hardware/firmware, may
+&gt; &gt;&gt; not get it just right in all cases. But may provide a good and
+&gt; &gt;&gt; reliable starting point that may end up 90+% correct.
+
+&gt; &gt; Oof.  See, here is where I think we hit a snag. :(  I'm thinking in
+&gt; &gt; terms of
+&gt; &gt; automated installations to a wide variety of server boxes that don't
+&gt; &gt; have
+&gt; &gt; a GUI with a mouse and monitor hooked up so a user can clicky-clicky
+&gt; &gt; to set
+&gt; &gt; which serial port is sio0. :(
+
+&gt; I don't see a snag. But maybe that's because I use
+&gt; uart(4) on my machines and I have a serial consoles
+&gt; no matter how things are enumerated...
+">
+
+So.  I misread how uart's stuff works the first time, but I think I understand
+now, but I think it has its own confusion.  So uart_cpu_{i386,amd64} expect
+there to be uart hints (wait, I thought hints were the great satan?) that are
+identical to sio hints.  Thus:
+
+hint.uart.0.at=&quot;isa&quot;
+hint.uart.0.flags=&quot;0x10&quot;
+hint.uart.0.port=&quot;0x3f8&quot;
+hint.uart.0.baud=&quot;9600&quot;
+
+However, if you have a system with a PCI serial device or where ACPI lists the
+darn things backwards then uart0 might be the PCI device, and, say, uart2
+might be the device corresponding to these hints.  The uart(4) driver then
+goes and scans the hints on its own to find a set of hints that matches the
+resources for uart2 and migrates the flag (and thus the serial console
+setting) over to uart2, so uart2 (device at 0x3f8) does get set to the serial
+console.  But /dev/ttyu0 in userland doesn't match hint.uart.0.  Instead, the
+user has to know (how??) that it's /dev/ttyu2 when they setup /etc/ttys to
+have a getty listening on COM1.  That seems very non-intuitive.  At least
+remove the unit numbers or something and do:
+
+uart.console.port=0x3f8
+uart.console.baud=9600
+
+or some such.  It seems very POLA-violating to have uart0 hints match some
+other unit number.  Of course, that solves the console problem but what if
+someone wants to apply a different property to a device, like
+hint.foo.0.disable? or hint.foo.0.bar?  (&quot;baud&quot; above corresponds to
+a &quot;bar&quot;).
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;&gt;&gt; The only currently reliable
+&gt; &gt;&gt;&gt; way I can see to wire things on x86 for an ISA device (and yes, the
+&gt; &gt;&gt;&gt; COM port on a PC is ISA even if ACPI is what enumerates it rather
+&gt; &gt;&gt;&gt; than
+&gt; &gt;&gt;&gt; PNPBIOS) is I/O resources or the name of the device in the ACPI
+&gt; &gt;&gt;&gt; namespace (ACPI-only).
+
+&gt; &gt;&gt; I disagree. Since the firmware describes the legacy devices present
+&gt; &gt;&gt; in the system, the only reliable way is to trust that information.
+&gt; &gt;&gt; Sure, bugs may exist but 95+% of the FreeBSD code assumes correctness
+&gt; &gt;&gt; of hardware as it is, so why not in this respect?
+
+&gt; &gt; You've missed the point of this entirely then. :(  Yes, the firmware
+&gt; &gt; is
+&gt; &gt; authoritative, and part of the goal is to fix a long-standing
+&gt; &gt; weakness where
+&gt; &gt; the OS is presented with two different enumerations of hardware: one
+&gt; &gt; supplied
+&gt; &gt; by the user via hints and one supplied by the firmware.
+
+&gt; The &quot;weakness&quot; you mention is really the OSes own failure by
+&gt; &quot;presenting&quot; itself with hardware information that has no
+&gt; relation to the machine that it runs on, because it's
+&gt; actually fixated by virtue of being part of the OSes source
+&gt; code. It isn't supplied by the user at all. We supply it to
+&gt; ourselves. Don't go blaming the user for that...
+">
+
+Umm, the user can adjust /boot/device.hints (I do) and can even adjust it at
+boot time in the loader.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;  The idea is to trust
+&gt; &gt; the firmware's notion of resources since it probably knows better
+&gt; &gt; while
+&gt; &gt; allowing for other non-resource information provided by the user to
+&gt; &gt; be tied
+&gt; &gt; to the correct piece of hardware.
+
+&gt; Agreed...
+
+&gt; He, that's what I said previously and you responded to with
+&gt; saying that we hit a snag. I guess we don't then; or do we?
+&gt; I'm confused now :-)
+">
+
+The snag is you want the user to explicitly set it all up whereas I require it
+to be automated and reliable (_UID and ACPI namespace node names are not
+reliable as per previous e-mails).
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;&gt; Anyway, when ACPI describes the hardware, I prefer not to call the
+&gt; &gt;&gt; legacy hardware ISA devices. It's important to make a clear
+&gt; &gt;&gt; distinction
+&gt; &gt;&gt; between enumerating and non-enumerating hardware, because that allows
+&gt; &gt;&gt; you to create mechanisms for dealing with non-enumerating hardware
+&gt; &gt;&gt; (i.e.
+&gt; &gt;&gt; hints) without creating conflicts or ambiguity with enumerating HW.
+&gt; &gt;&gt; We have convoluted this and mistakenly accepted this convolution as a
+&gt; &gt;&gt; property of ISA hardware.
+
+&gt; &gt;&gt; I've been advocating that our bus-abstraction is a good one. Devices
+&gt; &gt;&gt; enumerated by ACPI can be said to be attached to an ACPI bus. At
+&gt; &gt;&gt; least
+&gt; &gt;&gt; it's not more wrong than saying that they are ISA devices when it's
+&gt; &gt;&gt; obvious that there's no ISA bus to be found in modern hardware and
+&gt; &gt;&gt; all
+&gt; &gt;&gt; the legacy hardware is really on the chipsets LPC bus.
+
+&gt; &gt; You continue to ignore that ACPI is not just a simple bus, but is a
+&gt; &gt; namespace
+&gt; &gt; that enumerates devices on multiple busses such as ISA/LPC, SMBus
+&gt; &gt; (e.g. an
+&gt; &gt; IPMI SSIF interface can be enumerated via ACPI), etc.  It is much more
+&gt; &gt; generic than just an ISA enumerator like PNPBIOS.
+
+&gt; No, I don't ignore anything. I explicitly and deliberately use
+&gt; the term &quot;abstraction&quot;. It's a simplified representation of
+&gt; reality. An &quot;idea&quot;. My choice of calling ACPI a bus is probably
+&gt; what confuses you. I'm fully aware that it is much more than a
+&gt; bus, but it still &quot;quacks&quot; like one WRT legacy hardware...
+">
+
+So where do you hang non-ISA devices on &quot;dumb&quot; busses like IIC that ACPI
+enumerates?  Off acpi0 or the relevant parent such as iic0 or smbus0?
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;&gt;&gt; For uart console wiring you use I/O resources for
+&gt; &gt;&gt;&gt; wiring even.
+
+&gt; &gt;&gt; Yes, but not &quot;even&quot;. Since bus-enumeration hasn't happened yet,
+&gt; &gt;&gt; we can not describe the serial console by name+unit, because we
+&gt; &gt;&gt; have no way of knowing upfront what unit number will be assigned
+&gt; &gt;&gt; to the UART. The only way you can
+">
+
+...
+read more »
+</POST>
+<POST>
+<POSTER> Marcel Moolenaar &lt;xcl...@mac.com&gt; </POSTER>
+<POSTDATE> 2007-10-30T19:20:00 </POSTDATE>
+On Oct 30, 2007, at 1:56 PM, John Baldwin wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt;&gt;&gt;&gt; You rightly point out that what it really boils
+&gt;&gt;&gt;&gt;&gt;&gt; down to is how devX maps to a port on the back or
+&gt;&gt;&gt;&gt;&gt;&gt; front of the machine. This mapping should not
+&gt;&gt;&gt;&gt;&gt;&gt; change gratuitously. Device wiring achieves that.
+
+&gt;&gt;&gt;&gt;&gt; But on what basis will you wire things?
+
+&gt;&gt;&gt;&gt; Correcting the mapping of device instances to physical/visible
+&gt;&gt;&gt;&gt; ports will need to be based on user input. A default mapping,
+&gt;&gt;&gt;&gt; based on the self-enumerating ability of hardware/firmware, may
+&gt;&gt;&gt;&gt; not get it just right in all cases. But may provide a good and
+&gt;&gt;&gt;&gt; reliable starting point that may end up 90+% correct.
+
+&gt;&gt;&gt; Oof.  See, here is where I think we hit a snag. :(  I'm thinking in
+&gt;&gt;&gt; terms of
+&gt;&gt;&gt; automated installations to a wide variety of server boxes that don't
+&gt;&gt;&gt; have
+&gt;&gt;&gt; a GUI with a mouse and monitor hooked up so a user can clicky-clicky
+&gt;&gt;&gt; to set
+&gt;&gt;&gt; which serial port is sio0. :(
+
+&gt;&gt; I don't see a snag. But maybe that's because I use
+&gt;&gt; uart(4) on my machines and I have a serial consoles
+&gt;&gt; no matter how things are enumerated...
+
+&gt; So.  I misread how uart's stuff works the first time, but I think I
+&gt; understand
+&gt; now, but I think it has its own confusion.  So uart_cpu_{i386,amd64}
+&gt; expect
+&gt; there to be uart hints (wait, I thought hints were the great satan?)
+">
+
+Support for hints was added to i386 and amd64 to promote use
+of the uart(4) driver only. The uart-way is by using the
+tunable hw.uart.console and hw.uart.dbgport.
+
+<QUOTE PREVIOUSPOST="
+&gt; However, if you have a system with a PCI serial device or where ACPI
+&gt; lists the
+&gt; darn things backwards then uart0 might be the PCI device, and, say,
+&gt; uart2
+&gt; might be the device corresponding to these hints.
+">
+
+You're finally seeing it my way: hints are bad, m'kay :-)
+
+<QUOTE PREVIOUSPOST="
+&gt;  The uart(4) driver then
+&gt; goes and scans the hints on its own to find a set of hints that
+&gt; matches the
+&gt; resources for uart2 and migrates the flag (and thus the serial console
+&gt; setting) over to uart2, so uart2 (device at 0x3f8) does get set to
+&gt; the serial
+&gt; console.
+">
+
+Yes. The only thing uart(4) uses from the hints is the I/O
+address of the UART that is marked as console. Later, during
+bus-enumeration we map the driver instance onto the console
+like if you had no hints at all (the norm).
+
+<QUOTE PREVIOUSPOST="
+&gt;  Instead, the
+&gt; user has to know (how??) that it's /dev/ttyu2 when they setup /etc/
+&gt; ttys to
+&gt; have a getty listening on COM1.
+">
+
+Yes, /etc/ttys needs to match. This is a simple consequence of
+having configuration files, like network port setup in rc.conf
+and/or file systems in /etc/fstab. It's not a problem specific
+to uart(4) and any attempt in uart(4) to deal with that is
+wrong and futile.
+
+<QUOTE PREVIOUSPOST="
+&gt;  That seems very non-intuitive.
+">
+
+It is non-intuitive. Hints are.
+
+<QUOTE PREVIOUSPOST="
+&gt;  At least
+&gt; remove the unit numbers or something and do:
+
+&gt; uart.console.port=0x3f8
+&gt; uart.console.baud=9600
+">
+
+Why? There's already hw.uart.console and hw.uart.dbgport that
+allow you to set everything you need.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt;&gt;&gt; You've missed the point of this entirely then. :(  Yes, the
+&gt;&gt;&gt;&gt;&gt; firmware
+&gt;&gt;&gt; is
+&gt;&gt;&gt; authoritative, and part of the goal is to fix a long-standing
+&gt;&gt;&gt; weakness where
+&gt;&gt;&gt; the OS is presented with two different enumerations of hardware: one
+&gt;&gt;&gt; supplied
+&gt;&gt;&gt; by the user via hints and one supplied by the firmware.
+
+&gt;&gt; The &quot;weakness&quot; you mention is really the OSes own failure by
+&gt;&gt; &quot;presenting&quot; itself with hardware information that has no
+&gt;&gt; relation to the machine that it runs on, because it's
+&gt;&gt; actually fixated by virtue of being part of the OSes source
+&gt;&gt; code. It isn't supplied by the user at all. We supply it to
+&gt;&gt; ourselves. Don't go blaming the user for that...
+
+&gt; Umm, the user can adjust /boot/device.hints (I do) and can even
+&gt; adjust it at
+&gt; boot time in the loader.
+">
+
+I guess OOTB means manual configuration before the kernel
+boots? :-)
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; The idea is to trust
+&gt;&gt;&gt; the firmware's notion of resources since it probably knows better
+&gt;&gt;&gt; while
+&gt;&gt;&gt; allowing for other non-resource information provided by the user to
+&gt;&gt;&gt; be tied
+&gt;&gt;&gt; to the correct piece of hardware.
+
+&gt;&gt; Agreed...
+
+&gt;&gt; He, that's what I said previously and you responded to with
+&gt;&gt; saying that we hit a snag. I guess we don't then; or do we?
+&gt;&gt; I'm confused now :-)
+
+&gt; The snag is you want the user to explicitly set it all up whereas I
+&gt; require it
+&gt; to be automated and reliable (_UID and ACPI namespace node names are
+&gt; not
+&gt; reliable as per previous e-mails).
+">
+
+No, that's the opposite of what I want. ACPI is reliable.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt;&gt; Anyway, when ACPI describes the hardware, I prefer not to call the
+&gt;&gt;&gt;&gt; legacy hardware ISA devices. It's important to make a clear
+&gt;&gt;&gt;&gt; distinction
+&gt;&gt;&gt;&gt; between enumerating and non-enumerating hardware, because that
+&gt;&gt;&gt;&gt; allows
+&gt;&gt;&gt;&gt; you to create mechanisms for dealing with non-enumerating hardware
+&gt;&gt;&gt;&gt; (i.e.
+&gt;&gt;&gt;&gt; hints) without creating conflicts or ambiguity with enumerating HW.
+&gt;&gt;&gt;&gt; We have convoluted this and mistakenly accepted this convolution
+&gt;&gt;&gt;&gt; as a
+&gt;&gt;&gt;&gt; property of ISA hardware.
+
+&gt;&gt;&gt;&gt; I've been advocating that our bus-abstraction is a good one.
+&gt;&gt;&gt;&gt; Devices
+&gt;&gt;&gt;&gt; enumerated by ACPI can be said to be attached to an ACPI bus. At
+&gt;&gt;&gt;&gt; least
+&gt;&gt;&gt;&gt; it's not more wrong than saying that they are ISA devices when it's
+&gt;&gt;&gt;&gt; obvious that there's no ISA bus to be found in modern hardware and
+&gt;&gt;&gt;&gt; all
+&gt;&gt;&gt;&gt; the legacy hardware is really on the chipsets LPC bus.
+
+&gt;&gt;&gt; You continue to ignore that ACPI is not just a simple bus, but is a
+&gt;&gt;&gt; namespace
+&gt;&gt;&gt; that enumerates devices on multiple busses such as ISA/LPC, SMBus
+&gt;&gt;&gt; (e.g. an
+&gt;&gt;&gt; IPMI SSIF interface can be enumerated via ACPI), etc.  It is much
+&gt;&gt;&gt; more
+&gt;&gt;&gt; generic than just an ISA enumerator like PNPBIOS.
+
+&gt;&gt; No, I don't ignore anything. I explicitly and deliberately use
+&gt;&gt; the term &quot;abstraction&quot;. It's a simplified representation of
+&gt;&gt; reality. An &quot;idea&quot;. My choice of calling ACPI a bus is probably
+&gt;&gt; what confuses you. I'm fully aware that it is much more than a
+&gt;&gt; bus, but it still &quot;quacks&quot; like one WRT legacy hardware...
+
+&gt; So where do you hang non-ISA devices on &quot;dumb&quot; busses like IIC that
+&gt; ACPI
+&gt; enumerates?  Off acpi0 or the relevant parent such as iic0 or smbus0?
+">
+
+A device hangs off of it's corresponding bus in most cases.
+The legacy devices are special in our case, because we have
+1) hints that mess things up, and 2) the option of not using
+ACPI, so that we do need hints to enumerate things that we
+don't get enumerated any other way. Both 1) and 2) interact
+with each other in that we need 1) for 2). A separate bus is
+the best thing because it keeps things clear.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt;&gt;&gt; For uart console wiring you use I/O resources for
+&gt;&gt;&gt;&gt;&gt; wiring even.
+
+&gt;&gt;&gt;&gt; Yes, but not &quot;even&quot;. Since bus-enumeration hasn't happened yet,
+&gt;&gt;&gt;&gt; we can not describe the serial console by name+unit, because we
+&gt;&gt;&gt;&gt; have no way of knowing upfront what unit number will be assigned
+&gt;&gt;&gt;&gt; to the UART. The only way you can describe the serial console
+&gt;&gt;&gt;&gt; is by hardware resources or by firmware-level names (such as is
+&gt;&gt;&gt;&gt; the case on powerpc &amp; sparc64).
+
+&gt;&gt;&gt;&gt; This is why using hints to &quot;mark&quot; the console is wrong.
+
+&gt;&gt;&gt;&gt; Note also that on ia64 (at least) ACPI tables exist that describe
+&gt;&gt;&gt;&gt; the serial console (and debug port) and those tables use hardware
+&gt;&gt;&gt;&gt; resources. So, the common denominator is I/O resources (even for
+&gt;&gt;&gt;&gt; OFW-based machines) and as it is, it's really the only thing you
+&gt;&gt;&gt;&gt; need (module hardware type) to make a low-level console work.
+
+&gt;&gt;&gt;&gt; The only correct way to identify hardware for use as low-level
+&gt;&gt;&gt;&gt; console is by it's location in I/O space (module hardware type).
+&gt;&gt;&gt;&gt; This is what uart(4) does and it's one of the reasons uart(4)
+&gt;&gt;&gt;&gt; works on all platforms even though low-level console support is
+&gt;&gt;&gt;&gt; highly machine dependent. It's the right way of doing it and
+&gt;&gt;&gt;&gt; as such it just works.
+
+&gt;&gt;&gt;&gt; Do not mistake low-level console identification with bus-
+&gt;&gt;&gt;&gt; enumeration
+&gt;&gt;&gt;&gt; device wiring or it being similar to hints.
+
+&gt;&gt;&gt;&gt; To re-iterate:
+&gt;&gt;&gt;&gt; We should reserve hints for describing non-enumerating hardware
+&gt;&gt;&gt;&gt; (which means device.hints should be non-existent OOTB) and we
+&gt;&gt;&gt;&gt; should add other mechanisms to wire devices to hardware, making
+&gt;&gt;&gt;&gt; use of the fact that underneath it mechanisms exist to enumerate
+&gt;&gt;&gt;&gt; the hardware (incl. hints for non-enumerating hardware). In the
+&gt;&gt;&gt;&gt; future we can replace hints with a more flexible and expressive
+&gt;&gt;&gt;&gt; means to describe hardware so that it better meets the needs of
+&gt;&gt;&gt;&gt; embedded environments and without it impacting device wiring.
+
+&gt;&gt;&gt; So what do you want: 'wire.sio.0.*?'  Or do you want XML or some
+&gt;&gt;&gt; binary
+&gt;&gt;&gt; registery like Windows that can't be modified by the user w/o first
+&gt;&gt;&gt; booting
+&gt;&gt;&gt; the OS (which is real handy when it gets corrupted).
+
+&gt;&gt; What I want is something that is appropriate. If we want to wire
+&gt;&gt; hardware to devices, then we need to be able to uniquely identify
+&gt;&gt; a device in hardware. A path if you will that mentions busses,
+&gt;&gt; bridges devices and functions therein. Look at ACPI, EFI and OFW
+&gt;&gt; for example. Such an identification is the keying entity. Data
+&gt;&gt; that corresponds to that key can be complex or compound so that
+&gt;&gt; you can actually specify which driver you want to use above and
+&gt;&gt; beyond simply wiring it to a unit number. This also also allows
+&gt;&gt; us to add other pieces of information.
+
+&gt;&gt; I'm not going to give concrete examples, because I foresee that
+&gt;&gt; the discussion will then be about how my &quot;solution&quot; sucks rather
+&gt;&gt; than it being treated for what it is: an illustration -- something
+&gt;&gt; to explain what I said and in no way complete or even usable.
+
+&gt;&gt; Ok, what the heck. For better or for worse:
+
+&gt;&gt; \begin{/boot/hardware.conf}
+&gt;&gt; # Lines starting with '#' are comments
+&gt;&gt; [pci0.0.18.0]
+&gt;&gt;    # First function: standard UART
+&gt;&gt;    # We use this for remote GDB
+&gt;&gt;    driver=&quot;sio&quot;
+&gt;&gt;    unit=2
+&gt;&gt;    dbgport=&quot;9600,n,8,1&quot;
+&gt;&gt; [pci0.0.18.1]
+&gt;&gt;    # Second function: standard but memory-mapped UART
+&gt;&gt;    # doesn't work with
+">
+
+...
+read more »
+</POST>
+</TEXT>
+</BODY>
+</DOC>

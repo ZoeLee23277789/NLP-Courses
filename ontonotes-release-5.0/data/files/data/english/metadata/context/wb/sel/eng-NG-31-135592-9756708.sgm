@@ -1,0 +1,910 @@
+<DOC>
+<DOCID> eng-NG-31-135592-9756708 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2008-01-03T15:29:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Get your hands dirty: Help bootstrap Ruby on Windows.
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Luis Lavena &lt;luislav...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-03T15:29:00 </POSTDATE>
+This was asked, and asked, and asked too many times, so here we go.
+
+Since I don't want to hold anyone to try it, I'll like to share some
+progress I've made in this area.
+I'll like to make a few points clear before:
+
+1) VC6 vs. VC8 vs. MinGW have no room in this discussion. I took the
+MinGW path since was the only one that could be bootstrapped from
+scratch.
+
+2) This is a work in progress. Even that I'm 110% busy with work,
+interest on this seems it deserve be shared, no mater how &quot;alpha&quot; the
+whole process is.
+
+3) Don't blame me if isn't work or your Rails application don't work
+either. Isn't complete!. Instead: grab the code, hack it and send me
+your patches.
+
+4) Make code talk for you. I've heard this too many times on other
+projects, so please move from simple comments to share your ruby-fu.
+
+5) Part of this project is bring a new build procedure to One-Click
+Installer, if we succeed, everybody will enjoy the benefits.
+
+For those who aren't aware, I'm the new maintainer of OCI (One-Click
+Ruby Installer for Windows). Curt give me the kingdom keys a few
+months back and the latest release was completely build in my office
+computer.
+
+OCI, in its current state is a 'Package of Ruby Tools and libraries',
+not a Installer. There are plans to change that.
+
+So, now the code:
+
+http://code.mmediasys.com/installer3/latest.zip
+
+This is a pure-ruby solution that download and setup a mingw+msys
+environment to get Ruby build.
+
+It uses some rake recipes to download all the needed packages
+At this time Ruby 1.8.6 p111 is targeted, but targeting Ruby 1.9 will
+no have mayor issues.
+
+Dependencies are not compiled, just downloaded for the time being.
+Tested all the scenarios (pre-built and compile from source) and there
+are issues with them which I reported previously.
+
+To bootstrap and use this project, you need:
+- Ruby 1.8.5 or greater
+- Rake 0.7.3 or greater
+- Tar [1] and Unzip [2] binary packages from GnuWin32
+
+If someone can provide me a way to unpack 4MB zip, tgz and tar.bz2
+files without external dependencies (just ruby) -- you're welcome.
+
+The rake tasks available:
+rake check      # Run tests for the interpreter in the sandbox.
+rake clean      # Remove any temporary products.
+rake clobber    # Remove any generated file.
+rake compile    # Compile the interpreter.
+rake configure  # Run the configure process for the interpreter.
+rake download   # Download all components.
+rake extract    # Extract all downloaded components.
+rake install    # Install the interpreter in the sandbox.
+rake prepare    # Prepare the freshly extracted components.
+
+clean will remove the sandbox and clobber will remove all the
+downloaded files.
+
+The step sequence is:
+
+download, extract, prepare, configure, compile, install, check
+
+you will find the installed ruby in sandbox/ruby_mingw
+
+You need to install before check, so the check process use the sandbox
+interpreter instead of the one you're using to build it.
+
+check will fail in the readline tests, since I cannot get them working
+properly.
+
+I suggest to those who are interested, help me get this working.
+
+====
+
+Checkout code:
+
+I'm using Bazaar (bzr) as distributed version control software:
+
+http://www.bazaar-vcs.org/
+
+bzr branch http://code.mmediasys.com/installer3/dev my-local-branch
+
+====
+
+[1] This ships inside libarchive-2.4.0 named as 'bsdtar.exe'
+http://gnuwin32.sourceforge.net/packages/libarchive.htm
+
+[2] http://gnuwin32.sourceforge.net/packages/unzip.htm
+
+--
+Luis Lavena
+Multimedia systems
+-
+A common mistake that people make when trying to design
+something completely foolproof is to underestimate
+the ingenuity of complete fools.
+Douglas Adams
+</POST>
+<POST>
+<POSTER> &quot;Bill Kelly&quot; &lt;bi...@cts.com&gt; </POSTER>
+<POSTDATE> 2008-01-03T15:45:00 </POSTDATE>
+From: &quot;Luis Lavena&quot; &lt;luislav ... @gmail.com&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; 1) VC6 vs. VC8 vs. MinGW have no room in this discussion. I took the
+&gt; MinGW path since was the only one that could be bootstrapped from
+&gt; scratch.
+">
+
+Just to clarify... What does &quot;bootstrapped from scratch&quot; mean
+in this context?
+
+Regards,
+
+Bill
+</POST>
+<POST>
+<POSTER> James Tucker &lt;jftuc...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-03T15:57:00 </POSTDATE>
+On 3 Jan 2008, at 16:45, Bill Kelly wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; From: &quot;Luis Lavena&quot; &lt;luislav ... @gmail.com&gt;
+
+&gt;&gt; 1) VC6 vs. VC8 vs. MinGW have no room in this discussion. I took the
+&gt;&gt; MinGW path since was the only one that could be bootstrapped from
+&gt;&gt; scratch.
+
+&gt; Just to clarify... What does &quot;bootstrapped from scratch&quot; mean
+&gt; in this context?
+">
+
+As low as he (we) can go. At the moment, it's in ruby (as per the code
+presented and requirements), but some of my ideas had most of the
+stack from a .cmd file - although that may be excessive.
+
+.js or .vb via WSH anyone?
+
+<QUOTE PREVIOUSPOST="
+&gt; Regards,
+
+&gt; Bill
+">
+</POST>
+<POST>
+<POSTER> Luis Lavena &lt;luislav...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-03T15:59:00 </POSTDATE>
+On Jan 3, 6:45 pm, Bill Kelly &lt;bi ... @cts.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; From: &quot;Luis Lavena&quot; &lt;luislav ... @gmail.com&gt;
+
+&gt; &gt; 1) VC6 vs. VC8 vs. MinGW have no room in this discussion. I took the
+&gt; &gt; MinGW path since was the only one that could be bootstrapped from
+&gt; &gt; scratch.
+
+&gt; Just to clarify... What does &quot;bootstrapped from scratch&quot; mean
+&gt; in this context?
+">
+
+Don't know if that is the right terminology (since I'm not a native
+english speaker) but this means:
+
+- Grab MinGW+MSYS
+- Compile Ruby
+- Package it
+- Repeat!
+
+Be usable so you can repeat the whole process with the new version of
+the interpreter you just compiled :-)
+
+So future version use the new one, is like what Rubinius is doing:
+bootstrapping itself using a previous ruby installation.
+
+Hope this clarify things a bit.
+--
+Luis Lavena
+</POST>
+<POST>
+<POSTER> Luis Lavena &lt;luislav...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-03T16:09:00 </POSTDATE>
+On Jan 3, 6:57 pm, James Tucker &lt;jftuc ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 3 Jan 2008, at 16:45, Bill Kelly wrote:
+
+&gt; &gt; From: &quot;Luis Lavena&quot; &lt;luislav ... @gmail.com&gt;
+
+&gt; &gt;&gt; 1) VC6 vs. VC8 vs. MinGW have no room in this discussion. I took the
+&gt; &gt;&gt; MinGW path since was the only one that could be bootstrapped from
+&gt; &gt;&gt; scratch.
+
+&gt; &gt; Just to clarify... What does &quot;bootstrapped from scratch&quot; mean
+&gt; &gt; in this context?
+
+&gt; As low as he (we) can go. At the moment, it's in ruby (as per the code
+&gt; presented and requirements), but some of my ideas had most of the
+&gt; stack from a .cmd file - although that may be excessive.
+
+&gt; js or .vb via WSH anyone?
+">
+
+The idea is Bootstrap Ruby with Ruby, like Rubinius guys are doing.
+
+I must admit that have extensive batch files that I use to bootstrap
+ruby with VC6 at office, but maintain .CMD and workaround its
+limitations don't worth the effort.
+
+Also, we are using Ruby for the fun of it, right? ;-)
+--
+Luis Lavena
+</POST>
+<POST>
+<POSTER> James Tucker &lt;jftuc...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-03T17:01:00 </POSTDATE>
+On 3 Jan 2008, at 17:09, Luis Lavena wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 3, 6:57 pm, James Tucker &lt;jftuc ... @gmail.com&gt; wrote:
+&gt;&gt; On 3 Jan 2008, at 16:45, Bill Kelly wrote:
+
+&gt;&gt;&gt; From: &quot;Luis Lavena&quot; &lt;luislav ... @gmail.com&gt;
+
+&gt;&gt;&gt;&gt; 1) VC6 vs. VC8 vs. MinGW have no room in this discussion. I took
+&gt;&gt;&gt;&gt; the
+&gt;&gt;&gt;&gt; MinGW path since was the only one that could be bootstrapped from
+&gt;&gt;&gt;&gt; scratch.
+
+&gt;&gt;&gt; Just to clarify... What does &quot;bootstrapped from scratch&quot; mean
+&gt;&gt;&gt; in this context?
+
+&gt;&gt; As low as he (we) can go. At the moment, it's in ruby (as per the
+&gt;&gt; code
+&gt;&gt; presented and requirements), but some of my ideas had most of the
+&gt;&gt; stack from a .cmd file - although that may be excessive.
+
+&gt;&gt; js or .vb via WSH anyone?
+
+&gt; The idea is Bootstrap Ruby with Ruby, like Rubinius guys are doing.
+
+&gt; I must admit that have extensive batch files that I use to bootstrap
+&gt; ruby with VC6 at office, but maintain .CMD and workaround its
+&gt; limitations don't worth the effort.
+
+&gt; Also, we are using Ruby for the fun of it, right? ;-)
+">
+
+Right, shame one can't do the whole implement Jump, branch and then
+move on up thing though... ;-)
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; --
+&gt; Luis Lavena
+">
+</POST>
+<POST>
+<POSTER> Nobuyoshi Nakada &lt;n...@ruby-lang.org&gt; </POSTER>
+<POSTDATE> 2008-01-03T21:21:00 </POSTDATE>
+Hi,
+
+At Fri, 4 Jan 2008 05:29:58 +0900,
+Luis Lavena wrote in [ruby-talk:285910]:
+
+<QUOTE PREVIOUSPOST="
+&gt; So, now the code:
+
+&gt; http://code.mmediasys.com/installer3/latest.zip
+
+&gt; This is a pure-ruby solution that download and setup a mingw+msys
+&gt; environment to get Ruby build.
+">
+
+Seems manifest task in ruby18.rake doesn't close the target
+file, so the file may be incomplete at the end of the task.
+
+--
+Nobu Nakada
+</POST>
+<POST>
+<POSTER> Luis Lavena &lt;luislav...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-03T21:50:00 </POSTDATE>
+On Jan 4, 12:21 am, Nobuyoshi Nakada &lt;n ... @ruby-lang.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi,
+
+&gt; At Fri, 4 Jan 2008 05:29:58 +0900,
+&gt; Luis Lavena wrote in [ruby-talk:285910]:
+
+&gt; &gt; So, now the code:
+
+&gt; &gt; http://code.mmediasys.com/installer3/latest.zip
+
+&gt; &gt; This is a pure-ruby solution that download and setup a mingw+msys
+&gt; &gt; environment to get Ruby build.
+
+&gt; Seems manifest task in ruby18.rake doesn't close the target
+&gt; file, so the file may be incomplete at the end of the task.
+">
+
+Thank you Nobu, I didn't give attention to manifest since I was using
+WiX Heat to collect all the files.
+
+Change committed and pushed updated branch and zip file.
+
+Regards,
+--
+Luis Lavena
+</POST>
+<POST>
+<POSTER> &quot;M. Edward (Ed) Borasky&quot; &lt;zn...@cesmail.net&gt; </POSTER>
+<POSTDATE> 2008-01-04T00:03:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Luis Lavena wrote:
+">
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt; This is a pure-ruby solution that download and setup a mingw+msys
+&gt; environment to get Ruby build.
+
+&gt; It uses some rake recipes to download all the needed packages
+&gt; At this time Ruby 1.8.6 p111 is targeted, but targeting Ruby 1.9 will
+&gt; no have mayor issues.
+
+&gt; Dependencies are not compiled, just downloaded for the time being.
+&gt; Tested all the scenarios (pre-built and compile from source) and there
+&gt; are issues with them which I reported previously.
+
+&gt; To bootstrap and use this project, you need:
+&gt; - Ruby 1.8.5 or greater
+&gt; - Rake 0.7.3 or greater
+&gt; - Tar [1] and Unzip [2] binary packages from GnuWin32
+">
+
+Aren't they in MSys?
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt; I suggest to those who are interested, help me get this working.
+">
+
+This does look like fun. I have a spare Windows XP license I'm not using
+and a Linux hosted VMware Workstation 6. :) Are the compiler, linker,
+&quot;tar&quot; and zip/gzip/bzip2 the only external dependencies you have at the
+moment?
+</POST>
+<POST>
+<POSTER> Luis Lavena &lt;luislav...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-04T05:34:00 </POSTDATE>
+On 4 ene, 03:03, &quot;M. Edward (Ed) Borasky&quot; &lt;zn ... @cesmail.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Luis Lavena wrote:
+
+&gt; [snip]
+
+&gt; &gt; To bootstrap and use this project, you need:
+&gt; &gt; - Ruby 1.8.5 or greater
+&gt; &gt; - Rake 0.7.3 or greater
+&gt; &gt; - Tar [1] and Unzip [2] binary packages from GnuWin32
+
+&gt; Aren't they in MSys?
+">
+
+Chicken-egg situation:
+
+They are inside the compressed tar.gz and tar.bz2 files... how I'm
+supposed to get them if I don't decompress them first? :-D
+
+So: if someone have a pure-ruby (with aditional gem or extension) that
+allow us extract content from:
+
+- .zip (deflate) files
+- .gz (of .tar.gz) files
+- .bz2 (of .tar.bz2) files
+
+All without these dependencies, feel free to modify rake/
+extracttask :-)
+
+<QUOTE PREVIOUSPOST="
+&gt; This does look like fun. I have a spare Windows XP license I'm not using
+&gt; and a Linux hosted VMware Workstation 6. :) Are the compiler, linker,
+&gt; &quot;tar&quot; and zip/gzip/bzip2 the only external dependencies you have at the
+&gt; moment?
+">
+
+You don't need to manually download MinGW or MSYS, only you need get
+your hands at tar and unzip.
+(also, have a working ruby, which you could use OCI for that) ;-)
+
+The compiler, linker and dependencies are downloaded automatically.
+
+Right now only two &quot;dependencies&quot; are in place:
+
+- Zlib 1.2.3
+- Readline 5.0
+
+I stopped at readline since I got some serious issues with
+Readline.readline, as posted before to this list and ruby-core.
+
+The thing is that those worked in the past, but right know they don't.
+
+Each time I add a dependency (to get the bundled extension built), I
+do a 'test-all' procedure and see if it's passing their self-tests.
+
+Regards,
+--
+Luis Lavena
+</POST>
+<POST>
+<POSTER> &quot;Michal Suchanek&quot; &lt;hramr...@centrum.cz&gt; </POSTER>
+<POSTDATE> 2008-01-04T06:35:00 </POSTDATE>
+On 04/01/2008, Luis Lavena &lt;luislav ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 4 ene, 03:03, &quot;M. Edward (Ed) Borasky&quot; &lt;zn ... @cesmail.net&gt; wrote:
+&gt; &gt; Luis Lavena wrote:
+
+&gt; &gt; [snip]
+
+&gt; &gt; &gt; To bootstrap and use this project, you need:
+&gt; &gt; &gt; - Ruby 1.8.5 or greater
+&gt; &gt; &gt; - Rake 0.7.3 or greater
+&gt; &gt; &gt; - Tar [1] and Unzip [2] binary packages from GnuWin32
+
+&gt; &gt; Aren't they in MSys?
+
+&gt; Chicken-egg situation:
+
+&gt; They are inside the compressed tar.gz and tar.bz2 files... how I'm
+&gt; supposed to get them if I don't decompress them first? :-D
+
+&gt; So: if someone have a pure-ruby (with aditional gem or extension) that
+&gt; allow us extract content from:
+
+&gt; - .zip (deflate) files
+&gt; - .gz (of .tar.gz) files
+&gt; - .bz2 (of .tar.bz2) files
+
+&gt; All without these dependencies, feel free to modify rake/
+&gt; extracttask :-)
+">
+
+If youcan afford relying on ruby stdlib, there is zlib which can do
+deflate and gunzip.
+
+There is minitar hosted on rubyforge under ruwiki (does not work on
+unseekable files like stdin but works on gzipped files by using zlib).
+There is rubyzip (untested, uses zlib for compression). bzip2 remains
+to be solved but hopefully the basic stuff can be obtained as gzipped
+archives.
+
+http://rubyforge.org/frs/?group_id=84
+http://rubyforge.org/frs/?group_id=909
+
+Thanks
+
+Michal
+</POST>
+<POST>
+<POSTER> &quot;Michal Suchanek&quot; &lt;hramr...@centrum.cz&gt; </POSTER>
+<POSTDATE> 2008-01-04T06:43:00 </POSTDATE>
+On 04/01/2008, Michal Suchanek &lt;hramr ... @centrum.cz&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 04/01/2008, Luis Lavena &lt;luislav ... @gmail.com&gt; wrote:
+&gt; &gt; On 4 ene, 03:03, &quot;M. Edward (Ed) Borasky&quot; &lt;zn ... @cesmail.net&gt; wrote:
+&gt; &gt; &gt; Luis Lavena wrote:
+
+&gt; &gt; &gt; [snip]
+
+&gt; &gt; &gt; &gt; To bootstrap and use this project, you need:
+&gt; &gt; &gt; &gt; - Ruby 1.8.5 or greater
+&gt; &gt; &gt; &gt; - Rake 0.7.3 or greater
+&gt; &gt; &gt; &gt; - Tar [1] and Unzip [2] binary packages from GnuWin32
+
+&gt; &gt; &gt; Aren't they in MSys?
+
+&gt; &gt; Chicken-egg situation:
+
+&gt; &gt; They are inside the compressed tar.gz and tar.bz2 files... how I'm
+&gt; &gt; supposed to get them if I don't decompress them first? :-D
+
+&gt; &gt; So: if someone have a pure-ruby (with aditional gem or extension) that
+&gt; &gt; allow us extract content from:
+
+&gt; &gt; - .zip (deflate) files
+&gt; &gt; - .gz (of .tar.gz) files
+&gt; &gt; - .bz2 (of .tar.bz2) files
+
+&gt; &gt; All without these dependencies, feel free to modify rake/
+&gt; &gt; extracttask :-)
+
+&gt; If youcan afford relying on ruby stdlib, there is zlib which can do
+&gt; deflate and gunzip.
+
+&gt; There is minitar hosted on rubyforge under ruwiki (does not work on
+&gt; unseekable files like stdin but works on gzipped files by using zlib).
+&gt; There is rubyzip (untested, uses zlib for compression). bzip2 remains
+&gt; to be solved but hopefully the basic stuff can be obtained as gzipped
+&gt; archives.
+
+&gt; http://rubyforge.org/frs/?group_id=84
+&gt; http://rubyforge.org/frs/?group_id=909
+">
+
+And you can get bzip2 at
+http://www.bzip.org/1.0.4/bzip2-104-x86-win32.exe - plain win32
+executable.
+
+Thanks
+
+Michal
+</POST>
+<POST>
+<POSTER> Luis Lavena &lt;luislav...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-04T07:29:00 </POSTDATE>
+On 4 ene, 09:35, Michal Suchanek &lt;hramr ... @centrum.cz&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; If youcan afford relying on ruby stdlib, there is zlib which can do
+&gt; deflate and gunzip.
+
+&gt; There is minitar hosted on rubyforge under ruwiki (does not work on
+&gt; unseekable files like stdin but works on gzipped files by using zlib).
+&gt; There is rubyzip (untested, uses zlib for compression). bzip2 remains
+&gt; to be solved but hopefully the basic stuff can be obtained as gzipped
+&gt; archives.
+
+&gt; http://rubyforge.org/frs/?group_id=84
+&gt; http://rubyforge.org/frs/?group_id=909
+">
+
+Thank you Michal,
+
+Since I was moving from a batch-build process to a ruby/rake build
+process, a few external tools remains as requirement.
+
+MinGW packages are distributed in tar.gz format [1] (which I guess map
+perfect for Minitar project), but MSYS provides tar.bz2 files [2],
+which will still need the external tool to uncompress.
+
+In this case, tar.bz2 files can be uncompressed with bsdtar, which is
+the best implementation I've tested that work with all the file
+formats. (tgz, tar.gz and tar.bz2)
+
+There is also the memory usage and speed situation, extract 8MB files
+can take a bit slow using a pure-ruby implementation.
+
+[1] http://sourceforge.net/project/showfiles.php?group_id=2435&amp;package;_id...
+[2] http://sourceforge.net/project/showfiles.php?group_id=2435&amp;package;_id...
+
+Regards,
+--
+Luis Lavena
+</POST>
+<POST>
+<POSTER> Luis Lavena &lt;luislav...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-04T07:34:00 </POSTDATE>
+On 4 ene, 09:43, Michal Suchanek &lt;hramr ... @centrum.cz&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; And you can get bzip2 at http://www.bzip.org/1.0.4/bzip2-104-x86-win32.exe- plain win32
+&gt; executable.
+">
+
+Thank you again.
+
+I was using bsdtar from libarchive 2.4.0 mostly because it offered a
+one-step unpack procedure:
+
+tar xzf
+(.tar, tar.gz and .tgz files)
+
+tar jxf
+(.tar.bz2)
+
+Which is similar to the commands executed under *nix.
+
+Anyhow this could be changed, patchs are welcome :-)
+
+Regards,
+--
+Luis Lavena
+</POST>
+<POST>
+<POSTER> &quot;Austin Ziegler&quot; &lt;halosta...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-04T07:40:00 </POSTDATE>
+On Jan 4, 2008 5:34 AM, Luis Lavena &lt;luislav ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; They are inside the compressed tar.gz and tar.bz2 files... how I'm
+&gt; supposed to get them if I don't decompress them first? :-D
+
+&gt; So: if someone have a pure-ruby (with aditional gem or extension) that
+&gt; allow us extract content from:
+
+&gt; - .zip (deflate) files
+&gt; - .gz (of .tar.gz) files
+&gt; - .bz2 (of .tar.bz2) files
+
+&gt; All without these dependencies, feel free to modify rake/
+&gt; extracttask :-)
+">
+
+.gz and .tar.gz files aren't hard to deal with since a working Ruby
+1.8.5 is a prerequisite. Look at minitar, and the zlib library is part
+of a working Ruby 1.8.5 install.
+
+-austin
+--
+Austin Ziegler * halosta ... @gmail.com * http://www.halostatue.ca/
+* aus ... @halostatue.ca * http://www.halostatue.ca/feed/
+* aus ... @zieglers.ca
+</POST>
+<POST>
+<POSTER> &quot;Michal Suchanek&quot; &lt;hramr...@centrum.cz&gt; </POSTER>
+<POSTDATE> 2008-01-04T09:24:00 </POSTDATE>
+On 04/01/2008, Luis Lavena &lt;luislav ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 4 ene, 09:35, Michal Suchanek &lt;hramr ... @centrum.cz&gt; wrote:
+
+&gt; &gt; If youcan afford relying on ruby stdlib, there is zlib which can do
+&gt; &gt; deflate and gunzip.
+
+&gt; &gt; There is minitar hosted on rubyforge under ruwiki (does not work on
+&gt; &gt; unseekable files like stdin but works on gzipped files by using zlib).
+&gt; &gt; There is rubyzip (untested, uses zlib for compression). bzip2 remains
+&gt; &gt; to be solved but hopefully the basic stuff can be obtained as gzipped
+&gt; &gt; archives.
+
+&gt; &gt; http://rubyforge.org/frs/?group_id=84
+&gt; &gt; http://rubyforge.org/frs/?group_id=909
+
+&gt; Thank you Michal,
+
+&gt; Since I was moving from a batch-build process to a ruby/rake build
+&gt; process, a few external tools remains as requirement.
+
+&gt; MinGW packages are distributed in tar.gz format [1] (which I guess map
+&gt; perfect for Minitar project), but MSYS provides tar.bz2 files [2],
+&gt; which will still need the external tool to uncompress.
+
+&gt; In this case, tar.bz2 files can be uncompressed with bsdtar, which is
+&gt; the best implementation I've tested that work with all the file
+&gt; formats. (tgz, tar.gz and tar.bz2)
+
+&gt; There is also the memory usage and speed situation, extract 8MB files
+&gt; can take a bit slow using a pure-ruby implementation.
+">
+
+The decompression is handled by zlib so this should not be that much
+of an issue. Still people extracting on slow machines could see the
+difference, and there should be no problem with including these unpack
+tools in the archive containing the build scripts.
+On the other hand, the minitar might be useful if you wanted to do
+something special with symlinks (currently it does not extract them at
+all). Maintaining a patched minitar might be easier than maintaining a
+patched bsdtar binary.
+
+The rubyzip implementation does not include a working command line
+tool as far as I can tell. A poor man's unzip using the library is
+simple but I am not sure it is of much use. Perhaps an external unzip
+tool would be easier.
+
+Thanks
+
+Michal
+
+#unzip.rb
+# The example:
+#Zip::ZipInputStream::open(&quot;my.zip&quot;) {
+#     |io|
+#
+#     while (entry = io.get_next_entry)
+#       puts &quot;Contents of #{entry.name}: '#{io.read}'&quot;
+#     end
+#   }
+
+require 'zip/zip'
+
+def open_wr fn
+elts = fn.split(&quot;/&quot;)
+dir = &quot;&quot;
+elts[0...-1].each{|d|
+raise RuntimeError, &quot;Invalid filename '#{fn}'.&quot; if
+d == &quot;&quot; or d == &quot;..&quot;
+dir &lt;&lt; d &lt;&lt; &quot;/&quot;
+Dir.mkdir dir unless File.directory? dir
+}
+raise RuntimeError, &quot;File exists '#{fn}'.&quot; if
+File.exist? fn
+File.open(fn,&quot;wb&quot;){|f| yield f}
+end
+
+Zip::ZipInputStream::open(ARGV[0]) { |io|
+while (entry = io.get_next_entry)
+STDERR.puts entry.name
+# directories are of type file, they just have a trailing slash
+next if entry.name[-1] == '/'[-1]
+open_wr(entry.name){|out| out &lt;&lt; io.read}
+end
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+}
+">
+</POST>
+<POST>
+<POSTER> James Tucker &lt;jftuc...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-04T09:44:00 </POSTDATE>
+7za.exe from the 7z distribution is both open source, and really small.
+
+Whilst it may not be a 'normal' tool, it very happily deals with all
+of these issues in a single app, and common command line interface.
+
+It's also pretty swift.
+
+On 4 Jan 2008, at 10:30, Michal Suchanek wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 04/01/2008, Austin Ziegler &lt;halosta ... @gmail.com&gt; wrote:
+&gt;&gt; On Jan 4, 2008 5:34 AM, Luis Lavena &lt;luislav ... @gmail.com&gt; wrote:
+&gt;&gt;&gt; They are inside the compressed tar.gz and tar.bz2 files... how I'm
+&gt;&gt;&gt; supposed to get them if I don't decompress them first? :-D
+
+&gt;&gt;&gt; So: if someone have a pure-ruby (with aditional gem or extension)
+&gt;&gt;&gt; that
+&gt;&gt;&gt; allow us extract content from:
+
+&gt;&gt;&gt; - .zip (deflate) files
+&gt;&gt;&gt; - .gz (of .tar.gz) files
+&gt;&gt;&gt; - .bz2 (of .tar.bz2) files
+
+&gt;&gt;&gt; All without these dependencies, feel free to modify rake/
+&gt;&gt;&gt; extracttask :-)
+
+&gt;&gt; .gz and .tar.gz files aren't hard to deal with since a working Ruby
+&gt;&gt; 1.8.5 is a prerequisite. Look at minitar, and the zlib library is
+&gt;&gt; part
+&gt;&gt; of a working Ruby 1.8.5 install.
+
+&gt; Yes, it just does not handle bzip2 which is used to compress the mingw
+&gt; base that contains tar.
+
+&gt; So you still need bzip2, and you can as well include a full
+&gt; tar/gzip/bzibp2 suite then as it will probably make the decomression
+&gt; somewhat faster and less memory intensive. It might waste a bit of
+&gt; space as the minitar source would probably compress a few kilobytes
+&gt; smaller than the tar binary. Didn't do any benchmarks, though.
+
+&gt; Thanks
+
+&gt; Michal
+">
+</POST>
+<POST>
+<POSTER> &quot;Michal Suchanek&quot; &lt;hramr...@centrum.cz&gt; </POSTER>
+<POSTDATE> 2008-01-04T09:30:00 </POSTDATE>
+On 04/01/2008, Austin Ziegler &lt;halosta ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 4, 2008 5:34 AM, Luis Lavena &lt;luislav ... @gmail.com&gt; wrote:
+&gt; &gt; They are inside the compressed tar.gz and tar.bz2 files... how I'm
+&gt; &gt; supposed to get them if I don't decompress them first? :-D
+
+&gt; &gt; So: if someone have a pure-ruby (with aditional gem or extension) that
+&gt; &gt; allow us extract content from:
+
+&gt; &gt; - .zip (deflate) files
+&gt; &gt; - .gz (of .tar.gz) files
+&gt; &gt; - .bz2 (of .tar.bz2) files
+
+&gt; &gt; All without these dependencies, feel free to modify rake/
+&gt; &gt; extracttask :-)
+
+&gt; .gz and .tar.gz files aren't hard to deal with since a working Ruby
+&gt; 1.8.5 is a prerequisite. Look at minitar, and the zlib library is part
+&gt; of a working Ruby 1.8.5 install.
+">
+
+Yes, it just does not handle bzip2 which is used to compress the mingw
+base that contains tar.
+
+So you still need bzip2, and you can as well include a full
+tar/gzip/bzibp2 suite then as it will probably make the decomression
+somewhat faster and less memory intensive. It might waste a bit of
+space as the minitar source would probably compress a few kilobytes
+smaller than the tar binary. Didn't do any benchmarks, though.
+
+Thanks
+
+Michal
+</POST>
+<POST>
+<POSTER> Luis Lavena &lt;luislav...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-04T10:20:00 </POSTDATE>
+On 4 ene, 12:44, James Tucker &lt;jftuc ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; 7za.exe from the 7z distribution is both open source, and really small.
+
+&gt; Whilst it may not be a 'normal' tool, it very happily deals with all
+&gt; of these issues in a single app, and common command line interface.
+
+&gt; It's also pretty swift.
+">
+
+Until 'we' switch to other alternatives, either pure-ruby or externals
+tools, I've uploaded a zip file which contains the needed files to get
+you running:
+
+http://code.mmediasys.com/installer3/deps.zip (320KB)
+
+unzip into a new folder and put it in the PATH:
+
+Example:
+
+SET PATH=%PATH%;C:\installer3\dependencies
+
+Then you can use rake without worring about how or here to get these
+files.
+
+Regards,
+--
+Luis Lavena
+</POST>
+<POST>
+<POSTER> Luis Lavena &lt;luislav...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-08T14:40:00 </POSTDATE>
+On Jan 4, 1:17 pm, Luis Lavena &lt;luislav ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; [...]
+
+&gt; Until 'we' switch to other alternatives, either pure-ruby or externals
+&gt; tools, I've uploaded a zip file which contains the needed files to get
+&gt; you running:
+
+&gt; [...]
+">
+
+No more!
+
+(bumping this).
+
+Thanks to Dennis Ranke Installer3 nows uses a pure-ruby solution to
+download the required extracting tools using RubyZip code.
+
+There is no need to install rubyzip gem!
+
+You can grab exported code (revision 36) at the same URL:
+
+http://code.mmediasys.com/installer3/latest.zip
+
+Or checkout your own brach using bazaar:
+
+bzr branch http://code.mmediasys.com/installer3/dev my-branch-feature
+
+For those wanting to contribute, I'll be pushing further progress of
+this project on rubyinstaller-devel mailing list:
+
+http://rubyforge.org/mailman/listinfo/rubyinstaller-devel
+
+Remember that the idea behind this is bootstrap the new One-Click
+Installer for Windows.
+
+Looking forward for contributors.
+
+Regards,
+--
+Luis Lavena
+</POST>
+</TEXT>
+</BODY>
+</DOC>

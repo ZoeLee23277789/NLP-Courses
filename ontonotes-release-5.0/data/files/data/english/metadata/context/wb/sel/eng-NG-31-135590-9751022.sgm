@@ -1,0 +1,4972 @@
+<DOC>
+<DOCID> eng-NG-31-135590-9751022 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-11-07T00:42:00 </DATETIME>
+<BODY>
+<HEADLINE>
+form serialization (Code Worth Recommending Project)
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-07T00:42:00 </POSTDATE>
+If all goes well, this is part one of what will hopefully result in a
+body of code the group can recommend as a resource for JavaScript
+programmers and library writers. At the very least it's something
+constructive we can bicker over rather than just ridiculing the
+popular JavaScript libraries.
+
+I'm not yet sure how this code will be aggregated but it seems that
+Jim Ley will be making some changes on the jibbering server soon and
+perhaps this code will end up in a wiki or svn repository on the
+jibbering site or elsewhere.
+
+This first installment is about form serialization. This is a common
+task these days and something not covered in the group's FAQ notes.
+Below is an example of form serialization that works with forms with
+text-like inputs (eg text, hidden, textarea, etc). This follows
+Richard Cornford's idea of having multiple implementations of a single
+interface where each implementation is for a specific circumstance.
+Other implementations for forms with select, radio and checkbox inputs
+can be written (and I have written some.) Perhaps first it would be a
+good idea to criticize my implementation and documentation below for
+the stated circumstance much like the daily FAQ posts are heavily
+scrutinized.
+
+//
+--------------------------------------------------------------------------- -
+
+/**
+@object serializeForm&lt;function&gt;
+
+@param f&lt;form&gt; The form element to be serialized.
+
+@returns &lt;string&gt; The serialized form data in &quot;foo=bar&amp;asdf=1234&quot;
+format
+
+serializeForm will serialize data contained in forms with text-
+like
+inputs (eg. text, password, hidden, textarea.) The returned string
+is suitable for a URL query string or POST request body. Test that
+this function is defined before calling it. This function has
+no side effects.
+
+Features Not Tested
+(ECMAScript v2, DOM 1 and earlier features are assumed to reduce
+code size)
+JavaScript 1.0
+form.elements
+form.elements.length
+input.name
+input.value
+ECMAScript v1
+array.join
+DOM Level 1
+input.disabled
+*/
+
+// ECMAScript v3 feature tests
+if (Array.prototype.push &amp;&amp; encodeURIComponent) {
+
+function serializeForm(f) {
+var i, // elements loop index
+l, // elements loop length
+e, // element
+es = f.elements,
+c = []; // the serialization data parts
+
+for (i=0, l=es.length; i&lt;l; i++) {
+e = es[i];
+if (!e.disabled) {
+c.push(encodeURIComponent(e.name) + &quot;=&quot; +
+encodeURIComponent(e.value));
+}
+}
+return c.join('&amp;');
+}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+</POST>
+<POST>
+<POSTER> RobG &lt;rg...@iinet.net.au&gt; </POSTER>
+<POSTDATE> 2007-11-07T02:21:00 </POSTDATE>
+On Nov 7, 3:42 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; If all goes well, this is part one of what will hopefully result in a
+&gt; body of code the group can recommend as a resource for JavaScript
+&gt; programmers and library writers. At the very least it's something
+&gt; constructive we can bicker over rather than just ridiculing the
+&gt; popular JavaScript libraries.
+
+&gt; I'm not yet sure how this code will be aggregated but it seems that
+&gt; Jim Ley will be making some changes on the jibbering server soon and
+&gt; perhaps this code will end up in a wiki or svn repository on the
+&gt; jibbering site or elsewhere.
+
+&gt; This first installment is about form serialization. This is a common
+&gt; task these days and something not covered in the group's FAQ notes.
+&gt; Below is an example of form serialization that works with forms with
+&gt; text-like inputs (eg text, hidden, textarea, etc). This follows
+&gt; Richard Cornford's idea of having multiple implementations of a single
+&gt; interface where each implementation is for a specific circumstance.
+&gt; Other implementations for forms with select, radio and checkbox inputs
+&gt; can be written (and I have written some.) Perhaps first it would be a
+&gt; good idea to criticize my implementation and documentation below for
+&gt; the stated circumstance much like the daily FAQ posts are heavily
+&gt; scrutinized.
+
+&gt; //
+&gt; --------------------------------------------------------------------------- -
+
+&gt; /**
+&gt;     @object serializeForm&lt;function&gt;
+
+&gt;     @param f&lt;form&gt; The form element to be serialized.
+
+&gt;     @returns &lt;string&gt; The serialized form data in &quot;foo=bar&amp;asdf=1234&quot;
+&gt; format
+
+&gt;     serializeForm will serialize data contained in forms with text-
+&gt; like
+&gt;     inputs (eg. text, password, hidden, textarea.) The returned string
+&gt;     is suitable for a URL query string or POST request body. Test that
+&gt;     this function is defined before calling it. This function has
+&gt;     no side effects.
+
+&gt;     Features Not Tested
+&gt;     (ECMAScript v2, DOM 1 and earlier features are assumed to reduce
+&gt; code size)
+&gt;     JavaScript 1.0
+&gt;       form.elements
+&gt;       form.elements.length
+&gt;       input.name
+&gt;       input.value
+&gt;     ECMAScript v1
+&gt;       array.join
+&gt;     DOM Level 1
+&gt;       input.disabled
+&gt; */
+
+&gt; // ECMAScript v3 feature tests
+&gt; if (Array.prototype.push &amp;&amp; encodeURIComponent) {
+
+&gt;     function serializeForm(f) {
+&gt;         var i, // elements loop index
+&gt;             l, // elements loop length
+&gt;             e, // element
+&gt;             es = f.elements,
+&gt;             c = []; // the serialization data parts
+
+&gt;         for (i=0, l=es.length; i&lt;l; i++) {
+&gt;                 e = es[i];
+&gt;                 if (!e.disabled) {
+&gt;                         c.push(encodeURIComponent(e.name) + &quot;=&quot; +
+&gt;                                encodeURIComponent(e.value));
+&gt;                 }
+&gt;         }
+&gt;         return c.join('&amp;');
+&gt;     }
+&gt; }
+">
+
+The above function seems a little simplistic.  It should exclude form
+controls that don't have a name, it should also deal with radio
+buttons, selects, checkboxes, etc.
+
+You might want to check with Matt Kruse's Ajax Toolbox which has a
+form serialisation function:
+
+&lt;URL: http://www.ajaxtoolbox.com/request/documentation.php#serializeForm
+
+<QUOTE PREVIOUSPOST="
+
+">
+
+There is also IE's problem with reporting the value of an option
+element (the text value should be reported if there is no value
+attribute but IE doesn't).
+
+&lt;URL:
+http://groups.google.com.au/group/comp.lang.javascript/browse_frm/thr...
+
+<QUOTE PREVIOUSPOST="
+
+">
+
+and
+
+&lt;URL: http://groups.google.com/group/comp.lang.javascript/browse_frm/thread...
+
+<QUOTE PREVIOUSPOST="
+
+">
+
+--
+Rob
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-07T07:18:00 </POSTDATE>
+On 6 nov, 23:21, RobG &lt;rg ... @iinet.net.au&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Nov 7, 3:42 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+&gt; &gt; If all goes well, this is part one of what will hopefully result in a
+&gt; &gt; body of code the group can recommend as a resource for JavaScript
+&gt; &gt; programmers and library writers. At the very least it's something
+&gt; &gt; constructive we can bicker over rather than just ridiculing the
+&gt; &gt; popular JavaScript libraries.
+
+&gt; &gt; I'm not yet sure how this code will be aggregated but it seems that
+&gt; &gt; Jim Ley will be making some changes on the jibbering server soon and
+&gt; &gt; perhaps this code will end up in a wiki or svn repository on the
+&gt; &gt; jibbering site or elsewhere.
+
+&gt; &gt; This first installment is about form serialization. This is a common
+&gt; &gt; task these days and something not covered in the group's FAQ notes.
+&gt; &gt; Below is an example of form serialization that works with forms with
+&gt; &gt; text-like inputs (eg text, hidden, textarea, etc). This follows
+&gt; &gt; Richard Cornford's idea of having multiple implementations of a single
+&gt; &gt; interface where each implementation is for a specific circumstance.
+&gt; &gt; Other implementations for forms with select, radio and checkbox inputs
+&gt; &gt; can be written (and I have written some.) Perhaps first it would be a
+&gt; &gt; good idea to criticize my implementation and documentation below for
+&gt; &gt; the stated circumstance much like the daily FAQ posts are heavily
+&gt; &gt; scrutinized.
+
+&gt; &gt; //
+&gt; &gt; --------------------------------------------------------------------------- -
+
+&gt; &gt; /**
+&gt; &gt;     @object serializeForm&lt;function&gt;
+
+&gt; &gt;     @param f&lt;form&gt; The form element to be serialized.
+
+&gt; &gt;     @returns &lt;string&gt; The serialized form data in &quot;foo=bar&amp;asdf=1234&quot;
+&gt; &gt; format
+
+&gt; &gt;     serializeForm will serialize data contained in forms with text-
+&gt; &gt; like
+&gt; &gt;     inputs (eg. text, password, hidden, textarea.) The returned string
+&gt; &gt;     is suitable for a URL query string or POST request body. Test that
+&gt; &gt;     this function is defined before calling it. This function has
+&gt; &gt;     no side effects.
+
+&gt; &gt;     Features Not Tested
+&gt; &gt;     (ECMAScript v2, DOM 1 and earlier features are assumed to reduce
+&gt; &gt; code size)
+&gt; &gt;     JavaScript 1.0
+&gt; &gt;       form.elements
+&gt; &gt;       form.elements.length
+&gt; &gt;       input.name
+&gt; &gt;       input.value
+&gt; &gt;     ECMAScript v1
+&gt; &gt;       array.join
+&gt; &gt;     DOM Level 1
+&gt; &gt;       input.disabled
+&gt; &gt; */
+
+&gt; &gt; // ECMAScript v3 feature tests
+&gt; &gt; if (Array.prototype.push &amp;&amp; encodeURIComponent) {
+
+&gt; &gt;     function serializeForm(f) {
+&gt; &gt;         var i, // elements loop index
+&gt; &gt;             l, // elements loop length
+&gt; &gt;             e, // element
+&gt; &gt;             es = f.elements,
+&gt; &gt;             c = []; // the serialization data parts
+
+&gt; &gt;         for (i=0, l=es.length; i&lt;l; i++) {
+&gt; &gt;                 e = es[i];
+&gt; &gt;                 if (!e.disabled) {
+&gt; &gt;                         c.push(encodeURIComponent(e.name) + &quot;=&quot; +
+&gt; &gt;                                encodeURIComponent(e.value));
+&gt; &gt;                 }
+&gt; &gt;         }
+&gt; &gt;         return c.join('&amp;');
+&gt; &gt;     }
+&gt; &gt; }
+
+&gt; The above function seems a little simplistic.  It should exclude form
+&gt; controls that don't have a name,
+">
+
+Yes it should. I will add this.
+
+<QUOTE PREVIOUSPOST="
+&gt; it should also deal with radio
+&gt; buttons, selects, checkboxes, etc.
+">
+
+I have a version that does this to post later. It is bigger and wanted
+to post something smaller to look at format of how one of the multiple
+implementations might be presented. Each is simply an implementation
+for a different circumstance but with the same interface.
+
+Thanks,
+Peter
+</POST>
+<POST>
+<POSTER> Matt Kruse &lt;m...@mattkruse.com&gt; </POSTER>
+<POSTDATE> 2007-11-07T10:46:00 </POSTDATE>
+On Nov 7, 6:18 am, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I have a version that does this to post later. It is bigger and wanted
+&gt; to post something smaller to look at format of how one of the multiple
+&gt; implementations might be presented. Each is simply an implementation
+&gt; for a different circumstance but with the same interface.
+">
+
+IMO, this example is taking that philosophy a bit too far. The extra
+code required to handle all input types is minimal. Why would someone
+want a stripped-down version that only handles a very limited case,
+when they could have a fully reusable version that could be used in
+every case? This problem is very &quot;solvable&quot; in that a single general-
+purpose solution can be created. For different problems, that that's
+not so true and the &quot;many implementation&quot; approach makes more sense.
+
+In any case, my stab at it was posted by Rob. It does need to be
+improved to handle the special select case in IE and maybe there are
+some more quirks that exist that I didn't handle. You could surely
+take the serialization code from a few different libs and combine them
+into a single solution.
+
+Matt Kruse
+</POST>
+<POST>
+<POSTER> Martin Honnen &lt;mahotr...@yahoo.de&gt; </POSTER>
+<POSTDATE> 2007-11-07T11:31:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Peter Michaux wrote:
+&gt; // ECMAScript v3 feature tests
+&gt; if (Array.prototype.push &amp;&amp; encodeURIComponent) {
+">
+
+Shouldn't that check be
+if (Array.prototype.push &amp;&amp; typeof encodeURIComponent != 'undefined')
+? If you simply use the identifier encodeURIComponent then your code
+throws an error in implementations not implementing encodeURIComponent.
+
+<QUOTE PREVIOUSPOST="
+&gt;     function serializeForm(f) {
+">
+
+A function declaration inside of the if block? That is not even allowed
+syntax according to ECMAScript edition 3 as you can only put a statement
+in the if block but function declarations are not statements. And
+different implementations handle that case differently as it is not
+specified, I think Mozilla's Spidermonkey indeed processes the function
+declaration conditionally but with Microsoft's JScript the function
+declaration is processed unconditionally.
+
+--
+
+Martin Honnen
+http://JavaScript.FAQTs.com/
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-07T12:31:00 </POSTDATE>
+On Nov 7, 7:46 am, Matt Kruse &lt;m ... @mattkruse.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Nov 7, 6:18 am, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+&gt; &gt; I have a version that does this to post later. It is bigger and wanted
+&gt; &gt; to post something smaller to look at format of how one of the multiple
+&gt; &gt; implementations might be presented. Each is simply an implementation
+&gt; &gt; for a different circumstance but with the same interface.
+
+&gt; IMO, this example is taking that philosophy a bit too far. The extra
+&gt; code required to handle all input types is minimal. Why would someone
+&gt; want a stripped-down version that only handles a very limited case,
+&gt; when they could have a fully reusable version that could be used in
+&gt; every case? This problem is very &quot;solvable&quot; in that a single general-
+&gt; purpose solution can be created. For different problems, that that's
+&gt; not so true and the &quot;many implementation&quot; approach makes more sense.
+">
+
+I agree this problem is quite solvable in general and is why I chose
+it first. It is a chance to see how code could be aggregated with a
+philosophy that is inclusive to encourage participation. Acknowledging
+multiple implementations where people have different priorities
+(download size verses generality is a legitimate argument) will make
+the code base more reusable both educationally and by various people.
+By having an inclusive approach established, when the trickier
+problems are presented, I think we will have more input to tackle
+them.
+
+<QUOTE PREVIOUSPOST="
+&gt; In any case, my stab at it was posted by Rob. It does need to be
+&gt; improved to handle the special select case in IE and maybe there are
+&gt; some more quirks that exist that I didn't handle. You could surely
+&gt; take the serialization code from a few different libs and combine them
+&gt; into a single solution.
+">
+
+The option wrinkle is not as simple as it seems. In fact, I think
+there is no general JavaScript-only solution to that problem and the
+multiple implementations approach is the only way. I didn't know that
+until I started making examples for this. Various solutions require
+either supported browser restrictions or HTML authoring restrictions.
+I will post what I have when this simpler version is sorted.
+
+Thanks,
+Peter
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-07T13:46:00 </POSTDATE>
+On Nov 7, 8:31 am, Martin Honnen &lt;mahotr ... @yahoo.de&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Peter Michaux wrote:
+&gt; &gt; // ECMAScript v3 feature tests
+&gt; &gt; if (Array.prototype.push &amp;&amp; encodeURIComponent) {
+
+&gt; Shouldn't that check be
+&gt;    if (Array.prototype.push &amp;&amp; typeof encodeURIComponent != 'undefined')
+&gt; ? If you simply use the identifier encodeURIComponent then your code
+&gt; throws an error in implementations not implementing encodeURIComponent.
+">
+
+Indeed. Silly mistake that I've encountered before.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;     function serializeForm(f) {
+
+&gt; A function declaration inside of the if block? That is not even allowed
+&gt; syntax according to ECMAScript edition 3 as you can only put a statement
+&gt; in the if block but function declarations are not statements. And
+&gt; different implementations handle that case differently as it is not
+&gt; specified, I think Mozilla's Spidermonkey indeed processes the function
+&gt; declaration conditionally but with Microsoft's JScript the function
+&gt; declaration is processed unconditionally.
+">
+
+Thanks. I didn't know this. It seems that JavaScript(TM) does allow a
+FunctionDeclaration inside a Block but the ECMAScript v3 specification
+does not. It is quite an ordeal to verify that an IfStatement can
+contain a FunctionExpression through this series of productions:
+IfStatement, Block, StatementList, Statement, VariableStatement,
+VariableDeclarationList, VariableDeclaration, Initialiser,
+AssignmentExpression, ConditionalExpression, LogicalORExpression,
+LogicalANDExpression, BitwiseORExpression, BitwiseXORExpression,
+BitwiseANDExpression, EqualityExpression, RelationalExpression,
+ShiftExpression, AdditiveExpression, MultiplicativeExpression,
+UnaryExpression, PostfixExpression, LeftHandSideExpression,
+NewExpression, MemberExpression, FunctionExpression.
+
+Revised code...
+
+if (Array.prototype.push &amp;&amp; typeof encodeURIComponent != 'undefined')
+{
+
+var serializeForm = function(f) {
+var i, // elements loop index
+l, // elements loop length
+e, // element
+es = f.elements,
+c = []; // the serialization data parts
+
+for (i=0, l=es.length; i&lt;l; i++) {
+e = es[i];
+if (e.name &amp;&amp; !e.disabled) {
+c.push(encodeURIComponent(e.name) + &quot;=&quot; +
+encodeURIComponent(e.value));
+}
+}
+return c.join('&amp;');
+}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+Thanks again,
+Peter
+</POST>
+<POST>
+<POSTER> Matt Kruse &lt;m...@mattkruse.com&gt; </POSTER>
+<POSTDATE> 2007-11-07T16:33:00 </POSTDATE>
+On Nov 7, 11:31 am, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; The option wrinkle is not as simple as it seems. In fact, I think
+&gt; there is no general JavaScript-only solution to that problem and the
+&gt; multiple implementations approach is the only way.
+">
+
+This is my solution. I haven't encountered a situation where it fails
+(yet). If you can find one, I'd like to try to improve the code to
+handle it:
+
+function selectValue(sel) {
+if (sel.options &amp;&amp; sel.options.length) {
+var selected = [];
+for (var i=0; i&lt;sel.options.length; i++) {
+var opt = sel.options[i];
+if (sel.options[i].selected) {
+var val = null;
+// This mess is here because an option can have no value
+attribute, in which case the text property is used.
+// But IE messes up and gives a blank string as .value, even when
+value doesn't exist. Yuck.
+if (opt.value!=&quot;&quot;) { val = opt.value; }
+else if (!'value' in opt) { val = opt.text; }
+else if (opt.outerHTML &amp;&amp; opt.outerHTML.test(/&lt;[^&gt;]+value\s*=/i))
+{ val = opt.value; }
+else { val = opt.text; }
+if (sel.type==&quot;select-one&quot;) {
+return val;
+}
+selected.push(val);
+}
+}
+return selected;
+}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+Forgive me if it errors out, I actually slightly modified my code
+before posting because it was part of a bigger method. But the logic
+at least should be there.
+
+Matt Kruse
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-07T16:56:00 </POSTDATE>
+On Nov 6, 11:21 pm, RobG &lt;rg ... @iinet.net.au&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; There is also IE's problem with reporting the value of an option
+&gt; element (the text value should be reported if there is no value
+&gt; attribute but IE doesn't).
+
+&gt; &lt;URL: http://groups.google.com.au/group/comp.lang.javascript/browse_frm/thr... &gt;
+
+&gt; and
+
+&gt; &lt;URL: http://groups.google.com/group/comp.lang.javascript/browse_frm/thread... &gt;
+">
+
+Two getOptionValue functions were proposed in those threads. Neither
+is bullet proof.
+
+For both versions, if the value attribute is dynamically set to the
+empty string, then Firefox will report the option's text property as
+the option's value. An HTML page is appended below if anyone would
+like to verify this problem with the two versions.
+
+Matt's version will also be tricked if the option element has another
+attribute which has a value containing the string fragment &quot;value=&quot; as
+part of it's value. Elegie's version collapses the attribute values to
+avoid this problem.
+
+Peter
+
+&lt;html&gt;
+&lt;head&gt;
+&lt;title&gt;getOptionValue&lt;/title&gt;
+
+// Matt Kruse
+// &lt;URL: http://groups.google.com/group/comp.lang.javascript/msg/3f5de3dcacef20d2 &gt;
+String.prototype.test = function(regex) {
+return regex.test(this);
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+function getOptionValue(opt) {
+if (opt.value!=&quot;&quot;) {
+return opt.value;
+}
+if (!'value' in opt) {
+return opt.text;
+}
+if (opt.outerHTML &amp;&amp; opt.outerHTML.test(/&lt;[^&gt;]+value\s*=/i)) {
+return opt.value;
+}
+return opt.text;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+// Elegie
+// &lt;URL: http://groups.google.com/group/comp.lang.javascript/msg/a5029b734629d5c5 &gt;
+function getOptionValue(opt) {
+var v = opt.value,
+t = opt.text;
+
+return (v ||  attributeExists(opt, &quot;value&quot;)) ? v : t;
+
+function attributeExists(obj, attrName) {
+var oHtml = obj.outerHTML;
+alert(oHtml)
+var found = false;
+
+if (oHtml)
+found = /value\s*=/i.test(collapseQuotedValues(oHtml));
+
+return found;
+
+function collapseQuotedValues(txt){
+var sQuote = txt.indexOf(&quot;'&quot;);
+var dQuote = txt.indexOf(&quot;\&quot;&quot;);
+var q = &quot;&quot;;
+
+if (sQuote==-1 &amp;&amp; dQuote!=-1) {
+q =&quot;\&quot;&quot;;
+} else if (sQuote!=-1 &amp;&amp; dQuote==-1) {
+q =&quot;'&quot;
+} else if (sQuote!=-1 &amp;&amp; dQuote!=-1) {
+if (sQuote&lt;dQuote) q = &quot;'&quot;;
+if (dQuote&lt;sQuote) q = &quot;\&quot;&quot;;
+}
+
+if (q) txt = arguments.callee(
+txt.replace(new RegExp(q+&quot;[^&quot;+q
++&quot;]*&quot;+q),&quot;_&quot;)
+);
+
+return txt;
+} // collapseQuotedValues
+
+} // attributeExists
+
+<QUOTE PREVIOUSPOST="
+} // getOptionValue
+">
+
+&lt;/script&gt;
+
+&lt;script type=&quot;text/javascript&quot;&gt;
+
+window.onload = function() {
+var o  = document.forms.foo.elements.bar.options[0];
+o.value = '';
+alert(getOptionValue(o)); // &quot;hello&quot; but should be empty
+string
+};
+
+&lt;/script&gt;
+
+&lt;/head&gt;
+&lt;body&gt;
+
+&lt;form action=&quot;#&quot; name=&quot;foo&quot; method=&quot;get&quot; accept-charset=&quot;utf-8&quot;&gt;
+&lt;p&gt;
+&lt;select name=&quot;bar&quot;&gt;
+&lt;option&gt;hello&lt;/option&gt;
+&lt;/select&gt;
+&lt;/p&gt;
+&lt;/form&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-07T17:48:00 </POSTDATE>
+On Nov 6, 11:21 pm, RobG &lt;rg ... @iinet.net.au&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; There is also IE's problem with reporting the value of an option
+&gt; element (the text value should be reported if there is no value
+&gt; attribute but IE doesn't).
+">
+
+This getOptionValue function is inspired by the form serialization
+function in YUI's connection.js file.
+
+function getOptionValue(o) {
+return ((o.hasAttribute &amp;&amp; o.hasAttribute('value')) ||
+(o.attributes.value &amp;&amp; o.attributes.value.specified)) ?
+o.value : o.text;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+The o.hasAttribute() function works in FF2 and S2 but not IE6. The
+o.attributes.value.specified works in FF2 and IE6 but not S2. So both
+checks are needed but what if neither works for a particular browser?
+This situation exists in some older browsers and they will report
+o.text when perhaps they should be reporting o.value.
+
+One thing I don't understand is the direct access to the
+o.attributes.value property. It seems to me that the spec says for a
+NamedNodeMap it would instead need to be
+o.attributes.getNamedItem('value'). Does anyone know about the
+legality of the direct access use?
+
+---------
+
+The only &quot;cross browser&quot; solution I can think of is just develop so
+this never matters. If the option element's value attribute is always
+included in the HTML then we can write just the following which works
+back to IE4/NN4.
+
+function getOptionValue(o) {
+return o.value;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+The only argument against always including the value attribute is
+space. For example, a list of countries is long and omitting the value
+attribute would save quite a bit of space. On a page where countries
+are used and the value attributes are omitted for just that select
+element, we could write something like this.
+
+function getOptionValue(o) {
+return o.parentNode &amp;&amp; o.parentNode.name == 'country' ? o.text :
+o.value;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+If we know that on the page there are some options that don't have a
+value attribute specified but should never have an empty string as the
+value, then we can write
+
+function getOptionValue(o) {
+return o.value || o.text;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+Right now, it doesn't seem to me that there is a single bulletproof,
+non-sniffing solution to getting the value of an option element when
+the page can contain any combination of options and value attributes
+and any browser may be used. With the multiple implementations we can
+always choose one that works for a particular page or site, given the
+rules by which the HTML authors are playing.
+
+---------
+
+Some links and notes I collected when looking into the YUI function...
+
+Node interface
+&lt;URL: http://www.w3.org/TR/2000/WD-DOM-Level-1-20000929/level-one-core.html... &gt;
+&lt;URL: http://www.w3.org/TR/DOM-Level-2-Core/core.html#ID-1950641247 &gt;
+
+The Node interface specifies an &quot;attributes&quot; property which is a
+NamedNodeMap.
+
+HTMLOptionElement interface
+&lt;URL: http://www.w3.org/TR/DOM-Level-2-HTML/html.html#ID-70901257 &gt;
+
+The HTMLOptionElement interface extends the HTMLElement interface
+which extends the Element interface which extends the Node interface.
+
+The HTMLOptionElement interface specifies a read-write &quot;value&quot;
+property. The initial value of the &quot;value&quot; property is set by the
+value attribute in the HTML. If that attribute is not present then the
+text of the element is used.
+
+The HTMLOptionElement interface specifies a read-only &quot;text&quot; property.
+
+Attr interface
+&lt;URL: http://www.w3.org/TR/DOM-Level-2-Core/core.html#ID-637646024 &gt;
+
+The Attr interface specifies a read-only boolean &quot;specified&quot;.
+
+MS attributes collection
+&lt;URL: http://msdn2.microsoft.com/en-us/library/ms537438.aspx &gt;
+
+MS getNamedItem function (IE6+?)
+&lt;URL: http://msdn2.microsoft.com/en-us/library/ms536441.aspx &gt;
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-08T16:58:00 </POSTDATE>
+On Nov 7, 2:48 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Nov 6, 11:21 pm, RobG &lt;rg ... @iinet.net.au&gt; wrote:
+
+&gt; &gt; There is also IE's problem with reporting the value of an option
+&gt; &gt; element (the text value should be reported if there is no value
+&gt; &gt; attribute but IE doesn't).
+
+&gt; This getOptionValue function is inspired by the form serialization
+&gt; function in YUI's connection.js file.
+
+&gt; function getOptionValue(o) {
+&gt;     return ((o.hasAttribute &amp;&amp; o.hasAttribute('value')) ||
+&gt;             (o.attributes.value &amp;&amp; o.attributes.value.specified)) ?
+&gt; o.value : o.text;
+
+&gt; }
+
+&gt; The o.hasAttribute() function works in FF2 and S2 but not IE6. The
+&gt; o.attributes.value.specified works in FF2 and IE6 but not S2. So both
+&gt; checks are needed but what if neither works for a particular browser?
+&gt; This situation exists in some older browsers and they will report
+&gt; o.text when perhaps they should be reporting o.value.
+">
+
+The following code seems to be working. The getOptionValue function
+will only be defined in browsers where the function will work
+properly.
+
+It uses only DOM standard features (no outerHTML) if it is true that
+the direct option.attributes.value is really an allowed access into a
+NamedNodeMap.
+
+In the feature detection it assumes that, in a given browser, the
+documentElement and the option element implement the same attribute
+reporting interface. I think that is about as close to a direct test
+as is possible.
+
+// NN4 syntax error
+
+// NN4.5 getOptionValue undefined
+// O6 getOptionValue undefined
+// IE4 getOptionValue undefined
+
+// NN6 works with hasAttribute branch
+// O7 works with hasAttribute branch
+// S1.9 works with hasAttribute branch
+// Mac/icab3.0.3 works with hasAttribute branch
+// IE5 works with attributes branch
+// Mac/IE5.2 works with attributes branch
+
+var getOptionValue = (function() {
+if (document.documentElement) {
+if (document.documentElement.hasAttribute) {
+return function(o) {
+return o.hasAttribute('value') ? o.value : o.text;
+};
+}
+if (document.documentElement.attributes) {
+return function(o) {
+return (o.attributes.value &amp;&amp;
+o.attributes.value.specified) ?
+o.value : o.text;
+};
+}
+}
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+})();
+">
+</POST>
+<POST>
+<POSTER> &quot;Richard Cornford&quot; &lt;Rich...@litotes.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2007-11-10T12:39:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Peter Michaux wrote:
+&gt; On Nov 7, 2:48 pm, Peter Michaux wrote:
+&gt;&gt; On Nov 6, 11:21 pm, RobG wrote:
+&gt;&gt;&gt; There is also IE's problem with reporting the value of
+&gt;&gt;&gt; an option element (the text value should be reported if
+&gt;&gt;&gt; there is no value attribute but IE doesn't).
+&lt;snip&gt;
+&gt; var getOptionValue = (function() {
+&gt;    if (document.documentElement) {
+&gt;        if (document.documentElement.hasAttribute) {
+&gt;            return function(o) {
+&gt;                return o.hasAttribute('value') ? o.value : o.text;
+">
+
+&lt;snip&gt;
+
+Whenever a - value - attribute has trueness there is no need for any
+other testing to be applied (and that will be the most common case by a
+large margined). I would be inclined to test for that first, and use a
+true result to short-circuit the rest of the testing. I.E.:-
+
+return (o,value || (o.hasAttribute('value') ? o.value : o.text));
+
+Richard.
+</POST>
+<POST>
+<POSTER> &quot;Richard Cornford&quot; &lt;Rich...@litotes.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2007-11-10T12:39:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Matt Kruse wrote:
+&gt; On Nov 7, 6:18 am, Peter Michaux wrote:
+&gt;&gt; I have a version that does this to post later. It is bigger and
+&gt;&gt; wanted to post something smaller to look at format of how one
+&gt;&gt; of the multiple implementations might be presented. Each is
+&gt;&gt; simply an implementation for a different circumstance but with
+&gt;&gt; the same interface.
+
+&gt; IMO, this example is taking that philosophy a bit too far. The
+&gt; extra code required to handle all input types is minimal. Why
+&gt; would someone want a stripped-down version that only handles a
+&gt; very limited case, when they could have a fully reusable version
+&gt; that could be used in every case?
+">
+
+Speed would be one very good reason. The odds are that when you want to
+serialize a form you are reacting to user input and planning on getting
+the server to decide how to react to that input. Responding to user
+input is something that you always want to do quickly, and if you know
+up front that a set of possible conditions will never occur in the
+context there is no need to be wasting time executing code that is
+designed to accommodate them.
+
+<QUOTE PREVIOUSPOST="
+&gt; This problem is very &quot;solvable&quot; in that a single
+&gt; general- purpose solution can be created.
+">
+
+Well, no. Your own attempts have never addressed the possibility of a
+form including OBJECT elements in its submissions. Granted that is an
+extremely unexpected condition (especially given the extremely poor
+specification for OBJECT elements (generally and in the context of form
+controls), combined with extremely inconsistent browser support for
+OBJECT elements), but they are still part of the general problem by
+specification. And your handling of line breaks in TEXTAREA elements
+does not quite come up to the specification for
+application/x-www-form-urlencoded.
+
+<QUOTE PREVIOUSPOST="
+&gt; For different problems, that that's not so true and the
+&gt; &quot;many implementation&quot; approach makes more sense.
+">
+
+I think this is a very reasonable candidate for a &quot;many implementations&quot;
+approach. The web application that I am working on at the moment imposes
+conditions where I can be certain that no SELECT element will ever not
+have a VALUE attribute (as a direct consequence of the need to be
+multilingual) and the set of 'supported' browsers is such that I do not
+need to go into the - options - collection for - type == 'select-one' -
+and can treat such elements just like &lt;input type=text&gt;. Thus the
+specific code for the task would be smaller, simpler and faster. Other
+context may present alternative sets of knowns and unknowns and so be
+optimally handled by different implementations, while retaining the
+flexibility to react to changing conditions by doing no more than
+changing the underlying implementation.
+
+<QUOTE PREVIOUSPOST="
+&gt; In any case, my stab at it was posted by Rob. It does need
+&gt; to be improved to handle the special select case in IE and
+&gt; maybe there are some more quirks that exist that I didn't
+&gt; handle. You could surely take the serialization code from a
+&gt; few different libs and combine them into a single solution.
+">
+
+A strategy where the resulting code gets bigger, more complex and slower
+with the passage of time, but only in order to cover ever more obscure
+conditions (some of which are likely to be mutually exclusive in
+reality).
+
+Richard.
+</POST>
+<POST>
+<POSTER> &quot;Richard Cornford&quot; &lt;Rich...@litotes.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2007-11-10T12:39:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Peter Michaux wrote:
+">
+
+&lt;snip&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; This first installment is about form serialization.
+&gt; This is a common task these days and something not
+&gt; covered in the group's FAQ notes. Below is an example
+&gt; of form serialization that works with forms with
+&gt; text-like inputs (eg text, hidden, textarea, etc).
+&gt; This follows Richard Cornford's idea of having multiple
+&gt; implementations of a single interface where each
+&gt; implementation is for a specific circumstance.
+">
+
+&lt;snip&gt;
+
+So in this case we have an interface that consist of a global Identifier
+named 'serializeForm' that refers to a function object, which takes a
+form element as its single argument and returns a string that represents
+the form control's values in a (near) application/x-www-form-urlencoded
+form.
+
+My first quibble would be the name. Where global Identifiers are to be
+used (and I have no objection to their use here (better than the
+pointless runtime overheads of one of those silly 'namespace' schemes))
+the Identifier should be as unambiguous as possible, and certainly be
+fairly explicit about what the object identified is for.
+
+Form serialisation may take many forms, including (increasingly these
+days) JSON and XML serialisation. It may even include (given a suitable
+Intranet application with very restricted browser/browser configuration
+support and local file system access) multipart/form-data serialization
+for context involving file upload.
+
+It would be better if the interface name stated how it was going to
+serialize the form. Something like - urlSerializeForm - or -
+serializeFormUrlEncodeed -.
+
+<QUOTE PREVIOUSPOST="
+&gt; ------------------------------------------
+
+&gt; /**
+&gt;    @object serializeForm&lt;function&gt;
+
+&gt;    @param f&lt;form&gt; The form element to be serialized.
+
+&gt;    @returns &lt;string&gt; The serialized form data in &quot;foo=bar&amp;asdf=1234&quot;
+&gt; format
+">
+
+This description should be more explicit/precise about what this
+implementation actually does. It returns a string consisting of a '&amp;'
+separated sequence of '=' separated name/value pairs where the names and
+values have been encoded using javascript's - encodeURIComponent -. The
+result being an approximation of application/x-www-form-urlencoded, but
+not including the transfformation of line breaks into &quot;CR LF&quot; pairs
+(which is only likely to be an issue with TEXTAREA fileds on non-Windows
+OSs, and then only if the recivenign software cares or where consitency
+is expectd in the storage medium).
+
+There is a text wrapping issue in this presentation of the code. If this
+code is to be critiqued on Usenet (as it always should given the
+intention) it would be a good idea to apply/impose the formatting rule
+that all code and comments should be manually wrapped at (or before),
+say, 72 characters.
+
+<QUOTE PREVIOUSPOST="
+&gt;    serializeForm will serialize data contained in forms with text-
+&gt; like
+&gt;    inputs (eg. text, password, hidden, textarea.)
+">
+
+This is a statement of intended use masquerading as a statement of
+actual behaviour. This particular version will also serialize &lt;input
+type=&quot;button&quot;&gt;, &lt;input type=&quot;submit&quot;&gt;, and so on, in a way that would be
+unexpected in any submitted form data. In practice this version is only
+really intended for use with forms that consist _only_ of the elements
+listed (and that all such controls _must_ have name attributes), and
+that restriction should be very clearly stated.
+
+<QUOTE PREVIOUSPOST="
+&gt;    The returned string
+&gt;    is suitable for a URL query string or POST request body. Test that
+&gt;    this function is defined before calling it. This function has
+&gt;    no side effects.
+">
+
+The conditions determining the creation of the function object are the
+existence of a - push - method of arrays (so JScript 5.5+. or emulated
+on IE (&lt;=5.0)) and the ECMAScript 3rd Ed. encodeURIComponent function
+(or an emulation). When these conditions can be known to be met then
+there is no need for testing prior to use. Thus the true conditions
+should be stated here so that the test/don't test decision can be made
+on an informed basis.
+
+There is also the possibility of defining a 'default' function in an
+else branch for the creation test that just returns - null - and having
+the calling code test the return value for the success of the sterilize
+function call (no string, including the empty string, equals - null - by
+type-converting (or, obviously, strict) equality). That design would
+allow for the signalling of error states within the serialization
+function to also be signalled with a - null - return value).
+
+<QUOTE PREVIOUSPOST="
+&gt;    Features Not Tested
+">
+
+This would be better expressed as &quot;Features assumed to exist&quot;
+
+<QUOTE PREVIOUSPOST="
+&gt;    (ECMAScript v2, DOM 1 and earlier features are assumed to reduce
+&gt; code size)
+&gt;    JavaScript 1.0
+&gt;      form.elements
+&gt;      form.elements.length
+&gt;      input.name
+&gt;      input.value
+">
+
+There has got to be as better way of expressing this. While
+JavaScript(tm) 1.0 did have a notion of 'client side' and 'core'
+JavaScript(tm) that notion has long gone in practice, and the echoes of
+idea do no more now than introduce misconceptions. We (as a group)
+should do nothing to promote any ongoing perception of the browser
+object model as being a part of the javascript language.
+
+<QUOTE PREVIOUSPOST="
+&gt;    ECMAScript v1
+&gt;      array.join
+&gt;    DOM Level 1
+&gt;      input.disabled
+&gt; */
+
+&gt; // ECMAScript v3 feature tests
+&gt; if (Array.prototype.push &amp;&amp; encodeURIComponent) {
+">
+
+Martin Honnen has already corrected that second test, though it could
+still be a type-converting test rather than - typeof - (-
+window.encodeURIComponent - , or some form of -
+global.encodeURIComponent - with - var global - explicitly set (perhaps
+elsewhere)).
+
+The use of - push - is avoidable with another local variable initialised
+to zero and post incremented at assignment:-
+
+var n = 0;
+
+...
+
+c[n++] = (
+encodeURIComponent(e.name) +
+&quot;=&quot; +
+encodeURIComponent(e.value)
+);
+
+- as the output array is initialised to an empty array.
+
+<QUOTE PREVIOUSPOST="
+&gt;    function serializeForm(f) {
+&gt;        var i, // elements loop index
+&gt;            l, // elements loop length
+&gt;            e, // element
+&gt;            es = f.elements,
+&gt;            c = []; // the serialization data parts
+">
+
+Where the intention is to publish a large(ish) code repository (of any
+sort) there must be a great deal to be said for the code in that
+repository having a consistent form. That would effectively mean all the
+code being written to conform to (or modified to conform to) some single
+set of 'code style' guidelines. Consistency would be the primary goal so
+the precise set of style rules applied would not matter beyond their
+being reasonably ration/workable and clearly stated. And inevitably such
+rules would need to be agreed by anyone (at least initially) intending
+to participate.
+
+I can anticipate the above code block attracting criticism under many
+people's preferred 'code style' rules. The idea of having a comma
+separated set of local variable declarations/initialisations spread
+across a number of lines would fall fowl of some for a start. Others may
+quibble about the degree to which the Identifiers used where meaningful,
+while others would not see that as important in such a short section of
+code.
+
+I would not object to a single letter Identifier being used as a loop
+counter, but I would object to that letter being any one of lower case
+'I' or 'L', and upper case 'o'. It has been observed that in many
+type-faces these characters are easily mistaken for other characters;
+'i' and/or 'l' for 'l', 'i' and '1', and 'O' for zero. In other
+languages (most notably Java) 'i' may be an acceptable loop counter
+Identifier, but there it has meaning beyond being an arbitrary
+Identifier (the type of the counter is invariably - int -).  In
+javascript the type of the counter is always just number (as there is
+only one number type) so there are no reasons for using any particular
+character in that context, but there are reasons for not using 'i', 'l,
+or 'O'. Personally I use 'c' (for counter) exclusively (and 'd', 'e',
+'f', etc. when nesting loops), and use 'len' as the Identifier for
+length constraints.
+
+(There are also inherent advantages in not using Java style conventions,
+such as - int i - for loop counters, when writing javascript because
+there are contexts (e.g. JSP) where the two types of code can appear
+alongside each other, and a quick visual discrimination between the two
+(otherwise syntactically similar) languages is useful).
+
+<QUOTE PREVIOUSPOST="
+&gt;        for (i=0, l=es.length; i&lt;l; i++) {
+&gt;          e = es[i];
+&gt;          if (!e.disabled) {
+&gt;            c.push(encodeURIComponent(e.name) + &quot;=&quot; +
+&gt;               encodeURIComponent(e.value));
+&gt;          }
+&gt;        }
+&gt;        return c.join('&amp;');
+&gt;    }
+&gt; }
+">
+
+On the general interface design question, may I suggest an optional
+second argument that would be the name of a submit button (of one sort
+or another). It would not be used in this implementation (where submit
+buttons are not being handled at all, and so should be absent form the
+form) but in more elaborate implementations, while filtering out &lt;input
+type=submit&gt;, &lt;input type=image&gt;, &lt;button type=submit&gt; and &lt;button&gt;
+elements, the name value pair for any who's name corresponded with that
+second argument (if provided) could be inserted into the serialization.
+That could be useful for emulating types of form submission where the
+name/value pair of the submit button clicked determined the actions of
+the server script).
+
+Maybe not a complete solution as people often use many like-named submit
+buttons with differing values. And maybe not a necessary addition as the
+code retrieving the serialized form could always append such a name
+value pair to the serialized form.
+
+Generally these interface designs deserve some kicking about before
+fixing on the final design so that they can be flexible enough to
+support a good range of possible/likely underlying implementations
+beyond the one situation that first prompts their creation.
+
+Richard.
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-10T15:47:00 </POSTDATE>
+On Nov 10, 9:39 am, &quot;Richard Cornford&quot; &lt;Rich ... @litotes.demon.co.uk&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Peter Michaux wrote:
+&gt; &gt; On Nov 7, 2:48 pm, Peter Michaux wrote:
+&gt; &gt;&gt; On Nov 6, 11:21 pm, RobG wrote:
+&gt; &gt;&gt;&gt; There is also IE's problem with reporting the value of
+&gt; &gt;&gt;&gt; an option element (the text value should be reported if
+&gt; &gt;&gt;&gt; there is no value attribute but IE doesn't).
+&gt; &lt;snip&gt;
+&gt; &gt; var getOptionValue = (function() {
+&gt; &gt;    if (document.documentElement) {
+&gt; &gt;        if (document.documentElement.hasAttribute) {
+&gt; &gt;            return function(o) {
+&gt; &gt;                return o.hasAttribute('value') ? o.value : o.text;
+
+&gt; &lt;snip&gt;
+
+&gt; Whenever a - value - attribute has trueness there is no need for any
+&gt; other testing to be applied (and that will be the most common case by a
+&gt; large margined). I would be inclined to test for that first, and use a
+&gt; true result to short-circuit the rest of the testing. I.E.:-
+
+&gt; return (o,value || (o.hasAttribute('value') ? o.value : o.text));
+">
+
+This is one of the balance issues upon which programmers notoriously
+have a difficult time agreeing. Both versions will produce correct
+results. Is the extra code bulk worth the extra download time? For
+some forms it would be and for others it wouldn't. Unfortunately there
+is not clear answer.
+
+I would say that I worry more about download time for serialization. I
+know the code will need to be downloaded. I don't know if the code you
+have posted will be faster or slower. Form serialization is usually so
+fast that slight algorithmic inefficiencies can be included and still
+produce a sufficiently fast algorithms. By sufficiently fast I mean
+the user doesn't notice a difference. If the serialized data is sent
+to the server, the communication with the server will be far longer
+than the serialization. What generally seems slow in the browser
+scripting world are screen redraws in animations and server
+communication (including initial script downloads.) In terms of
+responsiveness, those two activities eclipse most run of the mill
+browser scripting activities.
+
+Peter
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-10T18:47:00 </POSTDATE>
+On Nov 10, 9:39 am, &quot;Richard Cornford&quot; &lt;Rich ... @litotes.demon.co.uk&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Peter Michaux wrote:
+
+&gt; &lt;snip&gt;&gt; This first installment is about form serialization.
+&gt; &gt; This is a common task these days and something not
+&gt; &gt; covered in the group's FAQ notes. Below is an example
+&gt; &gt; of form serialization that works with forms with
+&gt; &gt; text-like inputs (eg text, hidden, textarea, etc).
+&gt; &gt; This follows Richard Cornford's idea of having multiple
+&gt; &gt; implementations of a single interface where each
+&gt; &gt; implementation is for a specific circumstance.
+
+&gt; &lt;snip&gt;
+
+&gt; So in this case we have an interface that consist of a global Identifier
+&gt; named 'serializeForm' that refers to a function object, which takes a
+&gt; form element as its single argument and returns a string that represents
+&gt; the form control's values in a (near) application/x-www-form-urlencoded
+&gt; form.
+">
+
+Indeed it is only &quot;near&quot;.
+
+http://www.w3.org/TR/html4/interact/forms.html#h-17.13.4.1
+
+&quot;a b&quot; should be encoded as &quot;a+b&quot;
+
+but
+
+encodeURIComponent('a b') // &quot;a%20b&quot;
+
+&quot;a\nb&quot; should be encoded as &quot;a%0D%0Ab&quot;
+
+but
+
+encodeURIComponent('\n') // &quot;%0A&quot;
+
+In practice, it seems developers don't complain about this so their
+server-side toolkits that decode a request must know to do the right
+thing.
+
+I wonder why encodeURIComponent doesn't encode the whitespace
+correctly.
+
+Is replicating the spec for spaces and new lines necessary or should
+it simply be documented that there is a difference?
+
+<QUOTE PREVIOUSPOST="
+&gt; My first quibble would be the name.
+">
+
+I agree.
+
+(To a certain degree, over time I've been loosing energy to fight for
+this aesthetic quality simply because I work with a server-side legacy
+system that has a hodgepodge of names. Also, the browser scripting
+world is not known for a clean API. I just get used to looking up the
+correct name. We should try for a nice naming scheme, however.)
+
+<QUOTE PREVIOUSPOST="
+&gt; Where global Identifiers are to be
+&gt; used (and I have no objection to their use here (better than the
+&gt; pointless runtime overheads of one of those silly 'namespace' schemes))
+">
+
+I don't think one level of namespace is silly but would like to focus
+on correct algorithms. If an automatic build system converts a
+collection of these multiple implementations into a library, then the
+build system could introduce the namespacing. Correct algorithms are
+far more time consuming to develop then repackaging the code for use
+with a namespace.
+
+<QUOTE PREVIOUSPOST="
+&gt; the Identifier should be as unambiguous as possible, and certainly be
+&gt; fairly explicit about what the object identified is for.
+
+&gt; Form serialisation may take many forms, including (increasingly these
+&gt; days) JSON and XML serialisation. It may even include (given a suitable
+&gt; Intranet application with very restricted browser/browser configuration
+&gt; support and local file system access) multipart/form-data serialization
+&gt; for context involving file upload.
+
+&gt; It would be better if the interface name stated how it was going to
+&gt; serialize the form. Something like - urlSerializeForm - or -
+&gt; serializeFormUrlEncodeed -.
+">
+
+To me, descriptive but still short is better. I like the idea that
+serializing the form is the primary concern and the format is
+secondary. &quot;serializeFormUrl&quot; and &quot;serializeFormJson&quot; have the feel of
+the ES4 type annotations that are coming down the pipe.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; ------------------------------------------
+
+&gt; &gt; /**
+&gt; &gt;    @object serializeForm&lt;function&gt;
+
+&gt; &gt;    @param f&lt;form&gt; The form element to be serialized.
+
+&gt; &gt;    @returns &lt;string&gt; The serialized form data in &quot;foo=bar&amp;asdf=1234&quot;
+&gt; &gt; format
+
+&gt; This description should be more explicit/precise about what this
+&gt; implementation actually does. It returns a string consisting of a '&amp;'
+&gt; separated sequence of '=' separated name/value pairs where the names and
+&gt; values have been encoded using javascript's - encodeURIComponent -. The
+&gt; result being an approximation of application/x-www-form-urlencoded, but
+&gt; not including the transfformation of line breaks into &quot;CR LF&quot; pairs
+&gt; (which is only likely to be an issue with TEXTAREA fileds on non-Windows
+&gt; OSs, and then only if the recivenign software cares or where consitency
+&gt; is expectd in the storage medium).
+">
+
+The documentation does need improvement.
+
+<QUOTE PREVIOUSPOST="
+&gt; There is a text wrapping issue in this presentation of the code. If this
+&gt; code is to be critiqued on Usenet (as it always should given the
+&gt; intention) it would be a good idea to apply/impose the formatting rule
+&gt; that all code and comments should be manually wrapped at (or before),
+&gt; say, 72 characters.
+">
+
+I noticed this also. I only looked briefly and thought it was the
+google groups software wrapping after 71 characters. If Usenet wraps
+after 72 characters then perhaps we should set the limit to 70 so that
+at least one reply can be made without causing wrapping in the reply.
+
+TEST
+
+123456789 123456789 123456789 123456789 123456789 123456789 1 3 5 7 9
+1 3 5 7 9
+
+123456789 123456789 123456789 123456789 123456789 1234567890 2 4 6 8 0
+2 4 6 8 0
+
+(I'm posting through the google groups interface.)
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;    serializeForm will serialize data contained in forms with text-
+&gt; &gt; like
+&gt; &gt;    inputs (eg. text, password, hidden, textarea.)
+
+&gt; This is a statement of intended use masquerading as a statement of
+&gt; actual behaviour. This particular version will also serialize &lt;input
+&gt; type=&quot;button&quot;&gt;, &lt;input type=&quot;submit&quot;&gt;, and so on, in a way that would be
+&gt; unexpected in any submitted form data. In practice this version is only
+&gt; really intended for use with forms that consist _only_ of the elements
+&gt; listed (and that all such controls _must_ have name attributes), and
+&gt; that restriction should be very clearly stated.
+">
+
+Good point.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;    The returned string
+&gt; &gt;    is suitable for a URL query string or POST request body. Test that
+&gt; &gt;    this function is defined before calling it. This function has
+&gt; &gt;    no side effects.
+
+&gt; The conditions determining the creation of the function object are the
+&gt; existence of a - push - method of arrays (so JScript 5.5+. or emulated
+&gt; on IE (&lt;=5.0)) and the ECMAScript 3rd Ed. encodeURIComponent function
+&gt; (or an emulation). When these conditions can be known to be met then
+&gt; there is no need for testing prior to use. Thus the true conditions
+&gt; should be stated here so that the test/don't test decision can be made
+&gt; on an informed basis.
+">
+
+So you are in favor of stating the requirements in documentation
+rather than including the feature tests in the code? I would think
+that a version with and a version without the tests could account for
+two of the multiple implementations. The one with tests being
+applicable to the general web.
+
+<QUOTE PREVIOUSPOST="
+&gt; There is also the possibility of defining a 'default' function in an
+&gt; else branch for the creation test that just returns - null - and having
+&gt; the calling code test the return value for the success of the sterilize
+&gt; function call (no string, including the empty string, equals - null - by
+&gt; type-converting (or, obviously, strict) equality). That design would
+&gt; allow for the signalling of error states within the serialization
+&gt; function to also be signalled with a - null - return value).
+">
+
+I've been thinking about this lately as a result of some other posts
+about feature detection.
+
+I like the idea of not defining a function if feature detection
+determines the function cannot be supported. It would be nice if
+browser features that exist were bug free always worked. This allows
+for a nice programming pattern where functions are only defined if the
+dependencies exists. For example, a tabbed pane widget creation
+function wouldn't even exist if the browser's event's module is not
+present and functioning adequately. This seems like a safer way to
+program. The situation where a section of JavaScript starts executing
+and manipulating the DOM but fails half way through execution seems to
+be a concern that occupies my mind frequently. This technique of only
+defining a function when the dependencies are available is not
+possible in general. Scroll reporting is an example as the body
+element may need to be present. In scroll reporting checking the
+return value is important. I'd like to try to define functions only
+when dependencies are available and fall back to checking return
+values only when necessary. I'm not completely committed on way or the
+other, however.
+
+Another technique I tried for a while was to have an isSupported
+function
+
+function serializeForm() {
+// ...
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+serializeForm.isSupported = function() {
+// ...
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+// use
+if (serializeForm.isSupported()) {
+serializeForm();
+
+<QUOTE PREVIOUSPOST="
+}
+&gt; &gt;    Features Not Tested
+
+&gt; This would be better expressed as &quot;Features assumed to exist&quot;
+">
+
+Yes.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;    (ECMAScript v2, DOM 1 and earlier features are assumed to reduce
+&gt; &gt; code size)
+&gt; &gt;    JavaScript 1.0
+&gt; &gt;      form.elements
+&gt; &gt;      form.elements.length
+&gt; &gt;      input.name
+&gt; &gt;      input.value
+
+&gt; There has got to be as better way of expressing this.
+">
+
+Indeed. Those were very rough notes.
+
+<QUOTE PREVIOUSPOST="
+&gt; While
+&gt; JavaScript(tm) 1.0 did have a notion of 'client side' and 'core'
+&gt; JavaScript(tm) that notion has long gone in practice, and the echoes of
+&gt; idea do no more now than introduce misconceptions. We (as a group)
+&gt; should do nothing to promote any ongoing perception of the browser
+&gt; object model as being a part of the javascript language.
+">
+
+Agreed.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;    ECMAScript v1
+&gt; &gt;      array.join
+&gt; &gt;    DOM Level 1
+&gt; &gt;      input.disabled
+&gt; &gt; */
+
+&gt; &gt; // ECMAScript v3 feature tests
+&gt; &gt; if (Array.prototype.push &amp;&amp; encodeURIComponent) {
+
+&gt; Martin Honnen has already corrected that second test, though it could
+&gt; still be a type-converting test rather than - typeof - (-
+&gt; window.encodeURIComponent - , or some form of -
+&gt; global.encodeURIComponent - with - var global - explicitly set (perhaps
+&gt; elsewhere)).
+">
+
+One thing that really bothers me about the mainstream libraries is
+there is some sort of foundation file upon which all other files
+exist. I would like to avoid this and so would rather not have a file
+with &quot;var global=this;&quot;. It is a slippery slope and that foundation
+file has always grown in ...
+read more »
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-10T18:51:00 </POSTDATE>
+On Nov 10, 9:39 am, &quot;Richard Cornford&quot; &lt;Rich ... @litotes.demon.co.uk&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Peter Michaux wrote:
+
+&gt; &lt;snip&gt;&gt; This first installment is about form serialization.
+&gt; &gt; This is a common task these days and something not
+&gt; &gt; covered in the group's FAQ notes. Below is an example
+&gt; &gt; of form serialization that works with forms with
+&gt; &gt; text-like inputs (eg text, hidden, textarea, etc).
+&gt; &gt; This follows Richard Cornford's idea of having multiple
+&gt; &gt; implementations of a single interface where each
+&gt; &gt; implementation is for a specific circumstance.
+
+&gt; &lt;snip&gt;
+
+&gt; So in this case we have an interface that consist of a global Identifier
+&gt; named 'serializeForm' that refers to a function object, which takes a
+&gt; form element as its single argument and returns a string that represents
+&gt; the form control's values in a (near) application/x-www-form-urlencoded
+&gt; form.
+">
+
+Indeed it is only &quot;near&quot;.
+
+http://www.w3.org/TR/html4/interact/forms.html#h-17.13.4.1
+
+&quot;a b&quot; should be encoded as &quot;a+b&quot;
+
+but
+
+encodeURIComponent('a b') // &quot;a%20b&quot;
+
+&quot;a\nb&quot; should be encoded as &quot;a%0D%0Ab&quot;
+
+but
+
+encodeURIComponent('\n') // &quot;%0A&quot;
+
+In practice, it seems developers don't complain about this so their
+server-side toolkits that decode a response must know to do the right
+thing.
+
+I wonder why encodeURIComponent doesn't encode the whitespace
+correctly.
+
+Is replicating the spec for spaces and new lines necessary or should
+it simply be documented that there is a difference?
+
+<QUOTE PREVIOUSPOST="
+&gt; My first quibble would be the name.
+">
+
+I agree.
+
+(To a certain degree, over time I've been loosing energy to fight for
+this aesthetic quality simply because I work with a server-side legacy
+system that has a hodgepodge of names. Also, the browser scripting
+world is not known for a clean API. I just get used to looking up the
+correct name. We should try for a nice naming scheme, however.)
+
+<QUOTE PREVIOUSPOST="
+&gt; Where global Identifiers are to be
+&gt; used (and I have no objection to their use here (better than the
+&gt; pointless runtime overheads of one of those silly 'namespace' schemes))
+">
+
+I don't think one level of namespace is silly but would like to focus
+on correct algorithms. If an automatic build system converts a
+collection of these multiple implementations into a library, then the
+build system could introduce the namespacing. Correct algorithms are
+far more time consuming to develop then repackaging the code for use
+with a namespace.
+
+<QUOTE PREVIOUSPOST="
+&gt; the Identifier should be as unambiguous as possible, and certainly be
+&gt; fairly explicit about what the object identified is for.
+
+&gt; Form serialisation may take many forms, including (increasingly these
+&gt; days) JSON and XML serialisation. It may even include (given a suitable
+&gt; Intranet application with very restricted browser/browser configuration
+&gt; support and local file system access) multipart/form-data serialization
+&gt; for context involving file upload.
+
+&gt; It would be better if the interface name stated how it was going to
+&gt; serialize the form. Something like - urlSerializeForm - or -
+&gt; serializeFormUrlEncodeed -.
+">
+
+To me, descriptive but still short is better. I like the idea that
+serializing the form is the primary concern and the format is
+secondary. &quot;serializeFormUrl&quot; and &quot;serializeFormJson&quot; have the feel of
+the ES4 type annotations that are coming down the pipe.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; ------------------------------------------
+
+&gt; &gt; /**
+&gt; &gt;    @object serializeForm&lt;function&gt;
+
+&gt; &gt;    @param f&lt;form&gt; The form element to be serialized.
+
+&gt; &gt;    @returns &lt;string&gt; The serialized form data in &quot;foo=bar&amp;asdf=1234&quot;
+&gt; &gt; format
+
+&gt; This description should be more explicit/precise about what this
+&gt; implementation actually does. It returns a string consisting of a '&amp;'
+&gt; separated sequence of '=' separated name/value pairs where the names and
+&gt; values have been encoded using javascript's - encodeURIComponent -. The
+&gt; result being an approximation of application/x-www-form-urlencoded, but
+&gt; not including the transfformation of line breaks into &quot;CR LF&quot; pairs
+&gt; (which is only likely to be an issue with TEXTAREA fileds on non-Windows
+&gt; OSs, and then only if the recivenign software cares or where consitency
+&gt; is expectd in the storage medium).
+">
+
+THe documentation does need improvement.
+
+<QUOTE PREVIOUSPOST="
+&gt; There is a text wrapping issue in this presentation of the code. If this
+&gt; code is to be critiqued on Usenet (as it always should given the
+&gt; intention) it would be a good idea to apply/impose the formatting rule
+&gt; that all code and comments should be manually wrapped at (or before),
+&gt; say, 72 characters.
+">
+
+I noticed this also. I only looked briefly and thought it was the
+google groups software wrapping after 71 characters. If Usenet wraps
+after 72 characters then perhaps we should set the limit to 70 so that
+at least one reply can be made without causing wrapping in the reply.
+
+TEST
+
+123456789 123456789 123456789 123456789 123456789 123456789 1 3 5 7 9
+1 3 5 7 9
+
+123456789 123456789 123456789 123456789 123456789 1234567890 2 4 6 8 0
+2 4 6 8 0
+
+(I'm posting through the google groups interface.)
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;    serializeForm will serialize data contained in forms with text-
+&gt; &gt; like
+&gt; &gt;    inputs (eg. text, password, hidden, textarea.)
+
+&gt; This is a statement of intended use masquerading as a statement of
+&gt; actual behaviour. This particular version will also serialize &lt;input
+&gt; type=&quot;button&quot;&gt;, &lt;input type=&quot;submit&quot;&gt;, and so on, in a way that would be
+&gt; unexpected in any submitted form data. In practice this version is only
+&gt; really intended for use with forms that consist _only_ of the elements
+&gt; listed (and that all such controls _must_ have name attributes), and
+&gt; that restriction should be very clearly stated.
+">
+
+Good point.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;    The returned string
+&gt; &gt;    is suitable for a URL query string or POST request body. Test that
+&gt; &gt;    this function is defined before calling it. This function has
+&gt; &gt;    no side effects.
+
+&gt; The conditions determining the creation of the function object are the
+&gt; existence of a - push - method of arrays (so JScript 5.5+. or emulated
+&gt; on IE (&lt;=5.0)) and the ECMAScript 3rd Ed. encodeURIComponent function
+&gt; (or an emulation). When these conditions can be known to be met then
+&gt; there is no need for testing prior to use. Thus the true conditions
+&gt; should be stated here so that the test/don't test decision can be made
+&gt; on an informed basis.
+">
+
+So you are in favor of stating the requirements in documentation
+rather than including the feature tests in the code? I would think
+that a version with and a version without the tests could account for
+two of the multiple implementations. The one with tests being
+applicable to the general web.
+
+<QUOTE PREVIOUSPOST="
+&gt; There is also the possibility of defining a 'default' function in an
+&gt; else branch for the creation test that just returns - null - and having
+&gt; the calling code test the return value for the success of the sterilize
+&gt; function call (no string, including the empty string, equals - null - by
+&gt; type-converting (or, obviously, strict) equality). That design would
+&gt; allow for the signalling of error states within the serialization
+&gt; function to also be signalled with a - null - return value).
+">
+
+I've been thinking about this lately as a result of some other posts
+about feature detection.
+
+I like the idea of not defining a function if feature detection
+determines the function cannot be supported. It would be nice if
+browser features that exist were bug free always worked. This allows
+for a nice programming pattern where functions are only defined if the
+dependencies exists. For example, a tabbed pane widget creation
+function wouldn't even exist if the browser's event's module is not
+present and functioning adequately. This seems like a safer way to
+program. The situation where a section of JavaScript starts executing
+and manipulating the DOM but fails half way through execution seems to
+be a concern that occupies my mind frequently. This technique of only
+defining a function when the dependencies are available is not
+possible in general. Scroll reporting is an example as the body
+element may need to be present. In scroll reporting checking the
+return value is important. I'd like to try to define functions only
+when dependencies are available and fall back to checking return
+values only when necessary. I'm not completely committed on way or the
+other, however.
+
+Another technique I tried for a while was to have an isSupported
+function
+
+function serializeForm() {
+// ...
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+serializeForm.isSupported = function() {
+// ...
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+// use
+if (serializeForm.isSupported()) {
+serializeForm();
+
+<QUOTE PREVIOUSPOST="
+}
+&gt; &gt;    Features Not Tested
+
+&gt; This would be better expressed as &quot;Features assumed to exist&quot;
+">
+
+Yes.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;    (ECMAScript v2, DOM 1 and earlier features are assumed to reduce
+&gt; &gt; code size)
+&gt; &gt;    JavaScript 1.0
+&gt; &gt;      form.elements
+&gt; &gt;      form.elements.length
+&gt; &gt;      input.name
+&gt; &gt;      input.value
+
+&gt; There has got to be as better way of expressing this.
+">
+
+Indeed. Those were very rough notes.
+
+<QUOTE PREVIOUSPOST="
+&gt; While
+&gt; JavaScript(tm) 1.0 did have a notion of 'client side' and 'core'
+&gt; JavaScript(tm) that notion has long gone in practice, and the echoes of
+&gt; idea do no more now than introduce misconceptions. We (as a group)
+&gt; should do nothing to promote any ongoing perception of the browser
+&gt; object model as being a part of the javascript language.
+">
+
+Agreed.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;    ECMAScript v1
+&gt; &gt;      array.join
+&gt; &gt;    DOM Level 1
+&gt; &gt;      input.disabled
+&gt; &gt; */
+
+&gt; &gt; // ECMAScript v3 feature tests
+&gt; &gt; if (Array.prototype.push &amp;&amp; encodeURIComponent) {
+
+&gt; Martin Honnen has already corrected that second test, though it could
+&gt; still be a type-converting test rather than - typeof - (-
+&gt; window.encodeURIComponent - , or some form of -
+&gt; global.encodeURIComponent - with - var global - explicitly set (perhaps
+&gt; elsewhere)).
+">
+
+One thing that really bothers me about the mainstream libraries is
+there is some sort of foundation file upon which all other files
+exist. I would like to avoid this and so would rather not have a file
+with &quot;var global=this;&quot;. It is a slippery slope and that foundation
+file has always grown ...
+read more »
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-11T14:58:00 </POSTDATE>
+Below is my current version of the simple serializeFormUrl function.
+
+I've changed the documentation format. In the dependency section &quot;a&quot;
+means a required and assumed feature, &quot;r&quot; means a required and tested
+feature. I don't mind if the documentation system evolves over the
+implementation of the first few interfaces. If this is on the right
+track that is fine with me for now.
+
+I removed the use of c.push() in favor of c[c.length]. This change
+reduces dependencies, is faster (at least in FF2), reduces code size
+(no need for feature test), and does not require any extra variables.
+
+I reduce the indent to two spaces since usenet has such short line
+lengths (approx 70 chars). I personally prefer four spaces but I think
+two will be better for this project.
+
+If there are any remaining offenses in this implementation of the
+interface that make this implementation inadequate for recommendation,
+please post an edited version.
+
+/**
+* @object serializeFormUrl [function]
+*   All elements of the form that have a non-empty name
+*   attribute and are not disabled will be serialized.
+*
+*   Serialize form data in a format similar to the
+*   &lt;a href=&quot; http://www.w3.org/TR/1999/REC-html401-19991224/interact/
+forms.html#h-17.13.4.1&quot;&gt;
+*   application/x-www-form-urlencoded&lt;/a&gt; standardized format.
+*
+*   The handling of whitespace different from the standard.
+*   According to the x-www-form-urlencoded standard,
+*   a space should be encoded as a &quot;+&quot; and a newline
+*   should be encoded as a &quot;%0D%0A&quot;.
+*
+*   The JavaScript encodeURIComponent function is used
+*   to encode the form data. A space is encoded as &quot;%20&quot;.
+*   On Windows operating system a new line is encoded
+*   as &quot;%0D%0A&quot;. On Mac OS X a new line is encded as
+*   just &quot;%0A&quot;.
+*
+* @param f [form]
+*   The form element to be serialized.
+*
+* @returns [string]
+*   The serialized form.
+*
+* @dependencies
+*   r - ES3  - encodeURIComponent
+*   a - ES1  - Array.prototype.join
+*   a - DOM1 - HTMLFormElement.elements
+*   a - DOM1 - HTMLFormElement.elements.length
+*   a - DOM1 - HTMLFormElement.elements[i].name
+*   a - DOM1 - HTMLFormElement.elements[i].value
+*   a - DOM1 - HTMLFormElement.elements[i].disabled
+*/
+
+// test for required feature
+if (typeof encodeURIComponent != 'undefined') {
+
+var serializeFormUrl = function(f) {
+var i,               // elements loop index
+ilen,            // elements loop length
+e,               // element
+es = f.elements,
+c = [];          // the serialized name=value pairs
+
+for (i=0, ilen=es.length; i&lt;ilen; i++) {
+e = es[i];
+if (e.name &amp;&amp; !e.disabled) {
+c[c.length] = encodeURIComponent(e.name) + &quot;=&quot; +
+encodeURIComponent(e.value);
+}
+}
+return c.join('&amp;');
+};
+
+<QUOTE PREVIOUSPOST="
+}
+">
+</POST>
+<POST>
+<POSTER> &quot;dhtmlkitc...@gmail.com&quot; &lt;dhtmlkitc...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-12T02:10:00 </POSTDATE>
+I'm glad this problem is finally getting the attention it deserves!
+I've proposed Form Serialization to the WHAT WG. The browsers could
+make this really easy for us with something like:
+
+aForm.getEncodedURIString
+aForm.getJSONString
+aForm.getJSONData
+
+Encoding could be based on the form, or could be an param.
+
+On Nov 10, 9:39 am, &quot;Richard Cornford&quot; &lt;Rich ... @litotes.demon.co.uk&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Peter Michaux wrote:
+&gt; &gt; On Nov 7, 2:48 pm, Peter Michaux wrote:
+&gt; &gt;&gt; On Nov 6, 11:21 pm, RobG wrote:
+&gt; &gt;&gt;&gt; There is also IE's problem with reporting the value of
+&gt; &gt;&gt;&gt; an option element (the text value should be reported if
+&gt; &gt;&gt;&gt; there is no value attribute but IE doesn't).
+&gt; &lt;snip&gt;
+&gt; &gt; var getOptionValue = (function() {
+&gt; &gt;    if (document.documentElement) {
+&gt; &gt;        if (document.documentElement.hasAttribute) {
+&gt; &gt;            return function(o) {
+&gt; &gt;                return o.hasAttribute('value') ? o.value : o.text;
+
+&gt; &lt;snip&gt;
+
+&gt; Whenever a - value - attribute has trueness there is no need for any
+&gt; other testing to be applied (and that will be the most common case by a
+&gt; large margined). I would be inclined to test for that first, and use a
+&gt; true result to short-circuit the rest of the testing. I.E.:-
+
+&gt; return (o,value || (o.hasAttribute('value') ? o.value : o.text));
+">
+
+The problem is when the value attribute is intentionally blank.
+
+&lt;select&gt;
+&lt;option value=&quot;&quot;&gt;select a country&lt;/option&gt;
+&lt;option value=&quot;number1&quot;&gt;USA&lt;/option&gt;
+&lt;/select&gt;
+
+In that case, there will be an error in IE (doesn't support
+Element.prototype.hasAttribute).
+
+The code Peter posted is attempting to parse the outerHTML in lieu of
+Internet Explorer's broken attribute support. This is a painful. I
+would like to offer an IE 6+ solution for hasAttribute:
+
+// IE does not support Element.prototype.hasAttribute
+function hasAttribute(el, name) {
+var att = el.getAttributeNode(name);
+return Boolean(att) &amp;&amp; att.specified;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+What if the form has a file? Do you use FileList, or do you use an
+iframe, just to be on the lowest common denominator for the other
+browsers?
+
+Garrett
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; Richard.
+">
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-12T14:44:00 </POSTDATE>
+On Nov 11, 11:10 pm, &quot;dhtmlkitc ... @gmail.com&quot; &lt;dhtmlkitc ... @gmail.com&gt;
+wrote:
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt; On Nov 10, 9:39 am, &quot;Richard Cornford&quot; &lt;Rich ... @litotes.demon.co.uk&gt;
+&gt; wrote:
+
+&gt; &gt; Peter Michaux wrote:
+&gt; &gt; &gt; On Nov 7, 2:48 pm, Peter Michaux wrote:
+&gt; &gt; &gt;&gt; On Nov 6, 11:21 pm, RobG wrote:
+&gt; &gt; &gt;&gt;&gt; There is also IE's problem with reporting the value of
+&gt; &gt; &gt;&gt;&gt; an option element (the text value should be reported if
+&gt; &gt; &gt;&gt;&gt; there is no value attribute but IE doesn't).
+&gt; &gt; &lt;snip&gt;
+&gt; &gt; &gt; var getOptionValue = (function() {
+&gt; &gt; &gt;    if (document.documentElement) {
+&gt; &gt; &gt;        if (document.documentElement.hasAttribute) {
+&gt; &gt; &gt;            return function(o) {
+&gt; &gt; &gt;                return o.hasAttribute('value') ? o.value : o.text;
+
+&gt; &gt; &lt;snip&gt;
+
+&gt; &gt; Whenever a - value - attribute has trueness there is no need for any
+&gt; &gt; other testing to be applied (and that will be the most common case by a
+&gt; &gt; large margined). I would be inclined to test for that first, and use a
+&gt; &gt; true result to short-circuit the rest of the testing. I.E.:-
+
+&gt; &gt; return (o,value || (o.hasAttribute('value') ? o.value : o.text));
+
+&gt; The problem is when the value attribute is intentionally blank.
+
+&gt; &lt;select&gt;
+&gt; &lt;option value=&quot;&quot;&gt;select a country&lt;/option&gt;
+&gt; &lt;option value=&quot;number1&quot;&gt;USA&lt;/option&gt;
+&gt; &lt;/select&gt;
+
+&gt; In that case, there will be an error in IE (doesn't support
+&gt; Element.prototype.hasAttribute).
+
+&gt; The code Peter posted is attempting to parse the outerHTML in lieu of
+&gt; Internet Explorer's broken attribute support.
+">
+
+I did repost some other people's outerHTML solutions but don't think
+they are the right way to go.
+
+<QUOTE PREVIOUSPOST="
+&gt; This is a painful. I
+&gt; would like to offer an IE 6+ solution for hasAttribute:
+
+&gt; // IE does not support Element.prototype.hasAttribute
+&gt; function hasAttribute(el, name) {
+&gt;   var att = el.getAttributeNode(name);
+&gt;   return Boolean(att) &amp;&amp; att.specified;
+
+&gt; }
+">
+
+el.getAttributeNode is undefined in IE 5.5. The following works in IE
+5.5+ and so better suits the &quot;lowest common denominator&quot; approach.
+
+var getOptionValue = (function() {
+if (document.documentElement) {
+if (document.documentElement.hasAttribute) {
+return function(o) {
+return o.hasAttribute('value') ? o.value : o.text;
+};
+}
+if (document.documentElement.attributes) {
+return function(o) {
+return (o.attributes.value &amp;&amp;
+o.attributes.value.specified) ?
+o.value : o.text;
+};
+}
+}
+
+<QUOTE PREVIOUSPOST="
+})();
+&gt; What if the form has a file? Do you use FileList, or do you use an
+&gt; iframe, just to be on the lowest common denominator for the other
+&gt; browsers?
+">
+
+Use an iframe. Form serialization wouldn't likely be used in the case
+of iframe submission.
+
+Peter
+</POST>
+<POST>
+<POSTER> &quot;Richard Cornford&quot; &lt;Rich...@litotes.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2007-11-12T19:46:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+dhtmlkitc ... @gmail.com wrote:
+">
+
+&lt;snip&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; &lt;snip&gt;
+&gt;&gt;&gt; var getOptionValue = (function() {
+&gt;&gt;&gt;    if (document.documentElement) {
+&gt;&gt;&gt;        if (document.documentElement.hasAttribute) {
+&gt;&gt;&gt;            return function(o) {
+&gt;&gt;&gt;                return o.hasAttribute('value') ? o.value : o.text;
+
+&gt;&gt; &lt;snip&gt;
+
+&gt;&gt; Whenever a - value - attribute has trueness there is no need for
+&gt;&gt; any other testing to be applied (and that will be the most
+&gt;&gt; common case by a large margined). I would be inclined to test
+&gt;&gt; for that first, and use a true result to short-circuit the rest
+&gt;&gt; of the testing. I.E.:-
+
+&gt;&gt; return (o,value || (o.hasAttribute('value') ? o.value : o.text));
+
+&gt; The problem is when the value attribute is intentionally blank.
+
+&gt; &lt;select&gt;
+&gt; &lt;option value=&quot;&quot;&gt;select a country&lt;/option&gt;
+&gt; &lt;option value=&quot;number1&quot;&gt;USA&lt;/option&gt;
+&gt; &lt;/select&gt;
+
+&gt; In that case, there will be an error in IE (doesn't support
+&gt; Element.prototype.hasAttribute).
+">
+
+&lt;snip&gt;
+
+IE did not take that branch in the original code so that is irrelevant.
+My code was only intended to illustrate the short-circuiting of the
+testing, Which only needed illustrating once in context (at least for
+everyone except you).
+
+Richard.
+</POST>
+<POST>
+<POSTER> dm...@cinsoft.net </POSTER>
+<POSTDATE> 2007-12-04T02:39:00 </POSTDATE>
+On Nov 11, 2:58 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Below is my current version of the simple serializeFormUrl function.
+
+&gt; I've changed the documentation format. In the dependency section &quot;a&quot;
+&gt; means a required and assumed feature, &quot;r&quot; means a required and tested
+&gt; feature. I don't mind if the documentation system evolves over the
+&gt; implementation of the first few interfaces. If this is on the right
+&gt; track that is fine with me for now.
+
+&gt; I removed the use of c.push() in favor of c[c.length]. This change
+&gt; reduces dependencies, is faster (at least in FF2), reduces code size
+&gt; (no need for feature test), and does not require any extra variables.
+
+&gt; I reduce the indent to two spaces since usenet has such short line
+&gt; lengths (approx 70 chars). I personally prefer four spaces but I think
+&gt; two will be better for this project.
+
+&gt; If there are any remaining offenses in this implementation of the
+&gt; interface that make this implementation inadequate for recommendation,
+&gt; please post an edited version.
+
+&gt; /**
+&gt;  * @object serializeFormUrl [function]
+&gt;  *   All elements of the form that have a non-empty name
+&gt;  *   attribute and are not disabled will be serialized.
+&gt;  *
+&gt;  *   Serialize form data in a format similar to the
+&gt;  *   &lt;a href=&quot; http://www.w3.org/TR/1999/REC-html401-19991224/interact/
+&gt; forms.html#h-17.13.4.1&quot;&gt;
+&gt;  *   application/x-www-form-urlencoded&lt;/a&gt; standardized format.
+&gt;  *
+&gt;  *   The handling of whitespace different from the standard.
+&gt;  *   According to the x-www-form-urlencoded standard,
+&gt;  *   a space should be encoded as a &quot;+&quot; and a newline
+&gt;  *   should be encoded as a &quot;%0D%0A&quot;.
+&gt;  *
+&gt;  *   The JavaScript encodeURIComponent function is used
+&gt;  *   to encode the form data. A space is encoded as &quot;%20&quot;.
+&gt;  *   On Windows operating system a new line is encoded
+&gt;  *   as &quot;%0D%0A&quot;. On Mac OS X a new line is encded as
+&gt;  *   just &quot;%0A&quot;.
+&gt;  *
+&gt;  * @param f [form]
+&gt;  *   The form element to be serialized.
+&gt;  *
+&gt;  * @returns [string]
+&gt;  *   The serialized form.
+&gt;  *
+&gt;  * @dependencies
+&gt;  *   r - ES3  - encodeURIComponent
+&gt;  *   a - ES1  - Array.prototype.join
+&gt;  *   a - DOM1 - HTMLFormElement.elements
+&gt;  *   a - DOM1 - HTMLFormElement.elements.length
+&gt;  *   a - DOM1 - HTMLFormElement.elements[i].name
+&gt;  *   a - DOM1 - HTMLFormElement.elements[i].value
+&gt;  *   a - DOM1 - HTMLFormElement.elements[i].disabled
+&gt;  */
+
+&gt; // test for required feature
+&gt; if (typeof encodeURIComponent != 'undefined') {
+
+&gt;   var serializeFormUrl = function(f) {
+&gt;     var i,               // elements loop index
+&gt;         ilen,            // elements loop length
+&gt;         e,               // element
+&gt;         es = f.elements,
+&gt;         c = [];          // the serialized name=value pairs
+
+&gt;     for (i=0, ilen=es.length; i&lt;ilen; i++) {
+&gt;       e = es[i];
+&gt;       if (e.name &amp;&amp; !e.disabled) {
+&gt;         c[c.length] = encodeURIComponent(e.name) + &quot;=&quot; +
+&gt;                       encodeURIComponent(e.value);
+&gt;       }
+&gt;     }
+&gt;     return c.join('&amp;');
+&gt;   };
+
+&gt; }
+">
+
+If two inputs have the same name, the result will be incorrect.  Also,
+push has been excluded for the sake of backward compatibility, but was
+there was ever an agent that featured encodeURIComponent, but not
+Array.prototype.push?  So why not create a wrapper that falls back to
+escape when encodeURIComponent is unavailable?
+
+Also, would it really be that much of a performance hit to switch (or
+branch) on each element's type and deal with checkboxes and radio
+buttons?  It certainly wouldn't increase the size significantly.  The
+complete solution for select elements would double the size and add a
+little more processing overhead, so perhaps that should be in its own
+version.  Personally, I have always used a single general function for
+this.  I suppose if I ever had a project that excluded select elements
+and needed to serialize extremely long forms, perhaps I would crop out
+the select handling.  Otherwise, it seems like too much granularity,
+resulting in the extra work required to document and maintain two
+versions.
+
+Speaking of granularity, does it make sense for a function like this
+to be an island?  I can't see it being of much use outside of a basic
+Ajax module.  Building with functions as independent units is an
+interesting idea, but seems like overkill for most projects.
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-04T21:12:00 </POSTDATE>
+On Dec 3, 11:39 pm, dm ... @cinsoft.net wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Nov 11, 2:58 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+&gt; &gt; Below is my current version of the simple serializeFormUrl function.
+
+&gt; &gt; I've changed the documentation format. In the dependency section &quot;a&quot;
+&gt; &gt; means a required and assumed feature, &quot;r&quot; means a required and tested
+&gt; &gt; feature. I don't mind if the documentation system evolves over the
+&gt; &gt; implementation of the first few interfaces. If this is on the right
+&gt; &gt; track that is fine with me for now.
+
+&gt; &gt; I removed the use of c.push() in favor of c[c.length]. This change
+&gt; &gt; reduces dependencies, is faster (at least in FF2), reduces code size
+&gt; &gt; (no need for feature test), and does not require any extra variables.
+
+&gt; &gt; I reduce the indent to two spaces since usenet has such short line
+&gt; &gt; lengths (approx 70 chars). I personally prefer four spaces but I think
+&gt; &gt; two will be better for this project.
+
+&gt; &gt; If there are any remaining offenses in this implementation of the
+&gt; &gt; interface that make this implementation inadequate for recommendation,
+&gt; &gt; please post an edited version.
+
+&gt; &gt; /**
+&gt; &gt;  * @object serializeFormUrl [function]
+&gt; &gt;  *   All elements of the form that have a non-empty name
+&gt; &gt;  *   attribute and are not disabled will be serialized.
+&gt; &gt;  *
+&gt; &gt;  *   Serialize form data in a format similar to the
+&gt; &gt;  *   &lt;a href=&quot; http://www.w3.org/TR/1999/REC-html401-19991224/interact/
+&gt; &gt; forms.html#h-17.13.4.1&quot;&gt;
+&gt; &gt;  *   application/x-www-form-urlencoded&lt;/a&gt; standardized format.
+&gt; &gt;  *
+&gt; &gt;  *   The handling of whitespace different from the standard.
+&gt; &gt;  *   According to the x-www-form-urlencoded standard,
+&gt; &gt;  *   a space should be encoded as a &quot;+&quot; and a newline
+&gt; &gt;  *   should be encoded as a &quot;%0D%0A&quot;.
+&gt; &gt;  *
+&gt; &gt;  *   The JavaScript encodeURIComponent function is used
+&gt; &gt;  *   to encode the form data. A space is encoded as &quot;%20&quot;.
+&gt; &gt;  *   On Windows operating system a new line is encoded
+&gt; &gt;  *   as &quot;%0D%0A&quot;. On Mac OS X a new line is encded as
+&gt; &gt;  *   just &quot;%0A&quot;.
+&gt; &gt;  *
+&gt; &gt;  * @param f [form]
+&gt; &gt;  *   The form element to be serialized.
+&gt; &gt;  *
+&gt; &gt;  * @returns [string]
+&gt; &gt;  *   The serialized form.
+&gt; &gt;  *
+&gt; &gt;  * @dependencies
+&gt; &gt;  *   r - ES3  - encodeURIComponent
+&gt; &gt;  *   a - ES1  - Array.prototype.join
+&gt; &gt;  *   a - DOM1 - HTMLFormElement.elements
+&gt; &gt;  *   a - DOM1 - HTMLFormElement.elements.length
+&gt; &gt;  *   a - DOM1 - HTMLFormElement.elements[i].name
+&gt; &gt;  *   a - DOM1 - HTMLFormElement.elements[i].value
+&gt; &gt;  *   a - DOM1 - HTMLFormElement.elements[i].disabled
+&gt; &gt;  */
+
+&gt; &gt; // test for required feature
+&gt; &gt; if (typeof encodeURIComponent != 'undefined') {
+
+&gt; &gt;   var serializeFormUrl = function(f) {
+&gt; &gt;     var i,               // elements loop index
+&gt; &gt;         ilen,            // elements loop length
+&gt; &gt;         e,               // element
+&gt; &gt;         es = f.elements,
+&gt; &gt;         c = [];          // the serialized name=value pairs
+
+&gt; &gt;     for (i=0, ilen=es.length; i&lt;ilen; i++) {
+&gt; &gt;       e = es[i];
+&gt; &gt;       if (e.name &amp;&amp; !e.disabled) {
+&gt; &gt;         c[c.length] = encodeURIComponent(e.name) + &quot;=&quot; +
+&gt; &gt;                       encodeURIComponent(e.value);
+&gt; &gt;       }
+&gt; &gt;     }
+&gt; &gt;     return c.join('&amp;');
+&gt; &gt;   };
+
+&gt; &gt; }
+
+&gt; If two inputs have the same name, the result will be incorrect.
+">
+
+How so?
+
+<QUOTE PREVIOUSPOST="
+&gt; Also,
+&gt; push has been excluded for the sake of backward compatibility,
+">
+
+Not only for backwards compatibility. I tested in at least FF2 and
+c[c.length] was quite a bit faster than c.push()
+
+<QUOTE PREVIOUSPOST="
+&gt; but was
+&gt; there was ever an agent that featured encodeURIComponent, but not
+&gt; Array.prototype.push?
+">
+
+Perhaps not but using Array.prototype.push takes more characters since
+it's existence also needs to be tested. A positive test for
+encodeURIComponent does not imply the presence of
+Array.prototype.push. That would be object inference and that is not
+good enough. I know you weren't suggesting using object inference but
+rather were questioning the avoidance of using Array.prototype.push.
+
+So c[c.length] is less code, runs faster and is more backwards
+compatible. There is really no good reason to use
+Array.prototype.push.
+
+<QUOTE PREVIOUSPOST="
+&gt; So why not create a wrapper that falls back to
+&gt; escape when encodeURIComponent is unavailable?
+">
+
+The Mozilla site
+
+&lt;URL: http://developer.mozilla.org/en/docs/Core_JavaScript_1.5_Guide:Predef... &gt;
+
+states that
+
+&quot;The escape and unescape functions do not work properly for non-ASCII
+characters and have been deprecated.&quot;
+
+Since escape is not a true replacement of encodeURIComponent it isn't
+a sufficient fallback. If the escape fallback was included, a
+developer who tests only on browsers with encodeURIComponent and sees
+that the page works would be fooled because the page may fail on
+browsers without encodeURIComponenet but with escape. These kind of
+fallbacks really worry me.
+
+The YUI event library had one of these non-equivalent fallbacks that
+made me aware of this. Early Safari 2 and earlier browsers could not
+prevent default for a click event if the click event listener was
+attached using addEventListener. In YUI the fallback for safari _only_
+was to assign to the legacy element.onclick. The implementation would
+clobber any existing element.onclick property. I thought this was
+unfortunate as many developers don't test on Safari.
+
+Given how few browsers in use do not have encodeURIComponent, I think
+it is ok to leave serializeFormUrl undefined in those browsers. There
+is a very good chance that in these older browsers even if
+serializeFormUrl is defined that the other functions needed for a non-
+trivial script would not be defined. serializeFormUrl will not be
+defined in some old browsers and where to draw the line in browser
+history is a grey area. After rethinking this, thanks to your
+prompting, I think I've drawn the line in the right place.
+
+<QUOTE PREVIOUSPOST="
+&gt; Also, would it really be that much of a performance hit to switch (or
+&gt; branch) on each element's type and deal with checkboxes and radio
+&gt; buttons?
+">
+
+No it probably wouldn't be and this is the type of argument Matt Kruse
+makes for general purpose libraries and against which Richard Cornford
+argues. What I'm discovering with this &quot;multiple implementations&quot;
+approach is that different people will think different amounts of code
+in the &quot;simplest&quot; of the multiple implementations. One great thing
+about a code repository with multiple implementations is that varying
+degrees of functionality can be included. There can be bare bones
+implementations up to the usually sufficient functionality of the
+popular general purpose libraries and even more full featured
+implementations. It is a win-win-win code repository philosophy.
+
+<QUOTE PREVIOUSPOST="
+&gt; It certainly wouldn't increase the size significantly.  The
+&gt; complete solution for select elements would double the size and add a
+&gt; little more processing overhead, so perhaps that should be in its own
+&gt; version.  Personally, I have always used a single general function for
+&gt; this.
+">
+
+As have I and one will be included as one of the multiple
+implementations. It may be that this implementation is the one that
+most people want to use.
+
+<QUOTE PREVIOUSPOST="
+&gt; I suppose if I ever had a project that excluded select elements
+&gt; and needed to serialize extremely long forms, perhaps I would crop out
+&gt; the select handling.  Otherwise, it seems like too much granularity,
+&gt; resulting in the extra work required to document and maintain two
+&gt; versions.
+">
+
+This is something I'm interested to watch evolve over time. Certainly
+there is some art in this balance. Since this (and general Ajax code
+components) are the first components I want to make sure to try out
+this system.
+
+<QUOTE PREVIOUSPOST="
+&gt; Speaking of granularity, does it make sense for a function like this
+&gt; to be an island?
+">
+
+Consistent code design is valuable.
+
+<QUOTE PREVIOUSPOST="
+&gt; I can't see it being of much use outside of a basic
+&gt; Ajax module.
+">
+
+Indeed that is likely where it will be used.
+
+<QUOTE PREVIOUSPOST="
+&gt; Building with functions as independent units is an
+&gt; interesting idea, but seems like overkill for most projects.
+">
+
+But it doesn't take any/much code overhead to stick with this
+philosophy. The structure of the code I've developed so far seems very
+good. I think it is worth a shot and to see what happens.
+
+Peter
+</POST>
+<POST>
+<POSTER> David Mark &lt;dmark.cins...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-05T02:05:00 </POSTDATE>
+On Dec 4, 9:12 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 3, 11:39 pm, dm ... @cinsoft.net wrote:
+
+&gt; &gt; On Nov 11, 2:58 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; Below is my current version of the simple serializeFormUrl function.
+
+&gt; &gt; &gt; I've changed the documentation format. In the dependency section &quot;a&quot;
+&gt; &gt; &gt; means a required and assumed feature, &quot;r&quot; means a required and tested
+&gt; &gt; &gt; feature. I don't mind if the documentation system evolves over the
+&gt; &gt; &gt; implementation of the first few interfaces. If this is on the right
+&gt; &gt; &gt; track that is fine with me for now.
+
+&gt; &gt; &gt; I removed the use of c.push() in favor of c[c.length]. This change
+&gt; &gt; &gt; reduces dependencies, is faster (at least in FF2), reduces code size
+&gt; &gt; &gt; (no need for feature test), and does not require any extra variables.
+
+&gt; &gt; &gt; I reduce the indent to two spaces since usenet has such short line
+&gt; &gt; &gt; lengths (approx 70 chars). I personally prefer four spaces but I think
+&gt; &gt; &gt; two will be better for this project.
+
+&gt; &gt; &gt; If there are any remaining offenses in this implementation of the
+&gt; &gt; &gt; interface that make this implementation inadequate for recommendation,
+&gt; &gt; &gt; please post an edited version.
+
+&gt; &gt; &gt; /**
+&gt; &gt; &gt;  * @object serializeFormUrl [function]
+&gt; &gt; &gt;  *   All elements of the form that have a non-empty name
+&gt; &gt; &gt;  *   attribute and are not disabled will be serialized.
+&gt; &gt; &gt;  *
+&gt; &gt; &gt;  *   Serialize form data in a format similar to the
+&gt; &gt; &gt;  *   &lt;a href=&quot; http://www.w3.org/TR/1999/REC-html401-19991224/interact/
+&gt; &gt; &gt; forms.html#h-17.13.4.1&quot;&gt;
+&gt; &gt; &gt;  *   application/x-www-form-urlencoded&lt;/a&gt; standardized format.
+&gt; &gt; &gt;  *
+&gt; &gt; &gt;  *   The handling of whitespace different from the standard.
+&gt; &gt; &gt;  *   According to the x-www-form-urlencoded standard,
+&gt; &gt; &gt;  *   a space should be encoded as a &quot;+&quot; and a newline
+&gt; &gt; &gt;  *   should be encoded as a &quot;%0D%0A&quot;.
+&gt; &gt; &gt;  *
+&gt; &gt; &gt;  *   The JavaScript encodeURIComponent function is used
+&gt; &gt; &gt;  *   to encode the form data. A space is encoded as &quot;%20&quot;.
+&gt; &gt; &gt;  *   On Windows operating system a new line is encoded
+&gt; &gt; &gt;  *   as &quot;%0D%0A&quot;. On Mac OS X a new line is encded as
+&gt; &gt; &gt;  *   just &quot;%0A&quot;.
+&gt; &gt; &gt;  *
+&gt; &gt; &gt;  * @param f [form]
+&gt; &gt; &gt;  *   The form element to be serialized.
+&gt; &gt; &gt;  *
+&gt; &gt; &gt;  * @returns [string]
+&gt; &gt; &gt;  *   The serialized form.
+&gt; &gt; &gt;  *
+&gt; &gt; &gt;  * @dependencies
+&gt; &gt; &gt;  *   r - ES3  - encodeURIComponent
+&gt; &gt; &gt;  *   a - ES1  - Array.prototype.join
+&gt; &gt; &gt;  *   a - DOM1 - HTMLFormElement.elements
+&gt; &gt; &gt;  *   a - DOM1 - HTMLFormElement.elements.length
+&gt; &gt; &gt;  *   a - DOM1 - HTMLFormElement.elements[i].name
+&gt; &gt; &gt;  *   a - DOM1 - HTMLFormElement.elements[i].value
+&gt; &gt; &gt;  *   a - DOM1 - HTMLFormElement.elements[i].disabled
+&gt; &gt; &gt;  */
+
+&gt; &gt; &gt; // test for required feature
+&gt; &gt; &gt; if (typeof encodeURIComponent != 'undefined') {
+
+&gt; &gt; &gt;   var serializeFormUrl = function(f) {
+&gt; &gt; &gt;     var i,               // elements loop index
+&gt; &gt; &gt;         ilen,            // elements loop length
+&gt; &gt; &gt;         e,               // element
+&gt; &gt; &gt;         es = f.elements,
+&gt; &gt; &gt;         c = [];          // the serialized name=value pairs
+
+&gt; &gt; &gt;     for (i=0, ilen=es.length; i&lt;ilen; i++) {
+&gt; &gt; &gt;       e = es[i];
+&gt; &gt; &gt;       if (e.name &amp;&amp; !e.disabled) {
+&gt; &gt; &gt;         c[c.length] = encodeURIComponent(e.name) + &quot;=&quot; +
+&gt; &gt; &gt;                       encodeURIComponent(e.value);
+&gt; &gt; &gt;       }
+&gt; &gt; &gt;     }
+&gt; &gt; &gt;     return c.join('&amp;');
+&gt; &gt; &gt;   };
+
+&gt; &gt; &gt; }
+
+&gt; &gt; If two inputs have the same name, the result will be incorrect.
+
+&gt; How so?
+">
+
+The value will be an array, which this code will skip as arrays have
+no name property.  You have to loop through the elements and find the
+unique names first, then loop through the names.
+
+Also, somebody suggested that an additional parameter to indicate
+which submit button should be used, in the event of multiple buttons,
+and that seems like a good addition.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Also,
+&gt; &gt; push has been excluded for the sake of backward compatibility,
+
+&gt; Not only for backwards compatibility. I tested in at least FF2 and
+&gt; c[c.length] was quite a bit faster than c.push()
+">
+
+Interesting.  I had always heard the opposite about simulating push
+that way.  I can't imagine it makes a huge difference unless the form
+has thousands of elements, but good to know nonetheless.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; but was
+&gt; &gt; there was ever an agent that featured encodeURIComponent, but not
+&gt; &gt; Array.prototype.push?
+
+&gt; Perhaps not but using Array.prototype.push takes more characters since
+&gt; it's existence also needs to be tested. A positive test for
+&gt; encodeURIComponent does not imply the presence of
+&gt; Array.prototype.push. That would be object inference and that is not
+&gt; good enough. I know you weren't suggesting using object inference but
+&gt; rather were questioning the avoidance of using Array.prototype.push.
+">
+
+Right, you wouldn't skip the test for push in any event.
+
+<QUOTE PREVIOUSPOST="
+&gt; So c[c.length] is less code, runs faster and is more backwards
+&gt; compatible. There is really no good reason to use
+&gt; Array.prototype.push.
+">
+
+Sounds good to me.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; So why not create a wrapper that falls back to
+&gt; &gt; escape when encodeURIComponent is unavailable?
+
+&gt; The Mozilla site
+
+&gt; &lt;URL: http://developer.mozilla.org/en/docs/Core_JavaScript_1.5_Guide:Predef ...&gt;
+
+&gt; states that
+
+&gt; &quot;The escape and unescape functions do not work properly for non-ASCII
+&gt; characters and have been deprecated.&quot;
+">
+
+Right.
+
+<QUOTE PREVIOUSPOST="
+&gt; Since escape is not a true replacement of encodeURIComponent it isn't
+&gt; a sufficient fallback. If the escape fallback was included, a
+&gt; developer who tests only on browsers with encodeURIComponent and sees
+&gt; that the page works would be fooled because the page may fail on
+&gt; browsers without encodeURIComponenet but with escape. These kind of
+&gt; fallbacks really worry me.
+">
+
+I understand what you mean.  It would have to be documented that
+certain characters are not encoded properly and it is probably not
+worth the trouble as I can't think of a browser other than IE5.0 that
+would be able to do Ajax (via ActiveX) and does not include
+encodeURIComponent.
+
+<QUOTE PREVIOUSPOST="
+&gt; The YUI event library had one of these non-equivalent fallbacks that
+&gt; made me aware of this. Early Safari 2 and earlier browsers could not
+&gt; prevent default for a click event if the click event listener was
+&gt; attached using addEventListener. In YUI the fallback for safari _only_
+&gt; was to assign to the legacy element.onclick. The implementation would
+&gt; clobber any existing element.onclick property. I thought this was
+&gt; unfortunate as many developers don't test on Safari.
+">
+
+That's complete insanity.  Does it still do this?
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; Given how few browsers in use do not have encodeURIComponent, I think
+&gt; it is ok to leave serializeFormUrl undefined in those browsers. There
+&gt; is a very good chance that in these older browsers even if
+&gt; serializeFormUrl is defined that the other functions needed for a non-
+&gt; trivial script would not be defined. serializeFormUrl will not be
+&gt; defined in some old browsers and where to draw the line in browser
+&gt; history is a grey area. After rethinking this, thanks to your
+&gt; prompting, I think I've drawn the line in the right place.
+
+&gt; &gt; Also, would it really be that much of a performance hit to switch (or
+&gt; &gt; branch) on each element's type and deal with checkboxes and radio
+&gt; &gt; buttons?
+
+&gt; No it probably wouldn't be and this is the type of argument Matt Kruse
+&gt; makes for general purpose libraries and against which Richard Cornford
+&gt; argues. What I'm discovering with this &quot;multiple implementations&quot;
+&gt; approach is that different people will think different amounts of code
+&gt; in the &quot;simplest&quot; of the multiple implementations. One great thing
+&gt; about a code repository with multiple implementations is that varying
+&gt; degrees of functionality can be included. There can be bare bones
+&gt; implementations up to the usually sufficient functionality of the
+&gt; popular general purpose libraries and even more full featured
+&gt; implementations. It is a win-win-win code repository philosophy.
+">
+
+I understand that, but how granular does a dozen line function need to
+be?  It seems like it will be slow going to build this repository into
+a comprehensive resource.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; It certainly wouldn't increase the size significantly.  The
+&gt; &gt; complete solution for select elements would double the size and add a
+&gt; &gt; little more processing overhead, so perhaps that should be in its own
+&gt; &gt; version.  Personally, I have always used a single general function for
+&gt; &gt; this.
+
+&gt; As have I and one will be included as one of the multiple
+&gt; implementations. It may be that this implementation is the one that
+&gt; most people want to use.
+">
+
+I suspect it will be.  It seems most JavaScript developers today
+couldn't care less about file size.  In fact, most don't understand
+how to compare file sizes.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; I suppose if I ever had a project that excluded select elements
+&gt; &gt; and needed to serialize extremely long forms, perhaps I would crop out
+&gt; &gt; the select handling.  Otherwise, it seems like too much granularity,
+&gt; &gt; resulting in the extra work required to document and maintain two
+&gt; &gt; versions.
+
+&gt; This is something I'm interested to watch evolve over time. Certainly
+&gt; there is some art in this balance. Since this (and general Ajax code
+">
+
+Yes, it can be tricky to come up with the right granularity in any
+library, but especially for a general purpose repository.
+
+<QUOTE PREVIOUSPOST="
+&gt; components) are the first components I want to make sure to try out
+&gt; this system.
+
+&gt; &gt; Speaking of granularity, does it make sense for a function like this
+&gt; &gt; to be an island?
+
+&gt; Consistent code design is valuable.
+">
+
+What I meant was that perhaps the function should be part of a module.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; I can't see it being of much use outside of a basic
+&gt; &gt; Ajax module.
+
+&gt; Indeed that is likely where it will be used.
+
+&gt; &gt; Building with functions as independent units is an
+&gt; &gt; interesting idea, but seems like overkill for most projects.
+
+&gt; But it doesn't take any/much code overhead to stick with this
+&gt; philosophy. The structure of the code I've developed so far seems very
+&gt; good. I think it is worth
+">
+
+...
+read more »
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-05T03:17:00 </POSTDATE>
+On Dec 4, 11:05 pm, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 4, 9:12 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+&gt; &gt; On Dec 3, 11:39 pm, dm ... @cinsoft.net wrote:
+
+&gt; &gt; &gt; On Nov 11, 2:58 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; &gt; Below is my current version of the simple serializeFormUrl function.
+
+&gt; &gt; &gt; &gt; I've changed the documentation format. In the dependency section &quot;a&quot;
+&gt; &gt; &gt; &gt; means a required and assumed feature, &quot;r&quot; means a required and tested
+&gt; &gt; &gt; &gt; feature. I don't mind if the documentation system evolves over the
+&gt; &gt; &gt; &gt; implementation of the first few interfaces. If this is on the right
+&gt; &gt; &gt; &gt; track that is fine with me for now.
+
+&gt; &gt; &gt; &gt; I removed the use of c.push() in favor of c[c.length]. This change
+&gt; &gt; &gt; &gt; reduces dependencies, is faster (at least in FF2), reduces code size
+&gt; &gt; &gt; &gt; (no need for feature test), and does not require any extra variables.
+
+&gt; &gt; &gt; &gt; I reduce the indent to two spaces since usenet has such short line
+&gt; &gt; &gt; &gt; lengths (approx 70 chars). I personally prefer four spaces but I think
+&gt; &gt; &gt; &gt; two will be better for this project.
+
+&gt; &gt; &gt; &gt; If there are any remaining offenses in this implementation of the
+&gt; &gt; &gt; &gt; interface that make this implementation inadequate for recommendation,
+&gt; &gt; &gt; &gt; please post an edited version.
+
+&gt; &gt; &gt; &gt; /**
+&gt; &gt; &gt; &gt;  * @object serializeFormUrl [function]
+&gt; &gt; &gt; &gt;  *   All elements of the form that have a non-empty name
+&gt; &gt; &gt; &gt;  *   attribute and are not disabled will be serialized.
+&gt; &gt; &gt; &gt;  *
+&gt; &gt; &gt; &gt;  *   Serialize form data in a format similar to the
+&gt; &gt; &gt; &gt;  *   &lt;a href=&quot; http://www.w3.org/TR/1999/REC-html401-19991224/interact/
+&gt; &gt; &gt; &gt; forms.html#h-17.13.4.1&quot;&gt;
+&gt; &gt; &gt; &gt;  *   application/x-www-form-urlencoded&lt;/a&gt; standardized format.
+&gt; &gt; &gt; &gt;  *
+&gt; &gt; &gt; &gt;  *   The handling of whitespace different from the standard.
+&gt; &gt; &gt; &gt;  *   According to the x-www-form-urlencoded standard,
+&gt; &gt; &gt; &gt;  *   a space should be encoded as a &quot;+&quot; and a newline
+&gt; &gt; &gt; &gt;  *   should be encoded as a &quot;%0D%0A&quot;.
+&gt; &gt; &gt; &gt;  *
+&gt; &gt; &gt; &gt;  *   The JavaScript encodeURIComponent function is used
+&gt; &gt; &gt; &gt;  *   to encode the form data. A space is encoded as &quot;%20&quot;.
+&gt; &gt; &gt; &gt;  *   On Windows operating system a new line is encoded
+&gt; &gt; &gt; &gt;  *   as &quot;%0D%0A&quot;. On Mac OS X a new line is encded as
+&gt; &gt; &gt; &gt;  *   just &quot;%0A&quot;.
+&gt; &gt; &gt; &gt;  *
+&gt; &gt; &gt; &gt;  * @param f [form]
+&gt; &gt; &gt; &gt;  *   The form element to be serialized.
+&gt; &gt; &gt; &gt;  *
+&gt; &gt; &gt; &gt;  * @returns [string]
+&gt; &gt; &gt; &gt;  *   The serialized form.
+&gt; &gt; &gt; &gt;  *
+&gt; &gt; &gt; &gt;  * @dependencies
+&gt; &gt; &gt; &gt;  *   r - ES3  - encodeURIComponent
+&gt; &gt; &gt; &gt;  *   a - ES1  - Array.prototype.join
+&gt; &gt; &gt; &gt;  *   a - DOM1 - HTMLFormElement.elements
+&gt; &gt; &gt; &gt;  *   a - DOM1 - HTMLFormElement.elements.length
+&gt; &gt; &gt; &gt;  *   a - DOM1 - HTMLFormElement.elements[i].name
+&gt; &gt; &gt; &gt;  *   a - DOM1 - HTMLFormElement.elements[i].value
+&gt; &gt; &gt; &gt;  *   a - DOM1 - HTMLFormElement.elements[i].disabled
+&gt; &gt; &gt; &gt;  */
+
+&gt; &gt; &gt; &gt; // test for required feature
+&gt; &gt; &gt; &gt; if (typeof encodeURIComponent != 'undefined') {
+
+&gt; &gt; &gt; &gt;   var serializeFormUrl = function(f) {
+&gt; &gt; &gt; &gt;     var i,               // elements loop index
+&gt; &gt; &gt; &gt;         ilen,            // elements loop length
+&gt; &gt; &gt; &gt;         e,               // element
+&gt; &gt; &gt; &gt;         es = f.elements,
+&gt; &gt; &gt; &gt;         c = [];          // the serialized name=value pairs
+
+&gt; &gt; &gt; &gt;     for (i=0, ilen=es.length; i&lt;ilen; i++) {
+&gt; &gt; &gt; &gt;       e = es[i];
+&gt; &gt; &gt; &gt;       if (e.name &amp;&amp; !e.disabled) {
+&gt; &gt; &gt; &gt;         c[c.length] = encodeURIComponent(e.name) + &quot;=&quot; +
+&gt; &gt; &gt; &gt;                       encodeURIComponent(e.value);
+&gt; &gt; &gt; &gt;       }
+&gt; &gt; &gt; &gt;     }
+&gt; &gt; &gt; &gt;     return c.join('&amp;');
+&gt; &gt; &gt; &gt;   };
+
+&gt; &gt; &gt; &gt; }
+
+&gt; &gt; &gt; If two inputs have the same name, the result will be incorrect.
+
+&gt; &gt; How so?
+
+&gt; The value will be an array, which this code will skip as arrays have
+&gt; no name property.
+">
+
+In which browser? In FF2 the following works as I expected.
+
+&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.01//EN&quot;
+&quot; http://www.w3.org/TR/html4/strict.dtd &quot;&gt;
+
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+&lt;title&gt;form test&lt;/title&gt;
+
+&lt;script type=&quot;text/javascript&quot;&gt;
+
+if (typeof encodeURIComponent != 'undefined') {
+var urlencode = function(s) {
+return encodeURIComponent(s);
+};
+}
+
+if (typeof urlencode != 'undefined') {
+var serializeFormUrlencoded = function(f) {
+var e,               // element
+es = f.elements,
+c = [];          // the serialized name=value pairs
+
+for (var i=0, ilen=es.length; i&lt;ilen; i++) {
+e = es[i];
+if (e.name &amp;&amp; !e.disabled) {
+c[c.length] = urlencode(e.name) + &quot;=&quot; +
+urlencode(e.value);
+}
+}
+return c.join('&amp;');
+};
+}
+
+&lt;/script&gt;
+&lt;/head&gt;
+&lt;body&gt;
+
+&lt;form action=&quot;#&quot; onsubmit=&quot;return false;&quot;&gt;
+&lt;p&gt;&lt;input type=&quot;text&quot; name=&quot;foo&quot; value=&quot;alpha&quot;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;input type=&quot;text&quot; name=&quot;foo&quot; value=&quot;beta&quot;&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;input type=&quot;submit&quot; value=&quot;serializeFormUrlencoded&quot;
+onclick=&quot;alert(serializeFormUrlencoded(this.form));&quot;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;input type=&quot;submit&quot; value=&quot;console.log&quot;
+onclick=&quot;console.log(this.form.elements);&quot;&gt;&lt;/p&gt;
+
+&lt;/form&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; You have to loop through the elements and find the
+&gt; unique names first, then loop through the names.
+
+&gt; Also, somebody suggested that an additional parameter to indicate
+&gt; which submit button should be used, in the event of multiple buttons,
+&gt; and that seems like a good addition.
+">
+
+I made a note to return to this.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; &gt; Also,
+&gt; &gt; &gt; push has been excluded for the sake of backward compatibility,
+
+&gt; &gt; Not only for backwards compatibility. I tested in at least FF2 and
+&gt; &gt; c[c.length] was quite a bit faster than c.push()
+
+&gt; Interesting.  I had always heard the opposite about simulating push
+&gt; that way.  I can't imagine it makes a huge difference unless the form
+&gt; has thousands of elements, but good to know nonetheless.
+">
+
+Maybe simulating push by writing a function to do the push is slower
+because of the extra function call to a user function?
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; The YUI event library had one of these non-equivalent fallbacks that
+&gt; &gt; made me aware of this. Early Safari 2 and earlier browsers could not
+&gt; &gt; prevent default for a click event if the click event listener was
+&gt; &gt; attached using addEventListener. In YUI the fallback for safari _only_
+&gt; &gt; was to assign to the legacy element.onclick. The implementation would
+&gt; &gt; clobber any existing element.onclick property. I thought this was
+&gt; &gt; unfortunate as many developers don't test on Safari.
+
+&gt; That's complete insanity.  Does it still do this?
+">
+
+There is still special code for versions of webkit before version 418.
+Now they don't just clobber the exiting element.onclick attribute
+blindly. They replace it with the fallback technique listener function
+and then attach the original function to the fallback technique. It is
+still a non-equivalent fallback because a developer may assign to
+element.onclick and clobber the fallback technique listener in Safari.
+However the developer wouldn't notice this in testing unless they test
+on old versions of Safari. I don't expect many developers would either
+assign to element.onclick if they are using YUI or test in older
+Safari. I have never seen any YUI documentation warning about this
+problem. To me this is a situation to program to the lowest common
+denominator so that testing in any browser would reveal a problem.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Given how few browsers in use do not have encodeURIComponent, I think
+&gt; &gt; it is ok to leave serializeFormUrl undefined in those browsers. There
+&gt; &gt; is a very good chance that in these older browsers even if
+&gt; &gt; serializeFormUrl is defined that the other functions needed for a non-
+&gt; &gt; trivial script would not be defined. serializeFormUrl will not be
+&gt; &gt; defined in some old browsers and where to draw the line in browser
+&gt; &gt; history is a grey area. After rethinking this, thanks to your
+&gt; &gt; prompting, I think I've drawn the line in the right place.
+
+&gt; &gt; &gt; Also, would it really be that much of a performance hit to switch (or
+&gt; &gt; &gt; branch) on each element's type and deal with checkboxes and radio
+&gt; &gt; &gt; buttons?
+
+&gt; &gt; No it probably wouldn't be and this is the type of argument Matt Kruse
+&gt; &gt; makes for general purpose libraries and against which Richard Cornford
+&gt; &gt; argues. What I'm discovering with this &quot;multiple implementations&quot;
+&gt; &gt; approach is that different people will think different amounts of code
+&gt; &gt; in the &quot;simplest&quot; of the multiple implementations. One great thing
+&gt; &gt; about a code repository with multiple implementations is that varying
+&gt; &gt; degrees of functionality can be included. There can be bare bones
+&gt; &gt; implementations up to the usually sufficient functionality of the
+&gt; &gt; popular general purpose libraries and even more full featured
+&gt; &gt; implementations. It is a win-win-win code repository philosophy.
+
+&gt; I understand that, but how granular does a dozen line function need to
+&gt; be?  It seems like it will be slow going to build this repository into
+&gt; a comprehensive resource.
+">
+
+We don't need to implement every of the multiple implementations. That
+is actually not realistic. Just one or a few of each function.
+
+I think aggregating some code will go quite quickly. There are plenty
+of things to learn and discuss along the way and these details need
+discussion anyway. There are also plenty of quickly written libraries
+out there. We don't need another one :)
+
+I'd like to see nice Ajax and event code. They are certainly part of
+the core of any JavaScript resource. (I have my idea for an Ajax
+library mapped out. I think the modularity is good and I'll be posting
+it to the group later. &lt;URL: http://cljs.michaux.ca/trac/browser/
+branches/peterAjax/src/ajax&gt;. By the way, if you would like trac wiki
+and ticket privileges please send me an email.)
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; &gt; It certainly wouldn't increase the size significantly.  The
+&gt; &gt; &gt; complete solution for select elements would double the size and add a
+&gt; &gt; &gt; little more processing overhead, so perhaps that should be in its own
+&gt; &gt; &gt; version.  Personally, I
+">
+
+...
+read more »
+</POST>
+<POST>
+<POSTER> David Mark &lt;dmark.cins...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-05T03:59:00 </POSTDATE>
+On Dec 5, 3:17 am, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 4, 11:05 pm, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+
+&gt; &gt; On Dec 4, 9:12 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; On Dec 3, 11:39 pm, dm ... @cinsoft.net wrote:
+
+&gt; &gt; &gt; &gt; On Nov 11, 2:58 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; &gt; &gt; Below is my current version of the simple serializeFormUrl function.
+
+&gt; &gt; &gt; &gt; &gt; I've changed the documentation format. In the dependency section &quot;a&quot;
+&gt; &gt; &gt; &gt; &gt; means a required and assumed feature, &quot;r&quot; means a required and tested
+&gt; &gt; &gt; &gt; &gt; feature. I don't mind if the documentation system evolves over the
+&gt; &gt; &gt; &gt; &gt; implementation of the first few interfaces. If this is on the right
+&gt; &gt; &gt; &gt; &gt; track that is fine with me for now.
+
+&gt; &gt; &gt; &gt; &gt; I removed the use of c.push() in favor of c[c.length]. This change
+&gt; &gt; &gt; &gt; &gt; reduces dependencies, is faster (at least in FF2), reduces code size
+&gt; &gt; &gt; &gt; &gt; (no need for feature test), and does not require any extra variables.
+
+&gt; &gt; &gt; &gt; &gt; I reduce the indent to two spaces since usenet has such short line
+&gt; &gt; &gt; &gt; &gt; lengths (approx 70 chars). I personally prefer four spaces but I think
+&gt; &gt; &gt; &gt; &gt; two will be better for this project.
+
+&gt; &gt; &gt; &gt; &gt; If there are any remaining offenses in this implementation of the
+&gt; &gt; &gt; &gt; &gt; interface that make this implementation inadequate for recommendation,
+&gt; &gt; &gt; &gt; &gt; please post an edited version.
+
+&gt; &gt; &gt; &gt; &gt; /**
+&gt; &gt; &gt; &gt; &gt;  * @object serializeFormUrl [function]
+&gt; &gt; &gt; &gt; &gt;  *   All elements of the form that have a non-empty name
+&gt; &gt; &gt; &gt; &gt;  *   attribute and are not disabled will be serialized.
+&gt; &gt; &gt; &gt; &gt;  *
+&gt; &gt; &gt; &gt; &gt;  *   Serialize form data in a format similar to the
+&gt; &gt; &gt; &gt; &gt;  *   &lt;a href=&quot; http://www.w3.org/TR/1999/REC-html401-19991224/interact/
+&gt; &gt; &gt; &gt; &gt; forms.html#h-17.13.4.1&quot;&gt;
+&gt; &gt; &gt; &gt; &gt;  *   application/x-www-form-urlencoded&lt;/a&gt; standardized format.
+&gt; &gt; &gt; &gt; &gt;  *
+&gt; &gt; &gt; &gt; &gt;  *   The handling of whitespace different from the standard.
+&gt; &gt; &gt; &gt; &gt;  *   According to the x-www-form-urlencoded standard,
+&gt; &gt; &gt; &gt; &gt;  *   a space should be encoded as a &quot;+&quot; and a newline
+&gt; &gt; &gt; &gt; &gt;  *   should be encoded as a &quot;%0D%0A&quot;.
+&gt; &gt; &gt; &gt; &gt;  *
+&gt; &gt; &gt; &gt; &gt;  *   The JavaScript encodeURIComponent function is used
+&gt; &gt; &gt; &gt; &gt;  *   to encode the form data. A space is encoded as &quot;%20&quot;.
+&gt; &gt; &gt; &gt; &gt;  *   On Windows operating system a new line is encoded
+&gt; &gt; &gt; &gt; &gt;  *   as &quot;%0D%0A&quot;. On Mac OS X a new line is encded as
+&gt; &gt; &gt; &gt; &gt;  *   just &quot;%0A&quot;.
+&gt; &gt; &gt; &gt; &gt;  *
+&gt; &gt; &gt; &gt; &gt;  * @param f [form]
+&gt; &gt; &gt; &gt; &gt;  *   The form element to be serialized.
+&gt; &gt; &gt; &gt; &gt;  *
+&gt; &gt; &gt; &gt; &gt;  * @returns [string]
+&gt; &gt; &gt; &gt; &gt;  *   The serialized form.
+&gt; &gt; &gt; &gt; &gt;  *
+&gt; &gt; &gt; &gt; &gt;  * @dependencies
+&gt; &gt; &gt; &gt; &gt;  *   r - ES3  - encodeURIComponent
+&gt; &gt; &gt; &gt; &gt;  *   a - ES1  - Array.prototype.join
+&gt; &gt; &gt; &gt; &gt;  *   a - DOM1 - HTMLFormElement.elements
+&gt; &gt; &gt; &gt; &gt;  *   a - DOM1 - HTMLFormElement.elements.length
+&gt; &gt; &gt; &gt; &gt;  *   a - DOM1 - HTMLFormElement.elements[i].name
+&gt; &gt; &gt; &gt; &gt;  *   a - DOM1 - HTMLFormElement.elements[i].value
+&gt; &gt; &gt; &gt; &gt;  *   a - DOM1 - HTMLFormElement.elements[i].disabled
+&gt; &gt; &gt; &gt; &gt;  */
+
+&gt; &gt; &gt; &gt; &gt; // test for required feature
+&gt; &gt; &gt; &gt; &gt; if (typeof encodeURIComponent != 'undefined') {
+
+&gt; &gt; &gt; &gt; &gt;   var serializeFormUrl = function(f) {
+&gt; &gt; &gt; &gt; &gt;     var i,               // elements loop index
+&gt; &gt; &gt; &gt; &gt;         ilen,            // elements loop length
+&gt; &gt; &gt; &gt; &gt;         e,               // element
+&gt; &gt; &gt; &gt; &gt;         es = f.elements,
+&gt; &gt; &gt; &gt; &gt;         c = [];          // the serialized name=value pairs
+
+&gt; &gt; &gt; &gt; &gt;     for (i=0, ilen=es.length; i&lt;ilen; i++) {
+&gt; &gt; &gt; &gt; &gt;       e = es[i];
+&gt; &gt; &gt; &gt; &gt;       if (e.name &amp;&amp; !e.disabled) {
+&gt; &gt; &gt; &gt; &gt;         c[c.length] = encodeURIComponent(e.name) + &quot;=&quot; +
+&gt; &gt; &gt; &gt; &gt;                       encodeURIComponent(e.value);
+&gt; &gt; &gt; &gt; &gt;       }
+&gt; &gt; &gt; &gt; &gt;     }
+&gt; &gt; &gt; &gt; &gt;     return c.join('&amp;');
+&gt; &gt; &gt; &gt; &gt;   };
+
+&gt; &gt; &gt; &gt; &gt; }
+
+&gt; &gt; &gt; &gt; If two inputs have the same name, the result will be incorrect.
+
+&gt; &gt; &gt; How so?
+
+&gt; &gt; The value will be an array, which this code will skip as arrays have
+&gt; &gt; no name property.
+
+&gt; In which browser? In FF2 the following works as I expected.
+
+&gt; &lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.01//EN&quot;
+&gt;   &quot; http://www.w3.org/TR/html4/strict.dtd &quot;&gt;
+
+&gt; &lt;html lang=&quot;en&quot;&gt;
+&gt; &lt;head&gt;
+&gt;   &lt;title&gt;form test&lt;/title&gt;
+
+&gt;   &lt;script type=&quot;text/javascript&quot;&gt;
+
+&gt;     if (typeof encodeURIComponent != 'undefined') {
+&gt;       var urlencode = function(s) {
+&gt;         return encodeURIComponent(s);
+&gt;       };
+&gt;     }
+
+&gt;     if (typeof urlencode != 'undefined') {
+&gt;       var serializeFormUrlencoded = function(f) {
+&gt;         var e,               // element
+&gt;             es = f.elements,
+&gt;             c = [];          // the serialized name=value pairs
+
+&gt;         for (var i=0, ilen=es.length; i&lt;ilen; i++) {
+&gt;           e = es[i];
+&gt;           if (e.name &amp;&amp; !e.disabled) {
+&gt;             c[c.length] = urlencode(e.name) + &quot;=&quot; +
+&gt;                           urlencode(e.value);
+&gt;           }
+&gt;         }
+&gt;         return c.join('&amp;');
+&gt;       };
+&gt;     }
+
+&gt;   &lt;/script&gt;
+&gt; &lt;/head&gt;
+&gt; &lt;body&gt;
+
+&gt;   &lt;form action=&quot;#&quot; onsubmit=&quot;return false;&quot;&gt;
+&gt;     &lt;p&gt;&lt;input type=&quot;text&quot; name=&quot;foo&quot; value=&quot;alpha&quot;&gt;&lt;/p&gt;
+&gt;     &lt;p&gt;&lt;input type=&quot;text&quot; name=&quot;foo&quot; value=&quot;beta&quot;&gt;&lt;/p&gt;
+">
+
+I tried this in IE6 and it did work.  When I tested similar code with
+every possible type of input element, I ran into something that
+required iterating through the names, rather than the input elements
+to keep the results consistent with an actual form submit.  IIRC, it
+was because I was calling another function to retrieve the value of
+any type of input element by name.  Apparently this version is okay as
+written.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;     &lt;p&gt;&lt;input type=&quot;submit&quot; value=&quot;serializeFormUrlencoded&quot;
+&gt;       onclick=&quot;alert(serializeFormUrlencoded(this.form));&quot;&gt;&lt;/p&gt;
+&gt;     &lt;p&gt;&lt;input type=&quot;submit&quot; value=&quot;console.log&quot;
+&gt;       onclick=&quot;console.log(this.form.elements);&quot;&gt;&lt;/p&gt;
+
+&gt;   &lt;/form&gt;
+
+&gt; &lt;/body&gt;
+&gt; &lt;/html&gt;
+
+&gt; &gt; You have to loop through the elements and find the
+&gt; &gt; unique names first, then loop through the names.
+
+&gt; &gt; Also, somebody suggested that an additional parameter to indicate
+&gt; &gt; which submit button should be used, in the event of multiple buttons,
+&gt; &gt; and that seems like a good addition.
+
+&gt; I made a note to return to this.
+
+&gt; &gt; &gt; &gt; Also,
+&gt; &gt; &gt; &gt; push has been excluded for the sake of backward compatibility,
+
+&gt; &gt; &gt; Not only for backwards compatibility. I tested in at least FF2 and
+&gt; &gt; &gt; c[c.length] was quite a bit faster than c.push()
+
+&gt; &gt; Interesting.  I had always heard the opposite about simulating push
+&gt; &gt; that way.  I can't imagine it makes a huge difference unless the form
+&gt; &gt; has thousands of elements, but good to know nonetheless.
+
+&gt; Maybe simulating push by writing a function to do the push is slower
+&gt; because of the extra function call to a user function?
+">
+
+I didn't mean that.  Supposedly, just the basic assignment was slower,
+but apparently that is not the case.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; [snip]
+
+&gt; &gt; &gt; The YUI event library had one of these non-equivalent fallbacks that
+&gt; &gt; &gt; made me aware of this. Early Safari 2 and earlier browsers could not
+&gt; &gt; &gt; prevent default for a click event if the click event listener was
+&gt; &gt; &gt; attached using addEventListener. In YUI the fallback for safari _only_
+&gt; &gt; &gt; was to assign to the legacy element.onclick. The implementation would
+&gt; &gt; &gt; clobber any existing element.onclick property. I thought this was
+&gt; &gt; &gt; unfortunate as many developers don't test on Safari.
+
+&gt; &gt; That's complete insanity.  Does it still do this?
+
+&gt; There is still special code for versions of webkit before version 418.
+&gt; Now they don't just clobber the exiting element.onclick attribute
+&gt; blindly. They replace it with the fallback technique listener function
+&gt; and then attach the original function to the fallback technique. It is
+&gt; still a non-equivalent fallback because a developer may assign to
+&gt; element.onclick and clobber the fallback technique listener in Safari.
+">
+
+Right.
+
+<QUOTE PREVIOUSPOST="
+&gt; However the developer wouldn't notice this in testing unless they test
+&gt; on old versions of Safari. I don't expect many developers would either
+&gt; assign to element.onclick if they are using YUI or test in older
+&gt; Safari. I have never seen any YUI documentation warning about this
+&gt; problem. To me this is a situation to program to the lowest common
+&gt; denominator so that testing in any browser would reveal a problem.
+">
+
+I agree.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; &gt; Given how few browsers in use do not have encodeURIComponent, I think
+&gt; &gt; &gt; it is ok to leave serializeFormUrl undefined in those browsers. There
+&gt; &gt; &gt; is a very good chance that in these older browsers even if
+&gt; &gt; &gt; serializeFormUrl is defined that the other functions needed for a non-
+&gt; &gt; &gt; trivial script would not be defined. serializeFormUrl will not be
+&gt; &gt; &gt; defined in some old browsers and where to draw the line in browser
+&gt; &gt; &gt; history is a grey area. After rethinking this, thanks to your
+&gt; &gt; &gt; prompting, I think I've drawn the line in the right place.
+
+&gt; &gt; &gt; &gt; Also, would it really be that much of a performance hit to switch (or
+&gt; &gt; &gt; &gt; branch) on each element's type and deal with checkboxes and radio
+&gt; &gt; &gt; &gt; buttons?
+
+&gt; &gt; &gt; No it probably wouldn't be and this is the type of argument Matt Kruse
+&gt; &gt; &gt; makes for general purpose libraries and against which Richard Cornford
+&gt; &gt; &gt; argues. What I'm discovering with this &quot;multiple implementations&quot;
+&gt; &gt; &gt; approach is that different people will think different amounts of code
+&gt; &gt; &gt; in the &quot;simplest&quot; of the multiple implementations. One great thing
+&gt; &gt; &gt; about a code repository with multiple implementations is that varying
+&gt; &gt; &gt; degrees of functionality can be included. There can be bare bones
+&gt; &gt; &gt; implementations up to the usually sufficient functionality of the
+&gt; &gt; &gt; popular general purpose libraries and even more full featured
+&gt; &gt; &gt; implementations. It is a win-win-win code repository philosophy.
+
+&gt; &gt; I understand that, but how granular does a dozen line function need to
+&gt; &gt; be?  It seems like it will be slow going to build this repository into
+&gt; &gt; a comprehensive resource.
+
+&gt; We don't need to implement
+">
+
+...
+read more »
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-05T09:10:00 </POSTDATE>
+On Dec 5, 12:59 am, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 5, 3:17 am, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+&gt; &gt; On Dec 4, 11:05 pm, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; On Dec 4, 9:12 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; &gt; On Dec 3, 11:39 pm, dm ... @cinsoft.net wrote:
+&gt; &gt; &gt; &gt; &gt; Speaking of granularity, does it make sense for a function like this
+&gt; &gt; &gt; &gt; &gt; to be an island?
+
+&gt; &gt; &gt; &gt; Consistent code design is valuable.
+
+&gt; &gt; &gt; What I meant was that perhaps the function should be part of a module.
+
+&gt; &gt; What do you mean by &quot;module&quot;?
+
+&gt; A group of functions related by the context in which they are
+&gt; typically used (e.g. Ajax requests.)
+">
+
+I am primarily concerned with algorithm correctness. The various
+functions produced by this project could be packaged many ways for use
+in projects. I want to make sure the code repository is flexible
+enough to use the code many ways. One function per file seems like a
+good way to go for the repository. Developers can then concatenate
+files together as they choose the appropriate implementations of each
+function for their situations.
+
+For example, I like some kind of &quot;namespacing&quot;. I inject my code into
+a legacy website and worrying less about namespace collisions is piece
+of mind. One potential packaging I think about is wrapping the
+concatenated files. For example, Ajax related functions may be grouped
+like this.
+
+var CLJS = CLJS || {};
+
+(function() {
+
+// concatenated code from repository
+// * hasAttribute
+// * urlencode
+// * serializeFormUrlencoded
+// * sendAjax
+// * ...
+
+// export one/some of the functions
+if (typeof sendAjax != 'undefined') {
+
+CLJS.sendAjax = sendAjax;
+
+}
+
+<QUOTE PREVIOUSPOST="
+})();
+">
+
+Another option for &quot;namespacing&quot; would be like the ubiquitous &quot;MM_&quot;
+functions.
+
+var global = this;
+
+(function() {
+
+// concatenated code from repository
+// * hasAttribute
+// * theDocumentElement
+// * urlencode
+// * serializeFormUrlencoded
+// * sendAjax
+// * ...
+
+// export one/some of the functions
+if (typeof sendAjax != 'undefined') {
+
+global.CLJS_sendAjax = sendAjax;
+
+}
+
+<QUOTE PREVIOUSPOST="
+})();
+">
+
+If the code repository works out well, it should be easy to use it as
+the core functionality building blocks and wrap it with the YUI,
+jQuery, ajaxtoolbox, etc APIs.
+
+Peter
+</POST>
+<POST>
+<POSTER> David Mark &lt;dmark.cins...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-05T11:33:00 </POSTDATE>
+On Dec 5, 9:10 am, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 5, 12:59 am, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+
+&gt; &gt; On Dec 5, 3:17 am, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; On Dec 4, 11:05 pm, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; &gt; On Dec 4, 9:12 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; &gt; &gt; On Dec 3, 11:39 pm, dm ... @cinsoft.net wrote:
+&gt; &gt; &gt; &gt; &gt; &gt; Speaking of granularity, does it make sense for a function like this
+&gt; &gt; &gt; &gt; &gt; &gt; to be an island?
+
+&gt; &gt; &gt; &gt; &gt; Consistent code design is valuable.
+
+&gt; &gt; &gt; &gt; What I meant was that perhaps the function should be part of a module.
+
+&gt; &gt; &gt; What do you mean by &quot;module&quot;?
+
+&gt; &gt; A group of functions related by the context in which they are
+&gt; &gt; typically used (e.g. Ajax requests.)
+
+&gt; I am primarily concerned with algorithm correctness. The various
+&gt; functions produced by this project could be packaged many ways for use
+&gt; in projects. I want to make sure the code repository is flexible
+&gt; enough to use the code many ways. One function per file seems like a
+&gt; good way to go for the repository. Developers can then concatenate
+&gt; files together as they choose the appropriate implementations of each
+&gt; function for their situations.
+
+&gt; For example, I like some kind of &quot;namespacing&quot;. I inject my code into
+&gt; a legacy website and worrying less about namespace collisions is piece
+&gt; of mind. One potential packaging I think about is wrapping the
+&gt; concatenated files. For example, Ajax related functions may be grouped
+&gt; like this.
+
+&gt; var CLJS = CLJS || {};
+
+&gt; (function() {
+
+&gt;   // concatenated code from repository
+&gt;   // * hasAttribute
+&gt;   // * urlencode
+&gt;   // * serializeFormUrlencoded
+&gt;   // * sendAjax
+&gt;   // * ...
+
+&gt;   // export one/some of the functions
+&gt;   if (typeof sendAjax != 'undefined') {
+
+&gt;     CLJS.sendAjax = sendAjax;
+
+&gt;   }
+
+&gt; })();
+">
+
+That's almost exactly what my API looks like.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; Another option for &quot;namespacing&quot; would be like the ubiquitous &quot;MM_&quot;
+&gt; functions.
+
+&gt; var global = this;
+
+&gt; (function() {
+
+&gt;   // concatenated code from repository
+&gt;   // * hasAttribute
+&gt;   // * theDocumentElement
+&gt;   // * urlencode
+&gt;   // * serializeFormUrlencoded
+&gt;   // * sendAjax
+&gt;   // * ...
+
+&gt;   // export one/some of the functions
+&gt;   if (typeof sendAjax != 'undefined') {
+
+&gt;     global.CLJS_sendAjax = sendAjax;
+
+&gt;   }
+
+&gt; })();
+">
+
+I don't care for that as it is too much pollution.
+
+<QUOTE PREVIOUSPOST="
+&gt; If the code repository works out well, it should be easy to use it as
+&gt; the core functionality building blocks and wrap it with the YUI,
+&gt; jQuery, ajaxtoolbox, etc APIs.
+">
+
+I assume you mean object wrappers that mimic these interfaces.  I
+recently wrote one for my API that is somewhat like jQuery's
+interface.  I don't particularly like that interface, but I didn't do
+it for my benefit.  Not unexpectedly, the thin object layer wrapped
+around API functions turned out to be a very efficient and flexible
+solution.
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-06T17:10:00 </POSTDATE>
+As a result of this thread it became apparent some developers may need
+to correct the different handling of whitespace by encodeURIComponent
+and the application/x-www-form-urlencoded spec. Below are the two
+implementations currently in a branch of the code repository. Any
+comments before these are considered ok and move to the repository
+trunk?
+
+// -------------------------
+
+if (typeof encodeURIComponent != 'undefined') {
+
+var urlencode = function(s) {
+return encodeURIComponent(s);
+};
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+// ------------------------
+
+var urlencode = (function() {
+
+var f = function(s) {
+return encodeURIComponent(s).replace(/%20/,'+'
+).replace(/(.{0,3})(%0A)/g,
+function(m, a, b) {return a+(a=='%0D'?'':'%0D')+b;}
+).replace(/(%0D)(.{0,3})/g,
+function(m, a, b) {return a+(b=='%0A'?'':'%0A')+b;});
+};
+
+// try-catch is shorter than version below and shouldn't shy away
+// from ECMAScript 3 syntax.
+try {
+if (f('\n \r') == '%0D%0A+%0D%0A') {
+return f;
+}
+}
+catch(e) {}
+
+// Don't need try-catch because of automatic type conversion
+// to string of second argument in older browsers (IE4 &amp;&amp; NN4.0).
+// O6 doesn't error when function passed as second argument but
+// also doesn't do any replacement: the string stays the same.
+// if (typeof encodeURIComponent != 'undefined' &amp;&amp;
+//     String.prototype.replace &amp;&amp;
+//     f('\n \r') == '%0D%0A+%0D%0A') {
+//   return f;
+// }
+
+<QUOTE PREVIOUSPOST="
+})();
+">
+
+// -----------------
+
+Comments, documentation and final tests are still pending. I need to
+get a sense of where this library is headed before I finalize those
+things with input from the group, of course.
+
+I think the prerequisite functions for an Ajax library will be
+finished soon.
+
+Peter
+</POST>
+<POST>
+<POSTER> David Mark &lt;dmark.cins...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-06T17:20:00 </POSTDATE>
+On Dec 6, 5:10 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; As a result of this thread it became apparent some developers may need
+&gt; to correct the different handling of whitespace by encodeURIComponent
+&gt; and the application/x-www-form-urlencoded spec. Below are the two
+&gt; implementations currently in a branch of the code repository. Any
+&gt; comments before these are considered ok and move to the repository
+&gt; trunk?
+
+&gt; // -------------------------
+
+&gt; if (typeof encodeURIComponent != 'undefined') {
+
+&gt;   var urlencode = function(s) {
+&gt;     return encodeURIComponent(s);
+&gt;   };
+
+&gt; }
+
+&gt; // ------------------------
+
+&gt; var urlencode = (function() {
+
+&gt;   var f = function(s) {
+&gt;     return encodeURIComponent(s).replace(/%20/,'+'
+&gt;       ).replace(/(.{0,3})(%0A)/g,
+&gt;                 function(m, a, b) {return a+(a=='%0D'?'':'%0D')+b;}
+&gt;       ).replace(/(%0D)(.{0,3})/g,
+&gt;                 function(m, a, b) {return a+(b=='%0A'?'':'%0A')+b;});
+&gt;   };
+">
+
+Seems like this could be done using the older replace method (without
+function arguments.)
+
+<QUOTE PREVIOUSPOST="
+&gt;   // try-catch is shorter than version below and shouldn't shy away
+&gt;   // from ECMAScript 3 syntax.
+&gt;   try {
+&gt;     if (f('\n \r') == '%0D%0A+%0D%0A') {
+&gt;       return f;
+&gt;     }
+&gt;   }
+&gt;   catch(e) {}
+">
+
+I can never remember if try/catch was introduced in IE5 or 5.5.  I
+think try/catch should be avoided in low-level modules, but as this
+one is for Ajax functionality, I don't think it matters (Ajax handling
+will need it anyway.)
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;   // Don't need try-catch because of automatic type conversion
+&gt;   // to string of second argument in older browsers (IE4 &amp;&amp; NN4.0).
+&gt;   // O6 doesn't error when function passed as second argument but
+&gt;   // also doesn't do any replacement: the string stays the same.
+&gt;   // if (typeof encodeURIComponent != 'undefined' &amp;&amp;
+&gt;   //     String.prototype.replace &amp;&amp;
+&gt;   //     f('\n \r') == '%0D%0A+%0D%0A') {
+&gt;   //   return f;
+&gt;   // }
+
+&gt; })();
+
+&gt; // -----------------
+
+&gt; Comments, documentation and final tests are still pending. I need to
+&gt; get a sense of where this library is headed before I finalize those
+&gt; things with input from the group, of course.
+
+&gt; I think the prerequisite functions for an Ajax library will be
+&gt; finished soon.
+
+&gt; Peter
+">
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-06T17:32:00 </POSTDATE>
+Below is the more complex form serialization implementation in a
+branch of the repository. This one even contains an attempt at
+documentation although it isn't so great.
+
+I'd like to know other opinions of assuming the existance of
+Array.protoype.join. It is very easy to test for it and the test can
+even be short as adding &quot;&amp;&amp;[].join&quot;.
+
+I'm not assuming Array.prototype.join because some other new features
+are required for this function to even work. That would be object
+inference.
+
+I'm assuming Array.prototype.join because it was part of the
+ECMAScript 1 spec and that is from a long time ago. I have never
+tested for Array.prototype.join anywhere but my JavaScript code is
+mostly for behind login.
+
+The Code Worth Recommending project is about upholding high standards
+so a check for Array.prototype.join wouldn't cause me concern but
+there are other things being assumed in this function that are equally
+old: for example, forms have an &quot;elements&quot; object property.
+
+If Array.prototype.join is not tested then that sets a precedent for
+the whole project. I was thinking the following feature testing
+principle might be a good one
+
+===========
+
+Test for the existence of all features that were introduced after NN4
+and IE4. (i.e. features that were not in both NN4 and IE4)
+
+For features that were in NN4 and IE4, only test for their existence
+if there is a newer known browser that does not have the feature.
+
+Test that a feature works properly if there has been a known buggy
+implementation of that feature or implementations with various
+abilities (e.g. String.prototype.replace) in NN4, IE4 or newer
+browsers.
+
+===========
+
+Peter
+
+/**
+* @object serializeFormUrlencoded [function]
+*   All elements of the form of type
+*     * select-one
+*     * select-multiple
+*     * radio
+*     * checkbox
+*     * text
+*     * password
+*     * hidden
+*     * textarea
+*   with a non-empty name property and are not disabled
+*   will be serialized.
+*
+*   Serialize form data in a format similar or identical to the
+*   &lt;a href=&quot; http://www.w3.org/TR/1999/REC-html401-19991224/interact/
+forms.html#h-17.13.4.1&quot;&gt;
+*   application/x-www-form-urlencoded&lt;/a&gt; standardized format.
+*   The handling of whitespace is determined by which
+*   urlencode function is used with this function.
+*
+* @param f [form]
+*   The form element to be serialized.
+*
+* @returns [string]
+*   The serialized form.
+*
+* @dependencies
+*   r - user - urlencode
+*   r - user - getOptionValue
+*   a - ES1  - Array.prototype.join
+*   a - DOM1 - HTMLFormElement.elements
+*   a - DOM1 - HTMLFormElement.elements.length
+*   a - DOM1 - HTMLFormElement.elements[i].name
+*   a - DOM1 - HTMLFormElement.elements[i].type
+*   a - DOM1 - HTMLFormElement.elements[i].value
+*   a - DOM1 - HTMLFormElement.elements[i].disabled
+*   a - DOM1 - HTMLSelectElement.options
+*   a - DOM1 - HTMLSelectElement.selectedIndex
+*   a - DOM1 - HTMLOptionElement.selected
+*   a - DOM1 - HTMLInputElement.checked
+*/
+
+// test for required features
+if (typeof urlencode != 'undefined' &amp;&amp;
+typeof getOptionValue != 'undefined') {
+
+var serializeFormUrlencoded = function(f) {
+var e, // form element
+n, // form element's name
+o, // option element
+es = f.elements,
+c = []; // the serialization data parts
+
+function add(n, v) {
+c[c.length] = urlencode(n) + &quot;=&quot; + urlencode(v);
+}
+
+for (var i=0, ilen=es.length; i&lt;ilen; i++) {
+e = es[i];
+n = e.name;
+if (n &amp;&amp; !e.disabled) {
+switch (e.type) {
+// The 'select-one' case could reuse 'select-multiple' case
+// The 'select-one' case code is an optimization for
+// serialization processing time.
+case 'select-one':
+if (e.selectedIndex &gt;= 0) {
+add(n, getOptionValue(e.options[e.selectedIndex]));
+}
+break;
+case 'select-multiple':
+for (var j=0, jlen=e.options.length; j&lt;jlen; j++) {
+o = e.options[j];
+if (o.selected) {
+add(n, getOptionValue(o));
+}
+}
+break;
+case 'checkbox':
+case 'radio':
+if (e.checked) {
+add(n, e.value);
+}
+break;
+case 'text':
+case 'password':
+case 'hidden':
+case 'textarea':
+add(n, e.value);
+} // switch
+}
+}
+
+return c.join('&amp;');
+};
+
+<QUOTE PREVIOUSPOST="
+}
+">
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-06T17:36:00 </POSTDATE>
+On Dec 6, 2:20 pm, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 6, 5:10 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+&gt; &gt; As a result of this thread it became apparent some developers may need
+&gt; &gt; to correct the different handling of whitespace by encodeURIComponent
+&gt; &gt; and the application/x-www-form-urlencoded spec. Below are the two
+&gt; &gt; implementations currently in a branch of the code repository. Any
+&gt; &gt; comments before these are considered ok and move to the repository
+&gt; &gt; trunk?
+
+&gt; &gt; // -------------------------
+
+&gt; &gt; if (typeof encodeURIComponent != 'undefined') {
+
+&gt; &gt;   var urlencode = function(s) {
+&gt; &gt;     return encodeURIComponent(s);
+&gt; &gt;   };
+
+&gt; &gt; }
+
+&gt; &gt; // ------------------------
+
+&gt; &gt; var urlencode = (function() {
+
+&gt; &gt;   var f = function(s) {
+&gt; &gt;     return encodeURIComponent(s).replace(/%20/,'+'
+&gt; &gt;       ).replace(/(.{0,3})(%0A)/g,
+&gt; &gt;                 function(m, a, b) {return a+(a=='%0D'?'':'%0D')+b;}
+&gt; &gt;       ).replace(/(%0D)(.{0,3})/g,
+&gt; &gt;                 function(m, a, b) {return a+(b=='%0A'?'':'%0A')+b;});
+&gt; &gt;   };
+
+&gt; Seems like this could be done using the older replace method (without
+&gt; function arguments.)
+
+&gt; &gt;   // try-catch is shorter than version below and shouldn't shy away
+&gt; &gt;   // from ECMAScript 3 syntax.
+&gt; &gt;   try {
+&gt; &gt;     if (f('\n \r') == '%0D%0A+%0D%0A') {
+&gt; &gt;       return f;
+&gt; &gt;     }
+&gt; &gt;   }
+&gt; &gt;   catch(e) {}
+
+&gt; I can never remember if try/catch was introduced in IE5 or 5.5.
+">
+
+IE 5 has try/catch.
+
+Peter
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-06T18:03:00 </POSTDATE>
+The last open issue for form serialization is the optional argument
+for adding a name=value pair of the button pushed to initiate an Ajax
+form submission.
+
+I agree this is a worthwhile optional argument; however, I really
+don't like adding features to basic functions like a form
+serialization function. This is *exactly* how the mainstream popular
+libraries become bloated. Everyone that needs a particular feature and
+it is added to the base implementation. The Scriptaculous and YUI drag
+drop libraries are particularly good examples that I've looked at that
+suffer from this sort of feature creep.
+
+So adding features is a slippery slope and one that makes me
+particularly nervous. To add this feature I suggest we use a wrapper
+that can wrap any of the serializeFormUrlencoded implementations.
+
+// one of the many serializeFormUrlencoded implementations.
+
+if (typeof urlencode != 'undefined'
+/* other checks */ ) {
+
+var serializeFormUrlencoded = function(f) {
+
+//...
+
+};
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+// In a seperate file define the wrapper function
+// which automatically wraps the serializeFormUrlencoded
+// function.
+
+if (typeof serializeFormUrlencoded != 'undefined') {
+
+serializeFormUrlencoded = (function() {
+
+var original = serializeFormUrlencoded;
+
+return function(f, options) {
+var extras = [];
+if (options &amp;&amp; options.extras) {
+var oes = options.extras;
+for (var i=0, ilen=oes.length; i&lt;ilen; i++) {
+extras[extras.length] = urlencode(oes[i].key) +
+'=' +
+urlencode(oes[i].value);
+}
+}
+var result = original.apply(this, arguments);
+return result +
+((result &amp;&amp; extras) ? '&amp;' : '') +
+extras.join('&amp;');
+};
+
+})();
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+Using a wrapper obviously takes more space than to just add the
+optional argument directly to each implementation of
+serializeFormUrlencoded. The modularity of the wrapper is good
+isolation of the optional parameter implementation. Someone else may
+want a simpler button implementation that can only handle one extra
+button parameter that will always have the key &quot;button&quot;.
+
+This type of wrapper system is what I'm using in the Ajax library I'll
+propose soon for the repository. It seems to have solved the problem
+of bloat very nicely and I'd bet that almost everyone will only use a
+couple of the wrappers that suit their particular tastes in sugary
+APIs. So although the wrapper system may not seem so persuasive here I
+believe the general approach to modular software is a good one.
+
+Peter
+</POST>
+<POST>
+<POSTER> David Mark &lt;dmark.cins...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-06T18:10:00 </POSTDATE>
+On Dec 6, 5:32 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Below is the more complex form serialization implementation in a
+&gt; branch of the repository. This one even contains an attempt at
+&gt; documentation although it isn't so great.
+
+&gt; I'd like to know other opinions of assuming the existance of
+&gt; Array.protoype.join. It is very easy to test for it and the test can
+&gt; even be short as adding &quot;&amp;&amp;[].join&quot;.
+
+&gt; I'm not assuming Array.prototype.join because some other new features
+&gt; are required for this function to even work. That would be object
+&gt; inference.
+
+&gt; I'm assuming Array.prototype.join because it was part of the
+&gt; ECMAScript 1 spec and that is from a long time ago. I have never
+&gt; tested for Array.prototype.join anywhere but my JavaScript code is
+&gt; mostly for behind login.
+">
+
+I think it is safe to skip testing for anything introduced in
+JavaScript 1.1.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; The Code Worth Recommending project is about upholding high standards
+&gt; so a check for Array.prototype.join wouldn't cause me concern but
+&gt; there are other things being assumed in this function that are equally
+&gt; old: for example, forms have an &quot;elements&quot; object property.
+
+&gt; If Array.prototype.join is not tested then that sets a precedent for
+&gt; the whole project. I was thinking the following feature testing
+&gt; principle might be a good one
+
+&gt; ===========
+
+&gt; Test for the existence of all features that were introduced after NN4
+&gt; and IE4. (i.e. features that were not in both NN4 and IE4)
+
+&gt; For features that were in NN4 and IE4, only test for their existence
+&gt; if there is a newer known browser that does not have the feature.
+
+&gt; Test that a feature works properly if there has been a known buggy
+&gt; implementation of that feature or implementations with various
+&gt; abilities (e.g. String.prototype.replace) in NN4, IE4 or newer
+&gt; browsers.
+">
+
+Makes sense to me.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; ===========
+
+&gt; Peter
+
+&gt; /**
+&gt;  * @object serializeFormUrlencoded [function]
+&gt;  *   All elements of the form of type
+&gt;  *     * select-one
+&gt;  *     * select-multiple
+&gt;  *     * radio
+&gt;  *     * checkbox
+&gt;  *     * text
+&gt;  *     * password
+&gt;  *     * hidden
+&gt;  *     * textarea
+&gt;  *   with a non-empty name property and are not disabled
+&gt;  *   will be serialized.
+&gt;  *
+&gt;  *   Serialize form data in a format similar or identical to the
+&gt;  *   &lt;a href=&quot; http://www.w3.org/TR/1999/REC-html401-19991224/interact/
+&gt; forms.html#h-17.13.4.1&quot;&gt;
+&gt;  *   application/x-www-form-urlencoded&lt;/a&gt; standardized format.
+&gt;  *   The handling of whitespace is determined by which
+&gt;  *   urlencode function is used with this function.
+&gt;  *
+&gt;  * @param f [form]
+&gt;  *   The form element to be serialized.
+&gt;  *
+&gt;  * @returns [string]
+&gt;  *   The serialized form.
+&gt;  *
+&gt;  * @dependencies
+&gt;  *   r - user - urlencode
+&gt;  *   r - user - getOptionValue
+&gt;  *   a - ES1  - Array.prototype.join
+&gt;  *   a - DOM1 - HTMLFormElement.elements
+&gt;  *   a - DOM1 - HTMLFormElement.elements.length
+&gt;  *   a - DOM1 - HTMLFormElement.elements[i].name
+&gt;  *   a - DOM1 - HTMLFormElement.elements[i].type
+&gt;  *   a - DOM1 - HTMLFormElement.elements[i].value
+&gt;  *   a - DOM1 - HTMLFormElement.elements[i].disabled
+&gt;  *   a - DOM1 - HTMLSelectElement.options
+&gt;  *   a - DOM1 - HTMLSelectElement.selectedIndex
+&gt;  *   a - DOM1 - HTMLOptionElement.selected
+&gt;  *   a - DOM1 - HTMLInputElement.checked
+&gt;  */
+
+&gt; // test for required features
+&gt; if (typeof urlencode != 'undefined' &amp;&amp;
+&gt;     typeof getOptionValue != 'undefined') {
+
+&gt;   var serializeFormUrlencoded = function(f) {
+&gt;     var e, // form element
+&gt;         n, // form element's name
+&gt;         o, // option element
+&gt;         es = f.elements,
+&gt;         c = []; // the serialization data parts
+
+&gt;     function add(n, v) {
+&gt;       c[c.length] = urlencode(n) + &quot;=&quot; + urlencode(v);
+&gt;     }
+
+&gt;     for (var i=0, ilen=es.length; i&lt;ilen; i++) {
+&gt;       e = es[i];
+&gt;       n = e.name;
+&gt;       if (n &amp;&amp; !e.disabled) {
+&gt;         switch (e.type) {
+&gt;           // The 'select-one' case could reuse 'select-multiple' case
+&gt;           // The 'select-one' case code is an optimization for
+&gt;           // serialization processing time.
+&gt;           case 'select-one':
+&gt;             if (e.selectedIndex &gt;= 0) {
+">
+
+I think != -1 is clearer as no other negative values are possible.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;               add(n, getOptionValue(e.options[e.selectedIndex]));
+&gt;             }
+&gt;             break;
+&gt;           case 'select-multiple':
+&gt;             for (var j=0, jlen=e.options.length; j&lt;jlen; j++) {
+&gt;               o = e.options[j];
+&gt;               if (o.selected) {
+&gt;                 add(n, getOptionValue(o));
+&gt;               }
+&gt;                         }
+&gt;             break;
+&gt;           case 'checkbox':
+&gt;           case 'radio':
+&gt;             if (e.checked) {
+&gt;               add(n, e.value);
+&gt;             }
+">
+
+For the 'checkbox' type, if no value is defined, the default is &quot;on.&quot;
+
+<QUOTE PREVIOUSPOST="
+&gt;             break;
+&gt;           case 'text':
+&gt;           case 'password':
+&gt;           case 'hidden':
+&gt;           case 'textarea':
+&gt;             add(n, e.value);
+&gt;         } // switch
+">
+
+You might want to put this code in its own function as it is sometimes
+useful to query the value of just one form element by name.  Granted,
+it would be less efficient for this function and would raise the issue
+I brought up before about multiple elements with the same name.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;       }
+&gt;     }
+
+&gt;     return c.join('&amp;');
+&gt;   };
+
+&gt; }
+">
+</POST>
+<POST>
+<POSTER> &quot;Richard Cornford&quot; &lt;Rich...@litotes.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2007-12-06T18:15:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Peter Michaux wrote:
+&gt; Below is the more complex form serialization implementation in a
+&gt; branch of the repository. This one even contains an attempt at
+&gt; documentation although it isn't so great.
+
+&gt; I'd like to know other opinions of assuming the
+&gt; existance of Array.protoype.join. It is very easy
+&gt; to test for it and the test can
+&gt; even be short as adding &quot;&amp;&amp;[].join&quot;.
+">
+
+I would not bother testing for a join method. But if it is to be tested
+for I don't think the shortness of the test code is not necessarily the
+best guide as to which test to use. I would be inclined to directly test
+for the property of the - Array.prototype - rather than create an
+otherwise unused Array object instance.
+
+&lt;snip&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; ... that are equally old: for example, forms have
+&gt; an &quot;elements&quot; object property.
+">
+
+The very first form objects had - elements - collections, so don't worry
+about them.
+
+&lt;snip&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; Test for the existence of all features that were introduced
+&gt; after NN4 and IE4. (i.e. features that were not in both
+&gt; NN4 and IE4)
+
+&gt; For features that were in NN4 and IE4, only test for their
+&gt; existence if there is a newer known browser that does not
+&gt; have the feature.
+
+&gt; Test that a feature works properly if there has been a known
+&gt; buggy implementation of that feature or implementations with
+&gt; various abilities (e.g. String.prototype.replace) in NN4,
+&gt; IE4 or newer browsers.
+
+&gt; ===========
+">
+
+That doesn't seem unreasonable as a general principle, but one aspect of
+the multiple implementations strategy is that there are contexts where
+enough can be known up-front to eliminate the need for feature testing
+(mostly Intranets, particularly the IE only ones).
+
+&lt;snip&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt;    for (var i=0, ilen=es.length; i&lt;ilen; i++) {
+&gt;      e = es[i];
+&gt;      n = e.name;
+&gt;      if (n &amp;&amp; !e.disabled) {
+&gt;        switch (e.type) {
+&gt;        // The 'select-one' case could reuse 'select-multiple' case
+&gt;        // The 'select-one' case code is an optimization for
+&gt;        // serialization processing time.
+&gt;        case 'select-one':
+&gt;          if (e.selectedIndex &gt;= 0) {
+&gt;              add(n, getOptionValue(e.options[e.selectedIndex]));
+&gt;            }
+&gt;            break;
+&gt;        case 'select-multiple':
+&gt;          for (var j=0, jlen=e.options.length; j&lt;jlen; j++) {
+&gt;              o = e.options[j];
+&gt;              if (o.selected) {
+&gt;                add(n, getOptionValue(o));
+&gt;              }
+&gt;        }
+&gt;            break;
+">
+
+&lt;snip&gt;
+Ice Browser has a bug where the - type - of a select element is always
+reported as &quot;select&quot; regardless of whether it is 'multiple' or 'one',
+but the boolean - multiple - property of the element is appropriately
+set.
+
+Incidentally, some of the indentation in this post is horrible.
+
+Richard.
+</POST>
+<POST>
+<POSTER> &quot;Richard Cornford&quot; &lt;Rich...@litotes.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2007-12-06T18:15:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Peter Michaux wrote:
+&gt; On Dec 6, 2:20 pm, David Mark wrote:
+&lt;snip&gt;
+&gt;&gt; I can never remember if try/catch was introduced in IE5
+&gt;&gt; or 5.5.
+
+&gt; IE 5 has try/catch.
+">
+
+As JScript versions can be updated independently of the browser that
+assertion should be applied to JScript 5.0.
+
+However, - finally - did not get introduced until JScript 5.5 (Which
+does not matter much in context but should be mentioned for
+completeness).
+
+Richard.
+</POST>
+<POST>
+<POSTER> David Mark &lt;dmark.cins...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-06T18:50:00 </POSTDATE>
+On Dec 6, 6:03 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; The last open issue for form serialization is the optional argument
+&gt; for adding a name=value pair of the button pushed to initiate an Ajax
+&gt; form submission.
+
+&gt; I agree this is a worthwhile optional argument; however, I really
+&gt; don't like adding features to basic functions like a form
+&gt; serialization function. This is *exactly* how the mainstream popular
+&gt; libraries become bloated. Everyone that needs a particular feature and
+&gt; it is added to the base implementation. The Scriptaculous and YUI drag
+&gt; drop libraries are particularly good examples that I've looked at that
+&gt; suffer from this sort of feature creep.
+
+&gt; So adding features is a slippery slope and one that makes me
+&gt; particularly nervous. To add this feature I suggest we use a wrapper
+&gt; that can wrap any of the serializeFormUrlencoded implementations.
+
+&gt; // one of the many serializeFormUrlencoded implementations.
+
+&gt; if (typeof urlencode != 'undefined'
+&gt;     /* other checks */ ) {
+
+&gt;   var serializeFormUrlencoded = function(f) {
+
+&gt;     //...
+
+&gt;   };
+
+&gt; }
+
+&gt; // In a seperate file define the wrapper function
+&gt; // which automatically wraps the serializeFormUrlencoded
+&gt; // function.
+
+&gt; if (typeof serializeFormUrlencoded != 'undefined') {
+
+&gt;   serializeFormUrlencoded = (function() {
+
+&gt;     var original = serializeFormUrlencoded;
+
+&gt;     return function(f, options) {
+&gt;       var extras = [];
+&gt;       if (options &amp;&amp; options.extras) {
+&gt;         var oes = options.extras;
+&gt;         for (var i=0, ilen=oes.length; i&lt;ilen; i++) {
+&gt;           extras[extras.length] = urlencode(oes[i].key) +
+&gt;                                   '=' +
+&gt;                                   urlencode(oes[i].value);
+&gt;         }
+&gt;       }
+&gt;       var result = original.apply(this, arguments);
+">
+
+Why not just call original(f)?
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;       return result +
+&gt;              ((result &amp;&amp; extras) ? '&amp;' : '') +
+&gt;              extras.join('&amp;');
+&gt;     };
+
+&gt;   })();
+
+&gt; }
+
+&gt; Using a wrapper obviously takes more space than to just add the
+&gt; optional argument directly to each implementation of
+&gt; serializeFormUrlencoded. The modularity of the wrapper is good
+&gt; isolation of the optional parameter implementation. Someone else may
+&gt; want a simpler button implementation that can only handle one extra
+&gt; button parameter that will always have the key &quot;button&quot;.
+
+&gt; This type of wrapper system is what I'm using in the Ajax library I'll
+&gt; propose soon for the repository. It seems to have solved the problem
+&gt; of bloat very nicely and I'd bet that almost everyone will only use a
+&gt; couple of the wrappers that suit their particular tastes in sugary
+&gt; APIs. So although the wrapper system may not seem so persuasive here I
+&gt; believe the general approach to modular software is a good one.
+">
+
+This is similar to what I do, but I replace object methods, rather
+than global functions.  This is because I build with modules, not
+functions, so each module initializes in its own anonymous function.
+I do like the idea of a function-based build process, but I think it
+would take an automated process to make me switch to such a thing.  It
+would be necessarily more complex than the batch files I currently use
+to concatenate modules.
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-06T19:09:00 </POSTDATE>
+On Dec 6, 3:50 pm, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 6, 6:03 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+&gt; &gt; The last open issue for form serialization is the optional argument
+&gt; &gt; for adding a name=value pair of the button pushed to initiate an Ajax
+&gt; &gt; form submission.
+
+&gt; &gt; I agree this is a worthwhile optional argument; however, I really
+&gt; &gt; don't like adding features to basic functions like a form
+&gt; &gt; serialization function. This is *exactly* how the mainstream popular
+&gt; &gt; libraries become bloated. Everyone that needs a particular feature and
+&gt; &gt; it is added to the base implementation. The Scriptaculous and YUI drag
+&gt; &gt; drop libraries are particularly good examples that I've looked at that
+&gt; &gt; suffer from this sort of feature creep.
+
+&gt; &gt; So adding features is a slippery slope and one that makes me
+&gt; &gt; particularly nervous. To add this feature I suggest we use a wrapper
+&gt; &gt; that can wrap any of the serializeFormUrlencoded implementations.
+
+&gt; &gt; // one of the many serializeFormUrlencoded implementations.
+
+&gt; &gt; if (typeof urlencode != 'undefined'
+&gt; &gt;     /* other checks */ ) {
+
+&gt; &gt;   var serializeFormUrlencoded = function(f) {
+
+&gt; &gt;     //...
+
+&gt; &gt;   };
+
+&gt; &gt; }
+
+&gt; &gt; // In a seperate file define the wrapper function
+&gt; &gt; // which automatically wraps the serializeFormUrlencoded
+&gt; &gt; // function.
+
+&gt; &gt; if (typeof serializeFormUrlencoded != 'undefined') {
+
+&gt; &gt;   serializeFormUrlencoded = (function() {
+
+&gt; &gt;     var original = serializeFormUrlencoded;
+
+&gt; &gt;     return function(f, options) {
+&gt; &gt;       var extras = [];
+&gt; &gt;       if (options &amp;&amp; options.extras) {
+&gt; &gt;         var oes = options.extras;
+&gt; &gt;         for (var i=0, ilen=oes.length; i&lt;ilen; i++) {
+&gt; &gt;           extras[extras.length] = urlencode(oes[i].key) +
+&gt; &gt;                                   '=' +
+&gt; &gt;                                   urlencode(oes[i].value);
+&gt; &gt;         }
+&gt; &gt;       }
+&gt; &gt;       var result = original.apply(this, arguments);
+
+&gt; Why not just call original(f)?
+">
+
+If multiple wrappers are used (as they are in the Ajax code I'm
+working on) then inner wrappers may depend on other properties of the
+options object.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;       return result +
+&gt; &gt;              ((result &amp;&amp; extras) ? '&amp;' : '') +
+&gt; &gt;              extras.join('&amp;');
+&gt; &gt;     };
+
+&gt; &gt;   })();
+
+&gt; &gt; }
+
+&gt; &gt; Using a wrapper obviously takes more space than to just add the
+&gt; &gt; optional argument directly to each implementation of
+&gt; &gt; serializeFormUrlencoded. The modularity of the wrapper is good
+&gt; &gt; isolation of the optional parameter implementation. Someone else may
+&gt; &gt; want a simpler button implementation that can only handle one extra
+&gt; &gt; button parameter that will always have the key &quot;button&quot;.
+
+&gt; &gt; This type of wrapper system is what I'm using in the Ajax library I'll
+&gt; &gt; propose soon for the repository. It seems to have solved the problem
+&gt; &gt; of bloat very nicely and I'd bet that almost everyone will only use a
+&gt; &gt; couple of the wrappers that suit their particular tastes in sugary
+&gt; &gt; APIs. So although the wrapper system may not seem so persuasive here I
+&gt; &gt; believe the general approach to modular software is a good one.
+
+&gt; This is similar to what I do, but I replace object methods, rather
+&gt; than global functions.  This is because I build with modules, not
+&gt; functions, so each module initializes in its own anonymous function.
+&gt; I do like the idea of a function-based build process, but I think it
+&gt; would take an automated process to make me switch to such a thing.  It
+&gt; would be necessarily more complex than the batch files I currently use
+&gt; to concatenate modules.
+">
+
+I'm not sure what you mean and not completely clear what a &quot;module&quot; is
+to you.
+
+Peter
+</POST>
+<POST>
+<POSTER> David Mark &lt;dmark.cins...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-06T19:27:00 </POSTDATE>
+On Dec 6, 7:09 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 6, 3:50 pm, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+
+&gt; &gt; On Dec 6, 6:03 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; The last open issue for form serialization is the optional argument
+&gt; &gt; &gt; for adding a name=value pair of the button pushed to initiate an Ajax
+&gt; &gt; &gt; form submission.
+
+&gt; &gt; &gt; I agree this is a worthwhile optional argument; however, I really
+&gt; &gt; &gt; don't like adding features to basic functions like a form
+&gt; &gt; &gt; serialization function. This is *exactly* how the mainstream popular
+&gt; &gt; &gt; libraries become bloated. Everyone that needs a particular feature and
+&gt; &gt; &gt; it is added to the base implementation. The Scriptaculous and YUI drag
+&gt; &gt; &gt; drop libraries are particularly good examples that I've looked at that
+&gt; &gt; &gt; suffer from this sort of feature creep.
+
+&gt; &gt; &gt; So adding features is a slippery slope and one that makes me
+&gt; &gt; &gt; particularly nervous. To add this feature I suggest we use a wrapper
+&gt; &gt; &gt; that can wrap any of the serializeFormUrlencoded implementations.
+
+&gt; &gt; &gt; // one of the many serializeFormUrlencoded implementations.
+
+&gt; &gt; &gt; if (typeof urlencode != 'undefined'
+&gt; &gt; &gt;     /* other checks */ ) {
+
+&gt; &gt; &gt;   var serializeFormUrlencoded = function(f) {
+
+&gt; &gt; &gt;     //...
+
+&gt; &gt; &gt;   };
+
+&gt; &gt; &gt; }
+
+&gt; &gt; &gt; // In a seperate file define the wrapper function
+&gt; &gt; &gt; // which automatically wraps the serializeFormUrlencoded
+&gt; &gt; &gt; // function.
+
+&gt; &gt; &gt; if (typeof serializeFormUrlencoded != 'undefined') {
+
+&gt; &gt; &gt;   serializeFormUrlencoded = (function() {
+
+&gt; &gt; &gt;     var original = serializeFormUrlencoded;
+
+&gt; &gt; &gt;     return function(f, options) {
+&gt; &gt; &gt;       var extras = [];
+&gt; &gt; &gt;       if (options &amp;&amp; options.extras) {
+&gt; &gt; &gt;         var oes = options.extras;
+&gt; &gt; &gt;         for (var i=0, ilen=oes.length; i&lt;ilen; i++) {
+&gt; &gt; &gt;           extras[extras.length] = urlencode(oes[i].key) +
+&gt; &gt; &gt;                                   '=' +
+&gt; &gt; &gt;                                   urlencode(oes[i].value);
+&gt; &gt; &gt;         }
+&gt; &gt; &gt;       }
+&gt; &gt; &gt;       var result = original.apply(this, arguments);
+
+&gt; &gt; Why not just call original(f)?
+
+&gt; If multiple wrappers are used (as they are in the Ajax code I'm
+&gt; working on) then inner wrappers may depend on other properties of the
+&gt; options object.
+">
+
+Okay, change that to original(f, options).
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; &gt;       return result +
+&gt; &gt; &gt;              ((result &amp;&amp; extras) ? '&amp;' : '') +
+&gt; &gt; &gt;              extras.join('&amp;');
+&gt; &gt; &gt;     };
+
+&gt; &gt; &gt;   })();
+
+&gt; &gt; &gt; }
+
+&gt; &gt; &gt; Using a wrapper obviously takes more space than to just add the
+&gt; &gt; &gt; optional argument directly to each implementation of
+&gt; &gt; &gt; serializeFormUrlencoded. The modularity of the wrapper is good
+&gt; &gt; &gt; isolation of the optional parameter implementation. Someone else may
+&gt; &gt; &gt; want a simpler button implementation that can only handle one extra
+&gt; &gt; &gt; button parameter that will always have the key &quot;button&quot;.
+
+&gt; &gt; &gt; This type of wrapper system is what I'm using in the Ajax library I'll
+&gt; &gt; &gt; propose soon for the repository. It seems to have solved the problem
+&gt; &gt; &gt; of bloat very nicely and I'd bet that almost everyone will only use a
+&gt; &gt; &gt; couple of the wrappers that suit their particular tastes in sugary
+&gt; &gt; &gt; APIs. So although the wrapper system may not seem so persuasive here I
+&gt; &gt; &gt; believe the general approach to modular software is a good one.
+
+&gt; &gt; This is similar to what I do, but I replace object methods, rather
+&gt; &gt; than global functions.  This is because I build with modules, not
+&gt; &gt; functions, so each module initializes in its own anonymous function.
+&gt; &gt; I do like the idea of a function-based build process, but I think it
+&gt; &gt; would take an automated process to make me switch to such a thing.  It
+&gt; &gt; would be necessarily more complex than the batch files I currently use
+&gt; &gt; to concatenate modules.
+
+&gt; I'm not sure what you mean and not completely clear what a &quot;module&quot; is
+&gt; to you.
+">
+
+A module is a file with one or more functions in it.  It is the basic
+building block I use for applications.  Your proposed strategy is more
+granular in that it is using individual functions as building blocks.
+I assume your build process will wrap multiple API functions in an
+anonymous function, populating methods of an object at the end, all in
+one file.  My build process concatenates module files, which is less
+flexible and adds a bit of a redundancy in the code (each has its own
+anonymous function, each must do similar tests at the outset, etc.)
+On the plus side, it was very trivial to implement and requires no
+extraneous meta data for versioning (versions are part of each
+module's filename.)
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; Peter
+">
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-07T02:30:00 </POSTDATE>
+On Dec 6, 3:15 pm, &quot;Richard Cornford&quot; &lt;Rich ... @litotes.demon.co.uk&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Peter Michaux wrote:
+
+&gt; &gt; Test for the existence of all features that were introduced
+&gt; &gt; after NN4 and IE4. (i.e. features that were not in both
+&gt; &gt; NN4 and IE4)
+
+&gt; &gt; For features that were in NN4 and IE4, only test for their
+&gt; &gt; existence if there is a newer known browser that does not
+&gt; &gt; have the feature.
+
+&gt; &gt; Test that a feature works properly if there has been a known
+&gt; &gt; buggy implementation of that feature or implementations with
+&gt; &gt; various abilities (e.g. String.prototype.replace) in NN4,
+&gt; &gt; IE4 or newer browsers.
+
+&gt; &gt; ===========
+
+&gt; That doesn't seem unreasonable as a general principle, but one aspect of
+&gt; the multiple implementations strategy is that there are contexts where
+&gt; enough can be known up-front to eliminate the need for feature testing
+&gt; (mostly Intranets, particularly the IE only ones).
+">
+
+Yes I meant those rules for scripts destined for the general web. I
+will add this to the principles and post them in the project wiki.
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt; Ice Browser has a bug where the - type - of a select element is always
+&gt; reported as &quot;select&quot; regardless of whether it is 'multiple' or 'one',
+&gt; but the boolean - multiple - property of the element is appropriately
+&gt; set.
+">
+
+Oh joy! Here is a new version...
+
+if (typeof urlencode != 'undefined' &amp;&amp;
+typeof getOptionValue != 'undefined' &amp;&amp;
+String.prototype.match) {
+
+var serializeFormUrlencoded = function(f) {
+var e, // form element
+n, // form element's name
+t, // form element's type
+o, // option element
+es = f.elements,
+c = []; // the serialization data parts
+
+function add(n, v) {
+c[c.length] = urlencode(n) + &quot;=&quot; + urlencode(v);
+}
+
+for (var i=0, ilen=es.length; i&lt;ilen; i++) {
+e = es[i];
+n = e.name;
+if (n &amp;&amp; !e.disabled) {
+t = e.type;
+if (t.match(/^select/)) {
+// The 'select-one' case could reuse 'select-multiple' case
+// The 'select-one' case code is an optimization for
+// serialization processing time.
+if (t == 'select-one' || !e.multiple) {
+if (e.selectedIndex &gt;= 0) {
+add(n, getOptionValue(e.options[e.selectedIndex]));
+}
+}
+else {
+for (var j=0, jlen=e.options.length; j&lt;jlen; j++) {
+o = e.options[j];
+if (o.selected) {
+add(n, getOptionValue(o));
+}
+}
+}
+}
+else if (t.match(/^checkbox|radio$/)) {
+if (e.checked) {
+add(n, e.value);
+}
+}
+else if (t.match(/^text|password|hidden|textarea$/)) {
+add(n, e.value);
+}
+}
+}
+
+return c.join('&amp;');
+};
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+Thanks,
+Peter
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-07T02:46:00 </POSTDATE>
+On Dec 6, 4:27 pm, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 6, 7:09 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+&gt; &gt; On Dec 6, 3:50 pm, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; On Dec 6, 6:03 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+">
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; &gt; &gt; // In a seperate file define the wrapper function
+&gt; &gt; &gt; &gt; // which automatically wraps the serializeFormUrlencoded
+&gt; &gt; &gt; &gt; // function.
+
+&gt; &gt; &gt; &gt; if (typeof serializeFormUrlencoded != 'undefined') {
+
+&gt; &gt; &gt; &gt;   serializeFormUrlencoded = (function() {
+
+&gt; &gt; &gt; &gt;     var original = serializeFormUrlencoded;
+
+&gt; &gt; &gt; &gt;     return function(f, options) {
+&gt; &gt; &gt; &gt;       var extras = [];
+&gt; &gt; &gt; &gt;       if (options &amp;&amp; options.extras) {
+&gt; &gt; &gt; &gt;         var oes = options.extras;
+&gt; &gt; &gt; &gt;         for (var i=0, ilen=oes.length; i&lt;ilen; i++) {
+&gt; &gt; &gt; &gt;           extras[extras.length] = urlencode(oes[i].key) +
+&gt; &gt; &gt; &gt;                                   '=' +
+&gt; &gt; &gt; &gt;                                   urlencode(oes[i].value);
+&gt; &gt; &gt; &gt;         }
+&gt; &gt; &gt; &gt;       }
+&gt; &gt; &gt; &gt;       var result = original.apply(this, arguments);
+
+&gt; &gt; &gt; Why not just call original(f)?
+
+&gt; &gt; If multiple wrappers are used (as they are in the Ajax code I'm
+&gt; &gt; working on) then inner wrappers may depend on other properties of the
+&gt; &gt; options object.
+
+&gt; Okay, change that to original(f, options).
+">
+
+I don't know why I fell into the pattern of using apply or call for
+this. I used it all through the wrappers of my Ajax code I've been
+playing with recently. There must have been a really great reason at
+some point :)
+
+I believe you are right and that original(f, options) is better.
+
+Peter
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-07T02:51:00 </POSTDATE>
+On Dec 6, 11:30 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 6, 3:15 pm, &quot;Richard Cornford&quot; &lt;Rich ... @litotes.demon.co.uk&gt;
+&gt; wrote:
+
+&gt; &gt; Peter Michaux wrote:
+
+&gt; &gt; &gt; Test for the existence of all features that were introduced
+&gt; &gt; &gt; after NN4 and IE4. (i.e. features that were not in both
+&gt; &gt; &gt; NN4 and IE4)
+
+&gt; &gt; &gt; For features that were in NN4 and IE4, only test for their
+&gt; &gt; &gt; existence if there is a newer known browser that does not
+&gt; &gt; &gt; have the feature.
+
+&gt; &gt; &gt; Test that a feature works properly if there has been a known
+&gt; &gt; &gt; buggy implementation of that feature or implementations with
+&gt; &gt; &gt; various abilities (e.g. String.prototype.replace) in NN4,
+&gt; &gt; &gt; IE4 or newer browsers.
+
+&gt; &gt; &gt; ===========
+
+&gt; &gt; That doesn't seem unreasonable as a general principle, but one aspect of
+&gt; &gt; the multiple implementations strategy is that there are contexts where
+&gt; &gt; enough can be known up-front to eliminate the need for feature testing
+&gt; &gt; (mostly Intranets, particularly the IE only ones).
+
+&gt; Yes I meant those rules for scripts destined for the general web. I
+&gt; will add this to the principles and post them in the project wiki.
+
+&gt; [snip]
+
+&gt; &gt; Ice Browser has a bug where the - type - of a select element is always
+&gt; &gt; reported as &quot;select&quot; regardless of whether it is 'multiple' or 'one',
+&gt; &gt; but the boolean - multiple - property of the element is appropriately
+&gt; &gt; set.
+
+&gt; Oh joy! Here is a new version...
+
+&gt; if (typeof urlencode != 'undefined' &amp;&amp;
+&gt;     typeof getOptionValue != 'undefined' &amp;&amp;
+&gt;     String.prototype.match) {
+
+&gt;   var serializeFormUrlencoded = function(f) {
+&gt;     var e, // form element
+&gt;         n, // form element's name
+&gt;         t, // form element's type
+&gt;         o, // option element
+&gt;         es = f.elements,
+&gt;         c = []; // the serialization data parts
+
+&gt;     function add(n, v) {
+&gt;       c[c.length] = urlencode(n) + &quot;=&quot; + urlencode(v);
+&gt;     }
+
+&gt;     for (var i=0, ilen=es.length; i&lt;ilen; i++) {
+&gt;       e = es[i];
+&gt;       n = e.name;
+&gt;       if (n &amp;&amp; !e.disabled) {
+&gt;         t = e.type;
+&gt;         if (t.match(/^select/)) {
+&gt;           // The 'select-one' case could reuse 'select-multiple' case
+&gt;           // The 'select-one' case code is an optimization for
+&gt;           // serialization processing time.
+&gt;           if (t == 'select-one' || !e.multiple) {
+">
+
+Perhaps a little more cautious would be the following in case an
+implementation does not have the multiple property.
+
+if (t == 'select-one' || e.multiple === false) {
+
+Peter
+</POST>
+<POST>
+<POSTER> David Mark &lt;dmark.cins...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-07T03:16:00 </POSTDATE>
+On Dec 7, 2:51 am, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt; Perhaps a little more cautious would be the following in case an
+&gt; implementation does not have the multiple property.
+
+&gt; if (t == 'select-one' || e.multiple === false) {
+">
+
+I ended up with:
+
+if (t == 'select-one' || (t == 'select' &amp;&amp; !t.multiple)) {
+
+That way a standard implementation will never check the multiple flag.
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-07T17:34:00 </POSTDATE>
+On Dec 7, 12:16 am, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 7, 2:51 am, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+&gt; [snip]
+
+&gt; &gt; Perhaps a little more cautious would be the following in case an
+&gt; &gt; implementation does not have the multiple property.
+
+&gt; &gt; if (t == 'select-one' || e.multiple === false) {
+
+&gt; I ended up with:
+
+&gt; if (t == 'select-one' || (t == 'select' &amp;&amp; !t.multiple)) {
+
+&gt; That way a standard implementation will never check the multiple flag.
+">
+
+I think the same is true in mine due to how || short circuits.
+
+In yours if t == 'select' and t.multiple is undefined then the select-
+one branch runs when really the select-multiple branch should run  as
+it is more general.
+
+Peter
+</POST>
+<POST>
+<POSTER> David Mark &lt;dmark.cins...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-07T18:07:00 </POSTDATE>
+On Dec 7, 5:34 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 7, 12:16 am, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+
+&gt; &gt; On Dec 7, 2:51 am, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+&gt; &gt; [snip]
+
+&gt; &gt; &gt; Perhaps a little more cautious would be the following in case an
+&gt; &gt; &gt; implementation does not have the multiple property.
+
+&gt; &gt; &gt; if (t == 'select-one' || e.multiple === false) {
+
+&gt; &gt; I ended up with:
+
+&gt; &gt; if (t == 'select-one' || (t == 'select' &amp;&amp; !t.multiple)) {
+
+&gt; &gt; That way a standard implementation will never check the multiple flag.
+
+&gt; I think the same is true in mine due to how || short circuits.
+">
+
+If it is a multiple select, in standard implementations, it will check
+the multiple property as the first condition (t == 'select-one') will
+be false.  The second one will be false as well, so it will then
+proceed to the select-multiple branch.
+
+<QUOTE PREVIOUSPOST="
+&gt; In yours if t == 'select' and t.multiple is undefined then the select-
+&gt; one branch runs when really the select-multiple branch should run  as
+&gt; it is more general.
+">
+
+That's true.  I should change it to use the strict comparison.
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-07T18:38:00 </POSTDATE>
+On Dec 7, 3:07 pm, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 7, 5:34 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+&gt; &gt; On Dec 7, 12:16 am, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; On Dec 7, 2:51 am, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; [snip]
+
+&gt; &gt; &gt; &gt; Perhaps a little more cautious would be the following in case an
+&gt; &gt; &gt; &gt; implementation does not have the multiple property.
+
+&gt; &gt; &gt; &gt; if (t == 'select-one' || e.multiple === false) {
+
+&gt; &gt; &gt; I ended up with:
+
+&gt; &gt; &gt; if (t == 'select-one' || (t == 'select' &amp;&amp; !t.multiple)) {
+
+&gt; &gt; &gt; That way a standard implementation will never check the multiple flag.
+
+&gt; &gt; I think the same is true in mine due to how || short circuits.
+
+&gt; If it is a multiple select, in standard implementations, it will check
+&gt; the multiple property as the first condition (t == 'select-one') will
+&gt; be false.  The second one will be false as well, so it will then
+&gt; proceed to the select-multiple branch.
+">
+
+You are right. I'm getting blurry eyed.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; In yours if t == 'select' and t.multiple is undefined then the select-
+&gt; &gt; one branch runs when really the select-multiple branch should run  as
+&gt; &gt; it is more general.
+
+&gt; That's true.  I should change it to use the strict comparison.
+">
+
+--
+Peter
+Code Worth Recommending Project
+http://cljs.michaux.ca/
+</POST>
+</TEXT>
+</BODY>
+</DOC>

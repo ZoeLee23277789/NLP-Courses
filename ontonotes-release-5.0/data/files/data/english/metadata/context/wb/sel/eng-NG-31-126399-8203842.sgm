@@ -1,0 +1,132 @@
+<DOC>
+<DOCID> eng-NG-31-126399-8203842 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-14T19:39:00 </DATETIME>
+<BODY>
+<HEADLINE>
+FM synthesis using Numpy
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Joost Molenaar&quot; &lt;dzjo...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-14T19:39:00 </POSTDATE>
+Hello fellow Python coders,
+
+I'm trying to build a simple FM synthesizer in Python. As a beginner,
+I take 'FM synthesizer' to
+mean: &quot;using a sine wave to control the frequency of another sine wave.&quot;
+
+I tried to generate a tone of 1000 Hz that deviates 15 Hz six times a
+second. The start of the
+resulting wave file sounds right, i.e., a vibrato effect can be heard.
+After a second or so, the
+vibrato becomes more and more extreme, as if the modulating
+oscillator's amplitude is rising
+over time. I suspect that I am misunderstanding the math. I tried a
+couple of things:
+
+- removing the factor 2 * num.pi from either of the oscillators does
+not fix it, besides, doing so is
+even more wrong because numpy.sin works with radians
+
+- using a higher sampling frequency makes no difference
+
+- making t run from 0 to 1 each second (t %= 1) causes a clipping of
+the sound, so this seems
+wrong too
+
+- the problem is not related to Numpy, because the effect also happens
+in pure-Python
+implementations of my bug
+
+As you can see, I'm at a loss and am even trying incorrect bugfixes.
+Any help would be
+very welcome.
+
+Thanks for your time,
+
+Joost Molenaar
+
+[I left out a writewavheader function to aid brevity]
+-------------------------------------------------------------------
+
+import numpy as num
+
+def oscillator(x, freq=1, amp=1, base=0, phase=0):
+return base + amp * num.sin(2 * num.pi * freq * x + phase)
+
+def writewav(filename, data):
+wave = open(filename, 'wb')
+
+# .wav header: 30 s at 44100 Hz, 1 channel of 16 bit signed samples
+wave.write('RIFF\x14`(\x00WAVEfmt \x10\x00\x00\x00\x01\x00\x01\x00D'
+'\xac\x00\x00\x88X\x01\x00\x02\x00\x10\x00data\xf0_(\x00')
+
+# write float64 data as signed int16
+(32767 * data).astype(num.int16).tofile(wave)
+
+wave.close()
+
+t = num.arange(0, 30, 1./44100)
+
+freq = oscillator(t, freq=6, amp=15, base=1000)
+tone = oscillator(t, freq=freq, amp=0.1)
+
+writewav('spam.wav', tone)
+-------------------------------------------------------------------
+</POST>
+<POST>
+<POSTER> &quot;Terry Reedy&quot; &lt;tjre...@udel.edu&gt; </POSTER>
+<POSTDATE> 2007-08-15T00:15:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Joost Molenaar&quot; &lt;dzjo ... @gmail.com&gt; wrote in message
+">
+
+news:3657a8860708141639l7e90ebdoe844691627152e40@mail.gmail.com ...
+| I'm trying to build a simple FM synthesizer in Python. As a beginner,
+| I take 'FM synthesizer' to
+| mean: &quot;using a sine wave to control the frequency of another sine wave.&quot;
+
+If you don't get an answer here, try the numpy/scipy list(s)
+</POST>
+<POST>
+<POSTER> Bas &lt;wegw...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-15T10:53:00 </POSTDATE>
+You got your math wrong. What you are calculating is:
+sin(2*pi*(1000+15*sin(2*pi*6*t))*t) = sin(2*pi*1000*t +
+2*pi*15*sin(2*pi*6*t)*t)
+The 'instantaneous frequency' can be calculated by differentiating the
+argument of the sine and dividing by 2pi:
+x = sin(phi(t)) -&gt; f_inst = d (phi(t)) / dt / (2*pi)
+So in your case:
+f_inst = 1000 + 15*sin(2*pi*6*t) + 2*pi*t*6*15*cos(2*pi*6*t)
+the last term explains the effect you hear.
+
+What you want is:
+f_inst = f0 + df*cos(2*pi*fm*t)
+Integrating this and multiplying by 2pi gives the phase:
+phi(t) = 2*pi*f0*t + sin(2*pi*fm*t)*df/fm
+
+So you can achieve the frequency modulation by using phase modulation
+(these two are related). You can do this with your own code by
+
+phi = oscillator(t, freq=6, amp=15/6)
+tone = oscillator(t, freq=1000, amp=0.1, phase=phi)
+
+cheers,
+Bas
+</POST>
+<POST>
+<POSTER> &quot;Joost Molenaar&quot; &lt;dzjo...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-16T10:38:00 </POSTDATE>
+Thanks/bedankt Bas for the educative reply. I think I got misleaded by
+Max/MSP's tutorial[1], because MSP seems to automatically adjust the
+phase when you combine two oscillators in the way that I did.
+
+Joost
+
+[1] page 112 of http://www.cycling74.com/download/MSP45TutorialsAndTopics.pdf
+</POST>
+</TEXT>
+</BODY>
+</DOC>

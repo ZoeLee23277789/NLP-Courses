@@ -1,0 +1,1165 @@
+<DOC>
+<DOCID> eng-NG-31-126402-8205815 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-07-30T17:30:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Using DBI, better option than importing into @array
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Jason &lt;jwcarl...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-30T17:30:00 </POSTDATE>
+I've posted a few times now that I'm rebuilding a message board
+program to use MySQL instead of flat text files. I'm relatively new to
+MySQL, though, so I'm having fun with the challenges along the way.
+
+The database has 2 tables: one to hold subjects, and one to hold all
+of the posts. The subjects table has around 17000 rows, while the
+posts table has around 600,000.
+
+The most current problem is SPEED! From sheer lack of knowledge, I'm
+importing the subjects table into an array in the beginning of the
+script, then using a for loop throughout the program to access that
+array. But the program is running pretty slow, and I'm sure that the
+bottleneck is with this array.
+
+Here is the code that I'm using:
+
+# Push subjects into Perl array
+my $filelist = $dbh-&gt;selectall_arrayref(&quot;SELECT `id`, `lastmodified`,
+`subject` FROM $forum_subjects ORDER BY lastmodified DESC&quot;);
+
+my @filenames;
+for my $row (@$filelist) {
+my ($id, $lastmodified, $subject) = @$row;
+push(@filenames, $id . &quot;|:|&quot; . $lastmodified . &quot;|:|&quot; . $subject);
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+# In the &quot;view subject&quot; section, loop through last 20 indexes of
+@filenames
+# 0 and 20 are dynamic in the real script
+for ($count=0; $count &lt; 20; $count++) {
+($id, $lastmodified, $subject) = split(/\|:\|/, $filenames[$count]);
+
+my $topiclist = $dbh-&gt;selectall_arrayref(&quot;SELECT `id`, `subject`,
+`postdate`, `username`, `email`, `comment` FROM $forum_posts WHERE
+id=&quot; . $dbh-&gt;quote($id) . &quot; ORDER BY postdate ASC&quot;);
+
+print ...
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+I know that this has got to be the most inefficient method possible,
+but I haven't found a better way. Is there a faster method to get the
+information I want than this?
+
+TIA,
+
+Jason
+</POST>
+<POST>
+<POSTER> xhos...@gmail.com </POSTER>
+<POSTDATE> 2007-07-30T18:25:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jason &lt;jwcarl ... @gmail.com&gt; wrote:
+&gt; I've posted a few times now that I'm rebuilding a message board
+&gt; program to use MySQL instead of flat text files. I'm relatively new to
+&gt; MySQL, though, so I'm having fun with the challenges along the way.
+
+&gt; The database has 2 tables: one to hold subjects, and one to hold all
+&gt; of the posts. The subjects table has around 17000 rows, while the
+&gt; posts table has around 600,000.
+
+&gt; The most current problem is SPEED! From sheer lack of knowledge, I'm
+&gt; importing the subjects table into an array in the beginning of the
+&gt; script, then using a for loop throughout the program to access that
+&gt; array. But the program is running pretty slow, and I'm sure that the
+&gt; bottleneck is with this array.
+
+&gt; Here is the code that I'm using:
+
+&gt; # Push subjects into Perl array
+&gt; my $filelist = $dbh-&gt;selectall_arrayref(&quot;SELECT `id`, `lastmodified`,
+&gt; `subject` FROM $forum_subjects ORDER BY lastmodified DESC&quot;);
+
+&gt; my @filenames;
+&gt; for my $row (@$filelist) {
+&gt;   my ($id, $lastmodified, $subject) = @$row;
+&gt;   push(@filenames, $id . &quot;|:|&quot; . $lastmodified . &quot;|:|&quot; . $subject);
+">
+
+Why join the data with |:| just to later use split on it?  Unless you are
+severally strapped for memory, that is probably not a good thing to do.
+
+<QUOTE PREVIOUSPOST="
+&gt; }
+
+&gt; # In the &quot;view subject&quot; section, loop through last 20 indexes of
+&gt; @filenames
+&gt; # 0 and 20 are dynamic in the real script
+">
+
+You could use the &quot;limit&quot; keyword (mysql specific) to retrieve only
+the topics you are interested in, rather than returning all of them
+and then using only a subset.  I don't know how much, if any, of a speed
+improvement this would make.
+
+<QUOTE PREVIOUSPOST="
+&gt; for ($count=0; $count &lt; 20; $count++) {
+&gt;   ($id, $lastmodified, $subject) = split(/\|:\|/, $filenames[$count]);
+
+&gt;   my $topiclist = $dbh-&gt;selectall_arrayref(&quot;SELECT `id`, `subject`,
+&gt; `postdate`, `username`, `email`, `comment` FROM $forum_posts WHERE
+&gt; id=&quot; . $dbh-&gt;quote($id) . &quot; ORDER BY postdate ASC&quot;);
+">
+
+As a side note, it is generally better to use placeholders than to use
+dbh-&gt;quote.
+
+Is there an index on the id column of $forum_posts? If not, then MySQL has
+to read through all 600,000 rows, for each of the 21 topics.  I'm guessing
+that this will make MySQL, not Perl, the bottleneck.
+
+Xho
+
+--
+-------------------- http://NewsReader.Com/ --------------------
+Usenet Newsgroup Service                        $9.95/Month 30GB
+</POST>
+<POST>
+<POSTER> use...@DavidFilmer.com </POSTER>
+<POSTDATE> 2007-07-30T18:26:00 </POSTDATE>
+On Jul 30, 2:30 pm, Jason &lt;jwcarl ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; The most current problem is SPEED!
+">
+
+Yeah, I imagine so.  The killer is that you are submitting a full
+selectall inside a loop. You should generally NEVER do that.  By
+constructing a different SQL statement each time (because you hard-
+code the id in the SQL) it means the statement will never be found in
+your database server's cache, so the server must compute an execution
+plan over and over again.  Instead, you should always use the prepare
+method (outside of the loop) and then an execute (inside the loop).
+
+The array is almost surely also a problem, but I'm not fully
+understanding your intent.  It would be very helpful to see a few
+sample rows (or mock-up rows) from each table.  I think you should be
+doing a table straight join to avoid the need to pre-load the array,
+but it would be far easier to make a recommendation if I saw some
+sample data and you gave a specific example of what you want to do
+with this data.
+
+On other points related to style (and having nothing to do with
+whether these points should be used in your instance, because I don't
+think they should):
+
+<QUOTE PREVIOUSPOST="
+&gt; for ($count=0; $count &lt; 20; $count++) {
+&gt;   ($id, $lastmodified, $subject) = split(/\|:\|/, $filenames[$count]);
+">
+
+It's more Perlish to do a simple iterative loop like this:
+
+for (0..20) {         #Perl ain't C!
+
+But your intent seems to be just to do an array slice.  If you want to
+take an array slice, don't create a counter and increment it; just
+slice the array directly, such as:
+
+foreach my $line_of_the_array ( @array[0..20] ) {
+
+Oh, and, also:
+
+<QUOTE PREVIOUSPOST="
+&gt; $dbh-&gt;quote($id)
+">
+
+If you are sure your $id cannot be tainted (such as it has an integer
+type imposed by the database) then you don't need to quote it (and
+doing so further slows you down).
+
+Show me some sample rows and I'll respond with some more specific
+info...
+
+--
+The best way to get a good answer is to ask a good question.
+David Filmer ( http://DavidFilmer.com )
+</POST>
+<POST>
+<POSTER> &quot;J. Gleixner&quot; &lt;glex_no-s...@qwest-spam-no.invalid&gt; </POSTER>
+<POSTDATE> 2007-07-30T18:33:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jason wrote:
+&gt; The most current problem is SPEED! From sheer lack of knowledge, I'm
+&gt; importing the subjects table into an array in the beginning of the
+&gt; script, then using a for loop throughout the program to access that
+&gt; array. But the program is running pretty slow, and I'm sure that the
+&gt; bottleneck is with this array.
+">
+
+You probably want to look at the SQL 'limit' command. Fetching 17000
+rows is a complete waste of time because there's no way you're going
+to be able to efficiently display that much data.
+
+<QUOTE PREVIOUSPOST="
+&gt; Here is the code that I'm using:
+
+&gt; # Push subjects into Perl array
+&gt; my $filelist = $dbh-&gt;selectall_arrayref(&quot;SELECT `id`, `lastmodified`,
+&gt; `subject` FROM $forum_subjects ORDER BY lastmodified DESC&quot;);
+
+&gt; my @filenames;
+&gt; for my $row (@$filelist) {
+&gt;   my ($id, $lastmodified, $subject) = @$row;
+&gt;   push(@filenames, $id . &quot;|:|&quot; . $lastmodified . &quot;|:|&quot; . $subject);
+&gt; }
+">
+
+No need to do that.  You have $filelist, iterate through it below,
+instead of creating @filenames.
+
+<QUOTE PREVIOUSPOST="
+&gt; # In the &quot;view subject&quot; section, loop through last 20 indexes of
+&gt; @filenames
+&gt; # 0 and 20 are dynamic in the real script
+">
+
+No, use 'limit' and 'order by' to get the last 20 'id' fields.
+
+<QUOTE PREVIOUSPOST="
+&gt; for ($count=0; $count &lt; 20; $count++) {
+&gt;   ($id, $lastmodified, $subject) = split(/\|:\|/, $filenames[$count]);
+
+&gt;   my $topiclist = $dbh-&gt;selectall_arrayref(&quot;SELECT `id`, `subject`,
+&gt; `postdate`, `username`, `email`, `comment` FROM $forum_posts WHERE
+&gt; id=&quot; . $dbh-&gt;quote($id) . &quot; ORDER BY postdate ASC&quot;);
+">
+
+Look into placeholders and bind_columns and you don't need any of
+those '`'.
+
+my $sql = qq{ SELECT id, subject, postdate, username, email, comment
+FROM $forum_posts
+WHERE id=?
+ORDER BY postdate ASC};
+
+You could probably do it all in one query. There are plenty of
+sites that discuss using DBI and many on MySQL, give those
+a try too.
+</POST>
+<POST>
+<POSTER> Gunnar Hjalmarsson &lt;nore...@gunnar.cc&gt; </POSTER>
+<POSTDATE> 2007-07-30T18:37:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jason wrote:
+&gt; The most current problem is SPEED! From sheer lack of knowledge, I'm
+&gt; importing the subjects table into an array in the beginning of the
+&gt; script, then using a for loop throughout the program to access that
+&gt; array. But the program is running pretty slow, and I'm sure that the
+&gt; bottleneck is with this array.
+">
+
+How do you know that? Anyway, it seems to me that you can easily skip
+that array.
+
+<QUOTE PREVIOUSPOST="
+&gt; my $filelist = $dbh-&gt;selectall_arrayref(&quot;SELECT `id`, `lastmodified`,
+&gt; `subject` FROM $forum_subjects ORDER BY lastmodified DESC&quot;);
+">
+
+for ( 0 .. 20 ) {
+my $topiclist = ... id=&quot; . $dbh-&gt;quote( $filelist-&gt;[$_][0] ) . &quot; ...
+
+--
+Gunnar Hjalmarsson
+Email: http://www.gunnar.cc/cgi-bin/contact.pl
+</POST>
+<POST>
+<POSTER> Jason &lt;jwcarl...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-30T19:16:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Why join the data with |:| just to later use split on it?  Unless you are
+&gt; severally strapped for memory, that is probably not a good thing to do.
+">
+
+To be quite frank, the only reason I'm doing that is because I don't
+know a better way. I know that it's sloppy, but since the
+selectall_arrayref is creating a dynamically named array I couldn't
+figure out how to pick out the right thing later.
+
+LIMIT is probably what I need there, though.
+
+<QUOTE PREVIOUSPOST="
+&gt; As a side note, it is generally better to use placeholders than to use
+&gt; dbh-&gt;quote.
+">
+
+I didn't realize that, I was just looking at overall character size.
+I'll giving the ? a shot, though.
+
+<QUOTE PREVIOUSPOST="
+&gt; Is there an index on the id column of $forum_posts? If not, then MySQL has
+&gt; to read through all 600,000 rows, for each of the 21 topics.  I'm guessing
+&gt; that this will make MySQL, not Perl, the bottleneck.
+">
+
+No, but I don't quite understand how I can use an index to help me on
+this one. I posted that question to a MySQL ng earlier today, though;
+I know it's not really appropriate for CLPM.
+
+Thanks for the tips.
+</POST>
+<POST>
+<POSTER> Jason &lt;jwcarl...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-30T19:34:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Yeah, I imagine so.  The killer is that you are submitting a full
+&gt; selectall inside a loop. You should generally NEVER do that.  By
+&gt; constructing a different SQL statement each time (because you hard-
+&gt; code the id in the SQL) it means the statement will never be found in
+&gt; your database server's cache, so the server must compute an execution
+&gt; plan over and over again.  Instead, you should always use the prepare
+&gt; method (outside of the loop) and then an execute (inside the loop).
+">
+
+OK, I'll give that a shot.
+
+<QUOTE PREVIOUSPOST="
+&gt; The array is almost surely also a problem, but I'm not fully
+&gt; understanding your intent.  It would be very helpful to see a few
+&gt; sample rows (or mock-up rows) from each table.  I think you should be
+&gt; doing a table straight join to avoid the need to pre-load the array,
+&gt; but it would be far easier to make a recommendation if I saw some
+&gt; sample data and you gave a specific example of what you want to do
+&gt; with this data.
+">
+
+It's really a simple message board, just with a lot of rows. So the
+subjects table is
+
+Categories: id - lastmodified - subject
+Actual row: 17090 - 20070730192222 - This is a test
+
+The posts table would be like:
+
+Categories: id - subject - postdate - username - email - comment
+Actual row: 17090 - This is a test - 20070730192222 - Jason -
+jwcarl ... @gmail.com - This is a test comment.
+
+In retrospect, I can't quite remember why I'm duplicating the
+information into the subjects table; I think it was at the suggestion
+of someone in another NG. I'm sure that the goal was to make the &quot;view
+subjects&quot; section load faster by reading 17,000 rows instead of
+600,000.
+
+Would it be better to get rid of the &quot;subjects&quot; table altogether, and
+just create an index with the ID field?
+
+<QUOTE PREVIOUSPOST="
+&gt; On other points related to style (and having nothing to do with
+&gt; whether these points should be used in your instance, because I don't
+&gt; think they should):
+
+&gt; &gt; for ($count=0; $count &lt; 20; $count++) {
+&gt; &gt;   ($id, $lastmodified, $subject) = split(/\|:\|/, $filenames[$count]);
+
+&gt; It's more Perlish to do a simple iterative loop like this:
+
+&gt;    for (0..20) {         #Perl ain't C!
+
+&gt; But your intent seems to be just to do an array slice.  If you want to
+&gt; take an array slice, don't create a counter and increment it; just
+&gt; slice the array directly, such as:
+
+&gt;    foreach my $line_of_the_array ( @array[0..20] ) {
+">
+
+I guess my background is showing through, isn't it? LOL  I'm using the
+counter for a few other things, too, though; in this case, I use it to
+determine the background color of the table row (it alternates based
+on whether $count is divisible by 2).
+
+I don't think that I've seen your foreach version before, though. I'll
+have to remember that for future reference.
+
+<QUOTE PREVIOUSPOST="
+&gt; Oh, and, also:
+
+&gt; &gt; $dbh-&gt;quote($id)
+
+&gt; If you are sure your $id cannot be tainted (such as it has an integer
+&gt; type imposed by the database) then you don't need to quote it (and
+&gt; doing so further slows you down).
+">
+
+This confused me, too. When I didn't use quote(), it gave me an error;
+something along the lines of &quot;$id cannot be null.&quot; But it in the
+database as a number, every time, so I couldn't understand why it did
+that. Using quote() solved the problem, but I don't know why.
+
+- J
+</POST>
+<POST>
+<POSTER> Jason &lt;jwcarl...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-30T19:37:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; &gt; I'm sure that the
+&gt; &gt; bottleneck is with this array.
+
+&gt; How do you know that? Anyway, it seems to me that you can easily skip
+&gt; that array.
+">
+
+I don't actually know it, but it's my best guess. When the program
+used flat text files, it had gotten pretty slow, too, and the only
+thing that the 2 scripts have in common is this large array.
+
+<QUOTE PREVIOUSPOST="
+&gt; for ( 0 .. 20 ) {
+&gt;      my $topiclist = ... id=&quot; . $dbh-&gt;quote( $filelist-&gt;[$_][0] ) . &quot; ...
+">
+
+Thanks, Gunnar,
+
+Jason
+</POST>
+<POST>
+<POSTER> Ted Zlatanov &lt;t...@lifelogs.com&gt; </POSTER>
+<POSTDATE> 2007-07-30T20:00:00 </POSTDATE>
+On Mon, 30 Jul 2007 21:30:36 -0000 Jason &lt;jwcarl ... @gmail.com&gt; wrote:
+
+J&gt; # Push subjects into Perl array
+J&gt; my $filelist = $dbh-&gt;selectall_arrayref(&quot;SELECT `id`, `lastmodified`,
+J&gt; `subject` FROM $forum_subjects ORDER BY lastmodified DESC&quot;);
+...
+J&gt; # In the &quot;view subject&quot; section, loop through last 20 indexes of
+J&gt; @filenames
+J&gt; # 0 and 20 are dynamic in the real script
+J&gt; for ($count=0; $count &lt; 20; $count++) {
+J&gt;   ($id, $lastmodified, $subject) = split(/\|:\|/, $filenames[$count]);
+
+J&gt;   my $topiclist = $dbh-&gt;selectall_arrayref(&quot;SELECT `id`, `subject`,
+J&gt; `postdate`, `username`, `email`, `comment` FROM $forum_posts WHERE
+J&gt; id=&quot; . $dbh-&gt;quote($id) . &quot; ORDER BY postdate ASC&quot;);
+
+J&gt;   print ...
+J&gt; }
+
+J&gt; I know that this has got to be the most inefficient method possible,
+J&gt; but I haven't found a better way. Is there a faster method to get the
+J&gt; information I want than this?
+
+First of all, you may want to use sprintf() to make your SQL strings
+clearer.  Also, don't use $dbh-&gt;quote() only sometimes, use it all the
+time.
+
+Second, learn SQL better and you'll be able to write the exact query
+that will return the last 20 items with the detail you need.  It's not a
+Perl problem that your approach is slow.  I won't write the query for
+you, because you should look it up, and it may make sense for you to use
+the MySQL-specific version as opposed to the standard SQL version.
+
+Last but most important, use Rose::DB::Object or Class::DBI (both on
+CPAN) to automate your database work.  You'll spend 2 hours learning how
+to set up a Rose::DB connection, then you'll save weeks of your time
+using all the functionality that RDBO provides for you.  I like
+Class::DBI too, but RDBO is IMHO much better supported and designed, so
+I reccomend it.
+
+Ted
+</POST>
+<POST>
+<POSTER> Jason &lt;jwcarl...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-30T21:44:00 </POSTDATE>
+On Jul 30, 8:00 pm, Ted Zlatanov &lt;t ... @lifelogs.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Mon, 30 Jul 2007 21:30:36 -0000 Jason &lt;jwcarl ... @gmail.com&gt; wrote:
+
+&gt; J&gt; # Push subjects into Perl array
+&gt; J&gt; my $filelist = $dbh-&gt;selectall_arrayref(&quot;SELECT `id`, `lastmodified`,
+&gt; J&gt; `subject` FROM $forum_subjects ORDER BY lastmodified DESC&quot;);
+&gt; ...
+&gt; J&gt; # In the &quot;view subject&quot; section, loop through last 20 indexes of
+&gt; J&gt; @filenames
+&gt; J&gt; # 0 and 20 are dynamic in the real script
+&gt; J&gt; for ($count=0; $count &lt; 20; $count++) {
+&gt; J&gt;   ($id, $lastmodified, $subject) = split(/\|:\|/, $filenames[$count]);
+
+&gt; J&gt;   my $topiclist = $dbh-&gt;selectall_arrayref(&quot;SELECT `id`, `subject`,
+&gt; J&gt; `postdate`, `username`, `email`, `comment` FROM $forum_posts WHERE
+&gt; J&gt; id=&quot; . $dbh-&gt;quote($id) . &quot; ORDER BY postdate ASC&quot;);
+
+&gt; J&gt;   print ...
+&gt; J&gt; }
+
+&gt; J&gt; I know that this has got to be the most inefficient method possible,
+&gt; J&gt; but I haven't found a better way. Is there a faster method to get the
+&gt; J&gt; information I want than this?
+
+&gt; First of all, you may want to use sprintf() to make your SQL strings
+&gt; clearer.  Also, don't use $dbh-&gt;quote() only sometimes, use it all the
+&gt; time.
+
+&gt; Second, learn SQL better and you'll be able to write the exact query
+&gt; that will return the last 20 items with the detail you need.  It's not a
+&gt; Perl problem that your approach is slow.  I won't write the query for
+&gt; you, because you should look it up, and it may make sense for you to use
+&gt; the MySQL-specific version as opposed to the standard SQL version.
+
+&gt; Last but most important, use Rose::DB::Object or Class::DBI (both on
+&gt; CPAN) to automate your database work.  You'll spend 2 hours learning how
+&gt; to set up a Rose::DB connection, then you'll save weeks of your time
+&gt; using all the functionality that RDBO provides for you.  I like
+&gt; Class::DBI too, but RDBO is IMHO much better supported and designed, so
+&gt; I reccomend it.
+
+&gt; Ted
+">
+
+Thanks for the tip on Rose::DB::Object. The whole point of this
+exercise is to learn MySQL, anyway (the system functions in flat text,
+just not well), so that helps a lot.
+
+- J
+</POST>
+<POST>
+<POSTER> Ted Zlatanov &lt;t...@lifelogs.com&gt; </POSTER>
+<POSTDATE> 2007-07-30T23:27:00 </POSTDATE>
+On Tue, 31 Jul 2007 01:44:42 -0000 Jason &lt;jwcarl ... @gmail.com&gt; wrote:
+
+J&gt; On Jul 30, 8:00 pm, Ted Zlatanov &lt;t ... @lifelogs.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; On Mon, 30 Jul 2007 21:30:36 -0000 Jason &lt;jwcarl ... @gmail.com&gt; wrote:
+">
+
+J&gt; # Push subjects into Perl array
+J&gt; my $filelist = $dbh-&gt;selectall_arrayref(&quot;SELECT `id`, `lastmodified`,
+J&gt; `subject` FROM $forum_subjects ORDER BY lastmodified DESC&quot;);
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; ...
+">
+
+J&gt; # In the &quot;view subject&quot; section, loop through last 20 indexes of
+J&gt; @filenames
+J&gt; # 0 and 20 are dynamic in the real script
+J&gt; for ($count=0; $count &lt; 20; $count++) {
+J&gt; ($id, $lastmodified, $subject) = split(/\|:\|/, $filenames[$count]);
+
+<QUOTE PREVIOUSPOST="
+
+">
+
+J&gt; my $topiclist = $dbh-&gt;selectall_arrayref(&quot;SELECT `id`, `subject`,
+J&gt; `postdate`, `username`, `email`, `comment` FROM $forum_posts WHERE
+J&gt; id=&quot; . $dbh-&gt;quote($id) . &quot; ORDER BY postdate ASC&quot;);
+
+<QUOTE PREVIOUSPOST="
+
+">
+
+J&gt; print ...
+J&gt; }
+
+<QUOTE PREVIOUSPOST="
+
+">
+
+J&gt; I know that this has got to be the most inefficient method possible,
+J&gt; but I haven't found a better way. Is there a faster method to get the
+J&gt; information I want than this?
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; First of all, you may want to use sprintf() to make your SQL strings
+&gt;&gt; clearer.  Also, don't use $dbh-&gt;quote() only sometimes, use it all the
+&gt;&gt; time.
+
+&gt;&gt; Second, learn SQL better and you'll be able to write the exact query
+&gt;&gt; that will return the last 20 items with the detail you need.  It's not a
+&gt;&gt; Perl problem that your approach is slow.  I won't write the query for
+&gt;&gt; you, because you should look it up, and it may make sense for you to use
+&gt;&gt; the MySQL-specific version as opposed to the standard SQL version.
+
+&gt;&gt; Last but most important, use Rose::DB::Object or Class::DBI (both on
+&gt;&gt; CPAN) to automate your database work.  You'll spend 2 hours learning how
+&gt;&gt; to set up a Rose::DB connection, then you'll save weeks of your time
+&gt;&gt; using all the functionality that RDBO provides for you.  I like
+&gt;&gt; Class::DBI too, but RDBO is IMHO much better supported and designed, so
+&gt;&gt; I reccomend it.
+">
+
+J&gt; Thanks for the tip on Rose::DB::Object. The whole point of this
+J&gt; exercise is to learn MySQL, anyway (the system functions in flat text,
+J&gt; just not well), so that helps a lot.
+
+If you do use RDBO, turn on the &quot;Debug&quot; flag for the objects and the
+managers.  You'll see the full SQL queries RDBO makes, which is a nice
+learning tool.  Once you've used RDBO, you'll wonder why you ever
+suffered through the DBI interface.
+
+Ted
+</POST>
+<POST>
+<POSTER> Brian Blackmore &lt;b...@po.cwru.edu&gt; </POSTER>
+<POSTDATE> 2007-07-31T14:25:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jason &lt;jwcarl ... @gmail.com&gt; wrote:
+&gt; It's really a simple message board, just with a lot of rows. So the
+&gt; subjects table is
+&gt; Categories: id - lastmodified - subject
+&gt; Actual row: 17090 - 20070730192222 - This is a test
+&gt; The posts table would be like:
+&gt; Categories: id - subject - postdate - username - email - comment
+&gt; Actual row: 17090 - This is a test - 20070730192222 - Jason -
+&gt; jwcarl ... @gmail.com - This is a test comment.
+">
+
+Where are the messages?
+
+<QUOTE PREVIOUSPOST="
+&gt; In retrospect, I can't quite remember why I'm duplicating the
+&gt; information into the subjects table; I think it was at the suggestion
+&gt; of someone in another NG. I'm sure that the goal was to make the &quot;view
+&gt; subjects&quot; section load faster by reading 17,000 rows instead of
+&gt; 600,000.
+">
+
+I presume that the goal was to make the subjects load faster by moving
+the message _contents_ (i.e., the actual posts) of into their own table.
+Anything that you display in the &quot;quick view&quot; should doubtless be
+someplace else that allows for faster database access.  Granted, a true
+SQL VIEW might be able to handle fast selection on a big mess of a
+table, but there's no point in doing that.
+
+You need a posts table that contains the post id and the actual content
+of the post (oh, maybe that was &quot;comment&quot;?); you need a summary table
+that contains the &quot;quick view&quot; content; indices on the primary keys (of
+course), and no doubt and index on postdate.
+
+As suggested elsewhere, use LIMIT.
+
+With such a small number of records, the database latency should be far
+less than a second.
+
+Also, I'll repeat one other thing from elsewhere, definitely let the
+database do the selection because it knows how to optimize for fastest
+query return.  Looping select statements in perl is generally a bad
+idea.
+
+--
+Brian Blackmore
+blb8 at po dot cwru dot edu
+</POST>
+<POST>
+<POSTER> use...@DavidFilmer.com </POSTER>
+<POSTDATE> 2007-07-31T14:38:00 </POSTDATE>
+On Jul 30, 4:34 pm, Jason &lt;jwcarl ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; the subjects table is
+
+&gt; Categories: id - lastmodified - subject
+&gt; Actual row: 17090 - 20070730192222 - This is a test
+
+&gt; The posts table would be like:
+
+&gt; Categories: id - subject - postdate - username - email - comment
+&gt; Actual row: 17090 - This is a test - 20070730192222 - Jason -
+&gt; jwcarl ... @gmail.com - This is a test comment.
+">
+
+OK, try something like this (untested - I don't have a sample
+database):
+
+my $sth = $dbh-&gt;prepare(&lt;&lt;SQL);
+select $forum_posts.id,
+$forum_posts.subject,
+$forum_posts.postdate,
+$forum_posts.username,
+$forum_posts.email,
+$forum_posts.comment
+from $forum_posts
+left join id on ($forum_subjects.id = $forum_posts.id)
+order by $forum_subjects.postdate ASC
+limit 20
+SQL
+
+$sth-&gt;execute;
+
+while (my $row = $sth-&gt;fetchrow_arrayref()) {
+#do stuff
+
+<QUOTE PREVIOUSPOST="
+}
+&gt; In retrospect, I can't quite remember why I'm duplicating the
+&gt; information into the subjects table; I think it was at the suggestion
+&gt; of someone in another NG.
+">
+
+The person who made such a suggestion is a complete idiot.
+
+<QUOTE PREVIOUSPOST="
+&gt; Would it be better to get rid of the &quot;subjects&quot; table altogether, and
+&gt; just create an index with the ID field?
+">
+
+Absolutely.
+
+<QUOTE PREVIOUSPOST="
+&gt; counter for a few other things, too, though; in this case, I use it to
+&gt; determine the background color of the table row (it alternates based
+&gt; on whether $count is divisible by 2).
+">
+
+You don't need a counter to implement a simple boolean toggle;
+something like this will do:
+
+$toggle = ! $toggle;
+my $color = ($toggle) ? $color1 : $color2;
+
+But hopefully you are using a good template module (I prefer
+HTML::Template) and CSS to drive your markup.
+
+--
+The best way to get a good answer is to ask a good question.
+David Filmer ( http://DavidFilmer.com )
+</POST>
+<POST>
+<POSTER> &quot;Peter J. Holzer&quot; &lt;hjp-usen...@hjp.at&gt; </POSTER>
+<POSTDATE> 2007-08-04T07:39:00 </POSTDATE>
+On 2007-07-30 21:30, Jason &lt;jwcarl ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I've posted a few times now that I'm rebuilding a message board
+&gt; program to use MySQL instead of flat text files. I'm relatively new to
+&gt; MySQL, though, so I'm having fun with the challenges along the way.
+
+&gt; The database has 2 tables: one to hold subjects, and one to hold all
+&gt; of the posts. The subjects table has around 17000 rows, while the
+&gt; posts table has around 600,000.
+
+&gt; The most current problem is SPEED! From sheer lack of knowledge, I'm
+&gt; importing the subjects table into an array in the beginning of the
+&gt; script, then using a for loop throughout the program to access that
+&gt; array. But the program is running pretty slow, and I'm sure that the
+&gt; bottleneck is with this array.
+">
+
+This first thing you have to do when you try to make your program faster
+is to profile it. If you don't know WHAT exactly is slow, you can only
+guess, and you'll probably guess wrong and spend a lot of time improving
+the performance by one percent.
+
+There are tools for profiling, like Devel::DProf or Apache::DProf, but
+for starters, you can just use time (possibly with Time::HiRes to get
+sub-second resolution) and print, like this:
+
+<QUOTE PREVIOUSPOST="
+&gt; Here is the code that I'm using:
+">
+
+use Time::HiRes qw(time);
+
+my $t0 = time;
+
+<QUOTE PREVIOUSPOST="
+&gt; # Push subjects into Perl array
+&gt; my $filelist = $dbh-&gt;selectall_arrayref(&quot;SELECT `id`, `lastmodified`,
+&gt; `subject` FROM $forum_subjects ORDER BY lastmodified DESC&quot;);
+
+&gt; my @filenames;
+&gt; for my $row (@$filelist) {
+&gt;   my ($id, $lastmodified, $subject) = @$row;
+&gt;   push(@filenames, $id . &quot;|:|&quot; . $lastmodified . &quot;|:|&quot; . $subject);
+&gt; }
+">
+
+my $t1 = time();
+print STDERR &quot;retrieved subject list in &quot;, $t1 - $t0, &quot; seconds\n&quot;;
+
+$t0 = time();
+
+<QUOTE PREVIOUSPOST="
+&gt; # In the &quot;view subject&quot; section, loop through last 20 indexes of
+&gt; @filenames
+&gt; # 0 and 20 are dynamic in the real script
+&gt; for ($count=0; $count &lt; 20; $count++) {
+&gt;   ($id, $lastmodified, $subject) = split(/\|:\|/, $filenames[$count]);
+
+&gt;   my $topiclist = $dbh-&gt;selectall_arrayref(&quot;SELECT `id`, `subject`,
+&gt; `postdate`, `username`, `email`, `comment` FROM $forum_posts WHERE
+&gt; id=&quot; . $dbh-&gt;quote($id) . &quot; ORDER BY postdate ASC&quot;);
+
+&gt;   print ...
+&gt; }
+">
+
+$t1 = time();
+
+print STDERR &quot;displayed 20 postings in &quot;, $t1 - $t0, &quot; seconds\n&quot;;
+
+This will tell you whether you spend most time in the first or the
+second part of your program. Naturally, you start improving the part
+where it spends most time ...
+
+It also gives you numbers to compare so you don't have to rely on
+subjective feeling of speed. &quot;I think it is now faster than last week&quot;
+is not a good measurement. If you see in your log files that last week
+it took between 8 and 11 seconds, and now you're down to 5 to 6 seconds,
+you know that you've made progress.
+
+hp
+
+--
+_  | Peter J. Holzer    | I know I'd be respectful of a pirate
+|_|_) | Sysadmin WSR       | with an emu on his shoulder.
+| |   | h ... @hjp.at         |
+__/   | http://www.hjp.at/ |      -- Sam in &quot;Freefall&quot;
+</POST>
+<POST>
+<POSTER> &quot;Peter J. Holzer&quot; &lt;hjp-usen...@hjp.at&gt; </POSTER>
+<POSTDATE> 2007-08-04T07:55:00 </POSTDATE>
+On 2007-07-30 22:26, use ... @DavidFilmer.com &lt;use ... @DavidFilmer.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jul 30, 2:30 pm, Jason &lt;jwcarl ... @gmail.com&gt; wrote:
+
+&gt;&gt; The most current problem is SPEED!
+
+&gt; Yeah, I imagine so.  The killer is that you are submitting a full
+&gt; selectall inside a loop.
+">
+
+The loop is executed only 20 times, and prepare time is usually rather
+short (in fact, MySQL didn't have server side prepares until recently,
+and it's still disabled by default in DBD::mysql), so I doubt this is
+&quot;the killer&quot;. If that makes any difference at all, it is probably not
+noticable to the user.
+
+But as always in performance-tuning: Don't guess - measure!
+
+<QUOTE PREVIOUSPOST="
+&gt; You should generally NEVER do that.  By constructing a different SQL
+&gt; statement each time (because you hard- code the id in the SQL) it
+&gt; means the statement will never be found in your database server's
+&gt; cache, so the server must compute an execution plan over and over
+&gt; again.  Instead, you should always use the prepare method (outside of
+&gt; the loop) and then an execute (inside the loop).
+">
+
+I agree with that, but mostly because it forces you to use placeholders.
+
+<QUOTE PREVIOUSPOST="
+&gt; Oh, and, also:
+
+&gt;&gt; $dbh-&gt;quote($id)
+
+&gt; If you are sure your $id cannot be tainted (such as it has an integer
+&gt; type imposed by the database) then you don't need to quote it (and
+&gt; doing so further slows you down).
+">
+
+This is very bad advice. The OP should use placeholders instead. quote()
+encourages just that kind of dangerous micro-optimizations (Oh, I guess
+$id is probably ok, so I'll save 13 keystrokes and a few microseconds
+... and then you'll find out that it wasn't ok when your machine is
+0wned).
+
+hp
+
+--
+_  | Peter J. Holzer    | I know I'd be respectful of a pirate
+|_|_) | Sysadmin WSR       | with an emu on his shoulder.
+| |   | h ... @hjp.at         |
+__/   | http://www.hjp.at/ |      -- Sam in &quot;Freefall&quot;
+</POST>
+<POST>
+<POSTER> &quot;Peter J. Holzer&quot; &lt;hjp-usen...@hjp.at&gt; </POSTER>
+<POSTDATE> 2007-08-04T08:12:00 </POSTDATE>
+On 2007-07-31 18:38, use ... @DavidFilmer.com &lt;use ... @DavidFilmer.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jul 30, 4:34 pm, Jason &lt;jwcarl ... @gmail.com&gt; wrote:
+&gt;&gt; the subjects table is
+
+&gt;&gt; Categories: id - lastmodified - subject
+&gt;&gt; Actual row: 17090 - 20070730192222 - This is a test
+
+&gt;&gt; The posts table would be like:
+
+&gt;&gt; Categories: id - subject - postdate - username - email - comment
+">
+
+Please call the columns of the table &quot;columns&quot; or &quot;fields&quot;. Nobody will
+understand you if you call them &quot;categories&quot;.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Actual row: 17090 - This is a test - 20070730192222 - Jason -
+&gt;&gt; jwcarl ... @gmail.com - This is a test comment.
+
+&gt; OK, try something like this (untested - I don't have a sample
+&gt; database):
+
+&gt; my $sth = $dbh-&gt;prepare(&lt;&lt;SQL);
+&gt;    select $forum_posts.id,
+&gt;           $forum_posts.subject,
+&gt;           $forum_posts.postdate,
+&gt;           $forum_posts.username,
+&gt;           $forum_posts.email,
+&gt;           $forum_posts.comment
+&gt;    from $forum_posts
+&gt;    left join id on ($forum_subjects.id = $forum_posts.id)
+&gt;    order by $forum_subjects.postdate ASC
+&gt;    limit 20
+&gt; SQL
+">
+
+I haven't tested it either, but it doesn't look equivalent to what the
+OP had. It gets the oldest 20 postings instead of the newest 20 threads.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; In retrospect, I can't quite remember why I'm duplicating the
+&gt;&gt; information into the subjects table; I think it was at the suggestion
+&gt;&gt; of someone in another NG.
+
+&gt; The person who made such a suggestion is a complete idiot.
+">
+
+Maybe, maybe not. There are two possibilities:
+
+1) The subject cannot change within a thread. In this case it belongs
+*only* into the subjects (threads) table. Duplicating it in the
+postings table breaks normalization and is probably useless.
+
+2) The subject can change within a thread. In this case duplicating the
+subject of the first (or last) message into the subjects (threads)
+table may still be worthwhile to avoid a join if you just want to
+display an overview of the threads.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Would it be better to get rid of the &quot;subjects&quot; table altogether, and
+&gt;&gt; just create an index with the ID field?
+
+&gt; Absolutely.
+">
+
+Probably not. But it's hard to tell without knowing how the tables are
+used.
+
+hp
+
+--
+_  | Peter J. Holzer    | I know I'd be respectful of a pirate
+|_|_) | Sysadmin WSR       | with an emu on his shoulder.
+| |   | h ... @hjp.at         |
+__/   | http://www.hjp.at/ |      -- Sam in &quot;Freefall&quot;
+</POST>
+<POST>
+<POSTER> &quot;Peter J. Holzer&quot; &lt;hjp-usen...@hjp.at&gt; </POSTER>
+<POSTDATE> 2007-08-04T08:20:00 </POSTDATE>
+On 2007-07-30 22:33, J. Gleixner &lt;glex_no-s ... @qwest-spam-no.invalid&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Jason wrote:
+&gt;&gt;   my $topiclist = $dbh-&gt;selectall_arrayref(&quot;SELECT `id`, `subject`,
+&gt;&gt; `postdate`, `username`, `email`, `comment` FROM $forum_posts WHERE
+&gt;&gt; id=&quot; . $dbh-&gt;quote($id) . &quot; ORDER BY postdate ASC&quot;);
+
+&gt; Look into placeholders and bind_columns
+">
+
+I second that advice.
+
+<QUOTE PREVIOUSPOST="
+&gt; and you don't need any of those '`'.
+">
+
+Nope. The backticks are to delimit identifiers. You cannot substitute
+identifiers with placeholders. The backticks are only necessary if you
+want to use column names which are keywords or contain &quot;non-identifier&quot;
+characters (like spaces). As a matter of style, I think they should
+generally be omitted. Tools which generate SQL often use backticks so
+that the user doesn't have to know about SQL naming rules.
+
+hp
+
+--
+_  | Peter J. Holzer    | I know I'd be respectful of a pirate
+|_|_) | Sysadmin WSR       | with an emu on his shoulder.
+| |   | h ... @hjp.at         |
+__/   | http://www.hjp.at/ |      -- Sam in &quot;Freefall&quot;
+</POST>
+<POST>
+<POSTER> xhos...@gmail.com </POSTER>
+<POSTDATE> 2007-08-04T16:11:00 </POSTDATE>
+&quot;Peter J. Holzer&quot; &lt;hjp-usen ... @hjp.at&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2007-07-30 22:33, J. Gleixner &lt;glex_no-s ... @qwest-spam-no.invalid&gt;
+&gt; wrote:
+&gt; &gt; Jason wrote:
+&gt; &gt;&gt;   my $topiclist = $dbh-&gt;selectall_arrayref(&quot;SELECT `id`, `subject`,
+&gt; &gt;&gt; `postdate`, `username`, `email`, `comment` FROM $forum_posts WHERE
+&gt; &gt;&gt; id=&quot; . $dbh-&gt;quote($id) . &quot; ORDER BY postdate ASC&quot;);
+
+&gt; &gt; Look into placeholders and bind_columns
+
+&gt; I second that advice.
+
+&gt; &gt; and you don't need any of those '`'.
+
+&gt; Nope. The backticks are to delimit identifiers. You cannot substitute
+&gt; identifiers with placeholders.
+">
+
+I think you are misinterpreting Jason's advice.
+1) look into placeholders.
+2) you don't need those backticks.
+
+No causation implied between them.
+
+Xho
+
+--
+-------------------- http://NewsReader.Com/ --------------------
+Usenet Newsgroup Service                        $9.95/Month 30GB
+</POST>
+<POST>
+<POSTER> Jason &lt;jwcarl...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-05T20:15:00 </POSTDATE>
+On Aug 4, 7:39 am, &quot;Peter J. Holzer&quot; &lt;hjp-usen ... @hjp.at&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2007-07-30 21:30, Jason &lt;jwcarl ... @gmail.com&gt; wrote:
+
+&gt; &gt; I've posted a few times now that I'm rebuilding a message board
+&gt; &gt; program to use MySQL instead of flat text files. I'm relatively new to
+&gt; &gt; MySQL, though, so I'm having fun with the challenges along the way.
+
+&gt; &gt; The database has 2 tables: one to hold subjects, and one to hold all
+&gt; &gt; of the posts. The subjects table has around 17000 rows, while the
+&gt; &gt; posts table has around 600,000.
+
+&gt; &gt; The most current problem is SPEED! From sheer lack of knowledge, I'm
+&gt; &gt; importing the subjects table into an array in the beginning of the
+&gt; &gt; script, then using a for loop throughout the program to access that
+&gt; &gt; array. But the program is running pretty slow, and I'm sure that the
+&gt; &gt; bottleneck is with this array.
+
+&gt; This first thing you have to do when you try to make your program faster
+&gt; is to profile it. If you don't know WHAT exactly is slow, you can only
+&gt; guess, and you'll probably guess wrong and spend a lot of time improving
+&gt; the performance by one percent.
+
+&gt; There are tools for profiling, like Devel::DProf or Apache::DProf, but
+&gt; for starters, you can just use time (possibly with Time::HiRes to get
+&gt; sub-second resolution) and print, like this:
+
+&gt; &gt; Here is the code that I'm using:
+
+&gt; use Time::HiRes qw(time);
+
+&gt; my $t0 = time;
+
+&gt; &gt; # Push subjects into Perl array
+&gt; &gt; my $filelist = $dbh-&gt;selectall_arrayref(&quot;SELECT `id`, `lastmodified`,
+&gt; &gt; `subject` FROM $forum_subjects ORDER BY lastmodified DESC&quot;);
+
+&gt; &gt; my @filenames;
+&gt; &gt; for my $row (@$filelist) {
+&gt; &gt;   my ($id, $lastmodified, $subject) = @$row;
+&gt; &gt;   push(@filenames, $id . &quot;|:|&quot; . $lastmodified . &quot;|:|&quot; . $subject);
+&gt; &gt; }
+
+&gt; my $t1 = time();
+&gt; print STDERR &quot;retrieved subject list in &quot;, $t1 - $t0, &quot; seconds\n&quot;;
+
+&gt; $t0 = time();
+
+&gt; &gt; # In the &quot;view subject&quot; section, loop through last 20 indexes of
+&gt; &gt; @filenames
+&gt; &gt; # 0 and 20 are dynamic in the real script
+&gt; &gt; for ($count=0; $count &lt; 20; $count++) {
+&gt; &gt;   ($id, $lastmodified, $subject) = split(/\|:\|/, $filenames[$count]);
+
+&gt; &gt;   my $topiclist = $dbh-&gt;selectall_arrayref(&quot;SELECT `id`, `subject`,
+&gt; &gt; `postdate`, `username`, `email`, `comment` FROM $forum_posts WHERE
+&gt; &gt; id=&quot; . $dbh-&gt;quote($id) . &quot; ORDER BY postdate ASC&quot;);
+
+&gt; &gt;   print ...
+&gt; &gt; }
+
+&gt; $t1 = time();
+
+&gt; print STDERR &quot;displayed 20 postings in &quot;, $t1 - $t0, &quot; seconds\n&quot;;
+
+&gt; This will tell you whether you spend most time in the first or the
+&gt; second part of your program. Naturally, you start improving the part
+&gt; where it spends most time ...
+
+&gt; It also gives you numbers to compare so you don't have to rely on
+&gt; subjective feeling of speed. &quot;I think it is now faster than last week&quot;
+&gt; is not a good measurement. If you see in your log files that last week
+&gt; it took between 8 and 11 seconds, and now you're down to 5 to 6 seconds,
+&gt; you know that you've made progress.
+
+&gt;         hp
+
+&gt; --
+&gt;    _  | Peter J. Holzer    | I know I'd be respectful of a pirate
+&gt; |_|_) | Sysadmin WSR       | with an emu on his shoulder.
+&gt; | |   | h ... @hjp.at         |
+&gt; __/   | http://www.hjp.at/| -- Sam in &quot;Freefall&quot;
+">
+
+That's extremely helpful, Peter. Thank you very much for such great
+details! I've been measuring my success by the average server load,
+and while it's greatly improved with this transition, I'm sure that I
+can make it better.
+
+- Jason
+</POST>
+<POST>
+<POSTER> &quot;Dr.Ruud&quot; &lt;rvtol+n...@isolution.nl&gt; </POSTER>
+<POSTDATE> 2007-08-11T18:26:00 </POSTDATE>
+Jason schreef:
+
+<QUOTE PREVIOUSPOST="
+&gt; # Push subjects into Perl array
+&gt; my $filelist = $dbh-&gt;selectall_arrayref(&quot;SELECT `id`, `lastmodified`,
+&gt; `subject` FROM $forum_subjects ORDER BY lastmodified DESC&quot;);
+">
+
+There is an index on the lastmodified column?
+
+<QUOTE PREVIOUSPOST="
+&gt; # 0 and 20 are dynamic in the real script
+&gt; for ($count=0; $count &lt; 20; $count++) {
+&gt;   ($id, $lastmodified, $subject) = split(/\|:\|/, $filenames[$count]);
+
+&gt;   my $topiclist = $dbh-&gt;selectall_arrayref(&quot;SELECT `id`, `subject`,
+&gt; `postdate`, `username`, `email`, `comment` FROM $forum_posts WHERE
+&gt; id=&quot; . $dbh-&gt;quote($id) . &quot; ORDER BY postdate ASC&quot;);
+">
+
+21 queries where 1 would suffice. You do at least have an index on the
+postdate column?
+
+--
+Affijn, Ruud
+
+&quot;Gewoon is een tijger.&quot;
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,1096 @@
+<DOC>
+<DOCID> eng-NG-31-126402-8205955 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-07-16T07:40:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Handling Large files (a few Gb) in Perl
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;sydc...@gmail.com&quot; &lt;sydc...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-16T07:40:00 </POSTDATE>
+Hi,
+
+I am a beginner (or worse) at Perl.
+
+I have a need to find the longest line (record) in a file. The below
+code works neatly for small files.
+But when I need to read huge files (in the order of Gb), it is very
+slow.
+
+I need to write an output file with stuff like:
+Longest line is... occurring on line number...
+There are ... lines in the file
+
+The same file is crunched using C in about 30 milliseconds!
+The difference in run times of Perl/VbScript and C is a significant
+one.
+
+Could someone help me in finding what way I could make Perl work the
+best way for processing huge files such as these?
+
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+my $prev=-1;
+my $curr=0;
+
+my ($sec,$min,$hour,$com) = localtime(time);
+print &quot;Start time - $hour:$min:$sec \n&quot;;
+
+open(F1, &quot;c:\\perl\\syd\\del.txt&quot;);
+
+while (&lt;F1&gt;)
+{
+$curr = index($_, &quot;\x0A&quot;);
+if($curr &gt; $prev)
+{
+$prev = $curr;
+}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+close(F1);
+
+my ($sec,$min,$hour,$com) = localtime(time);
+print &quot;End time   - $hour:$min:$sec \n&quot;;
+print &quot;Lengthiest record length: $prev \n&quot;;
+
+The output times for a 1 Gb is
+Start time - 20:32:31
+End time   - 20:34:28
+Lengthiest record length: 460
+
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+I am running this on a laptop with Windows XP, 1.7 GHz processor with
+1 Gb of RAM
+I am using ActivePerl
+
+Thanks in advance!
+Syd
+</POST>
+<POST>
+<POSTER> Paul Lalli &lt;mri...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-16T08:15:00 </POSTDATE>
+On Jul 16, 7:40 am, &quot;sydc ... @gmail.com&quot; &lt;sydc ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I am a beginner (or worse) at Perl.
+
+&gt; I have a need to find the longest line (record) in a file. The below
+&gt; code works neatly for small files.
+&gt; But when I need to read huge files (in the order of Gb), it is very
+&gt; slow.
+&gt; Could someone help me in finding what way I could make Perl work the
+&gt; best way for processing huge files such as these?
+
+&gt; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+&gt; my $prev=-1;
+&gt; my $curr=0;
+
+&gt; my ($sec,$min,$hour,$com) = localtime(time);
+&gt; print &quot;Start time - $hour:$min:$sec \n&quot;;
+
+&gt; open(F1, &quot;c:\\perl\\syd\\del.txt&quot;);
+
+&gt; while (&lt;F1&gt;)
+&gt; {
+&gt;    $curr = index($_, &quot;\x0A&quot;);
+">
+
+Well here's one improvement you could make.  Don't force Perl to
+search through each string looking for a specific character.  Just ask
+it what the lenght of the string is.  In my tests, that's about 10%
+faster:
+
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Benchmark qw/:all/;
+
+sub use_index {
+open my $fh, '&lt;', 'ipsum.txt' or die $!;
+my $prev = 0;
+while (&lt;$fh&gt;) {
+my $cur = index($_, &quot;\x0A&quot;);
+if ($cur &gt; $prev) {
+$prev = $cur;
+}
+}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+sub use_length {
+open my $fh, '&lt;', 'ipsum.txt' or die $!;
+my $prev = 0;
+while (&lt;$fh&gt;) {
+my $cur = length;
+if ($cur &gt; $prev) {
+$prev = $cur;
+}
+}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+cmpthese(timethese(100_000, { length =&gt; \&amp;use_length, index =&gt;
+\&amp;use_index }));
+__END__
+
+Benchmark: timing 100000 iterations of index, length...
+index: 26 wallclock secs (19.81 usr +  6.27 sys = 26.08 CPU) @
+3834.36/s (n=100000)
+length: 24 wallclock secs (17.10 usr +  6.47 sys = 23.57 CPU) @
+4242.68/s (n=100000)
+Rate  index length
+index  3834/s     --   -10%
+length 4243/s    11%     --
+
+Paul Lalli
+</POST>
+<POST>
+<POSTER> &quot;sydc...@gmail.com&quot; &lt;sydc...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-16T11:37:00 </POSTDATE>
+Hi Paul,
+
+Thank you for your suggestion. This does speed up things quite a bit.
+
+Is there any other way to speed this up much faster? It is still slow
+and my pc hangs up on me, for large files.
+
+Warm regards!
+Syd
+</POST>
+<POST>
+<POSTER> &quot;J. Gleixner&quot; &lt;glex_no-s...@qwest-spam-no.invalid&gt; </POSTER>
+<POSTDATE> 2007-07-16T12:37:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+sydc ... @gmail.com wrote:
+&gt; Hi Paul,
+
+&gt; Thank you for your suggestion. This does speed up things quite a bit.
+
+&gt; Is there any other way to speed this up much faster?
+">
+
+Write it in C.
+
+&gt;It is still slow
+
+<QUOTE PREVIOUSPOST="
+&gt; and my pc hangs up on me, for large files.
+">
+
+It shouldn't 'hang' your PC.  It might use a large percentage of
+the CPU though.
+</POST>
+<POST>
+<POSTER> xhos...@gmail.com </POSTER>
+<POSTDATE> 2007-07-16T13:01:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;sydc ... @gmail.com&quot; &lt;sydc ... @gmail.com&gt; wrote:
+&gt; Hi,
+
+&gt; I am a beginner (or worse) at Perl.
+
+&gt; I have a need to find the longest line (record) in a file. The below
+&gt; code works neatly for small files.
+&gt; But when I need to read huge files (in the order of Gb), it is very
+&gt; slow.
+
+&gt; I need to write an output file with stuff like:
+&gt; Longest line is... occurring on line number...
+&gt; There are ... lines in the file
+
+&gt; The same file is crunched using C in about 30 milliseconds!
+">
+
+I can't get anywhere near that speed in C.  Can you post your C code,
+and some Perl code that generates a sample file to be operated on?
+
+<QUOTE PREVIOUSPOST="
+&gt; The difference in run times of Perl/VbScript and C is a significant
+&gt; one.
+
+&gt; Could someone help me in finding what way I could make Perl work the
+&gt; best way for processing huge files such as these?
+">
+
+Since you already have a C program which works, use it.
+
+<QUOTE PREVIOUSPOST="
+&gt; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+&gt; my $prev=-1;
+&gt; my $curr=0;
+
+&gt; my ($sec,$min,$hour,$com) = localtime(time);
+&gt; print &quot;Start time - $hour:$min:$sec \n&quot;;
+
+&gt; open(F1, &quot;c:\\perl\\syd\\del.txt&quot;);
+
+&gt; while (&lt;F1&gt;)
+&gt; {
+&gt;    $curr = index($_, &quot;\x0A&quot;);
+">
+
+You are searching for the end of line marker twice, once implicitly in the
+readline (&lt;F1&gt;) and once here.  And you already know where it will be
+found the second time--either at the end, or no where.
+
+Xho
+
+--
+-------------------- http://NewsReader.Com/ --------------------
+Usenet Newsgroup Service                        $9.95/Month 30GB
+</POST>
+<POST>
+<POSTER> &quot;Peter J. Holzer&quot; &lt;hjp-usen...@hjp.at&gt; </POSTER>
+<POSTDATE> 2007-07-16T15:18:00 </POSTDATE>
+On 2007-07-16 11:40, sydc ... @gmail.com &lt;sydc ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I have a need to find the longest line (record) in a file. The below
+&gt; code works neatly for small files.
+&gt; But when I need to read huge files (in the order of Gb), it is very
+&gt; slow.
+
+&gt; I need to write an output file with stuff like:
+&gt; Longest line is... occurring on line number...
+&gt; There are ... lines in the file
+
+&gt; The same file is crunched using C in about 30 milliseconds!
+[...]
+&gt; I am running this on a laptop with Windows XP, 1.7 GHz processor with
+&gt; 1 Gb of RAM
+">
+
+I don't believe that. Since you have only 1 GB RAM, you can't keep a
+1 GB file completely in memory. And you can't read a 1 GB file from disk
+in 30 milliseconds - certainly not from a laptop hard disk (30 seconds
+sounds more likely). Even if the whole file is cached in RAM I think
+that you can't scan 1GB of RAM in 30 ms (The new Power6 CPU claims a
+*maximum* memory read bandwidth of 40 GB/s - theoretically enough to
+scan 1 GB in 25 ms, but I doubt you get even close to that number in
+practice).  My best attempt takes about 2 seconds user time (1.85 GHz
+Core2). I won't be surprised if somebody can improve this by an order of
+magnitude, but anything more requires serious magic.
+
+Just for comparison. Your script takes about 20.5 seconds on my system.
+The obvious optimization (using length instead of index) brings it down
+to 19.3 seconds. A naive portable C version (using stdio) is about as
+fast as your script (21.0 seconds),  and a naive C version using mmap
+and strtok is much slower (37.4 seconds), but very much reduces CPU
+time. I guess by combining low level I/O calls (maybe even async I/O)
+and strtok I could get close to 15 seconds, which should be just about
+possible with the disk I have.
+
+hp
+
+--
+_  | Peter J. Holzer    | I know I'd be respectful of a pirate
+|_|_) | Sysadmin WSR       | with an emu on his shoulder.
+| |   | h ... @hjp.at         |
+__/   | http://www.hjp.at/ |      -- Sam in &quot;Freefall&quot;
+</POST>
+<POST>
+<POSTER> &quot;sydc...@gmail.com&quot; &lt;sydc...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-17T04:47:00 </POSTDATE>
+Hi,
+
+My apologies. The times were off the mark. It takes less than 3
+seconds (277 milliseconds).
+The start time is: 14:04:35.97
+The end time is: 14:04:38.74
+
+Here's the source code in C.
+***************************************Begin******************************* ********
+# include &lt;stdio.h&gt;
+# include &lt;conio.h&gt;
+# include &lt;fstream.h&gt;
+# include &lt;time.h&gt;
+
+//------------------------------------------------------------------------- //
+// This program reads a file - terminated by a carriage return and
+reports //
+// the length of the longest record in a
+file.                             //
+//------------------------------------------------------------------------- //
+
+int main ( int argc, char *argv[] );
+void handle ( char input_file_name[], int *wide_line_width,
+int *wide_line_number);
+void timestamp ( void );
+
+int main ( int argc, char *argv[] )
+{
+int i;
+char input_file_name[80];
+int wide_line_number;
+int wide_line_width;
+
+clrscr();
+
+textattr(6 + ((1) &lt;&lt; 5));
+highvideo();
+cprintf(&quot;\n\n\n\n&quot;);
+cprintf(&quot;
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿             &quot;);
+cprintf(&quot;             ³    CHECK THE MAX RECORD LENGTH IN A DOS/PC
+FILE    ³             &quot;);
+cprintf(&quot;
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ             &quot;);
+printf(&quot;\n&quot;);
+
+if ( argc &lt; 2 )
+{
+cout &lt;&lt; &quot;  Enter the input file name:\n&quot;;
+cout &lt;&lt; &quot;\n  &quot;;
+cin.getline ( input_file_name, sizeof ( input_file_name ) );
+
+cout &lt;&lt; &quot;\n&quot;;
+cout &lt;&lt; &quot;  Started - &quot;;
+timestamp ( );
+
+handle ( input_file_name, &amp;wide_line_width, &amp;wide_line_number);
+
+cout &lt;&lt; &quot;\n&quot;;
+cout &lt;&lt; &quot;  The longest line of \&quot;&quot; &lt;&lt; input_file_name
+&lt;&lt; &quot;\&quot; has length &quot; &lt;&lt; wide_line_width;
+}
+else
+{
+for ( i = 1 ; i &lt; argc ; ++i )
+{
+handle ( argv[i], &amp;wide_line_width, &amp;wide_line_number);
+
+cout &lt;&lt; &quot;  The longest line of \&quot;&quot; &lt;&lt; argv[i]
+&lt;&lt; &quot;\&quot; has length &quot; &lt;&lt; wide_line_width;
+}
+}
+cout &lt;&lt; &quot;\n&quot;;
+cout &lt;&lt; &quot;  Ended   - &quot;;
+timestamp ( );
+
+textattr(6 + ((1) &lt;&lt; 5));
+highvideo();
+cprintf(&quot;\n\n\n\n&quot;);
+cprintf(&quot;
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿             &quot;);
+cprintf(&quot;             ³             WRITTEN BY VINAY
+MAKAM                 ³             &quot;);
+cprintf(&quot;
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ             &quot;);
+
+getchar();
+return 0;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+//------------------------------------------------------------------------- //
+void handle ( char input_file_name[], int *wide_line_width,
+int *wide_line_number )
+{
+int big_number;
+int big_width;
+char c;
+ifstream input_file;
+int input_file_width;
+int line_number;
+int line_width;
+
+big_width = -1;
+big_number = -1;
+
+input_file.open( input_file_name );
+
+if ( !input_file )
+{
+cout &lt;&lt; &quot;\n&quot;;
+cout &lt;&lt; &quot;Fatal error!\n&quot;;
+cout &lt;&lt; &quot;  Cannot open the input file &quot; &lt;&lt; input_file &lt;&lt; &quot;.\n&quot;;
+return;
+}
+
+big_width = 0;
+line_width = 0;
+line_number = 0;
+
+while ( 1 )
+{
+input_file.get ( c );
+
+if ( input_file.eof ( ) )
+{
+break;
+}
+
+if ( c == '\n' )
+{
+line_number = line_number + 1;
+
+if ( big_width &lt; line_width )
+{
+big_width = line_width;
+big_number = line_number;
+}
+line_width = 0;
+}
+else
+{
+line_width = line_width + 1;
+}
+}
+
+input_file.close ( );
+
+*wide_line_width = big_width;
+*wide_line_number = big_number;
+
+return;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+//------------------------------------------------------------------------- //
+void timestamp ()
+{
+#define TIME_SIZE 40
+
+static char time_buffer[TIME_SIZE];
+const struct tm *tm;
+size_t len;
+time_t now;
+
+now = time ( NULL );
+tm = localtime ( &amp;now );
+
+len = strftime ( time_buffer, TIME_SIZE, &quot; %I:%M:%S %p&quot;, tm );
+len = len ;
+cout &lt;&lt; time_buffer &lt;&lt; &quot;\n&quot;;
+return ;
+#undef TIME_SIZE
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+****************************************End******************************** ********
+
+I am generating test files by copying a reasonable large file
+iteratively, in DOS.
+copy TestFile + TestFile  TestFileDoubled
+
+Thank you very much for all the suggestions!
+Syd
+</POST>
+<POST>
+<POSTER> Mirco Wahab &lt;wa...@chemie.uni-halle.de&gt; </POSTER>
+<POSTDATE> 2007-07-17T05:36:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+sydc ... @gmail.com wrote:
+&gt; Hi,
+
+&gt; My apologies. The times were off the mark. It takes less than 3
+&gt; seconds (277 milliseconds).
+&gt; The start time is: 14:04:35.97
+&gt; The end time is: 14:04:38.74
+
+&gt; Here's the source code in C.
+">
+
+...
+
+<QUOTE PREVIOUSPOST="
+&gt;   while ( 1 )
+&gt;   {
+&gt;     input_file.get ( c );
+
+&gt;     if ( input_file.eof ( ) )
+&gt;     {
+&gt;       break;
+&gt;     }
+
+&gt;     if ( c == '\n' )
+&gt;     {
+&gt;       line_number = line_number + 1;
+
+&gt;       if ( big_width &lt; line_width )
+&gt;       {
+&gt;    big_width = line_width;
+&gt;    big_number = line_number;
+&gt;       }
+&gt;       line_width = 0;
+&gt;     }
+&gt;     else
+&gt;     {
+&gt;       line_width = line_width + 1;
+&gt;     }
+&gt;   }
+
+&gt;   input_file.close ( );
+">
+
+This is entirely impossible. I guess your
+C++ &quot;test situation&quot; doesn't touch the 1G
+file at all. Your 0,3 msec or 3,0 sec are
+the time needed to load the application
+into ram - which terminates after startup.
+Thats it (possibly).
+
+The perl solution *does* obviously check
+each line and returns the expected result.
+
+My fast-hacked C solution reads a 1G file
+in ~28 sec (2M Lines, mean length 500 Bytes)
+on a Athlon64/3200 1Gig WinXP.
+
+my 0,02 €
+
+Regards
+
+M.
+</POST>
+<POST>
+<POSTER> Mirco Wahab &lt;wa...@chemie.uni-halle.de&gt; </POSTER>
+<POSTDATE> 2007-07-17T06:18:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+sydc ... @gmail.com wrote:
+&gt; Hi,
+
+&gt; I am a beginner (or worse) at Perl.
+
+&gt; I have a need to find the longest line (record) in a file. The below
+&gt; code works neatly for small files.
+&gt; But when I need to read huge files (in the order of Gb), it is very
+&gt; slow.
+
+&gt; I am running this on a laptop with Windows XP, 1.7 GHz processor with
+&gt; 1 Gb of RAM
+&gt; I am using ActivePerl
+">
+
+Id did some test on a linux machine (Athlon XP/2500+, 1Gig)
+to clear this up.
+
+First, is put the stuff on the good ole Maxtor server
+drive, generate the 1G file and run the perl program:
+
+winner: 1002 at 795
+
+real    0m31.034s
+user    0m7.080s
+sys     0m2.350s
+
+The real perl process did need 7 seconds then + 2 seconds
+operating system file handling. The difference up to the
+whole time of 31 sec is the time needed to get the file
+from the raw disk drive (a 1G file won't be buffered).
+
+Next, I move the dir to a new WD server drive, generate
+the 1G file an run the perl program:
+
+winner: 1002 at 200
+
+real    0m15.603s
+user    0m7.290s
+sys     0m2.030s
+
+What we see here - the whole time has been halved,
+but the time the perl needed is almost exactly the
+same. We measured the different disk bandwidths.
+
+Regards
+
+M.
+
+Perl source used:
+
+==&gt;
+use strict;
+use warnings;
+
+my ($l, $n) = (-1, -1);
+
+open my $fh, '&lt;', 'del.txt' or die &quot;can't do anything $!&quot;;
+while( &lt;$fh&gt; ) {
+($l, $n) = (length, $.) if $l &lt; length
+}
+close $fh;
+
+print &quot;winner: $l at $n\n&quot;;
+&lt;==
+</POST>
+<POST>
+<POSTER> &quot;sydc...@gmail.com&quot; &lt;sydc...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-17T08:03:00 </POSTDATE>
+Hi,
+
+I think it's only fair that we do this on the same file.
+
+***************************************Begin******************************* ­
+********
+open(F1, &quot;&gt;c:/perl/testout/HugeFile.txt&quot;);
+
+for ($index = 0; $index &lt;= 1000000; $index++)
+{
+print F1 &quot;This line is 32 characters long  \n&quot;;
+print F1 &quot;This line
+is
+101 characters long \n&quot;;
+}
+close F1;
+****************************************End******************************** ­
+********
+
+The C code times are as follows:
+The current time is: 17:30:47.20
+The current time is: 17:30:55.00
+
+Thanks!
+Sydney
+</POST>
+<POST>
+<POSTER> Mirco Wahab &lt;wa...@chemie.uni-halle.de&gt; </POSTER>
+<POSTDATE> 2007-07-17T08:19:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+sydc ... @gmail.com wrote:
+&gt; Hi,
+
+&gt; I think it's only fair that we do this on the same file.
+&gt; open(F1, &quot;&gt;c:/perl/testout/HugeFile.txt&quot;);
+
+&gt; for ($index = 0; $index &lt;= 1000000; $index++)
+&gt;    {
+&gt;       print F1 &quot;This line is 32 characters long  \n&quot;;
+&gt;       print F1 &quot;This line
+&gt; is
+&gt; 101 characters long \n&quot;;
+&gt;    }
+&gt; close F1;
+">
+
+Your file size will be
+
+1000000 * (32 + 101) ==&gt; 133000000
+
+which is almost 128 MB or 0.128 GB
+
+Try:
+
+==&gt;
+
+use strict;
+use warnings;
+
+my $count = 10_000_000;
+
+open my $fh, '&gt;', 'del.txt' or die &quot;can't write $!&quot;;
+
+print $fh (
+'This line is 32 characters long
+.................................... This line is 101 characters long ..............................
+' ) while $count--;
+
+close $fh;
+
+&lt;==
+
+This will result in a file of 128GB. Post your C results then.
+
+Regards
+
+M.
+</POST>
+<POST>
+<POSTER> Mirco Wahab &lt;wa...@chemie.uni-halle.de&gt; </POSTER>
+<POSTDATE> 2007-07-17T08:22:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Mirco Wahab wrote:
+
+&gt; This will result in a file of 128GB. Post your C results then.
+">
+
+OOPS, lost the dot:
+
+must read: &quot;This will result in a file of 1.28GB&quot;
+
+Sorry, M.
+</POST>
+<POST>
+<POSTER> &quot;Mumia W.&quot; &lt;paduille.4061.mumia.w+nos...@earthlink.net&gt; </POSTER>
+<POSTDATE> 2007-07-17T08:27:00 </POSTDATE>
+On 07/17/2007 03:47 AM, sydc ... @gmail.com wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi,
+
+&gt; My apologies. The times were off the mark. It takes less than 3
+&gt; seconds (277 milliseconds).
+&gt; The start time is: 14:04:35.97
+&gt; The end time is: 14:04:38.74
+&gt; [...]
+">
+
+No, this is not 277 milliseconds; it's 2.77 seconds or 2770 milliseconds.
+
+<QUOTE PREVIOUSPOST="
+&gt; Here's the source code in C. [...]
+">
+
+No, it's C++.
+
+<QUOTE PREVIOUSPOST="
+&gt; # include &lt;fstream.h&gt;
+&gt; [...]
+">
+
+You must have a fast machine. Either that or your program is buggy.
+
+I have a 1300mhz AMD CPU with 512mb. I wrote both a C and a Perl version
+of this program, and this is what I got:
+
+<QUOTE PREVIOUSPOST="
+&gt; $ ls -ln ~/tmp/junk/big
+&gt; -rw-r--r--  1 **** **** 2088763392 2007-07-17 06:33 /home/****/tmp/junk/big
+&gt; $
+&gt; $ cat count-lines.c
+
+&gt; #include &lt;stdio.h&gt;
+&gt; #include &lt;stdlib.h&gt;
+&gt; #include &lt;time.h&gt;
+&gt; #include &lt;string.h&gt;
+
+&gt; int main (int argc, const char ** argv)
+&gt; {
+&gt;     const char * filename = 0;
+&gt;     FILE * handle = 0;
+&gt;     time_t starttime = 0;
+&gt;     time_t endtime = 0;
+&gt;     long line_number = 0;
+&gt;     long line_length = 0;
+&gt;     long lnno = 0;
+&gt;     static char line [10000];
+
+&gt;     if (argc &lt; 2) {
+&gt;         fprintf(stderr, &quot;No filename\n&quot;);
+&gt;         return EXIT_FAILURE;
+&gt;     }
+
+&gt;     filename = argv[1];
+&gt;     handle = fopen(filename, &quot;r&quot;);
+&gt;     if (0 == handle) {
+&gt;         perror(filename);
+&gt;         return EXIT_FAILURE;
+&gt;     }
+
+&gt;     starttime = time(0);
+
+&gt;     while (fgets(line,sizeof(line),handle)) {
+&gt;         lnno++;
+&gt;         long length = strlen(line);
+&gt;         if (length &gt; line_length) {
+&gt;             line_length = length;
+&gt;             line_number = lnno;
+&gt;         }
+&gt;     }
+&gt;     fclose(handle);
+
+&gt;     endtime = time(0);
+
+&gt;     printf(&quot;%ld is the longest line with %ld characters\n&quot;,
+&gt;             line_number, line_length);
+&gt;     printf(&quot;%ld seconds elapsed\n&quot;, (long) (endtime-starttime));
+
+&gt;     return EXIT_SUCCESS;
+&gt; }
+
+&gt; $ cat count-lines.pl
+&gt; #!/usr/bin/perl
+&gt; use strict;
+&gt; use warnings;
+
+&gt; my ($line_number, $line_length) = (0,0);
+&gt; my $starttime = time();
+
+&gt; while (&lt;&gt;) {
+&gt;     my $length = length($_);
+&gt;     if ($length &gt; $line_length) {
+&gt;         $line_length = $length;
+&gt;         $line_number = $.;
+&gt;     }
+&gt; }
+&gt; close(ARGV);
+
+&gt; my $endtime = time();
+
+&gt; print &quot;$line_number is the longest line with $line_length characters\n&quot;;
+&gt; printf &quot;%d seconds elapsed\n&quot;, ($endtime-$starttime);
+
+&gt; $
+&gt; $
+&gt; $ ./count-lines ~/tmp/junk/big
+&gt; 9580 is the longest line with 3836 characters
+&gt; 51 seconds elapsed
+&gt; $
+&gt; $ ./count-lines.pl ~/tmp/junk/big
+&gt; 9580 is the longest line with 3836 characters
+&gt; 106 seconds elapsed
+&gt; $
+&gt; $ # For a bytecode-compiled scripting language, that's pretty damn good!
+&gt; $
+">
+
+I expected Perl to take ten to twenty times longer than C. I'm amazed
+that it's only about twice as slow. The fact that Perl can almost keep
+up with C means that Perl is ultra-efficient with character processing  :-D
+
+However, your time of 2.77 seconds stretches my belief muscles too far.
+What kind of machine are you running on?
+
+PS.
+I was using the ext3 filesystem during the test. I can probably get much
+better results by using ext2 if I'm willing to forgo filesystem
+journalizing--which I'm not willing to do.
+</POST>
+<POST>
+<POSTER> &quot;Mumia W.&quot; &lt;paduille.4061.mumia.w+nos...@earthlink.net&gt; </POSTER>
+<POSTDATE> 2007-07-17T08:49:00 </POSTDATE>
+On 07/17/2007 07:27 AM, Mumia W. wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 07/17/2007 03:47 AM, sydc ... @gmail.com wrote:
+&gt;&gt; Hi, [ program snipped ]
+
+&gt; However, your time of 2.77 seconds stretches my belief muscles too far.
+&gt; What kind of machine are you running on?
+&gt; [...]
+">
+
+Sorry about that. Of course your data is not my data, and of course some
+people will have machines that are 100 times faster than mine.
+</POST>
+<POST>
+<POSTER> &quot;Mumia W.&quot; &lt;paduille.4061.mumia.w+nos...@earthlink.net&gt; </POSTER>
+<POSTDATE> 2007-07-17T09:11:00 </POSTDATE>
+On 07/17/2007 07:19 AM, Mirco Wahab wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; sydc ... @gmail.com wrote:
+&gt;&gt; Hi,
+
+&gt;&gt; I think it's only fair that we do this on the same file.
+&gt;&gt; open(F1, &quot;&gt;c:/perl/testout/HugeFile.txt&quot;);
+
+&gt;&gt; for ($index = 0; $index &lt;= 1000000; $index++)
+&gt;&gt;    {
+&gt;&gt;       print F1 &quot;This line is 32 characters long  \n&quot;;
+&gt;&gt;       print F1 &quot;This line
+&gt;&gt; is
+&gt;&gt; 101 characters long \n&quot;;
+&gt;&gt;    }
+&gt;&gt; close F1;
+
+&gt; Your file size will be
+
+&gt;   1000000 * (32 + 101) ==&gt; 133000000
+
+&gt; which is almost 128 MB or 0.128 GB
+
+&gt; Try:
+
+&gt; ==&gt;
+
+&gt; use strict;
+&gt; use warnings;
+
+&gt; my $count = 10_000_000;
+
+&gt; open my $fh, '&gt;', 'del.txt' or die &quot;can't write $!&quot;;
+
+&gt; print $fh (
+&gt; 'This line is 32 characters long
+&gt; ..................................... This line is 101 characters long
+&gt; ..............................
+&gt; ' ) while $count--;
+
+&gt; close $fh;
+
+&gt; &lt;==
+
+&gt; This will result in a file of 128GB. Post your C results then.
+
+&gt; Regards
+
+&gt; M.
+">
+
+My timing for the C program is similar to yours (same data with a
+different program).
+
+<QUOTE PREVIOUSPOST="
+&gt; $ (cd ~/tmp/junk ; ls -ln del.txt)
+&gt; -rw-r--r--  1 **** **** 1340000000 2007-07-17 07:55 del.txt
+&gt; $
+&gt; $ ./count-lines ~/tmp/junk/del.txt
+&gt; 2 is the longest line with 102 characters
+&gt; 26 seconds elapsed
+&gt; $
+&gt; $ ./count-lines.pl ~/tmp/junk/del.txt
+&gt; 2 is the longest line with 102 characters
+&gt; 38 seconds elapsed
+&gt; $
+">
+
+&quot;Count-lines&quot; is the C program's binary, and count-lines.pl is,
+obviously, the Perl program.
+
+I'm still impressed by Perl's speed.
+
+Yes, I know the wording of my program's output needs work. Line 2 is
+only one of the 10 million longest lines in the file ;-)
+</POST>
+<POST>
+<POSTER> &quot;sydc...@gmail.com&quot; &lt;sydc...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-17T10:03:00 </POSTDATE>
+Hi,
+
+Using the Perl code that Mirco gave, I created a file which is 1.27 GB
+in size.
+
+Ran the C++ code and the times are:
+The current time is: 19:18:52.21
+The current time is: 19:23:09.65
+
+I am on a Windows XP system (1.7 GHz processor with 1 Gb of RAM), and
+using ActivePerl.
+
+Thanks!
+Syd
+</POST>
+<POST>
+<POSTER> Mirco Wahab &lt;wa...@chemie.uni-halle.de&gt; </POSTER>
+<POSTDATE> 2007-07-17T10:36:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+sydc ... @gmail.com wrote:
+&gt; Using the Perl code that Mirco gave, I created a file which is 1.27 GB
+&gt; in size.
+&gt; Ran the C++ code and the times are:
+&gt; The current time is: 19:18:52.21
+&gt; The current time is: 19:23:09.65
+">
+
+OK, this is 256 seconds which is what
+one may expect from a loaded win-xp
+machine of 1,7GHz.
+
+I did again another test with the very file
+(1,2GB) on an old unix machine (Athlon XP/2500+,
+running from a WD3200JB-ext3).
+
+After compiling (gcc 4.1) your C++-Programm (commenting out
+non-unixish stuff) with: g++ -O3 -o sydches sydches.cxx
+
+I see the following results:
+$&gt; time ./sydches del.txt
+
+...
+
+real    1m1.888s
+user    0m54.270s
+sys     0m3.070s
+
+(the whole process takes ~62sec) - whereas the short Perl
+script provided in another post shows the following:
+$&gt; time perl longest.pl
+
+...
+
+real    0m28.218s
+user    0m21.140s
+sys     0m3.330s
+
+(which is more than twice as fast). Some Perl program:
+
+...
+open my $fh, '&lt;', 'del.txt' or die &quot;can't do anything $!&quot;;
+while( &lt;$fh&gt; ) {
+($l, $n) = (length, $.) if $l &lt; length
+}
+close $fh;
+...
+
+may be therefore, as one can see, much
+much faster than a 'non-optimally' written
+C/C++ program.
+
+Regards
+
+Mirco
+</POST>
+<POST>
+<POSTER> &quot;sydc...@gmail.com&quot; &lt;sydc...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-18T11:35:00 </POSTDATE>
+Hi,
+
+I started running both my programs (C++ and Perl) on a whole lot of
+test files. And I noticed something.
+
+The C code and Perl code run in almost the same time!
+Except a single 1 Gb file which the C code does in around 250
+milliseconds, and Perl takes about 2-3 minutes for that!
+The output says 460 is the longest record.
+
+Unfortunately, I am unable to open this file directly (because of the
+size).
+I am going to try a splitter to see what kind of data is on this one
+file.
+
+Thanks for all the help. Boy, did I learn a whole lot talking to you
+guys!
+
+Warm regards!
+Syd
+</POST>
+<POST>
+<POSTER> xhos...@gmail.com </POSTER>
+<POSTDATE> 2007-07-18T12:39:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;sydc ... @gmail.com&quot; &lt;sydc ... @gmail.com&gt; wrote:
+&gt; Hi,
+
+&gt; I started running both my programs (C++ and Perl) on a whole lot of
+&gt; test files. And I noticed something.
+
+&gt; The C code and Perl code run in almost the same time!
+&gt; Except a single 1 Gb file which the C code does in around 250
+&gt; milliseconds, and Perl takes about 2-3 minutes for that!
+&gt; The output says 460 is the longest record.
+
+&gt; Unfortunately, I am unable to open this file directly (because of the
+&gt; size).
+&gt; I am going to try a splitter to see what kind of data is on this one
+&gt; file.
+">
+
+I wonder if Perl is somehow deciding that that file is in Unicode rather
+than simple one-byte characters.  I understand that that will slow things
+down considerably.  I don't know how Perl would make that decision; I have
+little experience on that topic.
+
+Xho
+
+--
+-------------------- http://NewsReader.Com/ --------------------
+Usenet Newsgroup Service                        $9.95/Month 30GB
+</POST>
+</TEXT>
+</BODY>
+</DOC>

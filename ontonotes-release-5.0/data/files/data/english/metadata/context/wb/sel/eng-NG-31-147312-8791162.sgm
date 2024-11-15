@@ -1,0 +1,195 @@
+<DOC>
+<DOCID> eng-NG-31-147312-8791162 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-12T15:10:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Can I declare column and properties on autoloaded tables?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Jason R. Coombs&quot; &lt;jar...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-12T15:10:00 </POSTDATE>
+Here's the problem.  I have a legacy database I'm trying to manage
+with SQLAlchemy/Elixir.
+
+Formerly, I was using just Elixir, and I had written a metaclass
+similar to elixir.EntityMeta to wrap common functionality in my
+Entities.
+
+Now that Elixir has come along, I'm porting my classes to it, but
+there are two things that I had done that I'm struggling with in
+Elixir.  I'm hoping there's an easy way to do what I want already in
+Elixir.  If not, I'd like to propose this type of functionality be
+added.
+
+---
+
+The first function is to establish relationships between tables that
+aren't defined in the existing legacy schema (&quot;schema&quot;).  The most
+basic example of this are foreign key relationships that are not
+declared in the schema.  For example, the database has two tables,
+Author and Book, where Author has_many Books.  Unfortunately, in the
+database, this foreign key relationship isn't defined (it's a schema
+problem, but can't be corrected).
+
+In my Entity metaclass during setup_table, I performed the following:
+
+cls._table = Table( cls._table_name, mdo, autoload=True )
+...
+if cls._ensure_foreign_key:
+col = cls._table.c[ cls._ensure_foreign_key.column_name ]
+ref = ForeignKey( cls._ensure_foreign_key.reference )
+if not col.foreign_key:
+# insert foreign key into the working Entity only
+log.warning( 'inserting foreign key for %s -&gt; %s', col, ref )
+col.append_foreign_key( ref )
+
+_ensure_foreign_key is an object with two attributes (column_name and
+reference), which indicates the foreign key for a given column (e.g.
+reference=&quot;Author.author_id&quot; or reference=&quot;Author&quot;).
+
+This would ensure that the proper relationships existed in the
+SQLAlchemy declaration even if they weren't present in the schema
+definition.  This would also ensure that the proper join clauses would
+be generated.
+
+I also used this same technique to create join relationships between
+objects that weren't proper foreign keys.  For example, we have two
+tables, &quot;document&quot; and &quot;state&quot;, which have a one-to-one mapping based
+on their primary keys (i.e. a document with its state are joined by
+&quot;document.document_id == state.state_id&quot;.  I faked this relationship
+by creating a foreign key from state.state_id to document.document_id,
+using the technique above.  While this worked, I recognize that it's
+not the _proper_ solution.  The proper solution would be to specify
+the primary_join relationship explicitly without having a foreign key
+in place.
+
+---
+
+The second function is to override the default generated sequence
+names in SQLAlchemy.  For some reason, SQLAlchemy is not able to infer
+the correct sequence name from the database.  This problem is likely
+specific to PostgreSQL/Oracle or maybe just PostgreSQL.  For example,
+the Author table has an author_id field which is associated with the
+sequence author_seq.  However, SQLAlchemy doesn't see the association,
+so I need a way to declare it, otherwise, SQLAlchemy assumes the
+sequence name should be &quot;author_author_id_seq&quot;.
+
+In my Entity metaclass during setup_table, I performed the following:
+
+cls._table = Table( cls._table_name, mdo, autoload=True )
+if cls._override_sequence:
+newSequence = Sequence( cls._override_sequence.sequence_name )
+col = cls._table.c[cls._override_sequence.column_name]
+newSequence._set_parent( col ) # this will also instruct col to
+reference newSequence
+
+_override_sequence is an object with two attributes (sequence_name and
+column_name) which indicates the name of the sequence for a given
+column.  Since I do this before installing the mapper, everything
+behaves exactly as I would expect it to.
+
+I can get similar behavior from Elixir by specifying the field
+explicitly in the class:
+
+class Author( Entity ):
+has_field( 'author_id', Integer, Sequence( 'author_seq' ),
+primary_key=True )
+
+But this approach has two problems.
+
+First, I'm having to specify everything about the field and not just
+the sequence name (and thus, if I leave off something like
+primary_key=True... or if that aspect changes in the schema, the
+Author class no longer works).  I'd like to be able to autoload
+everything but override the sequence name.
+
+Second, this approach doesn't work for the many-to-many association
+tables, as there's no hook to specify the intermediate class.
+
+---
+
+Any suggestions on how to solve these problems within Elixir would be
+most appreciated.  I'm using Elixir 0.4 from trunk.  I will gladly
+contribute patches and unit tests where appropriate (although a
+PostgreSQL database will be required for at least some of the tests).
+I feel comfortable implementing these features in the same declarative
+way I have done for my Metaclass, and can probably mutate it to match
+the Elixir paradigm... but I don't want to proceed without first
+exploring the option of using existing hooks if they exist.
+
+Regards,
+Jason R. Coombs
+</POST>
+<POST>
+<POSTER> &quot;Jason R. Coombs&quot; &lt;jar...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-12T15:37:00 </POSTDATE>
+My second paragraph should have said &quot;just SQLAlchemy&quot;.
+
+<QUOTE PREVIOUSPOST="
+&gt; Formerly, I was using just SQLAlchemy, and I had written a metaclass...
+">
+
+On Aug 12, 3:10 pm, &quot;Jason R. Coombs&quot; &lt;jar ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; ...
+
+&gt; Formerly, I was using just Elixir, and I had written a metaclass
+&gt; similar to elixir.EntityMeta to wrap common functionality in my
+&gt; Entities.
+
+&gt; ...
+">
+</POST>
+<POST>
+<POSTER> &quot;Gaetan de Menten&quot; &lt;gdemen...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-14T06:12:00 </POSTDATE>
+On 8/12/07, Jason R. Coombs &lt;jar ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Here's the problem.  I have a legacy database I'm trying to manage
+&gt; with SQLAlchemy/Elixir.
+
+&gt; Formerly, I was using just Elixir, and I had written a metaclass
+&gt; similar to elixir.EntityMeta to wrap common functionality in my
+&gt; Entities.
+
+&gt; Now that Elixir has come along, I'm porting my classes to it, but
+&gt; there are two things that I had done that I'm struggling with in
+&gt; Elixir.  I'm hoping there's an easy way to do what I want already in
+&gt; Elixir.  If not, I'd like to propose this type of functionality be
+&gt; added.
+">
+
+I think you should be able to solve both problems with either custom
+statements (which were recently improved to provide predefined hook
+points) or a custom MetaClass (inheriting from EntityMeta).
+
+To define a custom statement triggering a method at a specific
+initialization point, you can defined a statement-handling class with
+methods with specific names (the method name is the hook point). For
+example, if you want to do something after the table is setup, you
+should provide an &quot;after_table&quot; method to your statement-handling
+class. In that method, you should be able to alter the table/sequence
+as you want.
+
+Look in http://elixir.ematia.de/svn/elixir/trunk/elixir/ext/versioned.py
+for an example.
+
+Please report back any success as this would prove a good recipe.
+
+Hope this helps,
+--
+Gaëtan de Menten
+http://openhex.org
+</POST>
+<POST>
+<POSTER> &quot;Jason R. Coombs&quot; &lt;jar...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-14T11:57:00 </POSTDATE>
+Thanks for the suggestion.  I will follow up with my experience.
+</POST>
+</TEXT>
+</BODY>
+</DOC>

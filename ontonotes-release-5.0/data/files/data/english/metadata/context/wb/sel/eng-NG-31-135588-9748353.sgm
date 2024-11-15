@@ -1,0 +1,1948 @@
+<DOC>
+<DOCID> eng-NG-31-135588-9748353 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2008-01-26T14:16:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Lisp indenting tool
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Jeremy Smith &lt;nospamjer...@decompiler.org&gt; </POSTER>
+<POSTDATE> 2008-01-26T14:16:00 </POSTDATE>
+Hi all,
+
+I just wanted to talk about a pleasant Lisp experience.
+
+Last week I spent 2 hours writing a source code indenter for Lisp. It would
+indent each line with a tab for every parenthesis opened since the start of
+the file.
+
+It works perfectly, and deals with cases of quotes in strings, and escaped
+quotes (in or out of strings), escaped slashes, comments, and escaped
+parenthesis.
+
+It's just 52 lines of source code!
+
+I can't think of any other language I've used in which this would be
+possible (or as pleasant to develop).
+
+I won't bother posting the code because you can do this in EMACS - just
+that I don't use EMACS. I might put the code on a Lisp code snippets
+website.
+
+Cheers,
+
+Jeremy Smith BSc (Hons)
+</POST>
+<POST>
+<POSTER> Xah Lee &lt;x...@xahlee.org&gt; </POSTER>
+<POSTDATE> 2008-01-26T14:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jeremy Smith wrote:
+&gt; Last week I spent 2 hours writing a source code indenter for Lisp. It would
+&gt; indent each line with a tab for every parenthesis opened since the start of
+&gt; the file.
+
+&gt; It works perfectly, and deals with cases of quotes in strings, and escaped
+&gt; quotes (in or out of strings), escaped slashes, comments, and escaped
+&gt; parenthesis.
+
+&gt; ...
+&gt; I won't bother posting the code because you can do this in EMACS
+">
+
+Actually emacs can't do that. I hope it does but it won't. I tried to
+complain here:
+
+• A Simple Lisp Code Formatter
+http://xahlee.org/emacs/lisp_formatter.html
+
+If you post your code, i'd be happy to translate to emacs lisp for at
+least my own use.
+
+Xah
+x ... @xahlee.org
+∑ http://xahlee.org/
+
+☄
+
+On Jan 26, 11:16 am, Jeremy Smith &lt;nospamjer ... @decompiler.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi all,
+
+&gt; I just wanted to talk about a pleasant Lisp experience.
+
+&gt; Last week I spent 2 hours writing a source code indenter for Lisp. It would
+&gt; indent each line with a tab for every parenthesis opened since the start of
+&gt; the file.
+
+&gt; It works perfectly, and deals with cases of quotes in strings, and escaped
+&gt; quotes (in or out of strings), escaped slashes, comments, and escaped
+&gt; parenthesis.
+
+&gt; It's just 52 lines of source code!
+
+&gt; I can't think of any other language I've used in which this would be
+&gt; possible (or as pleasant to develop).
+
+&gt; I won't bother posting the code because you can do this in EMACS - just
+&gt; that I don't use EMACS. I might put the code on a Lisp code snippets
+&gt; website.
+
+&gt; Cheers,
+
+&gt; Jeremy Smith BSc (Hons)
+">
+</POST>
+<POST>
+<POSTER> Jeremy Smith &lt;nospamjer...@decompiler.org&gt; </POSTER>
+<POSTDATE> 2008-01-26T18:34:00 </POSTDATE>
+Xah Lee &lt;x ... @xahlee.org&gt; wrote in
+news:779175ef-2b39-42e3-b5b6-4c93bb697ada@d70g2000hsb.googlegroups.com:
+
+<QUOTE PREVIOUSPOST="
+&gt; Jeremy Smith wrote:
+&gt;&gt; Last week I spent 2 hours writing a source code indenter for Lisp. It
+&gt;&gt; woul
+&gt; d
+&gt;&gt; indent each line with a tab for every parenthesis opened since the
+&gt;&gt; start o
+&gt; f
+&gt;&gt; the file.
+
+&gt;&gt; It works perfectly, and deals with cases of quotes in strings, and
+&gt;&gt; escaped
+
+&gt;&gt; quotes (in or out of strings), escaped slashes, comments, and escaped
+&gt;&gt; parenthesis.
+
+&gt;&gt; ...
+&gt;&gt; I won't bother posting the code because you can do this in EMACS
+
+&gt; Actually emacs can't do that. I hope it does but it won't. I tried to
+&gt; complain here:
+
+&gt; • A Simple Lisp Code Formatter
+&gt; http://xahlee.org/emacs/lisp_formatter.html
+
+&gt; If you post your code, i'd be happy to translate to emacs lisp for at
+&gt; least my own use.
+
+&gt;   Xah
+&gt;   x ... @xahlee.org
+&gt; ∑ http://xahlee.org/
+
+&gt; ☄
+">
+
+Here it is. It's below.
+
+It's indented itself! The perfect test...
+
+Comments on this:
+
+*To use, (reformat filename) will output to filename.lisp.
+*Comments preceded by a semicolon are supported, and will be
+indented to the same as the line before.
+*#| style comments are not yet supported.
+*The code below was indented using this code, to show you what it
+can do
+*I think it can cope with an escaped semicolon, but I'm not sure
+*The indent character(s) is a tab, in this line: (append-format out-
+filename &quot;~a&quot; &quot;indent character goes here&quot;))
+*I think parenthesis 'trail', which means when they appear on a line
+of their own, they are indented 1 less than they close.
+*If this can be considered non-trivial, then I must be a good
+programmer.
+*It cannot cope with escaped #'s - the case here would be \\#) for
+instance. \#) is a closed bracket character in a string, and \\#) is a #
+followed by an unescaped ). I'll try and fix this.
+
+Tell me if this code is useful.
+
+All the best,
+
+Jeremy.
+
+(defun get-file-lines(filename)
+(let ((in (open filename :if-does-not-exist nil)))
+(get-stream-lines in)))
+
+(defun get-stream-lines(in)
+(let ((retval (list)))
+(when in
+(loop for line = (read-line in nil)
+while line do
+(push line retval))(close in))
+(reverse retval)))
+
+(defun quick-write-file(filename data &amp;optional append)
+(if append
+(with-open-file (stream filename :direction :output :if-exists
+:append :if-does-not-exist :create)
+(write-sequence data stream))
+(with-open-file (stream filename :direction :output)
+(write-sequence data stream))))
+
+;From On Lisp
+(defmacro for ((var start stop) &amp;body body)
+(let ((gstop (gensym)))
+`(do ((,var ,start (1+ ,var))
+(,gstop ,stop))
+((&gt; ,var ,gstop))
+,@body)))
+
+(defun append-format(filename format data)
+(quick-write-file filename (format NIL format data) T))
+
+(defun reformat(filename)
+(let ((lines(get-file-lines filename)))
+(reformat-lines lines (format NIL &quot;~a.lisp&quot; filename))))
+
+(defun reformat-lines(lines out-filename)
+(let ((indent 0))
+(dolist (line lines)
+(setf indent (reformat-line line indent out-filename)))))
+
+(defun reformat-line(line indent out-filename)
+(dotimes (i indent)
+(append-format out-filename &quot;~a&quot; &quot;       &quot;))
+;Go along the line
+(dotimes (i (length line))
+;Ignore #\( and #\)
+(when (and (&lt; (+ i 3) (length line)) (equal(subseq line i (+ i
+3)) &quot;#\\(&quot;))
+(decf indent))
+(when (and (&lt; (+ i 3) (length line)) (equal(subseq line i (+ i
+3)) &quot;#\\)&quot;))
+(incf indent))
+;If we find a quote, follow it until the next quote comes
+along (a slash quote is the exception)
+(when (equal (elt line i) #\&quot;)
+(for (j (+ i 1) (-(length line)1))
+;A quote is where we stop
+(when (equal (elt line j) #\&quot;)
+(unless (and (&gt; j 3 ) (equal (subseq line (- j
+2) (+ j 1)) &quot;\\\\\&quot;&quot;))
+(setf i j)
+(return)))
+;When we get a slash, check for quote
+(when (equal (elt line j) #\\)
+(when (equal (elt line (+ j 1)) #\&quot;)
+(incf j)))))
+;If we find a bracket, indent goes up
+(when (equal (elt line i) #\()
+(incf indent))
+(when (equal (elt line i) #\))
+(decf indent))
+(when (equal (elt line i) #\;)
+(unless (and (&gt; i 3 ) (equal (subseq line (- i 2) (+ i
+1)) &quot;#\\;&quot;))
+(return)))
+)
+(let ((count 0))
+(dotimes (i (length line))
+(if (equal (elt line i) #\Space)
+(incf count)
+(if (equal (elt line i) #\Tab)
+(incf count)
+(return))))
+(append-format out-filename &quot;~a&quot; (subseq line count (length
+line)))
+(append-format out-filename &quot;~%&quot; &quot;&quot;)
+)
+indent
+);Should be indented by 1 if this indenting code works properly
+</POST>
+<POST>
+<POSTER> Rainer Joswig &lt;jos...@lisp.de&gt; </POSTER>
+<POSTDATE> 2008-01-26T19:49:00 </POSTDATE>
+In article &lt;Xns9A31F037DF73Bjeremyalansmithso ... @62.253.170.163&gt;,
+Jeremy Smith &lt;nospamjer ... @decompiler.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Xah Lee &lt;x ... @xahlee.org&gt; wrote in
+&gt; news:779175ef-2b39-42e3-b5b6-4c93bb697ada@d70g2000hsb.googlegroups.com:
+
+&gt; &gt; Jeremy Smith wrote:
+&gt; &gt;&gt; Last week I spent 2 hours writing a source code indenter for Lisp. It
+&gt; &gt;&gt; woul
+&gt; &gt; d
+&gt; &gt;&gt; indent each line with a tab for every parenthesis opened since the
+&gt; &gt;&gt; start o
+&gt; &gt; f
+&gt; &gt;&gt; the file.
+
+&gt; &gt;&gt; It works perfectly, and deals with cases of quotes in strings, and
+&gt; &gt;&gt; escaped
+
+&gt; &gt;&gt; quotes (in or out of strings), escaped slashes, comments, and escaped
+&gt; &gt;&gt; parenthesis.
+
+&gt; &gt;&gt; ...
+&gt; &gt;&gt; I won't bother posting the code because you can do this in EMACS
+
+&gt; &gt; Actually emacs can't do that. I hope it does but it won't. I tried to
+&gt; &gt; complain here:
+
+&gt; &gt; • A Simple Lisp Code Formatter
+&gt; &gt; http://xahlee.org/emacs/lisp_formatter.html
+
+&gt; &gt; If you post your code, i'd be happy to translate to emacs lisp for at
+&gt; &gt; least my own use.
+
+&gt; &gt;   Xah
+&gt; &gt;   x ... @xahlee.org
+&gt; &gt; ∑ http://xahlee.org/
+
+&gt; &gt; ☄
+
+&gt; Here it is. It's below.
+
+&gt; It's indented itself! The perfect test...
+
+&gt; Comments on this:
+
+&gt;            *To use, (reformat filename) will output to filename.lisp.
+&gt;            *Comments preceded by a semicolon are supported, and will be
+&gt; indented to the same as the line before.
+&gt;            *#| style comments are not yet supported.
+&gt;            *The code below was indented using this code, to show you what it
+&gt; can do
+&gt;            *I think it can cope with an escaped semicolon, but I'm not sure
+&gt;            *The indent character(s) is a tab, in this line: (append-format out-
+&gt; filename &quot;~a&quot; &quot;indent character goes here&quot;))
+&gt;            *I think parenthesis 'trail', which means when they appear on a line
+&gt; of their own, they are indented 1 less than they close.
+&gt;            *If this can be considered non-trivial, then I must be a good
+&gt; programmer.
+&gt;            *It cannot cope with escaped #'s - the case here would be \\#) for
+&gt; instance. \#) is a closed bracket character in a string, and \\#) is a #
+&gt; followed by an unescaped ). I'll try and fix this.
+
+&gt; Tell me if this code is useful.
+
+&gt; All the best,
+
+&gt; Jeremy.
+">
+
+What you do is not 'reformat'. It is usually called 'reindent'.
+Reformat would fill the code across the lines.
+
+use (defun foo (bar) ...  -&gt; extra space between the function name
+and the arglist
+
+Check the use of comments: http://www.lispworks.com/documentation/HyperSpec/Body/02_ddb.htm
+Single semicolon vs. double semicolon.
+
+<QUOTE PREVIOUSPOST="
+&gt; (defun get-file-lines(filename)
+&gt;    (let ((in (open filename :if-does-not-exist nil)))
+&gt;            (get-stream-lines in)))
+">
+
+use WITH-OPEN-FILE
+
+<QUOTE PREVIOUSPOST="
+&gt; (defun get-stream-lines(in)
+&gt;    (let ((retval (list)))
+&gt;            (when in
+&gt;                    (loop for line = (read-line in nil)
+&gt;                            while line do
+&gt;                            (push line retval))(close in))
+&gt;            (reverse retval)))
+">
+
+Use COLLECT instead of  do (push
+
+So you read all lines and then write all lines?
+Fortunately we have quick garbage collectors and large
+memory, today.
+
+<QUOTE PREVIOUSPOST="
+&gt; (defun quick-write-file(filename data &amp;optional append)
+&gt;    (if append
+&gt;            (with-open-file (stream filename :direction :output :if-exists
+&gt; :append :if-does-not-exist :create)
+&gt;                    (write-sequence data stream))
+&gt;            (with-open-file (stream filename :direction :output)
+&gt;                    (write-sequence data stream))))
+">
+
+What is quick about that?
+
+<QUOTE PREVIOUSPOST="
+&gt; ;From On Lisp
+&gt; (defmacro for ((var start stop) &amp;body body)
+&gt;    (let ((gstop (gensym)))
+&gt;            `(do ((,var ,start (1+ ,var))
+&gt;                            (,gstop ,stop))
+&gt;                    ((&gt; ,var ,gstop))
+&gt;                    ,@body)))
+
+&gt; (defun append-format(filename format data)
+&gt;    (quick-write-file filename (format NIL format data) T))
+">
+
+You are opening/closing the file all the time??? why?
+
+Stuff like (format stream &quot;~a&quot; &quot;foo&quot;) is sick.
+Then you are again writing it, but this time with
+WRITE-SEQUENCE. Opening and closing the file
+all the time?
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; (defun reformat(filename)
+&gt;    (let ((lines(get-file-lines filename)))
+&gt;            (reformat-lines lines (format NIL &quot;~a.lisp&quot; filename))))
+
+&gt; (defun reformat-lines(lines out-filename)
+&gt;    (let ((indent 0))
+&gt;            (dolist (line lines)
+&gt;                    (setf indent (reformat-line line indent out-filename)))))
+
+&gt; (defun reformat-line(line indent out-filename)
+&gt;    (dotimes (i indent)
+&gt;            (append-format out-filename &quot;~a&quot; &quot;       &quot;))
+&gt;    ;Go along the line
+&gt;    (dotimes (i (length line))
+&gt;            ;Ignore #\( and #\)
+&gt;            (when (and (&lt; (+ i 3) (length line)) (equal(subseq line i (+ i
+&gt; 3)) &quot;#\\(&quot;))
+&gt;                    (decf indent))
+&gt;            (when (and (&lt; (+ i 3) (length line)) (equal(subseq line i (+ i
+&gt; 3)) &quot;#\\)&quot;))
+&gt;                    (incf indent))
+&gt;            ;If we find a quote, follow it until the next quote comes
+&gt; along (a slash quote is the exception)
+&gt;            (when (equal (elt line i) #\&quot;)
+&gt;                    (for (j (+ i 1) (-(length line)1))
+&gt;                            ;A quote is where we stop
+&gt;                            (when (equal (elt line j) #\&quot;)
+&gt;                                    (unless (and (&gt; j 3 ) (equal (subseq line (- j
+&gt; 2) (+ j 1)) &quot;\\\\\&quot;&quot;))
+&gt;                                            (setf i j)
+&gt;                                            (return)))
+&gt;                            ;When we get a slash, check for quote
+&gt;                            (when (equal (elt line j) #\\)
+&gt;                                    (when (equal (elt line (+ j 1)) #\&quot;)
+&gt;                                            (incf j)))))
+&gt;            ;If we find a bracket, indent goes up
+&gt;            (when (equal (elt line i) #\()
+&gt;                    (incf indent))
+&gt;            (when (equal (elt line i) #\))
+&gt;                    (decf indent))
+&gt;            (when (equal (elt line i) #\;)
+&gt;                    (unless (and (&gt; i 3 ) (equal (subseq line (- i 2) (+ i
+&gt; 1)) &quot;#\\;&quot;))
+&gt;                            (return)))
+&gt;            )
+&gt;    (let ((count 0))
+&gt;            (dotimes (i (length line))
+&gt;                    (if (equal (elt line i) #\Space)
+&gt;                            (incf count)
+&gt;                            (if (equal (elt line i) #\Tab)
+&gt;                                    (incf count)
+&gt;                                    (return))))
+&gt;            (append-format out-filename &quot;~a&quot; (subseq line count (length
+&gt; line)))
+&gt;            (append-format out-filename &quot;~%&quot; &quot;&quot;)
+&gt;            )
+&gt;    indent
+&gt;    );Should be indented by 1 if this indenting code works properly
+">
+</POST>
+<POST>
+<POSTER> Jeremy Smith &lt;nospamjer...@decompiler.org&gt; </POSTER>
+<POSTDATE> 2008-01-26T21:08:00 </POSTDATE>
+Rainer Joswig &lt;jos ... @lisp.de&gt; wrote in
+news:joswig-0B1E83.01492327012008@news-europe.giganews.com:
+
+<QUOTE PREVIOUSPOST="
+&gt; In article &lt;Xns9A31F037DF73Bjeremyalansmithso ... @62.253.170.163&gt;,
+&gt;  Jeremy Smith &lt;nospamjer ... @decompiler.org&gt; wrote:
+
+&gt;&gt; Xah Lee &lt;x ... @xahlee.org&gt; wrote in
+&gt;&gt; news:779175ef-2b39-42e3-b5b6-4c93bb697ada@d70g2000hsb.googlegroups.com
+&gt;&gt; :
+
+&gt; What you do is not 'reformat'. It is usually called 'reindent'.
+">
+
+I could make it reformat too.
+
+<QUOTE PREVIOUSPOST="
+&gt; Reformat would fill the code across the lines.
+
+&gt; use (defun foo (bar) ...  -&gt; extra space between the function name
+&gt; and the arglist
+">
+
+Okay, I'll make it do this automatically.
+
+I should point out that it's not far off being able to parse code trees,
+which I've adapted it for in another bit of software.
+
+<QUOTE PREVIOUSPOST="
+&gt; Check the use of comments:
+&gt; http://www.lispworks.com/documentation/HyperSpec/Body/02_ddb.htm
+&gt; Single semicolon vs. double semicolon.
+
+&gt;&gt; (defun get-file-lines(filename)
+&gt;&gt;      (let ((in (open filename :if-does-not-exist nil)))
+&gt;&gt;           (get-stream-lines in)))
+
+&gt; use WITH-OPEN-FILE
+">
+
+This stuff at the top is pretty slow, but won't be needed in the EMACS
+version.
+
+<QUOTE PREVIOUSPOST="
+&gt; Stuff like (format stream &quot;~a&quot; &quot;foo&quot;) is sick.
+&gt; Then you are again writing it, but this time with
+&gt; WRITE-SEQUENCE. Opening and closing the file
+&gt; all the time?
+">
+
+It's called quick-write-file because it's quick to use (eg, no messing
+around with file handles). I must admit in my other software where I use
+it, there isn't a lot of file output (~3mb perhaps).
+
+As for the double format, that's pretty bad, I'll try to fix it.
+
+Jeremy.
+</POST>
+<POST>
+<POSTER> Rainer Joswig &lt;jos...@lisp.de&gt; </POSTER>
+<POSTDATE> 2008-01-26T21:32:00 </POSTDATE>
+In article &lt;Xns9A3215C33C01Ejeremyalansmithso ... @80.5.182.99&gt;,
+Jeremy Smith &lt;nospamjer ... @decompiler.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Rainer Joswig &lt;jos ... @lisp.de&gt; wrote in
+&gt; news:joswig-0B1E83.01492327012008@news-europe.giganews.com:
+
+&gt; &gt; In article &lt;Xns9A31F037DF73Bjeremyalansmithso ... @62.253.170.163&gt;,
+&gt; &gt;  Jeremy Smith &lt;nospamjer ... @decompiler.org&gt; wrote:
+
+&gt; &gt;&gt; Xah Lee &lt;x ... @xahlee.org&gt; wrote in
+&gt; &gt;&gt; news:779175ef-2b39-42e3-b5b6-4c93bb697ada@d70g2000hsb.googlegroups.com
+&gt; &gt;&gt; :
+
+&gt; &gt; What you do is not 'reformat'. It is usually called 'reindent'.
+
+&gt; I could make it reformat too.
+
+&gt; &gt; Reformat would fill the code across the lines.
+
+&gt; &gt; use (defun foo (bar) ...  -&gt; extra space between the function name
+&gt; &gt; and the arglist
+
+&gt; Okay, I'll make it do this automatically.
+">
+
+Indentation is already not that simple:
+
+(destructuring-bind (a b) c
+d)
+
+(destructuring-bind (a
+b) c
+d)
+
+(destructuring-bind (a b) (foo c
+d)
+d)
+
+(destructuring-bind (a b)
+(foo c
+d)
+d)
+
+(loop for i ...
+do ...)
+
+(defun foo (a b &amp;key c d
+e f)
+...)
+
+If a parameter is declared as &amp;body, then it is indented differently
+If there is a macro, then the use of that macro later
+in the file will be indented differently based on the parameter
+list of the macro (and even based on the prefix (defsomething,
+with-something, ...).
+Then Lisp has a few special forms
+http://www.lisp.org/HyperSpec/Body/sec_3-1-2-1-2-1.html#clspecialops
+which have their own layout rules...
+
+Reformatting is even more complex.
+Especially since comments need to stay
+at the right places.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; I should point out that it's not far off being able to parse code trees,
+&gt; which I've adapted it for in another bit of software.
+
+&gt; &gt; Check the use of comments:
+&gt; &gt; http://www.lispworks.com/documentation/HyperSpec/Body/02_ddb.htm
+&gt; &gt; Single semicolon vs. double semicolon.
+
+&gt; &gt;&gt; (defun get-file-lines(filename)
+&gt; &gt;&gt;      (let ((in (open filename :if-does-not-exist nil)))
+&gt; &gt;&gt;           (get-stream-lines in)))
+
+&gt; &gt; use WITH-OPEN-FILE
+
+&gt; This stuff at the top is pretty slow, but won't be needed in the EMACS
+&gt; version.
+
+&gt; &gt; Stuff like (format stream &quot;~a&quot; &quot;foo&quot;) is sick.
+&gt; &gt; Then you are again writing it, but this time with
+&gt; &gt; WRITE-SEQUENCE. Opening and closing the file
+&gt; &gt; all the time?
+
+&gt; It's called quick-write-file because it's quick to use (eg, no messing
+&gt; around with file handles). I must admit in my other software where I use
+&gt; it, there isn't a lot of file output (~3mb perhaps).
+
+&gt; As for the double format, that's pretty bad, I'll try to fix it.
+
+&gt; Jeremy.
+">
+</POST>
+<POST>
+<POSTER> Jeremy Smith &lt;nospamjer...@decompiler.org&gt; </POSTER>
+<POSTDATE> 2008-01-26T22:42:00 </POSTDATE>
+Rainer Joswig &lt;jos ... @lisp.de&gt; wrote in
+news:joswig-43204C.03325427012008@news-europe.giganews.com:
+
+<QUOTE PREVIOUSPOST="
+&gt; In article &lt;Xns9A3215C33C01Ejeremyalansmithso ... @80.5.182.99&gt;,
+&gt;  Jeremy Smith &lt;nospamjer ... @decompiler.org&gt; wrote:
+
+&gt;&gt; Rainer Joswig &lt;jos ... @lisp.de&gt; wrote in
+&gt;&gt; news:joswig-0B1E83.01492327012008@news-europe.giganews.com:
+
+&gt;&gt; &gt; In article &lt;Xns9A31F037DF73Bjeremyalansmithso ... @62.253.170.163&gt;,
+&gt;&gt; &gt;  Jeremy Smith &lt;nospamjer ... @decompiler.org&gt; wrote:
+
+&gt;&gt; &gt;&gt; Xah Lee &lt;x ... @xahlee.org&gt; wrote in
+&gt;&gt; &gt;&gt; news:779175ef-2b39-42e3-b5b6-4c93bb697ada@d70g2000hsb.googlegroups .
+&gt;&gt; &gt;&gt; com
+&gt;&gt; &gt;&gt; :
+
+&gt;&gt; &gt; What you do is not 'reformat'. It is usually called 'reindent'.
+
+&gt;&gt; I could make it reformat too.
+
+&gt;&gt; &gt; Reformat would fill the code across the lines.
+
+&gt;&gt; &gt; use (defun foo (bar) ...  -&gt; extra space between the function name
+&gt;&gt; &gt; and the arglist
+
+&gt;&gt; Okay, I'll make it do this automatically.
+
+&gt; Indentation is already not that simple:
+
+&gt; (destructuring-bind (a b) c
+&gt;   d)
+
+&gt; (destructuring-bind (a
+&gt;                      b) c
+&gt;   d)
+
+&gt; (destructuring-bind (a b) (foo c
+&gt;                                d)
+&gt;   d)
+
+&gt; (destructuring-bind (a b)
+&gt;     (foo c
+&gt;          d)
+&gt;   d)
+
+&gt; (loop for i ...
+&gt;       do ...)
+
+&gt; (defun foo (a b &amp;key c d
+&gt;                      e f)
+&gt;    ...)
+
+&gt; If a parameter is declared as &amp;body, then it is indented differently
+&gt; If there is a macro, then the use of that macro later
+&gt; in the file will be indented differently based on the parameter
+&gt; list of the macro (and even based on the prefix (defsomething,
+&gt; with-something, ...).
+&gt; Then Lisp has a few special forms
+&gt; http://www.lisp.org/HyperSpec/Body/sec_3-1-2-1-2-1.html#clspecialops
+&gt; which have their own layout rules...
+
+&gt; Reformatting is even more complex.
+&gt; Especially since comments need to stay
+&gt; at the right places.
+">
+
+But this is just a tool to re-indent code that has already been formatted
+by the author. In other words, useful for me, and good for doing some of
+the 'heavy lifting' in code where stuff has been added at the wrong
+indent.
+
+Expecting a parenthesis-based indenter to handle arbitrary non-
+syntactical forms is, I think, unreasonable.
+
+Cheers,
+
+Jeremy.
+</POST>
+<POST>
+<POSTER> Patrick May &lt;p...@spe.com&gt; </POSTER>
+<POSTDATE> 2008-01-27T11:17:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jeremy Smith &lt;nospamjer ... @decompiler.org&gt; writes:
+&gt;&gt; If you post your code, i'd be happy to translate to emacs lisp for
+&gt;&gt; at least my own use.
+
+&gt; Here it is. It's below.
+
+&gt; It's indented itself! The perfect test...
+">
+
+I find this somewhat hard to read because of the non-idiomatic
+formatting.  Common Lisp, much moreso than most languages, has a
+standard style.  Emacs formats source according to this common style.
+Running your source through Emacs and applying some minimal cleanup by
+hand yields this:
+
+(defun get-file-lines (filename)
+(let ((in (open filename :if-does-not-exist nil)))
+(get-stream-lines in)))
+
+(defun get-stream-lines (in)
+(let ((retval (list)))
+(when in
+(loop for line = (read-line in nil)
+while line do
+(push line retval))(close in))
+(reverse retval)))
+
+(defun quick-write-file (filename data &amp;optional append)
+(if append
+(with-open-file (stream filename :direction :output :if-exists
+:append :if-does-not-exist :create)
+(write-sequence data stream))
+(with-open-file (stream filename :direction :output)
+(write-sequence data stream))))
+
+;; From On Lisp
+(defmacro for ((var start stop) &amp;body body)
+(let ((gstop (gensym)))
+`(do ((,var ,start (1+ ,var))
+(,gstop ,stop))
+((&gt; ,var ,gstop))
+,@body)))
+
+(defun append-format (filename format data)
+(quick-write-file filename (format NIL format data) T))
+
+(defun reformat (filename)
+(let ((lines(get-file-lines filename)))
+(reformat-lines lines (format NIL &quot;~a.lisp&quot; filename))))
+
+(defun reformat-lines (lines out-filename)
+(let ((indent 0))
+(dolist (line lines)
+(setf indent (reformat-line line indent out-filename)))))
+
+(defun reformat-line (line indent out-filename)
+(dotimes (i indent)
+(append-format out-filename &quot;~a&quot; &quot;   &quot;))
+(dotimes (i (length line))  ; Go along the line
+(when (and (&lt; (+ i 3) (length line))
+(equal(subseq line i (+ i 3)) &quot;#\\(&quot;))  ; Ignore #\( and #\)
+(decf indent))
+(when (and (&lt; (+ i 3) (length line))
+(equal(subseq line i (+ i 3)) &quot;#\\)&quot;))
+(incf indent))
+; If we find a quote, follow it until the next quote comes along
+; (a slash quote is the exception)
+(when (equal (elt line i) #\&quot;)
+(for (j (+ i 1) (-(length line)1))
+(when (equal (elt line j) #\&quot;)  ; A quote is where we stop
+(unless (and (&gt; j 3 )
+(equal (subseq line (- j 2) (+ j 1)) &quot;\\\\\&quot;&quot;))
+(setf i j)
+(return)))
+; When we get a slash, check for quote
+(when (equal (elt line j) #\\)
+(when (equal (elt line (+ j 1)) #\&quot;)
+(incf j)))))
+(when (equal (elt line i) #\()  ; If we find a bracket, indent goes up
+(incf indent))
+(when (equal (elt line i) #\))
+(decf indent))
+(when (equal (elt line i) #\;)
+(unless (and (&gt; i 3 )
+(equal (subseq line (- i 2) (+ i 1)) &quot;#\\;&quot;))
+(return))))
+(let ((count 0))
+(dotimes (i (length line))
+(if (equal (elt line i) #\Space)
+(incf count)
+(if (equal (elt line i) #\Tab)
+(incf count)
+(return))))
+(append-format out-filename &quot;~a&quot; (subseq line count (length line)))
+(append-format out-filename &quot;~%&quot; &quot;&quot;))
+indent)
+
+This is much more idiomatic than the output of your function.
+
+Regards,
+
+Patrick
+
+------------------------------------------------------------------------
+S P Engineering, Inc.  | Large scale, mission-critical, distributed OO
+| systems design and implementation.
+p ... @spe.com  | (C++, Java, Common Lisp, Jini, middleware, SOA)
+</POST>
+<POST>
+<POSTER> Xah Lee &lt;x...@xahlee.org&gt; </POSTER>
+<POSTDATE> 2008-01-27T14:33:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Patrick May &lt;p ... @spe.com&gt; wrote:
+&gt;      I find this somewhat hard to read because of the non-idiomatic
+&gt; formatting.  Common Lisp, much moreso than most languages, has a
+&gt; standard style.  Emacs formats source according to this common style.
+">
+
+Providing a automatic formating tool is important, because:
+
+On the whole, a simple formatting by lexical analysis in not going to
+be as pretty as manual formatting. However, it is my opinion, if
+lispers adapts to such a uniform, simple, machine-produced
+auto-formatting, the impact on lisp community considered as whole,
+will be tremendous. It would get rid of the “source code formatting
+style” literature and debates for good, because all coders will be
+accustomed to this machine-produced, uniform, style, when they begin
+to learn lisp. (each coder can set some personal preferences to the
+auto-formatter if she so wishes, and re-format entire source code on
+the fly) Once a language's source code are presented in a uniform
+style universally, it would fundamentally influence the idioms and
+program constructs lisp coders actually produce. (this is a advantage
+the Python language offers transparently.)
+
+• A Simple Lisp Code Formatter
+http://xahlee.org/emacs/lisp_formatter.html
+
+Xah
+x ... @xahlee.org
+∑ http://xahlee.org/
+
+☄
+</POST>
+<POST>
+<POSTER> Patrick May &lt;p...@spe.com&gt; </POSTER>
+<POSTDATE> 2008-01-27T14:43:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Xah Lee &lt;x ... @xahlee.org&gt; writes:
+&gt; Patrick May &lt;p ... @spe.com&gt; wrote:
+&gt;&gt;      I find this somewhat hard to read because of the non-idiomatic
+&gt;&gt; formatting.  Common Lisp, much moreso than most languages, has a
+&gt;&gt; standard style.  Emacs formats source according to this common
+&gt;&gt; style.
+
+&gt; Providing a automatic formating tool is important, because:
+
+&gt; On the whole, a simple formatting by lexical analysis in not going
+&gt; to be as pretty as manual formatting. However, it is my opinion, if
+&gt; lispers adapts to such a uniform, simple, machine-produced
+&gt; auto-formatting, the impact on lisp community considered as whole,
+&gt; will be tremendous.
+">
+
+Any strategy that starts with &quot;First, we change the world.&quot; is
+doomed to failure.  The current Lisp standard formatting evolved over
+many years and is remarkably usable and readable with a minimum
+investment in time.  The suggestion that every existing Lisp
+programmer should change his or her style is a non-starter.
+
+Sincerely,
+
+Patrick
+
+------------------------------------------------------------------------
+S P Engineering, Inc.  | Large scale, mission-critical, distributed OO
+| systems design and implementation.
+p ... @spe.com  | (C++, Java, Common Lisp, Jini, middleware, SOA)
+</POST>
+<POST>
+<POSTER> Xah Lee &lt;x...@xahlee.org&gt; </POSTER>
+<POSTDATE> 2008-01-27T15:23:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Patrick May &lt;p ... @spe.com&gt; wrote:
+&gt;      Any strategy that starts with &quot;First, we change the world.&quot; is
+&gt; doomed to failure.  The current Lisp standard formatting evolved over
+&gt; many years and is remarkably usable and readable with a minimum
+&gt; investment in time.  The suggestion that every existing Lisp
+&gt; programmer should change his or her style is a non-starter.
+">
+
+We don't have to view it as declaring a revolution. We can just let
+new ideas live.
+
+The lisp's lack of a formatting tool, for example is personally a
+problem for me. My opinion is that there should be some automatic
+formatting tool for language like lisp that is well designed and has
+regular syntax, but to my GREAT SURPRISE, i found out there is not
+when i started to get serious with emacs lisp in 2005. Apparently
+Jeremy Smith is running into the same problem, and he spend time to
+fix it at least for himself.
+
+With so many lisp gurus here, can someone take this problem and write
+a parser that does formatting?
+
+For example, i want to be able to, for example in emacs, press a
+button while cursor is on this code:
+
+(defun previous-user-buffer () &quot;Switch to the next user buffer in
+cyclic order.&quot;  (interactive) (previous-buffer) (let ((i 0)) (while
+(and (string-match &quot;^*&quot; (buffer-name)) (&lt; i 10)) (setq i (1+ i))
+(previous-buffer) )))
+
+then it turns into this:
+
+(defun previous-user-buffer
+() &quot;Switch to the next user buffer in cyclic order.&quot;
+(interactive)
+(previous-buffer)
+(let
+((i 0))
+(while
+(and
+(string-match &quot;^*&quot; (buffer-name))
+(&lt; i 10))
+(setq i (1+ i))
+(previous-buffer))))
+
+and vice versa.
+(the above formatting has 2 simple rules:
+1. start new line and indent n times for each opening paren that's has
+n levels nesting.
+2. The only exception is don't start new line if the complete sexp is
+less than 70 chars.
+)
+
+I don't think it is a good idea: but the automatic formatting tool can
+produce format in lisp's traditional style too. If lispers like the
+traditional formatting, it will still be great benefit to have such a
+formatting tool.
+
+Xah
+x ... @xahlee.org
+∑ http://xahlee.org/
+
+☄
+</POST>
+<POST>
+<POSTER> Damien Kick &lt;dk...@earthlink.net&gt; </POSTER>
+<POSTDATE> 2008-01-27T15:45:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jeremy Smith wrote:
+&gt; Here [the code to indent lisp] is. It's below.
+">
+
+The lisp pretty printer is still one of the biggest wholes in my
+knowledge of lisp.  To approach the problem of indenting lisp code
+without using the pretty printer seems to be missing out on yet another
+one of the big powerhouses of the language.  To just use some silly
+chunk of lisp code I've written as an example, the pretty printer
+already does a good job of indenting it, straight out of the box.
+
+PG-USER&gt; (setq *print-pretty* nil)
+NIL
+PG-USER&gt; *form*
+(DEFUN RECV-OCTET (FN TELNET-STREAM &amp;OPTIONAL EOF-ERROR-P EOF-VALUE)
+(WITH-ACCESSORS ((TCP-STREAM TELNET-TCP-STREAM) (SUPPRESS-GO-AHEAD
+TELNET-SUPPRESS-GO-AHEAD) (WAIT-FOR-TERMINAL-TYPE-SUBOPTION
+TELNET-WAIT-FOR-TERMINAL-TYPE-SUBOPTION)) TELNET-STREAM (LABELS
+((%READ-BYTE NIL (READ-BYTE TCP-STREAM EOF-ERROR-P EOF-VALUE))
+(%RECV-WILL (OPTION-BYTE-CODE) (COND ((= OPTION-BYTE-CODE
++SUPPRESS-GO-AHEAD/BYTE-CODE+) (SETQ SUPPRESS-GO-AHEAD T)) (T (WARN
+&quot;Received unknown option ~S.&quot; OPTION-BYTE-CODE)))) (%RECV-DO
+(OPTION-BYTE-CODE) (COND ((= OPTION-BYTE-CODE +TERMINAL-TYPE/BYTE-CODE+)
+(SEND-WILL +TERMINAL-TYPE/BYTE-CODE+ TELNET-STREAM) (SETQ
+WAIT-FOR-TERMINAL-TYPE-SUBOPTION T)) (T (SEND-WILL-NOT OPTION-BYTE-CODE
+TELNET-STREAM)))) (%RECV-DO-NOT (OPTION-BYTE-CODE) OPTION-BYTE-CODE)
+(%RECV-SB (OPTION-BYTE-CODE) (COND ((= OPTION-BYTE-CODE
++TERMINAL-TYPE/BYTE-CODE+) (UNLESS WAIT-FOR-TERMINAL-TYPE-SUBOPTION
+(WARN &quot;Received SB ~S before having sent a ~
+WILL TERMINAL-TYPE&quot; OPTION-BYTE-CODE)) (LET
+((SEND/BYTE-CODE 1)) (WHEN (= (%READ-BYTE) SEND/BYTE-CODE) (ASSERT (AND
+(= (%READ-BYTE) +IAC/BYTE-CODE+) (= (%READ-BYTE) +SE/BYTE-CODE+)))
+(SEND-SUB-TERMINAL-TYPE-IS TELNET-STREAM)))) (T (WARN &quot;Received unknown
+SB option ~S.&quot; OPTION-BYTE-CODE) (LOOP FOR OCTET = (%READ-BYTE) UNTIL
+(OR (NOT OCTET) (= OCTET +SE/BYTE-CODE+))))))) (LOOP FOR BYTE =
+(%READ-BYTE) WHILE BYTE IF (= BYTE +IAC/BYTE-CODE+) DO (LET
+((COMMAND-BYTE-CODE (%READ-BYTE))) (COND ((= COMMAND-BYTE-CODE
++IAC/BYTE-CODE+) (RETURN (FUNCALL FN COMMAND-BYTE-CODE))) ((=
+COMMAND-BYTE-CODE +WILL/BYTE-CODE+) (%RECV-WILL (%READ-BYTE))) ((=
+COMMAND-BYTE-CODE +DO/BYTE-CODE+) (%RECV-DO (%READ-BYTE))) ((=
+COMMAND-BYTE-CODE +DO-NOT/BYTE-CODE+) (%RECV-DO-NOT (%READ-BYTE))) ((=
+COMMAND-BYTE-CODE +SB/BYTE-CODE+) (%RECV-SB (%READ-BYTE))) (T (LET
+((UNKNOWN (%READ-BYTE))) (WARN &quot;Received command-byte-code ~S and ~
+unknown byte-code ~S.&quot;
+COMMAND-BYTE-CODE UNKNOWN))))) ELSE DO (UNLESS SUPPRESS-GO-AHEAD (WARN
+&quot;Have received data before WILL SUPPRESS-GO-AHEAD.&quot;)) (RETURN (FUNCALL
+FN BYTE))))))
+PG-USER&gt; (setq *print-pretty* t)
+T
+PG-USER&gt; *form*
+(DEFUN RECV-OCTET (FN TELNET-STREAM &amp;OPTIONAL EOF-ERROR-P EOF-VALUE)
+(WITH-ACCESSORS ((TCP-STREAM TELNET-TCP-STREAM)
+(SUPPRESS-GO-AHEAD TELNET-SUPPRESS-GO-AHEAD)
+(WAIT-FOR-TERMINAL-TYPE-SUBOPTION
+TELNET-WAIT-FOR-TERMINAL-TYPE-SUBOPTION))
+TELNET-STREAM
+(LABELS ((%READ-BYTE NIL
+(READ-BYTE TCP-STREAM EOF-ERROR-P EOF-VALUE))
+(%RECV-WILL (OPTION-BYTE-CODE)
+(COND ((= OPTION-BYTE-CODE
++SUPPRESS-GO-AHEAD/BYTE-CODE+)
+(SETQ SUPPRESS-GO-AHEAD T))
+(T
+(WARN &quot;Received unknown option ~S.&quot;
+OPTION-BYTE-CODE))))
+(%RECV-DO (OPTION-BYTE-CODE)
+(COND ((= OPTION-BYTE-CODE +TERMINAL-TYPE/BYTE-CODE+)
+(SEND-WILL +TERMINAL-TYPE/BYTE-CODE+
+TELNET-STREAM)
+(SETQ WAIT-FOR-TERMINAL-TYPE-SUBOPTION T))
+(T
+(SEND-WILL-NOT OPTION-BYTE-CODE TELNET-STREAM))))
+(%RECV-DO-NOT (OPTION-BYTE-CODE) OPTION-BYTE-CODE)
+(%RECV-SB (OPTION-BYTE-CODE)
+(COND ((= OPTION-BYTE-CODE +TERMINAL-TYPE/BYTE-CODE+)
+(UNLESS WAIT-FOR-TERMINAL-TYPE-SUBOPTION
+(WARN &quot;Received SB ~S before having sent a ~
+WILL TERMINAL-TYPE&quot; OPTION-BYTE-CODE))
+(LET ((SEND/BYTE-CODE 1))
+(WHEN (= (%READ-BYTE) SEND/BYTE-CODE)
+(ASSERT (AND
+(= (%READ-BYTE) +IAC/BYTE-CODE+)
+(= (%READ-BYTE) +SE/BYTE-CODE+)))
+(SEND-SUB-TERMINAL-TYPE-IS TELNET-STREAM))))
+(T
+(WARN &quot;Received unknown SB option ~S.&quot;
+OPTION-BYTE-CODE)
+(LOOP FOR OCTET = (%READ-BYTE) UNTIL
+(OR (NOT OCTET)
+(= OCTET +SE/BYTE-CODE+)))))))
+(LOOP FOR BYTE = (%READ-BYTE) WHILE BYTE IF
+(= BYTE +IAC/BYTE-CODE+) DO
+(LET ((COMMAND-BYTE-CODE (%READ-BYTE)))
+(COND ((= COMMAND-BYTE-CODE +IAC/BYTE-CODE+)
+(RETURN (FUNCALL FN COMMAND-BYTE-CODE)))
+((= COMMAND-BYTE-CODE +WILL/BYTE-CODE+)
+(%RECV-WILL (%READ-BYTE)))
+((= COMMAND-BYTE-CODE +DO/BYTE-CODE+)
+(%RECV-DO (%READ-BYTE)))
+((= COMMAND-BYTE-CODE +DO-NOT/BYTE-CODE+)
+(%RECV-DO-NOT (%READ-BYTE)))
+((= COMMAND-BYTE-CODE +SB/BYTE-CODE+)
+(%RECV-SB (%READ-BYTE)))
+(T
+(LET ((UNKNOWN (%READ-BYTE)))
+(WARN &quot;Received command-byte-code ~S and ~
+unknown byte-code ~S.&quot;
+COMMAND-BYTE-CODE UNKNOWN)))))
+ELSE DO
+(UNLESS SUPPRESS-GO-AHEAD
+(WARN &quot;Have received data before WILL SUPPRESS-GO-AHEAD.&quot;))
+(RETURN (FUNCALL FN BYTE))))))
+PG-USER&gt;
+
+What I would like to know is how to customize it to get it to indent my
+own macros or short snippets of code like I would want them to be
+indented.  For example,
+
+PG-USER&gt; (pprint '(defun foo (n) (+ n 10)))
+
+(DEFUN FOO (N) (+ N 10))
+; No value
+PG-USER&gt;
+
+How would you go about having the pretty printer always produce
+
+(defun foo (n)
+(+ n 10))
+
+Actually, I'm surprised to find that the pretty printer already does
+what I want with one of my own silly little macros.
+
+(defmacro with-open-files ((&amp;rest args) &amp;body forms)
+&quot;Multiple WITH-OPEN-FILE in a LETish syntax.&quot;
+(reduce (lambda (arg accumulator)
+`(with-open-file ,arg ,accumulator))
+args :from-end t :initial-value `(progn ,@forms)))
+
+PG-USER&gt; (pprint '(with-open-files ((in &quot;input.txt&quot;) (out &quot;output.txt&quot;
+:direction :output :if-exists :supersede)) (loop for line = (read-line
+in nil) while line do (write-line (transform-line line) out))))
+
+(WITH-OPEN-FILES ((IN &quot;input.txt&quot;)
+(OUT &quot;output.txt&quot; :DIRECTION :OUTPUT :IF-EXISTS
+:SUPERSEDE))
+(LOOP FOR LINE = (READ-LINE IN NIL) WHILE LINE DO
+(WRITE-LINE (TRANSFORM-LINE LINE) OUT)))
+; No value
+PG-USER&gt;
+
+It must key off of the fact that the form starts with WITH?  &lt;laugh&gt;
+Okay, I can't find a quick example of the pretty printer failing to
+already just do what I would want it to do.
+
+No, wait.  Actually, it doesn't quite automagically do what I would do
+&quot;by hand&quot; with LOOP forms.  When the pretty printer produces
+
+(LOOP FOR BYTE = (%READ-BYTE) WHILE BYTE IF
+(= BYTE +IAC/BYTE-CODE+) DO
+(LET ((COMMAND-BYTE-CODE (%READ-BYTE)))
+(COND ((= COMMAND-BYTE-CODE +IAC/BYTE-CODE+)
+(RETURN (FUNCALL FN COMMAND-BYTE-CODE)))
+((= COMMAND-BYTE-CODE +WILL/BYTE-CODE+)
+(%RECV-WILL (%READ-BYTE)))
+((= COMMAND-BYTE-CODE +DO/BYTE-CODE+)
+(%RECV-DO (%READ-BYTE)))
+((= COMMAND-BYTE-CODE +DO-NOT/BYTE-CODE+)
+(%RECV-DO-NOT (%READ-BYTE)))
+((= COMMAND-BYTE-CODE +SB/BYTE-CODE+)
+(%RECV-SB (%READ-BYTE)))
+(T
+(LET ((UNKNOWN (%READ-BYTE)))
+(WARN &quot;Received command-byte-code ~S and ~
+unknown byte-code ~S.&quot;
+COMMAND-BYTE-CODE UNKNOWN))))))
+
+I would have written this &quot;by hand&quot; as
+
+(LOOP FOR BYTE = (%READ-BYTE)
+WHILE BYTE
+IF (= BYTE +IAC/BYTE-CODE+)
+DO (LET ((COMMAND-BYTE-CODE (%READ-BYTE)))
+(COND ((= COMMAND-BYTE-CODE +IAC/BYTE-CODE+)
+(RETURN (FUNCALL FN COMMAND-BYTE-CODE)))
+((= COMMAND-BYTE-CODE +WILL/BYTE-CODE+)
+(%RECV-WILL (%READ-BYTE)))
+((= COMMAND-BYTE-CODE +DO/BYTE-CODE+)
+(%RECV-DO (%READ-BYTE)))
+((= COMMAND-BYTE-CODE +DO-NOT/BYTE-CODE+)
+(%RECV-DO-NOT (%READ-BYTE)))
+((= COMMAND-BYTE-CODE +SB/BYTE-CODE+)
+(%RECV-SB (%READ-BYTE)))
+(T
+(LET ((UNKNOWN (%READ-BYTE)))
+(WARN &quot;Received command-byte-code ~S and ~
+unknown byte-code ~S.&quot;
+COMMAND-BYTE-CODE UNKNOWN))))))
+
+With the LOOP keywords on there own line, as much as possible.  Would
+anyone be willing to learn me how to get the pretty printer to do the
+same thing?  I have a feeling, though, that the non-sexp nature of LOOP
+might make this a difficult task.
+</POST>
+<POST>
+<POSTER> Rainer Joswig &lt;jos...@lisp.de&gt; </POSTER>
+<POSTDATE> 2008-01-27T15:48:00 </POSTDATE>
+In article
+&lt;8e6f0680-5815-4057-92d0-b9b10c59c ... @t1g2000pra.googlegroups.com&gt;,
+Xah Lee &lt;x ... @xahlee.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Patrick May &lt;p ... @spe.com&gt; wrote:
+&gt; &gt;      Any strategy that starts with &quot;First, we change the world.&quot; is
+&gt; &gt; doomed to failure.  The current Lisp standard formatting evolved over
+&gt; &gt; many years and is remarkably usable and readable with a minimum
+&gt; &gt; investment in time.  The suggestion that every existing Lisp
+&gt; &gt; programmer should change his or her style is a non-starter.
+
+&gt; We don't have to view it as declaring a revolution. We can just let
+&gt; new ideas live.
+
+&gt; The lisp's lack of a formatting tool, for example is personally a
+&gt; problem for me. My opinion is that there should be some automatic
+&gt; formatting tool for language like lisp that is well designed and has
+&gt; regular syntax, but to my GREAT SURPRISE, i found out there is not
+&gt; when i started to get serious with emacs lisp in 2005. Apparently
+&gt; Jeremy Smith is running into the same problem, and he spend time to
+&gt; fix it at least for himself.
+
+&gt; With so many lisp gurus here, can someone take this problem and write
+&gt; a parser that does formatting?
+
+&gt; For example, i want to be able to, for example in emacs, press a
+&gt; button while cursor is on this code:
+
+&gt; (defun previous-user-buffer () &quot;Switch to the next user buffer in
+&gt; cyclic order.&quot;  (interactive) (previous-buffer) (let ((i 0)) (while
+&gt; (and (string-match &quot;^*&quot; (buffer-name)) (&lt; i 10)) (setq i (1+ i))
+&gt; (previous-buffer) )))
+
+&gt; then it turns into this:
+
+&gt; (defun previous-user-buffer
+&gt;  () &quot;Switch to the next user buffer in cyclic order.&quot;
+&gt;  (interactive)
+&gt;  (previous-buffer)
+&gt;  (let
+&gt;   ((i 0))
+&gt;   (while
+&gt;    (and
+&gt;     (string-match &quot;^*&quot; (buffer-name))
+&gt;     (&lt; i 10))
+&gt;     (setq i (1+ i))
+&gt;     (previous-buffer))))
+">
+
+But Common Lisp has that. The function is called PPRINT.
+It is based on a huge machinery defined in ANSI Common Lisp.
+
+See here:
+http://www.lispworks.com/documentation/HyperSpec/Body/22_b.htm
+
+See this paper: XP, a Common Lisp pretty printing system.
+
+http://citeseer.ist.psu.edu/waters89xp.html
+
+CL-USER&gt; (pprint '(defun previous-user-buffer () &quot;Switch to the next user buffer in
+cyclic order.&quot;  (interactive) (previous-buffer) (let ((i 0)) (while
+(and (string-match &quot;^*&quot; (buffer-name)) (&lt; i 10)) (setq i (1+ i))
+(previous-buffer) ))))
+
+(DEFUN PREVIOUS-USER-BUFFER ()
+&quot;Switch to the next user buffer in
+cyclic order.&quot;
+(INTERACTIVE)
+(PREVIOUS-BUFFER)
+(LET ((I 0))
+(WHILE (AND (STRING-MATCH &quot;^*&quot; (BUFFER-NAME)) (&lt; I 10))
+(SETQ I (1+ I)) (PREVIOUS-BUFFER))))
+
+The Pretty Printer has also be used to 'pretty print'
+other languages, since the machinery is available
+to the developer.
+
+You want it downcased?
+
+CL-USER&gt; (let ((*print-case* :downcase)) (pprint '(defun previous-user-buffer () &quot;Switch to the next user buffer in
+cyclic order.&quot;  (interactive) (previous-buffer) (let ((i 0)) (while
+(and (string-match &quot;^*&quot; (buffer-name)) (&lt; i 10)) (setq i (1+ i))
+(previous-buffer) )))))
+
+(defun previous-user-buffer ()
+&quot;Switch to the next user buffer in
+cyclic order.&quot;
+(interactive)
+(previous-buffer)
+(let ((i 0))
+(while (and (string-match &quot;^*&quot; (buffer-name)) (&lt; i 10))
+(setq i (1+ i)) (previous-buffer))))
+
+This is standard ANSI CL. It deals with Lisp code as data.
+It does not deal with Lisp code as text. Though as a
+trivial exercise you can do:
+
+CL-USER&gt; (defparameter *source-code-string* &quot;(defun previous-user-buffer () \&quot;Switch to the next user buffer in
+cyclic order.\&quot;  (interactive) (previous-buffer) (let ((i 0)) (while
+(and (string-match \&quot;^*\&quot; (buffer-name)) (&lt; i 10)) (setq i (1+ i))
+(previous-buffer) )))&quot;)
+*SOURCE-CODE-STRING*
+
+CL-USER&gt; (type-of *source-code-string*)
+(SIMPLE-BASE-STRING 220)
+
+CL-USER&gt; (let ((*print-case* :downcase)) (pprint (read-from-string *source-code-string*)))
+(defun previous-user-buffer ()
+&quot;Switch to the next user buffer in
+cyclic order.&quot;
+(interactive)
+(previous-buffer)
+(let ((i 0))
+(while (and (string-match &quot;^*&quot; (buffer-name)) (&lt; i 10))
+(setq i (1+ i)) (previous-buffer)))); No value
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; and vice versa.
+&gt; (the above formatting has 2 simple rules:
+&gt; 1. start new line and indent n times for each opening paren that's has
+&gt; n levels nesting.
+&gt; 2. The only exception is don't start new line if the complete sexp is
+&gt; less than 70 chars.
+&gt; )
+
+&gt; I don't think it is a good idea: but the automatic formatting tool can
+&gt; produce format in lisp's traditional style too. If lispers like the
+&gt; traditional formatting, it will still be great benefit to have such a
+&gt; formatting tool.
+
+&gt;   Xah
+&gt;   x ... @xahlee.org
+&gt; ∑ http://xahlee.org/
+
+&gt; ?
+">
+</POST>
+<POST>
+<POSTER> &quot;John Thingstad&quot; &lt;jpth...@online.no&gt; </POSTER>
+<POSTDATE> 2008-01-27T16:17:00 </POSTDATE>
+På Sun, 27 Jan 2008 21:23:03 +0100, skrev Xah Lee &lt;x ... @xahlee.org&gt;:
+
+<QUOTE PREVIOUSPOST="
+&gt; (defun previous-user-buffer () &quot;Switch to the next user buffer in
+&gt; cyclic order.&quot;  (interactive) (previous-buffer) (let ((i 0)) (while
+&gt; (and (string-match &quot;^*&quot; (buffer-name)) (&lt; i 10)) (setq i (1+ i))
+&gt; (previous-buffer) )))
+">
+
+like this perhaps?
+
+CL-USER 1 &gt; (pprint '(defun previous-user-buffer () &quot;Switch to the next
+user buffer in cyclic order.&quot;  (interactive) (previous-buffer) (let ((i
+0)) (while (and (string-match &quot;^*&quot; (buffer-name)) (&lt; i 10)) (setq i
+(1+ i)) (previous-buffer) ))))
+
+(DEFUN PREVIOUS-USER-BUFFER ()
+&quot;Switch to the next user buffer in cyclic order.&quot;
+(INTERACTIVE)
+(PREVIOUS-BUFFER)
+(LET ((I 0))
+(WHILE
+(AND (STRING-MATCH &quot;^*&quot; (BUFFER-NAME)) (&lt; I 10))
+(SETQ I (1+ I))
+(PREVIOUS-BUFFER))))
+
+Or in Emacs &lt;meta&gt;-x indent-form
+
+--------------
+John Thingstad
+</POST>
+<POST>
+<POSTER> &quot;John Thingstad&quot; &lt;jpth...@online.no&gt; </POSTER>
+<POSTDATE> 2008-01-27T16:42:00 </POSTDATE>
+På Sun, 27 Jan 2008 21:45:57 +0100, skrev Damien Kick
+&lt;dk ... @earthlink.net&gt;:
+
+<QUOTE PREVIOUSPOST="
+&gt; With the LOOP keywords on there own line, as much as possible.  Would
+&gt; anyone be willing to learn me how to get the pretty printer to do the
+&gt; same thing?  I have a feeling, though, that the non-sexp nature of LOOP
+&gt; might make this a difficult task.
+">
+
+Indeed. Of cource the problem goes away if you use iterate package instead.
+
+--------------
+John Thingstad
+</POST>
+<POST>
+<POSTER> philip.armit...@gmail.com </POSTER>
+<POSTDATE> 2008-01-27T16:48:00 </POSTDATE>
+On Jan 27, 8:48 pm, Rainer Joswig &lt;jos ... @lisp.de&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; But Common Lisp has that. The function is called PPRINT.
+&gt; It is based on a huge machinery defined in ANSI Common Lisp.
+">
+
+This is possibly CLISP specific: do any of the many options to control
+PPRINT force it to leave an empty lambda list alone rather than
+outputting it as NIL? I see that by default CLISP turns:
+
+(pprint '(defun hello () (print &quot;hello&quot;)))
+
+into:
+
+(DEFUN HELLO NIL (PRINT &quot;hello&quot;))
+
+which isn't ideal in an editor or similar. Apologies if I'm missing
+something obvious in the Hyperspec.
+
+Thanks,
+
+--
+Phil Armitage
+http://phil.nullable.eu/
+</POST>
+<POST>
+<POSTER> Juho Snellman &lt;jsn...@iki.fi&gt; </POSTER>
+<POSTDATE> 2008-01-27T16:52:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Damien Kick &lt;dk ... @earthlink.net&gt; writes:
+&gt; How would you go about having the pretty printer always produce
+
+&gt; (defun foo (n)
+&gt;    (+ n 10))
+">
+
+Something like:
+
+(set-pprint-dispatch
+'(cons (eql defun))
+(lambda (stream list &amp;rest ignore)
+(declare (ignore ignore))
+(format stream &quot;~:&lt;~^~W~^ ~@_~:I~W~^ ~:_~A~1I~@{ ~:@_~W~}~:&gt;&quot; list)))
+
+Modulo proper formatting of the lambda-list, would be a lot more
+complicated (and for which your implementation's pretty printer
+probably already has some existing code).
+
+<QUOTE PREVIOUSPOST="
+&gt; It must key off of the fact that the form starts with WITH?  &lt;laugh&gt;
+">
+
+More probably on the macro using &amp;BODY instead of &amp;REST.
+
+<QUOTE PREVIOUSPOST="
+&gt; With the LOOP keywords on there own line, as much as possible.  Would
+&gt; anyone be willing to learn me how to get the pretty printer to do the
+&gt; same thing?  I have a feeling, though, that the non-sexp nature of LOOP
+&gt; might make this a difficult task.
+">
+
+There is a pprinter for LOOP in CMUCL (code/pprint-loop.lisp) which is
+originally from Water's XP pretty printer. You should be able to use
+it with any other implementation too. It'd format the loop like this:
+
+(LOOP FOR BYTE = (%READ-BYTE)
+WHILE BYTE
+IF (= BYTE +IAC/BYTE-CODE+)
+DO (LET ((COMMAND-BYTE-CODE (%READ-BYTE)))
+(COND
+((= COMMAND-BYTE-CODE +IAC/BYTE-CODE+)
+(RETURN (FUNCALL FN COMMAND-BYTE-CODE)))
+((= COMMAND-BYTE-CODE +WILL/BYTE-CODE+)
+(%RECV-WILL (%READ-BYTE)))
+((= COMMAND-BYTE-CODE +DO/BYTE-CODE+)
+(%RECV-DO (%READ-BYTE)))
+((= COMMAND-BYTE-CODE +DO-NOT/BYTE-CODE+)
+(%RECV-DO-NOT (%READ-BYTE)))
+((= COMMAND-BYTE-CODE +SB/BYTE-CODE+)
+(%RECV-SB (%READ-BYTE)))
+(T
+(LET ((UNKNOWN (%READ-BYTE)))
+(WARN &quot;Received command-byte-code ~S and ~
+unknown byte-code ~S.&quot;
+COMMAND-BYTE-CODE UNKNOWN)))))
+
+--
+Juho Snellman
+</POST>
+<POST>
+<POSTER> Xah Lee &lt;x...@xahlee.org&gt; </POSTER>
+<POSTDATE> 2008-01-27T20:36:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;John Thingstad&quot; &lt;jpth ... @online.no&gt; wrote:
+&gt; like this perhaps?
+
+&gt; CL-USER 1 &gt; (pprint '(defun previous-user-buffer () &quot;Switch to the next
+&gt; user buffer in cyclic order.&quot;  (interactive) (previous-buffer) (let ((i
+&gt; 0)) (while (and (string-match &quot;^*&quot; (buffer-name)) (&lt; i 10)) (setq i
+&gt; (1+ i)) (previous-buffer) ))))
+
+&gt; (DEFUN PREVIOUS-USER-BUFFER ()
+&gt;    &quot;Switch to the next user buffer in cyclic order.&quot;
+&gt;    (INTERACTIVE)
+&gt;    (PREVIOUS-BUFFER)
+&gt;    (LET ((I 0))
+&gt;      (WHILE
+&gt;       (AND (STRING-MATCH &quot;^*&quot; (BUFFER-NAME)) (&lt; I 10))
+&gt;       (SETQ I (1+ I))
+&gt;       (PREVIOUS-BUFFER))))
+
+&gt; Or in Emacs &lt;meta&gt;-x indent-form
+">
+
+Thanks John Thingstad and Rainer Joswig.
+
+How can i have something similar in emacs lisp though? I couldn't find
+“indent-form” in elisp.
+
+If there's none, how can i write one?
+
+Xah
+x ... @xahlee.org
+∑ http://xahlee.org/
+
+☄
+</POST>
+<POST>
+<POSTER> Jeremy Smith &lt;nospamjer...@decompiler.org&gt; </POSTER>
+<POSTDATE> 2008-01-28T13:01:00 </POSTDATE>
+Rainer Joswig &lt;jos ... @lisp.de&gt; wrote in
+news:joswig-3BC417.21485527012008@news-europe.giganews.com:
+
+<QUOTE PREVIOUSPOST="
+&gt; In article
+&gt; &lt;8e6f0680-5815-4057-92d0-b9b10c59c ... @t1g2000pra.googlegroups.com&gt;,
+&gt;  Xah Lee &lt;x ... @xahlee.org&gt; wrote:
+
+&gt;&gt; Patrick May &lt;p ... @spe.com&gt; wrote:
+&gt;&gt; &gt;      Any strategy that starts with &quot;First, we change the world.&quot; is
+&gt;&gt; &gt; doomed to failure.  The current Lisp standard formatting evolved
+&gt;&gt; &gt; over many years and is remarkably usable and readable with a
+&gt;&gt; &gt; minimum investment in time.  The suggestion that every existing
+&gt;&gt; &gt; Lisp programmer should change his or her style is a non-starter.
+
+&gt;&gt; We don't have to view it as declaring a revolution. We can just let
+&gt;&gt; new ideas live.
+
+&gt;&gt; The lisp's lack of a formatting tool, for example is personally a
+&gt;&gt; problem for me. My opinion is that there should be some automatic
+&gt;&gt; formatting tool for language like lisp that is well designed and has
+&gt;&gt; regular syntax, but to my GREAT SURPRISE, i found out there is not
+&gt;&gt; when i started to get serious with emacs lisp in 2005. Apparently
+&gt;&gt; Jeremy Smith is running into the same problem, and he spend time to
+&gt;&gt; fix it at least for himself.
+
+&gt;&gt; With so many lisp gurus here, can someone take this problem and write
+&gt;&gt; a parser that does formatting?
+
+&gt;&gt; For example, i want to be able to, for example in emacs, press a
+&gt;&gt; button while cursor is on this code:
+
+&gt;&gt; (defun previous-user-buffer () &quot;Switch to the next user buffer in
+&gt;&gt; cyclic order.&quot;  (interactive) (previous-buffer) (let ((i 0)) (while
+&gt;&gt; (and (string-match &quot;^*&quot; (buffer-name)) (&lt; i 10)) (setq i (1+ i))
+&gt;&gt; (previous-buffer) )))
+
+&gt;&gt; then it turns into this:
+
+&gt;&gt; (defun previous-user-buffer
+&gt;&gt;  () &quot;Switch to the next user buffer in cyclic order.&quot;
+&gt;&gt;  (interactive)
+&gt;&gt;  (previous-buffer)
+&gt;&gt;  (let
+&gt;&gt;   ((i 0))
+&gt;&gt;   (while
+&gt;&gt;    (and
+&gt;&gt;     (string-match &quot;^*&quot; (buffer-name))
+&gt;&gt;     (&lt; i 10))
+&gt;&gt;     (setq i (1+ i))
+&gt;&gt;     (previous-buffer))))
+
+&gt; But Common Lisp has that. The function is called PPRINT.
+&gt; It is based on a huge machinery defined in ANSI Common Lisp.
+">
+
+This looks like a good indenting solution. The only problem is that it
+doesn't seem to keep comments, which is a problem on a big source file.
+
+Maybe there would be some way to keep comments after pretty-printing the
+source, by re-inserting them afterwards.
+
+But for now, I'll stick to my indent tool for personal use.
+
+Cheers,
+
+Jeremy.
+</POST>
+<POST>
+<POSTER> Xah Lee &lt;x...@xahlee.org&gt; </POSTER>
+<POSTDATE> 2008-01-28T13:41:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Rainer Joswig wrote:
+&gt; But Common Lisp has that. The function is called PPRINT.
+&gt; It is based on a huge machinery defined in ANSI Common Lisp.
+Jeremy Smith wrote:
+&gt; This looks like a good indenting solution. The only problem is that it
+&gt; doesn't seem to keep comments, which is a problem on a big source file.
+
+&gt; Maybe there would be some way to keep comments after pretty-printing the
+&gt; source, by re-inserting them afterwards.
+">
+
+Good point.
+
+From my experience with Mathematica, this is not possible when the
+solution is based on the compiler taking source code as input (since
+it discards comments).
+
+Maybe CL has a way to tell the compiler to keep the comments...
+
+If some lisper writes a simple parser in elisp, that'd be great.
+This'll solve problems in Common/Scheme/Emacs lisps. I just want this
+to work in emacs lisp.
+
+------------------------------
+
+(Mathematica has this build-in, so that when you press a keyboard
+shortcut, it reformats your code in any one of the predefined ways,
+namely InputForm (plain source text), StandardForm (displaying it as
+typeset 2D math), TraditionalForm (like StandardForm, but follows
+traditional math notation much like LaTeX's default) (you can write
+code to process whole source code exactly like lisp because of the
+“source = data” property, and this is done practically often. One
+example is a transparent built-in converter for opening older
+Mathematica notebooks (i.e. the source code file) in a newer
+Mathematica version. (it reads the source code, add extra info or
+structure for the newer Mathematica version if necessary (such as
+adding a version declaration), then display it in the “word-processor
+like” integrated editor)))
+
+------------------------------
+
+Btw, i've always thougth that lisp's notation are not as regular as
+Mathematica. For example, there's the “'(1 2 3)”. But that is
+syntactically the same as “(quote (1 2 3))”, so it doesn't count as a
+exception. But i think there are few others involving other chars like
+“#”, “,”, but i'm not sure which of these are just syntax sugars and
+which are genuine exception to the nested paren syntax.
+
+My question is, could anyone list all these, and show exactly which
+are just syntax equivalent on top of sexp and which are true
+exceptions?
+
+Xah
+x ... @xahlee.org
+∑ http://xahlee.org/
+
+☄
+</POST>
+<POST>
+<POSTER> Rainer Joswig &lt;jos...@lisp.de&gt; </POSTER>
+<POSTDATE> 2008-01-28T14:14:00 </POSTDATE>
+In article
+&lt;dfb17946-bf0c-40d6-9103-bb418d1f4 ... @k2g2000hse.googlegroups.com&gt;,
+Xah Lee &lt;x ... @xahlee.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Rainer Joswig wrote:
+&gt; &gt; But Common Lisp has that. The function is called PPRINT.
+&gt; &gt; It is based on a huge machinery defined in ANSI Common Lisp.
+
+&gt; Jeremy Smith wrote:
+&gt; &gt; This looks like a good indenting solution. The only problem is that it
+&gt; &gt; doesn't seem to keep comments, which is a problem on a big source file.
+
+&gt; &gt; Maybe there would be some way to keep comments after pretty-printing the
+&gt; &gt; source, by re-inserting them afterwards.
+
+&gt; Good point.
+
+&gt; From my experience with Mathematica, this is not possible when the
+&gt; solution is based on the compiler taking source code as input (since
+&gt; it discards comments).
+
+&gt; Maybe CL has a way to tell the compiler to keep the comments...
+">
+
+The compiler is not involved. Expressions are read by READ,
+not COMPILE. The reader ignores characters following a semicolon
+(up to the next newline or the end of file). Keeping
+comments is not easy. One could attempt to use a modified
+reader to do so.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; If some lisper writes a simple parser in elisp, that'd be great.
+&gt; This'll solve problems in Common/Scheme/Emacs lisps. I just want this
+&gt; to work in emacs lisp.
+
+&gt; ------------------------------
+
+&gt; (Mathematica has this build-in, so that when you press a keyboard
+&gt; shortcut, it reformats your code in any one of the predefined ways,
+&gt; namely InputForm (plain source text), StandardForm (displaying it as
+&gt; typeset 2D math), TraditionalForm (like StandardForm, but follows
+&gt; traditional math notation much like LaTeX's default) (you can write
+&gt; code to process whole source code exactly like lisp because of the
+&gt; “source = data” property, and this is done practically often. One
+&gt; example is a transparent built-in converter for opening older
+&gt; Mathematica notebooks (i.e. the source code file) in a newer
+&gt; Mathematica version. (it reads the source code, add extra info or
+&gt; structure for the newer Mathematica version if necessary (such as
+&gt; adding a version declaration), then display it in the “word-processor
+&gt; like” integrated editor)))
+
+&gt; ------------------------------
+
+&gt; Btw, i've always thougth that lisp's notation are not as regular as
+&gt; Mathematica. For example, there's the “'(1 2 3)”. But that is
+&gt; syntactically the same as “(quote (1 2 3))”,
+">
+
+It's obviously syntactically not the same. The Lisp 'reader' will
+just read both to the same result.
+
+<QUOTE PREVIOUSPOST="
+&gt; so it doesn't count as a
+&gt; exception. But i think there are few others involving other chars like
+&gt; “#”, “,”, but i'm not sure which of these are just syntax sugars and
+&gt; which are genuine exception to the nested paren syntax.
+
+&gt; My question is, could anyone list all these, and show exactly which
+&gt; are just syntax equivalent on top of sexp and which are true
+&gt; exceptions?
+">
+
+CLHS 2.4 Standard Macro Characters
+http://www.lispworks.com/documentation/HyperSpec/Body/02_d.htm
+
+If you would just read the documentation, half of your
+posts would be not necessary. How do you try to learn Lisp?
+By posting many questions to comp.lang.lisp ? How
+about taking a Lisp book (Touretzky, Winston/Horn, Seibel, Emacs
+Lisp intro, ...) and just read it? If all you want to
+do is Emacs customization using Emacs Lisp, then learn
+just Emacs Lisp. Common Lisp will only puzzle you. It
+has many concepts not found in Emacs Lisp. Much you
+hear here on comp.lang.lisp is not applicable to Emacs Lisp.
+Emacs Lisp and Common Lisp (which mostly discussed here)
+are very different languages.
+I think O'REILLY has a book about Emacs Lisp. There are
+some Emacs tutorials on the net.
+
+http://www.gnu.org/software/emacs/emacs-lisp-intro/
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;   Xah
+&gt;   x ... @xahlee.org
+&gt; ∑ http://xahlee.org/
+
+&gt; ?
+">
+</POST>
+<POST>
+<POSTER> Xah Lee &lt;x...@xahlee.org&gt; </POSTER>
+<POSTDATE> 2008-01-28T15:01:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Xah Lee wrote:
+&gt; My question is, could anyone list all these, and show exactly which
+&gt; are just syntax equivalent on top of sexp and which are true
+&gt; exceptions?
+Rainer Joswig wrote:
+&gt; CLHS 2.4 Standard Macro Characters
+&gt; http://www.lispworks.com/documentation/HyperSpec/Body/02_d.htm
+&gt; If you would just read the documentation, half of your
+&gt; posts would be not necessary. How do you try to learn Lisp?
+&gt; By posting many questions to comp.lang.lisp ? How
+&gt; about taking a Lisp book (Touretzky, Winston/Horn, Seibel, Emacs
+&gt; Lisp intro, ...) and just read it? If all you want to
+&gt; do is Emacs customization using Emacs Lisp, then learn
+&gt; just Emacs Lisp. Common Lisp will only puzzle you. It
+&gt; has many concepts not found in Emacs Lisp. Much you
+&gt; hear here on comp.lang.lisp is not applicable to Emacs Lisp.
+&gt; Emacs Lisp and Common Lisp (which mostly discussed here)
+&gt; are very different languages.
+&gt; I think O'REILLY has a book about Emacs Lisp. There are
+&gt; some Emacs tutorials on the net.
+&gt; http://www.gnu.org/software/emacs/emacs-lisp-intro/
+">
+
+Dear Rainer,
+
+why do you always respond to messages in the most idiotic tech geeking
+fashion?
+
+Why can't you learn to appreciate the overall meaning of the poster,
+and respond to that, instead of spelling picking?
+
+The topic of this thread, is about a source code reformatting tool.
+Yeah, Common Lisp's pprint facility is great, but the problem is still
+there, that there is not a tool so programers can use to format his
+code in a day-to-day coding.
+
+As has been illustrated, the CL's pprint deletes comments, and that's
+a problem making this facility not practical. Further, it's specific
+to CL not lisp in general, so i can't use it emacs lisp. (since all
+these lisps shares a uniform syntax, so a lexical parser can solve the
+problem, and is relevant)
+
+Further, i expressed the idea that a uniform, standard, universally
+adopted formatting that is produced by simple mechanical rule can have
+significant impact on idioms the programmers produces for the whole
+community, and i indicated that this is one practical advantage
+offered by Python lang transparently. It is fine that you do not
+address this in this particular thread, but in many discussions in the
+past months here, you and other Common Lisp advocating morons
+persistently and consistently ignored anything that's not within your
+expertise in CL yet kept expressing dogma. That is a problem.
+
+If i'm learning CL, and have CL specific questions, i can read the
+docs and i'll ask as such. But often in my questions or discussions
+posted here in the last few months, it is in general related to ideas
+in all Common/Scheme/Emacs lisps. Burying your head in Common Lisp and
+antagonistic to all other lisps and other advanced langs such as
+Haskell etc is not healthy.
+
+And, stop the habit of throwing out a flotilla of citations and urls.
+Should i start to throw out urls and citations and books in logic,
+mathematics, Mathematica tangentially, whenever you showed a ignorance
+in everything that's not Common Lisp technicalities?
+
+I do appreciate some CL technicalities that you gave sometimes, but
+stop acting like a CL priest.
+
+---------------------------------
+
+The question i posted in previous message, is about a list of all
+exception to lisp's nested form. You threw out some URL to the CL doc.
+I'm not particularly interested in CL to read the tens of pages and
+spend days to understand it exactly. I'm simply here interested in a
+simple answer in the context of regularity of syntaxes shared by all
+lisps and Mathematica. Can you see this?
+
+If Common Lisp, actually do not have syntax irregularities, just say
+so. Abusing citations and being a CL priest is not helpful. You are
+not a college student, and i'm not a college student. Get over with
+citations.
+
+Xah
+x ... @xahlee.org
+∑ http://xahlee.org/
+
+☄
+</POST>
+<POST>
+<POSTER> Rainer Joswig &lt;jos...@lisp.de&gt; </POSTER>
+<POSTDATE> 2008-01-28T16:11:00 </POSTDATE>
+In article
+&lt;c65747fa-430a-4a0d-ac44-59e64df5a ... @e4g2000hsg.googlegroups.com&gt;,
+Xah Lee &lt;x ... @xahlee.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; The question i posted in previous message, is about a list of all
+&gt; exception to lisp's nested form. You threw out some URL to the CL doc.
+&gt; I'm not particularly interested in CL to read the tens of pages and
+&gt; spend days to understand it exactly. I'm simply here interested in a
+&gt; simple answer in the context of regularity of syntaxes shared by all
+&gt; lisps and Mathematica. Can you see this?
+">
+
+Lisps don't share the same syntax.
+
+Syntax talks about the structure of the language.
+Lisp uses simple s-expression syntax for data.
+
+(a b c d e f) is a simple list. So how do you format it? When
+you print such a list? Simple:
+
+* print all elements on on line, if the line is not long
+enough print the remaining elements on the next line
+and indent by one:
+
+Example:
+
+(a b c
+d e f)
+
+But that is not Lisp code. That's list data.
+
+Lisp code has syntax on top of s-expressions.
+
+DEFUN in Common Lisp has the following syntax:
+
+defun function-name lambda-list [[declaration* | documentation]] form*
+
+Now we have list of again six elements, but not a b c d e f:
+
+(defun foo (bar) &quot;documentation&quot; (declare (integer bar)) (1+ bar))
+
+Now how do you indent that? By our simple list-based
+formatter above? No. We want it to be formatted like:
+
+(defun foo (bar)
+&quot;documentation&quot;
+(declare (integer bar))
+(1+ bar))
+
+So the rules for formatting this six element list is quite different:
+
+* if it is a defun form indent as follows
+** put the name after the defun
+** then format the arguments behind the name, if the arguments
+are longer than one line, use the next line for the remaining
+elements and indent up to the first argument of the preceding line
+** next indent two characters
+** put the documentation string on its own line if there is some
+** next comes the declaration on their own line
+use special formatting for the declarations
+** next comes the body of the function
+
+Define this for LET, LET*, UNWIND-PROTECT, PROGN, DEFCLASS, and so on.
+Each have their own syntax. Then define a generic macro
+formatter that takes some hints from the macro parameter list.
+
+The syntax and the rules to print Lisp code is different for
+each Lisp. Emacs Lisp is to Common Lisp, like Pascal to Ada.
+
+Learn Emacs Lisp. Write the formatter yourself. Since
+you are the world's best Mathematica expert it
+should not be difficult for you.
+
+<QUOTE PREVIOUSPOST="
+&gt; If Common Lisp, actually do not have syntax irregularities, just say
+&gt; so. Abusing citations and being a CL priest is not helpful. You are
+&gt; not a college student, and i'm not a college student. Get over with
+&gt; citations.
+">
+
+Learn Emacs Lisp. Write your program. Done. You are the world's
+best Mathematica expert it should be easy. If that's too difficult,
+write a formatter for Lisp in Mathematica and hook it up to Emacs.
+That should be easy for you.
+
+<QUOTE PREVIOUSPOST="
+&gt;   Xah
+&gt;   x ... @xahlee.org
+&gt; ∑ http://xahlee.org/
+
+&gt; ?
+">
+</POST>
+<POST>
+<POSTER> Damien Kick &lt;dk...@earthlink.net&gt; </POSTER>
+<POSTDATE> 2008-01-29T00:39:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jeremy Smith wrote:
+&gt; This looks like a good indenting solution. The only problem is that it
+&gt; doesn't seem to keep comments, which is a problem on a big source file.
+
+&gt; Maybe there would be some way to keep comments after pretty-printing the
+&gt; source, by re-inserting them afterwards.
+">
+
+I was half-pondering this at various points today.  The problem is that
+the comments are discarded by the reader before one ever gets to the
+pretty printer.  I was thinking that changing the dispatch table for ';'
+and '#||#' to have it produce something sexp for comments, i.e. (|;|
+&quot;This is the text of the comment&quot;) (but (|#\|\|#| &quot;Another comment&quot;) is
+far too ugly), and then setting up a printer dispatch for this form to
+restore things to the original textual representation would work okay.
+#||# style comments would be more difficult, though, I would think.
+</POST>
+</TEXT>
+</BODY>
+</DOC>

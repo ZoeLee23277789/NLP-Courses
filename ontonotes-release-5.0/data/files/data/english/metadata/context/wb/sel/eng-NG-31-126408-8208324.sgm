@@ -1,0 +1,472 @@
+<DOC>
+<DOCID> eng-NG-31-126408-8208324 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-07-25T17:55:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Bash: Strange quoting in pipelined commands
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Mister.Fred...@gmail.com </POSTER>
+<POSTDATE> 2007-07-25T17:55:00 </POSTDATE>
+I have the following files/subdirectories listed in List.txt.
+
+$cat List.txt
+
+FixDiff.out
+Temp.txt
+diff.out
+dog &amp;cat
+
+There are no leading or trailing spaces on each line.  I want to
+submit this to &quot;find&quot; after quoting each line.  This command seems to
+do the quoting:
+
+cat List.txt | sed -e 's/.*/&quot;&amp;&quot;/'
+
+It generates:
+
+&quot;FixDiff.out&quot;
+&quot;Temp.txt&quot;
+&quot;diff.out&quot;
+&quot;dog &amp;cat&quot;
+
+Here is how I fed it to the &quot;find&quot; command.  The head command simply
+ensures that I don't pollute the display with &quot;find&quot; output, and that
+no time is wasted on the find command, thus enabling me to quickly see
+the expanded command from &quot;set -x&quot;.
+
+set -x
+find ` cat List.txt | sed -e 's/.*/&quot;&amp;&quot;/' ` -type f 2&gt;&amp;1 | head -n 0
+find ` cat List.txt | sed -e 's/.*/&amp;/' ` -type f 2&gt;&amp;1 | head -n 0
+find ` cat List.txt | sed -e &quot;s/.*/'&amp;'/&quot; ` -type f 2&gt;&amp;1 | head -n 0
+
+Here is the output:
+
+$ find ` cat List.txt | sed -e 's/.*/&quot;&amp;&quot;/' ` -type f 2&gt;&amp;1 | head -n 0
+
+find '&quot;' 'FixDiff.out&quot;' '&quot;' 'Temp.txt&quot;' '&quot;' 'diff.out&quot;' '&quot;' dog
+'&amp;cat&quot;' -type f
+
+$ find ` cat List.txt | sed -e 's/.*/&amp;/' ` -type f 2&gt;&amp;1 | head -n 0
+
+find FixDiff.out Temp.txt diff.out dog '&amp;cat' -type f
+
+$ find ` cat List.txt | sed -e &quot;s/.*/'&amp;'/&quot; ` -type f 2&gt;&amp;1 | head -n 0
+
+find ''\''' 'FixDiff.out'\''' ''\''' 'Temp.txt'\''' ''\'''
+'diff.out'\''' ''\''' dog '&amp;cat'\''' -type f
+
+The 1st &quot;find&quot; is what I expected to work, but it generates extra
+single-quotes.  The 2nd &quot;find&quot; is a debugging step to find out exactly
+what happens when the 4-line output of &quot;cat | sed&quot; is put onto a
+single physical line for &quot;find&quot;.  Apparently, spaces are not
+protected, though ampersands are.  Leading quotes are protected, but
+are considered separated out as distinct arguments.
+
+The above is just a illustration of this behaviour.  The actual usage
+involves grepping a file instead of cat'ing it.  The result is even
+stranger -- using the 1st &quot;find&quot; above, only the 1st 2 filenames
+contain quotes (wrong though they may be), while the remaining large
+number of filenames have not quoting at all.
+
+Is there a way to generate the required quoting?  I realize I can
+prepend backslashes to all nonstandard characters, but simply quoting
+the whole thing seemed alot simpler than identifying all nonstandard
+characters -- if it can be made to work.
+
+Why do the above 3 &quot;find&quot; commands generate such strange quoting?
+
+Thanks!
+</POST>
+<POST>
+<POSTER> Michael Tosch &lt;eed...@NO.eed.SPAM.ericsson.PLS.se&gt; </POSTER>
+<POSTDATE> 2007-07-25T18:14:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Mister.Fred ... @gmail.com wrote:
+&gt; I have the following files/subdirectories listed in List.txt.
+
+&gt;    $cat List.txt
+
+&gt;       FixDiff.out
+&gt;       Temp.txt
+&gt;       diff.out
+&gt;       dog &amp;cat
+
+&gt; There are no leading or trailing spaces on each line.  I want to
+&gt; submit this to &quot;find&quot; after quoting each line.  This command seems to
+&gt; do the quoting:
+
+&gt;    cat List.txt | sed -e 's/.*/&quot;&amp;&quot;/'
+
+&gt; It generates:
+
+&gt;    &quot;FixDiff.out&quot;
+&gt;    &quot;Temp.txt&quot;
+&gt;    &quot;diff.out&quot;
+&gt;    &quot;dog &amp;cat&quot;
+
+&gt; Here is how I fed it to the &quot;find&quot; command.  The head command simply
+&gt; ensures that I don't pollute the display with &quot;find&quot; output, and that
+&gt; no time is wasted on the find command, thus enabling me to quickly see
+&gt; the expanded command from &quot;set -x&quot;.
+
+&gt;    set -x
+&gt;    find ` cat List.txt | sed -e 's/.*/&quot;&amp;&quot;/' ` -type f 2&gt;&amp;1 | head -n 0
+&gt;    find ` cat List.txt | sed -e 's/.*/&amp;/' ` -type f 2&gt;&amp;1 | head -n 0
+&gt;    find ` cat List.txt | sed -e &quot;s/.*/'&amp;'/&quot; ` -type f 2&gt;&amp;1 | head -n 0
+
+&gt; Here is the output:
+
+&gt;  $ find ` cat List.txt | sed -e 's/.*/&quot;&amp;&quot;/' ` -type f 2&gt;&amp;1 | head -n 0
+
+&gt;    find '&quot;' 'FixDiff.out&quot;' '&quot;' 'Temp.txt&quot;' '&quot;' 'diff.out&quot;' '&quot;' dog
+&gt; '&amp;cat&quot;' -type f
+
+&gt;  $ find ` cat List.txt | sed -e 's/.*/&amp;/' ` -type f 2&gt;&amp;1 | head -n 0
+
+&gt;    find FixDiff.out Temp.txt diff.out dog '&amp;cat' -type f
+
+&gt;  $ find ` cat List.txt | sed -e &quot;s/.*/'&amp;'/&quot; ` -type f 2&gt;&amp;1 | head -n 0
+
+&gt;    find ''\''' 'FixDiff.out'\''' ''\''' 'Temp.txt'\''' ''\'''
+&gt; 'diff.out'\''' ''\''' dog '&amp;cat'\''' -type f
+
+&gt; The 1st &quot;find&quot; is what I expected to work, but it generates extra
+&gt; single-quotes.  The 2nd &quot;find&quot; is a debugging step to find out exactly
+&gt; what happens when the 4-line output of &quot;cat | sed&quot; is put onto a
+&gt; single physical line for &quot;find&quot;.  Apparently, spaces are not
+&gt; protected, though ampersands are.  Leading quotes are protected, but
+&gt; are considered separated out as distinct arguments.
+
+&gt; The above is just a illustration of this behaviour.  The actual usage
+&gt; involves grepping a file instead of cat'ing it.  The result is even
+&gt; stranger -- using the 1st &quot;find&quot; above, only the 1st 2 filenames
+&gt; contain quotes (wrong though they may be), while the remaining large
+&gt; number of filenames have not quoting at all.
+
+&gt; Is there a way to generate the required quoting?  I realize I can
+&gt; prepend backslashes to all nonstandard characters, but simply quoting
+&gt; the whole thing seemed alot simpler than identifying all nonstandard
+&gt; characters -- if it can be made to work.
+
+&gt; Why do the above 3 &quot;find&quot; commands generate such strange quoting?
+
+&gt; Thanks!
+">
+
+The `` generates a list of IFS-separated tokens.
+It is safer to read the file line by line,
+and each time run a find command:
+
+while read -r line
+do
+find &quot;$line&quot; ...
+done &lt; List.txt
+
+--
+Michael Tosch @ hp : com
+</POST>
+<POST>
+<POSTER> Mister.Fred...@gmail.com </POSTER>
+<POSTDATE> 2007-07-25T18:57:00 </POSTDATE>
+On Jul 25, 6:14 pm, Michael Tosch &lt;eed ... @NO.eed.SPAM.ericsson.PLS.se&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Mister.Fred ... @gmail.com wrote:
+&gt; &gt; I have the following files/subdirectories listed in List.txt.
+
+&gt; &gt;    $cat List.txt
+
+&gt; &gt;       FixDiff.out
+&gt; &gt;       Temp.txt
+&gt; &gt;       diff.out
+&gt; &gt;       dog &amp;cat
+
+&gt; &gt; There are no leading or trailing spaces on each line.  I want to
+&gt; &gt; submit this to &quot;find&quot; after quoting each line.  This command seems to
+&gt; &gt; do the quoting:
+
+&gt; &gt;    cat List.txt | sed -e 's/.*/&quot;&amp;&quot;/'
+
+&gt; &gt; It generates:
+
+&gt; &gt;    &quot;FixDiff.out&quot;
+&gt; &gt;    &quot;Temp.txt&quot;
+&gt; &gt;    &quot;diff.out&quot;
+&gt; &gt;    &quot;dog &amp;cat&quot;
+
+&gt; &gt; Here is how I fed it to the &quot;find&quot; command.  The head command simply
+&gt; &gt; ensures that I don't pollute the display with &quot;find&quot; output, and that
+&gt; &gt; no time is wasted on the find command, thus enabling me to quickly see
+&gt; &gt; the expanded command from &quot;set -x&quot;.
+
+&gt; &gt;    set -x
+&gt; &gt;    find ` cat List.txt | sed -e 's/.*/&quot;&amp;&quot;/' ` -type f 2&gt;&amp;1 | head -n 0
+&gt; &gt;    find ` cat List.txt | sed -e 's/.*/&amp;/' ` -type f 2&gt;&amp;1 | head -n 0
+&gt; &gt;    find ` cat List.txt | sed -e &quot;s/.*/'&amp;'/&quot; ` -type f 2&gt;&amp;1 | head -n 0
+
+&gt; &gt; Here is the output:
+
+&gt; &gt;  $ find ` cat List.txt | sed -e 's/.*/&quot;&amp;&quot;/' ` -type f 2&gt;&amp;1 | head -n 0
+
+&gt; &gt;    find '&quot;' 'FixDiff.out&quot;' '&quot;' 'Temp.txt&quot;' '&quot;' 'diff.out&quot;' '&quot;' dog
+&gt; &gt; '&amp;cat&quot;' -type f
+
+&gt; &gt;  $ find ` cat List.txt | sed -e 's/.*/&amp;/' ` -type f 2&gt;&amp;1 | head -n 0
+
+&gt; &gt;    find FixDiff.out Temp.txt diff.out dog '&amp;cat' -type f
+
+&gt; &gt;  $ find ` cat List.txt | sed -e &quot;s/.*/'&amp;'/&quot; ` -type f 2&gt;&amp;1 | head -n 0
+
+&gt; &gt;    find ''\''' 'FixDiff.out'\''' ''\''' 'Temp.txt'\''' ''\'''
+&gt; &gt; 'diff.out'\''' ''\''' dog '&amp;cat'\''' -type f
+
+&gt; &gt; The 1st &quot;find&quot; is what I expected to work, but it generates extra
+&gt; &gt; single-quotes.  The 2nd &quot;find&quot; is a debugging step to find out exactly
+&gt; &gt; what happens when the 4-line output of &quot;cat | sed&quot; is put onto a
+&gt; &gt; single physical line for &quot;find&quot;.  Apparently, spaces are not
+&gt; &gt; protected, though ampersands are.  Leading quotes are protected, but
+&gt; &gt; are considered separated out as distinct arguments.
+
+&gt; &gt; The above is just a illustration of this behaviour.  The actual usage
+&gt; &gt; involves grepping a file instead of cat'ing it.  The result is even
+&gt; &gt; stranger -- using the 1st &quot;find&quot; above, only the 1st 2 filenames
+&gt; &gt; contain quotes (wrong though they may be), while the remaining large
+&gt; &gt; number of filenames have not quoting at all.
+
+&gt; &gt; Is there a way to generate the required quoting?  I realize I can
+&gt; &gt; prepend backslashes to all nonstandard characters, but simply quoting
+&gt; &gt; the whole thing seemed alot simpler than identifying all nonstandard
+&gt; &gt; characters -- if it can be made to work.
+
+&gt; &gt; Why do the above 3 &quot;find&quot; commands generate such strange quoting?
+
+&gt; &gt; Thanks!
+
+&gt; The `` generates a list of IFS-separated tokens.
+&gt; It is safer to read the file line by line,
+&gt; and each time run a find command:
+
+&gt; while read -r line
+&gt; do
+&gt;   find &quot;$line&quot; ...
+&gt; done &lt; List.txt
+">
+
+Thanks, Michael.  It works like a charm.  I also learned that you can
+pipe into a loop using &quot;&lt;&quot; at the end, or using &quot;|&quot; at the start.
+
+I looked up bash's &quot;read&quot;, but I'm confused by the delimiting.  It
+says the IFS variable (which I assume is the default, since I didn't
+change it) delimits the words in the line.  The -r switch simply says
+that backslashing isn't used -- not sure where that fits in, since I
+don't have such a character in List.txt.  It does not say that IFS is
+ignored -- yet this must be what is happening, since the entire
+contents of the physical line is stuffed into $line (else the find
+command would report and error).  So why is -r needed, and why is IFS
+*apparently* not used here?
+
+Thanks!
+</POST>
+<POST>
+<POSTER> Michael Tosch &lt;eed...@NO.eed.SPAM.ericsson.PLS.se&gt; </POSTER>
+<POSTDATE> 2007-07-25T19:24:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Mister.Fred ... @gmail.com wrote:
+&gt; On Jul 25, 6:14 pm, Michael Tosch &lt;eed ... @NO.eed.SPAM.ericsson.PLS.se&gt;
+&gt; wrote:
+&gt;&gt; Mister.Fred ... @gmail.com wrote:
+&gt;&gt;&gt; I have the following files/subdirectories listed in List.txt.
+&gt;&gt;&gt;    $cat List.txt
+&gt;&gt;&gt;       FixDiff.out
+&gt;&gt;&gt;       Temp.txt
+&gt;&gt;&gt;       diff.out
+&gt;&gt;&gt;       dog &amp;cat
+&gt;&gt;&gt; There are no leading or trailing spaces on each line.  I want to
+&gt;&gt;&gt; submit this to &quot;find&quot; after quoting each line.  This command seems to
+&gt;&gt;&gt; do the quoting:
+&gt;&gt;&gt;    cat List.txt | sed -e 's/.*/&quot;&amp;&quot;/'
+&gt;&gt;&gt; It generates:
+&gt;&gt;&gt;    &quot;FixDiff.out&quot;
+&gt;&gt;&gt;    &quot;Temp.txt&quot;
+&gt;&gt;&gt;    &quot;diff.out&quot;
+&gt;&gt;&gt;    &quot;dog &amp;cat&quot;
+&gt;&gt;&gt; Here is how I fed it to the &quot;find&quot; command.  The head command simply
+&gt;&gt;&gt; ensures that I don't pollute the display with &quot;find&quot; output, and that
+&gt;&gt;&gt; no time is wasted on the find command, thus enabling me to quickly see
+&gt;&gt;&gt; the expanded command from &quot;set -x&quot;.
+&gt;&gt;&gt;    set -x
+&gt;&gt;&gt;    find ` cat List.txt | sed -e 's/.*/&quot;&amp;&quot;/' ` -type f 2&gt;&amp;1 | head -n 0
+&gt;&gt;&gt;    find ` cat List.txt | sed -e 's/.*/&amp;/' ` -type f 2&gt;&amp;1 | head -n 0
+&gt;&gt;&gt;    find ` cat List.txt | sed -e &quot;s/.*/'&amp;'/&quot; ` -type f 2&gt;&amp;1 | head -n 0
+&gt;&gt;&gt; Here is the output:
+&gt;&gt;&gt;  $ find ` cat List.txt | sed -e 's/.*/&quot;&amp;&quot;/' ` -type f 2&gt;&amp;1 | head -n 0
+&gt;&gt;&gt;    find '&quot;' 'FixDiff.out&quot;' '&quot;' 'Temp.txt&quot;' '&quot;' 'diff.out&quot;' '&quot;' dog
+&gt;&gt;&gt; '&amp;cat&quot;' -type f
+&gt;&gt;&gt;  $ find ` cat List.txt | sed -e 's/.*/&amp;/' ` -type f 2&gt;&amp;1 | head -n 0
+&gt;&gt;&gt;    find FixDiff.out Temp.txt diff.out dog '&amp;cat' -type f
+&gt;&gt;&gt;  $ find ` cat List.txt | sed -e &quot;s/.*/'&amp;'/&quot; ` -type f 2&gt;&amp;1 | head -n 0
+&gt;&gt;&gt;    find ''\''' 'FixDiff.out'\''' ''\''' 'Temp.txt'\''' ''\'''
+&gt;&gt;&gt; 'diff.out'\''' ''\''' dog '&amp;cat'\''' -type f
+&gt;&gt;&gt; The 1st &quot;find&quot; is what I expected to work, but it generates extra
+&gt;&gt;&gt; single-quotes.  The 2nd &quot;find&quot; is a debugging step to find out exactly
+&gt;&gt;&gt; what happens when the 4-line output of &quot;cat | sed&quot; is put onto a
+&gt;&gt;&gt; single physical line for &quot;find&quot;.  Apparently, spaces are not
+&gt;&gt;&gt; protected, though ampersands are.  Leading quotes are protected, but
+&gt;&gt;&gt; are considered separated out as distinct arguments.
+&gt;&gt;&gt; The above is just a illustration of this behaviour.  The actual usage
+&gt;&gt;&gt; involves grepping a file instead of cat'ing it.  The result is even
+&gt;&gt;&gt; stranger -- using the 1st &quot;find&quot; above, only the 1st 2 filenames
+&gt;&gt;&gt; contain quotes (wrong though they may be), while the remaining large
+&gt;&gt;&gt; number of filenames have not quoting at all.
+&gt;&gt;&gt; Is there a way to generate the required quoting?  I realize I can
+&gt;&gt;&gt; prepend backslashes to all nonstandard characters, but simply quoting
+&gt;&gt;&gt; the whole thing seemed alot simpler than identifying all nonstandard
+&gt;&gt;&gt; characters -- if it can be made to work.
+&gt;&gt;&gt; Why do the above 3 &quot;find&quot; commands generate such strange quoting?
+&gt;&gt;&gt; Thanks!
+&gt;&gt; The `` generates a list of IFS-separated tokens.
+&gt;&gt; It is safer to read the file line by line,
+&gt;&gt; and each time run a find command:
+
+&gt;&gt; while read -r line
+&gt;&gt; do
+&gt;&gt;   find &quot;$line&quot; ...
+&gt;&gt; done &lt; List.txt
+
+&gt; Thanks, Michael.  It works like a charm.  I also learned that you can
+&gt; pipe into a loop using &quot;&lt;&quot; at the end, or using &quot;|&quot; at the start.
+
+&gt; I looked up bash's &quot;read&quot;, but I'm confused by the delimiting.  It
+&gt; says the IFS variable (which I assume is the default, since I didn't
+&gt; change it) delimits the words in the line.  The -r switch simply says
+&gt; that backslashing isn't used -- not sure where that fits in, since I
+&gt; don't have such a character in List.txt.  It does not say that IFS is
+&gt; ignored -- yet this must be what is happening, since the entire
+&gt; contents of the physical line is stuffed into $line (else the find
+&gt; command would report and error).  So why is -r needed, and why is IFS
+&gt; *apparently* not used here?
+">
+
+In case List.txt has
+
+line\
+1
+
+a normal read would compose that to &quot;line1&quot;, therefore the -r
+
+IFS is used to split the line:
+
+while read -r word1 word2 rest
+
+But we read the entire line.
+
+--
+Michael Tosch @ hp : com
+</POST>
+<POST>
+<POSTER> Mister.Fred...@gmail.com </POSTER>
+<POSTDATE> 2007-07-25T20:55:00 </POSTDATE>
+On Jul 25, 7:24 pm, Michael Tosch &lt;eed ... @NO.eed.SPAM.ericsson.PLS.se&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Mister.Fred ... @gmail.com wrote:
+&gt; &gt; On Jul 25, 6:14 pm, Michael Tosch &lt;eed ... @NO.eed.SPAM.ericsson.PLS.se&gt;
+&gt; &gt; wrote:
+&gt; &gt;&gt; Mister.Fred ... @gmail.com wrote:
+&gt; &gt;&gt;&gt; I have the following files/subdirectories listed in List.txt.
+&gt; &gt;&gt;&gt;    $cat List.txt
+&gt; &gt;&gt;&gt;       FixDiff.out
+&gt; &gt;&gt;&gt;       Temp.txt
+&gt; &gt;&gt;&gt;       diff.out
+&gt; &gt;&gt;&gt;       dog &amp;cat
+&gt; &gt;&gt;&gt; There are no leading or trailing spaces on each line.  I want to
+&gt; &gt;&gt;&gt; submit this to &quot;find&quot; after quoting each line.  This command seems to
+&gt; &gt;&gt;&gt; do the quoting:
+&gt; &gt;&gt;&gt;    cat List.txt | sed -e 's/.*/&quot;&amp;&quot;/'
+&gt; &gt;&gt;&gt; It generates:
+&gt; &gt;&gt;&gt;    &quot;FixDiff.out&quot;
+&gt; &gt;&gt;&gt;    &quot;Temp.txt&quot;
+&gt; &gt;&gt;&gt;    &quot;diff.out&quot;
+&gt; &gt;&gt;&gt;    &quot;dog &amp;cat&quot;
+&gt; &gt;&gt;&gt; Here is how I fed it to the &quot;find&quot; command.  The head command simply
+&gt; &gt;&gt;&gt; ensures that I don't pollute the display with &quot;find&quot; output, and that
+&gt; &gt;&gt;&gt; no time is wasted on the find command, thus enabling me to quickly see
+&gt; &gt;&gt;&gt; the expanded command from &quot;set -x&quot;.
+&gt; &gt;&gt;&gt;    set -x
+&gt; &gt;&gt;&gt;    find ` cat List.txt | sed -e 's/.*/&quot;&amp;&quot;/' ` -type f 2&gt;&amp;1 | head -n 0
+&gt; &gt;&gt;&gt;    find ` cat List.txt | sed -e 's/.*/&amp;/' ` -type f 2&gt;&amp;1 | head -n 0
+&gt; &gt;&gt;&gt;    find ` cat List.txt | sed -e &quot;s/.*/'&amp;'/&quot; ` -type f 2&gt;&amp;1 | head -n 0
+&gt; &gt;&gt;&gt; Here is the output:
+&gt; &gt;&gt;&gt;  $ find ` cat List.txt | sed -e 's/.*/&quot;&amp;&quot;/' ` -type f 2&gt;&amp;1 | head -n 0
+&gt; &gt;&gt;&gt;    find '&quot;' 'FixDiff.out&quot;' '&quot;' 'Temp.txt&quot;' '&quot;' 'diff.out&quot;' '&quot;' dog
+&gt; &gt;&gt;&gt; '&amp;cat&quot;' -type f
+&gt; &gt;&gt;&gt;  $ find ` cat List.txt | sed -e 's/.*/&amp;/' ` -type f 2&gt;&amp;1 | head -n 0
+&gt; &gt;&gt;&gt;    find FixDiff.out Temp.txt diff.out dog '&amp;cat' -type f
+&gt; &gt;&gt;&gt;  $ find ` cat List.txt | sed -e &quot;s/.*/'&amp;'/&quot; ` -type f 2&gt;&amp;1 | head -n 0
+&gt; &gt;&gt;&gt;    find ''\''' 'FixDiff.out'\''' ''\''' 'Temp.txt'\''' ''\'''
+&gt; &gt;&gt;&gt; 'diff.out'\''' ''\''' dog '&amp;cat'\''' -type f
+&gt; &gt;&gt;&gt; The 1st &quot;find&quot; is what I expected to work, but it generates extra
+&gt; &gt;&gt;&gt; single-quotes.  The 2nd &quot;find&quot; is a debugging step to find out exactly
+&gt; &gt;&gt;&gt; what happens when the 4-line output of &quot;cat | sed&quot; is put onto a
+&gt; &gt;&gt;&gt; single physical line for &quot;find&quot;.  Apparently, spaces are not
+&gt; &gt;&gt;&gt; protected, though ampersands are.  Leading quotes are protected, but
+&gt; &gt;&gt;&gt; are considered separated out as distinct arguments.
+&gt; &gt;&gt;&gt; The above is just a illustration of this behaviour.  The actual usage
+&gt; &gt;&gt;&gt; involves grepping a file instead of cat'ing it.  The result is even
+&gt; &gt;&gt;&gt; stranger -- using the 1st &quot;find&quot; above, only the 1st 2 filenames
+&gt; &gt;&gt;&gt; contain quotes (wrong though they may be), while the remaining large
+&gt; &gt;&gt;&gt; number of filenames have not quoting at all.
+&gt; &gt;&gt;&gt; Is there a way to generate the required quoting?  I realize I can
+&gt; &gt;&gt;&gt; prepend backslashes to all nonstandard characters, but simply quoting
+&gt; &gt;&gt;&gt; the whole thing seemed alot simpler than identifying all nonstandard
+&gt; &gt;&gt;&gt; characters -- if it can be made to work.
+&gt; &gt;&gt;&gt; Why do the above 3 &quot;find&quot; commands generate such strange quoting?
+&gt; &gt;&gt;&gt; Thanks!
+&gt; &gt;&gt; The `` generates a list of IFS-separated tokens.
+&gt; &gt;&gt; It is safer to read the file line by line,
+&gt; &gt;&gt; and each time run a find command:
+
+&gt; &gt;&gt; while read -r line
+&gt; &gt;&gt; do
+&gt; &gt;&gt;   find &quot;$line&quot; ...
+&gt; &gt;&gt; done &lt; List.txt
+
+&gt; &gt; Thanks, Michael.  It works like a charm.  I also learned that you can
+&gt; &gt; pipe into a loop using &quot;&lt;&quot; at the end, or using &quot;|&quot; at the start.
+
+&gt; &gt; I looked up bash's &quot;read&quot;, but I'm confused by the delimiting.  It
+&gt; &gt; says the IFS variable (which I assume is the default, since I didn't
+&gt; &gt; change it) delimits the words in the line.  The -r switch simply says
+&gt; &gt; that backslashing isn't used -- not sure where that fits in, since I
+&gt; &gt; don't have such a character in List.txt.  It does not say that IFS is
+&gt; &gt; ignored -- yet this must be what is happening, since the entire
+&gt; &gt; contents of the physical line is stuffed into $line (else the find
+&gt; &gt; command would report and error).  So why is -r needed, and why is IFS
+&gt; &gt; *apparently* not used here?
+
+&gt; In case List.txt has
+
+&gt; line\
+&gt; 1
+
+&gt; a normal read would compose that to &quot;line1&quot;, therefore the -r
+
+&gt; IFS is used to split the line:
+
+&gt; while read -r word1 word2 rest
+
+&gt; But we read the entire line.
+">
+
+Thanks, Michael.
+
+Fred
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,263 @@
+<DOC>
+<DOCID> eng-NG-31-135903-8606385 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-07T12:04:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Exception safety in Objective-C
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> David Phillip Oster &lt;os...@ieee.org&gt; </POSTER>
+<POSTDATE> 2007-08-07T12:04:00 </POSTDATE>
+Exceptions in Objective C are implemented using the C primitive:
+longjmp(). Objective-C is not C++. You may have many layers of method
+call between the code that raises the exception and the method that
+catches it. It is very easy to write a memory leak.
+
+Search your source code for methods that are not setters, and are not
+-(void)dealloc but which call -(void)release.
+
+A common pattern is:
+MyItem *item = [[MyItem alloc] init];
+[item setPart:[factory makePart]]; // calls many other things.
+[myArray addObject:alteredItem];
+[item release];
+
+Now, if [factory makePart] throws an exception, the [item release] will
+never get called and you'll have a memory leak. The usual fix is to get
+rid of the explicit [item release] and instead create item with:
+
+MyItem *item = [[[MyItem alloc] init] autorelease];
+
+That does work. If -(MyItem*)makePart; throws, item will still get
+released, when the autorelease pool is drained.
+
+But that doesn't work for autorelease pools. If you are creating
+autorelease pools, and something you write might call something that
+might someday be maintained to throw exceptions, you must write not the
+usual:
+
+NSAutoReleasePool *pool = [[NSAutoReleasePool alloc] init];
+[self doSomeWork]; // calls many other things.
+[pool release];
+
+but instead the correct:
+
+@try {
+NSAutoReleasePool *pool = [[NSAutoReleasePool alloc] init];
+[self doSomeWork];
+
+<QUOTE PREVIOUSPOST="
+}@finally{
+[pool release];
+}
+">
+
+(Note that you don't need the @catch part.)
+Written this way, and if doSomeWork calls something that throws, you
+pool will get drained as the stack gets unwound on its way up to the
+handler.
+
+Lastly, If you are writing in Objective-C++, be aware that C++
+exceptions and Objective-C exceptions don't mix. If your program might
+ever be maintained to throw either kind, then, at the points where the
+program switches from one language to the other, it must catch the inner
+exception in one language, and rethrow it as the equivalent exception in
+the other language. (And note as the stack is unwound the exception may
+be rethrown from C++ to Objective-C and back multiple times.)
+
+Note that any creation of an object, even convenience methods that
+return autoreleased objects, calls - (id)[alloc], which in turn can
+throw an NSMallocException, and be very afraid.
+
+(In the real world, we are all in denial about this last one.)
+-- David Phillip Oster
+
+(I posted earlier version of this posting as a comment on the end of
+http://www.macdevcenter.com/pub/a/mac/2007/07/31/understanding-except...
+-and-handlers-in-cocoa.html )
+</POST>
+<POST>
+<POSTER> David Phillip Oster &lt;os...@ieee.org&gt; </POSTER>
+<POSTDATE> 2007-08-07T12:55:00 </POSTDATE>
+In article &lt;oster-F0D470.09040707082 ... @newsclstr03.news.prodigy.net&gt;,
+
+<QUOTE PREVIOUSPOST="
+I &lt;os ... @ieee.org&gt; wrote:
+&gt; @try {
+&gt;   NSAutoReleasePool *pool = [[NSAutoReleasePool alloc] init];
+&gt;   [self doSomeWork];
+&gt; }@finally{
+&gt;   [pool release];
+&gt; }
+">
+
+But suppose an exception is thrown, won't the [pool release]
+release the exception, so the actual catcher, higher up the
+stack, will get a dead object?
+
+No.
+
+http://www.macdevcenter.com/pub/a/mac/2007/07/31/understanding-except...
+explains that the only way to make an NSException is with
+a class method of NSException that returns an object allocated
+on the main NSAutoReleasePool. If you try to alloc, init an
+NSException, in the ordinary way, you'll just get back a nil.
+We can depend on NSException to retain its userDict. So long
+as it does, it is safe to release, (andimplicitly drain) the
+autorelease pool.
+
+-- David Phillip Oster
+</POST>
+<POST>
+<POSTER> Michael Ash &lt;m...@mikeash.com&gt; </POSTER>
+<POSTDATE> 2007-08-07T13:26:00 </POSTDATE>
+David Phillip Oster &lt;os ... @ieee.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; But that doesn't work for autorelease pools. If you are creating
+&gt; autorelease pools, and something you write might call something that
+&gt; might someday be maintained to throw exceptions, you must write not the
+&gt; usual:
+
+&gt; NSAutoReleasePool *pool = [[NSAutoReleasePool alloc] init];
+&gt; [self doSomeWork]; // calls many other things.
+&gt; [pool release];
+
+&gt; but instead the correct:
+
+&gt; @try {
+&gt;  NSAutoReleasePool *pool = [[NSAutoReleasePool alloc] init];
+&gt;  [self doSomeWork];
+&gt; }@finally{
+&gt;  [pool release];
+&gt; }
+
+&gt; (Note that you don't need the @catch part.)
+&gt; Written this way, and if doSomeWork calls something that throws, you
+&gt; pool will get drained as the stack gets unwound on its way up to the
+&gt; handler.
+">
+
+This is unnecessary in most cases.
+
+Autorelease pools (note Cocoa does not capitalize the R in the class name)
+are always implicitly added to the next pool up the stack when created,
+and removed when destroyed. This means that if you somehow miss releasing
+your pool, it will be cleaned up for you when the enclosing pool goes
+away.
+
+The cases where you must write code as you describe are these:
+
+- This is in a loop that can run many times and throw many exceptions
+before returning. You'll risk ballooning your memory usage and running out
+of address space if you don't explicitly clean up pools when an exception
+is thrown.
+
+- This is the top-level pool. However, since you're throwing an exception
+into Cocoa code, and Cocoa code pretty much needs an autorelease pool to
+be present, this probably indicates a design flaw.
+
+<QUOTE PREVIOUSPOST="
+&gt; Note that any creation of an object, even convenience methods that
+&gt; return autoreleased objects, calls - (id)[alloc], which in turn can
+&gt; throw an NSMallocException, and be very afraid.
+
+&gt; (In the real world, we are all in denial about this last one.)
+">
+
+We're all in denial because once it happens there is basically nothing you
+can do to save the app.
+
+Any recovery mechanism is likely to need to allocate memory, which can
+fail again. Indeed, the NSMallocException probably has to be allocated, so
+this could fail too. And even if your recovery mechanismms succeed you're
+likely to leave the frameworks in an inconsistent state and so be unable
+to reliably accomplish anything.
+
+There are probably strategies you could take to increase the probability
+of success. For example, the old idea of keeping a big chunk of allocated
+memory around just for the purposes of freeing it in low-memory situations
+is interesting. If you can trap a failed malloc at a fairly low level, you
+could free this chunk, set a flag, and re-try the malloc. It may be
+somewhat challenging to make it work in a multithreaded environment.
+
+Overall, the payoff/effort ratio is just to low, which of course is why
+we're all in denial about it in the first place.
+
+--
+Michael Ash
+Rogue Amoeba Software
+</POST>
+<POST>
+<POSTER> David Phillip Oster &lt;os...@ieee.org&gt; </POSTER>
+<POSTDATE> 2007-08-07T22:45:00 </POSTDATE>
+In article &lt;1186507566.140 ... @nfs-db1.segnet.com&gt;,
+Michael Ash &lt;m ... @mikeash.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; David Phillip Oster &lt;os ... @ieee.org&gt; wrote:
+&gt; &gt; But that doesn't work for autorelease pools. If you are creating
+&gt; &gt; autorelease pools, and something you write might call something that
+&gt; &gt; might someday be maintained to throw exceptions, you must write not the
+&gt; &gt; usual:
+
+&gt; &gt; NSAutoReleasePool *pool = [[NSAutoReleasePool alloc] init];
+&gt; &gt; [self doSomeWork]; // calls many other things.
+&gt; &gt; [pool release];
+
+&gt; &gt; but instead the correct:
+
+&gt; &gt; @try {
+&gt; &gt;  NSAutoReleasePool *pool = [[NSAutoReleasePool alloc] init];
+&gt; &gt;  [self doSomeWork];
+&gt; &gt; }@finally{
+&gt; &gt;  [pool release];
+&gt; &gt; }
+
+&gt; &gt; (Note that you don't need the @catch part.)
+&gt; &gt; Written this way, and if doSomeWork calls something that throws, you
+&gt; &gt; pool will get drained as the stack gets unwound on its way up to the
+&gt; &gt; handler.
+
+&gt; This is unnecessary in most cases.
+">
+
+Actually,
+NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+@try {
+[self doSomeWork];
+
+<QUOTE PREVIOUSPOST="
+}@finally{
+[pool release];
+}
+">
+
+turns out to be unnecessary in ALL cases. It is safe, since the
+NSException object won't be deleted, but it isn't necessary.
+
+NSAutoreleasePools maintain themselves on a separate stack, so if you
+dealloc an outer one, it will dealloc any inner ones. It just means that
+if an NSException is thrown, then that inner NSAutoreleasePool will hang
+around until the next outer one drains, instead of being release at the
+end of the current method.
+
+I wrote a little program to prove to myself that it really works this
+way.
+</POST>
+<POST>
+<POSTER> David Phillip Oster &lt;os...@ieee.org&gt; </POSTER>
+<POSTDATE> 2007-08-07T22:46:00 </POSTDATE>
+In article &lt;1186507566.140 ... @nfs-db1.segnet.com&gt;,
+Michael Ash &lt;m ... @mikeash.com&gt; wrote:
+
+thanks Michael, now that I read your comments in detail, I see that you
+are completely correct. Thanks for the instruction.
+
+-- David Phillip Oster
+</POST>
+</TEXT>
+</BODY>
+</DOC>

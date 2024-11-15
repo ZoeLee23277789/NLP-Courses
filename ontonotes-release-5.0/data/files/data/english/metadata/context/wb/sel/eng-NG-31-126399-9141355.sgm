@@ -1,0 +1,292 @@
+<DOC>
+<DOCID> eng-NG-31-126399-9141355 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-11-10T10:37:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Extended date and time
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Jeremy Sanders &lt;jeremy+complangpyt...@jeremysanders.net&gt; </POSTER>
+<POSTDATE> 2007-11-10T10:37:00 </POSTDATE>
+Hi - I need to add support to a program for dates and times. The built-in
+Python library seems to be okay for many purposes, but what I would like
+would be Unix epoch style times (seconds relative to some date), covering a
+large period from the past to the future. What would be nice would be a
+library which can take floating point seconds from an epoch.
+
+Does anyone know of a library which can convert from human style dates and
+times to a floating point epoch and back again? I expect I could fudge the
+fractional seconds with the built-in library, but I can't see how to get
+dates in the past.
+
+Thanks, Jeremy.
+
+--
+Jeremy Sanders
+http://www.jeremysanders.net/
+</POST>
+<POST>
+<POSTER> &quot;Colin J. Williams&quot; &lt;c...@sympatico.ca&gt; </POSTER>
+<POSTDATE> 2007-11-11T13:29:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Adam Pletcher wrote:
+&gt; The &quot;time&quot; module in the standard library does epoch, and conversions.
+
+&gt; Get current local time in seconds since epoch (1970):
+
+&gt;&gt; &gt;&gt; import time
+&gt;&gt; &gt;&gt; now_secs = time.time()
+&gt;&gt; &gt;&gt; print now_secs
+&gt; 1194790069.33
+
+&gt; Convert to a struct_time object for conversions:
+
+&gt;&gt; &gt;&gt; now_struct = time.localtime(now_secs)
+&gt;&gt; &gt;&gt; print now_struct
+&gt; (2007, 11, 11, 8, 7, 49, 6, 315, 0)
+
+&gt; Make it a readable string:
+
+&gt;&gt; &gt;&gt; now_string = time.strftime('%a %m/%d/%Y, %I:%M:%S %p', now_struct)
+&gt;&gt; &gt;&gt; print now_string
+&gt; 'Sun 11/11/2007, 08:07:49 AM'
+
+&gt; Convert string back into a struct_time object, then seconds again:
+
+&gt;&gt; &gt;&gt; now_struct2 = time.strptime(now_string, '%a %m/%d/%Y, %I:%M:%S %p')
+&gt;&gt; &gt;&gt; print now_struct2
+&gt; (2007, 11, 11, 8, 7, 49, 6, 315, -1)
+&gt;&gt; &gt;&gt; now2 = time.mktime(now_struct2)
+&gt;&gt; &gt;&gt; print now2
+&gt; 1194790069.0
+
+&gt; ... etc.  If you're starting the other direction, change the format
+&gt; string passed to strptime to match the pattern of your
+&gt; existing strings.  The standard docs for the time module has all the
+&gt; details.
+
+&gt; - Adam
+">
+
+What about November 5, 1605 ?
+
+Colin W.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; ------------------------------------------------------------------------
+&gt; *From:* python-list-bounces+adam=volition-inc. ... @python.org on behalf
+&gt; of Jeremy Sanders
+&gt; *Sent:* Sat 11/10/2007 9:37 AM
+&gt; *To:* python-l ... @python.org
+&gt; *Subject:* Extended date and time
+
+&gt; Hi - I need to add support to a program for dates and times. The built-in
+&gt; Python library seems to be okay for many purposes, but what I would like
+&gt; would be Unix epoch style times (seconds relative to some date), covering a
+&gt; large period from the past to the future. What would be nice would be a
+&gt; library which can take floating point seconds from an epoch.
+
+&gt; Does anyone know of a library which can convert from human style dates and
+&gt; times to a floating point epoch and back again? I expect I could fudge the
+&gt; fractional seconds with the built-in library, but I can't see how to get
+&gt; dates in the past.
+
+&gt; Thanks, Jeremy.
+
+&gt; --
+&gt; Jeremy Sanders
+&gt; http://www.jeremysanders.net/
+&gt; --
+&gt; http://mail.python.org/mailman/listinfo/python-list
+">
+</POST>
+<POST>
+<POSTER> &quot;D.Hering&quot; &lt;vel.ac...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-11T16:46:00 </POSTDATE>
+On Nov 10, 10:37 am, Jeremy Sanders &lt;jeremy
+
+<QUOTE PREVIOUSPOST="
++complangpyt ... @jeremysanders.net&gt; wrote:
+&gt; Hi - I need to add support to a program for dates and times. The built-in
+&gt; Python library seems to be okay for many purposes, but what I would like
+&gt; would be Unix epoch style times (seconds relative to some date), covering a
+&gt; large period from the past to the future. What would be nice would be a
+&gt; library which can take floating point seconds from an epoch.
+
+&gt; Does anyone know of a library which can convert from human style dates and
+&gt; times to a floating point epoch and back again? I expect I could fudge the
+&gt; fractional seconds with the built-in library, but I can't see how to get
+&gt; dates in the past.
+
+&gt; Thanks, Jeremy.
+
+&gt; --
+&gt; Jeremy Sanders http://www.jeremysanders.net/
+">
+
+Have you looked at mx.DateTime:
+http://www.egenix.com/products/python/mxBase/mxDateTime/
+
+In matplotlib, I also use their Dates modules functions for
+conversions (see the near bottom of the page):
+http://matplotlib.sourceforge.net/matplotlib.dates.html
+
+In the scipy sandbox, you can also build a package called
+'TimeSeries':
+http://www.scipy.org/SciPyPackages/TimeSeries
+
+I also have trouble with date/times with whats available. Off the top
+of my head... converting a numpy array of epochs to some datetime
+object and back.
+
+If I had the time I'd contribute additional functionality to Pierre's
+and Matt's TimeSeries module (the one in scipy).
+
+-dieter
+</POST>
+<POST>
+<POSTER> &quot;D.Hering&quot; &lt;vel.ac...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-11T17:23:00 </POSTDATE>
+On Nov 11, 4:46 pm, &quot;D.Hering&quot; &lt;vel.ac ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Nov 10, 10:37 am, Jeremy Sanders &lt;jeremy
+
+&gt; I also have trouble with date/times with whats available. Off the top
+&gt; of my head... converting a numpy array of epochs to some datetime
+&gt; object and back.
+
+&gt; If I had the time I'd contribute additional functionality to Pierre's
+&gt; and Matt's TimeSeries module (the one in scipy).
+
+&gt; -dieter
+">
+
+I made a request for this to Pierre and Matt on the scipy-user list.
+</POST>
+<POST>
+<POSTER> John Machin &lt;sjmac...@lexicon.net&gt; </POSTER>
+<POSTDATE> 2007-11-11T18:22:00 </POSTDATE>
+On Nov 11, 2:37 am, Jeremy Sanders &lt;jeremy
+
+<QUOTE PREVIOUSPOST="
++complangpyt ... @jeremysanders.net&gt; wrote:
+&gt; Hi - I need to add support to a program for dates and times. The built-in
+&gt; Python library seems to be okay for many purposes, but what I would like
+&gt; would be Unix epoch style times (seconds relative to some date), covering a
+&gt; large period from the past to the future. What would be nice would be a
+&gt; library which can take floating point seconds from an epoch.
+
+&gt; Does anyone know of a library which can convert from human style dates and
+&gt; times to a floating point epoch and back again? I expect I could fudge the
+&gt; fractional seconds with the built-in library, but I can't see how to get
+&gt; dates in the past.
+">
+
+What does &quot;dates in the past&quot; mean?? Please be more specific about the
+earliest date that you want to be able to handle. Python's datetime
+starts at 0001-01-01. Somebody mentioned the time module, which is
+implementation-dependent but typically starts at 1970-01-01 .
+
+What functionality do you need, other than two-way conversion between
+days_since_epoch and (proleptic Gregorian) date/time?
+</POST>
+<POST>
+<POSTER> Jeremy Sanders &lt;jeremy+complangpyt...@jeremysanders.net&gt; </POSTER>
+<POSTDATE> 2007-11-12T04:46:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+John Machin wrote:
+&gt; What does &quot;dates in the past&quot; mean?? Please be more specific about the
+&gt; earliest date that you want to be able to handle. Python's datetime
+&gt; starts at 0001-01-01. Somebody mentioned the time module, which is
+&gt; implementation-dependent but typically starts at 1970-01-01 .
+
+&gt; What functionality do you need, other than two-way conversion between
+&gt; days_since_epoch and (proleptic Gregorian) date/time?
+">
+
+I want to convert between seconds from the epoch (let's say 1970 in floating
+point) and date and time. I also want it to work across all platforms.
+
+Is there any way to convert a datetime into seconds from a certain date? Is
+the most robust way of doing it just to subtract two datetime objects and
+turn the timedelta into a floating point number?
+
+Thanks
+
+Jeremy
+
+--
+Jeremy Sanders
+http://www.jeremysanders.net/
+</POST>
+<POST>
+<POSTER> John Machin &lt;sjmac...@lexicon.net&gt; </POSTER>
+<POSTDATE> 2007-11-12T06:09:00 </POSTDATE>
+On Nov 12, 8:46 pm, Jeremy Sanders &lt;jeremy
+
+<QUOTE PREVIOUSPOST="
++complangpyt ... @jeremysanders.net&gt; wrote:
+&gt; John Machin wrote:
+&gt; &gt; What does &quot;dates in the past&quot; mean?? Please be more specific about the
+&gt; &gt; earliest date that you want to be able to handle. Python's datetime
+&gt; &gt; starts at 0001-01-01. Somebody mentioned the time module, which is
+&gt; &gt; implementation-dependent but typically starts at 1970-01-01 .
+
+&gt; &gt; What functionality do you need, other than two-way conversion between
+&gt; &gt; days_since_epoch and (proleptic Gregorian) date/time?
+
+&gt; I want to convert between seconds from the epoch (let's say 1970 in floating
+&gt; point) and date and time. I also want it to work across all platforms.
+
+&gt; Is there any way to convert a datetime into seconds from a certain date? Is
+&gt; the most robust way of doing it just to subtract two datetime objects and
+&gt; turn the timedelta into a floating point number?
+">
+
+That seems to be robust enough:
+
+C:\junk&gt;type epoch.py
+import datetime
+now = datetime.datetime(2007, 11, 12, 21, 20, 39, 859123)
+for epoch_year in (1, 1970, 2070):
+EPOCH = datetime.datetime(epoch_year, 1, 1)
+print &quot;\nepoch&quot;, repr(EPOCH)
+diff = now - EPOCH
+print &quot;diff&quot;, repr(diff)
+sdiff = diff.microseconds / 1000000. \
++ diff.seconds + diff.days * 24. * 3600.
+print &quot;sdiff&quot;, repr(sdiff)
+roundtrip = EPOCH + datetime.timedelta(seconds=sdiff)
+print &quot;roundtrip&quot;, repr(roundtrip)
+C:\junk&gt;epoch.py
+
+epoch datetime.datetime(1, 1, 1, 0, 0)
+diff datetime.timedelta(732991, 76839, 859123)
+sdiff 63330499239.859123
+roundtrip datetime.datetime(2007, 11, 12, 21, 20, 39, 859123)
+
+epoch datetime.datetime(1970, 1, 1, 0, 0)
+diff datetime.timedelta(13829, 76839, 859123)
+sdiff 1194902439.859123
+roundtrip datetime.datetime(2007, 11, 12, 21, 20, 39, 859123)
+
+epoch datetime.datetime(2070, 1, 1, 0, 0)
+diff datetime.timedelta(-22696, 76839, 859123)
+sdiff -1960857560.140877
+roundtrip datetime.datetime(2007, 11, 12, 21, 20, 39, 859123)
+
+C:\junk&gt;
+
+Cheers,
+John
+</POST>
+</TEXT>
+</BODY>
+</DOC>

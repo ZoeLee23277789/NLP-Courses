@@ -1,0 +1,141 @@
+<DOC>
+<DOCID> eng-NG-31-135593-8598163 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-28T18:02:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Parse error under g++-3, not under g++-4
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Andrew D. Hwang&quot; &lt;buivmmdag...@sneakemail.com&gt; </POSTER>
+<POSTDATE> 2007-08-28T18:02:00 </POSTDATE>
+The file below (complete and, I believe, minimal) compiles under g+
++-4.0.1 (Apple Xcode). Under g++-3.2, 3.3, and 2.96 (on GNU/Linux),
+however, the indicated call parses erroneously:
+
+---(snip)---
+class A {
+public:
+A(double x, double y) { }
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+class B {
+public:
+B(A arg) { }
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+double&amp; f()
+{
+static double* val(new double);
+return *val;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+int main() {
+B tmp(A(f(), 0));  // &lt;-- syntax error before `,' token
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+---(snip)---
+
+Does the code run afoul of the language, or might this be a compiler
+bug?
+
+Thanks,
+Andy
+
+P.S. I do know several ways to correct the code; that's not the
+question. :)
+
+Andrew D. Hwang
+Dept of Mathematics and CS
+College of the Holy Cross
+Worcester, MA, 01610-2395, USA
+(Posting address is invalid)
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> zade &lt;zhaohongc...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-29T09:07:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; class B {
+&gt; public:
+&gt;   B(A arg) { }
+
+&gt; };
+">
+
+I think the better is below:
+
+class B {
+public:
+B(const A&amp; arg) { }
+
+<QUOTE PREVIOUSPOST="
+};
+&gt; int main() {
+&gt;   B tmp(A(f(), 0));  // &lt;-- syntax error before `,' token}
+">
+
+Here generates a temporary object, which should be a const argument,
+but it is not the case in your code.
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Thomas Richter &lt;t...@math.tu-berlin.de&gt; </POSTER>
+<POSTDATE> 2007-08-29T09:08:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Andrew D. Hwang wrote:
+&gt; The file below (complete and, I believe, minimal) compiles under g+
+&gt; +-4.0.1 (Apple Xcode). Under g++-3.2, 3.3, and 2.96 (on GNU/Linux),
+&gt; however, the indicated call parses erroneously:
+&gt; int main() {
+&gt;   B tmp(A(f(), 0));  // &lt;-- syntax error before `,' token
+&gt; }
+&gt; ---(snip)---
+
+&gt; Does the code run afoul of the language, or might this be a compiler
+&gt; bug?
+">
+
+This is C++'s &quot;most vexing parse&quot;, in a way. The problem is that if a
+compiler sees code like this:
+
+B tmp(A);
+
+it could be the creation of a B object from A, or it could be the
+declaration of the function &quot;tmp&quot; returning B's and taking A's. If there
+is no reason to decide, the compiler has to pick the second
+interpretation. This is what g++ does when it sees the line up to &quot;A(&quot;.
+As soon as it continues parsing, it realizes that this interpretation is
+wrong, but it's too late to change that for the earlier versions. Thus,
+it is really a compiler bug. IIRC, you also find this in the g++
+revision history.
+
+So long,
+Thomas
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,571 @@
+<DOC>
+<DOCID> eng-NG-31-135588-8596885 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-05T10:56:00 </DATETIME>
+<BODY>
+<HEADLINE>
+indenting lists (in bind, etc)
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Tamas Papp &lt;tkp...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T10:56:00 </POSTDATE>
+SLIME indents the form below as
+
+(bind (((really-long-variable-name-a really-long-variable-name-b
+really-long-variable-name-c
+really-long-variable-name-d)
+'(1 2 3 4)))
+(values really-long-variable-name-a
+really-long-variable-name-b
+really-long-variable-name-c
+really-long-variable-name-d))
+
+while semantically, I would prefer
+
+(bind (((really-long-variable-name-a really-long-variable-name-b
+really-long-variable-name-c really-long-variable-name-d)
+...
+
+Is there any way to achieve this?
+
+Tamas
+</POST>
+<POST>
+<POSTER> GP lisper &lt;spamb...@CloudDancer.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T23:27:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Wed, 05 Sep 2007 16:56:59 +0200, &lt;tkp ... @gmail.com&gt; wrote:
+&gt; SLIME indents the form below as
+
+&gt; (bind (((really-long-variable-name-a really-long-variable-name-b
+&gt;                                 really-long-variable-name-c
+&gt;                                 really-long-variable-name-d)
+&gt;    '(1 2 3 4)))
+&gt;   (values really-long-variable-name-a
+&gt;      really-long-variable-name-b
+&gt;      really-long-variable-name-c
+&gt;      really-long-variable-name-d))
+
+&gt; while semantically, I would prefer
+
+&gt; (bind (((really-long-variable-name-a really-long-variable-name-b
+&gt;     really-long-variable-name-c really-long-variable-name-d)
+&gt;    ...
+
+&gt; Is there any way to achieve this?
+">
+
+It's emacs!  Of course it is achieveable ;-) Just indent the second
+line the way you desire and all subsequent lines will match up.
+
+--
+Lisp:  Powering `Impossible Thoughts since 1958
+
+--
+Posted via a free Usenet account from http://www.teranews.com
+</POST>
+<POST>
+<POSTER> Kent M Pitman &lt;pit...@nhplace.com&gt; </POSTER>
+<POSTDATE> 2007-09-06T08:57:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+GP lisper &lt;spamb ... @CloudDancer.com&gt; writes:
+&gt; On Wed, 05 Sep 2007 16:56:59 +0200, &lt;tkp ... @gmail.com&gt; wrote:
+&gt; &gt; SLIME indents the form below as
+
+&gt; &gt; (bind (((really-long-variable-name-a really-long-variable-name-b
+&gt; &gt;                                    really-long-variable-name-c
+&gt; &gt;                                    really-long-variable-name-d)
+&gt; &gt;       '(1 2 3 4)))
+&gt; &gt;   (values really-long-variable-name-a
+&gt; &gt;         really-long-variable-name-b
+&gt; &gt;         really-long-variable-name-c
+&gt; &gt;         really-long-variable-name-d))
+
+&gt; &gt; while semantically, I would prefer
+
+&gt; &gt; (bind (((really-long-variable-name-a really-long-variable-name-b
+&gt; &gt;        really-long-variable-name-c really-long-variable-name-d)
+&gt; &gt;    ...
+
+&gt; &gt; Is there any way to achieve this?
+
+&gt; It's emacs!  Of course it is achieveable ;-) Just indent the second
+&gt; line the way you desire and all subsequent lines will match up.
+">
+
+Indeed, that's how you do it.
+
+Now the trick is to resist the urge to use that knowledge.
+
+There are many style rules of Lisp indentation but one of the fundamental
+meta-style rules of Lisp is to try VERY hard never to place text that's
+inside a set of parens to the left of the open paren containing it.
+
+People who don't use Lisp are always complaining about how they hate
+counting parens, but Lispers mostly don't count parens.  They look at
+the cues in the shape, and the OP is asking to violate this primary cue.
+
+He might as well have asked: How do I write my code in a way that will
+condemn any sad soul who has to read my code to meticulous paren counting?
+
+GP Lisper's response on the &quot;how&quot; would be the same.  But my advice on
+the &quot;whether&quot; would be, too:  No, don't.
+
+Incidentally, there's no problem in the case of the values expression
+up there.  It's just the
+(((long-foo
+long-bar)))
+you want to avoid unless you absolutely have to.  And the example cited
+doesn't seem to get across such an absolute need.
+
+It is right that Emacs manual editing exists to help you around the rules
+in an extreme case.  But the question wasn't about that.  It was about how
+to do this indentation style systematically... and, systematically, there
+are very good reasons the rules are as they are.
+</POST>
+<POST>
+<POSTER> Tamas Papp &lt;tkp...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-06T09:57:00 </POSTDATE>
+Kent M Pitman &lt;pit ... @nhplace.com&gt; writes:
+
+<QUOTE PREVIOUSPOST="
+&gt; GP lisper &lt;spamb ... @CloudDancer.com&gt; writes:
+
+&gt;&gt; On Wed, 05 Sep 2007 16:56:59 +0200, &lt;tkp ... @gmail.com&gt; wrote:
+&gt;&gt; &gt; SLIME indents the form below as
+
+&gt;&gt; &gt; (bind (((really-long-variable-name-a really-long-variable-name-b
+&gt;&gt; &gt;                                really-long-variable-name-c
+&gt;&gt; &gt;                                really-long-variable-name-d)
+&gt;&gt; &gt;   '(1 2 3 4)))
+&gt;&gt; &gt;   (values really-long-variable-name-a
+&gt;&gt; &gt;     really-long-variable-name-b
+&gt;&gt; &gt;     really-long-variable-name-c
+&gt;&gt; &gt;     really-long-variable-name-d))
+
+&gt;&gt; &gt; while semantically, I would prefer
+
+&gt;&gt; &gt; (bind (((really-long-variable-name-a really-long-variable-name-b
+&gt;&gt; &gt;    really-long-variable-name-c really-long-variable-name-d)
+&gt;&gt; &gt;    ...
+
+&gt;&gt; &gt; Is there any way to achieve this?
+
+&gt;&gt; It's emacs!  Of course it is achieveable ;-) Just indent the second
+&gt;&gt; line the way you desire and all subsequent lines will match up.
+
+&gt; Indeed, that's how you do it.
+
+&gt; Now the trick is to resist the urge to use that knowledge.
+
+&gt; There are many style rules of Lisp indentation but one of the fundamental
+&gt; meta-style rules of Lisp is to try VERY hard never to place text that's
+&gt; inside a set of parens to the left of the open paren containing it.
+
+&gt; People who don't use Lisp are always complaining about how they hate
+&gt; counting parens, but Lispers mostly don't count parens.  They look at
+&gt; the cues in the shape, and the OP is asking to violate this primary cue.
+
+&gt; He might as well have asked: How do I write my code in a way that will
+&gt; condemn any sad soul who has to read my code to meticulous paren counting?
+
+&gt; GP Lisper's response on the &quot;how&quot; would be the same.  But my advice on
+&gt; the &quot;whether&quot; would be, too:  No, don't.
+
+&gt; Incidentally, there's no problem in the case of the values expression
+&gt; up there.  It's just the
+&gt;  (((long-foo
+&gt;  long-bar)))
+&gt; you want to avoid unless you absolutely have to.  And the example cited
+&gt; doesn't seem to get across such an absolute need.
+
+&gt; It is right that Emacs manual editing exists to help you around the rules
+&gt; in an extreme case.  But the question wasn't about that.  It was about how
+&gt; to do this indentation style systematically... and, systematically, there
+&gt; are very good reasons the rules are as they are.
+">
+
+Sorry, it seems that the columns got misaligned somehow.  What I
+wanted looks like
+
+(bind (((a b
+c d) ...
+
+instead of
+
+(bind (((a b
+c d) ...
+
+this time I used spaces so I hope it shows up right.  I agree with
+your comment, and I am not trying to place code before the opening
+paren.
+
+The issue is more general: when indenting a function, one prefers
+
+(foo bar baz
+aaa bbb)
+
+but for lists,
+
+(foo bar baz
+aaa bbb)
+
+Of course, to determine correct indentation, one needs to know the
+semantics, and I guess this is a tough problem.
+
+About GP Lisper's solution: it works, but I would prefer something
+that stays after I reindent with M-C-q.
+
+Tamas
+</POST>
+<POST>
+<POSTER> Matthias Buelow &lt;m...@incubus.de&gt; </POSTER>
+<POSTDATE> 2007-09-06T13:08:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Tamas Papp wrote:
+&gt; About GP Lisper's solution: it works, but I would prefer something
+&gt; that stays after I reindent with M-C-q.
+">
+
+I think emacs has a hardcoded special case for let/let* etc., so you're
+out of luck with arbitrary let-style forms which use a different name. I
+might be wrong though, I only had a quick look into this some time ago.
+</POST>
+<POST>
+<POSTER> GP lisper &lt;spamb...@CloudDancer.com&gt; </POSTER>
+<POSTDATE> 2007-09-06T12:54:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Thu, 06 Sep 2007 15:57:28 +0200, &lt;tkp ... @gmail.com&gt; wrote:
+&gt; Kent M Pitman &lt;pit ... @nhplace.com&gt; writes:
+&gt;&gt; GP lisper &lt;spamb ... @CloudDancer.com&gt; writes:
+
+&gt;&gt;&gt; It's emacs!  Of course it is achieveable ;-) Just indent the second
+&gt;&gt;&gt; line the way you desire and all subsequent lines will match up.
+
+&gt;&gt; Indeed, that's how you do it.
+
+&gt;&gt; Now the trick is to resist the urge to use that knowledge.
+">
+
+Hehe, actually I use it to fix indenting that is insufficiently 'right'.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; People who don't use Lisp are always complaining about how they hate
+&gt;&gt; counting parens, but Lispers mostly don't count parens.  They look at
+&gt;&gt; the cues in the shape, and the OP is asking to violate this primary cue.
+">
+
+Indeed shape is all, but your eye and my eye might not agree on
+`pleasing.  I did notice the misaligned lines, and decided that tkpapp
+really didn't mean that, it was likely some formating error.  I made
+that decision for exactly the reason you cite, we don't count parens
+-- we barely notice them, we use shape.
+
+<QUOTE PREVIOUSPOST="
+&gt; Sorry, it seems that the columns got misaligned somehow.
+...
+&gt; this time I used spaces so I hope it shows up right.  I agree with
+&gt; your comment, and I am not trying to place code before the opening
+&gt; paren.
+">
+
+I use a tougher set of rules in order that a glance will reveal
+structure, I like somethings shifted more to the right, especially in
+a long form.  Opening with multiple parens bothers me, since such
+blocks will rarely close with multiple parens.  I use a lot of vertical
+alignment for easy checking, etc.
+
+<QUOTE PREVIOUSPOST="
+&gt; About GP Lisper's solution: it works, but I would prefer something
+&gt; that stays after I reindent with M-C-q.
+">
+
+I use the &quot;don''t do that&quot; answer there.  If you peel the structure
+carefully first in order to adjust some centerpiece, it goes back
+fine.  Adjusting a layer outside the center means adding your spacing
+back.  I tend to use TAB rather than M-C-q for that, mainly because
+I've modified the code and want a brief review to ensure that the mod
+is placed correctly.  If the code block is under developement, then
+leaving closing parens on separate lines, rather than all in a block
+seems to help.  With some of those closing parens on the same line,
+you indicate where multiple blocks should end rather then hunting back
+thru a large group of closings.
+
+Someday, I've decided that I will adjust the elisp rules to sharpen
+them some more.  You might want to google for that, I've picked up a
+couple sets over the years.
+
+--
+Lisp:  Powering `Impossible Thoughts since 1958
+
+--
+Posted via a free Usenet account from http://www.teranews.com
+</POST>
+<POST>
+<POSTER> Tim X &lt;t...@nospam.dev.null&gt; </POSTER>
+<POSTDATE> 2007-09-07T23:21:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Matthias Buelow &lt;m ... @incubus.de&gt; writes:
+&gt; Tamas Papp wrote:
+
+&gt;&gt; About GP Lisper's solution: it works, but I would prefer something
+&gt;&gt; that stays after I reindent with M-C-q.
+
+&gt; I think emacs has a hardcoded special case for let/let* etc., so you're
+&gt; out of luck with arbitrary let-style forms which use a different name. I
+&gt; might be wrong though, I only had a quick look into this some time ago.
+">
+
+I think lisp-mode uses properties to control indentation. Therefore, if you
+have an arbitrary form that isn't being formatted correctly and want to
+set it to something, you may be able to  set the lisp-indent-function
+property to achieve what you want. For example
+
+(put 'my-let 'lisp-indent-function 2)
+
+in a lisp-mode-hook.
+
+I joined this thread late and the earlier posts were purged from my news
+server, so if I've misunderstood the problem, apologies.
+
+Tim
+
+--
+tcross (at) rapttech dot com dot au
+</POST>
+<POST>
+<POSTER> Madhu &lt;enom...@meer.net&gt; </POSTER>
+<POSTDATE> 2007-09-08T06:13:00 </POSTDATE>
+* Tim X &lt;87wsv1yh84. ... @lion.rapttech.com.au&gt; :
+
+| I think lisp-mode uses properties to control indentation. Therefore, if you
+| have an arbitrary form that isn't being formatted correctly and want to
+| set it to something, you may be able to  set the lisp-indent-function
+| property to achieve what you want. For example
+| (put 'my-let 'lisp-indent-function 2)
+| in a lisp-mode-hook.
+
+I think he may want:
+
+(put 'bind 'common-lisp-indent-function '((&amp;whole 4 1) &amp;body))
+
+[Tamas, does that work with your Emacs?]  I'm not sure whether his
+LISP+SLIME combo will change that on the next `slime-update-indentation'
+but it shouldn't.
+
+Different versions of Emacs have different versions of cl-indent.el.
+Consequently how some piece of code is indented is ultimately an
+artifact of which Emacs was used to indent that code.
+
+Also marking the whole buffer and doing M-x indent-buffer will result in
+an indentation of the code which is slightly different from evaluating
+C-M-q (indent-sexp) on each form.
+
+This is an issue because I'd like to have my lisp code editor to indent
+all my code in a canonical fashion.
+
+| I joined this thread late and the earlier posts were purged from my news
+| server, so if I've misunderstood the problem, apologies.
+
+--
+Madhu
+</POST>
+<POST>
+<POSTER> Tamas K Papp &lt;tkp...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-08T08:51:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sat, 08 Sep 2007 15:43:40 +0530, Madhu wrote:
+&gt; * Tim X &lt;87wsv1yh84. ... @lion.rapttech.com.au&gt; :
+
+&gt; | I think lisp-mode uses properties to control indentation. Therefore,
+&gt; if you | have an arbitrary form that isn't being formatted correctly and
+&gt; want to | set it to something, you may be able to  set the
+&gt; lisp-indent-function | property to achieve what you want. For example |
+&gt; (put 'my-let 'lisp-indent-function 2) | in a lisp-mode-hook.
+
+&gt; I think he may want:
+
+&gt; (put 'bind 'common-lisp-indent-function '((&amp;whole 4 1) &amp;body))
+
+&gt; [Tamas, does that work with your Emacs?]  I'm not sure whether his
+&gt; LISP+SLIME combo will change that on the next `slime-update-indentation'
+&gt; but it shouldn't.
+">
+
+Sorry, it doesn't work.  I have 23.0.0.1, and put the following in
+my .emacs:
+
+(load-library &quot;cl-indent&quot;)
+(add-hook 'lisp-mode-hook
+(lambda ()
+(setq lisp-indent-function 'common-lisp-indent-function)
+(put 'bind 'common-lisp-indent-function '((&amp;whole 4 1 &amp;body))))
+
+but it has no effect, indentation is still
+
+(require :metabang-bind)
+(use-package :bind)
+
+(bind (((very-long-name-a very-long-name-b very-long-name-c
+very-long-name-d) '(1 2 3 4))))
+
+<QUOTE PREVIOUSPOST="
+&gt; Also marking the whole buffer and doing M-x indent-buffer will result in
+&gt; an indentation of the code which is slightly different from evaluating
+&gt; C-M-q (indent-sexp) on each form.
+">
+
+I have no indent-buffer.  Strange...
+
+<QUOTE PREVIOUSPOST="
+&gt; This is an issue because I'd like to have my lisp code editor to indent
+&gt; all my code in a canonical fashion.
+">
+
+Same here.
+
+Thanks,
+
+Tamas
+</POST>
+<POST>
+<POSTER> Matthias Buelow &lt;m...@incubus.de&gt; </POSTER>
+<POSTDATE> 2007-09-08T17:42:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Tim X wrote:
+&gt; (put 'my-let 'lisp-indent-function 2)
+">
+
+The lisp-indent-function property only seems to affect the indentation
+relative to the particular symbol, but not within (one of) its operands.
+As I said, I think lisp-mode has a hardcoded special case that
+recognizes LET/LET* specifically. A bit stupid, yes, but hey, it's emacs.
+</POST>
+<POST>
+<POSTER> Madhu &lt;enom...@meer.net&gt; </POSTER>
+<POSTDATE> 2007-09-09T00:24:00 </POSTDATE>
+* Tamas K Papp &lt;5kfk60F3ftv ... @mid.individual.net&gt; :
+| On Sat, 08 Sep 2007 15:43:40 +0530, Madhu wrote:
+|&gt; (put 'bind 'common-lisp-indent-function '((&amp;whole 4 1) &amp;body))
+| Sorry, it doesn't work.
+
+Now I'm mad!
+
+(setq lisp-indent-maximum-backtracking 4)
+
+(defun madhu-indent-bind (path state indent-point sexp-column normal-indent)
+(if (&gt;= (car path) 2)
+(if (cdr path)
+(funcall (function lisp-indent-259) '(nil)
+path state indent-point sexp-column normal-indent)
+(+ sexp-column lisp-body-indent))
+(+ sexp-column 1)))
+
+(put 'bind 'common-lisp-indent-function 'madhu-indent-bind)
+
+|&gt; Also marking the whole buffer and doing M-x indent-buffer will result in
+|&gt; an indentation of the code which is slightly different from evaluating
+|&gt; C-M-q (indent-sexp) on each form.
+|
+| I have no indent-buffer.  Strange...
+
+I  meant `indent-region' of course.  No more comments on cl-indent from me!
+--
+Madhu :)
+</POST>
+<POST>
+<POSTER> Michael Livshin &lt;use...@cmm.kakpryg.net&gt; </POSTER>
+<POSTDATE> 2007-09-09T01:43:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Matthias Buelow &lt;m ... @incubus.de&gt; writes:
+&gt; Tim X wrote:
+
+&gt;&gt; (put 'my-let 'lisp-indent-function 2)
+
+&gt; The lisp-indent-function property only seems to affect the
+&gt; indentation relative to the particular symbol, but not within (one
+&gt; of) its operands.
+">
+
+common-lisp-indent-function is smarter than lisp-indent-function, and
+its associated symbol property (conveniently named
+common-lisp-indent-function) allows for nice destructuring-style
+specifications.  in fact, Madhu upthread gives an example for 'bind.
+
+also, it is very much recommended to install cl-indent-patches.el
+(Google will tell you where it's at, as apparently some sort of
+licensing problem prevents bundling the thing with SLIME).
+
+cheers,
+--m
+</POST>
+<POST>
+<POSTER> Michael Livshin &lt;use...@cmm.kakpryg.net&gt; </POSTER>
+<POSTDATE> 2007-09-09T01:56:00 </POSTDATE>
+Tamas K Papp &lt;tkp ... @gmail.com&gt; writes:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sat, 08 Sep 2007 15:43:40 +0530, Madhu wrote:
+
+&gt;&gt; (put 'bind 'common-lisp-indent-function '((&amp;whole 4 1) &amp;body))
+
+&gt;&gt; [Tamas, does that work with your Emacs?]  I'm not sure whether his
+&gt;&gt; LISP+SLIME combo will change that on the next `slime-update-indentation'
+&gt;&gt; but it shouldn't.
+
+&gt; Sorry, it doesn't work.  I have 23.0.0.1, and put the following in
+&gt; my .emacs:
+
+&gt; (load-library &quot;cl-indent&quot;)
+&gt; (add-hook 'lisp-mode-hook
+&gt;      (lambda ()
+&gt;        (setq lisp-indent-function 'common-lisp-indent-function)
+&gt;        (put 'bind 'common-lisp-indent-function '((&amp;whole 4 1 &amp;body))))
+
+&gt; but it has no effect, indentation is still
+
+&gt; (require :metabang-bind)
+&gt; (use-package :bind)
+
+&gt; (bind (((very-long-name-a very-long-name-b very-long-name-c
+&gt;                      very-long-name-d) '(1 2 3 4))))
+">
+
+if you put a body in there, or tried to put the binds on the next
+line, you'd see that Madhu's suggestion does have an effect, and
+exactly the intended one.
+
+what it does _not_ help with, however, is the way Emacs indents the
+list of values.  looks like that cannot be helped, but you can sort of
+fix the situation by putting very-long-name-{b,c,d} on the next line
+-- then very-long-name-b will be right under very-long-name-a.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Also marking the whole buffer and doing M-x indent-buffer will result in
+&gt;&gt; an indentation of the code which is slightly different from evaluating
+&gt;&gt; C-M-q (indent-sexp) on each form.
+
+&gt; I have no indent-buffer.  Strange...
+">
+
+indent-region, not indent-buffer.  or, using the standard shortcuts:
+
+C-x h (this marks the whole buffer)
+C-M-\ (this indents the region).
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; This is an issue because I'd like to have my lisp code editor to indent
+&gt;&gt; all my code in a canonical fashion.
+
+&gt; Same here.
+">
+
+we hear you, brothers, we hear you.
+
+cheers,
+--m
+</POST>
+</TEXT>
+</BODY>
+</DOC>

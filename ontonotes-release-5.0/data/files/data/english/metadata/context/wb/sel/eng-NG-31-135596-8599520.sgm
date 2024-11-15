@@ -1,0 +1,394 @@
+<DOC>
+<DOCID> eng-NG-31-135596-8599520 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-08T05:04:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Puzzled about the use of static var/function in C++
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> GeertVc &lt;geert.vancomperno...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-08T05:04:00 </POSTDATE>
+Hi,
+
+I'm a bit puzzled about the following problem:
+
+I have the following set-up in my software design, which is a domotics
+system that is based on the I2C communication protocol, running on an
+embedded Linux system.  Pls. copy and paste the below figure into an
+editor to see the correct layout, the drawing below is screwed because
+of the true type behaviour of the edit box, I guess...
+
++--------+
+| main.c |
++--------+
+|
+|
++------------+
+| CTestClass |
++------------+
+|
+/|\
+/ | \
+/  |  \
++---------+   |  +----------+
+| C8575Io |   |  | C8591Adc |
++---------+   |  +----------+
+|        |        |
+|   +---------+   |
+|   | C8574Io |   |
+|   +---------+   |
+|        |        |
+\       |       /
+\      |      /
+\     |     /
++----------+
+User space | CI2cHal  |
++----------+
+==========================================
++-----------+
+Kernel     | I2cDriver |
++-----------+
+
+The I2C driver is located in the kernel.  On user space level, there's
+a &quot;hardware abstraction layer&quot;, called CI2cHal, which takes care of
+abstracting the &quot;annoying&quot; IOCTL() calls from the user, that have to
+be done towards the kernel to start the I2C communication protocol.
+
+Here's my problem:
+
+The classes C8575Io, C8591Adc and C8574Io (plus lots of others, which
+I left out for simplicity) are all using an instance of the class
+CI2cHal to communicate indirectly with the I2C driver in the kernel.
+
+I have a general main() function that triggers a (for the moment) test
+class CTestClass, which itself creates one or more instances of the
+classes just below.
+
+The classes should check (poll) at regular intervals the status of
+their inputs.  For the C8575Io class and the C8574Io class, for
+instance, this is to be done every 50ms (detecting if a button is
+pressed).  For the C8591Adc class, this is every 10 seconds (measuring
+room temperature).
+
+Because of that, I'm using separate threads in each of those classes.
+However, since they in the end all access CI2cHal() to communicate
+with the I2C driver in the kernel, it could be that one routine in the
+CI2cHal class is busy executing a command coming from one thread, to
+the I2C driver, while being suddenly interrupted by an I2C request
+coming from another thread.
+
+The solution is obviously to lock the functions in the class CI2cHal,
+with a (p)mutex that is the same for all instances of CI2cHal in the
+different clients of that CI2cHal class.
+
+So, what I did was the following:
+
+in CI2cHal, I created a private static variable: static CMutex
+I2cMutex; (CMutex() is a wrapper class to initialise, lock and unlock
+pthread_mutex...)
+I also created a public static function to initialise the I2cMutex
+(has to be static, since the private variable is also static, right?).
+
+This is the code for the static private variable in the class
+CI2cHal() header file:
+
+private:
+static CMutex I2cMutex;
+
+And this is the code for the static public function to initialise the
+I2cMutex:
+
+static void InitMutex( void ) { I2cMutex.Init(); }
+
+(as already said, CMutex() has, among other functions, Init() as a
+member).
+
+This is the implementation of CMutex::Init():
+
+void CMutex::Init()
+{
+pthread_mutex_init( &amp;mtx, 0 );
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+&quot;mtx&quot; is a private (non-static) variable of the class CMutex().
+
+The intention is to use that mutex to protect all my other functions
+in the class CI2cHal, such that when a communication towards the I2C
+driver is ongoing, no other thread can interrupt until the mutex is
+unlocked again.  This way, I'm safeguarding my driver against multi-
+threading, right?
+
+Since I want the mutex to be initialised only once and also that all
+instances of the class CI2cHal &quot;see&quot; the same mutex, I added the
+following line in the &quot;main&quot; function of my program (this is the first
+statement executed, to be sure there are no threads created before):
+
+void main( void )
+{
+CI2cHal::InitMutex();
+.
+.
+while( 1 );
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+However, when compiling this code, I get the following error the
+moment &quot;main.cpp&quot; gets compiled.
+
+/home/geertvc/appdata/domotics/i2clibtest/src/main.o: In function
+`CI2cHal::InitMutex()':
+/home/geertvc/appdata/domotics/i2clibtest/src/main.cpp:45: undefined
+reference to `CI2cHal::I2cMutex'
+
+This I don't understand: InitMutex() is a static function, that uses
+the static private variable I2cMutex.  This should all be hidden for
+the &quot;outside world&quot; and still, the compiler complains about &quot;not
+knowing about CI2cHal::I2cMutex&quot;...
+
+I'm puzzled...  Can somebody shine a light on this one?
+
+Any help very much appreciated.
+
+Best rgds,
+
+--Geert
+</POST>
+<POST>
+<POSTER> Logan Shaw &lt;lshaw-use...@austin.rr.com&gt; </POSTER>
+<POSTDATE> 2007-09-08T06:04:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+GeertVc wrote:
+&gt; The intention is to use that mutex to protect all my other functions
+&gt; in the class CI2cHal, such that when a communication towards the I2C
+&gt; driver is ongoing, no other thread can interrupt until the mutex is
+&gt; unlocked again.  This way, I'm safeguarding my driver against multi-
+&gt; threading, right?
+
+&gt; Since I want the mutex to be initialised only once and also that all
+&gt; instances of the class CI2cHal &quot;see&quot; the same mutex, I added the
+&gt; following line in the &quot;main&quot; function of my program (this is the first
+&gt; statement executed, to be sure there are no threads created before):
+
+&gt; void main( void )
+&gt; {
+&gt;     CI2cHal::InitMutex();
+&gt;    .
+&gt;    .
+&gt;    while( 1 );
+&gt; }
+
+&gt; However, when compiling this code, I get the following error the
+&gt; moment &quot;main.cpp&quot; gets compiled.
+
+&gt; /home/geertvc/appdata/domotics/i2clibtest/src/main.o: In function
+&gt; `CI2cHal::InitMutex()':
+&gt; /home/geertvc/appdata/domotics/i2clibtest/src/main.cpp:45: undefined
+&gt; reference to `CI2cHal::I2cMutex'
+
+&gt; This I don't understand: InitMutex() is a static function, that uses
+&gt; the static private variable I2cMutex.
+">
+
+It is, and it does.  The problem is that while the class definition
+exists and so defines the type of the static variable, making a class
+definition doesn't actually declare the static members.
+
+There is an analogous situation in straight C where if you do this
+in a header file foo.h:
+
+extern int globalVariable;
+
+you are just creating a symbol table entry for the variable but not
+actually declaring the variable's storage.  You need to put this:
+
+int globalVariable;
+
+into the corresponding source file foo.c; that actually creates the
+storage in one of the .o files and puts it somewhere where the linker
+can see it.
+
+A C++ static class variable works the same way:  the class definition
+in the header file defines the typename and member name that goes
+with it, but it doesn't allocate storage.  You need to manually do
+that in the source file where you have the code for the class: just
+like you define the bodies of the function in there, you need to
+define the &quot;body&quot; of the variable there.
+
+So basically, put this:
+
+CMutex CI2cHal::I2cMutex;
+
+into CI2cHal.cpp.
+
+This is C++ FAQ #10.10, by the way.  See
+http://www.faqs.org/faqs/C++-faq/part4/ .
+
+Having said all that, if you are already putting code into your
+main() function to initialize this up front, why not simply make
+the CMutex a regular instance variable and create a single object
+on the stack (or the heap, whatever) in main()?  If you only have
+one CI2cHal object, you could simply create it in main() and make
+the mutex an instance variable.  Or if you have no CI2cHal objects
+and all the methods are static, you could convert them into instance
+methods and have more objects.  Or if you have multiple CI2cHal
+objects that all need to share the same mutex (not sure if this
+would make sense, but I guess it could if the kernel driver shares
+some global state between device instances), you could create one
+object for that in main() and pass a pointer to it to all the
+CI2cHal objects.  Basically the point is, I think static members
+are inherently ugly.  :-)
+
+- Logan
+</POST>
+<POST>
+<POSTER> GeertVc &lt;geert.vancomperno...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-09T01:19:00 </POSTDATE>
+On 8 sep, 12:04, Logan Shaw &lt;lshaw-use ... @austin.rr.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; methods and have more objects.  Or if you have multiple CI2cHal
+&gt; objects that all need to share the same mutex (not sure if this
+&gt; would make sense, but I guess it could if the kernel driver shares
+&gt; some global state between device instances), you could create one
+&gt; object for that in main() and pass a pointer to it to all the
+&gt; CI2cHal objects.
+">
+
+First off, thanks very much for this extensive (and probably time-
+consuming), but clear answer!
+
+Regarding the doubt you had/have about the need to share the same
+mutex for all instances of CI2cHal, I can tell/add the following:
+
+Since there are in fact many CI2cHal instances present at a certain
+moment in time (I only drew one in my &quot;fantastic schematic&quot; above, but
+in fact there is one instance per I2c module), there are also many
+connections towards the kernel driver, so to speak.
+
+To avoid that one such &quot;connection&quot; between &quot;a&quot; CI2cHal object and the
+kernel has an ongoing communication with the kernel driver and all of
+a sudden is interrupted by another thread, I think I need such
+mechanism.
+
+Using the same mutex in all instances avoids this problem.  They all
+&quot;see&quot; the same mutex and once this mutex is taken, all others will
+wait until that one object releases it, allowing new communication
+towards the kernel from the next object that was lucky to be able to
+take the mutex.
+
+I know for the instances themselves, there's no need to have such
+mutex mechanism, since every object is uniquely defined and has its
+own memory spaces were the state of its own variables is safely
+stored.  One object will not change/destroy the content of the other
+object.
+
+It's just the last &quot;step&quot; that has to be safeguarded against: from the
+object to the kernel.
+
+Do you agree with this point of view?
+
+<QUOTE PREVIOUSPOST="
+&gt;Basically the point is, I think static members
+&gt; are inherently ugly.  :-)
+">
+
+Well, I'm too inexperienced to judge on that.  I thought that in my
+case a static mutex variable was the solution to go, because of the
+reason given just above.
+
+Best rgds,
+
+--Geert
+</POST>
+<POST>
+<POSTER> David Schwartz &lt;dav...@webmaster.com&gt; </POSTER>
+<POSTDATE> 2007-09-11T05:22:00 </POSTDATE>
+On Sep 8, 10:19 pm, GeertVc &lt;geert.vancomperno ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 8 sep, 12:04, Logan Shaw &lt;lshaw-use ... @austin.rr.com&gt; wrote:
+
+&gt; &gt; methods and have more objects.  Or if you have multiple CI2cHal
+&gt; &gt; objects that all need to share the same mutex (not sure if this
+&gt; &gt; would make sense, but I guess it could if the kernel driver shares
+&gt; &gt; some global state between device instances), you could create one
+&gt; &gt; object for that in main() and pass a pointer to it to all the
+&gt; &gt; CI2cHal objects.
+
+&gt; First off, thanks very much for this extensive (and probably time-
+&gt; consuming), but clear answer!
+
+&gt; Regarding the doubt you had/have about the need to share the same
+&gt; mutex for all instances of CI2cHal, I can tell/add the following:
+
+&gt; Since there are in fact many CI2cHal instances present at a certain
+&gt; moment in time (I only drew one in my &quot;fantastic schematic&quot; above, but
+&gt; in fact there is one instance per I2c module), there are also many
+&gt; connections towards the kernel driver, so to speak.
+
+&gt; To avoid that one such &quot;connection&quot; between &quot;a&quot; CI2cHal object and the
+&gt; kernel has an ongoing communication with the kernel driver and all of
+&gt; a sudden is interrupted by another thread, I think I need such
+&gt; mechanism.
+
+&gt; Using the same mutex in all instances avoids this problem.  They all
+&gt; &quot;see&quot; the same mutex and once this mutex is taken, all others will
+&gt; wait until that one object releases it, allowing new communication
+&gt; towards the kernel from the next object that was lucky to be able to
+&gt; take the mutex.
+
+&gt; I know for the instances themselves, there's no need to have such
+&gt; mutex mechanism, since every object is uniquely defined and has its
+&gt; own memory spaces were the state of its own variables is safely
+&gt; stored.  One object will not change/destroy the content of the other
+&gt; object.
+
+&gt; It's just the last &quot;step&quot; that has to be safeguarded against: from the
+&gt; object to the kernel.
+
+&gt; Do you agree with this point of view?
+
+&gt; &gt;Basically the point is, I think static members
+&gt; &gt; are inherently ugly.  :-)
+
+&gt; Well, I'm too inexperienced to judge on that.  I thought that in my
+&gt; case a static mutex variable was the solution to go, because of the
+&gt; reason given just above.
+
+&gt; Best rgds,
+
+&gt; --Geert
+">
+</POST>
+<POST>
+<POSTER> David Schwartz &lt;dav...@webmaster.com&gt; </POSTER>
+<POSTDATE> 2007-09-11T05:23:00 </POSTDATE>
+On Sep 8, 10:19 pm, GeertVc &lt;geert.vancomperno ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Well, I'm too inexperienced to judge on that.  I thought that in my
+&gt; case a static mutex variable was the solution to go, because of the
+&gt; reason given just above.
+">
+
+The mutex should not be static. It should belong to the object that
+represents whatever it protects. If it protects a single connection to
+a kernel driver, it should be a member of the class that represents
+that connection.
+
+DS
+
+PS: Sorry if there's a partial duplicate of this post. My keyboard
+went kind of nuts and might have sent the article and might have
+dropped it.
+</POST>
+</TEXT>
+</BODY>
+</DOC>

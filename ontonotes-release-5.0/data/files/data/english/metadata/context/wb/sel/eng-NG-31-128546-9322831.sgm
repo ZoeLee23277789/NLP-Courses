@@ -1,0 +1,163 @@
+<DOC>
+<DOCID> eng-NG-31-128546-9322831 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-11-30T14:08:00 </DATETIME>
+<BODY>
+<HEADLINE>
+PPC4xx OF Flat Tree Support
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Darcy Watkins&quot; &lt;DWatk...@tranzeo.com&gt; </POSTER>
+<POSTDATE> 2007-11-30T14:08:00 </POSTDATE>
+Hello,
+
+I am investigating migration of our AMCC405EP embedded linux based
+product from arch/ppc to arch/powerpc so that I can keep on top of real
+time extensions and other things that have abandoned the arch/ppc tree.
+I have just got to the point where I can compile linux kernel
+2.6.24-rc3-git2 under arch/powerpc, but it will not boot.  Further
+investigation leads to the boot process being different between the two
+arch trees.
+
+I read up on this open firmware (OF) flattened device tree (fdt) that
+gets passed to the kernel and discover that there is no support for it
+in the u-boot cpu support modules for the ppc4xx CPU family.
+
+I know that there is work in progress going on out there to migrate the
+Walnut (AMCC405GP) to arch/powerpc, and a new AMCC Kilauea board based
+on the new AMCC405EX processor appears under arch/powerpc - but neither
+of these appear to have board support or the OF fdt support in u-boot
+yet.  I checked the latest release (1.3.0) and the git repository.
+
+My requirement essential breaks out as follows:
+1.  I need OF fdt support for ppc4xx (at least I think I need it)
+2.  I need to implement a u-boot board support for our Taihushui board.
+3.  If possible, I would like to have u-boot be able to boot a linux
+kernel
+built from either arch/ppc or arch/powerpc (with some form of
+option in
+the bootm command to choose, or determine it from info in the
+uImage).
+
+If anyone has useful comments, suggestions and/or can point me to
+work-in-progress, patches, etc that would help me further investigate
+this, I'd appreciate it.
+
+Thanks in advance!
+
+Regards,
+
+Darcy
+
+-------------------------------------------------------------------------
+SF.Net email is sponsored by: The Future of Linux Business White Paper
+from Novell.  From the desktop to the data center, Linux is going
+mainstream.  Let it simplify your IT future.
+http://altfarm.mediaplex.com/ad/ck/8857-50307-18918-4
+_______________________________________________
+U-Boot-Users mailing list
+U-Boot-Us ... @lists.sourceforge.net
+https://lists.sourceforge.net/lists/listinfo/u-boot-users
+</POST>
+<POST>
+<POSTER> Stefan Roese &lt;s...@denx.de&gt; </POSTER>
+<POSTDATE> 2007-11-30T15:09:00 </POSTDATE>
+Hi Darcy,
+
+On Friday 30 November 2007, Darcy Watkins wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I am investigating migration of our AMCC405EP embedded linux based
+&gt; product from arch/ppc to arch/powerpc so that I can keep on top of real
+&gt; time extensions and other things that have abandoned the arch/ppc tree.
+&gt; I have just got to the point where I can compile linux kernel
+&gt; 2.6.24-rc3-git2 under arch/powerpc, but it will not boot.  Further
+&gt; investigation leads to the boot process being different between the two
+&gt; arch trees.
+">
+
+Right.
+
+<QUOTE PREVIOUSPOST="
+&gt; I read up on this open firmware (OF) flattened device tree (fdt) that
+&gt; gets passed to the kernel and discover that there is no support for it
+&gt; in the u-boot cpu support modules for the ppc4xx CPU family.
+
+&gt; I know that there is work in progress going on out there to migrate the
+&gt; Walnut (AMCC405GP) to arch/powerpc, and a new AMCC Kilauea board based
+&gt; on the new AMCC405EX processor appears under arch/powerpc - but neither
+&gt; of these appear to have board support or the OF fdt support in u-boot
+&gt; yet.  I checked the latest release (1.3.0) and the git repository.
+
+&gt; My requirement essential breaks out as follows:
+&gt;  1.  I need OF fdt support for ppc4xx (at least I think I need it)
+">
+
+Correct.
+
+<QUOTE PREVIOUSPOST="
+&gt;  2.  I need to implement a u-boot board support for our Taihushui board.
+">
+
+Correct.
+
+<QUOTE PREVIOUSPOST="
+&gt;  3.  If possible, I would like to have u-boot be able to boot a linux
+&gt; kernel
+&gt;      built from either arch/ppc or arch/powerpc (with some form of
+&gt; option in
+&gt;      the bootm command to choose, or determine it from info in the
+&gt; uImage).
+">
+
+That is possible.
+
+<QUOTE PREVIOUSPOST="
+&gt; If anyone has useful comments, suggestions and/or can point me to
+&gt; work-in-progress, patches, etc that would help me further investigate
+&gt; this, I'd appreciate it.
+">
+
+Good news for you: Work-in-progress? Yes! Please take a look at
+the &quot;for-1.3.1&quot; branch of my u-boot-ppc4xx custodian repository:
+
+http://www.denx.de/cgi-bin/gitweb.cgi?p=u-boot/u-boot-ppc4xx.git;a=sh...
+
+It has quite a bit of 4xx-fdt support already available. Tested right now only
+on Kilauea (405EX). But it should be possible to enable fdt support on other
+4xx board with little effort building on this code.
+
+BTW: You may have noticed that the U-Boot fdt support is undergoing rapid
+changes right now (I'm having troubles keeping up here :)). So there may be
+some rework necessary to bring this new 4xx fdt support up-to-date. But this
+will happen in the next few weeks.
+
+So if you still have a little time, I suggest you wait till the new stuff
+hit's the master U-Boot repository and you base you stuff on this version.
+But you are of course free to take a look at the already available fdt
+support in the &quot;for-1.3.1&quot; branch (yes, the name is not correct anymore,
+since 1.3.1 has no &quot;real&quot; merge window).
+
+Best regards,
+Stefan
+
+=====================================================================
+DENX Software Engineering GmbH,     MD: Wolfgang Denk &amp; Detlev Zundel
+HRB 165235 Munich, Office: Kirchenstr.5, D-82194 Groebenzell, Germany
+Phone: +49-8142-66989-0 Fax: +49-8142-66989-80  Email: off ... @denx.de
+=====================================================================
+
+-------------------------------------------------------------------------
+SF.Net email is sponsored by: The Future of Linux Business White Paper
+from Novell.  From the desktop to the data center, Linux is going
+mainstream.  Let it simplify your IT future.
+http://altfarm.mediaplex.com/ad/ck/8857-50307-18918-4
+_______________________________________________
+U-Boot-Users mailing list
+U-Boot-Us ... @lists.sourceforge.net
+https://lists.sourceforge.net/lists/listinfo/u-boot-users
+</POST>
+</TEXT>
+</BODY>
+</DOC>

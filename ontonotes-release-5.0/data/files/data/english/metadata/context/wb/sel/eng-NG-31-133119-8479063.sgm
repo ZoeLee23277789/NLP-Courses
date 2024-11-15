@@ -1,0 +1,155 @@
+<DOC>
+<DOCID> eng-NG-31-133119-8479063 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-15T08:32:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Again with the Convertible Bonds
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> John Maiden &lt;jwmai...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-08-15T08:32:00 </POSTDATE>
+For those that are interested, this is a potential patch for an issue I've found
+with the Convertible Bond classes. Basically the weights that are being assigned
+to calculate the discounting rate in TsiveriotisFernandesLattice::stepback skew
+the results for high credit spreads, so that a callable convertible bond will be
+more expensive than an equivalent non-callable convertible bond. See &quot;More More
+More Convertible Bonds&quot; in gmane.comp.finance.quantlib.user for more details.
+
+Changes would be made to TsiveriotisFernandesLattice::stepback and
+DiscretizedConvertible::applyConvertibility(). Would like input on these changes
+and see if people agree/disagree, or know of a better way to do this. Originally
+the adjusted discount rate was ConversionProbability * risk free rate + (1 -
+ConversionProbability) * (risk free rate + spread). A higher conversion
+probability (~1) means that you're probably going to convert, and should
+discount the convert like a stock. A lower conversion probability (~0) means the
+convert is trading like a bond, and should be discounted as such. I'll keep this
+approach, but change how the conversion probability is computed. Basically
+instead of assigning an initial probability of 1 if the convert is convertible
+and the value is below parity, and later blending the probabilities, the
+conversion probabilities will simply be delta (which I took from &quot;Global
+Convertible Investing&quot; by Hart Woodson). New code below:
+
+In DiscretedConvertible.cpp:
+
+void DiscretizedConvertible::applyConvertibility() {
+Array grid = adjustedGrid();
+Array ratio = divAdjustedRatio();
+for (Size j=0; j&lt;values_.size(); j++) {
+Real payoff = ratio[j]*grid[j];
+if (values_[j] &lt;= payoff) {
+values_[j] = payoff;
+// old method
+//conversionProbability_[j] = 1.0;
+}
+}
+
+for (Size j=0; j&lt;values_.size()-1; j++) {
+conversionProbability_[j] = ((values_[j+1]  - values_[j])/(grid[j+1] -
+grid[j]))*(1/ratio[j]);
+//some values are slightly above 1, must be due to rounding
+if(conversionProbability_[j] &gt; 1.0)
+conversionProbability_[j] = 1.0;
+}
+
+//always assume that will convert at highest stock price
+conversionProbability_[values_.size() - 1] = 1.0;
+
+}
+
+In TFLattice.hpp:
+
+template &lt;class T&gt;
+void TsiveriotisFernandesLattice&lt;T&gt;::stepback(
+Size i, const Array&amp; values, const Array&amp; conversionProbability,
+const Array&amp; spreadAdjustedRate, Array&amp; newValues,
+Array&amp; newConversionProbability,
+Array&amp; newSpreadAdjustedRate) const {
+
+Real localRiskFreeRate = riskFreeRate_.at(i);
+Real localcreditSpread = creditSpread_.at(i);
+Real down = TFtree_-&gt;probability(0,0,0);
+Real up = TFtree_-&gt;probability(0,0,1);
+
+for (Size j=0; j&lt;this-&gt;size(i); j++) {
+
+// new conversion probability is calculated via backward
+// induction using up and down probabilities on tree on
+// previous conversion probabilities, ie weighted average
+// of previous probabilities.
+
+//don't blend the probabilties
+newConversionProbability[j] = conversionProbability[j];
+/*down*conversionProbability[j]+ up*conversionProbability[j+1];*/
+
+// Use blended discounting rate
+newSpreadAdjustedRate[j] =
+newConversionProbability[j] * localRiskFreeRate +
+
+(1-newConversionProbability[j])*(localRiskFreeRate+localcreditSpread);
+
+newValues[j] =
+(down*values[j]/(1+(spreadAdjustedRate[j]*dt_)))
++ (up*values[j+1]/(1+(spreadAdjustedRate[j+1]*dt_)));
+
+}
+
+}
+
+Looking forward to input.
+
+-------------------------------------------------------------------------
+This SF.net email is sponsored by: Splunk Inc.
+Still grepping through log files to find problems?  Stop.
+Now Search log events and configuration files using AJAX and a browser.
+Download your FREE copy of Splunk now &gt;&gt; http://get.splunk.com/
+_______________________________________________
+QuantLib-dev mailing list
+QuantLib- ... @lists.sourceforge.net
+https://lists.sourceforge.net/lists/listinfo/quantlib-dev
+</POST>
+<POST>
+<POSTER> Luigi Ballabio &lt;luigi.balla...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-20T05:59:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Wed, 2007-08-15 at 12:32 +0000, John Maiden wrote:
+&gt; For those that are interested, this is a potential patch for an issue
+&gt; I've found
+&gt; with the Convertible Bond classes. Basically the weights that are
+&gt; being assigned
+&gt; to calculate the discounting rate in
+&gt; TsiveriotisFernandesLattice::stepback skew
+&gt; the results for high credit spreads, so that a callable convertible
+&gt; bond will be
+&gt; more expensive than an equivalent non-callable convertible bond. See
+&gt; &quot;More More
+&gt; More Convertible Bonds&quot; in gmane.comp.finance.quantlib.user for more
+&gt; details.
+">
+
+Thanks John,
+I'll have a look at your patch as soon as I get some time.
+
+Later,
+Luigi
+
+--
+
+The most exciting phrase to hear in science, the one that heralds new
+discoveries, is not &quot;Eureka!&quot; but &quot;That's funny...&quot;
+-- Isaac Asimov
+
+-------------------------------------------------------------------------
+This SF.net email is sponsored by: Splunk Inc.
+Still grepping through log files to find problems?  Stop.
+Now Search log events and configuration files using AJAX and a browser.
+Download your FREE copy of Splunk now &gt;&gt; http://get.splunk.com/
+_______________________________________________
+QuantLib-dev mailing list
+QuantLib- ... @lists.sourceforge.net
+https://lists.sourceforge.net/lists/listinfo/quantlib-dev
+</POST>
+</TEXT>
+</BODY>
+</DOC>

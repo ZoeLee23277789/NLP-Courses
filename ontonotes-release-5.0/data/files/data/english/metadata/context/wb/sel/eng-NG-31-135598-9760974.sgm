@@ -1,0 +1,1735 @@
+<DOC>
+<DOCID> eng-NG-31-135598-9760974 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-12-01T17:34:00 </DATETIME>
+<BODY>
+<HEADLINE>
+A fast scheme implementation?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> duaneb &lt;Bailey....@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-01T17:34:00 </POSTDATE>
+I've tried my hand at common lisp and decided I liked scheme as a
+language. However, I loved the speed of openmcl on my powerpc mac
+mini. Does anyone know of a scheme implementation that has comparable
+speed? So far, I've tried guile, scm, and mzscheme, and none of them
+come even close to the speed of c, as both openmcl and sbcl did.
+Anyone have any suggestions?
+</POST>
+<POST>
+<POSTER> Jens Axel Soegaard &lt;inva...@soegaard.net&gt; </POSTER>
+<POSTDATE> 2007-12-01T18:32:00 </POSTDATE>
+duaneb skrev:
+
+<QUOTE PREVIOUSPOST="
+&gt; I've tried my hand at common lisp and decided I liked scheme as a
+&gt; language. However, I loved the speed of openmcl on my powerpc mac
+&gt; mini. Does anyone know of a scheme implementation that has comparable
+&gt; speed? So far, I've tried guile, scm, and mzscheme, and none of them
+&gt; come even close to the speed of c, as both openmcl and sbcl did.
+&gt; Anyone have any suggestions?
+">
+
+Try the native compilers: Ikarus, GNU/MIT Scheme, and Larceny.
+Or one of the Scheme-to-C compilers: Bigloo, Chicken, and Gambit.
+
+Note also that to get the best speed out of MzScheme, remember
+to use modules in order to give the JIT-compiler a fair chance.
+
+--
+Jens Axel Søgaard
+</POST>
+<POST>
+<POSTER> William D Clinger &lt;cesur...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-12-02T12:19:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+duaneb wrote:
+&gt; So far, I've tried guile, scm, and mzscheme, and none of them
+&gt; come even close to the speed of c, as both openmcl and sbcl did.
+">
+
+Guile and scm are two of the slower implementations of Scheme.
+You might enjoy reading a defense of scm's speed by its author
+[1].
+
+MzScheme is slow when interpreted, but is reasonably fast when
+JIT-compiled on PowerPC and x86 machines; you won't see that
+speed until you incant (require mzscheme), however.  Even then,
+it won't be as fast overall as openmcl.
+
+Chez Scheme is definitely in the same league as openmcl, and
+may actually be faster, but it's a commercial product you'd have
+to purchase.  Ikarus (x86) and native Larceny (x86 and SPARC)
+offer similar performance and convenience for other processors,
+but not for the PowerPC.
+
+If you're limited to freeware and the PowerPC, then I would
+recommend the following systems: Gambit, Bigloo, MzScheme,
+Petit Larceny, Chicken, Petite Chez, Scheme 48.  Marc Feeley
+and I have benchmarked those systems on x86 processors,
+and the results may give you some idea of the specific things
+they do well or badly [2,3].
+
+Stalin earned its reputation for being the fastest Scheme-to-C
+compiler, but I cannot recommend it to someone new to Scheme
+because it's too hard to install and to use and because it doesn't
+conform to any of the current de facto standards for Scheme.
+
+Will
+
+[1] http://www-swiss.ai.mit.edu/~jaffer/CNS/benchmarks
+[2] http://www.ccs.neu.edu/home/will/Twobit/benchmarks2007.html
+[3] http://www.iro.umontreal.ca/~gambit/bench.html
+</POST>
+<POST>
+<POSTER> George Neuner &lt;gneuner2/@/comcast.net&gt; </POSTER>
+<POSTDATE> 2007-12-02T16:47:00 </POSTDATE>
+On Sat, 1 Dec 2007 14:34:42 -0800 (PST), duaneb &lt;Bailey. ... @gmail.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;I've tried my hand at common lisp and decided I liked scheme as a
+&gt;language. However, I loved the speed of openmcl on my powerpc mac
+&gt;mini. Does anyone know of a scheme implementation that has comparable
+&gt;speed? So far, I've tried guile, scm, and mzscheme, and none of them
+&gt;come even close to the speed of c, as both openmcl and sbcl did.
+&gt;Anyone have any suggestions?
+">
+
+MzScheme supports compilation to C (see the mzc utility) but some of
+the other Scheme-&gt;C compilers do a better job.  MzScheme is best used
+with the JIT compiler where possible.
+
+George
+--
+for email reply remove &quot;/&quot; from address
+</POST>
+<POST>
+<POSTER> j...@math.carleton.ca </POSTER>
+<POSTDATE> 2007-12-02T18:18:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sat, 1 Dec 2007, duaneb wrote:
+&gt; I've tried my hand at common lisp and decided I liked scheme as a
+&gt; language. However, I loved the speed of openmcl on my powerpc mac
+&gt; mini. Does anyone know of a scheme implementation that has comparable
+&gt; speed? So far, I've tried guile, scm, and mzscheme, and none of them
+&gt; come even close to the speed of c, as both openmcl and sbcl did.
+&gt; Anyone have any suggestions?
+">
+
+If you are interested in speed for numerical type computations then the
+best bet, in my opinion, is Bigloo scheme.  This is the only scheme
+implementation that supports optional typing that I am aware of.  You can
+really boost up the speed of code with Bigloo when you make such
+declarations.  In my experience this is true of Common lisp
+implementations as well, i.e., to get within the realm of C speed you need
+to add type declarations.  I quite like Bigloo's type annotation syntax as
+I find it less cumbersome than common lisp's.  Another nice feature of
+Bigloo is that it has a pretty good FFI to C making linking to numerical
+code in C fairly trivial.
+
+If you aren't interested in adding typing and want to go fully dynamic
+then gambit scheme is pretty nice (see the benchmarks linked in a previous
+post in this thread).  I've played around with it a bit and might do so
+more as it has some nice threading capability.
+
+Note: Bigloo has some warts of its own and there are many excellent scheme
+implementations out there, as has already been mentioned, but if speed is
+want you need then you can't beat it.
+
+Jason
+</POST>
+<POST>
+<POSTER> klohmusc...@yahoo.de </POSTER>
+<POSTDATE> 2007-12-07T08:53:00 </POSTDATE>
+On Dec 1, 10:34 pm, duaneb &lt;Bailey. ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I've tried my hand at common lisp and decided I liked scheme as a
+&gt; language. However, I loved the speed of openmcl on my powerpc mac
+&gt; mini. Does anyone know of a scheme implementation that has comparable
+&gt; speed? So far, I've tried guile, scm, and mzscheme, and none of them
+&gt; come even close to the speed of c, as both openmcl and sbcl did.
+&gt; Anyone have any suggestions?
+">
+
+Bigloo is a good candidate. Used it for my phd in physics (post-,
+preprocessing and steering radiative transfer codes). I made also all
+my plots on my Macintosh in Bigloo by means of DISLIN. I wrote a
+binding to dislin. If you are interested in drop me a note. Problem: I
+hope I will find some old backups of my binding of Linux and Mac OSX
+because someone broke into my flat and stole my ibook with all my
+data. I recently bought a new Mac Book but haven't had time to figure
+things out.
+
+The important thing for me: Bigloo works as well on my Mac OSX and
+Linux and Sun OS. It is a very stable compiler (some of my
+calculations took many days on computer time and Bigloo never let me
+in the dark).
+
+Worth to note: you must definitely browse through the manual. Giving
+types in Bigloo is really easy and very straightforward. C integration
+is sometimes straightfoward and sometimes not. I failed to start out
+writing my own binding to the gnu scientific library because my C
+knowledge is weak and never figured out this t_size (as far as I can
+remember).
+
+Stalin is also often mentioned related to speed. However, my Stalin
+experience dates back some couple of years. I was never impressed
+because at this time a typical Stalin compile time cycle was around
+over 30 seconds. That is not big a problem when your calculation will
+take some hours but it is unbearable when you develop small pieces of
+code.
+
+Regards,
+Sprecher des Vatikan
+btw: I am now post-doc, though, have to work with Fortran 90 and idl.
+But when they interviewed me I honestly said: &quot;never had to do
+anything big with Fortran and IDL&quot;. Their reaction was: 'if you can
+handle Scheme it should be no problem to get aquainted with Fortran as
+well'. Sure, learned some basic Fortran in the last couple of months,
+but man, how do I miss my Scheme. Programming in idl and fortran is
+programming with tied hands: horrible.
+</POST>
+<POST>
+<POSTER> &quot;Barak A. Pearlmutter&quot; &lt;ba...@cs.nuim.ie&gt; </POSTER>
+<POSTDATE> 2007-12-10T17:28:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+William D Clinger wrote:
+&gt; Stalin earned its reputation for being the fastest Scheme-to-C
+&gt; compiler, but I cannot recommend it to someone new to Scheme
+&gt; because it's too hard to install and to use and because it doesn't
+&gt; conform to any of the current de facto standards for Scheme.
+">
+
+It is certainly the case that stalin is fast.  It is the only
+Scheme that can seriously compete in the arena of scientific
+(i.e., numeric) computing.
+
+But stalin is not (at least for me) hard to install:
+
+$ apt-get install stalin
+
+$ cat &gt; hello.sc
+(display &quot;Hello world!&quot;)
+(newline)
+
+$ time stalin -On hello.sc
+real    0m5.002s
+user    0m4.816s
+sys     0m0.148s
+
+$ ./hello
+Hello world!
+
+$ strip hello
+
+$ ls -l hello
+-rwxrwxr-x 1 barak barak 27616 2007-12-10 21:57 hello
+
+As to standards, since stalin is the only scheme game in town for
+scientific computing, if you want to do scientific computing and
+write in scheme then stalin *is* the de facto standard!
+--
+Barak A. Pearlmutter
+Hamilton Institute &amp; Dept Comp Sci, NUI Maynooth, Co. Kildare, Ireland
+http://www.bcl.hamilton.ie/~barak/
+</POST>
+<POST>
+<POSTER> Abdulaziz Ghuloum &lt;aghul...@cee.ess.dot.indiana.dot.edu&gt; </POSTER>
+<POSTDATE> 2007-12-11T08:05:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Barak A. Pearlmutter wrote:
+&gt;   $ cat &gt; hello.sc
+&gt;   (display &quot;Hello world!&quot;)
+&gt;   (newline)
+
+&gt;   $ time stalin -On hello.sc
+&gt;   real    0m5.002s
+&gt;   user    0m4.816s
+&gt;   sys     0m0.148s
+">
+
+Five seconds to compile hello-world is pretty severe, no?
+I wonder what classes of sophisticated optimizations are
+applicable to this program.
+</POST>
+<POST>
+<POSTER> jadam...@partners.org (Joel J. Adamson) </POSTER>
+<POSTDATE> 2007-12-11T09:16:00 </POSTDATE>
+&quot;Barak A. Pearlmutter&quot; &lt;ba ... @cs.nuim.ie&gt; writes:
+
+<QUOTE PREVIOUSPOST="
+&gt; William D Clinger wrote:
+
+&gt;&gt; Stalin earned its reputation for being the fastest Scheme-to-C
+&gt;&gt; compiler, but I cannot recommend it to someone new to Scheme
+&gt;&gt; because it's too hard to install and to use and because it doesn't
+&gt;&gt; conform to any of the current de facto standards for Scheme.
+
+&gt; It is certainly the case that stalin is fast.  It is the only
+&gt; Scheme that can seriously compete in the arena of scientific
+&gt; (i.e., numeric) computing.
+">
+
+Can you be more specific?
+
+Joel
+
+--
+Joel J. Adamson
+Biostatistician
+Pediatric Psychopharmacology Research Unit
+Massachusetts General Hospital
+Boston, MA  02114
+(617) 643-1432
+(303) 880-3109
+</POST>
+<POST>
+<POSTER> &quot;Barak A. Pearlmutter&quot; &lt;ba...@cs.nuim.ie&gt; </POSTER>
+<POSTDATE> 2007-12-11T11:37:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Joel J. Adamson wrote:
+&gt; &quot;Barak A. Pearlmutter&quot; &lt;ba ... @cs.nuim.ie&gt; writes:
+
+&gt;&gt; It is certainly the case that stalin is fast.  It is the only
+&gt;&gt; Scheme that can seriously compete in the arena of scientific
+&gt;&gt; (i.e., numeric) computing.
+
+&gt; Can you be more specific?
+">
+
+In the hands of a skilled user, stalin is capable of numeric
+(i.e., floating point) performance that rivals or exceeds C
+or Fortran.  One example I personally found quite compelling
+was a numeric double integral, which was roughly 20x faster in
+stalin than in tuned C or Fortran.
+
+Whole-program analysis is the crucial ingredient for these kinds
+of speedups, as the integration routine would typically be in one
+file (a numeric library) while its invocation would be in another.
+
+Because stalin is standards conformant (with R4RS), it is not
+difficult to develop in an interactive environment and leave the
+stalin compilation for final production runs.  Which should be
+intensive, in order to amortize the considerable expense of the
+compilation itself.
+
+This is the domain for which stalin was designed, and where it
+excels.
+--
+Barak A. Pearlmutter
+Hamilton Institute &amp; Dept Comp Sci, NUI Maynooth, Co. Kildare, Ireland
+http://www.bcl.hamilton.ie/~barak/
+</POST>
+<POST>
+<POSTER> &quot;Barak A. Pearlmutter&quot; &lt;ba...@cs.nuim.ie&gt; </POSTER>
+<POSTDATE> 2007-12-11T11:46:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Abdulaziz Ghuloum wrote:
+&gt; Barak A. Pearlmutter wrote:
+
+&gt;&gt;   $ cat &gt; hello.sc
+&gt;&gt;   (display &quot;Hello world!&quot;)
+&gt;&gt;   (newline)
+
+&gt;&gt;   $ time stalin -On hello.sc
+&gt;&gt;   real    0m5.002s
+&gt;&gt;   user    0m4.816s
+&gt;&gt;   sys     0m0.148s
+
+&gt; Five seconds to compile hello-world is pretty severe, no?
+&gt; I wonder what classes of sophisticated optimizations are
+&gt; applicable to this program.
+">
+
+My intent there was just to show that stalin's engine was
+turning over, and to feel it rumble.
+
+You don't use a Formula 1 race car to go three blocks and
+buy some milk, even though you could.  As a tool, stalin
+is appropriate for big crunchy programs that will run for
+a long time.  It is the only compiler for a higher-order
+language available today that can give Fortran a run for
+its money.  It is the only scheme you could write a physics
+engine for a game in and hope to compete on performance
+rather than just code clarity.
+--
+Barak A. Pearlmutter
+Hamilton Institute &amp; Dept Comp Sci, NUI Maynooth, Co. Kildare, Ireland
+http://www.bcl.hamilton.ie/~barak/
+</POST>
+<POST>
+<POSTER> Abdulaziz Ghuloum &lt;aghul...@cee.ess.dot.indiana.dot.edu&gt; </POSTER>
+<POSTDATE> 2007-12-11T12:21:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Barak A. Pearlmutter wrote:
+&gt; My intent there was just to show that stalin's engine was
+&gt; turning over, and to feel it rumble.
+">
+
+Funny :-)
+I usually don't get any fuzzy feeling about software that
+turns over and rumbles, but, I guess, different people
+different customs ;)
+</POST>
+<POST>
+<POSTER> William D Clinger &lt;cesur...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-12-11T12:24:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Abdulaziz Ghuloum wrote:
+&gt; Five seconds to compile hello-world is pretty severe, no?
+&gt; I wonder what classes of sophisticated optimizations are
+&gt; applicable to this program.
+">
+
+I laughed at that, too, but there's a good reason
+for it:  Stalin compiles to a standalone executable,
+and most of the compile time was actually spent in
+the linker.
+
+As I said, MzScheme appears to be the only freeware
+that provides incremental native-code compilation
+(as in openmcl, which the original poster preferred)
+for Scheme on the PowerPC.
+
+On my 800 MHz PowerBook G4, using Petit Larceny, it
+takes about 0.875s real (0.418s cpu) to compile the
+hello program to C and then to native code; most of
+that time is spent in the C compiler, of course.  The
+resulting .fasl and .so files occupy 9957 bytes on disk.
+
+Although the original poster probably isn't concerned
+about licensing, I'll mention it anyway since it has
+come up with Ikarus.  Stalin is GPL'ed.  Gambit is
+licensed under LGPL or Apache licenses.  Bigloo is
+partly GPL and partly Library GPL.  MzScheme is LGPL,
+Chicken BSD.  Petit Larceny is not encumbered by GPL
+or LGPL or BSD or Apache licenses.
+
+As Barak and I both said in our different ways, the
+advantage of Stalin is that it generates fast code
+for numerical applications that don't need Scheme's
+entire numerical tower or macros or various other
+things.
+
+Will
+</POST>
+<POST>
+<POSTER> &quot;bunny...@yoho-gmail.com&quot; &lt;bunny...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-12T04:24:00 </POSTDATE>
+On Dec 11, 6:24 pm, William D Clinger &lt;cesur ... @yahoo.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Abdulaziz Ghuloum wrote:
+&gt; &gt; Five seconds to compile hello-world is pretty severe, no?
+&gt; &gt; I wonder what classes of sophisticated optimizations are
+&gt; &gt; applicable to this program.
+
+&gt; I laughed at that, too, but there's a good reason
+&gt; for it:  Stalin compiles to a standalone executable,
+&gt; and most of the compile time was actually spent in
+&gt; the linker.
+">
+
+The C compile times in this case are negligible. You must
+have made a mistake.
+
+cheers,
+felix
+</POST>
+<POST>
+<POSTER> Jean Guillaume Pyraksos &lt;wis...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-12T06:58:00 </POSTDATE>
+I tried to install Stalin on a MacBookPro/Intel/Leopard.
+Install ok but running the benchmark failed.
+Anyone had a better time ?
+
+-JG
+</POST>
+<POST>
+<POSTER> William D Clinger &lt;cesur...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-12-12T08:21:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+bunny ... @yoho-gmail.com wrote:
+&gt; The C compile times in this case are negligible. You must
+&gt; have made a mistake.
+">
+
+Quite possibly, and it would hardly be the
+first time either.
+
+I said nothing about the C compile times
+in this case, however, except to imply they
+were less than the link time.
+
+Will
+</POST>
+<POST>
+<POSTER> William D Clinger &lt;cesur...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-12-12T09:14:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+I wrote:
+&gt; I said nothing about the C compile times
+&gt; in this case, however, except to imply they
+&gt; were less than the link time.
+">
+
+On the other hand, I did say that most of
+(what Aziz took to be) the compile time was
+spent in the linker, and that isn't true.
+
+Aziz was right.  Most of the time is spent
+in Stalin's compiler.  Presumably the time
+is spent optimizing Scheme's standard io
+libraries to specialize them for the particular
+needs of the hello-world program.
+
+My apologies to Aziz and Felix!
+
+Will
+</POST>
+<POST>
+<POSTER> Adrian &lt;b...@swirve.com&gt; </POSTER>
+<POSTDATE> 2007-12-13T06:18:00 </POSTDATE>
+On Dec 12, 1:37 am, &quot;Barak A. Pearlmutter&quot; &lt;ba ... @cs.nuim.ie&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In the hands of a skilled user, stalin is capable of numeric
+&gt; (i.e., floating point) performance that rivals or exceeds C
+&gt; or Fortran.  One example I personally found quite compelling
+&gt; was a numeric double integral, which was roughly 20x faster in
+&gt; stalin than in tuned C or Fortran.
+">
+
+I'd like to see that code.
+
+Most cases of such claims of &quot;being faster than hand-tuned C&quot; turn out
+to be apocryphal or based on very poorly written or artificially
+constrained C/C++ (e.g. disallow use of real-world constructs such as
+pointer-aliasing optimizations, no template meta-programming, no 3rd
+party frameworks or libraries, and no use of profile-guided
+optimizations).
+
+It would be very interesting to see the evidence of this amazing claim
+that Stalin is &quot;roughly 20x faster&quot; than C and Fortran.  Comparative
+source code or it isn't true!
+
+Of course, the Scheme code is most likely far easier to understand and
+far less prone to defects than the hand-tuned C/C++ code.
+</POST>
+<POST>
+<POSTER> William D Clinger &lt;cesur...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-12-13T14:12:00 </POSTDATE>
+Adrian quoting Barak Pearlmutter:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; In the hands of a skilled user, stalin is capable of numeric
+&gt; &gt; (i.e., floating point) performance that rivals or exceeds C
+&gt; &gt; or Fortran.  One example I personally found quite compelling
+&gt; &gt; was a numeric double integral, which was roughly 20x faster in
+&gt; &gt; stalin than in tuned C or Fortran.
+
+&gt; I'd like to see that code.
+
+&gt; Most cases of such claims of &quot;being faster than hand-tuned C&quot; turn out
+&gt; to be apocryphal or based on very poorly written or artificially
+&gt; constrained C/C++ (e.g. disallow use of real-world constructs such as
+&gt; pointer-aliasing optimizations, no template meta-programming, no 3rd
+&gt; party frameworks or libraries, and no use of profile-guided
+&gt; optimizations).
+">
+
+Barak's claim, however, is fairly plausible.
+
+Think about it: a double integral.  He's talking
+about a general purpose library procedure, highly
+tuned, that performs numerical integration.  You'd
+pass it a procedure in Scheme, or a function pointer
+in C, and the two limits of integration.  For a
+double integral the library routine gets called
+twice, something like this:
+
+(integrate (lambda (x) (integrate sin 0 x))
+0 y)
+
+Translation of that call into efficient C is left as
+an exercise.  Note, however, that you can't change
+the code for integrate; that's a fixed library routine.
+
+Stalin optimizes the whole program.  That includes
+specialization of the library routines, effectively
+unrolling the inner call to integrate into the outer
+call to integrate.  That eliminates indirect calls
+to sin, and it *also* eliminates indirect calls to
+integrate from integrate itself.  You end up with
+two nested loops that contain a lot of numerical
+code, with no procedure calls.  That's what C
+compilers know how to optimize, so Stalin feeds
+that code to the C compiler, which turns it into
+efficient machine code.
+
+C compilers don't know how to optimize across library
+boundaries, however.  If you write your double integral
+in C, the inner call to integrate will spend a lot more
+of its time in procedure call overhead (calling sin)
+than in crunching numbers.  The outer call to integrate
+won't know it is calling itself, either, and won't be able
+to take advantage of that fact.
+
+That's why I would expect a double integral written in
+Scheme and compiled by Stalin to run faster than the
+equivalent code written in C.  I'm a little surprised that
+it's 20 times as fast, but I'm not at all surprised that it's
+faster.
+
+<QUOTE PREVIOUSPOST="
+&gt; Of course, the Scheme code is most likely far easier to understand and
+&gt; far less prone to defects than the hand-tuned C/C++ code.
+">
+
+That too.
+
+Will
+</POST>
+<POST>
+<POSTER> Jeffrey Mark Siskind &lt;q...@purdue.edu&gt; </POSTER>
+<POSTDATE> 2007-12-13T15:59:00 </POSTDATE>
+On Dec 13, 6:18 am, Adrian &lt;b ... @swirve.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 12, 1:37 am, &quot;Barak A. Pearlmutter&quot; &lt;ba ... @cs.nuim.ie&gt; wrote:
+
+&gt; &gt; In the hands of a skilled user, stalin is capable of numeric
+&gt; &gt; (i.e., floating point) performance that rivals or exceeds C
+&gt; &gt; or Fortran.  One example I personally found quite compelling
+&gt; &gt; was a numeric double integral, which was roughly 20x faster in
+&gt; &gt; stalin than in tuned C or Fortran.
+
+&gt; I'd like to see that code.
+
+&gt; Most cases of such claims of &quot;being faster than hand-tuned C&quot; turn out
+&gt; to be apocryphal or based on very poorly written or artificially
+&gt; constrained C/C++ (e.g. disallow use of real-world constructs such as
+&gt; pointer-aliasing optimizations, no template meta-programming, no 3rd
+&gt; party frameworks or libraries, and no use of profile-guided
+&gt; optimizations).
+
+&gt; It would be very interesting to see the evidence of this amazing claim
+&gt; that Stalin is &quot;roughly 20x faster&quot; than C and Fortran.  Comparative
+&gt; source code or it isn't true!
+">
+
+That claim was substantiated over ten years ago in this very
+newsgroup. See:
+
+http://groups.google.com/group/comp.lang.lisp/browse_frm/thread/ee481...
+
+and:
+
+http://groups.google.com/group/comp.lang.lisp/browse_frm/thread/ee481...
+
+It appears that such scepticism arises repeatedly despite the fact
+that these
+results have been made public for a very long time. So I have decided
+to put
+these up on the web.
+
+ftp://ftp.ecn.purdue.edu/qobi/integ.tgz
+
+integ.sc   This is the straighforward version in Scheme.
+integ2.sc  This is a version that has a large amount of code
+duplication. Note
+that this is not code specialization.
+integrate-1D{a,b[1-9]} are
+identical to each other and to integrate-1D from integ.sc
+except
+for parameter duplication. Similarly for integerate-2D and zark.
+However, this code duplication facilitates fully automatic
+specialization. It is not expected that a user write code
+like this. But straighforward extensions of the
+polyvariance
+mechanisms that already exist in Stalin could produce such
+code duplication automatically from integ.sc.
+integ3.sc  This is a version that has a small amount of manual code
+duplication. Again note that this is not code
+specialization.
+integrate-1D{a,} are identical to each other and to
+integrate-1D
+from integ.sc.
+integ-c.c  This version is written in GNU C and uses the GNU C
+extension of
+internal function definitions to implement nonescaping
+closures.
+integ2-c.c This version does not use the GNU C extension of internal
+function
+definitions and implements closures by way of global
+variables.
+integ-f.f  This version implements closures by way of a common block.
+But I
+don't know how to store function pointers in a common block
+and
+invoke such function pointers so this version hardwires the call
+to
+zarkon in inner. Thus it doesn't implement the full
+generality of
+either the Scheme or the C versions.
+
+Richard O'Keefe wrote integ.sc (along with Pascal and Ada versions)
+and sent
+them to me in July 1996. I wrote integ2.sc in July 1996. I don't
+recall when I
+wrote integ3.sc but the mtime for the file is 31 March 1998. Richard
+wrote a C
+version and told me about it in July 1996. I don't recall at this
+point
+whether he or I wrote integ-c.c and integ2-c.c and whether these are
+the
+versions that he told me about in July 1996. But the mtimes for these
+files are
+30 March 1998. I wrote integ-f.f today (13 December 2007).
+
+Here are results using Stalin 0.11, GCC 4.1.2, and G77 3.4.6, (the
+current
+versions on Debian Etch), under Debian Etch on a Shuttle SN25P with an
+FX-60
+and 2G RAM (I believe with 3-3-3-8 timings) with the following options
+
+stalin:    -d -On -db -no-clone-size-limit -split-even-if-no-
+widening
+-copt -O2 -copt -fomit-frame-pointer
+gcc &amp; g77: -O2 -fomit-frame-pointer
+
+as produced by the run script:
+
+qobi@tlamachilistli&gt;./run
+Thu Dec 13 13:55:27 EST 2007
+Stalin Version
+0.11
+GCC Version
+Using built-in specs.
+Target: i486-linux-gnu
+Configured with: ../src/configure -v --enable-languages=c,c+
++,fortran,objc,obj-c++,treelang --prefix=/usr --enable-shared --with-
+system-zlib --libexecdir=/usr/lib --without-included-gettext --enable-
+threads=posix --enable-nls --program-suffix=-4.1 --enable-__cxa_atexit
+--enable-clocale=gnu --enable-libstdcxx-debug --enable-mpfr --with-
+tune=i686 --enable-checking=release i486-linux-gnu
+Thread model: posix
+gcc version 4.1.2 20061115 (prerelease) (Debian 4.1.1-21)
+G77 Version
+Reading specs from /usr/lib/gcc/i486-linux-gnu/3.4.6/specs
+Configured with: ../src/configure -v --enable-languages=c,c+
++,f77,pascal --prefix=/usr --libexecdir=/usr/lib --with-gxx-include-
+dir=/usr/include/c++/3.4 --enable-shared --with-system-zlib --enable-
+nls --without-included-gettext --program-suffix=-3.4 --enable-
+__cxa_atexit --enable-clocale=gnu --enable-libstdcxx-debug --with-
+tune=i686 i486-linux-gnu
+Thread model: posix
+gcc version 3.4.6 (Debian 3.4.6-5)
+Stalin integ
+0.0
+0.848u 0.000s 0:00.84 100.0%    0+0k 0+0io 0pf+0w
+Stalin integ2
+0.0
+0.060u 0.000s 0:00.06 100.0%   0+0k 0+0io 0pf+0w
+Stalin integ3
+0.0
+0.328u 0.004s 0:00.32 100.0%   0+0k 0+0io 0pf+0w
+GCC integ-c
+0.000000
+2.224u 0.000s 0:02.23 99.5% 0+0k 0+0io 0pf+0w
+GCC integ2-c
+0.000000
+0.412u 0.000s 0:00.41 100.0%       0+0k 0+0io 0pf+0w
+G77 integ-f
+0.
+0.432u 0.000s 0:00.42 102.3%    0+0k 0+0io 0pf+0w
+22.761u 0.224s 0:23.01 99.8%   0+0k 0+0io 0pf+0w
+qobi@tlamachilistli&gt;
+
+Note that integ (the straightforward Scheme version compiled with
+Stalin) is
+2.6 times faster than integ-c (the C version using internal function
+definitions). Also note that integ3 (the Scheme version with only a
+small
+amount of manual code duplication) is 6.7 times faster than integ-c,
+1.24 times
+faster than integ2-c (the C version without internal function
+definitions),
+and 1.3 times faster than integ-f (the Fortran version). Finally note
+that
+integ2 (the Scheme version with a large amount of manual code
+duplication) is
+37.1 times faster than integ-c, 6.87 times faster than integ2-c, and
+7.2 times
+faster than integ-f.
+--------------------------------------------------------------------------- ----
+This entire benchmark exercise was initiated by Richard O'Keefe in
+correspondence with me in July 1996. Here are relevant excerpts from
+that
+correspondence:
+
+I wanted to compare the performance of
+- integration using nested functions and lambda expressions in
+Scheme
+- the same thing (or as close as possible) in Pascal
+- the same thing, but using generic procedures, in Ada
+because I was of the opinion that Ada generics are not as clean as
+lambdas
+and I wanted to see what speed advantage there was, if any.
+Imagine my surprise to find Stalin coming out first again!
+
+% gnatmake -gnatp integ -cargs -O4
+[This is the subtype Real is Float; version]
+% time integ
+2.61993E+13
+45.0u 0.0s 1:08 66% 0+0k 0+0io 0pf+0w
+% gnatmake -gnatp integ -cargs -O4
+[This is the subtype Real is Long_Float; version]
+0.00000000000000E+00
+18 0.0s 0:21 85% 0+0k 0+0io 0pf+0w
+[Yep, double is a fair bit faster than single!]
+% pc -s -native -O4 integ.pas
+% time a.out
+0.00000000000000e+00
+18.0u 0.0s 0:22 80% 0+0k 0+0io 0pf+0w
+[Pascal and Ada versions very close]
+% stalin -copt &quot;-O4&quot; -d -On -dc integ
+% time integ
+0.0
+6.0u 0.0s 0:10 57% 0+0k 0+0io 0pf+0w
+[That's right; Scheme was fastest]
+
+The interesting thing about this is that
+
+Scheme-&gt;             C               C
+gcc -O4         &lt;    Sun C        &lt;  gcc -O4
+6 sec              13 sec          20 sec
+
+[...] The evidence is that Stalin is
+able to generate *better* code (even going through C as an
+intermediate
+language, and C with a lot of temporary variables that need optimising
+away too) than the Ada, Pascal, or C compilers produced by high-
+powered
+multi-expert groups.
+--------------------------------------------------------------------------- ----
+I summarized that benchmarking exercise in August 1996 with the
+following:
+
+[...] Richard O'Keefe participated in a thread on comp.lang.ada
+arguing
+about Ada generics. He argued that lambda experessions are a much
+better
+mechanism for abstration. To prove his point he wrote a double
+integration
+benchmark using a simple quadrature rule. It used a higher order
+procedure to
+implement the integrator. He wrote this benchmark in Scheme, C,
+Pascal, and
+Ada. And he ran them on the same machine (an UltraSPARC). Here are the
+results (in CPU seconds):
+
+C(gcc) |  Ada | Pascal | C(Sun) | Scheme | Scheme(with inlining)
+-------------------------------------------------------------------
+20.0 | 18.0 |   18.0 |   13.0 |    5.0 |                   0.9
+
+All versions use double precision.
+
+The C(gcc) version was compiled with:
+% gcc -O4 integ.c
+
+The Ada version was compiled with:
+% gnatmake -gnatp integ -cargs -O4
+
+The Pascal version was compiled with:
+% pc -s -native -O4 integ.pas
+
+The C(Sun) version was compiled with:
+% cc -xinline=Int1,Int2,Zarkon -fsimple -native -fast -xO4 integ.c
+
+The Scheme version was compiled with:
+% stalin -cc cc -copt &quot;-native -xO4&quot; -d -On integ
+
+The Scheme(with inlining) version was compiled with:
+% stalin -cc cc -copt &quot;-fsimple -native -fast -xO4 -v&quot; -d -On integ2
+
+[...] you should bear in mind that
+(a) Stalin generates C code
+(b) The C code generated by stalin ran between 2.5 and 14 times faster
+than
+handwritten C code run through the very same compiler with the
+very same
+options.
+--------------------------------------------------------------------------- ----
+Note that this benchmark was not written by me. It thus constitutes
+independent
+substantiation of the claim. Such independent substantiation has
+occurred a
+number of times. For example, see the Ray Tracer example written by
+Jon Harrop:
+
+http://www.ffconsultancy.com/languages/ray_tracer/index.html
+
+For something more ...
+read more »
+</POST>
+<POST>
+<POSTER> Jed Davis &lt;j...@panix.com&gt; </POSTER>
+<POSTDATE> 2007-12-13T16:24:00 </POSTDATE>
+William D Clinger &lt;cesur ... @yahoo.com&gt; writes:
+
+<QUOTE PREVIOUSPOST="
+&gt; Think about it: a double integral.  He's talking
+&gt; about a general purpose library procedure, highly
+&gt; tuned, that performs numerical integration.  You'd
+&gt; pass it a procedure in Scheme, or a function pointer
+&gt; in C, and the two limits of integration.
+">
+
+Or, in C++, it could be templated on a class having the function as a
+member; then the compiler will, pardon my French, defunctorize the
+result and thus specialize the integral routine for that function.
+
+<QUOTE PREVIOUSPOST="
+&gt; C compilers don't know how to optimize across library
+&gt; boundaries, however.
+">
+
+Not entirely true.  If the compiler squirrels away a serialized
+representation of its IR along with the object code, then when invoked
+to do linking it can perform whole-program optimizations.
+
+Such things have been known in commercial C compilers for some time;
+more recently the LLVM project has been working in this area, and a
+separate effort is known to exist for GCC.
+
+--
+(let ((C call-with-current-continuation)) (apply (lambda (x y) (x y)) (map
+((lambda (r) ((C C) (lambda (s) (r (lambda l (apply (s s) l))))))  (lambda
+(f) (lambda (l) (if (null? l) C (lambda (k) (display (car l)) ((f (cdr l))
+(C k)))))))    '((#\J #\d #\D #\v #\s) (#\e #\space #\a #\i #\newline)))))
+</POST>
+<POST>
+<POSTER> William D Clinger &lt;cesur...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-12-13T17:47:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jed Davis wrote:
+&gt; Or, in C++, it could be templated on a class having the function as a
+&gt; member; then the compiler will, pardon my French, defunctorize the
+&gt; result and thus specialize the integral routine for that function.
+">
+
+Right.  Barak's claim compared Scheme to C and Fortran,
+however, not to C++.  Ada generics are pretty similar to
+C++ templates, of course, so Siskind's data for Ada are
+relevant here.
+
+<QUOTE PREVIOUSPOST="
+&gt; Not entirely true.  If the compiler squirrels away a serialized
+&gt; representation of its IR along with the object code, then when invoked
+&gt; to do linking it can perform whole-program optimizations.
+
+&gt; Such things have been known in commercial C compilers for some time;
+&gt; more recently the LLVM project has been working in this area, and a
+&gt; separate effort is known to exist for GCC.
+">
+
+I stand corrected.  Should I count the time spent waiting for
+this to be implemented in gcc as part of the compile time?
+
+Will
+</POST>
+<POST>
+<POSTER> Andrew Reilly &lt;andrew-newsp...@areilly.bpc-users.org&gt; </POSTER>
+<POSTDATE> 2007-12-13T19:57:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Thu, 13 Dec 2007 14:47:26 -0800, William D Clinger wrote:
+&gt;&gt; Not entirely true.  If the compiler squirrels away a serialized
+&gt;&gt; representation of its IR along with the object code, then when invoked
+&gt;&gt; to do linking it can perform whole-program optimizations.
+
+&gt;&gt; Such things have been known in commercial C compilers for some time;
+&gt;&gt; more recently the LLVM project has been working in this area, and a
+&gt;&gt; separate effort is known to exist for GCC.
+
+&gt; I stand corrected.  Should I count the time spent waiting for this to be
+&gt; implemented in gcc as part of the compile time?
+">
+
+Only if the competition was specific to GCC, rather than just &quot;C&quot;.  I
+remember using a MIPS toolchain back in the late 80s/early 90s that had a
+mode where it would emit some sort of half-compiled tree representation,
+rather than object code, and the &quot;linker&quot; would then do whole-program
+optimization.  I never used it, because it was (a) slow, and (b) I tended
+to compile all of my programs in a &quot;whole program&quot; way anyway, they
+didn't depend much on separately compiled libraries.
+
+It would be interesting to see how well a modern Java implementation
+managed it, too.  One of the things that current versions of HotSpot are
+supposed to do is inlining and specialization.
+
+Cheers,
+
+--
+Andrew
+</POST>
+<POST>
+<POSTER> Jeffrey Mark Siskind &lt;q...@purdue.edu&gt; </POSTER>
+<POSTDATE> 2007-12-14T00:29:00 </POSTDATE>
+On Dec 13, 4:24 pm, Jed Davis &lt;j ... @panix.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; William D Clinger &lt;cesur ... @yahoo.com&gt; writes:
+
+&gt; &gt; Think about it: a double integral.  He's talking
+&gt; &gt; about a general purpose library procedure, highly
+&gt; &gt; tuned, that performs numerical integration.  You'd
+&gt; &gt; pass it a procedure in Scheme, or a function pointer
+&gt; &gt; in C, and the two limits of integration.
+
+&gt; Or, in C++, it could be templated on a class having the function as a
+&gt; member; then the compiler will, pardon my French, defunctorize the
+&gt; result and thus specialize the integral routine for that function.
+">
+
+I'm not so sure that C++ templates can match the performance of whole-
+program
+interprocedural polyvariant flow analysis. Take a look at the
+Stalingrad and
+FADBAD++ examples on:
+
+http://www.bcl.hamilton.ie/~qobi/manuscript2008/
+
+(It's not there yet because the host is down. Hopefully it will be
+setup
+tomorrow.) Now admittedly this is for a different set of benchmarks
+(saddle
+and particle, not integ). And this is for a different compiler
+(Stalingrad,
+not Stalin) for a different language (VLAD, not Scheme but Scheme-
+like). Yet I
+give this example as counter-evidence to the conjecture that C++
+templates
+could be as effective as whole-program interprocedural polyvariant
+flow
+analysis for procedure integration across higher-order function calls.
+
+Like integ, both saddle and particle make heavy use of higher-order
+functions.
+The C++ version is written in a style that makes heavy use of
+templates,
+including for all higher-order function paramters. It is based on
+FADBAD++, an
+existing AD system listed on www.autodiff.org . Stalingrad performs
+whole-program interprocedural polyvariant flow analysis (though while
+its name
+is similar to Stalin and Stalin also performs whole-program
+interprocedural
+polyvariant flow analysis, the techniques employed by the two
+compilers differ
+significantly and substantively in the details). Stalingrad, like
+Stalin,
+generates C code. The code generated by Stalingrad for saddle is 6
+times
+faster than the C++/FADBAD++ code and the code generated by Stalingrad
+for
+particle is 32 times faster than the C++/FADBAD++ code.
+</POST>
+<POST>
+<POSTER> Jeffrey Mark Siskind &lt;q...@purdue.edu&gt; </POSTER>
+<POSTDATE> 2007-12-14T00:33:00 </POSTDATE>
+On Dec 13, 7:57 pm, Andrew Reilly &lt;andrew-newsp ... @areilly.bpc-
+
+<QUOTE PREVIOUSPOST="
+users.org&gt; wrote:
+&gt; On Thu, 13 Dec 2007 14:47:26 -0800, William D Clinger wrote:
+&gt; &gt;&gt; Not entirely true.  If the compiler squirrels away a serialized
+&gt; &gt;&gt; representation of its IR along with the object code, then when invoked
+&gt; &gt;&gt; to do linking it can perform whole-program optimizations.
+
+&gt; &gt;&gt; Such things have been known in commercial C compilers for some time;
+&gt; &gt;&gt; more recently the LLVM project has been working in this area, and a
+&gt; &gt;&gt; separate effort is known to exist for GCC.
+
+&gt; Only if the competition was specific to GCC, rather than just &quot;C&quot;.  I
+&gt; remember using a MIPS toolchain back in the late 80s/early 90s that had a
+&gt; mode where it would emit some sort of half-compiled tree representation,
+&gt; rather than object code, and the &quot;linker&quot; would then do whole-program
+&gt; optimization.  I never used it, because it was (a) slow, and (b) I tended
+&gt; to compile all of my programs in a &quot;whole program&quot; way anyway, they
+&gt; didn't depend much on separately compiled libraries.
+">
+
+People made exactly that same unsubstantiated claim 10 years ago when
+I first
+posted these results.
+
+Let me give some evidence against that claim. These examples are
+written as
+single files. Thus a compiler for which the compilation unit is the
+file is
+doing whole-program compilation. Gcc 4.1.2 is such a compiler. I have
+tried my
+best to get the gcc 4.1.2 to perform complete procedure integration
+for these
+examples. The *-inline.c versions have been modified so that *every* C
+function (except for the internal function definitions), both the
+function
+declaration (i.e. prototype) and the function definition is declared
+static
+inline. The *-always-inline.c versions have been further modified so
+that
+*every* inline specifier is paired with __attribute__
+((always_inline))
+(except for zark in integ-c-always-inline.c which GCC complains is not
+inlinable). You can examine the assembler output in *.s by compiling
+with -S
+instead of -o &lt;file&gt;. You will see that it never succeeds in inlining
+everything. Furthermore, it never even approaches the performance of
+the
+Stalin-generated code for integ2.sc from my post earlier today.
+
+Stalin integ2
+0.0
+0.060u 0.000s 0:00.06 100.0%   0+0k 0+0io 0pf+0w
+
+qobi@ingqondo&gt;gcc -o integ-c -O2 -fomit-frame-pointer integ-c.c
+qobi@ingqondo&gt;time ./integ-c
+0.000000
+2.940u 0.000s 0:02.94 100.0%    0+0k 0+0io 0pf+0w
+qobi@ingqondo&gt;gcc -o integ2-c -O2 -fomit-frame-pointer integ2-c.c
+qobi@ingqondo&gt;time ./integ2-c
+0.000000
+0.412u 0.000s 0:00.41 100.0%       0+0k 0+0io 0pf+0w
+
+qobi@ingqondo&gt;gcc -o integ-c-inline -O2 -fomit-frame-pointer integ-c-
+inline.c
+qobi@ingqondo&gt;time ./integ-c-inline
+0.000000
+2.584u 0.000s 0:02.59 99.6% 0+0k 0+0io 0pf+0w
+qobi@ingqondo&gt;gcc -o integ2-c-inline -O2 -fomit-frame-pointer integ2-c-
+inline.c
+qobi@ingqondo&gt;time ./integ2-c-inline
+0.000000
+0.300u 0.000s 0:00.30 100.0%     0+0k 0+0io 0pf+0w
+
+qobi@ingqondo&gt;gcc -o integ-c-inline -O3 -fomit-frame-pointer integ-c-
+inline.c
+qobi@ingqondo&gt;time ./integ-c-inline
+0.000000
+5.176u 0.004s 0:05.19 99.6%        0+0k 0+0io 0pf+0w
+qobi@ingqondo&gt;gcc -o integ2-c-inline -O3 -fomit-frame-pointer integ2-c-
+inline.c
+qobi@ingqondo&gt;time ./integ2-c-inline
+0.000000
+0.296u 0.000s 0:00.30 96.6%        0+0k 0+0io 0pf+0w
+
+qobi@ingqondo&gt;gcc -o integ-c-inline -O3 -fomit-frame-pointer -finline-
+limit=100000 --param large-function-insns=1000000 --param inline-unit-
+growth=1000000 integ-c-inline.c
+qobi@ingqondo&gt;time ./integ-c-inline
+0.000000
+5.228u 0.004s 0:05.24 99.6%        0+0k 0+0io 0pf+0w
+qobi@ingqondo&gt;gcc -o integ2-c-inline -O3 -fomit-frame-pointer -finline-
+limit=100000 --param large-function-insns=1000000 --param inline-unit-
+growth=1000000 integ2-c-inline.c
+qobi@ingqondo&gt;time ./integ2-c-inline
+0.000000
+0.296u 0.000s 0:00.29 100.0%       0+0k 0+0io 0pf+0w
+
+qobi@ingqondo&gt;gcc -o integ-c-always-inline -O3 -fomit-frame-pointer
+integ-c-always-inline.c
+qobi@ingqondo&gt;time ./integ-c-always-inline
+0.000000
+4.812u 0.004s 0:04.82 99.7%  0+0k 0+0io 0pf+0w
+qobi@ingqondo&gt;gcc -o integ2-c-always-inline -O3 -fomit-frame-pointer
+integ2-c-always-inline.c
+qobi@ingqondo&gt;time ./integ2-c-always-inline
+0.000000
+0.292u 0.000s 0:00.29 100.0%       0+0k 0+0io 0pf+0w
+
+Now, of course, nothing in principle precludes a C compiler from
+performing
+the same kind of whole-program interprocedural polyvariant flow
+analysis that
+Stalin performs, and thus matching or exceeding the performance of
+Stalin. It
+is just that I am not aware of such a C compiler. If one exists, it is
+likely
+to be a research prototype, like Stalin, and not a well known and
+heavily used
+compiler.
+</POST>
+<POST>
+<POSTER> Jed Davis &lt;j...@panix.com&gt; </POSTER>
+<POSTDATE> 2007-12-14T01:31:00 </POSTDATE>
+William D Clinger &lt;cesur ... @yahoo.com&gt; writes:
+
+<QUOTE PREVIOUSPOST="
+&gt; Jed Davis wrote:
+&gt;&gt; Or, in C++, it could be templated on a class having the function as a
+&gt;&gt; member; then the compiler will, pardon my French, defunctorize the
+&gt;&gt; result and thus specialize the integral routine for that function.
+
+&gt; Right.  Barak's claim compared Scheme to C and Fortran, however, not
+&gt; to C++.  Ada generics are pretty similar to C++ templates, of
+&gt; course, so Siskind's data for Ada are relevant here.
+">
+
+Someone else in the thread had mentioned C++; and, since C++ not only
+allows that kind of specialization, but allows the programmer to more
+or less require it of the compiler, that seemed worth mentioning.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Not entirely true.  If the compiler squirrels away a serialized
+&gt;&gt; representation of its IR along with the object code, then when invoked
+&gt;&gt; to do linking it can perform whole-program optimizations.
+
+&gt;&gt; Such things have been known in commercial C compilers for some time;
+&gt;&gt; more recently the LLVM project has been working in this area, and a
+&gt;&gt; separate effort is known to exist for GCC.
+
+&gt; I stand corrected.  Should I count the time spent waiting for
+&gt; this to be implemented in gcc as part of the compile time?
+">
+
+Yes.
+
+--
+(let ((C call-with-current-continuation)) (apply (lambda (x y) (x y)) (map
+((lambda (r) ((C C) (lambda (s) (r (lambda l (apply (s s) l))))))  (lambda
+(f) (lambda (l) (if (null? l) C (lambda (k) (display (car l)) ((f (cdr l))
+(C k)))))))    '((#\J #\d #\D #\v #\s) (#\e #\space #\a #\i #\newline)))))
+</POST>
+<POST>
+<POSTER> Abdulaziz Ghuloum &lt;aghul...@cee.ess.dot.indiana.dot.edu&gt; </POSTER>
+<POSTDATE> 2007-12-14T02:24:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jeffrey Mark Siskind wrote:
+&gt; I'm not so sure that C++ templates can match the performance
+&gt; of whole-program interprocedural polyvariant flow analysis.
+&gt; Take a look at the Stalingrad and FADBAD++ examples on:
+
+&gt; http://www.bcl.hamilton.ie/~qobi/manuscript2008/
+
+&gt; (It's not there yet because the host is down. Hopefully it
+&gt; will be setup tomorrow.) Now admittedly this is for a different
+&gt; set of benchmarks (saddle and particle, not integ). And this is
+&gt; for a different compiler (Stalingrad, not Stalin) for a different
+&gt; language (VLAD, not Scheme but Scheme-like). Yet I give this
+&gt; example as counter-evidence to the conjecture that C++ templates
+&gt; could be as effective as whole-program interprocedural polyvariant
+&gt; flow analysis for procedure integration across higher-order
+&gt; function calls.
+">
+
+The site is down, yes.  Hopefully, Barak can post the numbers
+comparing the performance of the 11 Scheme compilers on the
+saddle and particle benchmarks.  I could not run the benchmarks
+myself last time I looked because I still could not get Stalin
+to run anything on my Macbook.
+
+Aziz,,,
+</POST>
+<POST>
+<POSTER> Abdulaziz Ghuloum &lt;aghul...@cee.ess.dot.indiana.dot.edu&gt; </POSTER>
+<POSTDATE> 2007-12-14T02:36:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Abdulaziz Ghuloum wrote:
+&gt; Jeffrey Mark Siskind wrote:
+
+&gt; The site is down, yes.  Hopefully, Barak can post the numbers
+&gt; comparing the performance of the 11 Scheme compilers on the
+&gt; saddle and particle benchmarks.  I could not run the benchmarks
+&gt; myself last time I looked because I still could not get Stalin
+&gt; to run anything on my Macbook.
+">
+
+Or you can post them if you have them and it's not too much
+trouble. :-)
+
+Aziz,,,
+</POST>
+<POST>
+<POSTER> Jed Davis &lt;j...@panix.com&gt; </POSTER>
+<POSTDATE> 2007-12-14T03:40:00 </POSTDATE>
+Jeffrey Mark Siskind &lt;q ... @purdue.edu&gt; writes:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 13, 4:24 pm, Jed Davis &lt;j ... @panix.com&gt; wrote:
+&gt;&gt; Or, in C++, it could be templated on a class having the function as a
+&gt;&gt; member; then the compiler will, pardon my French, defunctorize the
+&gt;&gt; result and thus specialize the integral routine for that function.
+
+&gt; I'm not so sure that C++ templates can match the performance of
+&gt; whole- program interprocedural polyvariant flow analysis.
+">
+
+I wouldn't be surprised; C++ templates are, essentially, just an
+unusually ornate macro system.  (My point was just that that kind of
+specialization/inlining is not a terribly esoteric feat; I hadn't
+meant to imply anything in particular about the Stalin benchmarks.)
+
+--
+extern&quot;C&quot;void putchar(int);template&lt;char a,class D&gt;struct C{template&lt;class K&gt;
+void z(K k){putchar(a);k.z(D());}};template&lt;char a,class D&gt;C&lt;a,D&gt;c(D){return
+C&lt;a,D&gt;();}struct N{template&lt;class K&gt;void z(K){}}n;int main(){c&lt;'J'&gt;(c&lt;'d'&gt;(c&lt;
+'D'&gt;(c&lt;'v'&gt;(c&lt;'s'&gt;(n))))).z(c&lt;'e'&gt;(c&lt;'\040'&gt;(c&lt;'a'&gt;(c&lt;'i'&gt;(c&lt;'\n'&gt;(23)))))) ;}
+</POST>
+<POST>
+<POSTER> Jens Axel Soegaard &lt;inva...@soegaard.net&gt; </POSTER>
+<POSTDATE> 2007-12-14T07:18:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jed Davis wrote:
+&gt; Jeffrey Mark Siskind &lt;q ... @purdue.edu&gt; writes:
+
+&gt;&gt; On Dec 13, 4:24 pm, Jed Davis &lt;j ... @panix.com&gt; wrote:
+&gt;&gt;&gt; Or, in C++, it could be templated on a class having the function as a
+&gt;&gt;&gt; member; then the compiler will, pardon my French, defunctorize the
+&gt;&gt;&gt; result and thus specialize the integral routine for that function.
+&gt;&gt; I'm not so sure that C++ templates can match the performance of
+&gt;&gt; whole- program interprocedural polyvariant flow analysis.
+
+&gt; I wouldn't be surprised; C++ templates are, essentially, just an
+&gt; unusually ornate macro system.  (My point was just that that kind of
+&gt; specialization/inlining is not a terribly esoteric feat; I hadn't
+&gt; meant to imply anything in particular about the Stalin benchmarks.)
+">
+
+I am curious. What does the C++ template solution look like?
+
+--
+Jens Axel Søgaard
+</POST>
+<POST>
+<POSTER> Adrian &lt;b...@swirve.com&gt; </POSTER>
+<POSTDATE> 2007-12-14T09:16:00 </POSTDATE>
+On Dec 14, 5:59 am, Jeffrey Mark Siskind &lt;q ... @purdue.edu&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; That claim was substantiated over ten years ago in this very
+&gt; newsgroup.
+">
+
+Benchmarks from 1996 may no longer be relevant in 2007 after more than
+a decade of advances in compilers, multi-core CPUs and coding
+practices.  Time to revisit those benchmarks.  This time, it would be
+interesting to compare Stalin against the code rewritten in C++, and
+compiled with a couple of popular compilers (gcc and Intel icc to name
+two).  I might try this over the New Year break (although my C++
+skills are somewhat questionable).  Stay tuned, but don't hold your
+breath.  Looks like Stalin still holds the performance crown until it
+can be proved otherwise!
+</POST>
+<POST>
+<POSTER> Jeffrey Mark Siskind &lt;q...@purdue.edu&gt; </POSTER>
+<POSTDATE> 2007-12-14T11:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Benchmarks from 1996 may no longer be relevant in 2007 after more than
+&gt; a decade of advances in compilers, multi-core CPUs and coding
+&gt; practices.  Time to revisit those benchmarks.
+">
+
+I did. See my post yesterday. I reran the Scheme and C code yesterday
+with the
+most recent Debian Etch compilers. And I wrote a Fortran variant
+yesterday and
+ran it with the most recent Debian Etch compiler.
+
+I don't see how many of the things you mention (e.g. pointer-aliasing
+optimizations, 3rd party frameworks or libraries, profile-guided
+optimizations,
+multi-core CPUs, and advances in coding practises) have any relevance
+to the
+benchmarks and issues at hand.
+
+<QUOTE PREVIOUSPOST="
+&gt; This time, it would be
+&gt; interesting to compare Stalin against the code rewritten in C++,
+">
+
+Other than templates, I don't see how C++ could be different than C
+for these
+benchmarks. And see my post yesterday regarding a different pair of
+benchmarks
+comparing C++ templates to whole-program interprocedural polyvariant
+flow
+analysis.
+</POST>
+<POST>
+<POSTER> Andrew Reilly &lt;andrew-newsp...@areilly.bpc-users.org&gt; </POSTER>
+<POSTDATE> 2007-12-16T19:27:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Thu, 13 Dec 2007 21:33:29 -0800, Jeffrey Mark Siskind wrote:
+&gt; On Dec 13, 7:57 pm, Andrew Reilly &lt;andrew-newsp ... @areilly.bpc-
+&gt; users.org&gt; wrote:
+&gt;&gt; On Thu, 13 Dec 2007 14:47:26 -0800, William D Clinger wrote:
+&gt;&gt; &gt;&gt; Not entirely true.  If the compiler squirrels away a serialized
+&gt;&gt; &gt;&gt; representation of its IR along with the object code, then when
+&gt;&gt; &gt;&gt; invoked to do linking it can perform whole-program optimizations.
+
+&gt;&gt; &gt;&gt; Such things have been known in commercial C compilers for some time;
+&gt;&gt; &gt;&gt; more recently the LLVM project has been working in this area, and a
+&gt;&gt; &gt;&gt; separate effort is known to exist for GCC.
+
+&gt;&gt; Only if the competition was specific to GCC, rather than just &quot;C&quot;.  I
+&gt;&gt; remember using a MIPS toolchain back in the late 80s/early 90s that had
+&gt;&gt; a mode where it would emit some sort of half-compiled tree
+&gt;&gt; representation, rather than object code, and the &quot;linker&quot; would then do
+&gt;&gt; whole-program optimization.  I never used it, because it was (a) slow,
+&gt;&gt; and (b) I tended to compile all of my programs in a &quot;whole program&quot; way
+&gt;&gt; anyway, they didn't depend much on separately compiled libraries.
+
+&gt; People made exactly that same unsubstantiated claim 10 years ago when I
+&gt; first posted these results.
+">
+
+What unsubstantiated claim?  I wasn't saying that the MIPS C compiler
+could do the *sort* of whole-program optimization that stalin does, or
+even that it was in any way competitive.  Just that I know for certain
+that they had a mode of operation in which &quot;object&quot; files weren't fully
+compiled, and a &quot;linker&quot; that did (or was supposed to) finish the job,
+including some measure of inlining and constant propagation.
+
+<QUOTE PREVIOUSPOST="
+&gt; Now, of course, nothing in principle precludes a C compiler from
+&gt; performing
+&gt; the same kind of whole-program interprocedural polyvariant flow analysis
+&gt; that
+&gt; Stalin performs, and thus matching or exceeding the performance of
+&gt; Stalin. It
+&gt; is just that I am not aware of such a C compiler. If one exists, it is
+&gt; likely
+&gt; to be a research prototype, like Stalin, and not a well known and
+&gt; heavily used
+&gt; compiler.
+">
+
+Well, I can't help on that front: I don't know what &quot;polyvariant flow
+anaysis&quot; is.
+
+Cheers,
+
+--
+Andrew
+</POST>
+<POST>
+<POSTER> Bakul Shah &lt;use...@bitblocks.com&gt; </POSTER>
+<POSTDATE> 2007-12-19T12:57:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Although the original poster probably isn't concerned
+&gt; about licensing, I'll mention it anyway since it has
+&gt; come up with Ikarus.  Stalin is GPL'ed.  Gambit is
+&gt; licensed under LGPL or Apache licenses.  Bigloo is
+&gt; partly GPL and partly Library GPL.  MzScheme is LGPL,
+&gt; Chicken BSD.  Petit Larceny is not encumbered by GPL
+&gt; or LGPL or BSD or Apache licenses.
+">
+
+You find the BSD licence to be an encumbrance? Wow.
+</POST>
+<POST>
+<POSTER> Bakul Shah &lt;use...@bitblocks.com&gt; </POSTER>
+<POSTDATE> 2007-12-19T13:20:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+klohmusc ... @yahoo.de wrote:
+">
+
+...
+
+<QUOTE PREVIOUSPOST="
+&gt; The important thing for me: Bigloo works as well on my Mac OSX and
+&gt; Linux and Sun OS. It is a very stable compiler (some of my
+&gt; calculations took many days on computer time and Bigloo never let me
+&gt; in the dark).
+...
+&gt; Stalin is also often mentioned related to speed. However, my Stalin
+&gt; experience dates back some couple of years. I was never impressed
+&gt; because at this time a typical Stalin compile time cycle was around
+&gt; over 30 seconds. That is not big a problem when your calculation will
+&gt; take some hours but it is unbearable when you develop small pieces of
+&gt; code.
+">
+
+Looking back, do you think you could've tried Stalin during the days
+your calculation was in progress?  One can develop code using another
+compiler/interpreter and use Stalin for serious number crunching.
+</POST>
+<POST>
+<POSTER> Christoph Breitkopf &lt;ch...@chr-breitkopf.de&gt; </POSTER>
+<POSTDATE> 2008-01-02T11:12:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Andrew Reilly &lt;andrew-newsp ... @areilly.bpc-users.org&gt; writes:
+&gt; It would be interesting to see how well a modern Java implementation
+&gt; managed it, too.  One of the things that current versions of HotSpot are
+&gt; supposed to do is inlining and specialization.
+">
+
+Here's a java version. On my system it runs faster than the gcc-compiled C versions (at least
+with java -server). I don't have Stalin installed, so I can't compare to that.
+
+// ------------------------------------------------------------
+/* straightforward translation of integ.sc into java. */
+
+public class Integ {
+
+public static void main(String[] args) {
+System.out.println(errorSumOfSquares(1000));
+}
+
+private static double integrate1D(double l, double u, Fun1 f) {
+double d = (u - l) / 8.0;
+return ((f.apply(l) * 0.5 +
+f.apply(l + d) +
+f.apply(l + 2 * d) +
+f.apply(l + 3 * d) +
+f.apply(l + 4 * d) +
+f.apply(u - 3 * d) +
+f.apply(u - 2 * d) +
+f.apply(u - d) +
+f.apply(u) * 0.5)
+* d);
+}
+
+private static double integrate2D(final double l1, final double u1, double l2, double u2, final Fun2 f) {
+return integrate1D(l2, u2, new Fun1() {
+public double apply(final double y) {
+return integrate1D(l1, u1, new Fun1() {
+public double apply(double x) {
+return f.apply(x, y);
+}
+});
+}
+});
+}
+
+private static double rTotal(int n) {
+double sum = 0;
+for (int i = 1; i &lt;= n; i++) {
+sum += zark(i * 1.0, i * 2.0);
+}
+return sum;
+}
+
+private static double iTotal(int n) {
+double sum = 0;
+for (int i = 1; i &lt;= n; i++) {
+double i2 = i * i * 1.0;
+sum += i2 * i2;
+}
+return sum;
+}
+
+private static double zark(double u, double v) {
+return integrate2D(0, u, 0, v, new Fun2() {
+public double apply(double arg1, double arg2) {
+return arg1 * arg2;
+}
+});
+}
+
+private static double errorSumOfSquares(int n) {
+double sum = 0;
+for (int i = 1; i &lt;= n; i++) {
+double e = rTotal(i) - iTotal(i);
+sum += e * e;
+}
+return sum;
+}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+abstract class Fun1 {
+abstract public double apply(double arg1);
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+abstract class Fun2 {
+abstract public double apply(double arg1, double arg2);
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+// ------------------------------------------------------------
+
+Cheers,
+Chris
+</POST>
+<POST>
+<POSTER> Jeffrey Mark Siskind &lt;q...@purdue.edu&gt; </POSTER>
+<POSTDATE> 2008-01-06T19:37:00 </POSTDATE>
+On Jan 2, 11:12 am, Christoph Breitkopf &lt;ch ... @chr-breitkopf.de&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Andrew Reilly &lt;andrew-newsp ... @areilly.bpc-users.org&gt; writes:
+&gt; &gt; It would be interesting to see how well a modern Java implementation
+&gt; &gt; managed it, too.  One of the things that current versions of HotSpot are
+&gt; &gt; supposed to do is inlining and specialization.
+
+&gt; Here's a java version. On my system it runs faster than the gcc-compiled C versions (at least
+&gt; with java -server). I don't have Stalin installed, so I can't compare to that.
+">
+
+Thanks for the Java version. Stalin is still faster than HotSpot
+(JRE). integ3.sc under Stalin is about 10% faster than Integ.java
+under JRE -server and integ2.sc under Stalin is 5.8 times faster than
+Integ.java under JRE -server.
+
+Jeff ( http://www.ece.purdue.edu/~qobi )
+--------------------------------------------------------------------------- --------------------------------------------------------------------------- --
+#!/bin/tcsh -f
+
+setenv STALIN_OPTS &quot;-d -On -db -no-clone-size-limit -split-even-if-no-
+widening\
+-copt -O2 -copt -fomit-frame-pointer&quot;
+setenv OPTS &quot;-O2 -fomit-frame-pointer&quot;
+
+rm -f integ integ2 integ3 integ-c integ2-c integ-f *.class
+
+stalin $STALIN_OPTS integ
+stalin $STALIN_OPTS integ2
+stalin $STALIN_OPTS integ3
+gcc $OPTS -o integ-c integ-c.c
+gcc $OPTS -o integ2-c integ2-c.c
+g77 $OPTS -o integ-f integ-f.f
+javac Integ.java
+
+date
+
+echo Stalin Version
+stalin -version
+echo GCC Version
+gcc -v
+echo G77 Version
+g77 -v
+echo GCJ Version
+gcj -v
+echo JRE Version
+~/pkg/jre1.6.0_03/bin/java -version
+
+echo Stalin integ
+time ./integ
+echo Stalin integ2
+time ./integ2
+echo Stalin integ3
+time ./integ3
+echo GCC integ-c
+time ./integ-c
+echo GCC integ2-c
+time ./integ2-c
+echo G77 integ-f
+time ./integ-f
+echo JRE client Integ
+time ~/pkg/jre1.6.0_03/bin/java -client Integ
+echo JRE server Integ
+time ~/pkg/jre1.6.0_03/bin/java -server Integ
+
+rm -f integ integ2 integ3 integ-c integ2-c integ-f *.class
+
+qobi@ingqondo&gt;./run
+rm: No match.
+Sun Jan  6 19:24:31 EST 2008
+Stalin Version
+0.11
+GCC Version
+Using built-in specs.
+Target: i486-linux-gnu
+Configured with: ../src/configure -v --enable-languages=c,c+
++,fortran,objc,obj-c++,treelang --prefix=/usr --enable-shared --with-
+system-zlib --libexecdir=/usr/lib --without-included-gettext --enable-
+threads=posix --enable-nls --program-suffix=-4.1 --enable-__cxa_atexit
+--enable-clocale=gnu --enable-libstdcxx-debug --enable-mpfr --with-
+tune=i686 --enable-checking=release i486-linux-gnu
+Thread model: posix
+gcc version 4.1.2 20061115 (prerelease) (Debian 4.1.1-21)
+G77 Version
+Reading specs from /usr/lib/gcc/i486-linux-gnu/3.4.6/specs
+Configured with: ../src/configure -v --enable-languages=c,c+
++,f77,pascal --prefix=/usr --libexecdir=/usr/lib --with-gxx-include-
+dir=/usr/include/c++/3.4 --enable-shared --with-system-zlib --enable-
+nls --without-included-gettext --program-suffix=-3.4 --enable-
+__cxa_atexit --enable-clocale=gnu --enable-libstdcxx-debug --with-
+tune=i686 i486-linux-gnu
+Thread model: posix
+gcc version 3.4.6 (Debian 3.4.6-5)
+GCJ Version
+Using built-in specs.
+Reading specs from /usr/lib/gcc/i486-linux-gnu/4.1.2/libgcj.spec
+rename spec startfile to startfileorig
+rename spec lib to liborig
+Target: i486-linux-gnu
+Configured with: ../src/configure -v --enable-languages=c,c++,java --
+prefix=/usr --enable-shared --with-system-zlib --libexecdir=/usr/lib --
+without-included-gettext --enable-threads=posix --enable-nls --program-
+suffix=-4.1 --enable-__cxa_atexit --enable-clocale=gnu --enable-java-
+awt=gtk-default --enable-gtk-cairo --enable-plugin --with-java-home=/
+usr/lib/jvm/java-1.4.2-gcj-4.1-1.4.2.0/jre --with-tune=i686 --enable-
+checking=release i486-linux-gnu
+Thread model: posix
+gcc version 4.1.2 20061115 (prerelease) (Debian 4.1.1-20)
+JRE Version
+java version &quot;1.6.0_03&quot;
+Java(TM) SE Runtime Environment (build 1.6.0_03-b05)
+Java HotSpot(TM) Server VM (build 1.6.0_03-b05, mixed mode)
+Stalin integ
+0.0
+0.836u 0.000s 0:00.83 100.0%  0+0k 0+0io 0pf+0w
+Stalin integ2
+0.0
+0.060u 0.000s 0:00.06 100.0%   0+0k 0+0io 0pf+0w
+Stalin integ3
+0.0
+0.312u 0.004s 0:00.31 100.0%   0+0k 0+0io 0pf+0w
+GCC integ-c
+0.000000
+2.100u 0.000s 0:02.11 99.5% 0+0k 0+0io 0pf+0w
+GCC integ2-c
+0.000000
+0.424u 0.000s 0:00.42 100.0%       0+0k 0+0io 0pf+0w
+G77 integ-f
+0.
+0.428u 0.000s 0:00.42 100.0%    0+0k 0+0io 1pf+0w
+JRE client Integ
+0.0
+0.688u 0.036s 0:01.17 60.6% 0+0k 0+0io 63pf+0w
+JRE server Integ
+0.0
+0.312u 0.036s 0:00.40 85.0%        0+0k 0+0io 1pf+0w
+24.425u 0.612s 0:28.06 89.2%   0+0k 0+0io 339pf+0w
+qobi@ingqondo&gt;
+</POST>
+<POST>
+<POSTER> ozan s yigit &lt;o...@red.cs.yorku.ca&gt; </POSTER>
+<POSTDATE> 2008-02-04T11:07:00 </POSTDATE>
+William D Clinger &lt;cesur ... @yahoo.com&gt; writes:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Such things have been known in commercial C compilers for some time;
+&gt; &gt; more recently the LLVM project has been working in this area, and a
+&gt; &gt; separate effort is known to exist for GCC.
+
+&gt; I stand corrected.  Should I count the time spent waiting for
+&gt; this to be implemented in gcc as part of the compile time?
+
+&gt; Will
+">
+
+will, you may want to try the Sun/Solaris C compiler while waiting.
+
+oz
+---
+music is the space between the notes. | www.cs.yorku.ca/~oz
+-- claude debussy  | york u. dept of computer science
+</POST>
+</TEXT>
+</BODY>
+</DOC>

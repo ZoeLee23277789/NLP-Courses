@@ -1,0 +1,278 @@
+<DOC>
+<DOCID> eng-NG-31-126968-7179404 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-03-18T22:46:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Actual usage of 'data traps' on IBM 7090?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> hanco...@bbs.cpcn.com </POSTER>
+<POSTDATE> 2007-03-18T22:46:00 </POSTDATE>
+I found a 7090 introductory brochure (1959) and it mentioned that the
+CPU contained interupts.  If activated, the CPU would complete the
+current instruction, store the next address, and execute the
+instruction in a certain address.
+
+The brochure said in this way the machine could run two processes at
+once--an I/O intensive card-to-tape record-selection program along
+with a CPU intensive calculation program.  I'm not sure if the CPU was
+sophisticated enough to actually store two programs in core and switch
+between them as needed.  However, it seems that the new 7090 data
+channels had independent operation and could do stuff themselves, even
+some record selection.
+
+Anyway, I was wondering how these hardware features were utilized in
+everday usage.  I don't mean super-specialized applications like SABRE
+or a top bank using the mainframe to handle many banking terminals.
+
+Also, this brochure was dated 1959, which I believe was when the
+machine first was announced.  I wonder if it was enhanced as time went
+on.
+
+Any 7090 stories would be appreciated.  Thanks!
+</POST>
+<POST>
+<POSTER> &quot;Dennis Ritchie&quot; &lt;d...@bell-labs.com&gt; </POSTER>
+<POSTDATE> 2007-03-19T00:48:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+<hanco ... @bbs.cpcn.com> wrote in message
+">
+
+news:1174272374.008193.38860@l77g2000hsb.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+>I found a 7090 introductory brochure (1959) and it mentioned that the
+> CPU contained interupts.  If activated, the CPU would complete the
+> current instruction, store the next address, and execute the
+> instruction in a certain address.
+
+> The brochure said in this way the machine could run two processes at
+> once--an I/O intensive card-to-tape record-selection program along
+> with a CPU intensive calculation program.  I'm not sure if the CPU was
+> sophisticated enough to actually store two programs in core and switch
+> between them as needed.  However, it seems that the new 7090 data
+> channels had independent operation and could do stuff themselves, even
+> some record selection.
+
+> Anyway, I was wondering how these hardware features were utilized in
+> everday usage.  I don't mean super-specialized applications like SABRE
+> or a top bank using the mainframe to handle many banking terminals.
+">
+
+The usual use was for buffered IO, e.g. start a read of (say)
+a tape, notify the main program when done and start another
+read immediately.  Same for write.  So the IO routines
+were sort of a separate program (though in the same address
+space, in fact often just a subroutine package).
+
+The stock 7090 and its descendents did not have memory
+protection.  Various places had modifications that allowed
+that, and more sophisticated things were done, e.g. in
+CTSS at MIT, and also in Bell Labs's BE-SYS OSs.
+
+<QUOTE PREVIOUSPOST="
+> Also, this brochure was dated 1959, which I believe was when the
+> machine first was announced.  I wonder if it was enhanced as time went
+">
+
+....
+
+The 7094 was mostly the same as the 7090, but with more index
+registers.
+
+In both of these a clumsy form of memory protection was
+actually available on the stock machine by using a 704-simulation
+feature.  You could throw away half the address space so
+that it was only 14 instead of 15 bits and then ordinary programs
+could not access the upper part.  This, however, didn't prevent
+programs from executing instructions that in modern hardware
+would be forbidden in user mode.
+
+Dennis
+</POST>
+<POST>
+<POSTER> Pascal Bourguignon &lt;p...@informatimago.com&gt; </POSTER>
+<POSTDATE> 2007-03-19T05:00:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+hanco ... @bbs.cpcn.com writes:
+> I found a 7090 introductory brochure (1959) and it mentioned that the
+> CPU contained interupts.  If activated, the CPU would complete the
+> current instruction, store the next address, and execute the
+> instruction in a certain address.
+
+> The brochure said in this way the machine could run two processes at
+> once--an I/O intensive card-to-tape record-selection program along
+> with a CPU intensive calculation program.  I'm not sure if the CPU was
+> sophisticated enough to actually store two programs in core and switch
+> between them as needed.  However, it seems that the new 7090 data
+> channels had independent operation and could do stuff themselves, even
+> some record selection.
+
+> Anyway, I was wondering how these hardware features were utilized in
+> everday usage.  I don't mean super-specialized applications like SABRE
+> or a top bank using the mainframe to handle many banking terminals.
+
+> Also, this brochure was dated 1959, which I believe was when the
+> machine first was announced.  I wonder if it was enhanced as time went
+> on.
+
+> Any 7090 stories would be appreciated.  Thanks!
+">
+
+If you want an example showing how the I/O channels were used, here
+are the sources of LISP 1.5:
+
+http://www.mcjones.org/dustydecks/archives/2005/06/08/41/
+http://www.informatimago.com/develop/lisp/lisp15-0.0.2.tar.gz
+
+But I don't think it used the feature you're describing, it probably
+did all the I/O in synchronous mode, at least for reading.
+
+--
+__Pascal Bourguignon__
+http://www.informatimago.com
+http://pjb.ogamita.org
+</POST>
+<POST>
+<POSTER> &quot;Joe Morris&quot; &lt;j.c.mor...@verizon.net&gt; </POSTER>
+<POSTDATE> 2007-03-19T06:38:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Dennis Ritchie&quot; <d ... @bell-labs.com> wrote:
+">
+
+[replying to a question about the use of hardware interrupts in the 7090]
+
+<QUOTE PREVIOUSPOST="
+> The usual use was for buffered IO, e.g. start a read of (say)
+> a tape, notify the main program when done and start another
+> read immediately.  Same for write.  So the IO routines
+> were sort of a separate program (though in the same address
+> space, in fact often just a subroutine package).
+">
+
+Another use of the interrupts generated by tape operations was to
+pre-position the system tape(s) for the next phase of an application.  I
+never worked in the guts of FMS so I can't speak for it, but this was used
+in IBSYS.
+
+If, for example, you were compiling a FORTRAN program, the last step of the
+compiler (INGEN) passed control to the MAP interface (MAP010) to begin the
+creation of the binary deck.  The two might not be adjacent on the system
+tape (all IBM compilers in IBSYS, and some from other sources, used parts of
+the MAP assembler) so as soon as INGEN had been loaded into memory and
+control passed to it, the system began to move the tape to the point just
+before the beginning of MAP010.  This allowed INGEN to get the whole CPU
+minus only the time required to handle the tape interrupts as each forward
+or backwards space record command completed.
+
+Joe Morris
+</POST>
+<POST>
+<POSTER> &quot;Tim Shoppa&quot; &lt;sho...@trailing-edge.com&gt; </POSTER>
+<POSTDATE> 2007-03-19T10:33:00 </POSTDATE>
+On Mar 18, 10:46 pm, hanco ... @bbs.cpcn.com wrote:
+
+<QUOTE PREVIOUSPOST="
+> I found a 7090 introductory brochure (1959) and it mentioned that the
+> CPU contained interupts.  If activated, the CPU would complete the
+> current instruction, store the next address, and execute the
+> instruction in a certain address.
+
+> The brochure said in this way the machine could run two processes at
+> once--an I/O intensive card-to-tape record-selection program along
+> with a CPU intensive calculation program.  I'm not sure if the CPU was
+> sophisticated enough to actually store two programs in core and switch
+> between them as needed.
+">
+
+"Two processes" cannot be really interpreted in the modern way. A
+better term (though not modern either) would be "two co-routines".
+They have to know enough to not stomp on each other and each other's
+resources.
+
+Even better if they are not using each other's resources - in that
+respect making one "IO-intensive" and the other "CPU-intensive" is one
+very typical way to structure co-routines right up through modern
+interrupt-driven systems.
+
+Terminology for "foreground" vs "background" processes has reversed
+itself several times in the past half-century :-).
+
+Tim.
+</POST>
+<POST>
+<POSTER> Peter Flass &lt;Peter_Fl...@Yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-03-19T18:27:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Tim Shoppa wrote:
+> On Mar 18, 10:46 pm, hanco ... @bbs.cpcn.com wrote:
+
+>>I found a 7090 introductory brochure (1959) and it mentioned that the
+>>CPU contained interupts.  If activated, the CPU would complete the
+>>current instruction, store the next address, and execute the
+>>instruction in a certain address.
+
+>>The brochure said in this way the machine could run two processes at
+>>once--an I/O intensive card-to-tape record-selection program along
+>>with a CPU intensive calculation program.  I'm not sure if the CPU was
+>>sophisticated enough to actually store two programs in core and switch
+>>between them as needed.
+">
+
+Did IOCS make use of this?
+</POST>
+<POST>
+<POSTER> Louis Krupp &lt;lkr...@pssw.nospam.com.invalid&gt; </POSTER>
+<POSTDATE> 2007-03-19T23:59:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Tim Shoppa wrote:
+> On Mar 18, 10:46 pm, hanco ... @bbs.cpcn.com wrote:
+>> I found a 7090 introductory brochure (1959) and it mentioned that the
+>> CPU contained interupts.  If activated, the CPU would complete the
+>> current instruction, store the next address, and execute the
+>> instruction in a certain address.
+
+>> The brochure said in this way the machine could run two processes at
+>> once--an I/O intensive card-to-tape record-selection program along
+>> with a CPU intensive calculation program.  I'm not sure if the CPU was
+>> sophisticated enough to actually store two programs in core and switch
+>> between them as needed.
+
+> &quot;Two processes&quot; cannot be really interpreted in the modern way. A
+> better term (though not modern either) would be &quot;two co-routines&quot;.
+> They have to know enough to not stomp on each other and each other's
+> resources.
+
+> Even better if they are not using each other's resources - in that
+> respect making one &quot;IO-intensive&quot; and the other &quot;CPU-intensive&quot; is one
+> very typical way to structure co-routines right up through modern
+> interrupt-driven systems.
+
+> Terminology for &quot;foreground&quot; vs &quot;background&quot; processes has reversed
+> itself several times in the past half-century :-).
+">
+
+I think the brochure sounds more like what I learned to call
+multiprogramming -- having two or more independent programs run
+simultaneously on a single processor.  Using Burroughs terminology, the
+CPU-bound program would be interrupted by an I/O finish interrupt which
+would wake up the I/O-bound program long enough for it to do some simple
+processing, start another I/O operation, and wait for its completion.
+
+Two CPU-bound programs would "share" the CPU;  each would run until the
+interval timer interrupt code decided it was time to give the CPU to
+someone else.  Computer operators often had an idea of which jobs to run
+together for maximum throughput.
+
+Coroutines, on the other hand, are more or less cooperating pieces of a
+single whole.  Two programs on either end of a UNIX pipe are a loosely
+coupled example;  each does its thing in its own context but one
+program's write is coordinated with the other program's read.
+
+Louis
+</POST>
+</TEXT>
+</BODY>
+</DOC>

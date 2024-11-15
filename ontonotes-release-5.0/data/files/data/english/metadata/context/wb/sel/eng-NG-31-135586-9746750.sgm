@@ -1,0 +1,282 @@
+<DOC>
+<DOCID> eng-NG-31-135586-9746750 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-11-15T09:50:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Might be PHP after all
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Shelly&quot; &lt;sheldonlg.n...@asap-consult.com&gt; </POSTER>
+<POSTDATE> 2007-11-15T09:50:00 </POSTDATE>
+I found the mysql group on google and posted a question (which I'll attach
+below).  On thinking about it, it might be  a  php problem after all.  I can
+see the data properly via phpMyAdmin (an apostrophe is an apostrophe).
+However, on looking at the retrieved results in php, the apostrophe takes on
+an odd three character sequence.  Also, in looking at the text file in
+MSWord, I see apostrophes, but they look different than the apostrophe used
+to delimit a field value.  When I try to do a replace on the apostrophes I
+want, it picks them all out to replace.
+
+So, this might be php after all.
+
+(Side note to Jerry:  The activity in that group is about 30 posts/replies
+per day, with two of them from you.  Not a very active group -- but
+passable).
+
+Here is what I posted there:
+
+************
+I have to port data from MySQL 4.1.x to MySql 4.0.27  (The client is
+changing hosts).  Call these S for source and D for destination.
+
+On D, if I put in data with an apostrophe (using addslashes), it goes
+in fine and comes out fine.  However, data from S which is now in D
+via an export/import (done already, but I can redo it if needed) when
+retrieved via PHP comes up with a strange sequence of âEURO(tm) instead of
+an apostrophe.  Also, the e with the back accent mark as in Café comes
+out CafÃ(c),
+
+S has a default character set of lantin1, while D has a character set
+of utf8.
+
+I have tried an &quot;alter table foo character set latin1&quot; on D.  No
+help.  I have then gone and put it back to utf8.  Nothing changes.  I
+have also tried exporting from S specifying it as utf8 and importing
+it on D.  No luck there either.
+
+When I go into phpMyAdmin and look at the data, I see an apostrophe.
+
+Short of digging through all the data and doing an update, or looking
+at the export from D, massaging it, and reimporting it, I don't know
+how to fix these data.
+
+Any help is welcome.
+***********
+
+With a followup of:
+
+**********
+One more thing.  When I look at the text file that was exported from
+S, I see apostrophes, yet when I then import it to D and look at it I
+see the junk.  (I created a new table and did this for testing
+purposes).
+*********
+
+--
+Shelly
+</POST>
+<POST>
+<POSTER> Dikkie Dik &lt;dik...@nospam.org&gt; </POSTER>
+<POSTDATE> 2007-11-15T10:13:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; I have to port data from MySQL 4.1.x to MySql 4.0.27  (The client is
+&gt; changing hosts).  Call these S for source and D for destination.
+
+&gt; On D, if I put in data with an apostrophe (using addslashes), it goes
+&gt; in fine and comes out fine.  However, data from S which is now in D
+&gt; via an export/import (done already, but I can redo it if needed) when
+&gt; retrieved via PHP comes up with a strange sequence of âEURO(tm) instead of
+&gt; an apostrophe.  Also, the e with the back accent mark as in Café comes
+&gt; out CafÃ(c),
+
+&gt; S has a default character set of lantin1, while D has a character set
+&gt; of utf8.
+">
+
+OK. Let's anlyse this. What you are seeing if utf-8, but rendered as
+latin-1. It is a real pity that you have to backport data, as encoding
+support only gets better with the versions. Therefore, getting back
+makes things worse. Your best bet is to adapt the database in the most
+recent version of the two and then backport it.
+
+But if you get utf-8 anyway (even if rendered incorrectly), I suppose
+this went well. You can always check by using the mysql_dump utility and
+see what strings it generates. This is one of the few reliable methods
+to see how the strings are stored.
+
+So what is wrong is that you see data in utf-8, but your client does not
+know it.
+
+Take a look at my.cnf (your MySQL config file). It contains a section
+[mysql], a section [mysqld] and a section [client]. Check if the client
+section has its &quot;character set&quot; option set to utf-8.
+
+<QUOTE PREVIOUSPOST="
+&gt; I have tried an &quot;alter table foo character set latin1&quot; on D.  No
+&gt; help.  I have then gone and put it back to utf8.  Nothing changes.  I
+&gt; have also tried exporting from S specifying it as utf8 and importing
+&gt; it on D.  No luck there either.
+
+&gt; When I go into phpMyAdmin and look at the data, I see an apostrophe.
+
+&gt; Short of digging through all the data and doing an update, or looking
+&gt; at the export from D, massaging it, and reimporting it, I don't know
+&gt; how to fix these data.
+">
+
+So far, it could be a mysql issue. But you have not told us what
+application renders the query results. If you have a web page that just
+tells the browser to render &quot;text/html; charset=iso-8859-1&quot; and send
+strings in utf-8, it is clear that you will get the above output. In
+that case, it is a PHP problem.
+
+It can be solved by sending the correct encoding. This can be done in
+PHP.INI (server-wide, or from an apache config section-wide), or just by
+sending the appropriate Content-Type header &quot;by hand&quot;.
+
+Good luck!
+</POST>
+<POST>
+<POSTER> &quot;Rik Wasmus&quot; &lt;luiheidsgoe...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-15T10:20:00 </POSTDATE>
+On Thu, 15 Nov 2007 15:50:50 +0100, Shelly
+
+<QUOTE PREVIOUSPOST="
+&lt;sheldonlg.n ... @asap-consult.com&gt; wrote:
+&gt; I found the mysql group on google and posted a question (which I'll
+&gt; attach
+&gt; below).
+">
+
+Such impatience...
+--
+Rik Wasmus
+</POST>
+<POST>
+<POSTER> &quot;Shelly&quot; &lt;sheldonlg.n...@asap-consult.com&gt; </POSTER>
+<POSTDATE> 2007-11-15T10:43:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Dikkie Dik wrote:
+&gt;&gt; I have to port data from MySQL 4.1.x to MySql 4.0.27  (The client is
+&gt;&gt; changing hosts).  Call these S for source and D for destination.
+
+&gt;&gt; On D, if I put in data with an apostrophe (using addslashes), it goes
+&gt;&gt; in fine and comes out fine.  However, data from S which is now in D
+&gt;&gt; via an export/import (done already, but I can redo it if needed) when
+&gt;&gt; retrieved via PHP comes up with a strange sequence of âEURO(tm)
+&gt;&gt; instead of an apostrophe.  Also, the e with the back accent mark as
+&gt;&gt; in Café comes out CafÃ(c),
+
+&gt;&gt; S has a default character set of lantin1, while D has a character set
+&gt;&gt; of utf8.
+
+&gt; OK. Let's anlyse this. What you are seeing if utf-8, but rendered as
+&gt; latin-1. It is a real pity that you have to backport data, as encoding
+&gt; support only gets better with the versions. Therefore, getting back
+&gt; makes things worse. Your best bet is to adapt the database in the most
+&gt; recent version of the two and then backport it.
+
+&gt; But if you get utf-8 anyway (even if rendered incorrectly), I suppose
+&gt; this went well. You can always check by using the mysql_dump utility
+&gt; and see what strings it generates. This is one of the few reliable
+&gt; methods to see how the strings are stored.
+
+&gt; So what is wrong is that you see data in utf-8, but your client does
+&gt; not know it.
+
+&gt; Take a look at my.cnf (your MySQL config file). It contains a section
+&gt; [mysql], a section [mysqld] and a section [client]. Check if the
+&gt; client section has its &quot;character set&quot; option set to utf-8.
+
+&gt;&gt; I have tried an &quot;alter table foo character set latin1&quot; on D.  No
+&gt;&gt; help.  I have then gone and put it back to utf8.  Nothing changes.  I
+&gt;&gt; have also tried exporting from S specifying it as utf8 and importing
+&gt;&gt; it on D.  No luck there either.
+
+&gt;&gt; When I go into phpMyAdmin and look at the data, I see an apostrophe.
+
+&gt;&gt; Short of digging through all the data and doing an update, or looking
+&gt;&gt; at the export from D, massaging it, and reimporting it, I don't know
+&gt;&gt; how to fix these data.
+
+&gt; So far, it could be a mysql issue. But you have not told us what
+&gt; application renders the query results. If you have a web page that
+">
+
+The application is the web application that gets the data from the database
+and shows it.  It is obtain with a mysql_query and the succeeding commands.
+
+<QUOTE PREVIOUSPOST="
+&gt; just tells the browser to render &quot;text/html; charset=iso-8859-1&quot; and
+&gt; send strings in utf-8, it is clear that you will get the above
+&gt; output. In that case, it is a PHP problem.
+">
+
+It is &quot;text/html; charset=iso-8859-1&quot;.  So it IS a php problem?
+
+<QUOTE PREVIOUSPOST="
+&gt; It can be solved by sending the correct encoding. This can be done in
+&gt; PHP.INI (server-wide, or from an apache config section-wide), or just
+&gt; by sending the appropriate Content-Type header &quot;by hand&quot;.
+">
+
+Changing Content-Type would do it?  I'll look up what kind I need, but if
+you would be so kind.....?
+
+Shelly
+</POST>
+<POST>
+<POSTER> &quot;Shelly&quot; &lt;sheldonlg.n...@asap-consult.com&gt; </POSTER>
+<POSTDATE> 2007-11-15T11:22:00 </POSTDATE>
+Thank you Dikkie.  Changing the header content type in the metadata to utf8
+solved the problem.  It displays properly now.
+
+Rik, thank you as well for posting here and on comp.databases.mysql.
+
+--
+Shelly
+</POST>
+<POST>
+<POSTER> Dikkie Dik &lt;dik...@nospam.org&gt; </POSTER>
+<POSTDATE> 2007-11-15T11:27:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; It is &quot;text/html; charset=iso-8859-1&quot;.  So it IS a php problem?
+
+&gt;&gt; It can be solved by sending the correct encoding. This can be done in
+&gt;&gt; PHP.INI (server-wide, or from an apache config section-wide), or just
+&gt;&gt; by sending the appropriate Content-Type header &quot;by hand&quot;.
+
+&gt; Changing Content-Type would do it?  I'll look up what kind I need, but if
+&gt; you would be so kind.....?
+">
+
+just send a header &quot;Content-Type: text/html; charset=utf-8&quot;
+
+I think it is time to read something about the subject:
+http://www.joelonsoftware.com/articles/Unicode.html
+
+Good luck with the onions.
+</POST>
+<POST>
+<POSTER> &quot;Shelly&quot; &lt;sheldonlg.n...@asap-consult.com&gt; </POSTER>
+<POSTDATE> 2007-11-15T12:00:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Dikkie Dik wrote:
+&gt;&gt; It is &quot;text/html; charset=iso-8859-1&quot;.  So it IS a php problem?
+
+&gt;&gt;&gt; It can be solved by sending the correct encoding. This can be done
+&gt;&gt;&gt; in PHP.INI (server-wide, or from an apache config section-wide), or
+&gt;&gt;&gt; just by sending the appropriate Content-Type header &quot;by hand&quot;.
+
+&gt;&gt; Changing Content-Type would do it?  I'll look up what kind I need,
+&gt;&gt; but if you would be so kind.....?
+
+&gt; just send a header &quot;Content-Type: text/html; charset=utf-8&quot;
+
+&gt; I think it is time to read something about the subject:
+&gt; http://www.joelonsoftware.com/articles/Unicode.html
+
+&gt; Good luck with the onions.
+">
+
+Thanks again.  I found and did that on my own after your suggestion of
+content type, but thanks for responding with the answer.
+
+--
+Shelly
+</POST>
+</TEXT>
+</BODY>
+</DOC>

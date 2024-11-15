@@ -1,0 +1,514 @@
+<DOC>
+<DOCID> eng-NG-31-126392-9136106 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-11-08T05:58:00 </DATETIME>
+<BODY>
+<HEADLINE>
+how to get dollars($) in c
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Paro &lt;zubair.jh...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-08T05:58:00 </POSTDATE>
+If any body knows
+there is part time c language jobs here http://zubair.jhara.googlepages.com/jobs.html
+</POST>
+<POST>
+<POSTER> Ben Pfaff &lt;b...@cs.stanford.edu&gt; </POSTER>
+<POSTDATE> 2007-11-08T16:01:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Paro &lt;zubair.jh ... @gmail.com&gt; writes:
+&gt; Subject: how to get dollars($) in c
+">
+
+`$' is not in the basic source or execution character set and
+hence cannot be used in portable C programs.
+--
+Ben Pfaff
+http://benpfaff.org
+</POST>
+<POST>
+<POSTER> Tor Rustad &lt;tor_rus...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-09T19:51:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Ben Pfaff wrote:
+&gt; Paro &lt;zubair.jh ... @gmail.com&gt; writes:
+
+&gt;&gt; Subject: how to get dollars($) in c
+
+&gt; `$' is not in the basic source or execution character set and
+&gt; hence cannot be used in portable C programs.
+">
+
+#include &lt;stdio.h&gt;
+
+int main(void)
+{
+printf(&quot;C99 has UCN, so \u0024 can be used in identifiers, &quot;
+&quot;character constants, and string literal. See 6.4.3\n&quot;);
+
+return 0;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+--
+Tor &lt;bwz ... @wvtqvm.vw | tr i-za-h a-z&gt;
+</POST>
+<POST>
+<POSTER> Harald van Dĳk &lt;true...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-10T14:28:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sat, 10 Nov 2007 01:51:15 +0100, Tor Rustad wrote:
+&gt; Ben Pfaff wrote:
+&gt;&gt; Paro &lt;zubair.jh ... @gmail.com&gt; writes:
+
+&gt;&gt;&gt; Subject: how to get dollars($) in c
+
+&gt;&gt; `$' is not in the basic source or execution character set and hence
+&gt;&gt; cannot be used in portable C programs.
+
+&gt; #include &lt;stdio.h&gt;
+
+&gt; int main(void)
+&gt; {
+&gt;          printf(&quot;C99 has UCN, so \u0024 can be used in identifiers, &quot;
+&gt;                 &quot;character constants, and string literal. See 6.4.3\n&quot;);
+
+&gt;          return 0;
+&gt; }
+">
+
+While you are correct that C99 has UCNs, please keep in mind that not all
+characters need be supported. If the character set has a multi-byte
+sequence for the dollar sign, \u0024 probably isn't useful in narrow
+character constants (6.4.4p10), and if the character set doesn't support
+the dollar sign at all, \u0024 effectively maps to a different, possibly
+unrelated character (5.1.1.2p1#5). And on those implementations that do
+support the dollar sign, you can use them in character constants and
+string literals -- but not identifiers -- in the same cases where you can
+use the UCN.
+
+The only case I can think of where using \u0024 in character constants and/
+or string literals makes sense is if the source character set is different
+from the execution character set, and the dollar sign is only supported in
+the latter. I suspect this is quite rare. And for readability, I would not
+recommend using it in identifiers at all, even when it's allowed.
+</POST>
+<POST>
+<POSTER> Tor Rustad &lt;tor_rus...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-11T12:10:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Harald van Dĳk wrote:
+&gt; On Sat, 10 Nov 2007 01:51:15 +0100, Tor Rustad wrote:
+&gt;&gt; Ben Pfaff wrote:
+&gt;&gt;&gt; Paro &lt;zubair.jh ... @gmail.com&gt; writes:
+
+&gt;&gt;&gt;&gt; Subject: how to get dollars($) in c
+&gt;&gt;&gt; `$' is not in the basic source or execution character set and hence
+&gt;&gt;&gt; cannot be used in portable C programs.
+&gt;&gt; #include &lt;stdio.h&gt;
+
+&gt;&gt; int main(void)
+&gt;&gt; {
+&gt;&gt;          printf(&quot;C99 has UCN, so \u0024 can be used in identifiers, &quot;
+&gt;&gt;                 &quot;character constants, and string literal. See 6.4.3\n&quot;);
+
+&gt;&gt;          return 0;
+&gt;&gt; }
+
+&gt; While you are correct that C99 has UCNs, please keep in mind that not all
+&gt; characters need be supported.
+">
+
+The intent of UCN, was to provide a facility for e.g. the Asian
+languages, to let them write strictly conforming programs using
+characters outside the basic character set.
+
+The only C99 like compiler I currently have access to is
+
+gcc -std=c99
+
+which on my installations, defines __STDC_ISO_10646__. I expect Unicode
+characters to be supported, by the time we can start writing portable
+programs in C99! Until then, it doesn't matter much (for me).
+
+<QUOTE PREVIOUSPOST="
+&gt; The only case I can think of where using \u0024 in character constants and/
+&gt; or string literals makes sense is if the source character set is different
+&gt; from the execution character set, and the dollar sign is only supported in
+&gt; the latter. I suspect this is quite rare.
+">
+
+The way I picture it, isn't that programmers usually write these UCN
+sequences by hand via U+NNNN. My keyboard has some special characters
+too: &quot;æøåÆØÅ&quot;, which I can access via a single keystroke.
+
+However, if editing C source from another machine, e.g. using putty.exe
+(getting a Linux login shell over SSH from Windows), those keystrokes
+doesn't produce the expected result. Hence, I can't type
+
+setlocale(LC_CTYPE, &quot;&quot;)
+printf(&quot;%ls\n&quot;, L&quot;æøå&quot;); &lt;--- can't type
+
+hard coding these Latin 1 characters doesn't work either:
+printf(&quot;\xE6\xF8\xE5\n&quot;); &lt;--- display garbage
+
+while, not only does this work:
+printf(&quot;\u00e6\u00f8\u00e5\n&quot;); &lt;--- can type &amp; display correctly
+
+but can be typed from &quot;everywhere&quot;.
+
+&gt; And for readability, I would not recommend using it in
+&gt; identifiers at all, even when it's allowed.
+
+UTF-8 enabled editors, could be able to display the C source in a
+readable way. IMO, the main advantage for restricting source to be
+written in English, is that &quot;anyone&quot; can maintain the source afterwards,
+but that may not be important to e.g. a Japanese SW company.
+
+For readability
+
+int år, aar, year;
+
+'år' is not only the most readable form for me, but is also the quickest
+one to type (requires only two keystrokes). BTW, neither
+
+int år, \u0005r;
+
+works with latest GNU GCC, so UCN support appears to be broken. &lt;g&gt;
+
+--
+Tor &lt;bwz ... @wvtqvm.vw | tr i-za-h a-z&gt;
+</POST>
+<POST>
+<POSTER> Tor Rustad &lt;tor_rus...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-11T12:13:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Tor Rustad wrote:
+&gt; int år, \u0005r;
+">
+
+ooops, a typo for:
+
+int år, \u00e5r;
+
+--
+Tor &lt;bwz ... @wvtqvm.vw | tr i-za-h a-z&gt;
+</POST>
+<POST>
+<POSTER> Harald van Dĳk &lt;true...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-11T13:21:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sun, 11 Nov 2007 18:10:01 +0100, Tor Rustad wrote:
+&gt; Harald van Dĳk wrote:
+&gt;&gt; On Sat, 10 Nov 2007 01:51:15 +0100, Tor Rustad wrote:
+&gt;&gt;&gt; Ben Pfaff wrote:
+&gt;&gt;&gt;&gt; Paro &lt;zubair.jh ... @gmail.com&gt; writes:
+
+&gt;&gt;&gt;&gt;&gt; Subject: how to get dollars($) in c
+&gt;&gt;&gt;&gt; `$' is not in the basic source or execution character set and hence
+&gt;&gt;&gt;&gt; cannot be used in portable C programs.
+&gt;&gt;&gt; #include &lt;stdio.h&gt;
+
+&gt;&gt;&gt; int main(void)
+&gt;&gt;&gt; {
+&gt;&gt;&gt;          printf(&quot;C99 has UCN, so \u0024 can be used in identifiers, &quot;
+&gt;&gt;&gt;                 &quot;character constants, and string literal. See
+&gt;&gt;&gt;                 6.4.3\n&quot;);
+
+&gt;&gt;&gt;          return 0;
+&gt;&gt;&gt; }
+
+&gt;&gt; While you are correct that C99 has UCNs, please keep in mind that not
+&gt;&gt; all characters need be supported.
+
+&gt; The intent of UCN, was to provide a facility for e.g. the Asian
+&gt; languages, to let them write strictly conforming programs using
+&gt; characters outside the basic character set.
+">
+
+Almost, but not exactly. From the rationale:
+
+[...] Thus, \unnnn can be used to designate a Unicode character. This
+way, programs that must be fully portable may use virtually any
+character from any script used in the world and still be portable,
+provided of course that if it prints the character, the execution
+character set has representation for it.
+
+Fully portable programs can use \u00AA e.a. in identifiers, but fully
+portable programs cannot meaningfully use \u00AA in character constants.
+
+<QUOTE PREVIOUSPOST="
+&gt; The only C99 like compiler I currently have access to is
+
+&gt; gcc -std=c99
+">
+
+Consider adding -pedantic. With that option, you'll at least get gcc in a
+mode where it attempts to conform to C99, even if it doesn't yet. And
+also, see below.
+
+<QUOTE PREVIOUSPOST="
+&gt; which on my installations, defines __STDC_ISO_10646__. I expect Unicode
+&gt; characters to be supported, by the time we can start writing portable
+&gt; programs in C99! Until then, it doesn't matter much (for me).
+">
+
+__STDC_ISO_10646__ is optional, so an implementation might choose to not
+support it at all. If it is defined on your implementation, great, you
+can rely on it on your implementation, but only there.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; The only case I can think of where using \u0024 in character constants
+&gt;&gt; and/ or string literals makes sense is if the source character set is
+&gt;&gt; different from the execution character set, and the dollar sign is only
+&gt;&gt; supported in the latter. I suspect this is quite rare.
+
+&gt; The way I picture it, isn't that programmers usually write these UCN
+&gt; sequences by hand via U+NNNN. My keyboard has some special characters
+&gt; too: &quot;æøåÆØÅ&quot;, which I can access via a single keystroke.
+
+&gt; However, if editing C source from another machine, e.g. using putty.exe
+&gt; (getting a Linux login shell over SSH from Windows), those keystrokes
+&gt; doesn't produce the expected result. Hence, I can't type
+
+&gt; setlocale(LC_CTYPE, &quot;&quot;)
+&gt; printf(&quot;%ls\n&quot;, L&quot;æøå&quot;); &lt;--- can't type
+
+&gt; hard coding these Latin 1 characters doesn't work either:
+&gt; printf(&quot;\xE6\xF8\xE5\n&quot;); &lt;--- display garbage
+
+&gt; while, not only does this work:
+&gt; printf(&quot;\u00e6\u00f8\u00e5\n&quot;); &lt;--- can type &amp; display correctly
+
+&gt; but can be typed from &quot;everywhere&quot;.
+">
+
+You're assuming the locale will always be the same every time the program
+is run. It's better to use %ls as in your original version,
+
+setlocale(LC_CTYPE, &quot;&quot;);
+printf(&quot;%ls\n&quot;, L&quot;\u00e6\u00f8\u00e5&quot;);
+
+to minimise this assumption. That said, it's a step up from requiring
+L&quot;æøå&quot;, but still, this will work on implementations that support those
+characters, and won't on those that don't.
+
+<QUOTE PREVIOUSPOST="
+&gt;  &gt; And for readability, I would not recommend using it in identifiers at
+&gt;  &gt; all, even when it's allowed.
+
+&gt; UTF-8 enabled editors, could be able to display the C source in a
+&gt; readable way.
+">
+
+Not unless you want to deal with the same problems again that you already
+do: if an UTF-8 enabled editor automatically converts UCNs to/from UTF-8,
+you might be able to enter L&quot;\u00e6\u00f8\u00e5&quot;, but when reading it
+back, if it tries to show L&quot;æøå&quot;, it will quite likely give you garbled
+output.
+
+<QUOTE PREVIOUSPOST="
+&gt; IMO, the main advantage for restricting source to be
+&gt; written in English, is that &quot;anyone&quot; can maintain the source afterwards,
+&gt; but that may not be important to e.g. a Japanese SW company.
+
+&gt; For readability
+
+&gt; int år, aar, year;
+
+&gt; 'år' is not only the most readable form for me, but is also the quickest
+&gt; one to type (requires only two keystrokes). BTW, neither
+
+&gt; int år, \u0005r;
+
+&gt; works with latest GNU GCC, so UCN support appears to be broken. &lt;g&gt;
+">
+
+The former doesn't work because there is no required automatic conversion
+from any character to an UCN. An implementation may choose to do it in
+translation phase 1, but it's in no way required. The latter doesn't work
+because \u0005 is not a valid UCN (6.4.3p2), and even if it were, it's
+not a valid character in identifiers (6.4.2.1p3).
+
+int \u00e5r;
+
+is valid C99. &lt;OT&gt;It &quot;works&quot; with GCC when you enable the option to
+support UCNs in identifiers (-fextended-identifiers). This is not enabled
+by default, IIRC because the implementation is incomplete and/or broken,
+so choose your interpretation of &quot;works&quot;.&lt;/OT&gt;
+</POST>
+<POST>
+<POSTER> Tor Rustad &lt;tor_rus...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-12T10:55:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Harald van Dĳk wrote:
+&gt; On Sun, 11 Nov 2007 18:10:01 +0100, Tor Rustad wrote:
+&gt;&gt; Harald van Dĳk wrote:
+&gt;&gt;&gt; On Sat, 10 Nov 2007 01:51:15 +0100, Tor Rustad wrote:
+&gt;&gt;&gt;&gt; #include &lt;stdio.h&gt;
+
+&gt;&gt;&gt;&gt; int main(void)
+&gt;&gt;&gt;&gt; {
+&gt;&gt;&gt;&gt;          printf(&quot;C99 has UCN, so \u0024 can be used in identifiers, &quot;
+&gt;&gt;&gt;&gt;                 &quot;character constants, and string literal. See
+&gt;&gt;&gt;&gt;                 6.4.3\n&quot;);
+
+&gt;&gt;&gt;&gt;          return 0;
+&gt;&gt;&gt;&gt; }
+&gt;&gt;&gt; While you are correct that C99 has UCNs, please keep in mind that not
+&gt;&gt;&gt; all characters need be supported.
+&gt;&gt; The intent of UCN, was to provide a facility for e.g. the Asian
+&gt;&gt; languages, to let them write strictly conforming programs using
+&gt;&gt; characters outside the basic character set.
+
+&gt; Almost, but not exactly. From the rationale:
+
+&gt;   [...] Thus, \unnnn can be used to designate a Unicode character. This
+&gt;   way, programs that must be fully portable may use virtually any
+&gt;   character from any script used in the world and still be portable,
+&gt;   provided of course that if it prints the character, the execution
+&gt;   character set has representation for it.
+
+&gt; Fully portable programs can use \u00AA e.a. in identifiers, but fully
+&gt; portable programs cannot meaningfully use \u00AA in character constants.
+">
+
+Point taken.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; The only C99 like compiler I currently have access to is
+
+&gt;&gt; gcc -std=c99
+
+&gt; Consider adding -pedantic. With that option, you'll at least get gcc in a
+&gt; mode where it attempts to conform to C99, even if it doesn't yet. And
+&gt; also, see below.
+">
+
+I have yet to write my first useful C99 program, but will keep your
+advice in mind.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; which on my installations, defines __STDC_ISO_10646__. I expect Unicode
+&gt;&gt; characters to be supported, by the time we can start writing portable
+&gt;&gt; programs in C99! Until then, it doesn't matter much (for me).
+
+&gt; __STDC_ISO_10646__ is optional, so an implementation might choose to not
+&gt; support it at all. If it is defined on your implementation, great, you
+&gt; can rely on it on your implementation, but only there.
+">
+
+So is __STDC_IEC_559__. To my mind, ISO 10646 is the natural choice for
+internal representation of &quot;wide&quot; characters, and seems to be promoted
+(but not required) by the standard.
+
+[...]
+
+<QUOTE PREVIOUSPOST="
+&gt; You're assuming the locale will always be the same every time the program
+&gt; is run. It's better to use %ls as in your original version,
+
+&gt;   setlocale(LC_CTYPE, &quot;&quot;);
+&gt;   printf(&quot;%ls\n&quot;, L&quot;\u00e6\u00f8\u00e5&quot;);
+">
+
+Agreed.
+
+<QUOTE PREVIOUSPOST="
+&gt; to minimise this assumption. That said, it's a step up from requiring
+&gt; L&quot;æøå&quot;, but still, this will work on implementations that support those
+&gt; characters, and won't on those that don't.
+">
+
+When using common tools for file inter-change, I have watched national
+characters in comments, become garbage for many years, so I continue to
+write everything in English. Not so sure the Japanese agrees on doing
+that. :)
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;  &gt; And for readability, I would not recommend using it in identifiers at
+&gt;&gt;  &gt; all, even when it's allowed.
+
+&gt;&gt; UTF-8 enabled editors, could be able to display the C source in a
+&gt;&gt; readable way.
+
+&gt; Not unless you want to deal with the same problems again that you already
+&gt; do: if an UTF-8 enabled editor automatically converts UCNs to/from UTF-8,
+&gt; you might be able to enter L&quot;\u00e6\u00f8\u00e5&quot;, but when reading it
+&gt; back, if it tries to show L&quot;æøå&quot;, it will quite likely give you garbled
+&gt; output.
+">
+
+Context for me above, was identifiers, so I was thinking about the case
+where programmer write &amp; see &quot;int år&quot; the editor. In one mode, the
+editor could store this identifier as &quot;int \u00e5r&quot; on file, while in
+another mode, the editor save the source using UTF-8 encoding.
+
+Disclaimer: I don't have detailed knowledge on how editors and C
+processors handle multibyte sequence today, but I would suspect the
+natural choice for external encoding (source files on disk) is UTF-8.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; IMO, the main advantage for restricting source to be
+&gt;&gt; written in English, is that &quot;anyone&quot; can maintain the source afterwards,
+&gt;&gt; but that may not be important to e.g. a Japanese SW company.
+
+&gt;&gt; For readability
+
+&gt;&gt; int år, aar, year;
+
+&gt;&gt; 'år' is not only the most readable form for me, but is also the quickest
+&gt;&gt; one to type (requires only two keystrokes). BTW, neither
+
+&gt;&gt; int år, \u0005r;
+
+&gt;&gt; works with latest GNU GCC, so UCN support appears to be broken. &lt;g&gt;
+
+&gt; The former doesn't work because there is no required automatic conversion
+&gt; from any character to an UCN. An implementation may choose to do it in
+&gt; translation phase 1, but it's in no way required. The latter doesn't work
+&gt; because \u0005 is not a valid UCN (6.4.3p2), and even if it were, it's
+&gt; not a valid character in identifiers (6.4.2.1p3).
+">
+
+Sorry, \u0005 was a typo, I tried to correct it, but you where too quick. :)
+
+IMO, using e.g. &quot;int år&quot; should be the way to go, and to archive it, the
+implementation could use some specific translation at phase 1, e.g.
+accepting UTF-8 encoded source, and/or the editor could save non-ASCII
+character 'å' as \u00e5.
+
+IMO, the important properties for people using non-English language, is
+
+(1) C source can be exchanged in a portable way between systems
+(2) editors save C source in a compatible encoding of what C compilers
+accept.
+
+<QUOTE PREVIOUSPOST="
+&gt; int \u00e5r;
+
+&gt; is valid C99. &lt;OT&gt;It &quot;works&quot; with GCC when you enable the option to
+&gt; support UCNs in identifiers (-fextended-identifiers). This is not enabled
+&gt; by default, IIRC because the implementation is incomplete and/or broken,
+&gt; so choose your interpretation of &quot;works&quot;.&lt;/OT&gt;
+">
+
+I didn't know about the -fextended-identifiers switch.
+
+--
+Tor &lt;bwz ... @wvtqvm.vw | tr i-za-h a-z&gt;
+</POST>
+</TEXT>
+</BODY>
+</DOC>

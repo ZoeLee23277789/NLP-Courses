@@ -1,0 +1,1788 @@
+<DOC>
+<DOCID> eng-NG-31-135595-9759812 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2008-01-04T02:46:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Core commands as ensembles...
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Fredderic &lt;my-name-h...@excite.com&gt; </POSTER>
+<POSTDATE> 2008-01-04T02:46:00 </POSTDATE>
+One of my projects has a script that it sources to put in a few things
+that I consider to be lacking from TCL...  One of the things it does is
+add an &quot;mset&quot; to the [dict] command, that &quot;sets multiple items&quot;.  [dict
+replace] is good, but it's rarely the form I need.  And [dict set]
+isn't much better (if you ask me, it should have been called [dict
+lset] from the outset, and [dict set] given either single-item
+semantics, or better, multiple-item as per my [dict mset]).
+
+Something I discovered in the process, though, is the pain involved in
+extending the [dict] command, and I suspect, all the other core
+ensembles.  It stores all its commands in a -map directive, which
+you have to fetch, [dict set] with the new command, and then store back
+into the ensemble.
+
+IS THERE AN EASIER WAY?!?  Perhaps an [ensemble add-map] (and perhaps
+[ensemble add-subcommand]) would be a good idea.  I ended up creating
+a ::tcl::dict::add-command proc that does the dirty work, though I
+think it's a mistake to need this.
+
+With [expr], simply adding a proc to the tcl::mathfunc namespace does
+the trick.  It's instantly available.  (Perhaps it should have to be
+exported to become available, but that's another issue).
+
+[dict] and any others that are implemented as ensembles (in fact,
+the entire ensemble mechanism itself), should support auto-extension.
+Make it an option like sub-command name abbreviation, and tie it into
+[namespace export].  As soon as you [namespace export] a proc, it'd be
+automagically added to any ensembles with that option set (which all
+core ensembles should), as per the -subcommand option.
+
+Speaking of which, why are they defined through -map and not
+-subcommand anyhow?  When I first looked at tcl::dict, I found it
+rather confusing.
+
+Fredderic
+</POST>
+<POST>
+<POSTER> &quot;Donal K. Fellows&quot; &lt;donal.k.fell...@manchester.ac.uk&gt; </POSTER>
+<POSTDATE> 2008-01-05T16:54:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Fredderic wrote:
+&gt; IS THERE AN EASIER WAY?!?  Perhaps an [ensemble add-map] (and perhaps
+&gt; [ensemble add-subcommand]) would be a good idea.  I ended up creating
+&gt; a ::tcl::dict::add-command proc that does the dirty work, though I
+&gt; think it's a mistake to need this.
+">
+
+It's quite possible that there ought to be more APIs added to the
+ensemble engine.
+
+<QUOTE PREVIOUSPOST="
+&gt; Speaking of which, why are they defined through -map and not
+&gt; -subcommand anyhow?  When I first looked at tcl::dict, I found it
+&gt; rather confusing.
+">
+
+Because they're much easier to byte-compile that way. OK, not every
+subcommand is actually byte-compiled, but a number are. I suspect that
+they a bit faster to dispatch in non-compiled mode too (no string
+allocation/concatenation required). And in any case, the info that is
+stored in the map actually has to be built anyway; the fully-qualified
+name is needed when creating the implementation subcommands.
+
+Donal.
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-05T18:09:00 </POSTDATE>
+On Jan 5, 1:54 pm, &quot;Donal K. Fellows&quot;
+
+<QUOTE PREVIOUSPOST="
+&lt;donal.k.fell ... @manchester.ac.uk&gt; wrote:
+&gt; Fredderic wrote:
+&gt; &gt; IS THERE AN EASIER WAY?!?  Perhaps an [ensemble add-map] (and perhaps
+&gt; &gt; [ensemble add-subcommand]) would be a good idea.  I ended up creating
+&gt; &gt; a ::tcl::dict::add-command proc that does the dirty work, though I
+&gt; &gt; think it's a mistake to need this.
+
+&gt; It's quite possible that there ought to be more APIs added to the
+&gt; ensemble engine.
+
+&gt; &gt; Speaking of which, why are they defined through -map and not
+&gt; &gt; -subcommand anyhow?  When I first looked at tcl::dict, I found it
+&gt; &gt; rather confusing.
+
+&gt; Because they're much easier to byte-compile that way. OK, not every
+&gt; subcommand is actually byte-compiled, but a number are. I suspect that
+&gt; they a bit faster to dispatch in non-compiled mode too (no string
+&gt; allocation/concatenation required). And in any case, the info that is
+&gt; stored in the map actually has to be built anyway; the fully-qualified
+&gt; name is needed when creating the implementation subcommands.
+">
+
+From the little I have heard and read about this command, it seems
+very helpful. I have constant need for a series of subcommands and
+having to use a switch statement and check argument counts, etc. just
+confuses the code. I wish I could ensure 8.5 would always be
+available, but not yet. Too bad.
+
+One question though, about this -map thing. What I am wondering is if
+you can remove or replace subcommands? It looks like when you use the
+[namespace ensemble], you can remap everything, so you need everything
+available to do this. For instance, maybe you add a proc to replace
+the current implementation.
+
+Anyway, it seems like a good idea to define/redefine all the mapping
+at one point, as it will be much easier to read the code, and also to
+identify errors prior to use, maybe other options would end up also
+coming into play. If this is so, then the 'add' idea wouldn't
+necessarily be commutative.
+</POST>
+<POST>
+<POSTER> &quot;Donal K. Fellows&quot; &lt;donal.k.fell...@manchester.ac.uk&gt; </POSTER>
+<POSTDATE> 2008-01-05T21:33:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+tom.rmadilo wrote:
+&gt; One question though, about this -map thing. What I am wondering is if
+&gt; you can remove or replace subcommands?
+">
+
+Yes. Of course. For an experiment once, I added the [set] command to the
+[info] ensemble and it still generated the correct bytecode... :-)
+
+Donal.
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-05T22:24:00 </POSTDATE>
+On Jan 5, 6:33 pm, &quot;Donal K. Fellows&quot;
+
+<QUOTE PREVIOUSPOST="
+&lt;donal.k.fell ... @manchester.ac.uk&gt; wrote:
+&gt; tom.rmadilo wrote:
+&gt; &gt; One question though, about this -map thing. What I am wondering is if
+&gt; &gt; you can remove or replace subcommands?
+
+&gt; Yes. Of course. For an experiment once, I added the [set] command to the
+&gt; [info] ensemble and it still generated the correct bytecode... :-)
+">
+
+I'm not sure I get this. [info set] isn't an existing command/
+subcommand. What was removed or replaced here?
+
+My observation was prior to any experimentation, but after some
+testing it looks like you can 'reconfigure' the available commands
+(although you don't remove the non-ensemble'd commands from a
+namespace). I'll try to provide a larger example in the future, but it
+looks like [namespace ensemble create ...] is a complete statement of
+the interface. If so, this is very good (from my perspective).
+Incremental interface descriptions are not good ( you are not creating
+a derived interface btw). Code is documentation, not a mental
+experiment of [diff].
+</POST>
+<POST>
+<POSTER> &quot;Donal K. Fellows&quot; &lt;donal.k.fell...@man.ac.uk&gt; </POSTER>
+<POSTDATE> 2008-01-06T07:19:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+tom.rmadilo wrote:
+&gt; I'm not sure I get this. [info set] isn't an existing command/
+&gt; subcommand. What was removed or replaced here?
+">
+
+&lt;sigh&gt;
+
+I've not tried replacing a command, mostly because I couldn't actually
+be bothered to try that specific test. OTOH, I fully expect it to
+work; other things I have tested privately would lead me to expect it.
+
+<QUOTE PREVIOUSPOST="
+&gt; it looks like [namespace ensemble create ...] is a complete
+&gt; statement of the interface.
+">
+
+There's only one thing that's not available through that interface,
+and that's the enable-compilation flag. But user code shouldn't need
+that, and it would impose quite a performance penalty for the likes of
+Snit if set for every ensemble. I'm not currently sure whether to
+enable it at the C level or not. But in any case that should only be
+noticeable in terms of processing speed, and not semantically.
+
+Concrete documentation improvement suggestions welcome. Submit as
+issues at SF, please.
+
+Donal.
+</POST>
+<POST>
+<POSTER> Fredderic &lt;my-name-h...@excite.com&gt; </POSTER>
+<POSTDATE> 2008-01-11T08:11:00 </POSTDATE>
+On Sat, 5 Jan 2008 19:24:01 -0800 (PST),
+
+<QUOTE PREVIOUSPOST="
+&quot;tom.rmadilo&quot; &lt;tom.rmad ... @gmail.com&gt; wrote:
+&gt; Incremental interface descriptions are not good ( you are not creating
+&gt; a derived interface btw). Code is documentation, not a mental
+&gt; experiment of [diff].
+">
+
+I think you've missed the point, here.
+
+I was specifically referring to adding a new sub-command to the
+existing [dict] ensemble.  (It's lacking a few that I'm rather fond of.)
+
+I've actually taken the idea one step further and rolled together a
+[keyed] ensemble which I use instead of the built-in [dict] command, and
+which I feel provides a much cleaner and complete interface.
+
+But the point here was that adding a new subcommand to the [dict]
+ensemble is a pain, as you need to read the current -map, apply your
+modifications ([dict] itself comes in handy there), and then store the
+newly modified value back into the -map of the ensemble (and I have
+no idea what happens if the [ensemble] was built with the -subcommand
+option, I'm guessing -subcommand simply fills in the missing spots of
+the -map for you...?).  In any case, I ended up adding a new command
+to ::tcl::dict (but NOT added to the [dict] ensemble) to do it for me,
+but I really don't think that's a good solution, and I do think it
+needs to be addressed in the [ensemble] API.
+
+Fredderic
+</POST>
+<POST>
+<POSTER> Fredderic &lt;my-name-h...@excite.com&gt; </POSTER>
+<POSTDATE> 2008-01-11T10:25:00 </POSTDATE>
+On Fri, 11 Jan 2008 23:11:28 +1000,
+
+<QUOTE PREVIOUSPOST="
+Fredderic &lt;my-name-h ... @excite.com&gt; wrote:
+&gt; I've actually taken the idea one step further and rolled together a
+&gt; [keyed] ensemble which I use instead of the built-in [dict] command,
+&gt; and which I feel provides a much cleaner and complete interface.
+">
+
+For anyone curious what I meant here, here's the core -map of the
+[keyed] ensemble I rolled together for my own use in place of [dict],
+and most of the rationale behind it;
+
+{# create a new keyed list - aka dict with modified command set}
+create    {::tcl::dict::create}
+
+{# getv uses keylget form, but takes a value as argument!}
+get       {::tcl::dict::get}
+*   getv      {::keyed::getv}    {# optional storage target }
+*   getd      {::keyed::getd}    {# optional default value  }
+mget      {::keyed::mget}
+lget      {::tcl::dict::get}
+
+{# functions that work on variable name references}
+set       {::tcl::dict::set}
+*   mset      {::keyed::var.wrap ::tcl::dict::replace}
+*   lset      {::tcl::dict::set}
+unset     {::tcl::dict::unset}
+munset    {::keyed::munset}
+lunset    {::tcl::dict::unset}
+
+{# functions that work on values passed directly}
+replace   {::tcl::dict::replace}
+mreplace  {::tcl::dict::replace}
+lreplace  {::keyed::val.wrap ::tcl::dict::set}
+remove    {::tcl::dict::remove}
+lremove   {::keyed::val.wrap ::tcl::dict::unset}
+mremove   {::tcl::dict::remove}
+
+{# special functions for querying keyed lists}
+size      {::tcl::dict::size}
+exists    {::tcl::dict::exists}
+keys      {::tcl::dict::keys}
+values    {::tcl::dict::values}
+merge     {::tcl::dict::merge}
+
+{# special manipulations on first level values}
+incr      {::tcl::dict::incr}
+append    {::tcl::dict::append}
+lappend   {::tcl::dict::lappend}
+
+{# special processing of data within a dictionary}
+filter    {::tcl::dict::filter}
+for       {::tcl::dict::for}
+update    {::tcl::dict::update}
+
+{# rather heavy additional procedures}
+apply     {::keyed::apply}  {# [dict with] is just evil}
+upvar     {::keyed::upvar}
+
+Before anyone jumps up and down, that lot is wrapped in an [lsearch]
+which filters out any items starting with a #, before feeding it to -map
+of the [ensemble create] command.  It's a little trick I like to use to
+let me comment long lists and what-not, where there's a once-off setup
+cost paid at load time and no on-going expense.  Most of the commands,
+I think, are pretty self-explanatory, and I'll mention the last two
+down further.
+
+The redundant un-tagged commands like [get] and [set] are for the
+simplest case of a single first-level item, and only there because the
+existing [dict] functions are a bucket-load faster than my scripted
+additions.  So for the basic usage cases, it just aliases the fastest
+one available.  If I had [dict] to do over myself, I'd probably go with
+the multiple varieties being the plain command, and the deep
+(lset-style) commands all being l-commands.
+
+There is, however, a bit of an ugly clash with set/lset, and
+append/lappend, which I'm not sure what to do about.  I have thought of
+changing the l/v tags, or moving them to the end of the command, before
+the [keyed] usage gets too ingrained in anything.  Maybe [deep-set]
+instead of [lset], and [multi-replace] instead of [mreplace].  Or even
+splitting the whole thing into a couple separate [keyed] variants.  But
+they're already eating a lot of the average line I tend to use them in,
+so making them even longer still isn't high on my list of preferred
+options.  ;)
+
+The lines I marked are my main motivation for doing the whole thing,
+[get] with [regexp] value-var and boolean return value semantics is
+immensely useful, followed closely by [get] allowing a default value
+for a non-existent item.  And while [replace] works just fine, I tend
+to find it much more useful in a [set] usage pattern than as a filter.
+And speaking of [set], I personally feel it should have been called
+[lset] from the outset, in keeping with the base commands of those
+names.  Most of [dict]s commands are confusing like that.
+
+As a bonus, I get to replace [with] with a command that's not totally
+insane, and added an [upvar] command because I really do find my
+references idea useful ;) (though here, it is just an [upvar]-like
+command; a lazy updater implemented through read/write traces, not a
+full references type thing).
+
+As for the [apply] sub-command, it actually uses [apply] to do its work,
+although it has an issue; I use the argument list to the lambdaExpr,
+and match them against values within the dict, feeding through the
+appropriate values.  It works beautifully (the mget sub-command forms
+the engine of that task, taking a list of keys and returning the
+corresponding list of values), except that as far as I can tell, it
+breaks any existing byte-compilation on the lambdaExpr.  :(  I won't
+belabour the point here, though, because I'm pretty certain the
+overhead of my scripted [mset] sub-command far exceeds the overhead of
+having to re-byte-compile the lambdaExpr in all but extreme cases, and
+I haven't been brave enough to look at the TCL innards to see how
+workable my idea to fix it would actually be (most people are probably
+pretty frightened by any idea that comes out of my head by now ;) ).
+
+Since [apply] lacks [with]s ability to change values in the dict, I was
+thinking of re-implementing [with] using [upvar], but with either a
+list of item names to export, or assigning the items into an array
+instead of plain variables.  Either is preferable when you may not be
+the one who built the dict in the first place.
+
+Fredderic
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-11T12:06:00 </POSTDATE>
+On Jan 11, 5:11 am, Fredderic &lt;my-name-h ... @excite.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sat, 5 Jan 2008 19:24:01 -0800 (PST),
+
+&gt; &quot;tom.rmadilo&quot; &lt;tom.rmad ... @gmail.com&gt; wrote:
+&gt; &gt; Incremental interface descriptions are not good ( you are not creating
+&gt; &gt; a derived interface btw). Code is documentation, not a mental
+&gt; &gt; experiment of [diff].
+
+&gt; I think you've missed the point, here.
+
+&gt; I was specifically referring to adding a new sub-command to the
+&gt; existing [dict] ensemble.  (It's lacking a few that I'm rather fond of.)
+">
+
+I think I got your point, and I agree that it would be 'nice' to be
+able to 'just add' an additional sub-command to an existing ensemble,
+my point is that [namespace ensemble] appears to be already tricky,
+and it isn't apparent that you could guess what the result of a
+particular addition would be without knowing the current state of the
+ensemble.
+
+But, let's put this aside for now, what seems helpful is that you have
+used [namespace ensemble] to extend a built-in command [dict]. This
+would be great documentation on how to use [namespace ensemble] and I
+encourage you to release a working copy. I'll even host it and apply
+any updates you send me, or allow you to do it directly (but I'm using
+GIT).
+
+Thanks to this thread I played around a little with [namespace
+ensemble]. What I would like to find out is if you can alias the main
+command to something that looks like it is in the global namespace,
+without doing an import. I also haven't experimented with something I
+need which is sub-commands which look like regular Tcl commands [set]
+[lappend], etc. I guess this is what the -dict option is for.
+
+I'm guessing that your code would answer many of these questions.
+</POST>
+<POST>
+<POSTER> George Peter Staplin &lt;georgepsSPAMME...@xmission.com&gt; </POSTER>
+<POSTDATE> 2008-01-11T15:39:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Fredderic wrote:
+&gt; On Fri, 11 Jan 2008 23:11:28 +1000,
+&gt; Fredderic &lt;my-name-h ... @excite.com&gt; wrote:
+
+&gt;&gt; I've actually taken the idea one step further and rolled together a
+&gt;&gt; [keyed] ensemble which I use instead of the built-in [dict] command,
+&gt;&gt; and which I feel provides a much cleaner and complete interface.
+">
+
+DKF did his best to implement it.
+
+<QUOTE PREVIOUSPOST="
+&gt; For anyone curious what I meant here, here's the core -map of the
+&gt; [keyed] ensemble I rolled together for my own use in place of [dict],
+&gt; and most of the rationale behind it;
+">
+
+I don't mean to rain on your parade, but --
+
+I'll never understand why there is so much motivation for the complexity
+of [string] and ensembles, just for the benefit of being able to use a
+space.  Seriously, I think there are thousands of lines of code just for
+the whitespace.
+
+Tcl_GetIndexFromObj and Tcl_GetIndexFromObjStruct are useful of course,
+and I use them, and they are what predate the ensembles and dicts.
+
+As I understand it, one of the insprirations for ensembles was the
+ability to create core-like commands.  If we didn't value whitespace so
+much in commands like [string], we could have this anyway.
+
+string-first, string-match, etc.
+
+proc string-knob ...
+
+Tcl is never going to be a natural language.  While I think the ability
+to query the available subcommands is interesting, and group them, I
+feel it doesn't justify the complexity.  We could have this anyway with
+a [string] proc that just returns a list based on [info commands
+string-*].
+
+<QUOTE PREVIOUSPOST="
+&gt; As a bonus, I get to replace [with] with a command that's not totally
+&gt; insane, and added an [upvar] command because I really do find my
+&gt; references idea useful ;) (though here, it is just an [upvar]-like
+&gt; command; a lazy updater implemented through read/write traces, not a
+&gt; full references type thing).
+
+&gt; As for the [apply] sub-command, it actually uses [apply] to do its work,
+&gt; although it has an issue; I use the argument list to the lambdaExpr,
+&gt; and match them against values within the dict, feeding through the
+&gt; appropriate values.  It works beautifully (the mget sub-command forms
+&gt; the engine of that task, taking a list of keys and returning the
+&gt; corresponding list of values), except that as far as I can tell, it
+&gt; breaks any existing byte-compilation on the lambdaExpr.  :(  I won't
+&gt; belabour the point here, though, because I'm pretty certain the
+&gt; overhead of my scripted [mset] sub-command far exceeds the overhead of
+&gt; having to re-byte-compile the lambdaExpr in all but extreme cases, and
+&gt; I haven't been brave enough to look at the TCL innards to see how
+&gt; workable my idea to fix it would actually be (most people are probably
+&gt; pretty frightened by any idea that comes out of my head by now ;) ).
+">
+
+Some of that sounds interesting.  I don't think your ideas are
+frightening though.
+
+Some real frightening things we were just discussing in the Tcl chat.
+Tcl violates the strict-aliasing rules of modern C, and it seems that
+gcc enables -fstrict-aliasing at &quot;`-O2', `-O3', `-Os'&quot; optimization
+levels.  I happen to believe this could potentially be a source of
+strange bugs.
+
+Tcl in general doesn't use void pointers much, because they didn't exist
+when Tcl was originally written.  Tcl historically hasn't used size_t,
+because it didn't exist when Tcl was written.  So there are int(eger)
+type declarations everyhere, and functions that return generic pointers
+returning char *.  And Tcl treats pointers to structs as different
+structs, so this breaks strict aliasing, and could thereby lead to some
+interesting code generation that results in bugs.  This applies to Tk
+too.
+
+There is a desire for correctness though.  I think eventually in 5-10
+years Tcl 9.0 will change the world.  That may be a pessimistic or
+optimistic view of the future.  :-)
+
+George
+</POST>
+<POST>
+<POSTER> Gary &lt;bai...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-12T16:33:00 </POSTDATE>
+I wrote a small package to handle this and posted it at
+http://wiki.tcl.tk/13310 . The package does not extend the namespace
+command itself because I kept getting errors when trying to rename the
+namespace commmand. This package can turn an entire namespace into an
+ensemble, it can add and remove commands from ensembles.
+
+<QUOTE PREVIOUSPOST="
+Fredderic wrote:
+&gt; One of my projects has a script that it sources to put in a few things
+&gt; that I consider to be lacking from TCL...  One of the things it does is
+&gt; add an &quot;mset&quot; to the [dict] command, that &quot;sets multiple items&quot;.  [dict
+&gt; replace] is good, but it's rarely the form I need.  And [dict set]
+&gt; isn't much better (if you ask me, it should have been called [dict
+&gt; lset] from the outset, and [dict set] given either single-item
+&gt; semantics, or better, multiple-item as per my [dict mset]).
+
+&gt; Something I discovered in the process, though, is the pain involved in
+&gt; extending the [dict] command, and I suspect, all the other core
+&gt; ensembles.  It stores all its commands in a -map directive, which
+&gt; you have to fetch, [dict set] with the new command, and then store back
+&gt; into the ensemble.
+
+&gt; IS THERE AN EASIER WAY?!?  Perhaps an [ensemble add-map] (and perhaps
+&gt; [ensemble add-subcommand]) would be a good idea.  I ended up creating
+&gt; a ::tcl::dict::add-command proc that does the dirty work, though I
+&gt; think it's a mistake to need this.
+
+&gt; With [expr], simply adding a proc to the tcl::mathfunc namespace does
+&gt; the trick.  It's instantly available.  (Perhaps it should have to be
+&gt; exported to become available, but that's another issue).
+
+&gt; [dict] and any others that are implemented as ensembles (in fact,
+&gt; the entire ensemble mechanism itself), should support auto-extension.
+&gt; Make it an option like sub-command name abbreviation, and tie it into
+&gt; [namespace export].  As soon as you [namespace export] a proc, it'd be
+&gt; automagically added to any ensembles with that option set (which all
+&gt; core ensembles should), as per the -subcommand option.
+
+&gt; Speaking of which, why are they defined through -map and not
+&gt; -subcommand anyhow?  When I first looked at tcl::dict, I found it
+&gt; rather confusing.
+
+&gt; Fredderic
+">
+</POST>
+<POST>
+<POSTER> &quot;Donal K. Fellows&quot; &lt;donal.k.fell...@man.ac.uk&gt; </POSTER>
+<POSTDATE> 2008-01-12T23:20:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Gary wrote:
+&gt; I wrote a small package to handle this and posted it at http://wiki.tcl.tk/13310 . The package does not extend the namespace
+&gt; command itself because I kept getting errors when trying to rename the
+&gt; namespace commmand. This package can turn an entire namespace into an
+&gt; ensemble, it can add and remove commands from ensembles.
+">
+
+Neat! (And sorry you can't plug into [namespace ensemble]; I ran out
+of time before the 8.5 release, and it wasn't critical for the work on
+simplifying the compiler...)
+
+Donal.
+</POST>
+<POST>
+<POSTER> Gary &lt;bai...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-13T10:42:00 </POSTDATE>
+There is no need to apologize, I haven't done any work on Tcl so I did
+not mean to sound like I was complaining. I was just stating the reason
+that I could not plug it into [namespace ensemble]. If I had spent more
+time on it, and had a little better understanding of Tcl, I may have
+been able to figure out a way to make it work. I would have been
+surprised if I could have added to [namespace ensemble] that easily. The
+code I wrote needs more error checking, and probably more work to be
+more efficient; but hopefully it can be used at least as a starting
+point for those who do not understand [namespace ensemble].
+
+Gary
+
+<QUOTE PREVIOUSPOST="
+Donal K. Fellows wrote:
+&gt; Gary wrote:
+&gt;&gt; I wrote a small package to handle this and posted it at http://wiki.tcl.tk/13310 . The package does not extend the namespace
+&gt;&gt; command itself because I kept getting errors when trying to rename the
+&gt;&gt; namespace commmand. This package can turn an entire namespace into an
+&gt;&gt; ensemble, it can add and remove commands from ensembles.
+
+&gt; Neat! (And sorry you can't plug into [namespace ensemble]; I ran out
+&gt; of time before the 8.5 release, and it wasn't critical for the work on
+&gt; simplifying the compiler...)
+
+&gt; Donal.
+">
+</POST>
+<POST>
+<POSTER> Fredderic &lt;my-name-h...@excite.com&gt; </POSTER>
+<POSTDATE> 2008-01-13T11:45:00 </POSTDATE>
+On Fri, 11 Jan 2008 20:39:22 +0000 (UTC),
+George Peter Staplin &lt;georgepsSPAMME ... @xmission.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Fredderic wrote:
+&gt;&gt; On Fri, 11 Jan 2008 23:11:28 +1000,
+&gt;&gt; Fredderic &lt;my-name-h ... @excite.com&gt; wrote:
+&gt;&gt;&gt; I've actually taken the idea one step further and rolled together a
+&gt;&gt;&gt; [keyed] ensemble which I use instead of the built-in [dict]
+&gt;&gt;&gt; command, and which I feel provides a much cleaner and complete
+&gt;&gt;&gt; interface.
+&gt; DKF did his best to implement it.
+">
+
+Yes, I know.  I missed most of the discussion on the design of [dict].
+I know this issue has been brought up a few times.  But the good thing
+with it being an ensemble, is that you can re-arrange the functions.
+The error messages get a little confusing, though.  But such is
+life.  ;)
+
+Still, it'd be good if it could be straightened out now.  Though I
+suppose it's probably already found its way into an awful lot of code.
+It's a feature that's been wanted for quite some time, I think.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; For anyone curious what I meant here, here's the core -map of the
+&gt;&gt; [keyed] ensemble I rolled together for my own use in place of
+&gt;&gt; [dict], and most of the rationale behind it;
+&gt; I don't mean to rain on your parade, but --
+&gt; I'll never understand why there is so much motivation for the
+&gt; complexity of [string] and ensembles, just for the benefit of being
+&gt; able to use a space.  Seriously, I think there are thousands of lines
+&gt; of code just for the whitespace.
+">
+
+It's a style, thing, I think.  From what I can tell.  And I don't think
+it's MY parade you're raining on there...  ;)
+
+But then, the commands that have been ensemblised, you can always just
+hyphen-ise them yourself, if that's the style you prefer.
+
+<QUOTE PREVIOUSPOST="
+&gt; Tcl_GetIndexFromObj and Tcl_GetIndexFromObjStruct are useful of
+&gt; course, and I use them, and they are what predate the ensembles and
+&gt; dicts.
+&gt;    As I understand it, one of the insprirations for ensembles was the
+&gt; ability to create core-like commands.  If we didn't value whitespace
+&gt; so much in commands like [string], we could have this anyway.
+&gt;    string-first, string-match, etc.
+&gt;    proc string-knob ...
+">
+
+Another factor, of course, is command-space pollution.  TCL doesn't
+really scope its commands.  Sure, there's namespaces, but in their
+default configuration, there's only two of relevance; the current
+namespace, and the global namespace.  So anything you intend to be
+generally available, tends to get lobbed into the global namespace.
+This probably isn't as much of an issue as people suggest, really, but
+it looks ugly, and it certainly is more of an issue than for compiled
+languages.  Besides, the spacey method is much, much nicer to read.  ;)
+
+<QUOTE PREVIOUSPOST="
+&gt; Tcl is never going to be a natural language.  While I think the
+&gt; ability to query the available subcommands is interesting, and group
+&gt; them, I feel it doesn't justify the complexity.  We could have this
+&gt; anyway with a [string] proc that just returns a list based on [info
+&gt; commands string-*].
+">
+
+True enough.  But [file] and [string] have been there for rather a long
+time, and kind of set the tone.  So I guess we're stuck with it, and
+just have to make it as nice as possible.
+
+<QUOTE PREVIOUSPOST="
+&gt; Some of that sounds interesting.
+">
+
+Which bits?
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; (most people are probably pretty frightened by any idea that comes
+&gt;&gt; out of my head by now ;) ).
+&gt; I don't think your ideas are
+&gt; frightening though.
+">
+
+Are you SURE you've read any of my other posts?!?  ;)
+
+<QUOTE PREVIOUSPOST="
+&gt; Some real frightening things we were just discussing in the Tcl
+&gt; chat. Tcl violates the strict-aliasing rules of modern C, and it
+&gt; seems that gcc enables -fstrict-aliasing at &quot;`-O2', `-O3', `-Os'&quot;
+&gt; optimization levels.  I happen to believe this could potentially be a
+&gt; source of strange bugs.
+
+&gt; Tcl in general doesn't use void pointers much, because they didn't
+&gt; exist when Tcl was originally written.  Tcl historically hasn't used
+&gt; size_t, because it didn't exist when Tcl was written.  So there are
+&gt; int(eger) type declarations everyhere, and functions that return
+&gt; generic pointers returning char *.  And Tcl treats pointers to
+&gt; structs as different structs, so this breaks strict aliasing, and
+&gt; could thereby lead to some interesting code generation that results
+&gt; in bugs.  This applies to Tk too.
+">
+
+You're right...  That is frightening.  I never actually realised there
+was a before-void-pointers...  When-abouts was the void pointer
+introduced, then?
+
+<QUOTE PREVIOUSPOST="
+&gt; There is a desire for correctness though.  I think eventually in 5-10
+&gt; years Tcl 9.0 will change the world.  That may be a pessimistic or
+&gt; optimistic view of the future.  :-)
+">
+
+I'm going to be optimistic, and say that's a pessimistic view.  ;)
+
+Fredderic
+</POST>
+<POST>
+<POSTER> Fredderic &lt;my-name-h...@excite.com&gt; </POSTER>
+<POSTDATE> 2008-01-13T12:27:00 </POSTDATE>
+On Fri, 11 Jan 2008 09:06:53 -0800 (PST),
+
+<QUOTE PREVIOUSPOST="
+&quot;tom.rmadilo&quot; &lt;tom.rmad ... @gmail.com&gt; wrote:
+&gt; On Jan 11, 5:11 am, Fredderic &lt;my-name-h ... @excite.com&gt; wrote:
+&gt;&gt; On Sat, 5 Jan 2008 19:24:01 -0800 (PST),
+&gt;&gt; &quot;tom.rmadilo&quot; &lt;tom.rmad ... @gmail.com&gt; wrote:
+&gt;&gt;&gt; Incremental interface descriptions are not good ( you are not
+&gt;&gt;&gt; creating a derived interface btw). Code is documentation, not a
+&gt;&gt;&gt; mental experiment of [diff].
+&gt;&gt; I think you've missed the point, here.
+&gt;&gt; I was specifically referring to adding a new sub-command to the
+&gt;&gt; existing [dict] ensemble.  (It's lacking a few that I'm rather fond
+&gt;&gt; of.)
+&gt; I think I got your point, and I agree that it would be 'nice' to be
+&gt; able to 'just add' an additional sub-command to an existing ensemble,
+&gt; my point is that [namespace ensemble] appears to be already tricky,
+&gt; and it isn't apparent that you could guess what the result of a
+&gt; particular addition would be without knowing the current state of the
+&gt; ensemble.
+">
+
+Or, throw an error if the sub-command you're trying to incrementally
+add is already there (but not if you're adding exactly what is already
+there - ie. reloading the script that added the command will work).
+
+<QUOTE PREVIOUSPOST="
+&gt; But, let's put this aside for now, what seems helpful is that you have
+&gt; used [namespace ensemble] to extend a built-in command [dict]. This
+&gt; would be great documentation on how to use [namespace ensemble] and I
+&gt; encourage you to release a working copy. I'll even host it and apply
+&gt; any updates you send me, or allow you to do it directly (but I'm using
+&gt; GIT).
+">
+
+[dict] is already an ensemble, so all it was, was a rather
+pathologically simplistic proc:
+
+proc ::tcl::dict::add-command {cmnd args} {
+set map [namespace ensemble configure ::dict -map]
+if { [llength $args] &gt; 0 } {
+dict set map $cmnd [join $args]
+} else {
+dict set map $cmnd [uplevel 1 namespace current]::$cmnd
+}
+namespace ensemble configure ::dict -map $map
+}
+
+As I said above, it should probably accept identical additions, but
+otherwise fail with an error if the command you're trying to add
+already exists.  Or at the very least, provide an ensemble command to
+check whether a given command exists.  I haven't played with ensembles
+much, but I do think -subcommands and -map should be independent of
+each other, with an internal command list built by taking the existing
+-map, and adding in any commands from -subcommands not already present
+(or whatever the exact semantics are when both options are present).
+
+<QUOTE PREVIOUSPOST="
+&gt; Thanks to this thread I played around a little with [namespace
+&gt; ensemble]. What I would like to find out is if you can alias the main
+&gt; command to something that looks like it is in the global namespace,
+&gt; without doing an import. I also haven't experimented with something I
+&gt; need which is sub-commands which look like regular Tcl commands [set]
+&gt; [lappend], etc. I guess this is what the -dict option is for.
+">
+
+You can tell [namespace ensemble] to create whatever command you want,
+directly.  It's in the syntax of the [namespace ensemble create]
+command.  This actually has the rather neat feature of being able to
+construct several different ensembles out of the one namespace.  I've
+used it in a new project to construct a very light-weight
+object-orientated like mechanism.
+
+I start out with a regular bunch of procs in a namespace, for
+example, ::foo.  A main ensemble is created with sub-commands like
+[new], which I call ::Foo.  But I also construct a secondary ensemble
+command, called ::foo as well, from the same namespace, but put it
+within the namespace itself.  The [Foo new] sub-command then creates an
+array to hold the &quot;object&quot;s data members, and is invoked thus:
+
+set obj [Foo new options...]
+foo so-something $obj blah
+
+I miss the old [interp alias] trick, where you could actually invoke
+$obj as a command, and I'm not willing to use a [proc] wrapper, or
+create a new ensemble for each and every instance.  Either option is
+just over-kill, as far as I'm concerned.  I just wish (and have
+mentioned it to DKF, though if he understood my query, I didn't
+understand his answer) ensembles had the ability to take a configurable
+number of arguments, before the sub-command word.  (Either that, or
+[interp alias] supported shell-like $n argument references.)
+
+<QUOTE PREVIOUSPOST="
+&gt; I'm guessing that your code would answer many of these questions.
+">
+
+Probably not, it's not nearly as interesting as it may have sounded at
+first.  But maybe one or two.  ;)
+
+Fredderic
+</POST>
+<POST>
+<POSTER> Neil Madden &lt;n...@cs.nott.ac.uk&gt; </POSTER>
+<POSTDATE> 2008-01-13T12:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Fredderic wrote:
+">
+
+...
+
+<QUOTE PREVIOUSPOST="
+&gt; But the point here was that adding a new subcommand to the [dict]
+&gt; ensemble is a pain, as you need to read the current -map, apply your
+&gt; modifications ([dict] itself comes in handy there), and then store the
+&gt; newly modified value back into the -map of the ensemble (and I have
+&gt; no idea what happens if the [ensemble] was built with the -subcommand
+&gt; option, I'm guessing -subcommand simply fills in the missing spots of
+&gt; the -map for you...?).
+">
+
+Nope, which is a bit annoying. The ensemble mechanism is a bit difficult
+to use in places. My experience suggests that you should always
+consistently use the -map option, as it is the most general form.
+Ideally the other means of making an ensemble should just be short-cuts
+for populating the map.
+
+<QUOTE PREVIOUSPOST="
+&gt; In any case, I ended up adding a new command
+&gt; to ::tcl::dict (but NOT added to the [dict] ensemble) to do it for me,
+&gt; but I really don't think that's a good solution, and I do think it
+&gt; needs to be addressed in the [ensemble] API.
+">
+
+Given an ensemble that uses -map, it's pretty simple. See for instance
+http://wiki.tcl.tk/16975 , which supplies:
+
+proc alias {object slot = command args} {
+set map [namespace ensemble configure $object -map]
+dict set map $slot [linsert $args 0 $command]
+namespace ensemble configure $object -map $map
+}
+
+Which allows you to simply do:
+
+alias dict mycmd = ::mydict::mycmd
+
+And there are even simpler methods further down the page. That seems
+remarkably straight-forward and simple to implement to me.
+
+Personally, I think extending an existing ensemble with new sub-commands
+is not such a good idea, especially core ensembles. It's pretty easy to
+create a new ensemble and delegate to an existing one:
+
+namespace ensemble create mydict -map {...} -unknown {delegate ::dict}
+proc delegate {to args} { lreplace $args 0 0 $to }
+
+-- Neil
+</POST>
+<POST>
+<POSTER> Neil Madden &lt;n...@cs.nott.ac.uk&gt; </POSTER>
+<POSTDATE> 2008-01-13T12:46:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Fredderic wrote:
+">
+
+...
+
+<QUOTE PREVIOUSPOST="
+&gt; Since [apply] lacks [with]s ability to change values in the dict, I was
+&gt; thinking of re-implementing [with] using [upvar], but with either a
+&gt; list of item names to export, or assigning the items into an array
+&gt; instead of plain variables.  Either is preferable when you may not be
+&gt; the one who built the dict in the first place.
+">
+
+See [dictutils apply] at http://wiki.tcl.tk/17686
+
+-- Neil
+</POST>
+<POST>
+<POSTER> Fredderic &lt;my-name-h...@excite.com&gt; </POSTER>
+<POSTDATE> 2008-01-13T22:49:00 </POSTDATE>
+On Sat, 12 Jan 2008 15:33:24 -0600,
+
+<QUOTE PREVIOUSPOST="
+Gary &lt;bai ... @gmail.com&gt; wrote:
+&gt; I wrote a small package to handle this and posted it at
+&gt; http://wiki.tcl.tk/13310 . The package does not extend the namespace
+&gt; command itself because I kept getting errors when trying to rename
+&gt; the namespace commmand. This package can turn an entire namespace
+&gt; into an ensemble, it can add and remove commands from ensembles.
+">
+
+Yeah, I think there is a little extra care you need to take when
+redefining [namespace].  I did it myself to add a [namespace prefix]
+command that does much the same as [namespace code], except that it
+simply adds the fully qualified namespace from whence it was called
+(if one isn't already present), on the first argument given to it.  I
+then went on to [interp alias] that to a simple [call] command, and then
+figured &quot;well fuggit&quot;, and pulled the prefix addition out into a proc
+called &quot;call&quot;, rather than jumping through the extra hoops just for
+this one added function.  The best part of this [call] function, is it
+works on command and simple variables alike, since it's only adding a
+prefix to the first argument.
+
+proc call {args} {
+set ns [uplevel 1 namespace current]
+if { ! [llength $args] } {return $ns}
+set cmnd [lindex $args 0]
+if { [namespace qualifiers $cmnd] ne &quot;&quot; } {return $args}
+if { $ns eq &quot;::&quot; } {set ns &quot;&quot;}
+return [lreplace $args 0 0 ${ns}::[lindex $args 0]]
+}
+
+The trick with non-ensemble commands, is to [rename] them out of the
+way first (pick a name that isn't likely to clash with anyone else's,
+because you're not the only person trying to do this!), and then write
+a new proc in its place, which chains back to the original command as
+appropriate.  If you want to be able to reload your script, then pick
+two names, one to rename the original command to, and another to place
+your &quot;enhanced&quot; version on, define your new version first with its
+package-unique name, and then [interp alias] your version onto the
+regular command name right after you rename it, and wrap the two
+statements in a catch so they'll silently fail if it's already been
+done.
+
+proc _my_new_namespace {args} {
+...
+_my_real_namespace ...
+...
+}
+catch {
+rename namespace _my_real_namespace
+interp alias {} namespace {} _my_new_namespace
+}
+
+There should already be stuff on doing this in the wiki somewhere...
+Certainly plenty of examples, but a quick flick through didn't show me
+any pages specifically on this topic in general.  But then, I hate
+search functions in general, and they hate me too.  ;)
+
+Fredderic
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-14T00:23:00 </POSTDATE>
+On Jan 13, 7:49 pm, Fredderic &lt;my-name-h ... @excite.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Yeah, I think there is a little extra care you need to take when
+&gt; redefining [namespace].  I did it myself to add a [namespace prefix]
+&gt; command that does much the same as [namespace code], except that it
+&gt; simply adds the fully qualified namespace from whence it was called
+">
+
+This is simply moronic. You seem intent on adding confusing commands
+to Tcl, who cares about your additions? Why not just write your own
+language?
+
+Clue yourself in here: 'much the same' means 'not the same' as in
+'completely different'.
+
+We all get that you are not satisfied with ordinary Tcl. Still, we
+have no evidence of any code which demonstrates your ideas. Put up, or
+shut up. It is really very tiring discussing vapor-ware. Seriously, is
+there a single line of code anywhere we can look at?
+
+Fredderic, I would love nothing more than for you to prove me wrong,
+but without code, your words are just words. Words are words, code is
+code. No code = bs.
+</POST>
+<POST>
+<POSTER> Fredderic &lt;my-name-h...@excite.com&gt; </POSTER>
+<POSTDATE> 2008-01-25T12:36:00 </POSTDATE>
+On Sun, 13 Jan 2008 21:23:55 -0800 (PST),
+
+<QUOTE PREVIOUSPOST="
+&quot;tom.rmadilo&quot; &lt;tom.rmad ... @gmail.com&gt; wrote:
+&gt; On Jan 13, 7:49 pm, Fredderic &lt;my-name-h ... @excite.com&gt; wrote:
+&gt;&gt; Yeah, I think there is a little extra care you need to take when
+&gt;&gt; redefining [namespace].  I did it myself to add a [namespace prefix]
+&gt;&gt; command that does much the same as [namespace code], except that it
+&gt;&gt; simply adds the fully qualified namespace from whence it was called
+&gt; This is simply moronic. You seem intent on adding confusing commands
+&gt; to Tcl, who cares about your additions? Why not just write your own
+&gt; language?
+">
+
+Nah.  Did that once already.  Turned out rather entertaining, really.
+Not really much use, but very entertaining.  The main point of it was
+to be able to express structures that C had difficulty with, back in
+the XT/AT days, and thereabouts, where the thought of using a 32-bit
+int to count from 1 to 10 was something akin to a mortal sin.
+
+<QUOTE PREVIOUSPOST="
+&gt; Clue yourself in here: 'much the same' means 'not the same' as in
+&gt; 'completely different'.
+">
+
+What is your problem.  Usually you seem half-way intelligent, but
+you're a little off the rocker today...
+
+<QUOTE PREVIOUSPOST="
+&gt; We all get that you are not satisfied with ordinary Tcl. Still, we
+&gt; have no evidence of any code which demonstrates your ideas. Put up, or
+&gt; shut up. It is really very tiring discussing vapor-ware. Seriously, is
+&gt; there a single line of code anywhere we can look at?
+">
+
+If it makes you happy...
+
+proc call {args} {
+set ns [uplevel 1 namespace current]
+if { $args eq {} } {return $ns}
+set cmnd [lindex $args 0]
+if { [namespace qualifiers $cmnd] ne &quot;&quot; } {return $args}
+if { $ns eq &quot;::&quot; } {set ns &quot;&quot;}
+return [lreplace $args 0 0 ${ns}::[lindex $args 0]]
+}
+
+That's the present invocation of the function.  Not that it should
+matter.  I wasn't actually talking about how great and wonderful that
+function is, or how suitable it was to any given purpose.  I was
+describing the basic technique of adding functionality to non-ensemble
+commands, and offering an example as one such place where I have used
+the technique I was referring to.
+
+Further, that style results ultimately from the rather C-esque callback
+mechanism used in the first two applications I ever used which contained
+TCL as their scripting/console engine.  The first of them was an
+industrial-strength electonics CAD package, and both of them had an
+obvious C feel to the way they used TCL.  I've always had the distinct
+impression that both applications originally were built around an
+extremely basic DOS-like command line, and TCL was only plugged in
+later to make it actually remotely useful.  I still do odd jobs on
+software that hasn't really changed much since then, so most of that
+code really isn't applicable.  And being from an embedded systems
+background, I do tend to feel more comfortable with using that style in
+my own home-brew code.  Although I apply it with more thought to
+TCL-ness than those ancient applications did, it's still a very clean
+(to my way of thinking) mechanism.  Especially if at some point in the
+future I decide to translate it back into a compiled language.
+
+Lastly, most of my questions on here, relate more to my own personal
+home-brew bits and pieces, in which I will use TCL in any way that I
+damn well want to use it.  When I'm working on code that has a price tag
+attached, or which I intend to distribute, I'll use all due care and
+something resembling decent style.  But when I'm stuffing around with my
+own code, I'll take any shortcut I feel like, to get the job done, and
+get on with doing what I would rather be doing.  It serves its purpose
+perfectly well, whether you like it or not, and if you must know, the
+main reason I don't generally bang around code snippits is EXACTLY
+because I don't advocate using my slack home-brew style of coding for
+real jobs that might actually matter to someones wallet.  Plus, my
+general home-brew scripts make frequent use of other home-brew script
+libraries, TCL &quot;adjustments&quot;, and occasionally extensions, none of which
+will make a whole lot of sense to anyone else.  The code snippits I do
+include in my posts, are generally re-written on the spot to exhibit
+the key points, in as general a context as possible, and with as
+little cruft and/or confusing optimisations as possible (unless, of
+course, that's the main point being made).
+
+So to be quite frank, I really couldn't give a shit what you think
+about this particular example.  It wasn't even the point of the message.
+
+<QUOTE PREVIOUSPOST="
+&gt; Fredderic, I would love nothing more than for you to prove me wrong,
+&gt; but without code, your words are just words. Words are words, code is
+&gt; code. No code = bs.
+">
+
+Ahhh.....  So you would describe that thread on backrefs as bullshit
+too?  As far as I'm aware, there's no actual code there.  But I think
+you might rub more than just me the wrong way by labelling it such.
+
+No one, not me, nor anyone else, needs to prove themselves to you.  So
+next time you feel the need to stand on your soap box, at least try to
+do it on-topic.  But in the meantime, I do hope I've answered your
+questions.  At least, as far as I think you're worth answering.  Good
+day to you Sir, and do have a nice life.
+
+Fredderic
+</POST>
+<POST>
+<POSTER> Alexandre Ferrieux &lt;alexandre.ferri...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-25T12:53:00 </POSTDATE>
+On Jan 25, 6:36 pm, Fredderic &lt;my-name-h ... @excite.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Ahhh.....  So you would describe that thread on backrefs as bullshit
+&gt; too?  As far as I'm aware, there's no actual code there.  But I think
+&gt; you might rub more than just me the wrong way by labelling it such.
+">
+
+Yes, more than just you :-)
+BTW, now there _is_ code, see the other thread.
+If you send me a private e-mail I'll even be glad to send you back a
+Win32 tcl85.dll with the Mutability patch.
+
+-Alex
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-25T20:14:00 </POSTDATE>
+On Jan 25, 9:53 am, Alexandre Ferrieux &lt;alexandre.ferri ... @gmail.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 25, 6:36 pm, Fredderic &lt;my-name-h ... @excite.com&gt; wrote:
+
+&gt; &gt; Ahhh.....  So you would describe that thread on backrefs as bullshit
+&gt; &gt; too?  As far as I'm aware, there's no actual code there.  But I think
+&gt; &gt; you might rub more than just me the wrong way by labelling it such.
+">
+
+Well, Alexandre did provide code, so, no I don't think it is bs. How
+long does it take to post some code somewhere? If it is good code, why
+not share it? It is true you don't have to prove anything to me or
+anyone else. But if you complain about how the current Tcl code is
+arranged, why not take the time to provide an alternative? I'm sure
+everyone will switch to using it if it is half as good as you say it
+is.
+
+<QUOTE PREVIOUSPOST="
+&gt; Yes, more than just you :-)
+&gt; BTW, now there _is_ code, see the other thread.
+&gt; If you send me a private e-mail I'll even be glad to send you back a
+&gt; Win32 tcl85.dll with the Mutability patch.
+">
+
+One nice thing about code is that you instantly find out how 'not so
+easy' things are. Sorry to piss you guys off, but consider that some
+here have a knack at dissing working code without offering any
+alternative. If you think it helps, great. Personally, I think that
+vague grumblings about working code is destructive. Someone might
+actually believe it. Like I said: prove me wrong. Just provide some
+interesting code. Ideas are cheap, I know from personal experience.
+There is a long road from idea to production code.
+</POST>
+<POST>
+<POSTER> Fredderic &lt;my-name-h...@excite.com&gt; </POSTER>
+<POSTDATE> 2008-01-26T11:47:00 </POSTDATE>
+On Fri, 25 Jan 2008 17:14:48 -0800 (PST),
+
+<QUOTE PREVIOUSPOST="
+&quot;tom.rmadilo&quot; &lt;tom.rmad ... @gmail.com&gt; wrote:
+&gt;&gt; On Jan 25, 6:36 pm, Fredderic &lt;my-name-h ... @excite.com&gt; wrote:
+&gt;&gt;&gt; Ahhh.....  So you would describe that thread on backrefs as
+&gt;&gt;&gt; bullshit too?  As far as I'm aware, there's no actual code
+&gt;&gt;&gt; there.  But I think you might rub more than just me the wrong way
+&gt;&gt;&gt; by labelling it such.
+&gt; Well, Alexandre did provide code, so, no I don't think it is bs.
+">
+
+But that was only after a fairly long period of discussion back and
+forth between the two of us.  And if you wade through that discussion,
+you'll find a lot of very specific details.  I put forth to you, then,
+that the majority of the code was written out in those messages, before
+a word or bracket of it found itself in a file with a .c file extension.
+
+<QUOTE PREVIOUSPOST="
+&gt; How long does it take to post some code somewhere? If it is good
+&gt; code, why not share it? It is true you don't have to prove anything
+&gt; to me or anyone else. But if you complain about how the current Tcl
+&gt; code is arranged, why not take the time to provide an alternative?
+&gt; I'm sure everyone will switch to using it if it is half as good as
+&gt; you say it is.
+">
+
+But that is my point.  I never claimed it was good code, only that it
+fit the purpose for which it was written, and that, it is _a_ way of
+doing it.  If it spurs further discussion on the topic, than the
+purpose for mentioning it has been fulfilled.
+
+My only real complaint against TCL, is with the seemingly haphazard way
+the [dict] sub-commands were chosen.  And I have in fact provided
+the basis of my answer to that complaint, as you put it, an
+alternative.  I don't however believe that it is in any way suitable
+for human consumption in the form provided, and was in fact provided
+mostly as an example of how you can put comments into the -map
+statement of a [namespace ensemble create] command.
+
+If I ever feel the urge to clean up the error messages, and whatever
+else needs to be done to make it suitable for more than use in my
+personal library of quick and dirty hacks, I'll probably post it on the
+wiki somewhere, and let anyone interested take it from there.  In the
+meantime, anyone is welcome to take what I HAVE provided, and do it
+properly, and I'll provide the couple extra procedures it references to
+almost anyone interested.
+
+I have in fact provided some small amounts of very real code over the
+last few years, when I have considered it suitable.
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 25, 9:53 am, Alexandre Ferrieux &lt;alexandre.ferri ... @gmail.com&gt;
+&gt; wrote:
+&gt;&gt; Yes, more than just you :-)
+&gt;&gt; BTW, now there _is_ code, see the other thread.
+">
+
+Yes, I've been reading the threads in the core list, and I've got a
+reply sitting in another edit buffer.  I'll probably post it sometime
+tomorrow.  If I get a chance to go hunting for the attachment (the first
+reference I found off Google doesn't seem to provide access to
+attachments unless you create an account and sign in first), I'll take a
+look at that and revise my message as appropriate.  Otherwise I'll just
+hit send on what I wrote as I read through the threads, when I figure
+that it's not likely I'll get to improve on it sooner rather than
+later.  :)
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; If you send me a private e-mail I'll even be glad to send you back a
+&gt;&gt; Win32 tcl85.dll with the Mutability patch.
+">
+
+Do you think it'll run under Wine?  ;)
+
+Getting back to &quot;tom.rmadilo&quot;, who wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; One nice thing about code is that you instantly find out how 'not so
+&gt; easy' things are.  Sorry to piss you guys off, but consider that some
+&gt; here have a knack at dissing working code without offering any
+&gt; alternative.  If you think it helps, great.  Personally, I think that
+&gt; vague grumblings about working code is destructive.  Someone might
+&gt; actually believe it.  Like I said: prove me wrong.  Just provide some
+&gt; interesting code.  Ideas are cheap, I know from personal experience.
+&gt; There is a long road from idea to production code.
+">
+
+No shit.  But it all ultimately starts with an idea, and usually the
+energy born of some need.  I freely admit that many of my ideas are off
+with the fairies somewhere.  I mention them, generally, in the hope
+that someone with a better take on the idea will think, &quot;You know, that
+might just work if we do it THIS way, instead&quot;.  That is what happened
+between me and Alexandre, and the result was something very different
+to what he started with, but, I'm fairly confident in saying, quite
+improved.
+
+In another case, a description of some code I've been banging about my
+personal library gave rise to a wiki page with a simpler but rather
+elegant function, which in turn gave me some new ideas.  And a related
+discussion quite helpfully highlighted the idea of swapping out a value
+with a placeholder so it could be further manipulated without waking
+the slumbering beast-of-COW.  These are real results, from what is
+otherwise &quot;vague grumblings&quot;, as you put it.
+
+So, exactly what have you achieved with this little thread of yours?
+I'm afraid you haven't even pissed anyone off, that I know of.  I'd just
+spent two hours arguing with my ISP a few minutes earlier, and you
+simply rubbed me the wrong way while I wasn't in the best of moods at
+the time.  In actual fact, your illconsidered remarks provided me (and
+still are) a needed outlet to vent.  For that, I actually rather
+thank you.  Someone with a personal attack of no real substance, was
+pretty much exactly what I needed at that time.  Besides, you have
+given me an opportunity to point out some observations that I actually
+hadn't really stopped to think about myself prior, and make me quite a
+bit happier about many of the postings that you have so ineptly
+labelled &quot;vague grumblings&quot;.  But thanks to you, I've gained a whole new
+perspective on a few things.  So I guess you have achieved something,
+after all.  Certainly not what you intended, but something, none the
+less.  :)
+
+Yet again, I bid a good day to you, and offer a few more words of
+advice; Cheer up, cloth-ears.
+
+Fredderic
+</POST>
+<POST>
+<POSTER> Alexandre Ferrieux &lt;alexandre.ferri...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-26T13:26:00 </POSTDATE>
+On 26 jan, 17:47, Fredderic &lt;my-name-h ... @excite.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; &gt; On Jan 25, 9:53 am, Alexandre Ferrieux &lt;alexandre.ferri ... @gmail.com&gt;
+&gt; &gt; wrote:
+&gt; &gt;&gt; Yes, more than just you :-)
+&gt; &gt;&gt; BTW, now there _is_ code, see the other thread.
+
+&gt; Yes, I've been reading the threads in the core list, and I've got a
+&gt; reply sitting in another edit buffer.  I'll probably post it sometime
+&gt; tomorrow.  If I get a chance to go hunting for the attachment (the first
+&gt; reference I found off Google doesn't seem to provide access to
+&gt; attachments unless you create an account and sign in first), I'll take a
+&gt; look at that and revise my message as appropriate.
+">
+
+Much simpler would be to look up my e-mail and send a message so that
+I can know yours (I might guess, but I mught guess wrong), and send
+you the patch in return.
+
+-Alex
+</POST>
+<POST>
+<POSTER> &quot;Donal K. Fellows&quot; &lt;donal.k.fell...@man.ac.uk&gt; </POSTER>
+<POSTDATE> 2008-01-26T21:43:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Fredderic wrote:
+&gt; My only real complaint against TCL, is with the seemingly haphazard way
+&gt; the [dict] sub-commands were chosen.
+">
+
+Where were you when we were working on it, O magnificent fount of
+boundless design wisdom?
+
+Since you're obviously in the mood for complaining, feel free to
+pretend that only the following subcomamnds of [dict] exist:
+
+create, exists, for, get, merge, remove, replace, size
+
+That (apart from [dict merge] which was a nice suggestion by Joe
+English) was my original vision, and it's a strictly value-based
+vision. Everything else is a convenience (albeit a very useful one in
+some cases); a way to make it easier for people to use the code. It's
+also the subject of compromises in a few cases, necessary to make
+reliable use of the code in other cases not expensive (I'm not
+convinced that I got [dict update] right but the others are I think
+done as best as practical).
+
+Note that the fact that keys in dictionaries can be arbitrary strings
+is non-negotiable.
+
+<QUOTE PREVIOUSPOST="
+&gt; I don't however believe that it is in any way suitable
+&gt; for human consumption in the form provided,
+">
+
+We appreciate you too.
+
+<QUOTE PREVIOUSPOST="
+&gt; and was in fact provided
+&gt; mostly as an example of how you can put comments into the -map
+&gt; statement of a [namespace ensemble create] command.
+">
+
+The phrase &quot;comments in a -map statement&quot; makes me think you've either
+completely misunderstood what -map does, or you've done something
+icky. A (very) cursory search didn't reveal enough details to make me
+know which.
+
+<QUOTE PREVIOUSPOST="
+&gt; I mention [my ideas], generally, in the hope
+&gt; that someone with a better take on the idea will think, &quot;You know, that
+&gt; might just work if we do it THIS way, instead&quot;.
+">
+
+I'm interested in your energetic espousal of them, but I suspect
+you're going to run into more trouble than you expect. In particular,
+mutability and references have a lot of &quot;interesting&quot; consequences
+(assuming you're interested in efficient implementations that is). But
+it seems like you feel you have to learn that for yourself; be my
+guest, but don't hold up Tcl while you do it. :-)
+
+<QUOTE PREVIOUSPOST="
+&gt; So, exactly what have you achieved with this little thread of yours?
+&gt; I'm afraid you haven't even pissed anyone off, that I know of.
+">
+
+Hmm, but you've been irritating a few people yourself with some of
+your blanket statements. Time to back off and start being nice and
+diplomatic to everyone again.
+
+Donal.
+</POST>
+<POST>
+<POSTER> Fredderic &lt;my-name-h...@excite.com&gt; </POSTER>
+<POSTDATE> 2008-01-27T09:47:00 </POSTDATE>
+On Sat, 26 Jan 2008 18:43:53 -0800 (PST),
+&quot;Donal K. Fellows&quot; &lt;donal.k.fell ... @man.ac.uk&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Fredderic wrote:
+&gt;&gt; My only real complaint against TCL, is with the seemingly haphazard
+&gt;&gt; way the [dict] sub-commands were chosen.
+&gt; Where were you when we were working on it, O magnificent fount of
+&gt; boundless design wisdom?
+">
+
+hehehe  I was wondering if that comment would draw a response from
+you...  Wasn't really intended, though.  [dict] is quite good where it
+counts, and I've never said otherwise.
+
+The ONLY issue I have with it, is that the naming of the commands seems
+to me to have been fairly arbitrary in some cases.  Though I've also
+never claimed that my perspective on that is the only one.
+
+But it has been stated time and time again that it's confusing, not
+just with [dict], but a few of the others, also, and for someone with an
+extremely broken memory, I spend almost as much time looking at the
+documentation for [dict], than actually using it.  Which is why I
+rebuilt my own [keyed] variant that fits my pattern better.  Which
+brings up another issue...  Ensembles, with their ability to be
+remapped, are going to run afoul of freakish error message situations.
+I've been kicking around my head, a couple vague possibilities for
+reasonable (as opposed to some of my more entertaining ideas) ways of
+fixing that, and also making it easier to make new control structures
+more transparent.  If I come up with something solid, before someone
+else does, I sort of know where to send it, now.
+
+And to answer your specific question, unfortunately, by the time I came
+across it in the TIP list (I've really only just recently started paying
+attention to TCL's actual development in the last year at most), it was
+already well under way.  These very concerns WERE raised, though, not
+only by myself, and yet we are still here.  So it would seem that where
+I was at that point in time, personally, really doesn't matter.
+
+<QUOTE PREVIOUSPOST="
+&gt; Since you're obviously in the mood for complaining, feel free to
+&gt; pretend that only the following subcomamnds of [dict] exist:
+&gt;   create, exists, for, get, merge, remove, replace, size
+">
+
+I'll agree that the first two-thirds of my [keyed] alternative was all
+get, set, and unset, but I'm pretty sure I didn't leave anything off.
+Although I may have left out a section or two that were purely copied
+from [dict]s sub-command map, simply to shorten it a little...  I
+really don't remember.
+
+As I said, my main reasons for posting it was the mixing of [dict]s
+existing commands with home-brew additions, the ability to rename an
+existing command (so you can split a home-brew addition in its place),
+and the ability to have a command represented under two names.  With a
+side-serving of &quot;it's presently a pain to add new commands, and here is
+one idea I had for helping there, what do people think?&quot;, and &quot;[dict
+with] in its present form should be drawn and quartered, and then
+utterly erased from existence&quot;.  The concept behind [dict with] is all
+good and well, but having random variables popping into existence in
+the middle of your procedure is an exceedingly bad idea.  Just imagine
+if someone decides to extend that dict sometime with new fields, that
+happen to clash with a variable used by the procedure...  *shudders*
+Thankfully there are better alternatives.
+
+<QUOTE PREVIOUSPOST="
+&gt; That (apart from [dict merge] which was a nice suggestion by Joe
+&gt; English) was my original vision, and it's a strictly value-based
+&gt; vision. Everything else is a convenience (albeit a very useful one in
+&gt; some cases); a way to make it easier for people to use the code.
+">
+
+I was actually wondering about that...  The pure value-based approach
+does have its elegance.  But the need to take the value, manipulate it,
+and then assign it back into the same variable, does get rather long in
+the tooth at times when you're working with variable names that are
+long enough to be descriptive.  A three letter variable name holding a
+dict being constructed during a loop is one thing.  A 23 letter name of
+a variable two namespaces deep, however, is another issue entirely.
+I've found, mostly for just that reason, that the value-based approach
+does tend to foster a return to the old short cryptic variable names.
+
+There are three common access patterns, the way I see it; variables,
+values, and deep values in variables.  And TCL doesn't provide a ready
+mechanism to distinguish them.  This mutable stuff, especially if it
+was more pervasive than the current plan, would go an awfully long way
+to closing that gap in the deep structure cases, allowing the deep
+access functions like [lset] and the extra arguments to [lindex], to
+be made redundant.  But TCL still lacks the syntactic distinction that
+makes it easy to differentiate between the variable and value based
+access methods.
+
+Which is why in my [keyed] re-wrapping of the [dict] sub-commands, I
+aimed for a fairly specific naming convention, and a more complete set
+of convenience functions so when it came to the three main basic
+operations (get, set, unset), whichever way I wanted to use to access a
+value, was there in a clean and non-convoluted method.
+
+<QUOTE PREVIOUSPOST="
+&gt; It's also the subject of compromises in a few cases, necessary to
+&gt; make reliable use of the code in other cases not expensive (I'm not
+&gt; convinced that I got [dict update] right but the others are I think
+&gt; done as best as practical).
+">
+
+I've only been playing with [dict] for about a month, really.  I didn't
+want to jump on the [dict] bandwagon because I use a fair bit of TCL
+embedded into other applications, and none of them have picked up on
+8.5 yet.
+
+Yes, I know it's available as an extension, also, but kicking in the
+packaging system for a quicky utility can end up taking longer to
+determine the list of available packages, than the utility actually
+takes to run.  Plus it's a non-shared resource, at the end of it.
+
+<QUOTE PREVIOUSPOST="
+&gt; Note that the fact that keys in dictionaries can be arbitrary strings
+&gt; is non-negotiable.
+">
+
+I quite agree.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; and was in fact provided mostly as an example of how you can put
+&gt;&gt; comments into the -map statement of a [namespace ensemble create]
+&gt;&gt; command.
+&gt; The phrase &quot;comments in a -map statement&quot; makes me think you've either
+&gt; completely misunderstood what -map does, or you've done something
+&gt; icky. A (very) cursory search didn't reveal enough details to make me
+&gt; know which.
+">
+
+It was a very long -map statement, which prompted me to split it up
+into groups, and I wanted to be able to label the groups.  Being a
+one-shot command to create the ensemble at source-time, I figured
+stripping out a few comments with [lsearch] to be a perfectly
+acceptable overhead.  It probably comes under the category of &quot;a
+convenient icky&quot;.  ;)
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; I mention [my ideas], generally, in the hope that someone with a
+&gt;&gt; better take on the idea will think, &quot;You know, that might just work
+&gt;&gt; if we do it THIS way, instead&quot;.
+&gt; I'm interested in your energetic espousal of them, but I suspect
+&gt; you're going to run into more trouble than you expect.  In particular,
+&gt; mutability and references have a lot of &quot;interesting&quot; consequences
+&gt; (assuming you're interested in efficient implementations that is). But
+&gt; it seems like you feel you have to learn that for yourself; be my
+&gt; guest, but don't hold up Tcl while you do it. :-)
+">
+
+hehehe  Oh, I usually do run into more trouble than I expect.  It keeps
+life interesting.  ;)
+
+You're right, mutability and references do have a lot of consequences.
+That was fairly obvious going into it.  I do feel, though, that it
+would be well worth a slight performance regression, if it can be kept
+such, which is why I have so enthusiastically helped build the idea.
+I'm uneasy about the mutability concept, but I can't see a cleaner way
+of implementing references (which could, however, be used to hide some
+of the nasty consequences of mutability).  And either one will help a
+couple of those sore points in TCL's syntactic limitations.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; So, exactly what have you achieved with this little thread of yours?
+&gt;&gt; I'm afraid you haven't even pissed anyone off, that I know of.
+&gt; Hmm, but you've been irritating a few people yourself with some of
+&gt; your blanket statements. Time to back off and start being nice and
+&gt; diplomatic to everyone again.
+">
+
+Yeah, I know.  I've been a bad boy.  My sense of humour gets a little
+twisted from time to time when life takes a particularly nasty turn for
+the worse, as it is at present.  I am curious, though, which statements
+and people you're referring to...  I really do apologise if I've
+said something that hit someone unintentionally, or come across harder
+than intended.  My fairly direct view of things sometimes leaves me
+oblivious to just how I might be misinterpreted.
+
+At the end of the day, if TCL wasn't worth the effort, I wouldn't be
+bothering.
+
+Fredderic
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-27T11:53:00 </POSTDATE>
+Would it be possible to provide one example of what you would like to
+do that doesn't work very well with Tcl as it is? Maybe you don't want
+to publish your code, okay I can live with that, but why continue to
+make criticisms of the existing Tcl language without providing any
+examples of what you are trying to do?
+
+By example, I mean an algorithm, not implementation details which are
+not exposed to the Tcl level. Every language has its limitations,
+sometimes these limitations are vital to the language, you can't
+remove the limitation without destroying the basic character of the
+language. Most of what you discuss appears to fall into that category,
+but with no concrete example of what you can't do, or can't do in a
+way you find elegant, who will ever know?
+
+If you really think Tcl is worth it, give the community some basis,
+some reason to follow your ideas.
+</POST>
+<POST>
+<POSTER> Fredderic &lt;my-name-h...@excite.com&gt; </POSTER>
+<POSTDATE> 2008-01-28T01:50:00 </POSTDATE>
+On Sun, 27 Jan 2008 08:53:24 -0800 (PST),
+
+<QUOTE PREVIOUSPOST="
+&quot;tom.rmadilo&quot; &lt;tom.rmad ... @gmail.com&gt; wrote:
+&gt; Would it be possible to provide one example of what you would like to
+&gt; do that doesn't work very well with Tcl as it is? Maybe you don't want
+&gt; to publish your code, okay I can live with that, but why continue to
+&gt; make criticisms of the existing Tcl language without providing any
+&gt; examples of what you are trying to do?
+">
+
+It's not that I don't want to publish my code.  It's more just that I
+make heavy use of my own library of extras.  It's easier to describe
+most chunks of code, or even rewrite it from scratch, than strip out all
+the references to little tidbits I've gathered together over the
+years, and then test it to make sure it still works, still exhibits
+the same features, and/or bugs...
+
+I'm no master programmer by any means.  But I'm just a little above
+beginner, also.  And, more often than not when I have trouble doing
+something, enough trouble that I have to ask, it's complex enough that
+it's not so easy to provide an example.
+
+A description however, usually gets the point across without having to
+test it, and potentially have some bug or mistake slip through that
+confuses the heck out of people trying to help.  If it's really simple,
+or it's something specific in the coding that I'm trying to express,
+THEN I'll post code.  But almost everything I write for my own use has
+references to functions in my standard library.  Some of that I think
+might be handy to some people, and so I mention it from time to time.
+And occasionally someone's taken something I use, and mentioned, and
+done something useful with it.
+
+And all the code I've written that's not part of some personal project
+of my own, is barely worth mentioning.  It's all pretty straight
+forward, and usually stuck back in the '90's, in terms of TCL
+versions.  Not really the stuff I find myself asking for help with.
+
+And when I do make a remark about something I perceive to be lacking in
+TCL, I'm usually not the only one to have said it, and I won't be the
+last one to say it, either.  And if I have an answer of my own, I'll
+generally mention it soon after, or have mentioned it on a prior
+occasion.
+
+<QUOTE PREVIOUSPOST="
+&gt; By example, I mean an algorithm, not implementation details which are
+&gt; not exposed to the Tcl level. Every language has its limitations,
+&gt; sometimes these limitations are vital to the language, you can't
+&gt; remove the limitation without destroying the basic character of the
+&gt; language. Most of what you discuss appears to fall into that category,
+&gt; but with no concrete example of what you can't do, or can't do in a
+&gt; way you find elegant, who will ever know?
+">
+
+And sometimes a basic character of the language is exactly what needs
+to be changed.  You go through every significant new feature in TCL,
+such as namespaces and now ensembles, and tell me they didn't change the
+character of the language.  You can argue until you're blue in the face
+that they were the right choice for this reason, or that reason.  But I
+bet it wasn't quite so obvious when the idea was first put forward.  And
+I bet there were at least a few who were thinking they would
+irreparably damage the character of TCL in one way or another.
+
+If it's a characteristic that fundamental to the nature of TCL, then
+support for it won't materialise, and it'll pass along like many other
+suggestions have in the past.  There's a bunch of them in the TIPs
+list, some way wackier than anything I've dreamt up.  But some of those
+limitations are just waiting for a good idea.  And if people stop
+putting ideas forth in fear of breaking the language, it'll just fade
+away like the ideas themselves.
+
+And as for concrete examples, I believe I have given examples for most
+of the ideas I've put forth.  But it's hard to give a concrete example
+on a concept that still needs to be developed.  The last one was
+regarding my references idea, where I demonstrated the problem of
+passing a variable through an arbitrary number of intermediate
+functions, which have no comprehension that one of the data members
+they're dutifully passing along is a reference to a variable in the
+frame from which it originated.  It's not really that hard to fix, just
+send along [info level] as a second argument.  But that means that ALL
+uses of that function, now have to send along that extra piece of
+information, when generally it'll only be needed on a few rare
+occasions.  The actual issue was a background task that was initiated,
+some other processing was performed in the meantime, and then the
+result was waited on before the procedure could complete.
+
+<QUOTE PREVIOUSPOST="
+&gt; If you really think Tcl is worth it, give the community some basis,
+&gt; some reason to follow your ideas.
+">
+
+I do, when I deem it appropriate.  But having ideas is easy.  Having
+good ideas, that takes time, patience, and practice.  :)
+
+Fredderic
+</POST>
+<POST>
+<POSTER> Bryan Oakley &lt;oak...@bardo.clearlight.com&gt; </POSTER>
+<POSTDATE> 2008-01-28T06:44:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Fredderic wrote:
+&gt; And sometimes a basic character of the language is exactly what needs
+&gt; to be changed.  You go through every significant new feature in TCL,
+&gt; such as namespaces and now ensembles, and tell me they didn't change the
+&gt; character of the language.
+">
+
+Ok, I'll be the first :-). With the exception of {*}, I don't think any
+other change in the past decade has changed the character of the
+language. Even {*} is hard to argue as a character change. It perhaps
+made the language slightly less &quot;pretty&quot;, but the character of the
+language really hasn't changed.
+
+Now, the tile/ttk widgets probably has caused a character change in Tk,
+one for the better I think. Tk used to be &quot;customize everything to get
+it to look right&quot; and now is fast approaching &quot;customize nothing to get
+it to look right&quot;.
+</POST>
+<POST>
+<POSTER> Fredderic &lt;my-name-h...@excite.com&gt; </POSTER>
+<POSTDATE> 2008-01-28T15:04:00 </POSTDATE>
+On Mon, 28 Jan 2008 11:44:44 GMT,
+
+<QUOTE PREVIOUSPOST="
+Bryan Oakley &lt;oak ... @bardo.clearlight.com&gt; wrote:
+&gt; Fredderic wrote:
+&gt;&gt; And sometimes a basic character of the language is exactly what
+&gt;&gt; needs to be changed.  You go through every significant new feature
+&gt;&gt; in TCL, such as namespaces and now ensembles, and tell me they
+&gt;&gt; didn't change the character of the language.
+&gt; Ok, I'll be the first :-)
+">
+
+hehehe  I must admit, I enjoy these discussions entirely too much.
+They remind me of my University days...  And just like my University
+days, if only I could apply this much thought and effort to more useful
+pursuits...  ;)
+
+WARNING: This posting is rated MA, for mature audiences only.  If you're
+easily offended, you should probably look away now.
+
+<QUOTE PREVIOUSPOST="
+&gt; With the exception of {*}, I don't think any other change in the past
+&gt; decade has changed the character of the language. Even {*} is hard to
+&gt; argue as a character change. It perhaps made the language slightly
+&gt; less &quot;pretty&quot;, but the character of the language really hasn't
+&gt; changed.
+">
+
+My main point is that anything, taken in the wrong context, can be
+bitched at.  But those same things, viewed from hindsight, often seem
+quite natural and we wonder how we ever got along without them.
+
+Namespaces introduced a new bucket of problems, like their odd
+1-skip-a-few scoping.  Could that not be viewed as a character change
+from a non-namespace-supporting TCL?  Where without namespaces, you have
+local and global, now there's local, namespace, global, and potentially
+a chunk of never-never-land in between that needed some subsequent
+retrofitting to deal with decently.  (Don't worry DKF, I'm not trying
+to suggest that said subsequent retrofitting is in any way inadequate.)
+
+People have said that mutability is a drastic character change for
+TCL.  But is mutability really such a character change?  You're still
+just setting a new value to an old variable.  The fact that some changes
+appear elsewhere, is no different to if elsewhere was a variable created
+through [upvar], is it?  The only real difference is that mutability is
+new, requires some new machinery, and allows those changes to occur in
+places that [upvar] couldn't reach.  I dare say [upvar] itself needed
+some extra machinery added at one time, but now it's considered wholly
+a part of TCL's character.  My references idea would have been an
+extension to [upvar] to achieve much the same goal as mutability, and
+yet it's been stated by a few (by way of being suggested independently
+as an alternative) as being less of a character change than mutability.
+
+I have some code to synthesise multi-level arrays.  It works by taking
+the name you give your array, and giving it an internal name, and then
+creating a shadow item for every real item giving the index of a second
+internal array representing that items sub-items.  If any of that makes
+sense (I think there's a tcllib package which provides a similar
+service, though I wrote mine before I knew that tcllib even existed,
+and then a design change rendered the whole thing pretty mute).  All
+that makes it possible to achieve something very much akin to mutable
+values, but far slower and much more fragile.
+
+So, since it can already be done in a manner of speaking, how is it in
+fact, any more of a character change than {*} which has rendered an
+entire &quot;expert technique&quot; mostly redundant, being that of arcane
+eval-of-list magic?  If anything, I'd say that the evil mutability idea
+is actually bringing what can already be done, more in line with TCL's
+existing character.
+
+As for Tk, I don't use it as anything much more than a toy, so I can't
+comment on that part.  But I'd say your description of its transitions,
+are as much a change of character as {*}'s effect on the neccesity of
+eval-of-list magic, or mutable values impact on the even more evil and
+arcane (not to mention fragile) magics required to synthesise it.
+
+It's all a matter of perspective.
+
+Fredderic
+</POST>
+</TEXT>
+</BODY>
+</DOC>

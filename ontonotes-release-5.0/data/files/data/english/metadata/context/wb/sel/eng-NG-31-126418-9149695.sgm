@@ -1,0 +1,672 @@
+<DOC>
+<DOCID> eng-NG-31-126418-9149695 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-31T06:53:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Multiple $content_for_layout
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Cristi A.&quot; &lt;sareiod...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T06:53:00 </POSTDATE>
+Hi everyone,
+
+This is my first post and I am new to cakephp.
+
+I decided to start from the basic so I am trying to move a simple HTML
+web-site (mostly static pages) to cakephp and add an Administration
+for a photo gallery with multiple categories.
+
+The problem I encountered appeared early because the way the HTML was
+designed,
+so I need 2 $content_for_layout in my default layout, like this:
+********************
+&lt;div id=&quot;left_collumn&quot;&gt;
+&lt;?php echo $content1_for_layout ?&gt;
+&lt;/div&gt;
+
+&lt;div&gt; THE MAIN MENU&lt;/div&gt;
+
+&lt;div id=&quot;right_column&quot;&gt;
+&lt;?php echo $content2_for_layout ?&gt;
+&lt;/div&gt;
+*****************
+
+I've searched this group and found 3 threads started about this and 1
+solution which involved  modifying the core of cake(not recommended
+from obvious reasons).
+
+All I need to know if this can be done without modifying the core, and
+if yes ..how??
+
+Also I was thinking that if this can not be done is it possible to
+load an element inside a view and not a layout?
+This way I could define THE MENU, FOOTER, HEADER as elements and
+include them inside my views (not so sweet but would solve my
+problem.)
+
+Best wishes,
+Cristi A.
+</POST>
+<POST>
+<POSTER> Marcin Jaworski &lt;mrjawor...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T09:12:00 </POSTDATE>
+Hi.
+
+I'm new to CakePHP too. I was wondering the same thing. In my job I'm
+working with ASP.NET2.0 applications and there are MasterPages. This
+is something similar to layouts in Cake, but it allows to do some
+things not possible now in Cake:
+1. There is possibility to define a MasterPage for MasterPage
+(MasterPage nesting). For example I can have 2 masterpages defining
+different column layouts (1 column, 2 columns, etc) and they both are
+using a third masterpage with page header and footer. So the main
+MasterPage encapsulates one of those 2 masterpages and then one of
+them encapsulates a content page.
+It would be great to have a possibility to nest layouts in Cake the
+same way (for example by defining a $layout var on top the layout file
+or something like that.
+
+2. The MasterPage uses &lt;asp:ContentPlaceholder&gt; elements to place
+contents in proper places on the page. But it allows to include more
+than 1 placeholder (they are named). The content Page which uses this
+MasterPage can define a content for each placeholder. So when the
+master page has 2 placeholders named &quot;maincontent&quot; and &quot;sidebar&quot; I can
+define in a Page separate content for each of them
+(ContentPlaceholders can have a default content, so when specific Page
+doesn't define a content for it, it will use the default).
+
+I wonder if it would be possible to somehow emulate this behavior in
+Cake using elements and components. For example:
+- an element for defining additional contents in layout (placed in
+layout files)
+- a component which would allow to define in controller, from where it
+can get the content for specific content element
+or (instead of component)
+- a special tag which could be used in view (like &lt;cake:nocache&gt;) for
+example &lt;cake:content name=&quot;name_of_the_content&quot;&gt;some content&lt;/
+cake:content&gt;, which wouldn't be rendered as the main content, but
+instead it would be &quot;transfered&quot; to an element named
+&quot;name_of_the_content&quot; in layout.
+
+Example:
+
+in layout file (simplified):
+
+&lt;html&gt;
+&lt;body&gt;
+&lt;div id=&quot;leftcol&quot;&gt;&lt;?=$content_for_layout ?&gt;&lt;/div&gt;
+&lt;div id=&quot;rightcol&quot;&gt;&lt;? $this-&gt;renderElement('namedContent',
+array('name' =&gt; 'name_of_the_content')); ?&gt;&lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+
+in view:
+
+&lt;div&gt;Normal content rendered as $content_for_layout&lt;/div&gt;
+
+&lt;cake:content name=&quot;name_of_the_content&quot;&gt;
+This content should not be rendered to $content_for_layout. Instead it
+should be displayed by namedContent element.
+&lt;/cake:content&gt;
+
+It would be also possible to not using element to render this named
+content (the content could be available through
+$contents_for_layout[&quot;name_of_the_content&quot;] associative array in the
+layout, and the main content could be available like now, or using
+some default key in the array). I think that this would require
+modification of the core of Cake.
+
+I don't know if this is even possible. As I said I'm new to Cake and
+I'm now discovering all the goodies in it. Maybe there are some other
+ways to do this.
+</POST>
+<POST>
+<POSTER> Marcin Jaworski &lt;mrjawor...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T09:37:00 </POSTDATE>
+Hi.
+
+This is me again :).
+
+I did the search and I found a possible solution using ob_start() and
+ob_get_clean() functions. Like in my previous ideas it is something
+like content placeholders.
+
+view:
+
+&lt;div&gt;This is some view. This is it's main content&lt;/div&gt;
+&lt;? ob_start(); ?&gt;
+this content won't be rendered as $content_for_layout
+&lt;? $GLOBALS['namedContents']['somename'] = ob_get_clean(); ?&gt;
+
+then in layout:
+
+&lt;div id=&quot;leftcol&quot;&gt;&lt;?= $content_for_layout ?&gt;&lt;/div&gt;
+&lt;div id=&quot;rightcol&quot;&gt;
+&lt;? if (isset($GLOBALS['namedContents']['somename'])) { echo
+$GLOBALS['namedContents']['somename']; } else { ?&gt;
+Here goes the default content for this placeholder
+&lt;? } ?&gt;
+&lt;/div&gt;
+
+When no default content is required then just simply &lt;?=
+$GLOBALS['namedContents']['somename'] ?&gt; where it is needed.
+
+However I haven't tested this yet. It's only an idea. Maybe it could
+be wrapped in a Helper?
+
+This should not break existing buffering using ob_start() because as I
+have read on in the php manual, buffers are stackable (it is possible
+to call ob_start inside a buffer and this will create a new buffer on
+top of that first).
+</POST>
+<POST>
+<POSTER> &quot;Cristi A.&quot; &lt;sareiod...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T11:50:00 </POSTDATE>
+Hi Marcin,
+
+Thank you for your response. I'll try to implement your idea regarding
+ob_start() and
+ob_get_clean() functions as soon as I can.
+
+It would be a shame if it wasn't possible this kind of flexibility
+with cake.
+</POST>
+<POST>
+<POSTER> rtconner &lt;rtcon...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T12:34:00 </POSTDATE>
+I'm pretty sure this Helper will help you guys out..
+
+http://bakery.cakephp.org/articles/view/anything_for_layout-making-ht...
+</POST>
+<POST>
+<POSTER> Marcin Jaworski &lt;mrjawor...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T13:17:00 </POSTDATE>
+Thank you. My code basically does the same thing :). So I think that
+this must be a correct way of doing this because 2 different
+programmers had the same idea :) (I didn't know about this Helper
+before - I need spend more time in the bakery :)).
+
+On 31 Paź, 17:34, rtconner &lt;rtcon ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I'm pretty sure this Helper will help you guys out..
+
+&gt; http://bakery.cakephp.org/articles/view/anything_for_layout-making-ht ...
+">
+</POST>
+<POST>
+<POSTER> &quot;Cristi A.&quot; &lt;sareiod...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T17:38:00 </POSTDATE>
+Thank you Rob,
+
+This is exactly what I was looking for. :)
+
+It took me 3 hours to figure out how to set up routes from the
+&quot; www.site.com &quot; to the default home.ctp and then to a homepages/
+index.ctp view controled by a controller( doh ) that included your
+helper and to tell my model &quot;var $useTable = false;&quot;
+
+Other then that worked like a charm :))
+
+To bad there is no book exclusively about cake...it would sell like
+fresh baked cake ( I think this kind of talk is contagious :)
+
+On Oct 31, 6:34 pm, rtconner &lt;rtcon ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I'm pretty sure this Helper will help you guys out..
+
+&gt; http://bakery.cakephp.org/articles/view/anything_for_layout-making-ht ...
+">
+</POST>
+<POST>
+<POSTER> mbavio &lt;mba...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T19:34:00 </POSTDATE>
+On Oct 31, 10:37 am, Marcin Jaworski &lt;mrjawor ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi.
+
+&gt; This is me again :).
+
+&gt; I did the search and I found a possible solution using ob_start() and
+&gt; ob_get_clean() functions. Like in my previous ideas it is something
+&gt; like content placeholders.
+
+&gt; view:
+
+&gt; &lt;div&gt;This is some view. This is it's main content&lt;/div&gt;
+&gt; &lt;? ob_start(); ?&gt;
+&gt; this content won't be rendered as $content_for_layout
+&gt; &lt;? $GLOBALS['namedContents']['somename'] = ob_get_clean(); ?&gt;
+
+&gt; then in layout:
+
+&gt; &lt;div id=&quot;leftcol&quot;&gt;&lt;?= $content_for_layout ?&gt;&lt;/div&gt;
+&gt; &lt;div id=&quot;rightcol&quot;&gt;
+&gt; &lt;? if (isset($GLOBALS['namedContents']['somename'])) { echo
+&gt; $GLOBALS['namedContents']['somename']; } else { ?&gt;
+&gt; Here goes the default content for this placeholder
+&gt; &lt;? } ?&gt;
+&gt; &lt;/div&gt;
+
+&gt; When no default content is required then just simply &lt;?=
+&gt; $GLOBALS['namedContents']['somename'] ?&gt; where it is needed.
+
+&gt; However I haven't tested this yet. It's only an idea. Maybe it could
+&gt; be wrapped in a Helper?
+
+&gt; This should not break existing buffering using ob_start() because as I
+&gt; have read on in the php manual, buffers are stackable (it is possible
+&gt; to call ob_start inside a buffer and this will create a new buffer on
+&gt; top of that first).
+">
+
+Wow! Seems very complex. Why no to try the simple methodology of
+CakePHP and use elements ( http://bakery.cakephp.org/articles/view/
+creating-reusable-elements-with-requestaction) to create reusable
+parts of code that you can put everywhere...
+An advice... Always try to solve first in the Cake way, i´m sure
+you`re gonna save a lot of time.
+
+Have a nice day.
+</POST>
+<POST>
+<POSTER> Grant Cox &lt;grant....@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-01T00:43:00 </POSTDATE>
+You are correct that using elements is a good idea, but the only
+problem is that requestAction is really quite a large operation - a
+whole extra call through the CakePHP pipeline.  So if you have half a
+dozen of these on every page, it really will be inefficient.
+
+So the best solution is to have some beforeFilter action that
+determines what elements should be visible on the final page, and
+loads the appropriate data directly from the models (not via
+requestAction), and sets it for the view.  It's a little more work,
+and less &quot;plug and play&quot;, but will be noticably faster if you have a
+number of elements per page.
+</POST>
+<POST>
+<POSTER> Marcin Jaworski &lt;mrjawor...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-01T07:58:00 </POSTDATE>
+I don't think that elements are a good solution to this problem. What
+if I want to have a dynamically changing side column on my page, that
+is dependent on the main content (controller, action or even
+parameters)? Using elements, I would need to create element that would
+also get the data to display depending on the Cake's path or include
+some logic in layout so it would display different contents in side
+column. This would be a lot of work and it would require to add new
+code to element/layout when adding new controllers.
+
+Of course I could do the layout without the columns and just render
+columns' divs in each view, but I think that is not the Cake's way
+either (page's layout should be defined as a whole in layout files).
+
+Using predefined &quot;containers&quot; (in this case &quot;$*_for_layout&quot; variables)
+the layout itself is independent from the controllers/views. All you
+need to know is the name of those additional contents in layout file
+and just render it in your view. You can add new controllers and views
+without adding the support for them in layout or some kind of element.
+You can for example place links list of the months/years in /news/
+index and list of this month news when in /news/show/someid. But you
+can without the problem display for example a list of similar topics
+when displaying some forum post etc. The layout won't need to know
+what you need to display.
+
+It would be also great having nested layouts (as I mentioned in my
+first reply):
+
+--- mainlayout.ctp ---
+
+&lt;html&gt;
+&lt;head&gt;&lt;!-- html headers here --&gt;&lt;/head&gt;
+&lt;body&gt;
+&lt;div id=&quot;container&quot;&gt;
+&lt;div id=&quot;header&quot;&gt;&lt;!-- page header --&gt;&lt;/div&gt;
+&lt;?= $content_for_layout ?&gt;
+&lt;div id=&quot;footer&quot;&gt;&lt;!-- page footer --&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+
+------
+
+--- onecolumnlayout.ctp ---
+
+&lt;? $this-&gt;layout = 'mainlayout.ctp'; ?&gt;
+
+&lt;div id=&quot;singlecolumn&quot;&gt;
+&lt;?= $content_for_layout ?&gt;
+&lt;/div&gt;
+
+------
+
+--- twocolumnslayout.ctp ---
+
+&lt;? $this-&gt;layout = 'mainlayout.ctp'; ?&gt;
+
+&lt;div id=&quot;maincolumn&quot;&gt;
+&lt;?= $content_for_layout ?&gt;
+&lt;/div&gt;
+
+&lt;div id=&quot;sidecolumn&quot;&gt;
+&lt;?= $sidecontent_for_layout ?&gt;
+&lt;/div&gt;
+
+------
+
+Then in the controller, one could just select the layout from
+onecolumnlayout and twocolumnslayout depending on the needs and those
+layouts with rendered contents could be rendered as
+$content_for_layout in the mainlayout. This way we have only one place
+where we define headers, footers and the html stuff, and we follow the
+Cake's way of doing things defining columns in layouts and not in
+every view. And probably it would save a lot of work to many people
+out there :).
+
+On 1 Lis, 00:34, mbavio &lt;mba ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Oct 31, 10:37 am, Marcin Jaworski &lt;mrjawor ... @gmail.com&gt; wrote:
+
+&gt; &gt; Hi.
+
+&gt; &gt; This is me again :).
+
+&gt; &gt; I did the search and I found a possible solution using ob_start() and
+&gt; &gt; ob_get_clean() functions. Like in my previous ideas it is something
+&gt; &gt; like content placeholders.
+
+&gt; &gt; view:
+
+&gt; &gt; &lt;div&gt;This is some view. This is it's main content&lt;/div&gt;
+&gt; &gt; &lt;? ob_start(); ?&gt;
+&gt; &gt; this content won't be rendered as $content_for_layout
+&gt; &gt; &lt;? $GLOBALS['namedContents']['somename'] = ob_get_clean(); ?&gt;
+
+&gt; &gt; then in layout:
+
+&gt; &gt; &lt;div id=&quot;leftcol&quot;&gt;&lt;?= $content_for_layout ?&gt;&lt;/div&gt;
+&gt; &gt; &lt;div id=&quot;rightcol&quot;&gt;
+&gt; &gt; &lt;? if (isset($GLOBALS['namedContents']['somename'])) { echo
+&gt; &gt; $GLOBALS['namedContents']['somename']; } else { ?&gt;
+&gt; &gt; Here goes the default content for this placeholder
+&gt; &gt; &lt;? } ?&gt;
+&gt; &gt; &lt;/div&gt;
+
+&gt; &gt; When no default content is required then just simply &lt;?=
+&gt; &gt; $GLOBALS['namedContents']['somename'] ?&gt; where it is needed.
+
+&gt; &gt; However I haven't tested this yet. It's only an idea. Maybe it could
+&gt; &gt; be wrapped in a Helper?
+
+&gt; &gt; This should not break existing buffering using ob_start() because as I
+&gt; &gt; have read on in the php manual, buffers are stackable (it is possible
+&gt; &gt; to call ob_start inside a buffer and this will create a new buffer on
+&gt; &gt; top of that first).
+
+&gt; Wow! Seems very complex. Why no to try the simple methodology of
+&gt; CakePHP and use elements ( http://bakery.cakephp.org/articles/view/
+&gt; creating-reusable-elements-with-requestaction) to create reusable
+&gt; parts of code that you can put everywhere...
+&gt; An advice... Always try to solve first in the Cake way, i´m sure
+&gt; you`re gonna save a lot of time.
+
+&gt; Have a nice day.
+">
+</POST>
+<POST>
+<POSTER> mbavio &lt;mba...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-01T10:09:00 </POSTDATE>
+Keeps looking a little complicated to me, but it doesnt matter, we all
+have different ways of solving problems... Here you have an useful
+link for your purpose... http://cakebaker.42dh.com/2007/04/28/define-your-own-for_layout-varia...
+
+Peace.
+
+On Nov 1, 8:58 am, Marcin Jaworski &lt;mrjawor ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I don't think that elements are a good solution to this problem. What
+&gt; if I want to have a dynamically changing side column on my page, that
+&gt; is dependent on the main content (controller, action or even
+&gt; parameters)? Using elements, I would need to create element that would
+&gt; also get the data to display depending on the Cake's path or include
+&gt; some logic in layout so it would display different contents in side
+&gt; column. This would be a lot of work and it would require to add new
+&gt; code to element/layout when adding new controllers.
+
+&gt; Of course I could do the layout without the columns and just render
+&gt; columns' divs in each view, but I think that is not the Cake's way
+&gt; either (page's layout should be defined as a whole in layout files).
+
+&gt; Using predefined &quot;containers&quot; (in this case &quot;$*_for_layout&quot; variables)
+&gt; the layout itself is independent from the controllers/views. All you
+&gt; need to know is the name of those additional contents in layout file
+&gt; and just render it in your view. You can add new controllers and views
+&gt; without adding the support for them in layout or some kind of element.
+&gt; You can for example place links list of the months/years in /news/
+&gt; index and list of this month news when in /news/show/someid. But you
+&gt; can without the problem display for example a list of similar topics
+&gt; when displaying some forum post etc. The layout won't need to know
+&gt; what you need to display.
+
+&gt; It would be also great having nested layouts (as I mentioned in my
+&gt; first reply):
+
+&gt; --- mainlayout.ctp ---
+
+&gt; &lt;html&gt;
+&gt; &lt;head&gt;&lt;!-- html headers here --&gt;&lt;/head&gt;
+&gt; &lt;body&gt;
+&gt; &lt;div id=&quot;container&quot;&gt;
+&gt; &lt;div id=&quot;header&quot;&gt;&lt;!-- page header --&gt;&lt;/div&gt;
+&gt; &lt;?= $content_for_layout ?&gt;
+&gt; &lt;div id=&quot;footer&quot;&gt;&lt;!-- page footer --&gt;&lt;/div&gt;
+&gt; &lt;/div&gt;
+&gt; &lt;/body&gt;
+&gt; &lt;/html&gt;
+
+&gt; ------
+
+&gt; --- onecolumnlayout.ctp ---
+
+&gt; &lt;? $this-&gt;layout = 'mainlayout.ctp'; ?&gt;
+
+&gt; &lt;div id=&quot;singlecolumn&quot;&gt;
+&gt; &lt;?= $content_for_layout ?&gt;
+&gt; &lt;/div&gt;
+
+&gt; ------
+
+&gt; --- twocolumnslayout.ctp ---
+
+&gt; &lt;? $this-&gt;layout = 'mainlayout.ctp'; ?&gt;
+
+&gt; &lt;div id=&quot;maincolumn&quot;&gt;
+&gt; &lt;?= $content_for_layout ?&gt;
+&gt; &lt;/div&gt;
+
+&gt; &lt;div id=&quot;sidecolumn&quot;&gt;
+&gt; &lt;?= $sidecontent_for_layout ?&gt;
+&gt; &lt;/div&gt;
+
+&gt; ------
+
+&gt; Then in the controller, one could just select the layout from
+&gt; onecolumnlayout and twocolumnslayout depending on the needs and those
+&gt; layouts with rendered contents could be rendered as
+&gt; $content_for_layout in the mainlayout. This way we have only one place
+&gt; where we define headers, footers and the html stuff, and we follow the
+&gt; Cake's way of doing things defining columns in layouts and not in
+&gt; every view. And probably it would save a lot of work to many people
+&gt; out there :).
+
+&gt; On 1 Lis, 00:34, mbavio &lt;mba ... @gmail.com&gt; wrote:
+
+&gt; &gt; On Oct 31, 10:37 am, Marcin Jaworski &lt;mrjawor ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; Hi.
+
+&gt; &gt; &gt; This is me again :).
+
+&gt; &gt; &gt; I did the search and I found a possible solution using ob_start() and
+&gt; &gt; &gt; ob_get_clean() functions. Like in my previous ideas it is something
+&gt; &gt; &gt; like content placeholders.
+
+&gt; &gt; &gt; view:
+
+&gt; &gt; &gt; &lt;div&gt;This is some view. This is it's main content&lt;/div&gt;
+&gt; &gt; &gt; &lt;? ob_start(); ?&gt;
+&gt; &gt; &gt; this content won't be rendered as $content_for_layout
+&gt; &gt; &gt; &lt;? $GLOBALS['namedContents']['somename'] = ob_get_clean(); ?&gt;
+
+&gt; &gt; &gt; then in layout:
+
+&gt; &gt; &gt; &lt;div id=&quot;leftcol&quot;&gt;&lt;?= $content_for_layout ?&gt;&lt;/div&gt;
+&gt; &gt; &gt; &lt;div id=&quot;rightcol&quot;&gt;
+&gt; &gt; &gt; &lt;? if (isset($GLOBALS['namedContents']['somename'])) { echo
+&gt; &gt; &gt; $GLOBALS['namedContents']['somename']; } else { ?&gt;
+&gt; &gt; &gt; Here goes the default content for this placeholder
+&gt; &gt; &gt; &lt;? } ?&gt;
+&gt; &gt; &gt; &lt;/div&gt;
+
+&gt; &gt; &gt; When no default content is required then just simply &lt;?=
+&gt; &gt; &gt; $GLOBALS['namedContents']['somename'] ?&gt; where it is needed.
+
+&gt; &gt; &gt; However I haven't tested this yet. It's only an idea. Maybe it could
+&gt; &gt; &gt; be wrapped in a Helper?
+
+&gt; &gt; &gt; This should not break existing buffering using ob_start() because as I
+&gt; &gt; &gt; have read on in the php manual, buffers are stackable (it is possible
+&gt; &gt; &gt; to call ob_start inside a buffer and this will create a new buffer on
+&gt; &gt; &gt; top of that first).
+
+&gt; &gt; Wow! Seems very complex. Why no to try the simple methodology of
+&gt; &gt; CakePHP and use elements ( http://bakery.cakephp.org/articles/view/
+&gt; &gt; creating-reusable-elements-with-requestaction) to create reusable
+&gt; &gt; parts of code that you can put everywhere...
+&gt; &gt; An advice... Always try to solve first in the Cake way, i´m sure
+&gt; &gt; you`re gonna save a lot of time.
+
+&gt; &gt; Have a nice day.
+">
+</POST>
+<POST>
+<POSTER> AD7six &lt;andydawso...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-02T07:37:00 </POSTDATE>
+On Oct 31, 11:53 am, &quot;Cristi A.&quot; &lt;sareiod ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi everyone,
+
+&gt; This is my first post and I am new to cakephp.
+
+&gt; I decided to start from the basic so I am trying to move a simple HTML
+&gt; web-site (mostly static pages) to cakephp and add an Administration
+&gt; for a photo gallery with multiple categories.
+
+&gt; The problem I encountered appeared early because the way the HTML was
+&gt; designed,
+&gt; so I need 2 $content_for_layout in my default layout, like this:
+&gt; ********************
+&gt; &lt;div id=&quot;left_collumn&quot;&gt;
+&gt;     &lt;?php echo $content1_for_layout ?&gt;
+&gt; &lt;/div&gt;
+
+&gt; &lt;div&gt; THE MAIN MENU&lt;/div&gt;
+
+&gt; &lt;div id=&quot;right_column&quot;&gt;
+&gt;    &lt;?php echo $content2_for_layout ?&gt;
+&gt; &lt;/div&gt;
+&gt; *****************
+
+&gt; I've searched this group and found 3 threads started about this and 1
+&gt; solution which involved  modifying the core of cake(not recommended
+&gt; from obvious reasons).
+
+&gt; All I need to know if this can be done without modifying the core, and
+&gt; if yes ..how??
+
+&gt; Also I was thinking that if this can not be done is it possible to
+&gt; load an element inside a view and not a layout?
+&gt; This way I could define THE MENU, FOOTER, HEADER as elements and
+&gt; include them inside my views (not so sweet but would solve my
+&gt; problem.)
+">
+
+Why don't you define variables for these bits of dynamic content in
+your app controller and use these variables to output variable content
+in these elements?
+
+Elements don't have to be static. You might be interested in the links
+on this page: http://groups.google.com/group/cake-php/web/frequent-discussions
+
+hth,
+
+AD
+</POST>
+<POST>
+<POSTER> francky06l &lt;franckl...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-02T11:01:00 </POSTDATE>
+You could also cache your elements, it depends how frequently they are
+changing, but that's an alternative solution as well. (with cake 1.2)
+
+On Nov 2, 12:37 pm, AD7six &lt;andydawso ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Oct 31, 11:53 am, &quot;Cristi A.&quot; &lt;sareiod ... @gmail.com&gt; wrote:
+
+&gt; &gt; Hi everyone,
+
+&gt; &gt; This is my first post and I am new to cakephp.
+
+&gt; &gt; I decided to start from the basic so I am trying to move a simple HTML
+&gt; &gt; web-site (mostly static pages) to cakephp and add an Administration
+&gt; &gt; for a photo gallery with multiple categories.
+
+&gt; &gt; The problem I encountered appeared early because the way the HTML was
+&gt; &gt; designed,
+&gt; &gt; so I need 2 $content_for_layout in my default layout, like this:
+&gt; &gt; ********************
+&gt; &gt; &lt;div id=&quot;left_collumn&quot;&gt;
+&gt; &gt;     &lt;?php echo $content1_for_layout ?&gt;
+&gt; &gt; &lt;/div&gt;
+
+&gt; &gt; &lt;div&gt; THE MAIN MENU&lt;/div&gt;
+
+&gt; &gt; &lt;div id=&quot;right_column&quot;&gt;
+&gt; &gt;    &lt;?php echo $content2_for_layout ?&gt;
+&gt; &gt; &lt;/div&gt;
+&gt; &gt; *****************
+
+&gt; &gt; I've searched this group and found 3 threads started about this and 1
+&gt; &gt; solution which involved  modifying the core of cake(not recommended
+&gt; &gt; from obvious reasons).
+
+&gt; &gt; All I need to know if this can be done without modifying the core, and
+&gt; &gt; if yes ..how??
+
+&gt; &gt; Also I was thinking that if this can not be done is it possible to
+&gt; &gt; load an element inside a view and not a layout?
+&gt; &gt; This way I could define THE MENU, FOOTER, HEADER as elements and
+&gt; &gt; include them inside my views (not so sweet but would solve my
+&gt; &gt; problem.)
+
+&gt; Why don't you define variables for these bits of dynamic content in
+&gt; your app controller and use these variables to output variable content
+&gt; in these elements?
+
+&gt; Elements don't have to be static. You might be interested in the links
+&gt; on this page: http://groups.google.com/group/cake-php/web/frequent-discussions
+
+&gt; hth,
+
+&gt; AD
+">
+</POST>
+</TEXT>
+</BODY>
+</DOC>

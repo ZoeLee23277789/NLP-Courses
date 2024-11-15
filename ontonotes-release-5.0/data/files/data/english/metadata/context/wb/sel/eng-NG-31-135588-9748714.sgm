@@ -1,0 +1,507 @@
+<DOC>
+<DOCID> eng-NG-31-135588-9748714 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-12-04T20:36:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Falling on my own sword?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> squash...@math.ufl.edu </POSTER>
+<POSTDATE> 2007-12-04T20:36:00 </POSTDATE>
+I haven't taken the time to learn `defsystem' or equivalent,
+and up until an hour ago was getting along ok with `load'
+and the deprecated] `require/provide'.  This was in
+interpreted CLISP.
+
+Tonight I started compiling my code and ran into troubles
+getting it to load from scratch.  Possibly the problem is
+simply unexported symbols, due to this macro
+
+(defmacro     defun-e         (name  &amp;rest body)
+&quot;This automatically exports the function-name.&quot;
+(export name)   ` (defun  ,name  ,@body) )
+
+which I use instead of using the `export' clause in `defpackage'.
+
+If my guess is correct, is there a simple fix by means of
+an `eval-when' statement which will cause the symbol to be
+exported at load-time?  If yes, is there a fix that is
+invisible to the package-writer, because the fix only
+changes the definition of the `defun-e' macro?
+</POST>
+<POST>
+<POSTER> Kent M Pitman &lt;pit...@nhplace.com&gt; </POSTER>
+<POSTDATE> 2007-12-04T22:34:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+squash ... @math.ufl.edu writes:
+&gt; I haven't taken the time to learn `defsystem' or equivalent,
+&gt; and up until an hour ago was getting along ok with `load'
+&gt; and the deprecated] `require/provide'.  This was in
+&gt; interpreted CLISP.
+">
+
+You don't need defsystem.  You do need to rearrange your files, though.
+(IMO)
+
+<QUOTE PREVIOUSPOST="
+&gt; Tonight I started compiling my code and ran into troubles
+&gt; getting it to load from scratch.  Possibly the problem is
+&gt; simply unexported symbols, due to this macro
+
+&gt;     (defmacro     defun-e         (name  &amp;rest body)
+&gt;       &quot;This automatically exports the function-name.&quot;
+&gt;       (export name)   ` (defun  ,name  ,@body) )
+
+&gt; which I use instead of using the `export' clause in `defpackage'.
+
+&gt;   If my guess is correct, is there a simple fix by means of
+&gt; an `eval-when' statement which will cause the symbol to be
+&gt; exported at load-time?  If yes, is there a fix that is
+&gt; invisible to the package-writer, because the fix only
+&gt; changes the definition of the `defun-e' macro?
+">
+
+You need to learn how to indent your code.
+
+I don't think EVAL-WHEN can reliably fix it.  It doesn't run early
+enough to affect the reader.
+
+I strongly recommend you make an export declaration in a DEFPACKAGE
+before your first use.  There are other reasons to do this,
+too--people might want to reference your package without executing
+your code; if you structure it this way, they are forced to load your
+definitions, which they may not want.
+
+Although other ways of doing it are allowed by the language, I
+strongly suggest that a package declaration always be in a file that
+is independently loadable with no other effect than to define the
+package.
+
+It might or might not also help to read
+http://www.nhplace.com/kent/PS/Ambitious.html
+The issues in there are related, though not the same.
+</POST>
+<POST>
+<POSTER> Ken Tilton &lt;kennytil...@optonline.net&gt; </POSTER>
+<POSTDATE> 2007-12-04T23:25:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+squash ... @math.ufl.edu wrote:
+&gt; I haven't taken the time to learn `defsystem' or equivalent,
+&gt; and up until an hour ago was getting along ok with `load'
+&gt; and the deprecated] `require/provide'.  This was in
+&gt; interpreted CLISP.
+
+&gt; Tonight I started compiling my code and ran into troubles
+&gt; getting it to load from scratch.  Possibly the problem is
+&gt; simply unexported symbols, due to this macro
+
+&gt;     (defmacro     defun-e         (name  &amp;rest body)
+&gt;       &quot;This automatically exports the function-name.&quot;
+&gt;       (export name)   ` (defun  ,name  ,@body) )
+
+&gt; which I use instead of using the `export' clause in `defpackage'.
+
+&gt;   If my guess is correct, is there a simple fix by means of
+&gt; an `eval-when' statement which will cause the symbol to be
+&gt; exported at load-time?  If yes, is there a fix that is
+&gt; invisible to the package-writer, because the fix only
+&gt; changes the definition of the `defun-e' macro?
+">
+
+Why not make the export part of the expansion instead of doing it as a
+macro-expansion time side effect?
+
+`(progn (export ',name) (defun ...))
+
+You might need an eval-when around the export (but still in the
+expansion) not to get warnings about something or other being deprecated.
+
+kzo
+
+--
+http://www.theoryyalgebra.com/
+
+&quot;In the morning, hear the Way;
+in the evening, die content!&quot;
+-- Confucius
+</POST>
+<POST>
+<POSTER> Kent M Pitman &lt;pit...@nhplace.com&gt; </POSTER>
+<POSTDATE> 2007-12-05T00:53:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Ken Tilton &lt;kennytil ... @optonline.net&gt; writes:
+&gt; Why not make the export part of the expansion instead of doing it as a
+&gt; macro-expansion time side effect?
+
+&gt; `(progn (export ',name) (defun ...))
+">
+
+At minimum, you want `(progn (export (intern ,name) *package*) ...) or
+something like that, since you want not to be interning name prematurely.
+
+<QUOTE PREVIOUSPOST="
+&gt; You might need an eval-when around the export (but still in the
+&gt; expansion) not to get warnings about something or other being
+&gt; deprecated.
+">
+
+The symbol has already been seen by the time you touch it.  That means
+it depends on how the externalization [some nowadays would say
+serialization] is done by the compiler, etc.  Consider:
+
+(defun-exported foo (x)
+(if (zerop x) 1
+(* x (foo (- x 1)))))
+
+If you expand that that, you're going to get
+
+(progn (export &quot;FOO&quot;)
+(defun foo (x)
+(if (zerop x) 1
+(* x (foo (- x 1))))))
+
+The problem here is that the entire form will be read before the form is
+read.  Now in print/read, that might work.  But some implementations could
+store the symbol's package and exported nature in the externalization of
+binary code.  Assuming you're in package MY-PKG when you run this, that
+would be like writing:
+
+(CL:PROGN (CL:EXPORT &quot;FOO&quot;)
+(CL:DEFUN MY-PKG:FOO (MY-PKG::X)
+(CL:IF (ZEROP MY-PKG::X) 1
+(CL:* MY-PKG::X (MY-PKG:FOO (CL:- MY-PKG::X 1))))))
+
+The problem is that there are references to external MY-PKG:FOO that
+may get seen before the export runs.
+
+Another way this can lose is that if you read this file in and do some
+debugging, then compile it, you'll compile it after the export has run,
+and so if there are forward references to FOO, even though they were
+read originally as internal symbols, they may get externalized even
+before the DEFUN-EXPORTED has run.  That is, a file containing
+
+(defun bar (x) (foo x))
+(defun-exported foo (x) ...)
+
+will export FOO on load, but if you later in the same image compile FOO,
+you'll end up dumping out the FOO reference in BAR as an exported reference,
+not an imported reference.
+
+I mention these not as a theoretical exercise--the reason I know not
+to do this is that I lived through a lot of cases of this kind of
+thing, trying to do it myself for a long time, before the community I
+was in just said &quot;look, you just can't do that&quot;.  And I agreed.
+
+Write a DEFPACKAGE.
+
+If you're going to have DEFUN-EXPORTED do anything, have it sniff
+around for the file with the DEFPACKAGE and have it add an extra
+symbol to it if you've left one out... (I don't actually recommend
+that either, but mostly because it's hard to GC symbols you later
+don't export once it's done that way, and it's also susceptible to
+extra symbols (that don't get removed) due to typos... but I don't
+think that's as much a theoretical problem as a practical one).
+</POST>
+<POST>
+<POSTER> attila.lend...@gmail.com </POSTER>
+<POSTDATE> 2007-12-05T05:24:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Why not make the export part of the expansion instead of doing it as a
+&gt; macro-expansion time side effect?
+">
+
+we have written cl-def for that and a lot more like :test for
+defconstant, etc...:
+
+http://common-lisp.net/project/cl-def/
+
+CL-DEF&gt; (def (function eio) foo ()
+42)
+
+=&gt;
+
+CL-DEF&gt; (PROGN
+(DECLAIM (INLINE FOO))
+(LOCALLY (DECLARE (OPTIMIZE (SPEED 3) (DEBUG 0) (SAFETY 2)))
+(EXPORT 'FOO)
+(DEFUN FOO ()
+42)))
+
+guessing the meaning of the character flags is left as an exercise for
+the reader... :)
+
+we found that maintaining a defpackage was still more burden for us
+then avoiding/handling the problems Kent mentioned.
+
+non-locality of information hurts, and loading graphs from a flat text
+file hurts even more. we should finally realize how silly it is to
+store code (a graph) in flat text files, building a graph each time
+it's read and doing line based diffs as version control...
+
+- attila
+</POST>
+<POST>
+<POSTER> squash...@math.ufl.edu </POSTER>
+<POSTDATE> 2007-12-13T14:00:00 </POSTDATE>
+Thank you all.  I will have to think about this after the break
+between semesters.
+
+Prof. Jonathan LF King   Mathematics dept, Univ. of Florida
+</POST>
+<POST>
+<POSTER> Ken Tilton &lt;kennytil...@optonline.net&gt; </POSTER>
+<POSTDATE> 2007-12-13T20:09:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+squash ... @math.ufl.edu wrote:
+&gt; I haven't taken the time to learn `defsystem' or equivalent,
+&gt; and up until an hour ago was getting along ok with `load'
+&gt; and the deprecated] `require/provide'.  This was in
+&gt; interpreted CLISP.
+
+&gt; Tonight I started compiling my code and ran into troubles
+&gt; getting it to load from scratch.  Possibly the problem is
+&gt; simply unexported symbols, due to this macro
+
+&gt;     (defmacro     defun-e         (name  &amp;rest body)
+&gt;       &quot;This automatically exports the function-name.&quot;
+&gt;       (export name)   ` (defun  ,name  ,@body) )
+
+&gt; which I use instead of using the `export' clause in `defpackage'.
+
+&gt;   If my guess is correct, is there a simple fix by means of
+&gt; an `eval-when' statement which will cause the symbol to be
+&gt; exported at load-time?  If yes, is there a fix that is
+&gt; invisible to the package-writer, because the fix only
+&gt; changes the definition of the `defun-e' macro?
+">
+
+The problem is that you have confused two metaphors, viz., &quot;Hoist on my
+own petard!&quot; in which one suffers unwanted injury from someone else
+employing a tactic first used by oneself, and &quot;Fall on my sword&quot; which
+means deliberate suicide to do The Right Thing, witness the Clinton
+campaign advisor in New Hampshire who had spoken out of turn putting Hil
+in trouble.
+
+To make this clear, one only ever falls on one's /own/ sword, and the
+hoisting is only interesting because it is one's own petard.
+
+What I am not clear on is whether the possive of one requires an
+apostrophe. Too embarrassed to google it.
+
+hth,kt
+
+--
+http://www.theoryyalgebra.com/
+
+&quot;In the morning, hear the Way;
+in the evening, die content!&quot;
+-- Confucius
+</POST>
+<POST>
+<POSTER> Raffael Cavallaro &lt;raffaelcavallaro@pas-d&#39;espam-s&#39;il-vous-plait-mac.com&gt; </POSTER>
+<POSTDATE> 2007-12-14T00:09:00 </POSTDATE>
+On 2007-12-13 20:09:31 -0500, Ken Tilton &lt;kennytil ... @optonline.net&gt; said:
+
+<QUOTE PREVIOUSPOST="
+&gt; What I am not clear on is whether the possive of one requires an
+&gt; apostrophe. Too embarrassed to google it.
+">
+
+Indeed, one's only personal posessive pronoun posessed of an apostrophe.
+
+Impersonal posessives posess 'em too (e.g., someone's)
+</POST>
+<POST>
+<POSTER> Raffael Cavallaro &lt;raffaelcavallaro@pas-d&#39;espam-s&#39;il-vous-plait-mac.com&gt; </POSTER>
+<POSTDATE> 2007-12-14T00:13:00 </POSTDATE>
+On 2007-12-14 00:09:42 -0500, Raffael Cavallaro
+&lt;raffaelcavallaro@pas-d'espam-s'il-vous-plait-mac.com&gt; said:
+
+<QUOTE PREVIOUSPOST="
+&gt; Indeed, one's only personal posessive pronoun posessed of an apostrophe.
+
+&gt; Impersonal posessives posess 'em too (e.g., someone's)
+">
+
+now if only I could learn to spell 'possess' and 'possessive' :(
+</POST>
+<POST>
+<POSTER> Ken Tilton &lt;kennytil...@optonline.net&gt; </POSTER>
+<POSTDATE> 2007-12-14T07:59:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Raffael Cavallaro wrote:
+&gt; On 2007-12-14 00:09:42 -0500, Raffael Cavallaro
+&gt; &lt;raffaelcavallaro@pas-d'espam-s'il-vous-plait-mac.com&gt; said:
+
+&gt;&gt; Indeed, one's only personal posessive pronoun posessed of an apostrophe.
+
+&gt;&gt; Impersonal posessives posess 'em too (e.g., someone's)
+
+&gt; now if only I could learn to spell 'possess' and 'possessive' :(
+">
+
+Its an easy misstake.
+
+So &quot;its&quot; has a grammatical niche to it'self?
+
+Hang on. &quot;That&quot; might have an argument with that's accuracy.
+
+kt
+
+--
+http://www.theoryyalgebra.com/
+
+&quot;In the morning, hear the Way;
+in the evening, die content!&quot;
+-- Confucius
+</POST>
+<POST>
+<POSTER> Raffael Cavallaro &lt;raffaelcavallaro@pas-d&#39;espam-s&#39;il-vous-plait-mac.com&gt; </POSTER>
+<POSTDATE> 2007-12-14T10:40:00 </POSTDATE>
+On 2007-12-14 07:59:22 -0500, Ken Tilton &lt;kennytil ... @optonline.net&gt; said:
+
+<QUOTE PREVIOUSPOST="
+&gt; So &quot;its&quot; has a grammatical niche to it'self?
+">
+
+his, hers, theirs, ours, yours - none has an apostrophe. Only one's.
+&quot;It's&quot; is a contraction of &quot;it is&quot; not a possessive.
+
+<QUOTE PREVIOUSPOST="
+&gt; Hang on. &quot;That&quot; might have an argument with that's accuracy.
+">
+
+&quot;That's&quot; as a possessive? First, &quot;that&quot; isn't a *personal* pronoun,
+it's a demonstrative pronoun. Remember other pronouns, such as the
+impersonal pronouns &quot;everybody,&quot; and &quot;anybody&quot; can have possessives
+with apostrophes - everybody's, anybody's.
+
+Second, &quot;that's&quot; as a possessive is not the common usage (or even one
+I've ever heard). Your sentence is usually rendered as &quot;'That' might
+have an argument with the accuracy of that.&quot;
+
+Finally I would find it very amusing if someone managed to bring this
+sub-thread back on topic for c.l.l. Not impossible mind you, just
+amusing...
+</POST>
+<POST>
+<POSTER> Ken Tilton &lt;kennytil...@optonline.net&gt; </POSTER>
+<POSTDATE> 2007-12-15T03:13:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Raffael Cavallaro wrote:
+&gt; On 2007-12-14 07:59:22 -0500, Ken Tilton &lt;kennytil ... @optonline.net&gt; said:
+
+&gt;&gt; So &quot;its&quot; has a grammatical niche to it'self?
+
+&gt; his, hers, theirs, ours, yours - none has an apostrophe. Only one's.
+&gt; &quot;It's&quot; is a contraction of &quot;it is&quot; not a possessive.
+
+&gt;&gt; Hang on. &quot;That&quot; might have an argument with that's accuracy.
+
+&gt; &quot;That's&quot; as a possessive? First, &quot;that&quot; isn't a *personal* pronoun,...
+">
+
+&quot;It&quot; is? I love that sentence, btw.
+
+<QUOTE PREVIOUSPOST="
+&gt; it's
+&gt; a demonstrative pronoun. Remember other pronouns, such as the impersonal
+&gt; pronouns &quot;everybody,&quot; and &quot;anybody&quot; can have possessives with
+&gt; apostrophes - everybody's, anybody's.
+
+&gt; Second, &quot;that's&quot; as a possessive is not the common usage...
+">
+
+Uncommonness is no objection. But nice tag line: &quot;CL: Only the name is
+Common&quot;
+
+<QUOTE PREVIOUSPOST="
+&gt;... (or even one
+&gt; I've ever heard).
+">
+
+Of course now that we've had this little chat you have noticed that's
+every day and will twice on Sunday. Me, I just ran across:
+
+&quot;I admired all three's ability to take me into my imagination.&quot;
+
+QfrickinED!
+
+kxo
+
+--
+http://www.theoryyalgebra.com/
+
+&quot;In the morning, hear the Way;
+in the evening, die content!&quot;
+-- Confucius
+</POST>
+<POST>
+<POSTER> Raffael Cavallaro &lt;raffaelcavallaro@pas-d&#39;espam-s&#39;il-vous-plait-mac.com&gt; </POSTER>
+<POSTDATE> 2007-12-15T06:47:00 </POSTDATE>
+On 2007-12-15 03:13:44 -0500, Ken Tilton &lt;kennytil ... @optonline.net&gt; said:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; &quot;That's&quot; as a possessive? First, &quot;that&quot; isn't a *personal* pronoun,...
+
+&gt; &quot;It&quot; is?
+">
+
+&lt; http://en.wikipedia.org/wiki/Personal_pronoun &gt;
+
+&quot;Ordinary English has seven personal pronouns:
+first-person singular (I)
+first-person plural (we)
+second-person singular and plural (you)
+third-person singular human or animate male (he)
+third-person singular human or animate female (she)
+third-person singular non-human or inanimate, or impersonal (it)
+third-person plural (they)&quot;
+
+Gotta love a system where the non-human, inanimate or impersonal can be
+&quot;personal.&quot;
+
+Maybe this is the sort of &quot;personal&quot; people who belive in a &quot;personal
+God&quot; are talking about ;^)
+
+<QUOTE PREVIOUSPOST="
+&gt; I love that sentence, btw.
+">
+
+&quot;For what do we live, but to make sport for our neighbors, and laugh at
+them in our turn?&quot;
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; it's a demonstrative pronoun. Remember other pronouns, such as the
+&gt;&gt; impersonal pronouns &quot;everybody,&quot; and &quot;anybody&quot; can have possessives
+&gt;&gt; with apostrophes - everybody's, anybody's.
+
+&gt;&gt; Second, &quot;that's&quot; as a possessive is not the common usage...
+
+&gt; Uncommonness is no objection. But nice tag line: &quot;CL: Only the name is Common&quot;
+
+&gt;&gt; ... (or even one I've ever heard).
+
+&gt; Of course now that we've had this little chat you have noticed that's
+&gt; every day and will twice on Sunday. Me, I just ran across:
+
+&gt; &quot;I admired all three's ability to take me into my imagination.&quot;
+">
+
+&quot;I admired counting by threes' ability to take me back to my
+childhood.&quot; Stick that in your grammatical pipe and smoke it!
+
+<QUOTE PREVIOUSPOST="
+&gt; QfrickinED!
+">
+
+Is this even a word?
+I for one am doubtful of QfrickinED's claim to... Doh!
+
+;^)
+</POST>
+</TEXT>
+</BODY>
+</DOC>

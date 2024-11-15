@@ -1,0 +1,684 @@
+<DOC>
+<DOCID> eng-NG-31-128541-9317448 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-11-08T19:31:00 </DATETIME>
+<BODY>
+<HEADLINE>
+a better lesskey helper
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Chuck Robey &lt;chu...@chuckr.org&gt; </POSTER>
+<POSTDATE> 2007-11-08T19:31:00 </POSTDATE>
+Well, I've taken a rather lengthy vacation from FreeBSD, trolling around
+Linux, so I could try to see if I was right in my presonal prejudice of
+FreeBSD being better.  While I did prove myself right there, I did
+happen to find a few pearls (no, NOT perls!) of wisdom out amongst the
+Linux-folks.  One of those pearls that I really do think we could stand
+to bring aboard is a file &quot;/usr/bin/lesspipe.sh&quot;  When you couple that
+with a one-liner, a alias that gets stuck in one of the shell template
+files in /etc. making less even more functional than it is now, most
+especially for programmers.
+
+It causes less to automatically recognize a couiple more binary types
+than it does now.  While it now currenlty recognizes several compresed
+archive types, so it can automatically decompress them and display them,
+it adds recognition of executables and libraries, and automatically
+routes them thru objdump, so you get all the info you'd probably be
+likely to want, short of a full binary dump.  Seeing as I personally
+have a hard time remembering all the various parameters to objdump, I
+like this behavior quite a bit.
+
+Tell you what.  If you would like to see what I mean, just write me, and
+(assuming that I don't actually get totally buried underneath a
+avalanche of requests!) I will try to send you a copy of the lesspipe.sh
+file, and the line to stick in your shell startup file.  Seeing as I'm
+no committer any longer, perhaps someone else might decided that this
+file is actually as nice as I say it is, and commit it the the sources,
+maybe increasing the size of our currently installed lesspipe.sh file.
+
+Real source of this?  It's from Gentoo Linux, which is in my own opinion
+the only Linux that any FreeBSDer ought to consider using.  They have a
+check of a nice etc file control system (called rc-update), nice enough
+to warrant those of you who are curious to take a look.  Really.
+
+Well, I do hope I'm not just wasting  your time.
+_______________________________________________
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+<POST>
+<POSTER> Nikolay Pavlov &lt;qpa...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-09T06:09:00 </POSTDATE>
+On Friday 09 November 2007 02:31:01 Chuck Robey wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Well, I've taken a rather lengthy vacation from FreeBSD, trolling around
+&gt; Linux, so I could try to see if I was right in my presonal prejudice of
+&gt; FreeBSD being better.  While I did prove myself right there, I did
+&gt; happen to find a few pearls (no, NOT perls!) of wisdom out amongst the
+&gt; Linux-folks.  One of those pearls that I really do think we could stand
+&gt; to bring aboard is a file &quot;/usr/bin/lesspipe.sh&quot;
+">
+
+Hello Chuck.
+There is already such a file there. You just need to proper set an
+environment: setenv LESSOPEN '|lesspipe.sh  %s'
+Also you can find a copy of such file from Debian distribution in
+attachment.
+
+--
+======================================================================
+- Best regards, Nikolay Pavlov. &lt;&lt;&lt;-----------------------------------
+======================================================================
+
+signature.asc
+1K Download
+</POST>
+<POST>
+<POSTER> Dag-Erling Smørgrav &lt;d...@des.no&gt; </POSTER>
+<POSTDATE> 2007-11-09T06:52:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Nikolay Pavlov &lt;qpa ... @gmail.com&gt; writes:
+&gt; There is already such a file there. You just need to proper set an
+&gt; environment: setenv LESSOPEN '|lesspipe.sh %s'
+">
+
+zless will do that for you.
+
+DES
+--
+Dag-Erling Smørgrav - d ... @des.no
+_______________________________________________
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+<POST>
+<POSTER> Chuck Robey &lt;chu...@chuckr.org&gt; </POSTER>
+<POSTDATE> 2007-11-09T15:27:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Nikolay Pavlov wrote:
+&gt; On Friday 09 November 2007 02:31:01 Chuck Robey wrote:
+&gt;&gt; Well, I've taken a rather lengthy vacation from FreeBSD, trolling around
+&gt;&gt; Linux, so I could try to see if I was right in my presonal prejudice of
+&gt;&gt; FreeBSD being better.  While I did prove myself right there, I did
+&gt;&gt; happen to find a few pearls (no, NOT perls!) of wisdom out amongst the
+&gt;&gt; Linux-folks.  One of those pearls that I really do think we could stand
+&gt;&gt; to bring aboard is a file &quot;/usr/bin/lesspipe.sh&quot;
+
+&gt; Hello Chuck.
+&gt; There is already such a file there. You just need to proper set an
+&gt; environment: setenv LESSOPEN '|lesspipe.sh  %s'
+&gt; Also you can find a copy of such file from Debian distribution in
+&gt; attachment.
+">
+
+the one I saw, after my buildworld, only performed automatic
+decompression of archives like *.tar.gz and *.tar.bz2 things, it did not
+do automatic objdump info runs on libraries and executeables.  Yours
+does this?  Confirm that for me by doing a &quot;less /usr/bin/vi&quot; and if
+less comes back with a &quot;Binary file, are your sure?&quot; then I'm right, but
+if it comes back with all the elf info, and then a listing of symbols,
+then I guess I would need to see why my own system did not do that.
+
+I should not need that setenv, because it should have been in
+/etc/csh.cshrc so it works automatically.  Maybe, if you're telling me
+that it does it, then I needed merely to fix that.
+
+It's possible, I could have assumed that since it wasn't in the
+/etc/csh.cshrc, it didn't exist.  I guess I need to see that.
+
+OK, I just checked my sources, in /usr/src/usr.bin/less/lesspipe.sh.
+Unless another file somewhere overwrites it, I'm right here.  Could you
+please check yourself on your system?
+_______________________________________________
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+<POST>
+<POSTER> Chuck Robey &lt;chu...@chuckr.org&gt; </POSTER>
+<POSTDATE> 2007-11-09T15:34:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Dag-Erling Smørgrav wrote:
+&gt; Nikolay Pavlov &lt;qpa ... @gmail.com&gt; writes:
+&gt;&gt; There is already such a file there. You just need to proper set an
+&gt;&gt; environment: setenv LESSOPEN '|lesspipe.sh %s'
+
+&gt; zless will do that for you.
+
+&gt; DES
+">
+
+Now I'm getting a bit confused.  I know you from long before, and I know
+you wouldn't make mistakes easily.  MY zless here doesn't decode
+executables and libs, but there's no man page, and zless --help gives
+only the standard less help info, so I don;'t know what zless does that
+less didn't do before I changed out the lesspipe.sh on my local system.
+
+I really wouldn't want to bother folks anymore on this if I'm all wet?
+Does your less not decode tar.gz things?  What does your zless do that
+your less doesn't?  Does either your zless or your less decode
+executables and libraries (via a objdump pipe)?
+
+I gotta admit, I'd never heard of zless.
+_______________________________________________
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+<POST>
+<POSTER> Dag-Erling Smørgrav &lt;d...@des.no&gt; </POSTER>
+<POSTDATE> 2007-11-09T15:59:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Chuck Robey &lt;chu ... @chuckr.org&gt; writes:
+&gt; Dag-Erling Smørgrav wrote:
+&gt;&gt; Nikolay Pavlov &lt;qpa ... @gmail.com&gt; writes:
+&gt;&gt;&gt; There is already such a file there. You just need to proper set an
+&gt;&gt;&gt; environment: setenv LESSOPEN '|lesspipe.sh %s'
+&gt;&gt; zless will do that for you.
+&gt; Now I'm getting a bit confused.  I know you from long before, and I
+&gt; know you wouldn't make mistakes easily.  MY zless here doesn't decode
+&gt; executables and libs, but there's no man page, and zless --help gives
+&gt; only the standard less help info, so I don;'t know what zless does
+&gt; that less didn't do before I changed out the lesspipe.sh on my local
+&gt; system.
+">
+
+&quot;that&quot; refers to Nikolay's setenv trick.  If you actually define
+LESSOPEN in your environment, less will always use it, which may not be
+what you want; instead, you can use less when you want to see the actual
+file and zless when you want it &quot;decoded&quot;.
+
+DES
+--
+Dag-Erling Smørgrav - d ... @des.no
+_______________________________________________
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+<POST>
+<POSTER> Chuck Robey &lt;chu...@chuckr.org&gt; </POSTER>
+<POSTDATE> 2007-11-09T16:06:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Dag-Erling Smørgrav wrote:
+&gt; Chuck Robey &lt;chu ... @chuckr.org&gt; writes:
+&gt;&gt; Dag-Erling Smørgrav wrote:
+&gt;&gt;&gt; Nikolay Pavlov &lt;qpa ... @gmail.com&gt; writes:
+&gt;&gt;&gt;&gt; There is already such a file there. You just need to proper set an
+&gt;&gt;&gt;&gt; environment: setenv LESSOPEN '|lesspipe.sh %s'
+&gt;&gt;&gt; zless will do that for you.
+&gt;&gt; Now I'm getting a bit confused.  I know you from long before, and I
+&gt;&gt; know you wouldn't make mistakes easily.  MY zless here doesn't decode
+&gt;&gt; executables and libs, but there's no man page, and zless --help gives
+&gt;&gt; only the standard less help info, so I don;'t know what zless does
+&gt;&gt; that less didn't do before I changed out the lesspipe.sh on my local
+&gt;&gt; system.
+
+&gt; &quot;that&quot; refers to Nikolay's setenv trick.  If you actually define
+&gt; LESSOPEN in your environment, less will always use it, which may not be
+&gt; what you want; instead, you can use less when you want to see the actual
+&gt; file and zless when you want it &quot;decoded&quot;.
+">
+
+Oh, I see.  Can I ask you to check, please, Dag, does your zless decode
+binaries?  Mine didn't, and the lesspipe.sh that's in the sources
+(unless another one's hidden somewhere) doesn't allow it either, it only
+gave decoding of tar archives and stuff compressed with bzip/gzip.  I'd
+really appreciate you doublechecking me on this.  If you say it works to
+do the objdump decoding, I will believe you and keep to myself on this.
+Otherwise, I think this deserves going into our sources.
+
+<QUOTE PREVIOUSPOST="
+&gt; DES
+">
+
+_______________________________________________
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+<POST>
+<POSTER> Chuck Robey &lt;chu...@chuckr.org&gt; </POSTER>
+<POSTDATE> 2007-11-09T16:18:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Dag-Erling Smørgrav wrote:
+&gt; Chuck Robey &lt;chu ... @chuckr.org&gt; writes:
+&gt;&gt; Dag-Erling Smørgrav wrote:
+&gt;&gt;&gt; Nikolay Pavlov &lt;qpa ... @gmail.com&gt; writes:
+&gt;&gt;&gt;&gt; There is already such a file there. You just need to proper set an
+&gt;&gt;&gt;&gt; environment: setenv LESSOPEN '|lesspipe.sh %s'
+&gt;&gt;&gt; zless will do that for you.
+&gt;&gt; Now I'm getting a bit confused.  I know you from long before, and I
+&gt;&gt; know you wouldn't make mistakes easily.  MY zless here doesn't decode
+&gt;&gt; executables and libs, but there's no man page, and zless --help gives
+&gt;&gt; only the standard less help info, so I don;'t know what zless does
+&gt;&gt; that less didn't do before I changed out the lesspipe.sh on my local
+&gt;&gt; system.
+
+&gt; &quot;that&quot; refers to Nikolay's setenv trick.  If you actually define
+&gt; LESSOPEN in your environment, less will always use it, which may not be
+&gt; what you want; instead, you can use less when you want to see the actual
+&gt; file and zless when you want it &quot;decoded&quot;.
+">
+
+One other comment.  About your setting of defaults ... defaulting less
+to not working.  It comes down to this:  I have ocaisonally been
+surprised that a file was binary, but files that are binary, AND not elf
+encoded images, will still show up just like the current less without
+the objdump encoding I'm suggesting, no changes.  It's only the elf
+images that get routed thru objdump ... so, asking you, which happens
+more often, that you want to view the garbage binary via the default
+less behavior, or (on elf images) that you want to see any available elf
+info?
+
+Personally, I do get ocaisonally surprised by a file being binary, but I
+have never yet hit the case that I wanted to see the straight binary
+(even when surprised) and not the decoded version.  Remember, with the
+improvement I'm suggesting, non-elf images STILL get the default
+behavior.  Are you sure you're not catering to the rare case, and making
+the usual case require extra steps?  Your opinion is good enough for me,
+go ahead and tell me what you think.
+_______________________________________________
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+<POST>
+<POSTER> Carl Johan Gustavsson &lt;carl.gustavs...@bahnhofbredband.se&gt; </POSTER>
+<POSTDATE> 2007-11-09T15:56:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Chuck Robey wrote:
+&gt; Dag-Erling Smørgrav wrote:
+&gt;&gt; Nikolay Pavlov &lt;qpa ... @gmail.com&gt; writes:
+&gt;&gt;&gt; There is already such a file there. You just need to proper set an
+&gt;&gt;&gt; environment: setenv LESSOPEN '|lesspipe.sh %s'
+
+&gt;&gt; zless will do that for you.
+
+&gt;&gt; DES
+&gt; Now I'm getting a bit confused.  I know you from long before, and I
+&gt; know you wouldn't make mistakes easily.  MY zless here doesn't decode
+&gt; executables and libs, but there's no man page, and zless --help gives
+&gt; only the standard less help info, so I don;'t know what zless does
+&gt; that less didn't do before I changed out the lesspipe.sh on my local
+&gt; system.
+
+&gt; I really wouldn't want to bother folks anymore on this if I'm all wet?
+&gt; Does your less not decode tar.gz things?  What does your zless do that
+&gt; your less doesn't?  Does either your zless or your less decode
+&gt; executables and libraries (via a objdump pipe)?
+
+&gt; I gotta admit, I'd never heard of zless.
+">
+
+Hi
+
+zless is a wrapper script that uses lesspipe.sh
+
+Look into /usr/src/usr.bin/less/zless.sh :)
+
+cjg
+_______________________________________________
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+<POST>
+<POSTER> Bill Vermillion &lt;b...@wjv.com&gt; </POSTER>
+<POSTDATE> 2007-11-09T17:45:00 </POSTDATE>
+The time has come the freebsd-current-requ ... @freebsd.org said, to
+talk of many things but all that was heard on Fri, Nov 09, 2007 at
+22:24 was whether pigs have wings - or:
+
+<QUOTE PREVIOUSPOST="
+&gt; Date: Fri, 09 Nov 2007 15:34:08 -0500
+&gt; From: Chuck Robey &lt;chu ... @chuckr.org&gt;
+&gt; Subject: Re: a  better  lesskey  helper
+&gt; Dag-Erling Sm??rgrav wrote:
+&gt; &gt; Nikolay Pavlov &lt;qpa ... @gmail.com&gt; writes:
+&gt; &gt;&gt; There is already such a file there. You just need to proper set an
+&gt; &gt;&gt; environment: setenv LESSOPEN '|lesspipe.sh %s'
+&gt; &gt; zless will do that for you.
+&gt; &gt; DES
+&gt; Now I'm getting a bit confused. I know you from long before, and
+&gt; I know you wouldn't make mistakes easily. MY zless here doesn't
+&gt; decode executables and libs, but there's no man page, and zless
+&gt; --help gives only the standard less help info, so I don;'t know
+&gt; what zless does that less didn't do before I changed out the
+&gt; lesspipe.sh on my local system.
+&gt; I really wouldn't want to bother folks anymore on this if I'm
+&gt; all wet? Does your less not decode tar.gz things? What does your
+&gt; zless do that your less doesn't? Does either your zless or your
+&gt; less decode executables and libraries (via a objdump pipe)?
+&gt; I gotta admit, I'd never heard of zless.
+">
+
+I've found that 'most' is quite handy.  It decodes binaries when it
+finds thems, it decompresses gzipped files.
+
+It's in /usr/ports/sysutils/most
+
+Bill
+
+--
+Bill Vermillion - bv @ wjv . com
+_______________________________________________
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+<POST>
+<POSTER> Dag-Erling Smørgrav &lt;d...@des.no&gt; </POSTER>
+<POSTDATE> 2007-11-09T17:49:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Chuck Robey &lt;chu ... @chuckr.org&gt; writes:
+&gt; Oh, I see.  Can I ask you to check, please, Dag, does your zless
+&gt; decode binaries?
+">
+
+zless does neither more nor less than set LESSOPEN and run less.
+
+I have no idea what you mean by &quot;decode binaries&quot;, but it's all up to
+your lesspipe.sh.
+
+DES
+--
+Dag-Erling Smørgrav - d ... @des.no
+_______________________________________________
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+<POST>
+<POSTER> Chuck Robey &lt;chu...@chuckr.org&gt; </POSTER>
+<POSTDATE> 2007-11-09T18:15:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Bill Vermillion wrote:
+&gt;&gt;&gt; I really wouldn't want to bother folks anymore on this if I'm
+&gt;&gt; all wet? Does your less not decode tar.gz things? What does your
+&gt;&gt; zless do that your less doesn't? Does either your zless or your
+&gt;&gt; less decode executables and libraries (via a objdump pipe)?
+
+&gt;&gt; I gotta admit, I'd never heard of zless.
+
+&gt; I've found that 'most' is quite handy.  It decodes binaries when it
+&gt; finds thems, it decompresses gzipped files.
+
+&gt; It's in /usr/ports/sysutils/most
+">
+
+That sort of behavior is (I think, I haven't yet checked most) what I am
+suggesting be brought into less.  Look, let me repeat, now that I have
+gotten confirmation that I wasn't wrong (thanks to Carl).  It's this:
+
+1: modify our lesspipe.sh, so that, in addition to the detection of
+various tar archives (along with compression), it also detects various
+elf images, and uses objdump to display the info.  Less will keep the
+current behavior on any other binaries it hits, only decoding the elf
+images.
+
+2) add 1 line to our /etc/csh.cshrc and /etc/profile (to cover those sh
+and csh compatible shells) so that the lesspipe.sh functionality no
+longer needs folks to remember zless.  I don't think it's needed, but if
+users ask for it, it would be trivial to code up a variable, like
+LESS_WITHOUT_LESSPIPE, that if defined could even block out these
+changes.  I can't see why folks would not want it, but I'm not fanatic
+over it.
+
+3) remove zless.
+
+I haven't been a committer for a great long time.  I'm coming back to
+FreeBSD now, but until I have a bit more experience with all the changes
+(so I don't just recommit everyone's mistakes from the last couple
+years) I think I maybe shouldn't just go ahead and commit.  Let some
+actual current committer stick it in.
+
+Look, the changes I'm suggesting are very very trivial, but if you want
+it, I could easily package things up as a diff.  Or, if anyone at all
+wants to see my proposed lesspipe.sh, well, just mail me and ask for it.
+I gotta go ask and find out who gets the credit (I stole my copy from
+Gentoo Linux).  I have a bad habit about that:  I care absolutely zero
+about credit, and I sometimes forget that others do care.  It's an
+honest mistake that I don't mind being reminded about, if someone
+notices me doing that.  Certainly, going to any lengths to give ME
+credit of this would be kinda silly, but I do get confused sometimes
+about where to draw the line.
+
+_______________________________________________
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+<POST>
+<POSTER> &quot;Kevin Oberman&quot; &lt;ober...@es.net&gt; </POSTER>
+<POSTDATE> 2007-11-09T18:21:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Date: Fri, 9 Nov 2007 17:45:31 -0500
+&gt; From: Bill Vermillion &lt;b ... @wjv.com&gt;
+&gt; Sender: owner-freebsd-curr ... @freebsd.org
+
+&gt; The time has come the freebsd-current-requ ... @freebsd.org said, to
+&gt; talk of many things but all that was heard on Fri, Nov 09, 2007 at
+&gt; 22:24 was whether pigs have wings - or:
+
+&gt; &gt; Date: Fri, 09 Nov 2007 15:34:08 -0500
+&gt; &gt; From: Chuck Robey &lt;chu ... @chuckr.org&gt;
+&gt; &gt; Subject: Re: a  better  lesskey  helper
+
+&gt; &gt; Dag-Erling Sm??rgrav wrote:
+&gt; &gt; &gt; Nikolay Pavlov &lt;qpa ... @gmail.com&gt; writes:
+&gt; &gt; &gt;&gt; There is already such a file there. You just need to proper set an
+&gt; &gt; &gt;&gt; environment: setenv LESSOPEN '|lesspipe.sh %s'
+
+&gt; &gt; &gt; zless will do that for you.
+
+&gt; &gt; &gt; DES
+
+&gt; &gt; Now I'm getting a bit confused. I know you from long before, and
+&gt; &gt; I know you wouldn't make mistakes easily. MY zless here doesn't
+&gt; &gt; decode executables and libs, but there's no man page, and zless
+&gt; &gt; --help gives only the standard less help info, so I don;'t know
+&gt; &gt; what zless does that less didn't do before I changed out the
+&gt; &gt; lesspipe.sh on my local system.
+
+&gt; &gt; I really wouldn't want to bother folks anymore on this if I'm
+&gt; &gt; all wet? Does your less not decode tar.gz things? What does your
+&gt; &gt; zless do that your less doesn't? Does either your zless or your
+&gt; &gt; less decode executables and libraries (via a objdump pipe)?
+
+&gt; &gt; I gotta admit, I'd never heard of zless.
+
+&gt; I've found that 'most' is quite handy.  It decodes binaries when it
+&gt; finds thems, it decompresses gzipped files.
+
+&gt; It's in /usr/ports/sysutils/most
+">
+
+It also decompresses bz2s, allows moving to a specific line by number or
+to a percentage of the file, auto-sizes to the window size (on the fly),
+can split the display and show multiple files or multiple parts of one
+file, delete files, search either case sensitive or insensitive, and a
+lot more. I've been using it as my pager for about 20 years.
+
+most(1) is more than less(1).
+--
+R. Kevin Oberman, Network Engineer
+Energy Sciences Network (ESnet)
+Ernest O. Lawrence Berkeley National Laboratory (Berkeley Lab)
+E-mail: ober ... @es.net                   Phone: +1 510 486-8634
+Key fingerprint:059B 2DDF 031C 9BA3 14A4  EADA 927D EBB3 987B 3751
+
+application_pgp-signature_part
+1K Download
+</POST>
+<POST>
+<POSTER> Andriy Gapon &lt;a...@icyb.net.ua&gt; </POSTER>
+<POSTDATE> 2007-11-10T07:42:00 </POSTDATE>
+Not sure if all of this discussion really belongs to current@.
+
+Anyway, check out misc/lesspipe port/package.
+'locate lesspipe' gave me many insights immediately after seeing your
+first post, so it might be useful for you too.
+
+--
+Andriy Gapon
+_______________________________________________
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+<POST>
+<POSTER> Dag-Erling Smørgrav &lt;d...@des.no&gt; </POSTER>
+<POSTDATE> 2007-11-10T10:26:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Chuck Robey &lt;chu ... @chuckr.org&gt; writes:
+&gt; That sort of behavior is (I think, I haven't yet checked most) what I
+&gt; am suggesting be brought into less.  Look, let me repeat, now that I
+&gt; have gotten confirmation that I wasn't wrong (thanks to Carl).  It's
+&gt; this:
+
+&gt; 1: modify our lesspipe.sh, so that, in addition to the detection of
+&gt; various tar archives (along with compression), it also detects various
+&gt; elf images, and uses objdump to display the info.  Less will keep the
+&gt; current behavior on any other binaries it hits, only decoding the elf
+&gt; images.
+
+&gt; 2) add 1 line to our /etc/csh.cshrc and /etc/profile (to cover those
+&gt; sh and csh compatible shells) so that the lesspipe.sh functionality no
+&gt; longer needs folks to remember zless.  I don't think it's needed, but
+&gt; if users ask for it, it would be trivial to code up a variable, like
+&gt; LESS_WITHOUT_LESSPIPE, that if defined could even block out these
+&gt; changes.  I can't see why folks would not want it, but I'm not fanatic
+&gt; over it.
+
+&gt; 3) remove zless.
+">
+
+None of that will happen.  You are free to use your own lesspipe.sh on
+your own system, or install sysutils/most from ports, but the base
+system's lesspipe.sh will not change, LESSOPEN will not be defined in
+the default environment, and zless will stay.
+
+DES
+--
+Dag-Erling Smørgrav - d ... @des.no
+_______________________________________________
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+<POST>
+<POSTER> Nikolay Pavlov &lt;qpa...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-10T11:39:00 </POSTDATE>
+On Saturday 10 November 2007 01:15:34 Chuck Robey wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; 1: modify our lesspipe.sh, so that, in addition to the detection of
+&gt; various tar archives (along with compression), it also detects various
+&gt; elf images, and uses objdump to display the info.  Less will keep the
+&gt; current behavior on any other binaries it hits, only decoding the elf
+&gt; images.
+
+&gt; 2) add 1 line to our /etc/csh.cshrc and /etc/profile (to cover those sh
+&gt; and csh compatible shells) so that the lesspipe.sh functionality no
+&gt; longer needs folks to remember zless.  I don't think it's needed, but if
+&gt;   users ask for it, it would be trivial to code up a variable, like
+&gt; LESS_WITHOUT_LESSPIPE, that if defined could even block out hese
+&gt; changes.  I can't see why folks would not want it, but I'm not fanatic
+&gt; over it.
+
+&gt; 3) remove zless.
+">
+
+Why do you need all this. You can write whatever you want less to do in
+lesspipe.sh.
+The Debian version that i've send to you also decode *.arj, *.deb, *.doc,
+*.gif|*.jpeg|*.jpg|*.pcd|*.png|*.tga|*.tiff|*.tif, *.iso, *.lha|*.lzh,
+*.pdf, *.rar|*.r[0-9][0-9], *.rpm *.jar|*.war|*.ear|*.xpi|*.zip, *.7z,
+*.zoo
+
+But even there it's not enabled by default.
+
+--
+======================================================================
+- Best regards, Nikolay Pavlov. &lt;&lt;&lt;-----------------------------------
+======================================================================
+
+signature.asc
+1K Download
+</POST>
+<POST>
+<POSTER> Chuck Robey &lt;chu...@chuckr.org&gt; </POSTER>
+<POSTDATE> 2007-11-10T20:51:00 </POSTDATE>
+&lt;descriptions of my 3 suggestions&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; None of that will happen.  You are free to use your own lesspipe.sh on
+&gt; your own system, or install sysutils/most from ports, but the base
+&gt; system's lesspipe.sh will not change, LESSOPEN will not be defined in
+&gt; the default environment, and zless will stay.
+">
+
+OK.  That's, I guess, what I was after.  It seems that some folks have
+lost my point, which was to see if there was any support for improving
+the currently installed lesspipe.sh.  Since we already had one, and the
+changes are clearly useful to programmers, it seemed a likely bet, but
+if you're that dead set against it, OK, it's dropped.
+
+I got suggestions from several folks to do things like go look up other
+less users, but they didn't see that wasn't my intention, I wanted to
+see about improving our lesspipe.sh.  I actually still disagree, but
+it's surely not worth any more discussion.
+
+It's dropped.  I'll just maintain my own here.  Easy enough to do.
+
+<QUOTE PREVIOUSPOST="
+&gt; DES
+">
+
+_______________________________________________
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+<POST>
+<POSTER> John Baldwin &lt;j...@freebsd.org&gt; </POSTER>
+<POSTDATE> 2007-11-12T17:51:00 </POSTDATE>
+On Friday 09 November 2007 03:59:21 pm Dag-Erling Smørgrav wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Chuck Robey &lt;chu ... @chuckr.org&gt; writes:
+&gt; &gt; Dag-Erling Smørgrav wrote:
+&gt; &gt;&gt; Nikolay Pavlov &lt;qpa ... @gmail.com&gt; writes:
+&gt; &gt;&gt;&gt; There is already such a file there. You just need to proper set an
+&gt; &gt;&gt;&gt; environment: setenv LESSOPEN '|lesspipe.sh %s'
+&gt; &gt;&gt; zless will do that for you.
+&gt; &gt; Now I'm getting a bit confused.  I know you from long before, and I
+&gt; &gt; know you wouldn't make mistakes easily.  MY zless here doesn't decode
+&gt; &gt; executables and libs, but there's no man page, and zless --help gives
+&gt; &gt; only the standard less help info, so I don;'t know what zless does
+&gt; &gt; that less didn't do before I changed out the lesspipe.sh on my local
+&gt; &gt; system.
+
+&gt; &quot;that&quot; refers to Nikolay's setenv trick.  If you actually define
+&gt; LESSOPEN in your environment, less will always use it, which may not be
+&gt; what you want; instead, you can use less when you want to see the actual
+&gt; file and zless when you want it &quot;decoded&quot;.
+">
+
+less -L
+
+--
+John Baldwin
+_______________________________________________
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+</TEXT>
+</BODY>
+</DOC>

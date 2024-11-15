@@ -1,0 +1,225 @@
+<DOC>
+<DOCID> eng-NG-31-126392-8198796 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-19T10:02:00 </DATETIME>
+<BODY>
+<HEADLINE>
+zlib question (compression/uncompression fails) - demo atatched
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Anonymous &lt;no.re...@here.com&gt; </POSTER>
+<POSTDATE> 2007-08-19T10:02:00 </POSTDATE>
+Slightly OT, but can't find a zlib specific ng - so hopefuly, someone
+can point out why uncompressed strings are not matching the original
+strings (lots of strange characters at end of string).
+
+Heres a little prog that demonstrates the problem:
+
+//include zlib header etc
+
+int main(int argc, char * argv[])
+{
+unsigned long compressed_str_len, srclen ;
+void * src_buffer = 0, * dest_buffer = 0;
+void * compressed_str = 0, * uncompressed_str = 0 ;
+char * test_string = 0;
+uLongf temp, dest_buffer_len, uncompressed_str_len  ;
+
+if (argc &lt; 1)
+return -1 ;
+
+test_string = argv[1];
+
+// COMPRESSION
+
+//get the size of the input
+srclen = strlen(test_string) ;
+
+//zlib states that the source buffer must be at least 0.1
+//times larger than the source buffer plus 12 bytes
+//to cope with the overhead of zlib data streams
+temp = (uLongf)(srclen + (srclen * 0.1) + 12);
+dest_buffer = calloc((size_t)(temp), sizeof(char));
+
+src_buffer = test_string ;
+
+//now compress the data
+compress2((Bytef*)dest_buffer, (uLongf*)&amp;dest_buffer_len,
+(const Bytef*)src_buffer, (uLongf)srclen, Z_BEST_COMPRESSION);
+
+//write the compressed data to disk
+//fwrite(dest_buffer, dest_buffer_len, 1, FileOut);
+printf(&quot;String to compress: '%s'\n&quot;, test_string );
+printf(&quot;Length of string to compress: %d\n&quot;, strlen(test_string) ) ;
+
+printf(&quot;Compressed string: '%s'\n&quot;, dest_buffer );
+printf(&quot;Length of compressed string: %d\n&quot;, dest_buffer_len ) ;
+
+// DECOMPRESSION
+compressed_str_len = dest_buffer_len ;
+
+//read in the contents of the file into the source buffer
+compressed_str = dest_buffer ;
+
+//allocate a buffer big enough to hold the uncompressed data, we can
+cheat here
+//because we know the size of the original
+uncompressed_str_len = strlen(test_string);
+uncompressed_str = calloc(uncompressed_str_len, sizeof(char));
+
+//all data we require is ready so compress it into the source buffer,
+the exact
+//size will be stored in uncompressed_str_len
+uncompress((Bytef*)uncompressed_str, &amp;uncompressed_str_len, (const
+Bytef*)compressed_str, compressed_str_len );
+
+printf(&quot;\nString to uncompress: '%s'\n&quot;, compressed_str);
+printf(&quot;Length of string to uncompress: %d\n&quot;, compressed_str_len ) ;
+
+printf(&quot;UnCompressed string: '%s'\n&quot;, uncompressed_str );
+printf(&quot;Length of Uncompressed string: %d\n&quot;, uncompressed_str_len ) ;
+
+printf(&quot;\nCompression/Uncompression result: %s\n&quot;, strcmp(test_string,
+(char*)uncompressed_str) == 0 ? &quot;SUCCESS&quot; : &quot;FAIL&quot; );
+
+free(dest_buffer);
+free(uncompressed_str);
+
+return 0;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+This always returns FAIL - because the strings don't match (uncompressed
+string contains wierd chars after original string - why does this
+happen, and how can I get rid of it without resorting to memcpy or strncpy?
+</POST>
+<POST>
+<POSTER> pete &lt;pfil...@mindspring.com&gt; </POSTER>
+<POSTDATE> 2007-08-19T10:17:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Anonymous wrote:
+
+&gt; Slightly OT, but can't find a zlib specific ng - so hopefuly, someone
+&gt; can point out why uncompressed strings are not matching the original
+&gt; strings (lots of strange characters at end of string).
+
+&gt; Heres a little prog that demonstrates the problem:
+
+&gt; //include zlib header etc
+">
+
+I can't compile your code.
+Is it possible to post the relevant parts of zlib.h ?
+
+<QUOTE PREVIOUSPOST="
+&gt;         unsigned long compressed_str_len, srclen ;
+&gt;         uLongf temp, dest_buffer_len, uncompressed_str_len  ;
+&gt;         //zlib states that the source buffer must be at least 0.1
+&gt;         //times larger than the source buffer plus 12 bytes
+&gt;         //to cope with the overhead of zlib data streams
+&gt;         temp = (uLongf)(srclen + (srclen * 0.1) + 12);
+">
+
+If temp is an integer type,
+then your code does not do what your comment says it must do.
+
+((int)(9 + 9 * 0.1)) is not greater than 9.
+
+--
+pete
+</POST>
+<POST>
+<POSTER> Chris Dollin &lt;e...@electrichedgehog.net&gt; </POSTER>
+<POSTDATE> 2007-08-19T10:25:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Anonymous wrote:
+&gt; Slightly OT, but can't find a zlib specific ng - so hopefuly, someone
+&gt; can point out why uncompressed strings are not matching the original
+&gt; strings (lots of strange characters at end of string).
+">
+
+(fx:big-snip)
+
+<QUOTE PREVIOUSPOST="
+&gt; This always returns FAIL - because the strings don't match (uncompressed
+&gt; string contains wierd chars after original string - why does this
+&gt; happen, and how can I get rid of it without resorting to memcpy or
+&gt; strncpy?
+">
+
+I'd lay odds that the result from zlib decompression /is not a string/,
+ie, it's not null-terminated. (How could it be? zlib surely isn't
+limited to compressing text data, and non-text data could easily have
+null bytes in it. That's why you have to pass in a length on compressing,
+and provide a length result parameter when uncompressing, yes?) So
+your checking that the result is OK is wrong: you should not use
+`strcmp`.
+
+<QUOTE PREVIOUSPOST="
+&gt; how can I get rid of it without resorting to memcpy or strncpy?
+">
+
+How about using `memcmp`?
+
+--
+Zedgehog
+&quot;I just wonder when we're going to have to sit down and re-evaluate
+our decision-making paradigm.&quot; /Sahara/
+</POST>
+<POST>
+<POSTER> &quot;Malcolm McLean&quot; &lt;regniz...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-08-19T11:45:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Chris Dollin&quot; &lt;e ... @electrichedgehog.net&gt; wrote in message
+">
+
+news:8pYxi.24189$L85.18832@fe1.news.blueyonder.co.uk ...
+
+<QUOTE PREVIOUSPOST="
+&gt; I'd lay odds that the result from zlib decompression /is not a string/,
+&gt; ie, it's not null-terminated.
+">
+
+He's calling zlib with the string address, correctly, but then with the
+length of the string, incorrectly. It should be length plus one.
+zlib decompresses, but isn't clever enough to add a nul on the end. Hnece
+the string is unterminated and C sees string plus random garbage.
+
+Crashingly simple, like most bugs.
+--
+Free games and programming goodies.
+http://www.personal.leeds.ac.uk/~bgy1mm
+</POST>
+<POST>
+<POSTER> Keith Thompson &lt;ks...@mib.org&gt; </POSTER>
+<POSTDATE> 2007-08-19T16:02:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Malcolm McLean&quot; &lt;regniz ... @btinternet.com&gt; writes:
+&gt; &quot;Chris Dollin&quot; &lt;e ... @electrichedgehog.net&gt; wrote in message
+&gt; news:8pYxi.24189$L85.18832@fe1.news.blueyonder.co.uk ...
+&gt;&gt; I'd lay odds that the result from zlib decompression /is not a string/,
+&gt;&gt; ie, it's not null-terminated.
+
+&gt; He's calling zlib with the string address, correctly, but then with
+&gt; the length of the string, incorrectly. It should be length plus one.
+&gt; zlib decompresses, but isn't clever enough to add a nul on the
+&gt; end. Hnece the string is unterminated and C sees string plus random
+&gt; garbage.
+">
+
+Either that, or he needs to pass the length of the string and then
+re-append the '\0' after decompression.  It's hard to tell which
+approach makes more sense.
+
+--
+Keith Thompson (The_Other_Keith) ks ... @mib.org  &lt; http://www.ghoti.net/~kst &gt;
+San Diego Supercomputer Center             &lt;*&gt;  &lt; http://users.sdsc.edu/~kst &gt;
+&quot;We must do something.  This is something.  Therefore, we must do this.&quot;
+-- Antony Jay and Jonathan Lynn, &quot;Yes Minister&quot;
+</POST>
+</TEXT>
+</BODY>
+</DOC>

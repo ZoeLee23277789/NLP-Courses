@@ -1,0 +1,933 @@
+<DOC>
+<DOCID> eng-NG-31-135072-9638264 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-16T14:10:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Feisty Ubuntu: The UUID problem
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Jeremy Boden &lt;JeremyBo...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-16T14:10:00 </POSTDATE>
+With the soon to be release of Gutsy, I'd like to get my disk mounting
+correct.
+In Edgy a change was made to use a UUID instead of constructs like /
+dev/sda1
+History:-
+In Dapper I had LVM using /dev/mapper  -  purely because I wanted to
+see what it could do.
+Upgrade to Edgy (&amp; these UUID's) - seemed OK
+After upgrade to Feisty, I managed to cause occasional breakages in /
+dev/mapper
+
+I have, I think successfully, removed /dev/mapper
+However, if I force a restart - with fsck checking I get messages
+like:
+/dev/sdb1: 41/526320 files (22.0% non-contiguous), 153744/1052226
+blocks
+Failed to open the device 'UUID=7b3d8e1c-2080-4016-a672-1b2fed6ce7c8':
+No such file or directory
+
+Eventually fsck &quot;dies&quot; and I get a single user CTRL-D option
+If I take this and reboot (no fsck checks) the PC boots normally.
+
+I run commands like:-
+jeremy@HECTOR:~$ udevinfo -q env -n /dev/sdb2
+ID_VENDOR=ATA
+ID_MODEL=SAMSUNG_SP2504C
+ID_REVISION=VT10
+ID_SERIAL=1ATA_SAMSUNG_SP2504C_S09QJ1HL916745
+ID_SERIAL_SHORT=ATA_SAMSUNG_SP2504C_S09QJ1HL916745
+ID_TYPE=disk
+ID_BUS=scsi
+ID_PATH=pci-0000:00:07.0-scsi-1:0:0:0
+ID_FS_USAGE=filesystem
+ID_FS_TYPE=ext3
+ID_FS_VERSION=1.0
+ID_FS_UUID=064f1127-b29f-4146-8ffd-181c4ac9f1ee
+ID_FS_LABEL=
+ID_FS_LABEL_SAFE=
+
+But that UUID is just a copy of what I have in my fstab
+Yet another reboot with fsck would only fail.
+
+Should I
+a) revert all those UUID's to /dev/sda1 style definitions OR
+b) Is there a definitive way of finding out the UUID of a partition/
+filesystem which doesn't just involve a lookup of fstab.
+BTW I have 2 disks - one SATA &amp; one SCSI
+
+Thanks in advance...
+</POST>
+<POST>
+<POSTER> &quot;Robert Citek&quot; &lt;robert.ci...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-16T14:45:00 </POSTDATE>
+On 10/16/07, Jeremy Boden &lt;JeremyBo ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Should I
+&gt; a) revert all those UUID's to /dev/sda1 style definitions OR
+">
+
+No.  Once you get used to UUIDs or Labels, I think you'll like them.
+It allows you (instead of the kernel) to control the naming of the
+partitions.  This is extremely useful if you move drives around or use
+external drives.
+
+<QUOTE PREVIOUSPOST="
+&gt; b) Is there a definitive way of finding out the UUID of a partition/
+&gt; filesystem which doesn't just involve a lookup of fstab.
+">
+
+Yes, use tune2fs, assuming the fs is ext2/3.  For example:
+
+tune2fs -l /dev/sda2 | grep -i uuid
+
+To change it, use tune2fs -U ${new_UUID} /dev/sda2
+
+To generate a random UUID, use uuidgen.
+
+<QUOTE PREVIOUSPOST="
+&gt; BTW I have 2 disks - one SATA &amp; one SCSI
+">
+
+That is the perfect reason to love UUIDs and Labels.  With UUIDs and
+Labels you can add, remove, or change the position of those drives and
+not have to worry about redoing all the system settings, e.g.
+/etc/fstab.
+
+Personally, I like Labels better than UUIDs.  To discover the label of
+a partition:
+
+tune2fs -l /dev/sda2 | grep -i volume
+
+To change the label to foobar:
+
+e2label /dev/sda2 foobar
+
+To use the label in /etc/fstab, replace /dev/sda2 or UUID= with LABEL=.
+
+To use the label in /boot/grub/menu.lst, replace root=UUID= with
+root=LABEL=.  Do that everywhere, including the # kopt= line.
+
+Good luck and let us know how things go.
+
+Regards,
+- Robert
+</POST>
+<POST>
+<POSTER> Jeremy Boden &lt;JeremyBo...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-16T20:06:00 </POSTDATE>
+On 16 Oct, 19:45, &quot;Robert Citek&quot; &lt;robert.ci ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 10/16/07, Jeremy Boden &lt;JeremyBo ... @gmail.com&gt; wrote:
+
+&gt; &gt; Should I
+&gt; &gt; a) revert all those UUID's to /dev/sda1 style definitions OR
+
+&gt; No.  Once you get used to UUIDs or Labels, I think you'll like them.
+&gt; It allows you (instead of the kernel) to control the naming of the
+&gt; partitions.  This is extremely useful if you move drives around or use
+&gt; external drives.
+
+&gt; &gt; b) Is there a definitive way of finding out the UUID of a partition/
+&gt; &gt; filesystem which doesn't just involve a lookup of fstab.
+
+&gt; Yes, use tune2fs, assuming the fs is ext2/3.  For example:
+
+&gt; tune2fs -l /dev/sda2 | grep -i uuid
+
+&gt; To change it, use tune2fs -U ${new_UUID} /dev/sda2
+
+&gt; To generate a random UUID, use uuidgen.
+
+&gt; &gt; BTW I have 2 disks - one SATA &amp; one SCSI
+
+&gt; That is the perfect reason to love UUIDs and Labels.  With UUIDs and
+&gt; Labels you can add, remove, or change the position of those drives and
+&gt; not have to worry about redoing all the system settings, e.g.
+&gt; /etc/fstab.
+
+&gt; Personally, I like Labels better than UUIDs.  To discover the label of
+&gt; a partition:
+
+&gt; tune2fs -l /dev/sda2 | grep -i volume
+
+&gt; To change the label to foobar:
+
+&gt; e2label /dev/sda2 foobar
+
+&gt; To use the label in /etc/fstab, replace /dev/sda2 or UUID= with LABEL=.
+
+&gt; To use the label in /boot/grub/menu.lst, replace root=UUID= with
+&gt; root=LABEL=.  Do that everywhere, including the # kopt= line.
+
+&gt; Good luck and let us know how things go.
+
+&gt; Regards,
+&gt; - Robert
+">
+
+Thanks Robert,
+
+So far so good.
+
+Yes - I will go the UUID route - although I'm not in the habit of
+swapping hard disks...
+BTW tune2fs requires sudo.
+
+Partial success - I've been able to confirm that all ext3 partitions
+are correct.
+All partitions in GRUB &amp; / are ext3 (already using UUID's) and working
+- so that's OK!
+However, /home &amp; a mount created by me (/filestore) are reiserfs.
+I've looked around for something like tune2fs for reiser and all I can
+find is reiserfstune, which only allows setting parameters, not
+interrogating them.
+I appreciate I could generate a UUID &amp; then set the filesystem - but
+that seems to be living dangerously!
+That /dev/mapper left comments in fstab which interchanged sda? with
+sdb? - very confusing.
+
+Can you help with reiserfs?
+
+Thanks &amp; Regards,
+</POST>
+<POST>
+<POSTER> Robert Citek &lt;robert.ci...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-16T23:36:00 </POSTDATE>
+On 10/16/2007 07:06 PM, Jeremy Boden wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Thanks Robert,
+
+&gt; So far so good.
+">
+
+That's great to hear.
+
+<QUOTE PREVIOUSPOST="
+&gt; Yes - I will go the UUID route - although I'm not in the habit of
+&gt; swapping hard disks...
+&gt; BTW tune2fs requires sudo.
+">
+
+Yes, it does.  Good catch.
+
+<QUOTE PREVIOUSPOST="
+&gt; I've looked around for something like tune2fs for reiser and all I can
+&gt; find is reiserfstune, which only allows setting parameters, not
+&gt; interrogating them.
+">
+
+It does both.  Unfortunately, it doesn't work if the filesystem is
+mounted.  From the bit of testing I did, typing 'reiserfstune /dev/sda2'
+seems to interrogate the fs without modifying it.  But perhaps someone
+more familiar with reiserfs can comment.
+
+<QUOTE PREVIOUSPOST="
+&gt; Can you help with reiserfs?
+">
+
+Looks like you'll have to boot into recovery mode, probably unmount the
+reiser filesystems, interrogate them, and then remount them before
+continuing the normal boot process.
+
+Again, good luck and let us know how it goes.
+
+Regards,
+- Robert
+</POST>
+<POST>
+<POSTER> Jeremy Boden &lt;JeremyBo...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-17T08:01:00 </POSTDATE>
+On 17 Oct, 04:36, Robert Citek &lt;robert.ci ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 10/16/2007 07:06 PM, Jeremy Boden wrote:
+
+&gt; &gt; Thanks Robert,
+
+&gt; &gt; So far so good.
+
+&gt; That's great to hear.
+
+&gt; &gt; Yes - I will go the UUID route - although I'm not in the habit of
+&gt; &gt; swapping hard disks...
+&gt; &gt; BTW tune2fs requires sudo.
+
+&gt; Yes, it does.  Good catch.
+
+&gt; &gt; I've looked around for something like tune2fs for reiser and all I can
+&gt; &gt; find is reiserfstune, which only allows setting parameters, not
+&gt; &gt; interrogating them.
+
+&gt; It does both.  Unfortunately, it doesn't work if the filesystem is
+&gt; mounted.  From the bit of testing I did, typing 'reiserfstune /dev/sda2'
+&gt; seems to interrogate the fs without modifying it.  But perhaps someone
+&gt; more familiar with reiserfs can comment.
+
+&gt; &gt; Can you help with reiserfs?
+
+&gt; Looks like you'll have to boot into recovery mode, probably unmount the
+&gt; reiser filesystems, interrogate them, and then remount them before
+&gt; continuing the normal boot process.
+
+&gt; Again, good luck and let us know how it goes.
+">
+
+Sorry to be a pain!
+You are right - I booted using the recovery option.
+&quot;Luckily&quot; I had preset my root password so I can sign-on as root.
+If I enter reiserfstune /dev/sdaX then I get a full description
+(including UUID).
+
+However, booting into recovery mode seems to swap sda &amp; sdb.
+Here is a list of all my file systems (Partial /dev contents)
+sda1   /boot (ext3)
+sda2   /backup (ext3)
+sda3   /filestore (reiserfs)
+sdb2   /swap
+sdb5   /   (ext3)
+sdb6   /usr  (ext3)
+sdb7   /var  (ext3)
+sdb8   /home (reiserfs)
+There are no other /dev/sd* entries.
+
+[sdb has a small unused partion, but no file system in what would be
+sdb1]
+There are no other entries in /dev
+But when I boot into recovery mode
+I see only sda8 &amp; sdb3 as reiserfs (AND the UUID's correspond with the
+&quot;real&quot; sda3 &amp; sdb8).
+
+Since pressing CTRL-D on a normal boot allows /filestore &amp; /home to be
+mounted correctly I'm reluctant to change fstab.
+
+Is it possible that this is a non-UUID problem?
+</POST>
+<POST>
+<POSTER> &quot;Robert Citek&quot; &lt;robert.ci...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-17T09:08:00 </POSTDATE>
+On 10/17/07, Jeremy Boden &lt;JeremyBo ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; If I enter reiserfstune /dev/sdaX then I get a full description
+&gt; (including UUID).
+
+&gt; However, booting into recovery mode seems to swap sda &amp; sdb.
+&gt; Here is a list of all my file systems (Partial /dev contents)
+&gt; sda1   /boot (ext3)
+&gt; sda2   /backup (ext3)
+&gt; sda3   /filestore (reiserfs)
+&gt; sdb2   /swap
+&gt; sdb5   /   (ext3)
+&gt; sdb6   /usr  (ext3)
+&gt; sdb7   /var  (ext3)
+&gt; sdb8   /home (reiserfs)
+&gt; There are no other /dev/sd* entries.
+">
+
+How do you know the above information?  I suspect something is doing
+some sleight-of-hand.  To figure out what's going on, boot normally
+and type (cut-n-paste) the following commands into a terminal:
+
+true ; (
+sudo echo -n
+set -x
+cat /etc/issue.net
+uname -va
+sudo fdisk -l
+cat /etc/fstab
+awk 'NR &gt;1 &amp;&amp; $2 &gt; 0 {print &quot;/dev/&quot; $4}' /proc/partitions |
+xargs -n 1 sudo file -s
+) &gt;&amp; output.txt
+
+Please post the contents of output.txt to this list.
+
+<QUOTE PREVIOUSPOST="
+&gt; Is it possible that this is a non-UUID problem?
+">
+
+For now, anything is possible.
+
+Regards,
+- Robert
+</POST>
+<POST>
+<POSTER> Jeremy Boden &lt;JeremyBo...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-17T10:11:00 </POSTDATE>
+On Oct 17, 2:08 pm, &quot;Robert Citek&quot; &lt;robert.ci ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 10/17/07, Jeremy Boden &lt;JeremyBo ... @gmail.com&gt; wrote:
+
+&gt; &gt; If I enter reiserfstune /dev/sdaX then I get a full description
+&gt; &gt; (including UUID).
+
+&gt; &gt; However, booting into recovery mode seems to swap sda &amp; sdb.
+&gt; &gt; Here is a list of all my file systems (Partial /dev contents)
+&gt; &gt; sda1   /boot (ext3)
+&gt; &gt; sda2   /backup (ext3)
+&gt; &gt; sda3   /filestore (reiserfs)
+&gt; &gt; sdb2   /swap
+&gt; &gt; sdb5   /   (ext3)
+&gt; &gt; sdb6   /usr  (ext3)
+&gt; &gt; sdb7   /var  (ext3)
+&gt; &gt; sdb8   /home (reiserfs)
+&gt; &gt; There are no other /dev/sd* entries.
+
+&gt; How do you know the above information?  I suspect something is doing
+&gt; some sleight-of-hand.  To figure out what's going on, boot normally
+&gt; and type (cut-n-paste) the following commands into a terminal:
+
+&gt; true ; (
+&gt; sudo echo -n
+&gt; set -x
+&gt; cat /etc/issue.net
+&gt; uname -va
+&gt; sudo fdisk -l
+&gt; cat /etc/fstab
+&gt; awk 'NR &gt;1 &amp;&amp; $2 &gt; 0 {print &quot;/dev/&quot; $4}' /proc/partitions |
+&gt; xargs -n 1 sudo file -s
+&gt; ) &gt;&amp; output.txt
+
+&gt; Please post the contents of output.txt to this list.
+
+&gt; &gt; Is it possible that this is a non-UUID problem?
+
+&gt; For now, anything is possible.
+
+&gt; Regards,
+&gt; - Robert
+">
+
+I ran those commands - please don't be misled by comment lines in
+fstab - I typed/amended them myself.
+BTW The partition information is from my recollection + what &quot;System
+Monitor&quot; GUI says.
+
+=======================START OF
+OUTPUT=================================
++ cat /etc/issue.net
+Ubuntu 7.04
++ uname -va
+Linux HECTOR 2.6.20-16-generic #2 SMP Sun Sep 23 18:31:23 UTC 2007
+x86_64 GNU/Linux
++ sudo fdisk -l
+
+Disk /dev/sda: 250.0 GB, 250059350016 bytes
+255 heads, 63 sectors/track, 30401 cylinders
+Units = cylinders of 16065 * 512 = 8225280 bytes
+
+Device Boot      Start         End      Blocks   Id  System
+/dev/sda1               1         131     1052226   83  Linux
+/dev/sda2             132        6505    51199155   83  Linux
+/dev/sda3            6506       30401   191944620   83  Linux
+
+Disk /dev/sdb: 73.4 GB, 73407865856 bytes
+255 heads, 63 sectors/track, 8924 cylinders
+Units = cylinders of 16065 * 512 = 8225280 bytes
+
+Device Boot      Start         End      Blocks   Id  System
+/dev/sdb2             132         164      265072+  82  Linux swap /
+Solaris
+/dev/sdb3             165        8924    70364700    5  Extended
+/dev/sdb5             165         674     4096543+  83  Linux
+/dev/sdb6             675        2203    12281661   83  Linux
+/dev/sdb7            2204        2713     4096543+  83  Linux
+/dev/sdb8            2714        8924    49889826   83  Linux
++ cat /etc/fstab
+# /etc/fstab: static file system information.
+#
+# &lt;file system&gt; &lt;mount point&gt;   &lt;type&gt;  &lt;options&gt;       &lt;dump&gt;  &lt;pass&gt;
+proc            /proc           proc    defaults        0       0
+# /dev/sda5 -- converted during upgrade to edgy
+UUID=233565b8-f1c9-412d-add7-848988ee52d3 / ext3
+defaults,errors=remount-ro 0 1          # OK
+# /dev/sdb2 -- converted during upgrade to edgy
+UUID=064f1127-b29f-4146-8ffd-181c4ac9f1ee /backup ext3 defaults 0 2
+# OK
+# /dev/sdb3 -- converted during upgrade to edgy
+UUID=feb26ef0-be8e-49ac-8fbe-2c443549c553 /filestore reiserfs defaults
+0 2             # ?
+# /dev/sdb1 -- converted during upgrade to edgy
+UUID=403d16ca-ce7b-44f4-bcb3-87654deb5466 /boot ext3 defaults 0 2                       #
+OK
+# /dev/sda8 -- converted during upgrade to edgy
+UUID=7b3d8e1c-2080-4016-a672-1b2fed6ce7c8 /home reiserfs defaults 0
+2                       # ?
+# /dev/sda6 -- converted during upgrade to edgy
+UUID=247b2017-4636-40c5-8c7d-82721dd0caf5 /usr ext3 defaults 0 2                        #
+OK
+# /dev/sda7 -- converted during upgrade to edgy
+UUID=2ff24943-33a8-43e9-97da-73982cf8845b /var ext3 defaults 0 2                        #
+OK
+# /dev/sda2 -- converted during upgrade to edgy
+UUID=936ee5a4-2f4f-48c6-ba36-894426deb357 none swap sw 0 0                              # ?
+
+### /dev/sda1   /media/disk     ext3 rw,noexec,nosuid,nodev,noauto      0       0
+/dev/cdrom      /media/cdrom0   udf,iso9660 user,noauto                 0       0
+
++ awk 'NR &gt;1 &amp;&amp; $2 &gt; 0 {print &quot;/dev/&quot; $4}' /proc/partitions
++ xargs -n 1 sudo file -s
+/dev/sda1: Linux rev 1.0 ext3 filesystem data (needs journal recovery)
+/dev/sda2: Linux rev 1.0 ext3 filesystem data (needs journal recovery)
+(large files)
+/dev/sda3: ReiserFS V3.6 block size 4096 (mounted or unclean) num
+blocks 47986144 r5 hash
+/dev/sdb: x86 boot sector; partition 2: ID=0x82, starthead 0,
+startsector 2104515, 530145 sectors; partition 3: ID=0x5, starthead 0,
+startsector 2634660, 140729400 sectors
+/dev/sdb2: Linux/i386 swap file (new style) 1 (4K pages) size 66267
+pages
+/dev/sdb5: Linux rev 1.0 ext3 filesystem data (needs journal recovery)
+/dev/sdb6: Linux rev 1.0 ext3 filesystem data (needs journal recovery)
+/dev/sdb7: Linux rev 1.0 ext3 filesystem data (needs journal recovery)
+/dev/sdb8: ReiserFS V3.6 block size 4096 (mounted or unclean) num
+blocks 12472448 r5 hash
+===========END OF OUTPUT=====================
+Can I point out that the 250G disk is SATA and apart from /boot is a
+non-system disk.
+The SCSI disk is 73G &amp; should be plain Linux partitions.
+
+Thanks &amp; regards
+Jeremy
+</POST>
+<POST>
+<POSTER> &quot;Robert Citek&quot; &lt;robert.ci...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-18T00:30:00 </POSTDATE>
+On 10/17/07, Jeremy Boden &lt;JeremyBo ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; /dev/sda3: ReiserFS V3.6 block size 4096 (mounted or unclean) num
+&gt; /dev/sdb8: ReiserFS V3.6 block size 4096 (mounted or unclean) num
+">
+
+Those two partitions are reiserfs.  Boot into recovery mode, find the
+UUID, and add them to the /etc/fstab in the appropriate place.
+
+BTW, I think you swapped sda and sdb in your notes in the /etc/fstab.
+
+Regards,
+- Robert
+</POST>
+<POST>
+<POSTER> Jeremy Boden &lt;JeremyBo...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-18T08:25:00 </POSTDATE>
+On Oct 18, 5:30 am, &quot;Robert Citek&quot; &lt;robert.ci ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 10/17/07, Jeremy Boden &lt;JeremyBo ... @gmail.com&gt; wrote:
+
+&gt; &gt; /dev/sda3: ReiserFS V3.6 block size 4096 (mounted or unclean) num
+&gt; &gt; /dev/sdb8: ReiserFS V3.6 block size 4096 (mounted or unclean) num
+
+&gt; Those two partitions are reiserfs.  Boot into recovery mode, find the
+&gt; UUID, and add them to the /etc/fstab in the appropriate place.
+
+&gt; BTW, I think you swapped sda and sdb in your notes in the /etc/fstab.
+
+&gt; Regards,
+&gt; - Robert
+">
+
+Thanks Robert,
+However - this is where things get really bad!
+I sorted out the comments in fstab.
+When I checked the UUID's (in recovery mode) for the two ReiserFS's
+they matched the two values of UUID's in fstab - although I was
+confused about the disk names, I did write the two UUID's down.
+However, I didn't swap the two UUID's over - because the correct
+partitions are always being loaded for /home &amp; /filestore
+
+I have done several sudo shutdown -rF now commands to reboot with
+forced fsck's:-
+When fully started from recovery mode I have run &quot;mount&quot; - #1
+When this restarted in normal mode I have run &quot;mount&quot; - #2
+Rebooted into normal mode - I get errors (UUID's not found)
+I still ran &quot;mount&quot; - #3
+====BUT all the mount outputs - 1, 2 &amp; 3 are identical!!!!
+
+I will include the contents of /var/log/fsck/checkfs as it gets wiped
+on every boot:-
+It starts here:--------------
+Log of fsck -C -R -A -a -f
+Thu Oct 18 12:28:43 2007
+
+fsck 1.40-WIP (14-Nov-2006)
+/dev/sda2: 471/6406144 files (9.6% non-contiguous), 6575990/12799788
+blocks
+/dev/sda1: 41/526320 files (22.0% non-contiguous), 153744/1052226
+blocks
+/dev/sdb6: 189331/1537088 files (2.1% non-contiguous), 1444187/3070415
+blocks
+Failed to open the device 'UUID=feb26ef0-be8e-49ac-8fbe-2c443549c553':
+No such file or directory
+Failed to open the device 'UUID=7b3d8e1c-2080-4016-a672-1b2fed6ce7c8':
+No such file or directory
+/dev/sdb7: 12877/513024 files (6.8% non-contiguous), 239317/1024135
+blocks
+fsck died with exit status 8
+
+Thu Oct 18 12:30:23 2007
+----------------
+(end of the log file)
+
+My problem is that those two UUID's are definitely the ReiserFS
+partitions and that even though it says they don't exist, I was able
+to locate them using reiserfstune and Feisty was able to locate them
+to mount them correctly.
+
+Would it help to admit defeat and call them /dev/sdb8 &amp; /dev/sda3 in
+fstab...
+I'd like to know why fsck says it has died...
+
+Thanks for your help,
+- Jeremy
+</POST>
+<POST>
+<POSTER> &quot;Robert Citek&quot; &lt;robert.ci...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-18T18:30:00 </POSTDATE>
+On 10/18/07, Jeremy Boden &lt;JeremyBo ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Would it help to admit defeat and call them /dev/sdb8 &amp; /dev/sda3 in
+&gt; fstab...
+">
+
+Quite possibly.  Or change the ending &quot;2&quot; to a &quot;0&quot; on those lines.  It
+looks like you have tripped upon a bug similar to these:
+
+https://bugs.launchpad.net/ubuntu/+source/e2fsprogs/+bug/66032
+https://bugs.launchpad.net/ubuntu/+source/e2fsprogs/+bug/110138
+
+<QUOTE PREVIOUSPOST="
+&gt; I'd like to know why fsck says it has died...
+">
+
+I suspect you have a buggy blkid or vol_id.  To confirm, try this bit of code:
+
+true ; (
+sudo echo -n
+set -x
+blkid  -v
+for i in $(awk 'NR &gt;1 &amp;&amp; $2 &gt; 0 {print &quot;/dev/&quot; $4}' /proc/partitions) ; do
+echo $i
+sudo blkid $i
+sudo vol_id $i
+done
+) &gt;&amp; output.txt
+
+Please post the contents of output.txt
+
+Regards,
+- Robert
+</POST>
+<POST>
+<POSTER> Jeremy Boden &lt;JeremyBo...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-18T21:38:00 </POSTDATE>
+On 18 Oct, 23:30, &quot;Robert Citek&quot; &lt;robert.ci ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 10/18/07, Jeremy Boden &lt;JeremyBo ... @gmail.com&gt; wrote:
+
+&gt; &gt; Would it help to admit defeat and call them /dev/sdb8 &amp; /dev/sda3 in
+&gt; &gt; fstab...
+
+&gt; Quite possibly.  Or change the ending &quot;2&quot; to a &quot;0&quot; on those lines.  It
+&gt; looks like you have tripped upon a bug similar to these:
+
+&gt; https://bugs.launchpad.net/ubuntu/+source/e2fsprogs/+bug/66032https:/...
+
+&gt; &gt; I'd like to know why fsck says it has died...
+
+&gt; I suspect you have a buggy blkid or vol_id.  To confirm, try this bit of code:
+
+&gt; true ; (
+&gt; sudo echo -n
+&gt; set -x
+&gt; blkid  -v
+&gt; for i in $(awk 'NR &gt;1 &amp;&amp; $2 &gt; 0 {print &quot;/dev/&quot; $4}' /proc/partitions) ; do
+&gt;   echo $i
+&gt;   sudo blkid $i
+&gt;   sudo vol_id $i
+&gt; done
+&gt; ) &gt;&amp; output.txt
+
+&gt; Please post the contents of output.txt
+
+&gt; Regards,
+&gt; - Robert
+">
+
+Thanks, once again Robert!
+
+Here is the output - rather voluminous I'm afraid:-
++ blkid -v
+blkid 1.0.0 (12-Feb-2003)
+++ awk 'NR &gt;1 &amp;&amp; $2 &gt; 0 {print &quot;/dev/&quot; $4}' /proc/partitions
++ for i in '$(awk '\''NR &gt;1 &amp;&amp; $2 &gt; 0 {print &quot;/dev/&quot; $4}'\'' /proc/
+partitions)'
++ echo /dev/sda2
+/dev/sda2
++ sudo blkid /dev/sda2
+/dev/sda2: TYPE=&quot;swap&quot; UUID=&quot;936ee5a4-2f4f-48c6-ba36-894426deb357&quot;
++ sudo vol_id /dev/sda2
+ID_FS_USAGE=other
+ID_FS_TYPE=swap
+ID_FS_VERSION=2
+ID_FS_UUID=936ee5a4-2f4f-48c6-ba36-894426deb357
+ID_FS_LABEL=
+ID_FS_LABEL_SAFE=
++ for i in '$(awk '\''NR &gt;1 &amp;&amp; $2 &gt; 0 {print &quot;/dev/&quot; $4}'\'' /proc/
+partitions)'
++ echo /dev/sda3
+/dev/sda3
++ sudo blkid /dev/sda3
++ sudo vol_id /dev/sda3
+/dev/sda3: unknown volume type
++ for i in '$(awk '\''NR &gt;1 &amp;&amp; $2 &gt; 0 {print &quot;/dev/&quot; $4}'\'' /proc/
+partitions)'
++ echo /dev/sda5
+/dev/sda5
++ sudo blkid /dev/sda5
+/dev/sda5: UUID=&quot;233565b8-f1c9-412d-add7-848988ee52d3&quot; SEC_TYPE=&quot;ext2&quot;
+TYPE=&quot;ext3&quot;
++ sudo vol_id /dev/sda5
+ID_FS_USAGE=filesystem
+ID_FS_TYPE=ext3
+ID_FS_VERSION=1.0
+ID_FS_UUID=233565b8-f1c9-412d-add7-848988ee52d3
+ID_FS_LABEL=
+ID_FS_LABEL_SAFE=
++ for i in '$(awk '\''NR &gt;1 &amp;&amp; $2 &gt; 0 {print &quot;/dev/&quot; $4}'\'' /proc/
+partitions)'
++ echo /dev/sda6
+/dev/sda6
++ sudo blkid /dev/sda6
+/dev/sda6: UUID=&quot;247b2017-4636-40c5-8c7d-82721dd0caf5&quot; SEC_TYPE=&quot;ext2&quot;
+TYPE=&quot;ext3&quot;
++ sudo vol_id /dev/sda6
+ID_FS_USAGE=filesystem
+ID_FS_TYPE=ext3
+ID_FS_VERSION=1.0
+ID_FS_UUID=247b2017-4636-40c5-8c7d-82721dd0caf5
+ID_FS_LABEL=
+ID_FS_LABEL_SAFE=
++ for i in '$(awk '\''NR &gt;1 &amp;&amp; $2 &gt; 0 {print &quot;/dev/&quot; $4}'\'' /proc/
+partitions)'
++ echo /dev/sda7
+/dev/sda7
++ sudo blkid /dev/sda7
+/dev/sda7: UUID=&quot;2ff24943-33a8-43e9-97da-73982cf8845b&quot; SEC_TYPE=&quot;ext2&quot;
+TYPE=&quot;ext3&quot;
++ sudo vol_id /dev/sda7
+ID_FS_USAGE=filesystem
+ID_FS_TYPE=ext3
+ID_FS_VERSION=1.0
+ID_FS_UUID=2ff24943-33a8-43e9-97da-73982cf8845b
+ID_FS_LABEL=
+ID_FS_LABEL_SAFE=
++ for i in '$(awk '\''NR &gt;1 &amp;&amp; $2 &gt; 0 {print &quot;/dev/&quot; $4}'\'' /proc/
+partitions)'
++ echo /dev/sda8
+/dev/sda8
++ sudo blkid /dev/sda8
+/dev/sda8: UUID=&quot;7b3d8e1c-2080-4016-a672-1b2fed6ce7c8&quot;
+TYPE=&quot;reiserfs&quot;
++ sudo vol_id /dev/sda8
+ID_FS_USAGE=filesystem
+ID_FS_TYPE=reiserfs
+ID_FS_VERSION=3.6
+ID_FS_UUID=7b3d8e1c-2080-4016-a672-1b2fed6ce7c8
+ID_FS_LABEL=
+ID_FS_LABEL_SAFE=
++ for i in '$(awk '\''NR &gt;1 &amp;&amp; $2 &gt; 0 {print &quot;/dev/&quot; $4}'\'' /proc/
+partitions)'
++ echo /dev/sdb
+/dev/sdb
++ sudo blkid /dev/sdb
++ sudo vol_id /dev/sdb
+/dev/sdb: unknown volume type
++ for i in '$(awk '\''NR &gt;1 &amp;&amp; $2 &gt; 0 {print &quot;/dev/&quot; $4}'\'' /proc/
+partitions)'
++ echo /dev/sdb1
+/dev/sdb1
++ sudo blkid /dev/sdb1
+/dev/sdb1: UUID=&quot;403d16ca-ce7b-44f4-bcb3-87654deb5466&quot; SEC_TYPE=&quot;ext2&quot;
+TYPE=&quot;ext3&quot;
++ sudo vol_id /dev/sdb1
+ID_FS_USAGE=filesystem
+ID_FS_TYPE=ext3
+ID_FS_VERSION=1.0
+ID_FS_UUID=403d16ca-ce7b-44f4-bcb3-87654deb5466
+ID_FS_LABEL=
+ID_FS_LABEL_SAFE=
++ for i in '$(awk '\''NR &gt;1 &amp;&amp; $2 &gt; 0 {print &quot;/dev/&quot; $4}'\'' /proc/
+partitions)'
++ echo /dev/sdb2
+/dev/sdb2
++ sudo blkid /dev/sdb2
+/dev/sdb2: UUID=&quot;064f1127-b29f-4146-8ffd-181c4ac9f1ee&quot; SEC_TYPE=&quot;ext2&quot;
+TYPE=&quot;ext3&quot;
++ sudo vol_id /dev/sdb2
+ID_FS_USAGE=filesystem
+ID_FS_TYPE=ext3
+ID_FS_VERSION=1.0
+ID_FS_UUID=064f1127-b29f-4146-8ffd-181c4ac9f1ee
+ID_FS_LABEL=
+ID_FS_LABEL_SAFE=
++ for i in '$(awk '\''NR &gt;1 &amp;&amp; $2 &gt; 0 {print &quot;/dev/&quot; $4}'\'' /proc/
+partitions)'
++ echo /dev/sdb3
+/dev/sdb3
++ sudo blkid /dev/sdb3
+/dev/sdb3: UUID=&quot;feb26ef0-be8e-49ac-8fbe-2c443549c553&quot;
+TYPE=&quot;reiserfs&quot;
++ sudo vol_id /dev/sdb3
+ID_FS_USAGE=filesystem
+ID_FS_TYPE=reiserfs
+ID_FS_VERSION=3.6
+ID_FS_UUID=feb26ef0-be8e-49ac-8fbe-2c443549c553
+ID_FS_LABEL=
+ID_FS_LABEL_SAFE=
+
+Note that it says /dev/sda3: unknown volume type - but gparted says
+that's my extended partition.
+
+Unless you can see a quick fix, I think I will follow your suggestion
+to change that 2 to a 0 and try to remember to do the occasional
+manual fsck.
+
+It does look awfully like the first launchpad error.
+
+Many thanks for all your efforts - especially for those two scripts.
+
+Regards,
+Jeremy
+</POST>
+<POST>
+<POSTER> &quot;Robert Citek&quot; &lt;robert.ci...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-19T09:51:00 </POSTDATE>
+On 10/18/07, Jeremy Boden &lt;JeremyBo ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Note that it says /dev/sda3: unknown volume type - but gparted says
+&gt; that's my extended partition.
+">
+
+Which makes sense, since /dev/sda3 doesn't contain a filesystem.
+
+<QUOTE PREVIOUSPOST="
+&gt; Unless you can see a quick fix, I think I will follow your suggestion
+&gt; to change that 2 to a 0 and try to remember to do the occasional
+&gt; manual fsck.
+">
+
+Let us know if that works.
+
+<QUOTE PREVIOUSPOST="
+&gt; It does look awfully like the first launchpad error.
+">
+
+You might want to file a bug on launchpad and let those more
+in-the-know decide if it is the same bug.  In your report include the
+error message along with the output of this script:
+
+true ; (
+sudo echo -n
+set -x
+cat /etc/issue.net
+uname -va
+blkid  -v
+cat /etc/fstab
+sudo fdisk -l
+for i in $(awk 'NR &gt;1 &amp;&amp; $2 &gt; 0 {print &quot;/dev/&quot; $4}' /proc/partitions) ; do
+echo $i
+sudo blkid $i
+done
+) &gt;&amp; output.txt
+
+<QUOTE PREVIOUSPOST="
+&gt; Many thanks for all your efforts - especially for those two scripts.
+">
+
+No problem.  Again let us know how it goes and post the url to the bug
+report here.  That way we can all follow it.
+
+BTW, the above launchpad link mentions that the bug was fixed in
+Gutsy, which was released yesterday.  May be worth exploring on an
+experimental machine or VM.
+
+Regards,
+- Robert
+</POST>
+<POST>
+<POSTER> Jeremy Boden &lt;JeremyBo...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-19T11:10:00 </POSTDATE>
+On 19 Oct, 14:51, &quot;Robert Citek&quot; &lt;robert.ci ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 10/18/07, Jeremy Boden &lt;JeremyBo ... @gmail.com&gt; wrote:
+
+&gt; &gt; Note that it says /dev/sda3: unknown volume type - but gparted says
+&gt; &gt; that's my extended partition.
+
+&gt; Which makes sense, since /dev/sda3 doesn't contain a filesystem.
+
+&gt; &gt; Unless you can see a quick fix, I think I will follow your suggestion
+&gt; &gt; to change that 2 to a 0 and try to remember to do the occasional
+&gt; &gt; manual fsck.
+
+&gt; Let us know if that works.
+
+&gt; &gt; It does look awfully like the first launchpad error.
+
+&gt; You might want to file a bug on launchpad and let those more
+&gt; in-the-know decide if it is the same bug.  In your report include the
+&gt; error message along with the output of this script:
+
+&gt; true ; (
+&gt; sudo echo -n
+&gt; set -x
+&gt; cat /etc/issue.net
+&gt; uname -va
+&gt; blkid  -v
+&gt; cat /etc/fstab
+&gt; sudo fdisk -l
+&gt; for i in $(awk 'NR &gt;1 &amp;&amp; $2 &gt; 0 {print &quot;/dev/&quot; $4}' /proc/partitions) ; do
+&gt;  echo $i
+&gt;  sudo blkid $i
+&gt; done
+&gt; ) &gt;&amp; output.txt
+
+&gt; &gt; Many thanks for all your efforts - especially for those two scripts.
+
+&gt; No problem.  Again let us know how it goes and post the url to the bug
+&gt; report here.  That way we can all follow it.
+
+&gt; BTW, the above launchpad link mentions that the bug was fixed in
+&gt; Gutsy, which was released yesterday.  May be worth exploring on an
+&gt; experimental machine or VM.
+
+&gt; Regards,
+&gt; - Robert
+">
+
+Thanks for your efforts.
+I've added a comment (with all the details) to
+https://bugs.launchpad.net/ubuntu/+bug/106782/comments/1
+(&quot;checkfs &amp; fsck command options don't work with fsck.jfs at boot&quot;)
+
+I am now going to try changing the 0 2 in fstab to 0 0.
+I will post if anything serious happens!
+
+Thanks &amp; Regards,
+Jeremy
+</POST>
+</TEXT>
+</BODY>
+</DOC>

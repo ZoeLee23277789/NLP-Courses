@@ -1,0 +1,895 @@
+<DOC>
+<DOCID> eng-NG-31-126394-9138758 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-05T02:54:00 </DATETIME>
+<BODY>
+<HEADLINE>
+References or pointers?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> desktop &lt;f...@sss.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T02:54:00 </POSTDATE>
+I have made this example:
+
+#include&lt;iostream&gt;
+
+class Beer {
+public:
+Beer() {
+std::cout &lt;&lt; &quot;made a beer\n&quot;;
+num = 1;
+}
+
+Beer(int n) : num(n) {}
+
+int getBeer(){
+return num;
+}
+
+void remove(){
+num--;
+}
+
+private:
+int num;
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+class Brew {
+public:
+/* Simple*/
+void drinkBeer(Beer b) {
+std::cout &lt;&lt; &quot;Drank &quot; &lt;&lt; b.getBeer() &lt;&lt; &quot; instances of beers!\n&quot;;
+b.remove();
+}
+
+void checkBeer(Beer b) {
+std::cout &lt;&lt; b.getBeer() &lt;&lt; &quot; instances of beers left!\n&quot;;
+}
+
+/* With references. Notice that the '&amp;' is placed AFTER the type like the
+* pointer operator. */
+void drinkBeerRef(Beer&amp; b) {
+std::cout &lt;&lt; &quot;Drank &quot; &lt;&lt; b.getBeer() &lt;&lt; &quot; reference beers!\n&quot;;
+b.remove();
+}
+
+void checkBeerRef(Beer&amp; b) {
+std::cout &lt;&lt; b.getBeer() &lt;&lt; &quot; reference beers left!\n&quot;;
+}
+
+/* With pointers */
+void drinkBeer(Beer* b) {
+std::cout &lt;&lt; &quot;Drank &quot; &lt;&lt; b-&gt;getBeer() &lt;&lt; &quot; pointer beers!\n&quot;;
+b-&gt;remove();
+}
+
+void checkBeer(Beer* b) {
+std::cout &lt;&lt; b-&gt;getBeer() &lt;&lt; &quot; pointer beers left!\n&quot;;
+}
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+int main(){
+
+/* (0) Calling default constructor. */
+Beer b1;
+
+/* (1) Make a brewery where you can drink! checkBeer will not print
+* the right value. */
+Beer b2(10); // make 10 beers.
+Brew brew;
+brew.drinkBeer(b2);
+brew.checkBeer(b2);
+
+std::cout &lt;&lt; std::endl;
+
+/* (2) Using references */
+Beer b3(10); // make 10 beers.
+brew.drinkBeerRef(b3);
+brew.checkBeerRef(b3);
+
+std::cout &lt;&lt; std::endl;
+
+/* (3) Using pointers */
+
+/* Single object containing 10 beers. */
+Beer* b4 =  new Beer(10);
+
+/* or:
+*
+* Beer* b4 =  new Beer[10];
+*
+* using default constructor. 10 objects containing 1 beer.
+*
+* */
+
+brew.drinkBeer(b4);
+brew.checkBeer(b4);
+
+return 0;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+How does passing an argument as a reference differ from passing it as a
+pointer (besides from also giving the right result)?
+
+When you use 'new' the data is allocated on the heap and when changed in
+a function will remain changed after the functions returns. But this is
+also the case with references...does 'Beer b3' allocate 'b3' on the heap?
+</POST>
+<POST>
+<POSTER> &quot;Carlo Capelli&quot; &lt;carlo.cape...@rdbos.it&gt; </POSTER>
+<POSTDATE> 2007-09-05T03:48:00 </POSTDATE>
+&quot;desktop&quot; &lt;f ... @sss.com&gt; ha scritto nel messaggio
+news:fbljr2$48m$1@news.net.uni-c.dk ...
+
+<QUOTE PREVIOUSPOST="
+&gt;I have made this example:
+...
+&gt; How does passing an argument as a reference differ from passing it as a
+&gt; pointer (besides from also giving the right result)?
+">
+
+You can think to references as 'syntax sugar' for const pointers (beware,
+not pointer to consts).
+Passing an argument by reference is a safer and more convenient way to pass
+the pointer to the value.
+The callee can modify the value but not the pointer, i.e. can't switch the
+'pointer' to something else.
+
+<QUOTE PREVIOUSPOST="
+&gt; When you use 'new' the data is allocated on the heap and when changed in a
+&gt; function will remain changed after the functions returns. But this is also
+&gt; the case with references...does 'Beer b3' allocate 'b3' on the heap?
+">
+
+b3 is on the stack, but the pertinent point is that the section marked /*
+Simple*/ it's incorrect.
+You pass 'by value' the beer, and that make sense only in the checkBeer
+call.
+
+Bye Carlo
+</POST>
+<POST>
+<POSTER> terminator &lt;farid.mehr...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T04:53:00 </POSTDATE>
+On Sep 5, 9:54 am, desktop &lt;f ... @sss.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I have made this example:
+
+&gt; #include&lt;iostream&gt;
+
+&gt; class Beer {
+&gt; public:
+&gt;         Beer() {
+&gt;                 std::cout &lt;&lt; &quot;made a beer\n&quot;;
+&gt;                 num = 1;
+&gt;         }
+
+&gt;         Beer(int n) : num(n) {}
+
+&gt;         int getBeer(){
+&gt;                 return num;
+&gt;         }
+
+&gt;         void remove(){
+&gt;                 num--;
+&gt;         }
+
+&gt; private:
+&gt;         int num;
+
+&gt; };
+
+&gt; class Brew {
+&gt; public:
+&gt;         /* Simple*/
+&gt;         void drinkBeer(Beer b) {
+&gt;                 std::cout &lt;&lt; &quot;Drank &quot; &lt;&lt; b.getBeer() &lt;&lt; &quot; instances of beers!\n&quot;;
+&gt;                 b.remove();
+&gt;         }
+
+&gt;         void checkBeer(Beer b) {
+&gt;                 std::cout &lt;&lt; b.getBeer() &lt;&lt; &quot; instances of beers left!\n&quot;;
+&gt;         }
+
+&gt;         /* With references. Notice that the '&amp;' is placed AFTER the type like the
+&gt;          * pointer operator. */
+&gt;         void drinkBeerRef(Beer&amp; b) {
+&gt;                 std::cout &lt;&lt; &quot;Drank &quot; &lt;&lt; b.getBeer() &lt;&lt; &quot; reference beers!\n&quot;;
+&gt;                 b.remove();
+&gt;         }
+
+&gt;         void checkBeerRef(Beer&amp; b) {
+&gt;                 std::cout &lt;&lt; b.getBeer() &lt;&lt; &quot; reference beers left!\n&quot;;
+&gt;         }
+
+&gt;         /* With pointers */
+&gt;         void drinkBeer(Beer* b) {
+&gt;                 std::cout &lt;&lt; &quot;Drank &quot; &lt;&lt; b-&gt;getBeer() &lt;&lt; &quot; pointer beers!\n&quot;;
+&gt;                 b-&gt;remove();
+&gt;         }
+
+&gt;         void checkBeer(Beer* b) {
+&gt;                 std::cout &lt;&lt; b-&gt;getBeer() &lt;&lt; &quot; pointer beers left!\n&quot;;
+&gt;         }
+
+&gt; };
+
+&gt; int main(){
+
+&gt;         /* (0) Calling default constructor. */
+&gt;         Beer b1;
+
+&gt;         /* (1) Make a brewery where you can drink! checkBeer will not print
+&gt;          * the right value. */
+&gt;         Beer b2(10); // make 10 beers.
+&gt;         Brew brew;
+&gt;         brew.drinkBeer(b2);
+&gt;         brew.checkBeer(b2);
+">
+
+**NO NO NO**
+the 2 later lines are syntax errors.You must use the address-of
+operator (&amp;) to extract the address of an object and pass it to a
+pointer:
+
+brew.drinkBeer(&amp;b2);
+brew.checkBeer(&amp;b2);
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;         std::cout &lt;&lt; std::endl;
+
+&gt;         /* (2) Using references */
+&gt;         Beer b3(10); // make 10 beers.
+&gt;         brew.drinkBeerRef(b3);
+&gt;         brew.checkBeerRef(b3);
+
+&gt;         std::cout &lt;&lt; std::endl;
+
+&gt;         /* (3) Using pointers */
+
+&gt;         /* Single object containing 10 beers. */
+&gt;         Beer* b4 =  new Beer(10);
+
+&gt;         /* or:
+&gt;          *
+&gt;          * Beer* b4 =  new Beer[10];
+&gt;          *
+&gt;          * using default constructor. 10 objects containing 1 beer.
+&gt;          *
+&gt;          * */
+
+&gt;         brew.drinkBeer(b4);
+&gt;         brew.checkBeer(b4);
+">
+
+you can dereference a pointer via the derefrence operator(unary *).try
+this one too:
+
+brew.drinkBeerRef( * b4 );
+brew.checkBeerRef( * b4 );
+
+beware: you need to get rid of dynamic objects(created via new/new[]
+operators) before ending the program :
+
+delete b4;
+/* or:
+*
+* delete[] b4;Beer* b4 =  new Beer[10];
+*
+* if Beer* b4 =  new Beer[10];
+*
+*/
+return 0;
+
+<QUOTE PREVIOUSPOST="
+&gt; }
+
+&gt; How does passing an argument as a reference differ from passing it as a
+&gt; pointer (besides from also giving the right result)?
+
+&gt; When you use 'new' the data is allocated on the heap and when changed in
+&gt; a function will remain changed after the functions returns. But this is
+&gt; also the case with references...does 'Beer b3' allocate 'b3' on the heap?
+">
+
+No,'b3' is allocated on the stack and deallocated(first destructed
+then deallocated) prior to exiting the enclosing code block(main
+function in this context).
+
+Tip:
+Dynamic objects (created with new ) are placed on the heap and live
+there unless you do kill them (destroy with delete).
+None - static objects declared in code blocks are destroyed when the
+enclosing block exits.
+Instance data members are destroyed by the owner object.
+static objects are destroyed at the end of the program.
+pointers can be inc/decremented(++/--) like integral types.this is
+usefull when working with intrinsic arrays:
+
+int a[10];
+int * ptr =a;//ptr = &amp; a[0];
+cout &lt;&lt;*++ptr;//ptr= &amp; a[1];cout&lt;&lt;*ptr;
+
+regards,
+FM.
+</POST>
+<POST>
+<POSTER> &quot;Chris Thomasson&quot; &lt;cris...@comcast.net&gt; </POSTER>
+<POSTDATE> 2007-09-05T05:46:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Carlo Capelli&quot; &lt;carlo.cape ... @rdbos.it&gt; wrote in message
+">
+
+news:ZbtDi.6287$Th1.3251@tornado.fastwebnet.it ...
+[...]
+
+<QUOTE PREVIOUSPOST="
+&gt; You can think to references as 'syntax sugar' for const pointers
+">
+
+Indeed.
+</POST>
+<POST>
+<POSTER> desktop &lt;f...@sss.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T07:41:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+terminator wrote:
+&gt; On Sep 5, 9:54 am, desktop &lt;f ... @sss.com&gt; wrote:
+&gt;&gt; I have made this example:
+
+&gt;&gt; #include&lt;iostream&gt;
+
+&gt;&gt; class Beer {
+&gt;&gt; public:
+&gt;&gt;         Beer() {
+&gt;&gt;                 std::cout &lt;&lt; &quot;made a beer\n&quot;;
+&gt;&gt;                 num = 1;
+&gt;&gt;         }
+
+&gt;&gt;         Beer(int n) : num(n) {}
+
+&gt;&gt;         int getBeer(){
+&gt;&gt;                 return num;
+&gt;&gt;         }
+
+&gt;&gt;         void remove(){
+&gt;&gt;                 num--;
+&gt;&gt;         }
+
+&gt;&gt; private:
+&gt;&gt;         int num;
+
+&gt;&gt; };
+
+&gt;&gt; class Brew {
+&gt;&gt; public:
+&gt;&gt;         /* Simple*/
+&gt;&gt;         void drinkBeer(Beer b) {
+&gt;&gt;                 std::cout &lt;&lt; &quot;Drank &quot; &lt;&lt; b.getBeer() &lt;&lt; &quot; instances of beers!\n&quot;;
+&gt;&gt;                 b.remove();
+&gt;&gt;         }
+
+&gt;&gt;         void checkBeer(Beer b) {
+&gt;&gt;                 std::cout &lt;&lt; b.getBeer() &lt;&lt; &quot; instances of beers left!\n&quot;;
+&gt;&gt;         }
+
+&gt;&gt;         /* With references. Notice that the '&amp;' is placed AFTER the type like the
+&gt;&gt;          * pointer operator. */
+&gt;&gt;         void drinkBeerRef(Beer&amp; b) {
+&gt;&gt;                 std::cout &lt;&lt; &quot;Drank &quot; &lt;&lt; b.getBeer() &lt;&lt; &quot; reference beers!\n&quot;;
+&gt;&gt;                 b.remove();
+&gt;&gt;         }
+
+&gt;&gt;         void checkBeerRef(Beer&amp; b) {
+&gt;&gt;                 std::cout &lt;&lt; b.getBeer() &lt;&lt; &quot; reference beers left!\n&quot;;
+&gt;&gt;         }
+
+&gt;&gt;         /* With pointers */
+&gt;&gt;         void drinkBeer(Beer* b) {
+&gt;&gt;                 std::cout &lt;&lt; &quot;Drank &quot; &lt;&lt; b-&gt;getBeer() &lt;&lt; &quot; pointer beers!\n&quot;;
+&gt;&gt;                 b-&gt;remove();
+&gt;&gt;         }
+
+&gt;&gt;         void checkBeer(Beer* b) {
+&gt;&gt;                 std::cout &lt;&lt; b-&gt;getBeer() &lt;&lt; &quot; pointer beers left!\n&quot;;
+&gt;&gt;         }
+
+&gt;&gt; };
+
+&gt;&gt; int main(){
+
+&gt;&gt;         /* (0) Calling default constructor. */
+&gt;&gt;         Beer b1;
+
+&gt;&gt;         /* (1) Make a brewery where you can drink! checkBeer will not print
+&gt;&gt;          * the right value. */
+&gt;&gt;         Beer b2(10); // make 10 beers.
+&gt;&gt;         Brew brew;
+&gt;&gt;         brew.drinkBeer(b2);
+&gt;&gt;         brew.checkBeer(b2);
+
+&gt; **NO NO NO**
+&gt; the 2 later lines are syntax errors.You must use the address-of
+&gt; operator (&amp;) to extract the address of an object and pass it to a
+&gt; pointer:
+">
+
+Well I don't see why its syntactical incorrect. In Brew I have a method
+that takes as argument a static object of type Beer.
+
+I use the above lines to illustrate what happens if you DON'T use a
+pointer or reference to Beer. The changes made will not be correct after
+returning since the remove() call works on a copy of the passed object
+and not the actual object.
+
+To achieve the latter its necessary to pass the object as reference or
+pointer.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;          brew.drinkBeer(&amp;b2);
+&gt;          brew.checkBeer(&amp;b2);
+
+&gt;&gt;         std::cout &lt;&lt; std::endl;
+
+&gt;&gt;         /* (2) Using references */
+&gt;&gt;         Beer b3(10); // make 10 beers.
+&gt;&gt;         brew.drinkBeerRef(b3);
+&gt;&gt;         brew.checkBeerRef(b3);
+
+&gt;&gt;         std::cout &lt;&lt; std::endl;
+
+&gt;&gt;         /* (3) Using pointers */
+
+&gt;&gt;         /* Single object containing 10 beers. */
+&gt;&gt;         Beer* b4 =  new Beer(10);
+
+&gt;&gt;         /* or:
+&gt;&gt;          *
+&gt;&gt;          * Beer* b4 =  new Beer[10];
+&gt;&gt;          *
+&gt;&gt;          * using default constructor. 10 objects containing 1 beer.
+&gt;&gt;          *
+&gt;&gt;          * */
+
+&gt;&gt;         brew.drinkBeer(b4);
+&gt;&gt;         brew.checkBeer(b4);
+&gt; you can dereference a pointer via the derefrence operator(unary *).try
+&gt; this one too:
+
+&gt;           brew.drinkBeerRef( * b4 );
+&gt;           brew.checkBeerRef( * b4 );
+
+&gt; beware: you need to get rid of dynamic objects(created via new/new[]
+&gt; operators) before ending the program :
+
+&gt;           delete b4;
+&gt;          /* or:
+&gt;           *
+&gt;           * delete[] b4;Beer* b4 =  new Beer[10];
+&gt;           *
+&gt;           * if Beer* b4 =  new Beer[10];
+&gt;           *
+&gt;           */
+&gt;          return 0;
+&gt;&gt; }
+
+&gt;&gt; How does passing an argument as a reference differ from passing it as a
+&gt;&gt; pointer (besides from also giving the right result)?
+
+&gt;&gt; When you use 'new' the data is allocated on the heap and when changed in
+&gt;&gt; a function will remain changed after the functions returns. But this is
+&gt;&gt; also the case with references...does 'Beer b3' allocate 'b3' on the heap?
+
+&gt; No,'b3' is allocated on the stack and deallocated(first destructed
+&gt; then deallocated) prior to exiting the enclosing code block(main
+&gt; function in this context).
+
+&gt; Tip:
+&gt;  Dynamic objects (created with new ) are placed on the heap and live
+&gt; there unless you do kill them (destroy with delete).
+&gt;  None - static objects declared in code blocks are destroyed when the
+&gt; enclosing block exits.
+&gt;  Instance data members are destroyed by the owner object.
+&gt;  static objects are destroyed at the end of the program.
+&gt;  pointers can be inc/decremented(++/--) like integral types.this is
+&gt; usefull when working with intrinsic arrays:
+">
+
+But a method that takes a reference to a static object will leave the
+object changed after returning.
+</POST>
+<POST>
+<POSTER> desktop &lt;f...@sss.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T07:43:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Carlo Capelli wrote:
+&gt; &quot;desktop&quot; &lt;f ... @sss.com&gt; ha scritto nel messaggio
+&gt; news:fbljr2$48m$1@news.net.uni-c.dk ...
+&gt;&gt; I have made this example:
+&gt; ....
+&gt;&gt; How does passing an argument as a reference differ from passing it as a
+&gt;&gt; pointer (besides from also giving the right result)?
+
+&gt; You can think to references as 'syntax sugar' for const pointers (beware,
+&gt; not pointer to consts).
+&gt; Passing an argument by reference is a safer and more convenient way to pass
+&gt; the pointer to the value.
+&gt; The callee can modify the value but not the pointer, i.e. can't switch the
+&gt; 'pointer' to something else.
+">
+
+Ok thats a very good explanation, thanks!
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; When you use 'new' the data is allocated on the heap and when changed in a
+&gt;&gt; function will remain changed after the functions returns. But this is also
+&gt;&gt; the case with references...does 'Beer b3' allocate 'b3' on the heap?
+
+&gt; b3 is on the stack, but the pertinent point is that the section marked /*
+&gt; Simple*/ it's incorrect.
+&gt; You pass 'by value' the beer, and that make sense only in the checkBeer
+&gt; call.
+">
+
+I know but the example is also made to show what happens if you DON'T
+pass an object as pointer or reference.
+</POST>
+<POST>
+<POSTER> terminator &lt;farid.mehr...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T11:50:00 </POSTDATE>
+On Sep 5, 2:41 pm, desktop &lt;f ... @sss.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; terminator wrote:
+&gt; &gt; On Sep 5, 9:54 am, desktop &lt;f ... @sss.com&gt; wrote:
+&gt; &gt;&gt; I have made this example:
+
+&gt; &gt;&gt; #include&lt;iostream&gt;
+
+&gt; &gt;&gt; class Beer {
+&gt; &gt;&gt; public:
+&gt; &gt;&gt;         Beer() {
+&gt; &gt;&gt;                 std::cout &lt;&lt; &quot;made a beer\n&quot;;
+&gt; &gt;&gt;                 num = 1;
+&gt; &gt;&gt;         }
+
+&gt; &gt;&gt;         Beer(int n) : num(n) {}
+
+&gt; &gt;&gt;         int getBeer(){
+&gt; &gt;&gt;                 return num;
+&gt; &gt;&gt;         }
+
+&gt; &gt;&gt;         void remove(){
+&gt; &gt;&gt;                 num--;
+&gt; &gt;&gt;         }
+
+&gt; &gt;&gt; private:
+&gt; &gt;&gt;         int num;
+
+&gt; &gt;&gt; };
+
+&gt; &gt;&gt; class Brew {
+&gt; &gt;&gt; public:
+&gt; &gt;&gt;         /* Simple*/
+&gt; &gt;&gt;         void drinkBeer(Beer b) {
+&gt; &gt;&gt;                 std::cout &lt;&lt; &quot;Drank &quot; &lt;&lt; b.getBeer() &lt;&lt; &quot; instances of beers!\n&quot;;
+&gt; &gt;&gt;                 b.remove();
+&gt; &gt;&gt;         }
+
+&gt; &gt;&gt;         void checkBeer(Beer b) {
+&gt; &gt;&gt;                 std::cout &lt;&lt; b.getBeer() &lt;&lt; &quot; instances of beers left!\n&quot;;
+&gt; &gt;&gt;         }
+
+&gt; &gt;&gt;         /* With references. Notice that the '&amp;' is placed AFTER the type like the
+&gt; &gt;&gt;          * pointer operator. */
+&gt; &gt;&gt;         void drinkBeerRef(Beer&amp; b) {
+&gt; &gt;&gt;                 std::cout &lt;&lt; &quot;Drank &quot; &lt;&lt; b.getBeer() &lt;&lt; &quot; reference beers!\n&quot;;
+&gt; &gt;&gt;                 b.remove();
+&gt; &gt;&gt;         }
+
+&gt; &gt;&gt;         void checkBeerRef(Beer&amp; b) {
+&gt; &gt;&gt;                 std::cout &lt;&lt; b.getBeer() &lt;&lt; &quot; reference beers left!\n&quot;;
+&gt; &gt;&gt;         }
+
+&gt; &gt;&gt;         /* With pointers */
+&gt; &gt;&gt;         void drinkBeer(Beer* b) {
+&gt; &gt;&gt;                 std::cout &lt;&lt; &quot;Drank &quot; &lt;&lt; b-&gt;getBeer() &lt;&lt; &quot; pointer beers!\n&quot;;
+&gt; &gt;&gt;                 b-&gt;remove();
+&gt; &gt;&gt;         }
+
+&gt; &gt;&gt;         void checkBeer(Beer* b) {
+&gt; &gt;&gt;                 std::cout &lt;&lt; b-&gt;getBeer() &lt;&lt; &quot; pointer beers left!\n&quot;;
+&gt; &gt;&gt;         }
+
+&gt; &gt;&gt; };
+
+&gt; &gt;&gt; int main(){
+
+&gt; &gt;&gt;         /* (0) Calling default constructor. */
+&gt; &gt;&gt;         Beer b1;
+
+&gt; &gt;&gt;         /* (1) Make a brewery where you can drink! checkBeer will not print
+&gt; &gt;&gt;          * the right value. */
+&gt; &gt;&gt;         Beer b2(10); // make 10 beers.
+&gt; &gt;&gt;         Brew brew;
+&gt; &gt;&gt;         brew.drinkBeer(b2);
+&gt; &gt;&gt;         brew.checkBeer(b2);
+
+&gt; &gt; **NO NO NO**
+&gt; &gt; the 2 later lines are syntax errors.You must use the address-of
+&gt; &gt; operator (&amp;) to extract the address of an object and pass it to a
+&gt; &gt; pointer:
+
+&gt; Well I don't see why its syntactical incorrect. In Brew I have a method
+&gt; that takes as argument a static object of type Beer.
+
+&gt; I use the above lines to illustrate what happens if you DON'T use a
+&gt; pointer or reference to Beer. The changes made will not be correct after
+&gt; returning since the remove() call works on a copy of the passed object
+&gt; and not the actual object.
+
+&gt; To achieve the latter its necessary to pass the object as reference or
+&gt; pointer.
+
+&gt; &gt;          brew.drinkBeer(&amp;b2);
+&gt; &gt;          brew.checkBeer(&amp;b2);
+
+&gt; &gt;&gt;         std::cout &lt;&lt; std::endl;
+
+&gt; &gt;&gt;         /* (2) Using references */
+&gt; &gt;&gt;         Beer b3(10); // make 10 beers.
+&gt; &gt;&gt;         brew.drinkBeerRef(b3);
+&gt; &gt;&gt;         brew.checkBeerRef(b3);
+
+&gt; &gt;&gt;         std::cout &lt;&lt; std::endl;
+
+&gt; &gt;&gt;         /* (3) Using pointers */
+
+&gt; &gt;&gt;         /* Single object containing 10 beers. */
+&gt; &gt;&gt;         Beer* b4 =  new Beer(10);
+
+&gt; &gt;&gt;         /* or:
+&gt; &gt;&gt;          *
+&gt; &gt;&gt;          * Beer* b4 =  new Beer[10];
+&gt; &gt;&gt;          *
+&gt; &gt;&gt;          * using default constructor. 10 objects containing 1 beer.
+&gt; &gt;&gt;          *
+&gt; &gt;&gt;          * */
+
+&gt; &gt;&gt;         brew.drinkBeer(b4);
+&gt; &gt;&gt;         brew.checkBeer(b4);
+&gt; &gt; you can dereference a pointer via the derefrence operator(unary *).try
+&gt; &gt; this one too:
+
+&gt; &gt;           brew.drinkBeerRef( * b4 );
+&gt; &gt;           brew.checkBeerRef( * b4 );
+
+&gt; &gt; beware: you need to get rid of dynamic objects(created via new/new[]
+&gt; &gt; operators) before ending the program :
+
+&gt; &gt;           delete b4;
+&gt; &gt;          /* or:
+&gt; &gt;           *
+&gt; &gt;           * delete[] b4;Beer* b4 =  new Beer[10];
+&gt; &gt;           *
+&gt; &gt;           * if Beer* b4 =  new Beer[10];
+&gt; &gt;           *
+&gt; &gt;           */
+&gt; &gt;          return 0;
+&gt; &gt;&gt; }
+
+&gt; &gt;&gt; How does passing an argument as a reference differ from passing it as a
+&gt; &gt;&gt; pointer (besides from also giving the right result)?
+
+&gt; &gt;&gt; When you use 'new' the data is allocated on the heap and when changed in
+&gt; &gt;&gt; a function will remain changed after the functions returns. But this is
+&gt; &gt;&gt; also the case with references...does 'Beer b3' allocate 'b3' on the heap?
+
+&gt; &gt; No,'b3' is allocated on the stack and deallocated(first destructed
+&gt; &gt; then deallocated) prior to exiting the enclosing code block(main
+&gt; &gt; function in this context).
+
+&gt; &gt; Tip:
+&gt; &gt;  Dynamic objects (created with new ) are placed on the heap and live
+&gt; &gt; there unless you do kill them (destroy with delete).
+&gt; &gt;  None - static objects declared in code blocks are destroyed when the
+&gt; &gt; enclosing block exits.
+&gt; &gt;  Instance data members are destroyed by the owner object.
+&gt; &gt;  static objects are destroyed at the end of the program.
+&gt; &gt;  pointers can be inc/decremented(++/--) like integral types.this is
+&gt; &gt; usefull when working with intrinsic arrays:
+
+&gt; But a method that takes a reference to a static object will leave the
+&gt; object changed after returning.- Hide quoted text -
+">
+
+pointers and refrences are both used for passing by reference but they
+obey different symantics and have different syntaxes you can not
+initialize a pointer with a normal variable or vice-versa:
+
+class A{};
+A a1
+A * Aptr=a1;//error
+A a2=Aptr;//error
+A &amp; Aref1=Aptr;//error
+
+you must write:
+
+A * Aptr= &amp; a1;//pass the address of 'a1' to 'Aptr'
+A a2= * Aptr ;//pass the value pointed by 'Aptr' to 'a2'
+A &amp; Aref1= a1;//make 'Aref1' an aliase(new name)for 'a1'
+A &amp; Aref2= *Aptr;//make 'Aref2' a reference to what 'Aptr' points to
+
+you seem not to know the meaning of 'static';read your book before
+asking any more Qs.
+
+FM.
+</POST>
+<POST>
+<POSTER> SasQ &lt;sa...@go2.pl&gt; </POSTER>
+<POSTDATE> 2007-09-05T12:20:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Wed, 05 Sep 2007 02:46:08 -0700, Chris Thomasson wrote:
+&gt;&gt; You can think to references as 'syntax sugar' for
+&gt;&gt; const pointers
+
+&gt; Indeed.
+">
+
+Not always true.
+The compiler is able to &quot;inline&quot; access by reference
+so that it access the original value directly.
+
+--
+SasQ
+</POST>
+<POST>
+<POSTER> Old Wolf &lt;oldw...@inspire.net.nz&gt; </POSTER>
+<POSTDATE> 2007-09-05T19:45:00 </POSTDATE>
+On Sep 5, 9:46 pm, &quot;Chris Thomasson&quot; &lt;cris ... @comcast.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Carlo Capelli&quot; &lt;carlo.cape ... @rdbos.it&gt; wrote in message
+
+&gt; &gt; You can think to references as 'syntax sugar' for const pointers
+
+&gt; Indeed.
+">
+
+If you like fostering misconceptions about the language, that is.
+</POST>
+<POST>
+<POSTER> &quot;Chris Thomasson&quot; &lt;cris...@comcast.net&gt; </POSTER>
+<POSTDATE> 2007-09-05T23:57:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Old Wolf&quot; &lt;oldw ... @inspire.net.nz&gt; wrote in message
+">
+
+news:1189035902.013196.289460@50g2000hsm.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 5, 9:46 pm, &quot;Chris Thomasson&quot; &lt;cris ... @comcast.net&gt; wrote:
+&gt;&gt; &quot;Carlo Capelli&quot; &lt;carlo.cape ... @rdbos.it&gt; wrote in message
+
+&gt;&gt; &gt; You can think to references as 'syntax sugar' for const pointers
+
+&gt;&gt; Indeed.
+
+&gt; If you like fostering misconceptions about the language, that is.
+">
+
+Okay: I am wrong.
+</POST>
+<POST>
+<POSTER> &quot;Chris Thomasson&quot; &lt;cris...@comcast.net&gt; </POSTER>
+<POSTDATE> 2007-09-05T23:58:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;SasQ&quot; &lt;sa ... @go2.pl&gt; wrote in message
+">
+
+news:pan.2007.09.05.16.20.19.911060@go2.pl ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Wed, 05 Sep 2007 02:46:08 -0700, Chris Thomasson wrote:
+
+&gt;&gt;&gt; You can think to references as 'syntax sugar' for
+&gt;&gt;&gt; const pointers
+
+&gt;&gt; Indeed.
+
+&gt; Not always true.
+&gt; The compiler is able to &quot;inline&quot; access by reference
+&gt; so that it access the original value directly.
+">
+
+I was thinking in the sense that a reference wraps an underlying constant
+pointer which points directly at the object.
+</POST>
+<POST>
+<POSTER> Joe Greer &lt;jgr...@doubletake.com&gt; </POSTER>
+<POSTDATE> 2007-09-06T11:09:00 </POSTDATE>
+&quot;Chris Thomasson&quot; &lt;cris ... @comcast.net&gt; wrote in
+news:rYKdnUfLz7HF50LbnZ2dnUVZ_oOnnZ2d@comcast.com:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;SasQ&quot; &lt;sa ... @go2.pl&gt; wrote in message
+&gt; news:pan.2007.09.05.16.20.19.911060@go2.pl ...
+&gt;&gt; On Wed, 05 Sep 2007 02:46:08 -0700, Chris Thomasson wrote:
+
+&gt;&gt;&gt;&gt; You can think to references as 'syntax sugar' for
+&gt;&gt;&gt;&gt; const pointers
+
+&gt;&gt;&gt; Indeed.
+
+&gt;&gt; Not always true.
+&gt;&gt; The compiler is able to &quot;inline&quot; access by reference
+&gt;&gt; so that it access the original value directly.
+
+&gt; I was thinking in the sense that a reference wraps an underlying
+&gt; constant pointer which points directly at the object.
+">
+
+In many cases, references are to objects as typedefs are to types.  What
+I mean is that a reference adds an alias to an existing object.  What
+lies under the covers can vary quite a bit.  For example:
+
+int f( object const &amp; obj)
+{
+// In this form, obj most often is a hidden pointer, but with
+// inlining a such, that may not be true either
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+int a;
+int &amp; b = a;
+
+In the above form, most compilers won't have any backing for b at all
+and will generate code as if you had just used 'a'.  What adds to the
+confusion is that in Java or C# they use references as pointers.  That
+is:
+
+Object a = new Object;
+
+a = new Object;
+
+Works fine with the assignment changing the object that a points to and
+the first object is lost to the garbage collector.  In C++ If you wrote:
+
+Object &amp; a = *new Object;
+a = *new Object;
+
+You would have created a second new object and copied its contents on
+top of the first object, then orphaned the second.  That is, you can't
+reseat references in C++.  If you wanted the Jave/C# behavior, then you
+would use pointers.  That is what they are for.  C++ doesn't hide the
+mechanics from you and if you are trying to squeeze every clock cycle
+out of your program, that is a good thing.
+
+Hope that helps more than confuses.
+
+joe
+</POST>
+</TEXT>
+</BODY>
+</DOC>

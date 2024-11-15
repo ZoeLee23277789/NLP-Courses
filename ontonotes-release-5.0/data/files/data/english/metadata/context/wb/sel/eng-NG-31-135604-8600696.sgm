@@ -1,0 +1,164 @@
+<DOC>
+<DOCID> eng-NG-31-135604-8600696 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-02T15:04:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Call_External error in Virtual Machine
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> bsoher &lt;brian.so...@duke.edu&gt; </POSTER>
+<POSTDATE> 2007-08-02T15:04:00 </POSTDATE>
+Hi,
+
+I have a windows DLL that I call from an IDL gui using the
+CALL_EXTERNAL mechanism that works just fine when I compile the
+application in IDL 6.1 and run it from the IDL command line. When I
+save the app (SAVE, /ROUTINES, /XDR, FILENAME=fname) and drop the
+fname.sav file onto the IDL 6.3 Virtual Machine shortcut, the
+application's gui pops up OK, but I get an error message from
+Call_External the first time it tries to access the DLL.
+
+The error index = -378
+The error msg = CALL_EXTERNAL: Error loading sharable executable.
+Symbol: gava_mysql_do_query, File=C:\WINDOWS
+\system32\libgava_main.dll
+The specified module could not be found.
+
+Again, this CALL_EXTERNAL call works just fine outside the VM. I've
+tried hardcoding the directory where the DLL is located (usually I
+just list the DLL name because system32 is in the search path) but
+this did not help.
+
+Any thoughts would be appreciated.
+
+Thanks,
+
+Brian.
+</POST>
+<POST>
+<POSTER> bsoher &lt;brian.so...@duke.edu&gt; </POSTER>
+<POSTDATE> 2007-08-05T20:17:00 </POSTDATE>
+Found my problem with some help from others ... so I'm replying to my
+own email.
+
+Turns out my problem is due to a difference between IDL 6.1 and 6.3.
+I call C++ code using CALL_EXTERNAL, and I use the idl32.dll call,
+IDL_StrStore(), to write error messages back to my IDL routine.  In
+IDL 6.3 (or maybe 6.2) they renamed this DLL to idl.dll which sort of
+leaves me hanging out in the wind a bit.
+
+RSI/ITT's (polite but not completely helpful) response to all this was
+that CALL_EXTERNAL was meant to link in standalone C/C++ routines that
+did not make use of IDL functionality.  So, I can either create IDL
+version specific releases for my program OR find a way to ditch
+IDL_StrString(), which is the only function I call out of idl32.dll.
+
+I figure that I'll set up my strings in the C++ call as fixed length
+byte arrays and then use strncpy() to copy in any error messages. I
+can then use the STRING() function in IDL to recreate these messages
+for display.
+
+Brian.
+
+On Aug 2, 3:04 pm, bsoher &lt;brian.so ... @duke.edu&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi,
+
+&gt; I have a windows DLL that I call from an IDL gui using the
+&gt; CALL_EXTERNAL mechanism that works just fine when I compile the
+&gt; application in IDL 6.1 and run it from the IDL command line. When I
+&gt; save the app (SAVE, /ROUTINES, /XDR, FILENAME=fname) and drop the
+&gt; fname.sav file onto the IDL 6.3 Virtual Machine shortcut, the
+&gt; application's gui pops up OK, but I get an error message from
+&gt; Call_External the first time it tries to access the DLL.
+
+&gt; The error index = -378
+&gt; The error msg = CALL_EXTERNAL: Error loading sharable executable.
+&gt;            Symbol: gava_mysql_do_query, File=C:\WINDOWS
+&gt; \system32\libgava_main.dll
+&gt;            The specified module could not be found.
+
+&gt; Again, this CALL_EXTERNAL call works just fine outside the VM. I've
+&gt; tried hardcoding the directory where the DLL is located (usually I
+&gt; just list the DLL name because system32 is in the search path) but
+&gt; this did not help.
+
+&gt; Any thoughts would be appreciated.
+
+&gt; Thanks,
+
+&gt; Brian.
+">
+</POST>
+<POST>
+<POSTER> &quot;Haje Korth&quot; &lt;haje.ko...@nospam.jhuapl.edu&gt; </POSTER>
+<POSTDATE> 2007-08-06T08:03:00 </POSTDATE>
+The renaming to idl.dll occurred from v6.2 to v6.3 and is a well known
+issue. While the necessity of this cosmetic change is arguable, your
+problems can occur with any other third party library as well. Just write
+your own function. Haje
+
+<QUOTE PREVIOUSPOST="
+&quot;bsoher&quot; &lt;brian.so ... @duke.edu&gt; wrote in message
+">
+
+news:1186359464.644776.127180@k79g2000hse.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Found my problem with some help from others ... so I'm replying to my
+&gt; own email.
+
+&gt; Turns out my problem is due to a difference between IDL 6.1 and 6.3.
+&gt; I call C++ code using CALL_EXTERNAL, and I use the idl32.dll call,
+&gt; IDL_StrStore(), to write error messages back to my IDL routine.  In
+&gt; IDL 6.3 (or maybe 6.2) they renamed this DLL to idl.dll which sort of
+&gt; leaves me hanging out in the wind a bit.
+
+&gt; RSI/ITT's (polite but not completely helpful) response to all this was
+&gt; that CALL_EXTERNAL was meant to link in standalone C/C++ routines that
+&gt; did not make use of IDL functionality.  So, I can either create IDL
+&gt; version specific releases for my program OR find a way to ditch
+&gt; IDL_StrString(), which is the only function I call out of idl32.dll.
+
+&gt; I figure that I'll set up my strings in the C++ call as fixed length
+&gt; byte arrays and then use strncpy() to copy in any error messages. I
+&gt; can then use the STRING() function in IDL to recreate these messages
+&gt; for display.
+
+&gt; Brian.
+
+&gt; On Aug 2, 3:04 pm, bsoher &lt;brian.so ... @duke.edu&gt; wrote:
+&gt;&gt; Hi,
+
+&gt;&gt; I have a windows DLL that I call from an IDL gui using the
+&gt;&gt; CALL_EXTERNAL mechanism that works just fine when I compile the
+&gt;&gt; application in IDL 6.1 and run it from the IDL command line. When I
+&gt;&gt; save the app (SAVE, /ROUTINES, /XDR, FILENAME=fname) and drop the
+&gt;&gt; fname.sav file onto the IDL 6.3 Virtual Machine shortcut, the
+&gt;&gt; application's gui pops up OK, but I get an error message from
+&gt;&gt; Call_External the first time it tries to access the DLL.
+
+&gt;&gt; The error index = -378
+&gt;&gt; The error msg = CALL_EXTERNAL: Error loading sharable executable.
+&gt;&gt;            Symbol: gava_mysql_do_query, File=C:\WINDOWS
+&gt;&gt; \system32\libgava_main.dll
+&gt;&gt;            The specified module could not be found.
+
+&gt;&gt; Again, this CALL_EXTERNAL call works just fine outside the VM. I've
+&gt;&gt; tried hardcoding the directory where the DLL is located (usually I
+&gt;&gt; just list the DLL name because system32 is in the search path) but
+&gt;&gt; this did not help.
+
+&gt;&gt; Any thoughts would be appreciated.
+
+&gt;&gt; Thanks,
+
+&gt;&gt; Brian.
+">
+</POST>
+</TEXT>
+</BODY>
+</DOC>

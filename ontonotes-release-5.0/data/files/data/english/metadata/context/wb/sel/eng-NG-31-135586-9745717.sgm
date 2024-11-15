@@ -1,0 +1,204 @@
+<DOC>
+<DOCID> eng-NG-31-135586-9745717 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2008-01-30T09:18:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Threaded (subject indented) php forums?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> salmobytes &lt;Sandy.Pittendr...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-30T09:18:00 </POSTDATE>
+I'm shopping around for php based forum/bulletin board software.
+PhpBB is (obviously) popular. But I don't like the linear way its
+topic threads
+are presented.
+
+In the old days, the earliest forums were files based.  File-naming
+schemes
+could be used so threads could be presented as indented, hierarchical
+post lists,
+where it was visually obvious that post number 5 was a direct response
+to
+post number 3, etc. In all the mysql-based forums I've seen so far
+each thread is presented as a linear line of responses to a head topic
+listing,
+where the individual response-to-which-response hierarchy is lost.
+
+Perhaps this has something to do the difficulty sql has in modeling
+hierarchical
+structures.  Regardless, are there any php/mysql based forums out
+there, that start off
+by presenting a topic list, *BUT WHERE*  individual thread histories
+are presented
+as an indented hierarchy?  Maybe I'm just blind. I've looked at
+several and haven't found
+it yet.
+</POST>
+<POST>
+<POSTER> Jerry Stuckle &lt;jstuck...@attglobal.net&gt; </POSTER>
+<POSTDATE> 2008-01-31T07:37:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+salmobytes wrote:
+&gt; I'm shopping around for php based forum/bulletin board software.
+&gt; PhpBB is (obviously) popular. But I don't like the linear way its
+&gt; topic threads
+&gt; are presented.
+
+&gt; In the old days, the earliest forums were files based.  File-naming
+&gt; schemes
+&gt; could be used so threads could be presented as indented, hierarchical
+&gt; post lists,
+&gt; where it was visually obvious that post number 5 was a direct response
+&gt; to
+&gt; post number 3, etc. In all the mysql-based forums I've seen so far
+&gt; each thread is presented as a linear line of responses to a head topic
+&gt; listing,
+&gt; where the individual response-to-which-response hierarchy is lost.
+
+&gt; Perhaps this has something to do the difficulty sql has in modeling
+&gt; hierarchical
+&gt; structures.  Regardless, are there any php/mysql based forums out
+&gt; there, that start off
+&gt; by presenting a topic list, *BUT WHERE*  individual thread histories
+&gt; are presented
+&gt; as an indented hierarchy?  Maybe I'm just blind. I've looked at
+&gt; several and haven't found
+&gt; it yet.
+">
+
+None that I know of.
+
+It's not hard to do hierarchal structures in MySQL.  Maybe it's just
+historical reasons - the original BBS's weren't hierarchal, so people
+aren't building them that way now.  But I really don't know.
+
+--
+==================
+Remove the &quot;x&quot; from my email address
+Jerry Stuckle
+JDS Computer Training Corp.
+jstuck ... @attglobal.net
+==================
+</POST>
+<POST>
+<POSTER> &quot;Rik Wasmus&quot; &lt;luiheidsgoe...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-31T08:04:00 </POSTDATE>
+On Wed, 30 Jan 2008 15:18:18 +0100, salmobytes
+
+<QUOTE PREVIOUSPOST="
+&lt;Sandy.Pittendr ... @gmail.com&gt; wrote:
+&gt; I'm shopping around for php based forum/bulletin board software.
+&gt; PhpBB is (obviously) popular. But I don't like the linear way its
+&gt; topic threads
+&gt; are presented.
+
+&gt; In the old days, the earliest forums were files based.  File-naming
+&gt; schemes
+&gt; could be used so threads could be presented as indented, hierarchical
+&gt; post lists,
+&gt; where it was visually obvious that post number 5 was a direct response
+&gt; to
+&gt; post number 3, etc. In all the mysql-based forums I've seen so far
+&gt; each thread is presented as a linear line of responses to a head topic
+&gt; listing,
+&gt; where the individual response-to-which-response hierarchy is lost.
+
+&gt; Perhaps this has something to do the difficulty sql has in modeling
+&gt; hierarchical
+&gt; structures.  Regardless, are there any php/mysql based forums out
+&gt; there, that start off
+&gt; by presenting a topic list, *BUT WHERE*  individual thread histories
+&gt; are presented
+&gt; as an indented hierarchy?  Maybe I'm just blind. I've looked at
+&gt; several and haven't found
+&gt; it yet.
+">
+
+I'm not aware of any packages that do this out of the box, howeve, I've
+seen comment's which do. So maybe widen your search to check wether you
+can alter a comments script which does thread to become a forum.
+
+Technically, it's not that difficult, unless you want to be able to delete
+intermediate posts. Just have a table messages (I would choose the
+adjacency model, nested sets are not suited for fast/frequent alterations):
+id      message         parent-id
+1       foo             NULL
+2       bar             1
+3       foz             1
+4       baz             NULL
+5       fox             2
+6       bax             5
+7       foy             3
+8       bay             3
+
+Resulting in:
+1
+--2
+-----5
+--------6
+--3
+-----7
+-----8
+4
+
+The main difficulty is displaying: if you want fully 'expanded' thread,
+you can't escape a resursive function or procedure (either in the script
+or at the database side). If you choose to show only a certain level of
+threads, a bunch of self joins as needed are enough.
+--
+Rik Wasmus
+</POST>
+<POST>
+<POSTER> Erwin Moller &lt;Since_humans_read_this_I_am_spammed_too_m...@spamyourself.com&gt; </POSTER>
+<POSTDATE> 2008-02-01T04:49:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+salmobytes wrote:
+&gt; I'm shopping around for php based forum/bulletin board software.
+&gt; PhpBB is (obviously) popular. But I don't like the linear way its
+&gt; topic threads
+&gt; are presented.
+
+&gt; In the old days, the earliest forums were files based.  File-naming
+&gt; schemes
+&gt; could be used so threads could be presented as indented, hierarchical
+&gt; post lists,
+&gt; where it was visually obvious that post number 5 was a direct response
+&gt; to
+&gt; post number 3, etc. In all the mysql-based forums I've seen so far
+&gt; each thread is presented as a linear line of responses to a head topic
+&gt; listing,
+&gt; where the individual response-to-which-response hierarchy is lost.
+
+&gt; Perhaps this has something to do the difficulty sql has in modeling
+&gt; hierarchical
+&gt; structures.  Regardless, are there any php/mysql based forums out
+&gt; there, that start off
+&gt; by presenting a topic list, *BUT WHERE*  individual thread histories
+&gt; are presented
+&gt; as an indented hierarchy?  Maybe I'm just blind. I've looked at
+&gt; several and haven't found
+&gt; it yet.
+">
+
+Hi,
+
+Well, it is not difficult to create a threaded view.
+I wrote a few discussionfora in the past that do this, but they were
+written in JAVA, not PHP.
+It also offered the option to 'link' your response to multiple other
+articles.
+It boils down to storing parentid of a response, like Rik explained,
+using recursive logic. (I sidestepped the real recursive logic by using
+an alternative algoritm, but that was because I was having trouble with
+the multiple parents.)
+If you are going to write your own threaded forum that uses multiple
+parent, I will gladly share my experience with you if needed.
+
+Regards,
+Erwin Moller
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,1530 @@
+<DOC>
+<DOCID> eng-NG-31-135592-9757710 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-12-01T12:26:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Identifying a volume as being an iPod
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> John Joyce &lt;dangerwillrobinsondan...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-01T12:26:00 </POSTDATE>
+Does anybody know how to identify a mounted volume as being an iPod ?
+Or even more generally useful, is there a lib or gem to help identify
+the type of volume or disk ?
+
+I'm currently working on a prog to help transfer songs from your iPod
+to an authorized iTunes account.
+iTunes itself makes it easy to transfer &quot;purchased songs&quot;, that is,
+songs that are identified as purchased through iTunes, but fails to
+offer an easy method to transfer songs that you did not buy through
+iTunes, such as tracks you ripped from a CD.
+
+Opening the directories that hold the music on an iPod is dead
+simple, even opening them as Finder windows on OS X, but the two
+areas that are stopping me know are:
+1-- making an automated identification of the iPod
+2-- actually moving the songs to the iTunes library.
+
+The second one is something I'm currently learning AppleScript in
+order to make it feasible, perhaps with the rubyOSA gem.
+Ideally, I would like to make it cross platform, but I don't have any
+Windows, so it would be up to somebody else to add that later.
+</POST>
+<POST>
+<POSTER> Tiago Macedo &lt;tmac...@student.dei.uc.pt&gt; </POSTER>
+<POSTDATE> 2007-12-01T13:10:00 </POSTDATE>
+An iPod (at least when formatted in FAT32 will contain an &quot;iPod_Control&quot;
+folder on the root.
+
+You can also check the USB device ids:
+Bus 005 Device 003: ID 05ac:1261 Apple Computer, Inc.
+(this is an 80GB Classic Silver)
+
+or just build a wrapper for libgpod (I don't it supports drm'ed tracks
+though)
+
+Tiago Macedo
+
+<QUOTE PREVIOUSPOST="
+John Joyce wrote:
+&gt; Does anybody know how to identify a mounted volume as being an iPod ?
+&gt; Or even more generally useful, is there a lib or gem to help identify
+&gt; the type of volume or disk ?
+
+&gt; I'm currently working on a prog to help transfer songs from your iPod to
+&gt; an authorized iTunes account.
+&gt; iTunes itself makes it easy to transfer &quot;purchased songs&quot;, that is,
+&gt; songs that are identified as purchased through iTunes, but fails to
+&gt; offer an easy method to transfer songs that you did not buy through
+&gt; iTunes, such as tracks you ripped from a CD.
+
+&gt; Opening the directories that hold the music on an iPod is dead simple,
+&gt; even opening them as Finder windows on OS X, but the two areas that are
+&gt; stopping me know are:
+&gt; 1-- making an automated identification of the iPod
+&gt; 2-- actually moving the songs to the iTunes library.
+
+&gt; The second one is something I'm currently learning AppleScript in order
+&gt; to make it feasible, perhaps with the rubyOSA gem.
+&gt; Ideally, I would like to make it cross platform, but I don't have any
+&gt; Windows, so it would be up to somebody else to add that later.
+">
+</POST>
+<POST>
+<POSTER> John Joyce &lt;dangerwillrobinsondan...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-01T16:40:00 </POSTDATE>
+On Dec 1, 2007, at 12:10 PM, Tiago Macedo wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; An iPod (at least when formatted in FAT32 will contain an
+&gt; &quot;iPod_Control&quot; folder on the root.
+
+&gt; You can also check the USB device ids:
+&gt; Bus 005 Device 003: ID 05ac:1261 Apple Computer, Inc.
+&gt; (this is an 80GB Classic Silver)
+
+&gt; or just build a wrapper for libgpod (I don't it supports drm'ed
+&gt; tracks though)
+
+&gt; Tiago Macedo
+">
+
+The device ID info is in the right vein for what I'm thinking of.
+I know about the &quot;iPod_Control&quot; folder.
+It's on every iPod, inside it is the Music folder and that contains
+the directories that actually hold the audio files.
+I'm just curious, but I'll look into the way the system recognizes
+the iPod... there must be some simple trick to go, ok this is an iPod
+and not some other device.
+</POST>
+<POST>
+<POSTER> MonkeeSage &lt;MonkeeS...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-01T17:25:00 </POSTDATE>
+On Dec 1, 3:40 pm, John Joyce &lt;dangerwillrobinsondan ... @gmail.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 1, 2007, at 12:10 PM, Tiago Macedo wrote:
+
+&gt; &gt; An iPod (at least when formatted in FAT32 will contain an
+&gt; &gt; &quot;iPod_Control&quot; folder on the root.
+
+&gt; &gt; You can also check the USB device ids:
+&gt; &gt; Bus 005 Device 003: ID 05ac:1261 Apple Computer, Inc.
+&gt; &gt; (this is an 80GB Classic Silver)
+
+&gt; &gt; or just build a wrapper for libgpod (I don't it supports drm'ed
+&gt; &gt; tracks though)
+
+&gt; &gt; Tiago Macedo
+
+&gt; The device ID info is in the right vein for what I'm thinking of.
+&gt; I know about the &quot;iPod_Control&quot; folder.
+&gt; It's on every iPod, inside it is the Music folder and that contains
+&gt; the directories that actually hold the audio files.
+&gt; I'm just curious, but I'll look into the way the system recognizes
+&gt; the iPod... there must be some simple trick to go, ok this is an iPod
+&gt; and not some other device.
+">
+
+On my system (linux, 2.6.22 kernel), this turns up some interesting
+results...
+
+$ sudo grep -R -i ipod /usr/src/linux/*
+
+...particularly, the following files look like they have some stuff
+for identifying ipod devices...
+
+/usr/src/linux/drivers/ieee1394/sbp2.c
+/usr/src/linux/drivers/usb/storage/unusual_devs.h
+
+Regards,
+Jordan
+</POST>
+<POST>
+<POSTER> John Joyce &lt;dangerwillrobinsondan...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-01T18:31:00 </POSTDATE>
+On Dec 1, 2007, at 4:25 PM, MonkeeSage wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 1, 3:40 pm, John Joyce &lt;dangerwillrobinsondan ... @gmail.com&gt;
+&gt; wrote:
+&gt;&gt; On Dec 1, 2007, at 12:10 PM, Tiago Macedo wrote:
+
+&gt;&gt;&gt; An iPod (at least when formatted in FAT32 will contain an
+&gt;&gt;&gt; &quot;iPod_Control&quot; folder on the root.
+
+&gt;&gt;&gt; You can also check the USB device ids:
+&gt;&gt;&gt; Bus 005 Device 003: ID 05ac:1261 Apple Computer, Inc.
+&gt;&gt;&gt; (this is an 80GB Classic Silver)
+
+&gt;&gt;&gt; or just build a wrapper for libgpod (I don't it supports drm'ed
+&gt;&gt;&gt; tracks though)
+
+&gt;&gt;&gt; Tiago Macedo
+
+&gt;&gt; The device ID info is in the right vein for what I'm thinking of.
+&gt;&gt; I know about the &quot;iPod_Control&quot; folder.
+&gt;&gt; It's on every iPod, inside it is the Music folder and that contains
+&gt;&gt; the directories that actually hold the audio files.
+&gt;&gt; I'm just curious, but I'll look into the way the system recognizes
+&gt;&gt; the iPod... there must be some simple trick to go, ok this is an iPod
+&gt;&gt; and not some other device.
+
+&gt; On my system (linux, 2.6.22 kernel), this turns up some interesting
+&gt; results...
+
+&gt; $ sudo grep -R -i ipod /usr/src/linux/*
+
+&gt; ...particularly, the following files look like they have some stuff
+&gt; for identifying ipod devices...
+
+&gt; /usr/src/linux/drivers/ieee1394/sbp2.c
+&gt; /usr/src/linux/drivers/usb/storage/unusual_devs.h
+
+&gt; Regards,
+&gt; Jordan
+">
+
+Interesting, ieee1394 is FireWire, but iPods haven't shipped with
+that in quite some time.
+none the less, if you look in there and happen to see anything
+interesting, let me know please!
+I don't currently have a Linux system running, even it requires
+better hardware than my current crop of old hardware...
+</POST>
+<POST>
+<POSTER> &quot;Giles Bowkett&quot; &lt;gil...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-01T19:38:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Opening the directories that hold the music on an iPod is dead
+&gt; simple, even opening them as Finder windows on OS X, but the two
+&gt; areas that are stopping me know are:
+&gt; 1-- making an automated identification of the iPod
+&gt; 2-- actually moving the songs to the iTunes library.
+">
+
+The iTunes library has an XML component and a binary component. The
+XML part is just a dumb-as-nails XML file. I think I once edited it by
+hand because iTunes was pissing me off and I wanted it to know who was
+boss. Anyway, IIRC, iTunes didn't explode as a result. I don't know
+what the binary component is but if my fuzzy memory is working
+properly you can just change the XML and the program will deal.
+
+However, I thought moving files off the iPod was impossible.
+
+Oh wow, that's cool. You can just go in there in Term, or Path Finder.
+I don't use Finder, but presumably you can get in that way too. Very
+cool. Now I can archive all the stuff I bought on my old computer.
+Weird how the files get renamed, though. Are they supposed to all have
+names like F47/ENNS.mp3?
+
+<QUOTE PREVIOUSPOST="
+&gt; The second one is something I'm currently learning AppleScript in
+&gt; order to make it feasible, perhaps with the rubyOSA gem.
+&gt; Ideally, I would like to make it cross platform, but I don't have any
+&gt; Windows, so it would be up to somebody else to add that later.
+">
+
+I think you can just do it with Builder in Ruby. I did a little
+googling and the impression I got was that the binary and XML
+components are exact duplicates, and that when iTunes finds the binary
+version is corrupted, it uses the XML as a backup. So you could just
+add the files in the XML, nuke the binary, and iTunes would
+automatically go to the XML to stay up to date.
+
+By the way, if you want to find out what the files in
+iPod_Control/iTunes do, don't run cat against them, some of them are
+quite large and others will make your Terminal beep at you.
+
+--
+Giles Bowkett
+
+Podcast: http://hollywoodgrit.blogspot.com
+Blog: http://gilesbowkett.blogspot.com
+Portfolio: http://www.gilesgoatboy.org
+Tumblelog: http://giles.tumblr.com
+</POST>
+<POST>
+<POSTER> &quot;Giles Bowkett&quot; &lt;gil...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-01T19:41:00 </POSTDATE>
+If you speak Perl there are some pretty wiggy-looking Perl libraries for it:
+
+http://search.cpan.org/search?query=iPod&amp;mode;=all
+
+What's really odd is that most of them seem to involve SQL.
+
+--
+Giles Bowkett
+
+Podcast: http://hollywoodgrit.blogspot.com
+Blog: http://gilesbowkett.blogspot.com
+Portfolio: http://www.gilesgoatboy.org
+Tumblelog: http://giles.tumblr.com
+</POST>
+<POST>
+<POSTER> John Joyce &lt;dangerwillrobinsondan...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-01T22:02:00 </POSTDATE>
+On Dec 1, 2007, at 6:41 PM, Giles Bowkett wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; If you speak Perl there are some pretty wiggy-looking Perl
+&gt; libraries for it:
+
+&gt; http://search.cpan.org/search?query=iPod&amp;mode;=all
+
+&gt; What's really odd is that most of them seem to involve SQL.
+
+&gt; --
+&gt; Giles Bowkett
+
+&gt; Podcast: http://hollywoodgrit.blogspot.com
+&gt; Blog: http://gilesbowkett.blogspot.com
+&gt; Portfolio: http://www.gilesgoatboy.org
+&gt; Tumblelog: http://giles.tumblr.com
+">
+
+Sweet, I don't speak Perl, but when it's readable I can read it
+enough to get what I need.
+
+But yeah, you can go into /Volumes/ipod_name/iPod_Control/Music/
+and there you find some cryptically named directories that contain
+your audio files.
+The names of tracks are stored internally in the files themselves.
+
+just open each directory with the OS X terminal command open, then
+drag the songs to the iTunes library in the iTunes app window.
+Sometimes the tracks will not get their names as they should and
+retain those cryptic names in iTunes.
+I've yet to determine why but I supsect either for larger libraries,
+it steps on itself during the transfer, or files that are not the
+native iTunes format might not contain the track info internally.
+
+Anyway, this is my little project to help me and my coworkers enjoy
+our own music at work.
+I've discovered that OS X has an IORegistry that holds xml of
+connected devices, iPods make themselves pretty obviously iPods in
+that IORegistry, but I don't yet know how to access the IORegistry to
+check connected iPods and their names.
+I want to make it so that the user can confirm that the proper iPod
+is being accessed, then transfer the songs.
+
+appleScript is currently on the menu for adding the files to the
+iTunes library. The library's xml files are just too ugly for me.
+I don't really want to dig in to how they are structured or ordered.
+This gives me the impetus to finally learn appleScript and then I can
+use rubyOSA...
+but if you have some deeper insights into iTunes' xml then maybe we
+can add that to it.
+I suspect using the appleScript GUI scripting approach will be faster
+than Ruby xml writing.
+
+If this is nailed down well enough it should be cake for somebody
+else to do the windows version of the program.
+</POST>
+<POST>
+<POSTER> John Joyce &lt;dangerwillrobinsondan...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-02T00:31:00 </POSTDATE>
+Well, I've found better stuff to work with, more practical anyway.
+
+in:
+/Volumes/ipod_name_here/iPod_Control/Device/
+there is a nifty little file called SysInfo
+
+I wouldn't dare modify it, but it is worth reading. In fact, I would
+almost recommend creating read-only method to wrap whatever methods
+you want to use to open and read the thing. Just to avoid any chance
+of stepping on this file.
+I have replaced my serial number with a five asterisks. You only need
+the first 3 characters of a serial number on the ipod to identify it.
+The most important line is line 3, the model number.
+You could, if you were diligent, check to see that the first 3 chars
+of the serial number match the model number for the type of iPod.
+If you were overly diligent, you could try to check the serial number
+against Apple's web site somewhere.
+
+Anyway, let's just say we've got more than enough to say the device
+is probably an iPod and is likely the one you want to transfer music
+from to an authorized iTunes. The odds of having multiple iPods
+connected to one computer are pretty low. It happens, but not much.
+That's no big deal, we just have to add a check to ask the user
+running the program which iPod they want to transfer from, since the
+name of the iPod is the same name in the terminal.
+
+Now all we need to do is script the Finder to move the files into
+iTunes!
+After I finish learning just enough AppleScript, I will convert it to
+RubyOSA...
+
+The file reads thus:
+
+BoardHwName: iPod M26
+pszSerialNumber: 5U5*****TK2
+ModelNumStr: MA107
+FirewireGuid: 0x000A270012AE3CCB
+HddFirmwareRev: ADBA41KB
+RegionCode: J(0x0002)
+PolicyFlags: 0x00000000
+buildID: 0x05118000 (5.1.1)
+visibleBuildID: 0x01118000 (1.1.1)
+boardHwRev: 0x00000000 (0.0 0)
+boardHwSwInterfaceRev: 0x000C0005 (0.0.12 5)
+bootLoaderImageRev: 0x00000000 (0.0 0)
+diskModeImageRev: 0x00000000 (0.0 0)
+diagImageRev: 0x00000000 (0.0 0)
+osImageRev: 0x00000000 (0.0 0)
+iPodFamily: 0x00000000
+updaterFamily: 0x00000000
+</POST>
+<POST>
+<POSTER> &quot;Giles Bowkett&quot; &lt;gil...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-02T02:29:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; it steps on itself during the transfer, or files that are not the
+&gt; native iTunes format might not contain the track info internally.
+">
+
+I can definitely contradict this. I pulled an .mp3 off one of my iPods
+and although it had an iPod filename it knew what the song was called.
+mp3s have a system for metadata, I think they're called ID3 tags but
+don't quote me on that. I think Apple's proprietary format also uses
+this same system for metadata. so when you pull in songs from an iPod
+it just goes to the metadata in most cases. of course it's possible to
+create mp3s without metadata, which is very likely what you're seeing
+if it goes to the weird filename rather than the name of the song,
+especially if you're only seeing it on mp3s but not AACs.
+
+Anyway, seems like a nifty project, announce if you release it, sounds
+like it'd be fun to play with.
+
+--
+Giles Bowkett
+
+Podcast: http://hollywoodgrit.blogspot.com
+Blog: http://gilesbowkett.blogspot.com
+Portfolio: http://www.gilesgoatboy.org
+Tumblelog: http://giles.tumblr.com
+</POST>
+<POST>
+<POSTER> MonkeeSage &lt;MonkeeS...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-02T08:40:00 </POSTDATE>
+On Dec 1, 5:31 pm, John Joyce &lt;dangerwillrobinsondan ... @gmail.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 1, 2007, at 4:25 PM, MonkeeSage wrote:
+
+&gt; &gt; On Dec 1, 3:40 pm, John Joyce &lt;dangerwillrobinsondan ... @gmail.com&gt;
+&gt; &gt; wrote:
+&gt; &gt;&gt; On Dec 1, 2007, at 12:10 PM, Tiago Macedo wrote:
+
+&gt; &gt;&gt;&gt; An iPod (at least when formatted in FAT32 will contain an
+&gt; &gt;&gt;&gt; &quot;iPod_Control&quot; folder on the root.
+
+&gt; &gt;&gt;&gt; You can also check the USB device ids:
+&gt; &gt;&gt;&gt; Bus 005 Device 003: ID 05ac:1261 Apple Computer, Inc.
+&gt; &gt;&gt;&gt; (this is an 80GB Classic Silver)
+
+&gt; &gt;&gt;&gt; or just build a wrapper for libgpod (I don't it supports drm'ed
+&gt; &gt;&gt;&gt; tracks though)
+
+&gt; &gt;&gt;&gt; Tiago Macedo
+
+&gt; &gt;&gt; The device ID info is in the right vein for what I'm thinking of.
+&gt; &gt;&gt; I know about the &quot;iPod_Control&quot; folder.
+&gt; &gt;&gt; It's on every iPod, inside it is the Music folder and that contains
+&gt; &gt;&gt; the directories that actually hold the audio files.
+&gt; &gt;&gt; I'm just curious, but I'll look into the way the system recognizes
+&gt; &gt;&gt; the iPod... there must be some simple trick to go, ok this is an iPod
+&gt; &gt;&gt; and not some other device.
+
+&gt; &gt; On my system (linux, 2.6.22 kernel), this turns up some interesting
+&gt; &gt; results...
+
+&gt; &gt; $ sudo grep -R -i ipod /usr/src/linux/*
+
+&gt; &gt; ...particularly, the following files look like they have some stuff
+&gt; &gt; for identifying ipod devices...
+
+&gt; &gt; /usr/src/linux/drivers/ieee1394/sbp2.c
+&gt; &gt; /usr/src/linux/drivers/usb/storage/unusual_devs.h
+
+&gt; &gt; Regards,
+&gt; &gt; Jordan
+
+&gt; Interesting, ieee1394 is FireWire, but iPods haven't shipped with
+&gt; that in quite some time.
+&gt; none the less, if you look in there and happen to see anything
+&gt; interesting, let me know please!
+&gt; I don't currently have a Linux system running, even it requires
+&gt; better hardware than my current crop of old hardware...
+">
+
+Interesting bits...
+
+==snip==
+
+/* iPod 4th generation */ {
+.firmware_revision      = 0x0a2700,
+.model_id               = 0x000021,
+.workarounds            = SBP2_WORKAROUND_FIX_CAPACITY,
+},
+/* iPod mini */ {
+.firmware_revision      = 0x0a2700,
+.model_id               = 0x000023,
+.workarounds            = SBP2_WORKAROUND_FIX_CAPACITY,
+},
+/* iPod Photo */ {
+.firmware_revision      = 0x0a2700,
+.model_id               = 0x00007e,
+.workarounds            = SBP2_WORKAROUND_FIX_CAPACITY,
+}
+
+========
+
+==snip==
+
+/* Submitted by Sven Anderson &lt;sven-li ... @anderson.de&gt;
+* There are at least four ProductIDs used for iPods, so I added
+0x1202 and
+* 0x1204. They just need the US_FL_FIX_CAPACITY. As the bcdDevice
+appears
+* to change with firmware updates, I changed the range to maximum for
+all
+* iPod entries.
+*/
+UNUSUAL_DEV( 0x05ac, 0x1202, 0x0000, 0x9999,
+&quot;Apple&quot;,
+&quot;iPod&quot;,
+US_SC_DEVICE, US_PR_DEVICE, NULL,
+US_FL_FIX_CAPACITY ),
+
+/* Reported by Avi Kivity &lt;a ... @argo.co.il&gt; */
+UNUSUAL_DEV( 0x05ac, 0x1203, 0x0000, 0x9999,
+&quot;Apple&quot;,
+&quot;iPod&quot;,
+US_SC_DEVICE, US_PR_DEVICE, NULL,
+US_FL_FIX_CAPACITY ),
+
+UNUSUAL_DEV( 0x05ac, 0x1204, 0x0000, 0x9999,
+&quot;Apple&quot;,
+&quot;iPod&quot;,
+US_SC_DEVICE, US_PR_DEVICE, NULL,
+US_FL_FIX_CAPACITY | US_FL_NOT_LOCKABLE ),
+
+UNUSUAL_DEV( 0x05ac, 0x1205, 0x0000, 0x9999,
+&quot;Apple&quot;,
+&quot;iPod&quot;,
+US_SC_DEVICE, US_PR_DEVICE, NULL,
+US_FL_FIX_CAPACITY ),
+
+/*
+* Reported by Tyson Vinson &lt;lorn ... @gmail.com&gt;
+* This particular productId is the iPod Nano
+*/
+UNUSUAL_DEV( 0x05ac, 0x120a, 0x0000, 0x9999,
+&quot;Apple&quot;,
+&quot;iPod&quot;,
+US_SC_DEVICE, US_PR_DEVICE, NULL,
+US_FL_FIX_CAPACITY ),
+
+========
+
+Don't ask me about what exactly all the code means, I just thought it
+looked promising. Ps. You can browse and search the kernel source
+online: http://lxr.linux.no/linux
+
+Regards,
+Jordan
+</POST>
+<POST>
+<POSTER> John Joyce &lt;dangerwillrobinsondan...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-02T14:30:00 </POSTDATE>
+On Dec 2, 2007, at 1:29 AM, Giles Bowkett wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; it steps on itself during the transfer, or files that are not the
+&gt;&gt; native iTunes format might not contain the track info internally.
+
+&gt; I can definitely contradict this. I pulled an .mp3 off one of my iPods
+&gt; and although it had an iPod filename it knew what the song was called.
+&gt; mp3s have a system for metadata, I think they're called ID3 tags but
+&gt; don't quote me on that. I think Apple's proprietary format also uses
+&gt; this same system for metadata. so when you pull in songs from an iPod
+&gt; it just goes to the metadata in most cases. of course it's possible to
+&gt; create mp3s without metadata, which is very likely what you're seeing
+&gt; if it goes to the weird filename rather than the name of the song,
+&gt; especially if you're only seeing it on mp3s but not AACs.
+
+&gt; Anyway, seems like a nifty project, announce if you release it, sounds
+&gt; like it'd be fun to play with.
+
+&gt; --
+&gt; Giles Bowkett
+">
+
+No contradiction there, I said &quot;might not contain track info
+internally&quot; ...
+Some mp3 files (most really) have id3 tags properly filled in.
+Other formats handled by iTunes might only have their metadata in the
+iTunes library xml files.
+For example aif or aiff files. These were some of my suspects.
+I don't know how iTunes checks audio files, but you can bet it
+doesn't care much about the file name.
+Oddly enough though, it seems that the file name tweaking occurs
+during the transfer to iPods, a little obfuscation to slow down
+hacking the things.
+</POST>
+<POST>
+<POSTER> John Joyce &lt;dangerwillrobinsondan...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-02T14:35:00 </POSTDATE>
+On Dec 2, 2007, at 7:40 AM, MonkeeSage wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 1, 5:31 pm, John Joyce &lt;dangerwillrobinsondan ... @gmail.com&gt;
+&gt; wrote:
+&gt;&gt; On Dec 1, 2007, at 4:25 PM, MonkeeSage wrote:
+
+&gt;&gt;&gt; On Dec 1, 3:40 pm, John Joyce &lt;dangerwillrobinsondan ... @gmail.com&gt;
+&gt;&gt;&gt; wrote:
+&gt;&gt;&gt;&gt; On Dec 1, 2007, at 12:10 PM, Tiago Macedo wrote:
+
+&gt;&gt;&gt;&gt;&gt; An iPod (at least when formatted in FAT32 will contain an
+&gt;&gt;&gt;&gt;&gt; &quot;iPod_Control&quot; folder on the root.
+
+&gt;&gt;&gt;&gt;&gt; You can also check the USB device ids:
+&gt;&gt;&gt;&gt;&gt; Bus 005 Device 003: ID 05ac:1261 Apple Computer, Inc.
+&gt;&gt;&gt;&gt;&gt; (this is an 80GB Classic Silver)
+
+&gt;&gt;&gt;&gt;&gt; or just build a wrapper for libgpod (I don't it supports drm'ed
+&gt;&gt;&gt;&gt;&gt; tracks though)
+
+&gt;&gt;&gt;&gt;&gt; Tiago Macedo
+
+&gt;&gt;&gt;&gt; The device ID info is in the right vein for what I'm thinking of.
+&gt;&gt;&gt;&gt; I know about the &quot;iPod_Control&quot; folder.
+&gt;&gt;&gt;&gt; It's on every iPod, inside it is the Music folder and that contains
+&gt;&gt;&gt;&gt; the directories that actually hold the audio files.
+&gt;&gt;&gt;&gt; I'm just curious, but I'll look into the way the system recognizes
+&gt;&gt;&gt;&gt; the iPod... there must be some simple trick to go, ok this is an
+&gt;&gt;&gt;&gt; iPod
+&gt;&gt;&gt;&gt; and not some other device.
+
+&gt;&gt;&gt; On my system (linux, 2.6.22 kernel), this turns up some interesting
+&gt;&gt;&gt; results...
+
+&gt;&gt;&gt; $ sudo grep -R -i ipod /usr/src/linux/*
+
+&gt;&gt;&gt; ...particularly, the following files look like they have some stuff
+&gt;&gt;&gt; for identifying ipod devices...
+
+&gt;&gt;&gt; /usr/src/linux/drivers/ieee1394/sbp2.c
+&gt;&gt;&gt; /usr/src/linux/drivers/usb/storage/unusual_devs.h
+
+&gt;&gt;&gt; Regards,
+&gt;&gt;&gt; Jordan
+
+&gt;&gt; Interesting, ieee1394 is FireWire, but iPods haven't shipped with
+&gt;&gt; that in quite some time.
+&gt;&gt; none the less, if you look in there and happen to see anything
+&gt;&gt; interesting, let me know please!
+&gt;&gt; I don't currently have a Linux system running, even it requires
+&gt;&gt; better hardware than my current crop of old hardware...
+
+&gt; Interesting bits...
+
+&gt; ==snip==
+
+&gt;    /* iPod 4th generation */ {
+&gt;            .firmware_revision      = 0x0a2700,
+&gt;            .model_id               = 0x000021,
+&gt;            .workarounds            = SBP2_WORKAROUND_FIX_CAPACITY,
+&gt;    },
+&gt;    /* iPod mini */ {
+&gt;            .firmware_revision      = 0x0a2700,
+&gt;            .model_id               = 0x000023,
+&gt;            .workarounds            = SBP2_WORKAROUND_FIX_CAPACITY,
+&gt;    },
+&gt;    /* iPod Photo */ {
+&gt;            .firmware_revision      = 0x0a2700,
+&gt;            .model_id               = 0x00007e,
+&gt;            .workarounds            = SBP2_WORKAROUND_FIX_CAPACITY,
+&gt;    }
+
+&gt; ========
+
+&gt; ==snip==
+
+&gt; /* Submitted by Sven Anderson &lt;sven-li ... @anderson.de&gt;
+&gt;  * There are at least four ProductIDs used for iPods, so I added
+&gt; 0x1202 and
+&gt;  * 0x1204. They just need the US_FL_FIX_CAPACITY. As the bcdDevice
+&gt; appears
+&gt;  * to change with firmware updates, I changed the range to maximum for
+&gt; all
+&gt;  * iPod entries.
+&gt;  */
+&gt; UNUSUAL_DEV( 0x05ac, 0x1202, 0x0000, 0x9999,
+&gt;            &quot;Apple&quot;,
+&gt;            &quot;iPod&quot;,
+&gt;            US_SC_DEVICE, US_PR_DEVICE, NULL,
+&gt;            US_FL_FIX_CAPACITY ),
+
+&gt; /* Reported by Avi Kivity &lt;a ... @argo.co.il&gt; */
+&gt; UNUSUAL_DEV( 0x05ac, 0x1203, 0x0000, 0x9999,
+&gt;            &quot;Apple&quot;,
+&gt;            &quot;iPod&quot;,
+&gt;            US_SC_DEVICE, US_PR_DEVICE, NULL,
+&gt;            US_FL_FIX_CAPACITY ),
+
+&gt; UNUSUAL_DEV( 0x05ac, 0x1204, 0x0000, 0x9999,
+&gt;            &quot;Apple&quot;,
+&gt;            &quot;iPod&quot;,
+&gt;            US_SC_DEVICE, US_PR_DEVICE, NULL,
+&gt;            US_FL_FIX_CAPACITY | US_FL_NOT_LOCKABLE ),
+
+&gt; UNUSUAL_DEV( 0x05ac, 0x1205, 0x0000, 0x9999,
+&gt;            &quot;Apple&quot;,
+&gt;            &quot;iPod&quot;,
+&gt;            US_SC_DEVICE, US_PR_DEVICE, NULL,
+&gt;            US_FL_FIX_CAPACITY ),
+
+&gt; /*
+&gt;  * Reported by Tyson Vinson &lt;lorn ... @gmail.com&gt;
+&gt;  * This particular productId is the iPod Nano
+&gt;  */
+&gt; UNUSUAL_DEV( 0x05ac, 0x120a, 0x0000, 0x9999,
+&gt;            &quot;Apple&quot;,
+&gt;            &quot;iPod&quot;,
+&gt;            US_SC_DEVICE, US_PR_DEVICE, NULL,
+&gt;            US_FL_FIX_CAPACITY ),
+
+&gt; ========
+
+&gt; Don't ask me about what exactly all the code means, I just thought it
+&gt; looked promising. Ps. You can browse and search the kernel source
+&gt; online: http://lxr.linux.no/linux
+
+&gt; Regards,
+&gt; Jordan
+">
+
+Thanks! I know, it's intentionally cryptic.
+</POST>
+<POST>
+<POSTER> &quot;Giles Bowkett&quot; &lt;gil...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-02T17:29:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; For example aif or aiff files. These were some of my suspects.
+">
+
+Ahhhh. I get it.
+
+<QUOTE PREVIOUSPOST="
+&gt; I don't know how iTunes checks audio files, but you can bet it
+&gt; doesn't care much about the file name.
+&gt; Oddly enough though, it seems that the file name tweaking occurs
+&gt; during the transfer to iPods, a little obfuscation to slow down
+&gt; hacking the things.
+">
+
+That means if you have an id3-tag reader (either command-line or
+Ruby), you can process the most common use case entirely in Ruby.
+
+(I'm averse to learning AppleScript but otherwise interested in this
+kind of hacking, so that's very good news in my book.)
+
+--
+Giles Bowkett
+
+Podcast: http://hollywoodgrit.blogspot.com
+Blog: http://gilesbowkett.blogspot.com
+Portfolio: http://www.gilesgoatboy.org
+Tumblelog: http://giles.tumblr.com
+</POST>
+<POST>
+<POSTER> John Joyce &lt;dangerwillrobinsondan...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-02T20:29:00 </POSTDATE>
+On Dec 2, 2007, at 4:29 PM, Giles Bowkett wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; For example aif or aiff files. These were some of my suspects.
+
+&gt; Ahhhh. I get it.
+
+&gt;&gt; I don't know how iTunes checks audio files, but you can bet it
+&gt;&gt; doesn't care much about the file name.
+&gt;&gt; Oddly enough though, it seems that the file name tweaking occurs
+&gt;&gt; during the transfer to iPods, a little obfuscation to slow down
+&gt;&gt; hacking the things.
+
+&gt; That means if you have an id3-tag reader (either command-line or
+&gt; Ruby), you can process the most common use case entirely in Ruby.
+
+&gt; (I'm averse to learning AppleScript but otherwise interested in this
+&gt; kind of hacking, so that's very good news in my book.)
+
+&gt; --
+&gt; Giles Bowkett
+">
+
+After spending some time with AppleScript for a day or two now in my
+spare time, let me assure you:
+aversion is good. AppleScript is an old dog and it shows. Limitations
+galore.
+There are a lot of powerful little hooks in it, but it's hardly worth
+the effort to reach the level of using them.
+Turns out GUI scripting still requires a user to turn on this feature
+manually. Unless somebody knows what to send to the tool
+defaults write &lt;something here&gt;
+If somebody already could tell me, I could write that into the Ruby
+portion as a backtick command in the beginning and in the end clean
+up to turn it off again (if it wasn't on before).
+
+Worst thing is that AppleScript can launch a process but can't get
+output from that process, not directly anyway.
+It requires use of intermediary file writing and subsequent reading.
+
+I've got enough now to where the only thing I have to figure out is
+how to leverage Applescript for the GUI scripting of adding files to
+the library. The concept is simple, but I'm working on the learning
+the mechanism now.
+</POST>
+<POST>
+<POSTER> &quot;Giles Bowkett&quot; &lt;gil...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-02T21:12:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; After spending some time with AppleScript for a day or two now in my
+&gt; spare time, let me assure you:
+&gt; aversion is good. AppleScript is an old dog and it shows. Limitations
+&gt; galore.
+">
+
+You're not the only one having that experience. I've seen it elsewhere
+- hence the aversion.
+
+I think this is one reason Apple's getting behind Ruby w/RubyCocoa,
+etc. I could be wrong, though.
+
+http://developer.apple.com/scriptingautomation/overview.html
+
+&quot;Scripting Bridge, new in Leopard, brings advanced automation to the
+desktop, making it easy to send Apple Events—the built-in messaging
+architecture of Mac OS X—between applications, allowing you to
+leverage the features of rich desktop applications from your own code.
+The best part is that your code can be in the language you want,
+whether Objective-C (with Scripting Bridge), Python (with PyObjC),
+Ruby (with RubyCocoa), or pure AppleScript.&quot;
+
+I read somewhere or got the impression somehow that the whole plan
+here was to leverage the power they built into AppleScript but allow
+people to use languages they actually *enjoy* using, so Apple could
+stop sinking money into AppleScript and instead leverage the hackery
+and energy of the open source communities around Python and Ruby (and
+others).
+
+Wow. There's a bunch of libraries; check this out. I did
+
+sudo port install id3lib ; sudo gem install id3lib-ruby
+
+And then created a symlink because the apostrophe in my iPod's name
+was confusing Ruby somehow.
+
+ln -s /Volumes/Giles's\ iPod/iPod_Control/Music/F01/TSGI.mp3 path_to_ipod_mp3
+
+And then:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; require 'id3lib'
+=&gt; true
+&gt;&gt; ID3Lib::Tag.new('path_to_ipod_mp3').title
+=&gt; &quot;Good To Go&quot;
+&gt;&gt; ID3Lib::Tag.new('path_to_ipod_mp3').artist
+">
+
+=&gt; &quot;General Midi&quot;
+
+This means that for the simplest scenarios, copying stuff off an iPod
+and giving each file an appropriate name is downright effortless.
+That's really, really cool - I have an iPod synched to an old machine
+that I figured I'd have to keep forever unless I felt like giving up
+all the content on it. Not a problem any longer. I could fit the whole
+thing in the spare capacity on my newer iPod (since virtually
+everything on there was done in good old-fashioned mp3 format).
+
+w00t w00t
+
+--
+Giles Bowkett
+
+Podcast: http://hollywoodgrit.blogspot.com
+Blog: http://gilesbowkett.blogspot.com
+Portfolio: http://www.gilesgoatboy.org
+Tumblelog: http://giles.tumblr.com
+</POST>
+<POST>
+<POSTER> John Joyce &lt;dangerwillrobinsondan...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-02T22:41:00 </POSTDATE>
+On Dec 2, 2007, at 8:12 PM, Giles Bowkett wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; After spending some time with AppleScript for a day or two now in my
+&gt;&gt; spare time, let me assure you:
+&gt;&gt; aversion is good. AppleScript is an old dog and it shows. Limitations
+&gt;&gt; galore.
+
+&gt; You're not the only one having that experience. I've seen it elsewhere
+&gt; - hence the aversion.
+
+&gt; I think this is one reason Apple's getting behind Ruby w/RubyCocoa,
+&gt; etc. I could be wrong, though.
+
+&gt; http://developer.apple.com/scriptingautomation/overview.html
+
+&gt; &quot;Scripting Bridge, new in Leopard, brings advanced automation to the
+&gt; desktop, making it easy to send Apple Events—the built-in messaging
+&gt; architecture of Mac OS X—between applications, allowing you to
+&gt; leverage the features of rich desktop applications from your own code.
+&gt; The best part is that your code can be in the language you want,
+&gt; whether Objective-C (with Scripting Bridge), Python (with PyObjC),
+&gt; Ruby (with RubyCocoa), or pure AppleScript.&quot;
+
+&gt; I read somewhere or got the impression somehow that the whole plan
+&gt; here was to leverage the power they built into AppleScript but allow
+&gt; people to use languages they actually *enjoy* using, so Apple could
+&gt; stop sinking money into AppleScript and instead leverage the hackery
+&gt; and energy of the open source communities around Python and Ruby (and
+&gt; others).
+
+&gt; Wow. There's a bunch of libraries; check this out. I did
+
+&gt; sudo port install id3lib ; sudo gem install id3lib-ruby
+
+&gt; And then created a symlink because the apostrophe in my iPod's name
+&gt; was confusing Ruby somehow.
+
+&gt; ln -s /Volumes/Giles's\ iPod/iPod_Control/Music/F01/TSGI.mp3
+&gt; path_to_ipod_mp3
+
+&gt; And then:
+
+&gt;&gt;&gt; require 'id3lib'
+&gt; =&gt; true
+&gt;&gt;&gt; ID3Lib::Tag.new('path_to_ipod_mp3').title
+&gt; =&gt; &quot;Good To Go&quot;
+&gt;&gt;&gt; ID3Lib::Tag.new('path_to_ipod_mp3').artist
+&gt; =&gt; &quot;General Midi&quot;
+
+&gt; This means that for the simplest scenarios, copying stuff off an iPod
+&gt; and giving each file an appropriate name is downright effortless.
+&gt; That's really, really cool - I have an iPod synched to an old machine
+&gt; that I figured I'd have to keep forever unless I felt like giving up
+&gt; all the content on it. Not a problem any longer. I could fit the whole
+&gt; thing in the spare capacity on my newer iPod (since virtually
+&gt; everything on there was done in good old-fashioned mp3 format).
+
+&gt; w00t w00t
+
+&gt; --
+&gt; Giles Bowkett
+">
+
+I too wonder if Apple is or isn't cooking up some kind of appleScript
+replacement.
+Ruby would be wonderful candidate for it.
+But maybe too wonderful...?
+The trouble with Apple Events is that in order to really make use of
+them, you have to know a lot of Cocoa stuff already.
+It's not cake.
+What's worse is, if the app in question doesn't make itself
+scriptable, then it will only be scriptable the hard way.
+Apple employs this themselves in limiting access to apps... :(
+</POST>
+<POST>
+<POSTER> has &lt;has.te...@virgin.net&gt; </POSTER>
+<POSTDATE> 2007-12-04T11:00:00 </POSTDATE>
+On 1 Dec, 17:26, John Joyce &lt;dangerwillrobinsondan ... @gmail.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Does anybody know how to identify a mounted volume as being aniPod?
+&gt; Or even more generally useful, is there a lib or gem to help identify
+&gt; the type of volume or disk ?
+">
+
+I don't have an iPod myself, but doesn't iTunes list mounted CDs,
+iPods, etc. automatically? In which case you should be able to get a
+list of references to mounted iPods using something like this:
+
+require 'appscript'
+include Appscript
+
+ITunes = app('iTunes')
+
+p ITunes.sources[its.kind.eq(:iPod)].get
+
+From there you should be able to refer to an iPods playlists and
+tracks, copy them to iTunes' own playlist, etc.
+
+HTH
+
+has
+--
+http://appscript.sourceforge.net
+http://rb-appscript.rubyforge.org
+</POST>
+<POST>
+<POSTER> has &lt;has.te...@virgin.net&gt; </POSTER>
+<POSTDATE> 2007-12-04T11:00:00 </POSTDATE>
+On 3 Dec, 01:29, John Joyce &lt;dangerwillrobinsondan ... @gmail.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; After spending some time withAppleScriptfor a day or two now in my
+&gt; spare time, let me assure you:
+&gt; aversion is good.AppleScriptis an old dog and it shows. Limitations
+&gt; galore.
+&gt; There are a lot of powerful little hooks in it, but it's hardly worth
+&gt; the effort to reach the level of using them.
+">
+
+The AppleScript language is largely crud, but the one thing it does do
+extremely well is speak Apple events to other applications. Other
+languages have been appallingly slow to catch up in this area; as a
+result, most of the application-specific domain knowledge still lies
+over in the AppleScript community.
+
+Therefore, if you want to do any significant amount of application
+automation work in any language, then realistically you'll need to get
+at least a working understanding of AppleScript under your belt first.
+(Yes it sucks; but if you ever want things to change then somebody's
+gotta go first.) Learning the language will enable you to grok
+existing AppleScripts for hints and solutions and phrase questions in
+terms that experienced AppleScripters - who may not know much about
+general programming, but know these applications scripting interfaces
+like the backs of their hands - can understand and reply to.
+
+The best book for existing developers to get up to speed on
+AppleScript is Matt Neuburg's 'AppleScript: The Definitive Guide'
+&lt; http://www.oreilly.com/catalog/applescpttdg2/ &gt;. The language-specific
+chapters you should be able to skim through; once you get past the
+weird syntax, except for the Apple event stuff it's a rather ordinary,
+minimally-featured imperative scripting language. The chapters on
+application scripting should contain information applicable to all
+languages, though will be phrased in AppleScript terms, of course
+(hence the need to know the language itself in order to make sense of
+everything else).
+
+FWIW, Brian Marick ('Everyday Scripting with Ruby') is also planning
+to write a book on Mac automation with Ruby ( http://www.exampler.com/
+blog/2007/11/27/scripting-your-mac-with-ruby/) which will include
+material on using Ruby in place of AppleScript, although I don't
+imagine it will be out until well into next year.
+
+<QUOTE PREVIOUSPOST="
+&gt; I've got enough now to where the only thing I have to figure out is
+&gt; how to leverageApplescriptfor the GUI scripting of adding files to
+&gt; the library. The concept is simple, but I'm working on the learning
+&gt; the mechanism now.
+">
+
+I'm not an iTunes scripting guru, but I would think a fairly simple
+sounding task like yours should be entirely doable via iTunes own
+scripting interface. GUI Scripting is hackish and fragile, and best
+avoided if at all possible.
+
+Best place for asking application-specific questions would probably be
+the AppleScript-users list (there are other places, but AS-users is
+the most popular and contains a reasonable proportion of experienced
+users):
+
+http://lists.apple.com/mailman/listinfo/applescript-users
+
+Curious folks, AppleScripters; they often seem to exist in a bubble
+disconnected from the rest of the programming world, but are generally
+eager to help. The quality of advice can vary, but I don't think
+that's different to anywhere else.
+
+Once you've found out the magic incantations to use - usually the
+hardest part - you'll need to translate them from AppleScript to Ruby
+syntax yourself. First thing obviously is to print out the iTunes
+dictionary in Ruby format using the tools supplied with the Apple
+event bridge you're using (e.g. for appscript use ASDictionary). If
+you get stuck you can try posting them here - there's a few folks like
+myself who have some experience using Ruby as an AppleScript
+replacement, that may be able to help. Another extremely handy tool is
+ASTranslate, which converts AppleScript commands to their Ruby
+appscript equivalents - while it's not a full-blown code converter,
+it's a great tool for helping to work out how to rephrase individual
+application commands.
+
+HTH
+
+has
+--
+http://appscript.sourceforge.net
+http://rb-appscript.rubyforge.org
+</POST>
+<POST>
+<POSTER> has &lt;has.te...@virgin.net&gt; </POSTER>
+<POSTDATE> 2007-12-04T11:35:00 </POSTDATE>
+On 3 Dec, 03:41, John Joyce &lt;dangerwillrobinsondan ... @gmail.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 2, 2007, at 8:12 PM, Giles Bowkett wrote:
+
+&gt; &gt; I think this is one reason Apple's getting behind Ruby w/RubyCocoa,
+&gt; &gt; etc. I could be wrong, though.
+
+&gt; &gt; http://developer.apple.com/scriptingautomation/overview.html
+
+&gt; &gt; &quot;Scripting Bridge, new in Leopard, brings advanced automation to the
+&gt; &gt; desktop, making it easy to send Apple Events--the built-in messaging
+&gt; &gt; architecture of Mac OS X--between applications, allowing you to
+&gt; &gt; leverage the features of rich desktop applications from your own code.
+&gt; &gt; The best part is that your code can be in the language you want,
+&gt; &gt; whether Objective-C (with Scripting Bridge), Python (with PyObjC),
+&gt; &gt; Ruby (with RubyCocoa), or pure AppleScript.&quot;
+
+&gt; &gt; I read somewhere or got the impression somehow that the whole plan
+&gt; &gt; here was to leverage the power they built into AppleScript but allow
+&gt; &gt; people to use languages they actually *enjoy* using, so Apple could
+&gt; &gt; stop sinking money into AppleScript and instead leverage the hackery
+&gt; &gt; and energy of the open source communities around Python and Ruby (and
+&gt; &gt; others).
+">
+
+All the real functionality is at the OS API level (Apple events, OSA)
+and in the applications that leverage these APIs to expose some or all
+of their functionality to other programs. AppleScript is just one of
+several client languages for these services (it wasn't even the first,
+btw; UserTalk predates it).
+
+As for Scripting Bridge, I'm rather disappointed with it myself: it
+lacks several features found in AppleScript, is noticeably inferior on
+the application compatibility front, parts of its API are badly
+designed or basically unfinished, and the lack of native APIs on
+Python and Ruby makes those languages feel like they're being treated
+as second-class citizens in the AppleScript world. Still, that's why
+there's appscript. :)
+
+<QUOTE PREVIOUSPOST="
+&gt; I too wonder if Apple is or isn't cooking up some kind of appleScript
+&gt; replacement.
+&gt; Ruby would be wonderful candidate for it.
+">
+
+I wouldn't mind seeing a full-blown OSA language component for Ruby
+myself, which is what you really need to replace AppleScript 100% as
+that'd let you use Ruby for tasks that require attachability (Mail
+rules, folder actions, etc).
+
+However, I believe Ruby's internal architecture makes this difficult
+as it doesn't ensure that unrelated scripts hosted within the same
+Ruby runtime are 100% isolated from one another. I've already run into
+similar problems designing my PyOSA component, which is why it's still
+not got past the 'developer preview' status after more than two years;
+well, that, and I'm lazy. (One solution might be to host each Ruby
+script as a separate subprocess, but the OSA wasn't really designed to
+work that way so this is likely to cause other problems, not to
+mention an inevitable performance hit.) Still, if anyone wants to
+discuss this topic further, drop us an email.
+
+<QUOTE PREVIOUSPOST="
+&gt; But maybe too wonderful...?
+&gt; The trouble with Apple Events is that in order to really make use of
+&gt; them, you have to know a lot of Cocoa stuff already.
+">
+
+You don't have to know any Cocoa stuff to use Apple events; however,
+you do have to know at least a bit about how Apple events work, and
+quite a lot about how individual applications implement their Apple
+event interfaces. The latter in particular are notoriously
+underdocumented which can cause some real headaches when learning to
+script a new application, requiring you to fall back on a mix of
+intelligent guesswork, trial-and-error experimentation and shared
+community knowledge to figure things out. Though hopefully as more
+folks are introduced to application scripting via Python, Ruby, etc.,
+application developers will start to take scripting interface
+documentation and other issues more seriously.
+
+HTH
+
+has
+--
+http://appscript.sourceforge.net
+http://rb-appscript.rubyforge.org
+</POST>
+<POST>
+<POSTER> John Joyce &lt;dangerwillrobinsondan...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-06T22:58:00 </POSTDATE>
+Thanks has,
+some nice tips there!!
+I spent some time last weekend reading about and working through some
+AppleScript material.
+It has tiny moments of wow, and lots and lots of uggggghhh
+Feels about as fun as COBOL and should probably be renamed to APPOL.
+I'm not a fan of it.
+
+I'm more interested in spending that time working on learning about
+Cocoa than AppleScript.
+Anyway, after digging deep enough, GUI scripting with Applescript
+will require the user to enable GUI scripting.
+Not worth doing it or learning it (GUI scripting) the standard
+AppleScript way.
+
+Half my script was written easily enough in Ruby.
+I distributed it to people at work who were requesting it, and as
+long as they read the read me file, things were fine.
+
+Truth is, at this point, all I need to do is the HARD PART.
+Yay.
+</POST>
+<POST>
+<POSTER> has &lt;has.te...@virgin.net&gt; </POSTER>
+<POSTDATE> 2007-12-07T11:14:00 </POSTDATE>
+On 7 Dec, 03:58, John Joyce &lt;dangerwillrobinsondan ... @gmail.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Thanks has,
+&gt; some nice tips there!!
+&gt; I spent some time last weekend reading about and working through some
+&gt; AppleScript material.
+&gt; It has tiny moments of wow, and lots and lots of uggggghhh
+&gt; Feels about as fun as COBOL and should probably be renamed to APPOL.
+&gt; I'm not a fan of it.
+">
+
+Won't argue with those sentiments, but until the Ruby community builds
+up enough knowledge and experience to stand on its own in this area,
+it's hard to avoid AppleScript completely. Folks like myself try to do
+our bit in bringing that knowledge across, but there's a lot to do and
+more bodies are needed.
+
+I'd also suggest reading the appscript documentation &lt; http://rb-
+appscript.rubyforge.org/doc/appscript-manual/index.html&gt;, which
+provides a brief introduction and tutorial to general application
+scripting principles. I realise it's rather thin and less than
+brilliantly written (comments, criticisms, and requests and
+suggestions for improvements would be hugely appreciated, btw) but
+hopefully it'll be of some help in getting your head around the
+concepts involved.
+
+<QUOTE PREVIOUSPOST="
+&gt; Anyway, after digging deep enough, GUI scripting with Applescript
+&gt; will require the user to enable GUI scripting.
+">
+
+I'm still not clear why you believe you have to use GUI Scripting, as
+opposed to iTunes' own scripting interface, but unless you can say
+exactly what it is your script needs to do I can't offer any more
+specific advice on that front.
+
+HTH
+
+has
+--
+http://appscript.sourceforge.net
+http://rb-appscript.rubyforge.org
+</POST>
+<POST>
+<POSTER> John Joyce &lt;dangerwillrobinsondan...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-07T19:36:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Anyway, after digging deep enough, GUI scripting with Applescript
+&gt;&gt; will require the user to enable GUI scripting.
+
+&gt; I'm still not clear why you believe you have to use GUI Scripting, as
+&gt; opposed to iTunes' own scripting interface, but unless you can say
+&gt; exactly what it is your script needs to do I can't offer any more
+&gt; specific advice on that front.
+">
+
+Has, thanks again,
+So far, as far as I can tell, the iTunes AppleScript library doesn't
+include a way to do what I want to do.
+Of course I'm still getting a handle on AppleScript itself and making
+sense of each application's scripting library. They're always pretty
+thinly documented. I mean, they are terse. It's like they were
+written by credit card companies. Too short and hard to understand.
+
+Anyway, I'll figure out if I can actually use AppleScript or OSA
+(without GUI scripting) once I have enough time to learn AS and OSA
+more solidly. It's a work in progress in spare time.
+
+What I want to do is fundamentally this:
+move some audio files (non-DRM'd, the type you've taken off of CD's
+yourself, and which have already been converted to mp3 or aac
+formats) into the iTunes library.
+
+Ideally, I'd like to move them into the library through iTunes in
+order to have iTunes handle its own library xml files and such
+itself, and parse all the files for their internal metadata (id3
+tags, etc...). Let iTunes do the hard part.
+
+If you already know a way to have iTunes rebuild or rescan its
+library for files, then that would be great help. Then I would just
+need to be able to ask iTunes where its library is and move the files
+to it, then have them added to the library's xml.
+
+The other option conceptually was, telling iTunes to call its import
+command and selecting the files from the directory they are in.
+
+If you know which hooks I need or how to easily do any of this, it
+would certainly save me some time and energy.
+</POST>
+<POST>
+<POSTER> has &lt;has.te...@virgin.net&gt; </POSTER>
+<POSTDATE> 2007-12-07T23:15:00 </POSTDATE>
+On 8 Dec, 00:36, John Joyce &lt;dangerwillrobinsondan ... @gmail.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; What I want to do is fundamentally this:
+&gt; move some audio files (non-DRM'd, the type you've taken off of CD's
+&gt; yourself, and which have already been converted to mp3 or aac
+&gt; formats) into the iTunes library.
+">
+
+Adding audio files to iTunes is easy enough, if typically under-
+documented:
+
+require 'appscript'
+include Appscript
+
+ITunes = app('iTunes')
+
+files = [
+MacTypes::Alias.path('/path/to/file1.mp3'),
+MacTypes::Alias.path('/path/to/file2.mp3'),
+...
+]
+
+track_refs = ITunes.add(files) # add files to iTunes library
+
+p track_refs
+
+If you want to add the files to a specific user playlist as well as
+the main library playlist, you can supply a reference to that playlist
+via the optional :to parameter:
+
+ITunes.add(files, :to=&gt;app.playlists['your playlist'])
+
+If the tracks are on an iPod that's already listed in iTunes, it may
+also be possible to directly copy them in iTunes without having to
+muck about in the file system at all. However, I'm not an iTunes guru
+so unless there's any other ruby-talkers here who happen to know you
+may need to ask on one of the AppleScript lists or look for existing
+examples on http://dougscripts.com/itunes for help there.
+
+HTH
+
+has
+--
+http://appscript.sourceforge.net
+http://rb-appscript.rubyforge.org
+</POST>
+<POST>
+<POSTER> John Joyce &lt;dangerwillrobinsondan...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-08T19:17:00 </POSTDATE>
+On Dec 7, 2007, at 10:15 PM, has wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 8 Dec, 00:36, John Joyce &lt;dangerwillrobinsondan ... @gmail.com&gt;
+&gt; wrote:
+
+&gt;&gt; What I want to do is fundamentally this:
+&gt;&gt; move some audio files (non-DRM'd, the type you've taken off of CD's
+&gt;&gt; yourself, and which have already been converted to mp3 or aac
+&gt;&gt; formats) into the iTunes library.
+
+&gt; Adding audio files to iTunes is easy enough, if typically under-
+&gt; documented:
+
+&gt; require 'appscript'
+&gt; include Appscript
+
+&gt; ITunes = app('iTunes')
+
+&gt; files = [
+&gt;    MacTypes::Alias.path('/path/to/file1.mp3'),
+&gt;    MacTypes::Alias.path('/path/to/file2.mp3'),
+&gt;    ...
+&gt; ]
+
+&gt; track_refs = ITunes.add(files) # add files to iTunes library
+
+&gt; p track_refs
+
+&gt; If you want to add the files to a specific user playlist as well as
+&gt; the main library playlist, you can supply a reference to that playlist
+&gt; via the optional :to parameter:
+
+&gt; ITunes.add(files, :to=&gt;app.playlists['your playlist'])
+
+&gt; If the tracks are on an iPod that's already listed in iTunes, it may
+&gt; also be possible to directly copy them in iTunes without having to
+&gt; muck about in the file system at all. However, I'm not an iTunes guru
+&gt; so unless there's any other ruby-talkers here who happen to know you
+&gt; may need to ask on one of the AppleScript lists or look for existing
+&gt; examples on http://dougscripts.com/itunes for help there.
+">
+
+Wow, excellent has!!
+That's a great help.
+the add command is described in the scripting definition as adding to
+a playlist, so I was very unsure if it would add to the library.
+
+Quick question for you: can AppleScript like that be used with iTunes
+for Windows as well?
+
+If you have any other appscript or applescript tips, general ones
+even, by all means clue me in!
+Making sense of sdef libraries is definitely a tough thing to do with
+the sparse docs.
+You basically, just wrote the other half of my script for me!
+
+Now, I'm going to give it a simple GUI so users don't need to muck
+about with the terminal.
+
+by the way, is appscript the same as the appscript-rb gem?
+Seems to be.
+
+I picked up the OREILLY AppleScript book, seems useful.
+</POST>
+<POST>
+<POSTER> has &lt;has.te...@virgin.net&gt; </POSTER>
+<POSTDATE> 2007-12-09T21:53:00 </POSTDATE>
+On 9 Dec, 00:17, John Joyce &lt;dangerwillrobinsondan ... @gmail.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Quick question for you: can AppleScript like that be used with iTunes
+&gt; for Windows as well?
+">
+
+No. The Windows version of iTunes has a COM API, however, so I'd
+suggest looking into that. BTW, I believe there's a project on
+RubyForge to develop a cross-platform iTunes module; I don't know how
+far along it is, but you may want to look it up.
+
+<QUOTE PREVIOUSPOST="
+&gt; If you have any other appscript or applescript tips, general ones
+&gt; even, by all means clue me in!
+">
+
+Understand how the Apple Event Object Model works - while every
+application API is different, the basic rules by which they operate
+are generally the same.
+
+When figuring out a specific application API, start by reading the
+dictionary, then hunt around for any supplementary documentation,
+sample scripts, scripts written by other users, previous online
+discussions, etc. to fill in the various bits of information that
+dictionaries don't tell you. Expect to do some trial-and-error
+exploration and testing yourself to figure things out, and don't be
+shy to ask for advice when you get stuck - AppleScripters are well
+used to exchanging knowledge this way.
+
+Read the appscript manual. (You may also find some useful stuff on the
+appscript site's links page.)
+
+ASDictionary and ASTranslate are your friends.
+
+Appscript's built-in #help method rocks for exploring applications in
+irb. File feature requests with scriptable application developers
+asking them to improve their documentation.
+
+File feature requests with the appscript developer (me) asking for
+improvements in the appscript documentation. (If you can be specific
+about which bits need improved, that will be a big help.)
+
+<QUOTE PREVIOUSPOST="
+&gt; Making sense of sdef libraries is definitely a tough thing to do with
+&gt; the sparse docs.
+">
+
+Tell us about it. If it's any consolation, figuring out applications'
+scripting interfaces does get easier with practice. You should find
+Matt's book some help in getting started here, and if you've any
+specific questions then just ask.
+
+<QUOTE PREVIOUSPOST="
+&gt; by the way, is appscript the same as the appscript-rb gem?
+&gt; Seems to be.
+">
+
+Yep. Ruby appscript (rb-appscript) is available in source, gem and
+binary installer formats. Python and ObjC versions of appscript are
+also available (py-appscript, objc-appscript). Unfortunately, the use
+of prefixes is somewhat inconsistent, and they quite often get omitted
+due to laziness, oversight or (in the case of py-appscript) historical
+reasons. e.g. Use 'gem install rb-appscript' to install the Ruby
+appscript gem and 'require &quot;appscript&quot;' to import it.
+
+HTH
+
+has
+--
+http://appscript.sourceforge.net
+http://rb-appscript.rubyforge.org
+</POST>
+<POST>
+<POSTER> &quot;Giles Bowkett&quot; &lt;gil...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-28T14:38:00 </POSTDATE>
+Hi all, for those of you who were into this thread, I was kind of
+inspired by it and built a little backup script which runs in the
+context of Rails, although all it really uses from Rails is
+ActiveRecord and a schema auto-migrate plugin.
+
+Of course being the shameless self-promoting blogger I am that gives
+me the chance to form a totally provocative URL:
+
+http://gilesbowkett.blogspot.com/2007/12/back-up-your-ipod-with-rails...
+
+But it's really a shell script. The shell just happens to be IRB
+instead of bash or zsh, and because of this it can use ActiveRecord,
+the media file metadata libraries MP4Info and ID3Lib, and some other
+niftiness.
+
+Re: the original thread, John and has were talking quite a bit about
+appscript, but I kind of went in the opposite direction. Although
+appscript looks like a cool project, I want to get rid of iTunes
+completely, so scripting it is an unsatisfying solution for me
+personally.
+
+--
+Giles Bowkett
+
+Podcast: http://hollywoodgrit.blogspot.com
+Blog: http://gilesbowkett.blogspot.com
+Portfolio: http://www.gilesgoatboy.org
+Tumblelog: http://giles.tumblr.com
+</POST>
+<POST>
+<POSTER> John Joyce &lt;dangerwillrobinsondan...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-29T14:09:00 </POSTDATE>
+Giles,
+I was thinking the last 2 weeks of just such an idea... (email me
+directly to discuss that... it is an interesting idea I have
+regarding that...)
+
+My little curmudgeon of an app for moving songs from an iPod to
+iTunes is going to be ready today.
+It's still a little rough and it does unfortunately rely on some GUI
+scripting at this time, but it works.
+
+It'd be easy enough to change it to do other things, like simply copy
+the files to elsewhere, but things would get more involved with a
+necessary check for DRM since DRMd songs would be useless without
+violating the DMCA and getting sued.
+
+At this time I don't really want to do that.
+</POST>
+</TEXT>
+</BODY>
+</DOC>

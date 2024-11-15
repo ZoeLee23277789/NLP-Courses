@@ -1,0 +1,1603 @@
+<DOC>
+<DOCID> eng-NG-31-135593-9758769 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-11-17T11:29:00 </DATETIME>
+<BODY>
+<HEADLINE>
+How to check for assignment to self?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Matthias Hofmann&quot; &lt;hofm...@anvil-soft.com&gt; </POSTER>
+<POSTDATE> 2007-11-17T11:29:00 </POSTDATE>
+Hello everyone!
+
+It is common practice to check for assgnment to self in the copy assignment
+operator, like in the following example:
+
+String&amp; operator=( const String&amp; other )
+{
+if ( &amp;other != this )
+{
+delete m_string;
+m_string = strdup( other.m_string );
+}
+
+return *this;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+Unfortunately, this is not guaranteed to work as expected: While the
+standard guarantees that pointers to the same object must compare equal, it
+doesn't guarantee that pointers to different objects must compare unequal.
+
+So what is a programmer supposed to do?
+
+--
+Matthias Hofmann
+Anvil-Soft, CEO
+http://www.anvil-soft.com - The Creators of Toilet Tycoon
+http://www.anvil-soft.de - Die Macher des Klomanagers
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> isemenov.pr...@gmail.com </POSTER>
+<POSTDATE> 2007-11-17T15:44:00 </POSTDATE>
+{ Top-posting is discouraged in this group, see the FAQ. -mod }
+
+What do you mean by &quot;it doesn't guarantee that pointers to different
+objects must compare unequal&quot;.
+In fact pointer is an object address in memory. How two different
+object can have same address?
+
+<QUOTE PREVIOUSPOST="
+&gt; Unfortunately, this is not guaranteed to work as expected: While the
+&gt; standard guarantees that pointers to the same object must compare equal, it
+&gt; doesn't guarantee that pointers to different objects must compare unequal.
+">
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Jerry Coffin &lt;jcof...@taeus.com&gt; </POSTER>
+<POSTDATE> 2007-11-17T15:41:00 </POSTDATE>
+In article &lt;5q8dvsFuq5u ... @mid.individual.net&gt;, hofm ... @anvil-soft.com
+says...
+
+<QUOTE PREVIOUSPOST="
+&gt; Hello everyone!
+
+&gt; It is common practice to check for assgnment to self in the copy assignment
+&gt; operator, like in the following example:
+
+&gt; String&amp; operator=( const String&amp; other )
+&gt; {
+&gt;      if ( &amp;other != this )
+&gt;      {
+&gt;          delete m_string;
+&gt;          m_string = strdup( other.m_string );
+&gt;      }
+
+&gt;      return *this;
+&gt; }
+
+&gt; Unfortunately, this is not guaranteed to work as expected: While the
+&gt; standard guarantees that pointers to the same object must compare equal, it
+&gt; doesn't guarantee that pointers to different objects must compare unequal.
+
+&gt; So what is a programmer supposed to do?
+">
+
+Use std::less, which is required to &quot;do the right thing&quot; even with
+points to different objects with which ==, !=, etc., can give
+meaningless results.
+
+--
+Later,
+Jerry.
+
+The universe is a figment of its own imagination.
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;Mayk...@gmail.com&quot; &lt;Mayk...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-17T15:41:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Unfortunately, this is not guaranteed to work as expected: While the
+&gt; standard guarantees that pointers to the same object must compare equal, it
+&gt; doesn't guarantee that pointers to different objects must compare unequal.
+">
+
+Are you sure? I can not imagine when and how two different objects are
+located at the same address at the same time.
+
+<QUOTE PREVIOUSPOST="
+&gt; So what is a programmer supposed to do?
+">
+
+Anyway you can use different approach.
+Common way to implement op= is to use copy constructor and swap
+function.
+
+class String{ ...
+String&amp; operator=(const String&amp; other){
+String copy(other); // no need for check
+swap(copy);
+return *this;
+// destructor of copy will free() old m_string automagicially
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+void swap( String&amp; other ){
+std::swap( m_string, other.m_string);
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> jkherci...@gmx.net </POSTER>
+<POSTDATE> 2007-11-17T15:43:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Matthias Hofmann wrote:
+&gt; It is common practice to check for assgnment to self in the copy
+&gt; assignment operator, like in the following example:
+
+&gt; String&amp; operator=( const String&amp; other )
+&gt; {
+&gt;      if ( &amp;other != this )
+&gt;      {
+&gt;          delete m_string;
+&gt;          m_string = strdup( other.m_string );
+&gt;      }
+
+&gt;      return *this;
+&gt; }
+">
+
+This code prevents self-assignment. It is, however, not exception safe.
+
+<QUOTE PREVIOUSPOST="
+&gt; Unfortunately, this is not guaranteed to work as expected: While the
+&gt; standard guarantees that pointers to the same object must compare equal,
+&gt; it doesn't guarantee that pointers to different objects must compare
+&gt; unequal.
+">
+
+That appears to be incorrect as per [5.10/1]:
+
+Two pointers of the same type compare equal if and only if they are both
+null, both point to the same function, or both represent the same
+address
+(3.9.2).
+
+Note the &quot;if and only if&quot;.
+
+<QUOTE PREVIOUSPOST="
+&gt; So what is a programmer supposed to do?
+">
+
+With regard to your example, a programmer is supposed to use std::string :-)
+
+Best
+
+Kai-Uwe Bux
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Bart van Ingen Schenau &lt;b...@ingen.ddns.info&gt; </POSTER>
+<POSTDATE> 2007-11-17T15:43:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Matthias Hofmann wrote:
+&gt; Hello everyone!
+
+&gt; It is common practice to check for assgnment to self in the copy
+&gt; assignment operator, like in the following example:
+&lt;snip&gt;
+&gt; Unfortunately, this is not guaranteed to work as expected: While the
+&gt; standard guarantees that pointers to the same object must compare
+&gt; equal, it doesn't guarantee that pointers to different objects must
+&gt; compare unequal.
+">
+
+I am sorry, but I don't follow you.
+The expression 'p1 == p2' may only result in the value 'true' if p1 and
+p2 refer to the same address.
+So, unless the standard allows two distinct objects to share the same
+address (which it is not supposed to do), the failure you indicate
+above can not occur.
+
+Note that the equality operators (== and !=) are fully specified for
+pointers to unrelated objects, unlike the relational operators.
+
+<QUOTE PREVIOUSPOST="
+&gt; So what is a programmer supposed to do?
+">
+
+Primarily, write code that does not depend on the ability to detect
+self-assignment.
+And otherwise, trust that the address of an object can be used as an
+identity value, like it is supposed to work.
+
+Bart v Ingen Schenau
+--
+a.c.l.l.c-c++ FAQ: http://www.comeaucomputing.com/learn/faq
+c.l.c FAQ: http://c-faq.com/
+c.l.c++ FAQ: http://www.parashift.com/c++-faq-lite/
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> David Abrahams &lt;d...@boost-consulting.com&gt; </POSTER>
+<POSTDATE> 2007-11-17T15:41:00 </POSTDATE>
+on Sat Nov 17 2007, &quot;Matthias Hofmann&quot; &lt;hofmann-AT-anvil-soft.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hello everyone!
+
+&gt; It is common practice to check for assgnment to self in the copy assignment
+&gt; operator, like in the following example:
+
+&gt; String&amp; operator=( const String&amp; other )
+&gt; {
+&gt;      if ( &amp;other != this )
+&gt;      {
+&gt;          delete m_string;
+&gt;          m_string = strdup( other.m_string );
+&gt;      }
+
+&gt;      return *this;
+&gt; }
+
+&gt; Unfortunately, this is not guaranteed to work as expected: While the
+&gt; standard guarantees that pointers to the same object must compare equal, it
+&gt; doesn't guarantee that pointers to different objects must compare
+&gt; unequal.
+">
+
+Fortunately, it does guarantee that two different objects **of the
+same type** cannot have the same address. Moreover, two nonempty
+objects can never share the same address.
+
+<QUOTE PREVIOUSPOST="
+&gt; So what is a programmer supposed to do?
+">
+
+Don't worry; be happy ;-)
+
+--
+Dave Abrahams
+Boost Consulting
+http://www.boost-consulting.com
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Alberto Ganesh Barbati &lt;AlbertoBarb...@libero.it&gt; </POSTER>
+<POSTDATE> 2007-11-18T07:44:00 </POSTDATE>
+Matthias Hofmann ha scritto:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hello everyone!
+
+&gt; It is common practice to check for assgnment to self in the copy assignment
+&gt; operator, like in the following example:
+
+&gt; String&amp; operator=( const String&amp; other )
+&gt; {
+&gt;      if ( &amp;other != this )
+&gt;      {
+&gt;          delete m_string;
+&gt;          m_string = strdup( other.m_string );
+&gt;      }
+
+&gt;      return *this;
+&gt; }
+
+&gt; Unfortunately, this is not guaranteed to work as expected: While the
+&gt; standard guarantees that pointers to the same object must compare equal, it
+&gt; doesn't guarantee that pointers to different objects must compare unequal.
+">
+
+Really? According to 5.10/1 &quot;Two pointers of the same type compare equal
+if and only if they are both null, both point to the same function, or
+both represent the same address (3.9.2).&quot;
+
+Notice the &quot;if and only if&quot;. If two objects of the same type are stored
+at the same address then they definitely are the same object (see also
+1.7/1 &quot;Every byte has a unique address.&quot;)
+
+HTH,
+
+Ganesh
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Greg Herlihy &lt;gre...@mac.com&gt; </POSTER>
+<POSTDATE> 2007-11-18T07:44:00 </POSTDATE>
+On Nov 17, 8:29 am, &quot;Matthias Hofmann&quot; &lt;hofm ... @anvil-soft.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; It is common practice to check for assgnment to self in the copy assignment
+&gt; operator, like in the following example:
+
+&gt; String&amp; operator=( const String&amp; other )
+&gt; {
+&gt;      if ( &amp;other != this )
+&gt;      {
+&gt;          delete m_string;
+&gt;          m_string = strdup( other.m_string );
+&gt;      }
+&gt;      return *this;
+&gt; }
+
+&gt; Unfortunately, this is not guaranteed to work as expected: While the
+&gt; standard guarantees that pointers to the same object must compare equal, it
+&gt; doesn't guarantee that pointers to different objects must compare unequal.
+">
+
+There is such a guarantee:
+
+&quot;Two pointers of the same type compare equal if and only if they are
+both null, both point to the same function, or both represent the same
+address.&quot; [§5.10/1]
+
+Note the &quot;if and only if&quot; - which means that pointers to two objects
+residing at different addresses - may never compare as equal.
+Therefore, your example is guaranteed to work as expected - because -
+in order for &quot;this&quot; and &quot;&amp;otherString&quot; to compare as equal - they must
+be pointing to the same String object. And in fact the only way in C++
+to tell whether two pointers point to the same, or to different
+objects - is to compare them for equality. There is no other
+definition of &quot;different&quot; beyond that simple test.
+
+Of course, the notion of equality can apply not only to objects - but
+to values as well. Strings in fact are usually implemented with a
+&quot;value&quot; class and not a &quot;reference&quot; class. So in this case, comparing
+the contents of the two strings for equality (assuming that there is
+some reasonably efficient way to compare the strings) would prevent
+more unnecessary copying  - than limiting the comparison to the
+objects themselves.
+
+Greg
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Marco Manfredini &lt;ok_nospam...@phoyd.net&gt; </POSTER>
+<POSTDATE> 2007-11-18T07:44:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Mayk ... @gmail.com wrote:
+&gt;&gt; Unfortunately, this is not guaranteed to work as expected: While the
+&gt;&gt; standard guarantees that pointers to the same object must compare equal, it
+&gt;&gt; doesn't guarantee that pointers to different objects must compare unequal.
+&gt; Are you sure? I can not imagine when and how two different objects are
+&gt; located at the same address at the same time.
+">
+
+#include &lt;iostream&gt;
+using namespace std;
+int main()
+{
+struct A {int x;} a;
+cout &lt;&lt; &amp;a &lt;&lt; &quot;==&quot; &lt;&lt; &amp;a.x &lt;&lt; endl;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+Actually, two different objects of the *same type* cannot appear at the
+same address.
+
+compare:
+struct A {};
+struct B : public A { A a; } b;
+cout &lt;&lt; &amp;b &lt;&lt; &quot;!=&quot; &lt;&lt; &amp;b.a &lt;&lt; endl;
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;R.F. Pels&quot; &lt;ru...@tiscali.nl&gt; </POSTER>
+<POSTDATE> 2007-11-18T07:51:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Matthias Hofmann wrote:
+&gt; String&amp; operator=( const String&amp; other )
+&gt; {
+&gt;      if ( &amp;other != this )
+&gt;      {
+&gt;          delete m_string;
+&gt;          m_string = strdup( other.m_string );
+&gt;      }
+&gt;      return *this;
+&gt; }
+&gt; Unfortunately, this is not guaranteed to work as expected: While the
+&gt; standard guarantees that pointers to the same object must compare equal,
+&gt; it doesn't guarantee that pointers to different objects must compare
+&gt; unequal.
+
+&gt; So what is a programmer supposed to do?
+">
+
+Hihihihihi. You're funny. Since equality comparison is an operation that
+yields a boolean value this implies that if the comparison holds (that is,
+the 'objects' compared are equal) it also implies that the opposite is the
+case: if the equality comparison does NOT hold, that is, if two 'objects'
+are compared lead to a non-true result, the two 'objects' are not equal.
+
+Guaranteeing that two pointers-to-object are equal if they point to the same
+object IMPLIES that two pointers-to-object are inequal if they do NOT point
+to the same object.
+
+--
+Ruurd
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;Matthias Hofmann&quot; &lt;hofm...@anvil-soft.com&gt; </POSTER>
+<POSTDATE> 2007-11-18T14:36:00 </POSTDATE>
+&lt;jkherci ... @gmx.net&gt; schrieb im Newsbeitrag news:fhnhcd$f81$1@aioe.org ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Matthias Hofmann wrote:
+&gt;&gt; Unfortunately, this is not guaranteed to work as expected: While the
+&gt;&gt; standard guarantees that pointers to the same object must compare equal,
+&gt;&gt; it doesn't guarantee that pointers to different objects must compare
+&gt;&gt; unequal.
+
+&gt; That appears to be incorrect as per [5.10/1]:
+
+&gt;   Two pointers of the same type compare equal if and only if they are both
+&gt;   null, both point to the same function, or both represent the same
+&gt; address
+&gt;   (3.9.2).
+
+&gt; Note the &quot;if and only if&quot;.
+">
+
+That's good news. Then the information I found in the following Guru of Week
+seems to be incorrect (see &quot;Problem #6: It Relies on Unreliable Pointer
+Comparisons&quot;): http://www.gotw.ca/gotw/023.htm
+
+--
+Matthias Hofmann
+Anvil-Soft, CEO
+http://www.anvil-soft.com - The Creators of Toilet Tycoon
+http://www.anvil-soft.de - Die Macher des Klomanagers
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;Daniel T.&quot; &lt;danie...@earthlink.net&gt; </POSTER>
+<POSTDATE> 2007-11-18T14:43:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Matthias Hofmann&quot; &lt;hofm ... @anvil-soft.com&gt; wrote:
+&gt; It is common practice to check for assgnment to self in the copy assignment
+&gt; operator, like in the following example:
+
+&gt; String&amp; operator=( const String&amp; other )
+&gt; {
+&gt;      if ( &amp;other != this )
+&gt;      {
+&gt;          delete m_string;
+&gt;          m_string = strdup( other.m_string );
+&gt;      }
+
+&gt;      return *this;
+&gt; }
+">
+
+I'm going to talk about something different than everyone else. Your
+premise is wrong. It is not standard practice to check for assignment to
+self like in your example above.
+
+Actually, several well regarded publications explicitly warn *against*
+such code.
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Francis Glassborow &lt;francis.glassbo...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-11-18T15:02:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Matthias Hofmann wrote:
+&gt; Hello everyone!
+
+&gt; It is common practice to check for assgnment to self in the copy assignment
+&gt; operator, like in the following example:
+
+&gt; String&amp; operator=( const String&amp; other )
+&gt; {
+&gt;      if ( &amp;other != this )
+&gt;      {
+&gt;          delete m_string;
+&gt;          m_string = strdup( other.m_string );
+&gt;      }
+
+&gt;      return *this;
+&gt; }
+
+&gt; Unfortunately, this is not guaranteed to work as expected: While the
+&gt; standard guarantees that pointers to the same object must compare equal, it
+&gt; doesn't guarantee that pointers to different objects must compare unequal.
+
+&gt; So what is a programmer supposed to do?
+">
+
+Learn the exception safe idiom that does not need chcking for self
+assignment. The idiom you are using dates from the early 90s and has
+been superceded by a new one.
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Alberto Ganesh Barbati &lt;AlbertoBarb...@libero.it&gt; </POSTER>
+<POSTDATE> 2007-11-18T23:53:00 </POSTDATE>
+R.F. Pels ha scritto:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hihihihihi. You're funny. Since equality comparison is an operation that
+&gt; yields a boolean value this implies that if the comparison holds (that is,
+&gt; the 'objects' compared are equal) it also implies that the opposite is the
+&gt; case: if the equality comparison does NOT hold, that is, if two 'objects'
+&gt; are compared lead to a non-true result, the two 'objects' are not equal.
+
+&gt; Guaranteeing that two pointers-to-object are equal if they point to the same
+&gt; object IMPLIES that two pointers-to-object are inequal if they do NOT point
+&gt; to the same object.
+">
+
+I'm sorry to inform you that, logically speaking, your argument is plain
+wrong and therefore does not prove anything. You do not seem to have
+fully grasped the difference between an &quot;if&quot; and an &quot;if and only if&quot;.
+
+Fortunately, in this case, the standard do have &quot;if and only if&quot; in the
+right place and that's what the OP (and possibly you) is missing.
+
+Ganesh
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> jkherci...@gmx.net </POSTER>
+<POSTDATE> 2007-11-18T23:56:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Matthias Hofmann wrote:
+&gt; &lt;jkherci ... @gmx.net&gt; schrieb im Newsbeitrag news:fhnhcd$f81$1@aioe.org ...
+&gt;&gt; Matthias Hofmann wrote:
+
+&gt;&gt;&gt; Unfortunately, this is not guaranteed to work as expected: While the
+&gt;&gt;&gt; standard guarantees that pointers to the same object must compare equal,
+&gt;&gt;&gt; it doesn't guarantee that pointers to different objects must compare
+&gt;&gt;&gt; unequal.
+
+&gt;&gt; That appears to be incorrect as per [5.10/1]:
+
+&gt;&gt;   Two pointers of the same type compare equal if and only if they are
+&gt;&gt;   both null, both point to the same function, or both represent the same
+&gt;&gt; address
+&gt;&gt;   (3.9.2).
+
+&gt;&gt; Note the &quot;if and only if&quot;.
+
+&gt; That's good news. Then the information I found in the following Guru of
+&gt; Week seems to be incorrect (see &quot;Problem #6: It Relies on Unreliable
+&gt; Pointer Comparisons&quot;): http://www.gotw.ca/gotw/023.htm
+">
+
+Interesting. Maybe this is a fix added to the standard in 2003?
+
+Nonetheless, chasing his reference to GotW11, you will find that there is
+indeed another issue with the line
+
+if ( &amp;other != this )
+
+because operator&amp; might be overloaded. To protect against that, you can use
+boost::addressof.
+
+Best
+
+Kai-Uwe Bux
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;Matthias Hofmann&quot; &lt;hofm...@anvil-soft.com&gt; </POSTER>
+<POSTDATE> 2007-11-18T23:51:00 </POSTDATE>
+&quot;R.F. Pels&quot; &lt;ru ... @tiscali.nl&gt; schrieb im Newsbeitrag
+news:fhnnou$5pp$1@aioe.org ...
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Unfortunately, this is not guaranteed to work as expected: While the
+&gt;&gt; standard guarantees that pointers to the same object must compare equal,
+&gt;&gt; it doesn't guarantee that pointers to different objects must compare
+&gt;&gt; unequal.
+
+&gt;&gt; So what is a programmer supposed to do?
+
+&gt; Hihihihihi. You're funny. Since equality comparison is an operation that
+&gt; yields a boolean value this implies that if the comparison holds (that is,
+&gt; the 'objects' compared are equal) it also implies that the opposite is the
+&gt; case: if the equality comparison does NOT hold, that is, if two 'objects'
+&gt; are compared lead to a non-true result, the two 'objects' are not equal.
+">
+
+Yes, if two pointers don't compare equal, then we are dealing with different
+objects. However, this does not imply that pointers to different objects
+must compare unequal.
+
+<QUOTE PREVIOUSPOST="
+&gt; Guaranteeing that two pointers-to-object are equal if they point to the
+&gt; same
+&gt; object IMPLIES that two pointers-to-object are inequal if they do NOT
+&gt; point
+&gt; to the same object.
+">
+
+No. Take a segmented memory model where every address consists of a base and
+an offset. If the compiler compares only the offsets, then pointers to
+different objects may compare equal, despite them being located in different
+segments.
+
+--
+Matthias Hofmann
+Anvil-Soft, CEO
+http://www.anvil-soft.com - The Creators of Toilet Tycoon
+http://www.anvil-soft.de - Die Macher des Klomanagers
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> jkherci...@gmx.net </POSTER>
+<POSTDATE> 2007-11-18T23:58:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+R.F. Pels wrote:
+&gt; Matthias Hofmann wrote:
+[snip]
+&gt;&gt; While the
+&gt;&gt; standard guarantees that pointers to the same object must compare equal,
+&gt;&gt; it doesn't guarantee that pointers to different objects must compare
+&gt;&gt; unequal.
+
+&gt;&gt; So what is a programmer supposed to do?
+
+&gt; Hihihihihi. You're funny. Since equality comparison is an operation that
+&gt; yields a boolean value this implies that if the comparison holds (that is,
+&gt; the 'objects' compared are equal) it also implies that the opposite is the
+&gt; case: if the equality comparison does NOT hold, that is, if two 'objects'
+&gt; are compared lead to a non-true result, the two 'objects' are not equal.
+
+&gt; Guaranteeing that two pointers-to-object are equal if they point to the
+&gt; same object IMPLIES that two pointers-to-object are inequal if they do NOT
+&gt; point to the same object.
+">
+
+Your reasoning must be flawed. The following function yields a boolean and
+is guaranteed to return true if the two pointer arguments point to the same
+object:
+
+template &lt; typename T &gt;
+bool guaranteed_to_be_true_if_point_to_same ( T* lhs, T* rhs ) {
+return ( true );
+}
+
+Nonetheless is is not guaranteed to return false for pointers to different
+objects.
+
+Note: the relevant portion of the standard carefully uses the phrase &quot;if and
+only if&quot; instead of just &quot;if&quot;.
+
+Best
+
+Kai-Uwe Bux
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;Matthias Hofmann&quot; &lt;hofm...@anvil-soft.com&gt; </POSTER>
+<POSTDATE> 2007-11-18T23:50:00 </POSTDATE>
+&quot;Marco Manfredini&quot; &lt;ok_nospam ... @phoyd.net&gt; schrieb im Newsbeitrag
+news:fhnlgp$th1$1@aioe.org ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Mayk ... @gmail.com wrote:
+&gt; compare:
+&gt; struct A {};
+&gt; struct B : public A { A a; } b;
+&gt; cout &lt;&lt; &amp;b &lt;&lt; &quot;!=&quot; &lt;&lt; &amp;b.a &lt;&lt; endl;
+">
+
+This is a very interesting example: Is the compiler not allowed to apply
+empty base class optimization in this case?
+
+--
+Matthias Hofmann
+Anvil-Soft, CEO
+http://www.anvil-soft.com - The Creators of Toilet Tycoon
+http://www.anvil-soft.de - Die Macher des Klomanagers
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;Matthias Hofmann&quot; &lt;hofm...@anvil-soft.com&gt; </POSTER>
+<POSTDATE> 2007-11-18T23:50:00 </POSTDATE>
+&quot;Alberto Ganesh Barbati&quot; &lt;AlbertoBarb ... @libero.it&gt; schrieb im Newsbeitrag
+news:9zI%i.176168$U01.1205553@twister1.libero.it ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Matthias Hofmann ha scritto:
+&gt; Notice the &quot;if and only if&quot;. If two objects of the same type are stored
+&gt; at the same address then they definitely are the same object (see also
+&gt; 1.7/1 &quot;Every byte has a unique address.&quot;)
+">
+
+This sounds like the compiler treats every address as a far pointer, i.e.
+that in theory, there is no such thing as memory segmentation. So why are
+there so many restriction on using relational operators on pointers?
+
+--
+Matthias Hofmann
+Anvil-Soft, CEO
+http://www.anvil-soft.com - The Creators of Toilet Tycoon
+http://www.anvil-soft.de - Die Macher des Klomanagers
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;Daniel Krügler&quot; &lt;daniel.krueg...@googlemail.com&gt; </POSTER>
+<POSTDATE> 2007-11-18T23:56:00 </POSTDATE>
+On 18 Nov., 20:36, &quot;Matthias Hofmann&quot; &lt;hofm ... @anvil-soft.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &lt;jkherci ... @gmx.net&gt; schrieb im Newsbeitrag news:fhnhcd$f81$1@aioe.org ...
+
+&gt; &gt; Matthias Hofmann wrote:
+&gt; &gt;&gt; Unfortunately, this is not guaranteed to work as expected: While the
+&gt; &gt;&gt; standard guarantees that pointers to the same object must compare equal,
+&gt; &gt;&gt; it doesn't guarantee that pointers to different objects must compare
+&gt; &gt;&gt; unequal.
+
+&gt; &gt; That appears to be incorrect as per [5.10/1]:
+
+&gt; &gt;   Two pointers of the same type compare equal if and only if they are both
+&gt; &gt;   null, both point to the same function, or both represent the same
+&gt; &gt; address
+&gt; &gt;   (3.9.2).
+
+&gt; &gt; Note the &quot;if and only if&quot;.
+
+&gt; That's good news. Then the information I found in the following Guru of Week
+&gt; seems to be incorrect (see &quot;Problem #6: It Relies on Unreliable Pointer
+&gt; Comparisons&quot;): http://www.gotw.ca/gotw/023.htm
+">
+
+You should have read the nearby link to #11 (Object identity): The
+possible scenario to out-trick the address comparison is by means
+of an user-defined unary cv T* operator&amp;() cv with some unusual
+semantics ;-)
+
+Funnily this can be realized even by any non-owner of the class T,
+because - in contrast to e.g. overloading the assignment operator -
+there are no constraints that unary operator&amp; needs to be a member
+function.
+
+If you are really nervous, that someone might add a free
+cv T* operator&amp;(cv T&amp;) (Machiavelli) you can use something like
+boost::addressof to get the *real* address - even in the existence
+of overloaded address operators. I doubt that this is necessary,
+because it's rather probable that a class, which is not prepared
+for an overloaded address operator, wont work.
+
+Greetings from Bremen,
+
+Daniel Krügler
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;Matthias Hofmann&quot; &lt;hofm...@anvil-soft.com&gt; </POSTER>
+<POSTDATE> 2007-11-18T23:50:00 </POSTDATE>
+&quot;Jerry Coffin&quot; &lt;jcof ... @taeus.com&gt; schrieb im Newsbeitrag
+news:MPG.21a8d302389db028989a92@news.sunsite.dk ...
+
+<QUOTE PREVIOUSPOST="
+&gt; In article &lt;5q8dvsFuq5u ... @mid.individual.net&gt;, hofm ... @anvil-soft.com
+&gt; says...
+&gt;&gt; Unfortunately, this is not guaranteed to work as expected: While the
+&gt;&gt; standard guarantees that pointers to the same object must compare equal,
+&gt;&gt; it
+&gt;&gt; doesn't guarantee that pointers to different objects must compare
+&gt;&gt; unequal.
+
+&gt;&gt; So what is a programmer supposed to do?
+
+&gt; Use std::less, which is required to &quot;do the right thing&quot; even with
+&gt; points to different objects with which ==, !=, etc., can give
+&gt; meaningless results.
+">
+
+Relational operators are a good point: As I have learned in another reply to
+my original post, comparing pointers to objects of the same type is in fact
+not a problem, but how come this is different with relational operators? I
+understand that the compiler has to take memory segmentation into account,
+but this should also be the case with comparisons for equality?
+
+--
+Matthias Hofmann
+Anvil-Soft, CEO
+http://www.anvil-soft.com - The Creators of Toilet Tycoon
+http://www.anvil-soft.de - Die Macher des Klomanagers
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Roy Smith &lt;r...@panix.com&gt; </POSTER>
+<POSTDATE> 2007-11-18T23:59:00 </POSTDATE>
+In article &lt;G9ydnfGRdKgQ1d3anZ2dnUVZ8uWdn ... @eclipse.net.uk&gt;,
+Francis Glassborow &lt;francis.glassbo ... @btinternet.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; So what is a programmer supposed to do?
+
+&gt; Learn the exception safe idiom that does not need chcking for self
+&gt; assignment. The idiom you are using dates from the early 90s and has
+&gt; been superceded by a new one.
+">
+
+Are you going to keep us in suspense, or are you going to give us a hint
+what that idiom is? :-)
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Sebastian Redl &lt;e0226...@student.tuwien.ac.at&gt; </POSTER>
+<POSTDATE> 2007-11-19T07:09:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Matthias Hofmann wrote:
+&gt; Relational operators are a good point: As I have learned in another reply
+&gt; to my original post, comparing pointers to objects of the same type is in
+&gt; fact not a problem, but how come this is different with relational
+&gt; operators? I understand that the compiler has to take memory segmentation
+&gt; into account, but this should also be the case with comparisons for
+&gt; equality?
+">
+
+The standard guarantees defined results only for comparisons of pointers to
+objects of the same type that are part of the same larger construct (array
+or class).
+However, the standard also requires std::less&lt;T*&gt; to be defined for all
+pointers. Implementations can either specialize std::less for pointers and
+use some special comparison (e.g. in segmented memory models, force a far
+pointer comparison instead of a near pointer comparison that the normal &lt;
+is allowed to use) or they can give &lt; global ordering semantics.
+
+--
+Sebastian Redl
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Sebastian Redl &lt;e0226...@student.tuwien.ac.at&gt; </POSTER>
+<POSTDATE> 2007-11-19T07:08:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Matthias Hofmann wrote:
+&gt; &quot;Marco Manfredini&quot; &lt;ok_nospam ... @phoyd.net&gt; schrieb im Newsbeitrag
+&gt; news:fhnlgp$th1$1@aioe.org ...
+
+&gt;&gt; compare:
+&gt;&gt; struct A {};
+&gt;&gt; struct B : public A { A a; } b;
+&gt;&gt; cout &lt;&lt; &amp;b &lt;&lt; &quot;!=&quot; &lt;&lt; &amp;b.a &lt;&lt; endl;
+
+&gt; This is a very interesting example: Is the compiler not allowed to apply
+&gt; empty base class optimization in this case?
+">
+
+It's not allowed to put the base A object and the member A object at the
+same address. Whether it fulfills this requirement by not applying EBO and
+thus offsetting the member A, or by &quot;applying&quot; EBO and offsetting the
+member A to compensate is up to the implementation.
+
+--
+Sebastian Redl
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Jerry Coffin &lt;jcof...@taeus.com&gt; </POSTER>
+<POSTDATE> 2007-11-19T07:08:00 </POSTDATE>
+In article &lt;roy-F60C42.19490318112 ... @news.panix.com&gt;, r ... @panix.com
+says...
+
+<QUOTE PREVIOUSPOST="
+&gt; In article &lt;G9ydnfGRdKgQ1d3anZ2dnUVZ8uWdn ... @eclipse.net.uk&gt;,
+&gt;  Francis Glassborow &lt;francis.glassbo ... @btinternet.com&gt; wrote:
+
+&gt; &gt; &gt; So what is a programmer supposed to do?
+
+&gt; &gt; Learn the exception safe idiom that does not need chcking for self
+&gt; &gt; assignment. The idiom you are using dates from the early 90s and has
+&gt; &gt; been superceded by a new one.
+
+&gt; Are you going to keep us in suspense, or are you going to give us a hint
+&gt; what that idiom is? :-)
+">
+
+The idiom is to create a copy of the object being assigned, then if and
+only if it's created correctly, you swap the copy with the existing
+target object. This is exception safe if swap is guaranteed not to throw
+(which is normally the case).
+
+The code typically looks something like this:
+
+class String {
+char *m_string;
+public:
+String &amp;operator=(String other) {
+swap(other);
+return *this;
+// 'other', now containing the original contents of
+// this string is destroyed when it goes out of scope.
+}
+
+void swap(String &amp;other) {
+char *temp = m_string;
+m_string = other.m_string;
+other.m_string = temp;
+}
+// copy ctor, dtor, etc. omitted.
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+Note that in this case we have NOT passed 'other' by reference. The
+reason to pass by reference is to avoid a copy -- but in this case, we
+know we're going to copy it anyway, so we can let the standard parameter
+passing mechanism do that for us. Of course, if you want to make it more
+explicit, you can do something like this:
+
+// swap remains as before...
+String &amp;operator=(String const &amp;other) {
+String temp(other);
+swap(temp);
+return *this;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+Either way, the basic idea is pretty simple: we never modify the
+existing target item until we're sure we can do so with no chance of an
+exception occurring when we do it. Anyway, we either get an exception
+while we're creating the copy (in which case, the original item remains
+untouched) or else no exception occurs at all, in which case our
+assignment succeeds in its entirety.
+
+Now, if creating the copy is really expensive, we CAN add a check for
+self assignment as an optimization, and everything is still fine. The
+problem arises with code that really _needs_ to check for the assignment
+to self, such as the original code:
+
+String&amp; operator=( const String&amp; other )
+{
+if ( &amp;other != this )
+{
+delete m_string;
+m_string = strdup( other.m_string );
+}
+
+return *this;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+If this didn't check for assignment to self, when we do the 'delete
+m_string', we would destroy not only the target, but also the source of
+the assignment. When we attempt to duplicate the 'other', we'd read from
+memory that's been deleted, and we'd get undefined behavior. Even when
+we don't have self-assignment, we have a serious chance for a problem.
+In the typical case, strdup looks something like:
+
+char *strdup(char const *other) {
+char *temp = malloc(strlen(other)+1);
+if (temp)
+strcpy(temp, other);
+return temp;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+now, if that fails, we've destroyed the original target, but we canNOT
+assign the 'other' value correctly, because we don't have memory to hold
+it. We no longer have the original value, but we don't have the new
+value either.
+
+Of course, with some extra work we can fix that as well, for example,
+using code something like this:
+
+String &amp;operator=(String const &amp;other) {
+if (&amp;other == this)
+return *this;
+char *temp = strdup(other);
+if (temp != NULL) {
+free(m_string);
+m_string = temp;
+}
+return *this;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+this highlights another problem with the orginal: although strdup (at
+least in the implmenetations I've seen) uses malloc, the memory was
+freed with delete instead of free -- leading to undefined behavior.
+
+Anyway, this is safe if and only if we're guaranteed that 'free' never
+throws an exception (usually a safe bet, since it's part of the C
+library that knows nothing about exceptions), and that assigning a
+pointer can't throw an exception (again, normally true).
+
+OTOH, our code is now quite a bit longer and more complex than it
+started. If we want to use new and delete to manage the memory, instead
+of malloc/free as happens with strdup, our code gets longer and more
+complex still:
+
+String &amp;operator=(String const &amp;other) {
+if (this == &amp;other)
+return *this;
+char *temp = NULL;
+try {
+// anything that might throw an exception is in here
+temp = new char[strlen(other)+1];
+strcpy(temp, other.m_string);
+}
+catch(bad_alloc const &amp;) {
+if (temp != NULL)
+delete [] temp;
+return *this;
+}
+// down here we have only code we _know_ cannot fail.
+delete [] m_string;
+m_string = temp;
+return *this;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+In fairness, the part that deletes temp in the catch block is only
+needed if we have a strcpy that could throw an exception. Since strcpy
+is at least normally the same as in the C library, that's not normally
+the case; then again, the C++ standard doesn't really guarantee it.
+
+The code using swap is certainly quite a bit simpler and less error
+prone.
+
+--
+Later,
+Jerry.
+
+The universe is a figment of its own imagination.
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Marco Manfredini &lt;ok_nospam...@phoyd.net&gt; </POSTER>
+<POSTDATE> 2007-11-19T07:09:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Matthias Hofmann wrote:
+&gt; This is a very interesting example: Is the compiler not allowed to apply
+&gt; empty base class optimization in this case?
+">
+
+Yep. Here's another one:
+
+struct Base{};
+struct A : public Base{ Base* getA(){return this;}};
+struct B : public Base{ Base *getB(){return this;}};
+
+struct X: public A, public B { int x; };
+
+sizeof(X)==sizeof(int) and gcc places the &quot;B::Base&quot; part of X somewhere
+inside of X::x.
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Francis Glassborow &lt;francis.glassbo...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-11-19T07:09:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Matthias Hofmann wrote:
+
+&gt; No. Take a segmented memory model where every address consists of a base and
+&gt; an offset. If the compiler compares only the offsets, then pointers to
+&gt; different objects may compare equal, despite them being located in different
+&gt; segments.
+">
+
+Then the compiler is bugged. If two poiters to the same type compare
+equal they point to the same object. The real problem is that if, for
+example, you do this:
+
+if((void *) a_ptr == (void *) b_ptr)
+
+you may get a false positive because you have stripped the vital type
+information.
+
+Remember that given:
+
+struct X {
+int a;
+
+<QUOTE PREVIOUSPOST="
+} x;
+">
+
+x and x.a have the same address and so the only thing that prevents them
+from comparing equal is that they have different types. The type is an
+essential part of the rules for pointer equality.
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Francis Glassborow &lt;francis.glassbo...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-11-19T07:10:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Matthias Hofmann wrote:
+&gt; &quot;Jerry Coffin&quot; &lt;jcof ... @taeus.com&gt; schrieb im Newsbeitrag
+&gt; news:MPG.21a8d302389db028989a92@news.sunsite.dk ...
+&gt;&gt; In article &lt;5q8dvsFuq5u ... @mid.individual.net&gt;, hofm ... @anvil-soft.com
+&gt;&gt; says...
+
+&gt;&gt;&gt; Unfortunately, this is not guaranteed to work as expected: While the
+&gt;&gt;&gt; standard guarantees that pointers to the same object must compare equal,
+&gt;&gt;&gt; it
+&gt;&gt;&gt; doesn't guarantee that pointers to different objects must compare
+&gt;&gt;&gt; unequal.
+
+&gt;&gt;&gt; So what is a programmer supposed to do?
+&gt;&gt; Use std::less, which is required to &quot;do the right thing&quot; even with
+&gt;&gt; points to different objects with which ==, !=, etc., can give
+&gt;&gt; meaningless results.
+
+&gt; Relational operators are a good point: As I have learned in another reply to
+&gt; my original post, comparing pointers to objects of the same type is in fact
+&gt; not a problem, but how come this is different with relational operators? I
+&gt; understand that the compiler has to take memory segmentation into account,
+&gt; but this should also be the case with comparisons for equality?
+">
+
+Consider a system with multiple memory 'pools' containing addresses from
+0 upwards. In general there is no ordering of the pools (segmented
+memory is a special case because there is an ordering of the segments
+and on most systems a way to convert the segment and offset into a
+single value).
+
+Now it is perfectly reasonable to require that the (in)equality
+operators check that the addresses are in the same pool before checking
+for numerical equality but it is not reasonable to require an ordering
+of the pools.
+
+Indeed if we are working with distributed systems we might be using
+opaque pointers (think of internet urls) where the actual location of
+the object might vary over time. Comparing for equality is still easy
+but we need to have some other mechanism to determine ordering (for
+example for urls we might use a collation sequence)
+
+std::less is provided to allow such complexity to be hidden and at the
+same time allow quick comparisons in the normal cases where memory is
+strictly ordered.
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Francis Glassborow &lt;francis.glassbo...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2007-11-19T13:24:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Roy Smith wrote:
+&gt; In article &lt;G9ydnfGRdKgQ1d3anZ2dnUVZ8uWdn ... @eclipse.net.uk&gt;,
+&gt;  Francis Glassborow &lt;francis.glassbo ... @btinternet.com&gt; wrote:
+
+&gt;&gt;&gt; So what is a programmer supposed to do?
+
+&gt;&gt; Learn the exception safe idiom that does not need chcking for self
+&gt;&gt; assignment. The idiom you are using dates from the early 90s and has
+&gt;&gt; been superceded by a new one.
+
+&gt; Are you going to keep us in suspense, or are you going to give us a hint
+&gt; what that idiom is? :-)
+">
+
+OK. When is the default copy assignment dangerous? Basically when you
+need a deep copy (e.g. your type includes a pointer member that owns the
+resource pointed to)
+
+Here is a simple example:
+
+class X {
+public:
+X();
+X(X const &amp;);
+X&amp; operator=(X const &amp;);
+~X();
+private:
+sometype * a_ptr;
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+Implementation:
+
+X::X(): a_ptr(new sometype){}
+X::X(X const &amp; x): a_ptr(new sometype(x.a_ptr){}
+X::~X(){delete a_ptr;}
+X&amp; X::operator=(X const &amp; x){
+// get a copy of the owned object:
+sometype * temp_ptr(new sometype(x.a_ptr));
+delete a_ptr; // we can safely discard that
+// now we have dealt with the code that might exit with an exception
+a_ptr = temp_ptr;
+return *this;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+This idiom is exception safe and does not require checking for self
+assignment. If assignment was a) expensive and self-assignment was
+relatively common you might still want to do the check as an
+optimisation. However note that cases where self-assignment is anything
+but rare are very uncommon. Adding a check for self-assignment will cost
+in all cases that are not.
+
+There are several variations on the above but the basic principle is to
+do everything that might result in an exception first, using temporary
+pointers where necessary then relocate the parts held by temporary pointers.
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Martin Bonner &lt;martinfro...@yahoo.co.uk&gt; </POSTER>
+<POSTDATE> 2007-11-19T13:23:00 </POSTDATE>
+On Nov 19, 4:59 am, Roy Smith &lt;r ... @panix.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In article &lt;G9ydnfGRdKgQ1d3anZ2dnUVZ8uWdn ... @eclipse.net.uk&gt;,
+&gt;  Francis Glassborow &lt;francis.glassbo ... @btinternet.com&gt; wrote:
+
+&gt; &gt; &gt; So what is a programmer supposed to do?
+
+&gt; &gt; Learn the exception safe idiom that does not need chcking for self
+&gt; &gt; assignment. The idiom you are using dates from the early 90s and has
+&gt; &gt; been superceded by a new one.
+
+&gt; Are you going to keep us in suspense, or are you going to give us a hint
+&gt; what that idiom is? :-)
+">
+
+Implement a non-throwing swap function then assignment then becomes
+T&amp; operator =(const T&amp; rhs)
+{
+T temp(rhs);     // Copy constructor, may throw.
+swap(*this,rhs); // Non-throwing swap.
+return *this;    // Destructor of temp will destroy resources
+// that were originally owned by *this.
+}
+This is:
+- exception safe
+- provides a useful utility function (non-throwing swap)
+- pretty much as efficient as possible.  The big work will be
+destroying the original resources owned by *this, and creating copies
+of the resources owned by rhs - both of which still have to be done.
+There is some trivial work assigning pointers etc in swap, but that is
+likely to be lost in the noice.
+
+(With luck this will provoke a discussion of exactly the right way to
+spell the second line in my function.)
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> David Abrahams &lt;d...@boost-consulting.com&gt; </POSTER>
+<POSTDATE> 2007-11-19T13:41:00 </POSTDATE>
+on Sun Nov 18 2007, Francis Glassborow
+
+<QUOTE PREVIOUSPOST="
+&lt;francis.glassborow-AT-btinternet.com&gt; wrote:
+&gt; Matthias Hofmann wrote:
+&gt;&gt; Hello everyone!
+
+&gt;&gt; It is common practice to check for assgnment to self in the copy assignment
+&gt;&gt; operator, like in the following example:
+
+&gt;&gt; String&amp; operator=( const String&amp; other )
+&gt;&gt; {
+&gt;&gt;      if ( &amp;other != this )
+&gt;&gt;      {
+&gt;&gt;          delete m_string;
+&gt;&gt;          m_string = strdup( other.m_string );
+&gt;&gt;      }
+
+&gt;&gt;      return *this;
+&gt;&gt; }
+
+&gt;&gt; Unfortunately, this is not guaranteed to work as expected: While the
+&gt;&gt; standard guarantees that pointers to the same object must compare equal, it
+&gt;&gt; doesn't guarantee that pointers to different objects must compare unequal.
+
+&gt;&gt; So what is a programmer supposed to do?
+
+&gt; Learn the exception safe idiom that does not need chcking for self
+&gt; assignment. The idiom you are using dates from the early 90s and has
+&gt; been superceded by a new one.
+">
+
+If you had said &quot;largely superceded,&quot; I would agree with you.  For
+some types, the copy/swap idiom will produce avoidable resource usage
+spikes.  That's why, for example, none of the standard containers use
+it.
+
+--
+Dave Abrahams
+Boost Consulting
+http://www.boost-consulting.com
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Jerry Coffin &lt;jcof...@taeus.com&gt; </POSTER>
+<POSTDATE> 2007-11-19T13:41:00 </POSTDATE>
+In article &lt;5qb5efFv5jj ... @mid.individual.net&gt;, hofm ... @anvil-soft.com
+says...
+
+[ ... ]
+
+<QUOTE PREVIOUSPOST="
+&gt; Relational operators are a good point: As I have learned in another reply to
+&gt; my original post, comparing pointers to objects of the same type is in fact
+&gt; not a problem, but how come this is different with relational operators? I
+&gt; understand that the compiler has to take memory segmentation into account,
+&gt; but this should also be the case with comparisons for equality?
+">
+
+To an extent, it's historical -- the relational operators have only ever
+been defined under relatively limited circumstances. Specifying them to
+act in a way that might be different from the native comparison
+operators would more or less require showing that this wouldn't break
+any existing code that might depend on native behavior. Since that would
+be a lot of work, it's a lot easier to leave that definition alone, and
+add something new (std::less&lt;T&gt; in this case) that has more tightly
+defined semantics. Since they needed something that could be passed as a
+template argument anyway, this didn't really impose any overhead in the
+definition.
+
+--
+Later,
+Jerry.
+
+The universe is a figment of its own imagination.
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;Daniel T.&quot; &lt;danie...@earthlink.net&gt; </POSTER>
+<POSTDATE> 2007-11-20T12:56:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Francis Glassborow &lt;francis.glassbo ... @btinternet.com&gt; wrote:
+&gt; X::X(): a_ptr(new sometype){}
+&gt; X::X(X const &amp; x): a_ptr(new sometype(x.a_ptr){}
+&gt; X::~X(){delete a_ptr;}
+&gt; X&amp; X::operator=(X const &amp; x){
+&gt; // get a copy of the owned object:
+&gt;     sometype * temp_ptr(new sometype(x.a_ptr));
+&gt;     delete a_ptr; // we can safely discard that
+&gt; // now we have dealt with the code that might exit with an exception
+&gt;     a_ptr = temp_ptr;
+&gt;     return *this;
+&gt; }
+">
+
+What about doing this?
+
+X&amp; X::operator=(const X&amp; x ) {
+*a_ptr = *x.a_ptr;
+return *this;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+I mean, if sometype is copy constructible, it should also be assignable
+shouldn't it?
+
+<QUOTE PREVIOUSPOST="
+&gt; There are several variations on the above but the basic principle is to
+&gt;   do everything that might result in an exception first, using temporary
+&gt; pointers where necessary then relocate the parts held by temporary pointers.
+">
+
+Is the code I posted above one of the variations?
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;Matthias Hofmann&quot; &lt;hofm...@anvil-soft.com&gt; </POSTER>
+<POSTDATE> 2007-11-20T17:08:00 </POSTDATE>
+&quot;Francis Glassborow&quot; &lt;francis.glassbo ... @btinternet.com&gt; schrieb im
+Newsbeitrag news:kcqdnak7hK9iwdzanZ2dnUVZ8s2mnZ2d@eclipse.net.uk ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Matthias Hofmann wrote:
+
+&gt;&gt; No. Take a segmented memory model where every address consists of a base
+&gt;&gt; and
+&gt;&gt; an offset. If the compiler compares only the offsets, then pointers to
+&gt;&gt; different objects may compare equal, despite them being located in
+&gt;&gt; different
+&gt;&gt; segments.
+
+&gt; Then the compiler is bugged. If two poiters to the same type compare
+&gt; equal they point to the same object. The real problem is that if, for
+&gt; example, you do this:
+
+&gt; if((void *) a_ptr == (void *) b_ptr)
+
+&gt; you may get a false positive because you have stripped the vital type
+&gt; information.
+
+&gt; Remember that given:
+
+&gt; struct X {
+&gt;   int a;
+&gt; } x;
+
+&gt; x and x.a have the same address and so the only thing that prevents them
+&gt; from comparing equal is that they have different types. The type is an
+&gt; essential part of the rules for pointer equality.
+">
+
+So the compiler basically proceeds as follows?
+
+template &lt;class T1, class T2&gt;
+bool is_equal( T1* p1, T2* p2 )
+{
+return ( typeid( *p1 ) != typeid( *p2 ) )
+? false : ( void* ) p1 == ( void* ) p2;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+--
+Matthias Hofmann
+Anvil-Soft, CEO
+http://www.anvil-soft.com - The Creators of Toilet Tycoon
+http://www.anvil-soft.de - Die Macher des Klomanagers
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;Matthias Hofmann&quot; &lt;hofm...@anvil-soft.com&gt; </POSTER>
+<POSTDATE> 2007-11-20T17:09:00 </POSTDATE>
+&quot;Jerry Coffin&quot; &lt;jcof ... @taeus.com&gt; schrieb im Newsbeitrag
+news:MPG.21aad6f6fa642df7989aa7@news.sunsite.dk ...
+
+<QUOTE PREVIOUSPOST="
+&gt; In article &lt;roy-F60C42.19490318112 ... @news.panix.com&gt;, r ... @panix.com
+&gt; says...
+&gt;&gt; In article &lt;G9ydnfGRdKgQ1d3anZ2dnUVZ8uWdn ... @eclipse.net.uk&gt;,
+&gt;&gt;  Francis Glassborow &lt;francis.glassbo ... @btinternet.com&gt; wrote:
+&gt; Either way, the basic idea is pretty simple: we never modify the
+&gt; existing target item until we're sure we can do so with no chance of an
+&gt; exception occurring when we do it. Anyway, we either get an exception
+&gt; while we're creating the copy (in which case, the original item remains
+&gt; untouched) or else no exception occurs at all, in which case our
+&gt; assignment succeeds in its entirety.
+">
+
+I like that idiom, as it basically implements the copy assignment operator
+in terms of the copy constructor, thus also reducing code duplication.
+
+--
+Matthias Hofmann
+Anvil-Soft, CEO
+http://www.anvil-soft.com - The Creators of Toilet Tycoon
+http://www.anvil-soft.de - Die Macher des Klomanagers
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;Andrew Koenig&quot; &lt;a...@acm.org&gt; </POSTER>
+<POSTDATE> 2007-11-21T06:33:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Matthias Hofmann&quot; &lt;hofm ... @anvil-soft.com&gt; wrote in message
+">
+
+news:5qb5saFv00e3U1@mid.individual.net ...
+
+<QUOTE PREVIOUSPOST="
+&gt; This sounds like the compiler treats every address as a far pointer, i.e.
+&gt; that in theory, there is no such thing as memory segmentation. So why are
+&gt; there so many restriction on using relational operators on pointers?
+">
+
+The idea, which is borrowed from C, is that == and != are required to treat
+every address as a far pointer, but &lt; &lt;= &gt; &gt;= are not.
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,1353 @@
+<DOC>
+<DOCID> eng-NG-31-126395-8200526 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-16T03:10:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Add scaled time to taskstats based process accounting
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Michael Neuling &lt;mi...@neuling.org&gt; </POSTER>
+<POSTDATE> 2007-08-16T03:10:00 </POSTDATE>
+This adds two items to the taststats struct to account for user and
+system time based on scaling the CPU frequency and instruction issue
+rates.
+
+Adds account_(user|system)_time_scaled callbacks which architectures
+can use to account for time using this mechanism.
+
+Signed-off-by: Michael Neuling &lt;mi ... @neuling.org&gt;
+
+---
+
+include/linux/kernel_stat.h |    2 ++
+include/linux/sched.h       |    2 +-
+include/linux/taskstats.h   |    6 +++++-
+kernel/fork.c               |    2 ++
+kernel/sched.c              |   21 +++++++++++++++++++++
+kernel/timer.c              |    7 +++++--
+kernel/tsacct.c             |    4 ++++
+7 files changed, 40 insertions(+), 4 deletions(-)
+
+Index: linux-2.6-ozlabs/include/linux/kernel_stat.h
+===================================================================
+--- linux-2.6-ozlabs.orig/include/linux/kernel_stat.h
++++ linux-2.6-ozlabs/include/linux/kernel_stat.h
+@@ -52,7 +52,9 @@ static inline int kstat_irqs(int irq)
+}
+
+extern void account_user_time(struct task_struct *, cputime_t);
++extern void account_user_time_scaled(struct task_struct *, cputime_t);
+extern void account_system_time(struct task_struct *, int, cputime_t);
++extern void account_system_time_scaled(struct task_struct *, cputime_t);
+extern void account_steal_time(struct task_struct *, cputime_t);
+
+#endif /* _LINUX_KERNEL_STAT_H */
+Index: linux-2.6-ozlabs/include/linux/sched.h
+===================================================================
+--- linux-2.6-ozlabs.orig/include/linux/sched.h
++++ linux-2.6-ozlabs/include/linux/sched.h
+@@ -1020,7 +1020,7 @@ struct task_struct {
+int __user *clear_child_tid;            /* CLONE_CHILD_CLEARTID */
+
+unsigned int rt_priority;
+-       cputime_t utime, stime;
++       cputime_t utime, stime, utimescaled, stimescaled;
+unsigned long nvcsw, nivcsw; /* context switch counts */
+struct timespec start_time;             /* monotonic time */
+struct timespec real_start_time;        /* boot based time */
+Index: linux-2.6-ozlabs/include/linux/taskstats.h
+===================================================================
+--- linux-2.6-ozlabs.orig/include/linux/taskstats.h
++++ linux-2.6-ozlabs/include/linux/taskstats.h
+@@ -31,7 +31,7 @@
+*/
+
+-#define TASKSTATS_VERSION      5
++#define TASKSTATS_VERSION      6
+#define TS_COMM_LEN            32      /* should be &gt;= TASK_COMM_LEN
+* in linux/sched.h */
+
+@@ -142,6 +142,10 @@ struct taskstats {
+__u64   write_char;             /* bytes written */
+__u64   read_syscalls;          /* read syscalls */
+__u64   write_syscalls;         /* write syscalls */
++
++       /* time accounting for SMT machines */
++       __u64   ac_utimescaled;         /* utime scaled on frequency etc */
++       __u64   ac_stimescaled;         /* stime scaled on frequency etc */
+/* Extended accounting fields end */
+
+#define TASKSTATS_HAS_IO_ACCOUNTING
+Index: linux-2.6-ozlabs/kernel/fork.c
+===================================================================
+--- linux-2.6-ozlabs.orig/kernel/fork.c
++++ linux-2.6-ozlabs/kernel/fork.c
+@@ -1045,6 +1045,8 @@ static struct task_struct *copy_process(
+
+p-&gt;utime = cputime_zero;
+p-&gt;stime = cputime_zero;
++       p-&gt;utimescaled = cputime_zero;
++       p-&gt;stimescaled = cputime_zero;
+
+#ifdef CONFIG_TASK_XACCT
+p-&gt;rchar = 0;                /* I/O counter: bytes read */
+Index: linux-2.6-ozlabs/kernel/sched.c
+===================================================================
+--- linux-2.6-ozlabs.orig/kernel/sched.c
++++ linux-2.6-ozlabs/kernel/sched.c
+@@ -3249,6 +3249,16 @@ void account_user_time(struct task_struc
+}
+
+/*
++ * Account scaled user cpu time to a process.
++ * @p: the process that the cpu time gets accounted to
++ * @cputime: the cpu time spent in user space since the last update
++ */
++void account_user_time_scaled(struct task_struct *p, cputime_t cputime)
++{
++       p-&gt;utimescaled = cputime_add(p-&gt;utimescaled, cputime);
++}
++
++/*
+* Account system cpu time to a process.
+* @p: the process that the cpu time gets accounted to
+* @hardirq_offset: the offset to subtract from hardirq_count()
+@@ -3280,6 +3290,17 @@ void account_system_time(struct task_str
+}
+
+/*
++ * Account scaled system cpu time to a process.
++ * @p: the process that the cpu time gets accounted to
++ * @hardirq_offset: the offset to subtract from hardirq_count()
++ * @cputime: the cpu time spent in kernel space since the last update
++ */
++void account_system_time_scaled(struct task_struct *p, cputime_t cputime)
++{
++       p-&gt;stimescaled = cputime_add(p-&gt;stimescaled, cputime);
++}
++
++/*
+* Account for involuntary wait time.
+* @p: the process from which the cpu time has been stolen
+* @steal: the cpu time spent in involuntary wait
+Index: linux-2.6-ozlabs/kernel/timer.c
+===================================================================
+--- linux-2.6-ozlabs.orig/kernel/timer.c
++++ linux-2.6-ozlabs/kernel/timer.c
+@@ -826,10 +826,13 @@ void update_process_times(int user_tick)
+int cpu = smp_processor_id();
+
+/* Note: this timer irq context must be accounted for as well. */
+-       if (user_tick)
++       if (user_tick) {
+account_user_time(p, jiffies_to_cputime(1));
+-       else
++               account_user_time_scaled(p, jiffies_to_cputime(1));
++       } else {
+account_system_time(p, HARDIRQ_OFFSET, jiffies_to_cputime(1));
++               account_system_time_scaled(p, jiffies_to_cputime(1));
++       }
+run_local_timers();
+if (rcu_pending(cpu))
+rcu_check_callbacks(cpu, user_tick);
+Index: linux-2.6-ozlabs/kernel/tsacct.c
+===================================================================
+--- linux-2.6-ozlabs.orig/kernel/tsacct.c
++++ linux-2.6-ozlabs/kernel/tsacct.c
+@@ -62,6 +62,10 @@ void bacct_add_tsk(struct taskstats *sta
+rcu_read_unlock();
+stats-&gt;ac_utime       = cputime_to_msecs(tsk-&gt;utime) * USEC_PER_MSEC;
+stats-&gt;ac_stime       = cputime_to_msecs(tsk-&gt;stime) * USEC_PER_MSEC;
++       stats-&gt;ac_utimescaled =
++               cputime_to_msecs(tsk-&gt;utimescaled) * USEC_PER_MSEC;
++       stats-&gt;ac_stimescaled =
++               cputime_to_msecs(tsk-&gt;stimescaled) * USEC_PER_MSEC;
+stats-&gt;ac_minflt = tsk-&gt;min_flt;
+stats-&gt;ac_majflt = tsk-&gt;maj_flt;
+
+-
+To unsubscribe from this list: send the line &quot;unsubscribe linux-kernel&quot; in
+the body of a message to majord ... @vger.kernel.org
+More majordomo info at http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at http://www.tux.org/lkml/
+</POST>
+<POST>
+<POSTER> Balbir Singh &lt;bal...@linux.vnet.ibm.com&gt; </POSTER>
+<POSTDATE> 2007-08-16T03:30:00 </POSTDATE>
+Hi, Michael,
+
+Thanks for doing this, this is really useful.
+
+<QUOTE PREVIOUSPOST="
+Michael Neuling wrote:
+&gt; This adds two items to the taststats struct to account for user and
+&gt; system time based on scaling the CPU frequency and instruction issue
+&gt; rates.
+
+&gt; Adds account_(user|system)_time_scaled callbacks which architectures
+&gt; can use to account for time using this mechanism.
+
+&gt; Signed-off-by: Michael Neuling &lt;mi ... @neuling.org&gt;
+
+&gt; ---
+
+&gt;  include/linux/kernel_stat.h |    2 ++
+&gt;  include/linux/sched.h       |    2 +-
+&gt;  include/linux/taskstats.h   |    6 +++++-
+&gt;  kernel/fork.c               |    2 ++
+&gt;  kernel/sched.c              |   21 +++++++++++++++++++++
+&gt;  kernel/timer.c              |    7 +++++--
+&gt;  kernel/tsacct.c             |    4 ++++
+&gt;  7 files changed, 40 insertions(+), 4 deletions(-)
+
+&gt; Index: linux-2.6-ozlabs/include/linux/kernel_stat.h
+&gt; ===================================================================
+&gt; --- linux-2.6-ozlabs.orig/include/linux/kernel_stat.h
+&gt; +++ linux-2.6-ozlabs/include/linux/kernel_stat.h
+&gt; @@ -52,7 +52,9 @@ static inline int kstat_irqs(int irq)
+&gt;  }
+
+&gt;  extern void account_user_time(struct task_struct *, cputime_t);
+&gt; +extern void account_user_time_scaled(struct task_struct *, cputime_t);
+&gt;  extern void account_system_time(struct task_struct *, int, cputime_t);
+&gt; +extern void account_system_time_scaled(struct task_struct *, cputime_t);
+&gt;  extern void account_steal_time(struct task_struct *, cputime_t);
+
+&gt;  #endif /* _LINUX_KERNEL_STAT_H */
+&gt; Index: linux-2.6-ozlabs/include/linux/sched.h
+&gt; ===================================================================
+&gt; --- linux-2.6-ozlabs.orig/include/linux/sched.h
+&gt; +++ linux-2.6-ozlabs/include/linux/sched.h
+&gt; @@ -1020,7 +1020,7 @@ struct task_struct {
+&gt;    int __user *clear_child_tid;            /* CLONE_CHILD_CLEARTID */
+
+&gt;    unsigned int rt_priority;
+&gt; -  cputime_t utime, stime;
+&gt; +  cputime_t utime, stime, utimescaled, stimescaled;
+&gt;    unsigned long nvcsw, nivcsw; /* context switch counts */
+&gt;    struct timespec start_time;             /* monotonic time */
+&gt;    struct timespec real_start_time;        /* boot based time */
+&gt; Index: linux-2.6-ozlabs/include/linux/taskstats.h
+&gt; ===================================================================
+&gt; --- linux-2.6-ozlabs.orig/include/linux/taskstats.h
+&gt; +++ linux-2.6-ozlabs/include/linux/taskstats.h
+&gt; @@ -31,7 +31,7 @@
+&gt;   */
+
+&gt; -#define TASKSTATS_VERSION 5
+&gt; +#define TASKSTATS_VERSION 6
+&gt;  #define TS_COMM_LEN               32      /* should be &gt;= TASK_COMM_LEN
+&gt;                                     * in linux/sched.h */
+
+&gt; @@ -142,6 +142,10 @@ struct taskstats {
+&gt;    __u64   write_char;             /* bytes written */
+&gt;    __u64   read_syscalls;          /* read syscalls */
+&gt;    __u64   write_syscalls;         /* write syscalls */
+&gt; +
+&gt; +  /* time accounting for SMT machines */
+&gt; +  __u64   ac_utimescaled;         /* utime scaled on frequency etc */
+&gt; +  __u64   ac_stimescaled;         /* stime scaled on frequency etc */
+&gt;    /* Extended accounting fields end */
+">
+
+I'd also request for you to add a cpu_scaled_run_real_total for use
+by delay accounting. cpu_scaled_run_real_total should be similar in
+functionality to cpu_run_real_total.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;  #define TASKSTATS_HAS_IO_ACCOUNTING
+&gt; Index: linux-2.6-ozlabs/kernel/fork.c
+&gt; ===================================================================
+&gt; --- linux-2.6-ozlabs.orig/kernel/fork.c
+&gt; +++ linux-2.6-ozlabs/kernel/fork.c
+&gt; @@ -1045,6 +1045,8 @@ static struct task_struct *copy_process(
+
+&gt;    p-&gt;utime = cputime_zero;
+&gt;    p-&gt;stime = cputime_zero;
+&gt; +  p-&gt;utimescaled = cputime_zero;
+&gt; +  p-&gt;stimescaled = cputime_zero;
+
+&gt;  #ifdef CONFIG_TASK_XACCT
+&gt;    p-&gt;rchar = 0;                /* I/O counter: bytes read */
+&gt; Index: linux-2.6-ozlabs/kernel/sched.c
+&gt; ===================================================================
+&gt; --- linux-2.6-ozlabs.orig/kernel/sched.c
+&gt; +++ linux-2.6-ozlabs/kernel/sched.c
+&gt; @@ -3249,6 +3249,16 @@ void account_user_time(struct task_struc
+&gt;  }
+
+&gt;  /*
+&gt; + * Account scaled user cpu time to a process.
+&gt; + * @p: the process that the cpu time gets accounted to
+&gt; + * @cputime: the cpu time spent in user space since the last update
+&gt; + */
+&gt; +void account_user_time_scaled(struct task_struct *p, cputime_t cputime)
+&gt; +{
+&gt; +  p-&gt;utimescaled = cputime_add(p-&gt;utimescaled, cputime);
+&gt; +}
+&gt; +
+&gt; +/*
+&gt;   * Account system cpu time to a process.
+&gt;   * @p: the process that the cpu time gets accounted to
+&gt;   * @hardirq_offset: the offset to subtract from hardirq_count()
+&gt; @@ -3280,6 +3290,17 @@ void account_system_time(struct task_str
+&gt;  }
+
+&gt;  /*
+&gt; + * Account scaled system cpu time to a process.
+&gt; + * @p: the process that the cpu time gets accounted to
+&gt; + * @hardirq_offset: the offset to subtract from hardirq_count()
+&gt; + * @cputime: the cpu time spent in kernel space since the last update
+&gt; + */
+&gt; +void account_system_time_scaled(struct task_struct *p, cputime_t cputime)
+&gt; +{
+&gt; +  p-&gt;stimescaled = cputime_add(p-&gt;stimescaled, cputime);
+&gt; +}
+&gt; +
+&gt; +/*
+&gt;   * Account for involuntary wait time.
+&gt;   * @p: the process from which the cpu time has been stolen
+&gt;   * @steal: the cpu time spent in involuntary wait
+&gt; Index: linux-2.6-ozlabs/kernel/timer.c
+&gt; ===================================================================
+&gt; --- linux-2.6-ozlabs.orig/kernel/timer.c
+&gt; +++ linux-2.6-ozlabs/kernel/timer.c
+&gt; @@ -826,10 +826,13 @@ void update_process_times(int user_tick)
+&gt;    int cpu = smp_processor_id();
+
+&gt;    /* Note: this timer irq context must be accounted for as well. */
+&gt; -  if (user_tick)
+&gt; +  if (user_tick) {
+&gt;            account_user_time(p, jiffies_to_cputime(1));
+&gt; -  else
+&gt; +          account_user_time_scaled(p, jiffies_to_cputime(1));
+&gt; +  } else {
+&gt;            account_system_time(p, HARDIRQ_OFFSET, jiffies_to_cputime(1));
+&gt; +          account_system_time_scaled(p, jiffies_to_cputime(1));
+&gt; +  }
+">
+
+I am a little confused here, scaled accounting and regular accounting
+go hand in hand?
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;    run_local_timers();
+&gt;    if (rcu_pending(cpu))
+&gt;            rcu_check_callbacks(cpu, user_tick);
+&gt; Index: linux-2.6-ozlabs/kernel/tsacct.c
+&gt; ===================================================================
+&gt; --- linux-2.6-ozlabs.orig/kernel/tsacct.c
+&gt; +++ linux-2.6-ozlabs/kernel/tsacct.c
+&gt; @@ -62,6 +62,10 @@ void bacct_add_tsk(struct taskstats *sta
+&gt;    rcu_read_unlock();
+&gt;    stats-&gt;ac_utime       = cputime_to_msecs(tsk-&gt;utime) * USEC_PER_MSEC;
+&gt;    stats-&gt;ac_stime       = cputime_to_msecs(tsk-&gt;stime) * USEC_PER_MSEC;
+&gt; +  stats-&gt;ac_utimescaled =
+&gt; +          cputime_to_msecs(tsk-&gt;utimescaled) * USEC_PER_MSEC;
+&gt; +  stats-&gt;ac_stimescaled =
+&gt; +          cputime_to_msecs(tsk-&gt;stimescaled) * USEC_PER_MSEC;
+&gt;    stats-&gt;ac_minflt = tsk-&gt;min_flt;
+&gt;    stats-&gt;ac_majflt = tsk-&gt;maj_flt;
+">
+
+--
+Warm Regards,
+Balbir Singh
+Linux Technology Center
+IBM, ISTL
+-
+To unsubscribe from this list: send the line &quot;unsubscribe linux-kernel&quot; in
+the body of a message to majord ... @vger.kernel.org
+More majordomo info at http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at http://www.tux.org/lkml/
+</POST>
+<POST>
+<POSTER> li...@austin.ibm.com (Linas Vepstas) </POSTER>
+<POSTDATE> 2007-08-16T12:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Thu, Aug 16, 2007 at 05:09:22PM +1000, Michael Neuling wrote:
+&gt; This adds two items to the taststats struct to account for user and
+&gt; system time based on scaling the CPU frequency and instruction issue
+&gt; rates.
+
+&gt; Adds account_(user|system)_time_scaled callbacks which architectures
+&gt; can use to account for time using this mechanism.
+">
+
+There's something simple here that I just don't understand.
+
+<QUOTE PREVIOUSPOST="
+&gt;  /*
+&gt; + * Account scaled user cpu time to a process.
+&gt; + * @p: the process that the cpu time gets accounted to
+&gt; + * @cputime: the cpu time spent in user space since the last update
+&gt; + */
+&gt; +void account_user_time_scaled(struct task_struct *p, cputime_t cputime)
+&gt; +{
+&gt; +  p-&gt;utimescaled = cputime_add(p-&gt;utimescaled, cputime);
+&gt; +}
+">
+
+My gut impression (maybe wrong?) is that the scaled time is,
+in a certain sense, &quot;more accurate&quot; than the unscaled time.
+In fact, the unscaled time gives me the impression of being
+rather meaningless, as it has no particular significance
+with respect to the wall-clock, and it also doesn't give
+any accurate hint of how much cpu resource was actually
+consumed.
+
+If one has a cpu with frequency scaling, then when would
+one ever be interested in the non-scaled time? If the answer
+is &quot;never&quot;, then why not just always use the scaled time,
+instead of adding more stuff to the kernel structs?
+
+--linas
+
+-
+To unsubscribe from this list: send the line &quot;unsubscribe linux-kernel&quot; in
+the body of a message to majord ... @vger.kernel.org
+More majordomo info at http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at http://www.tux.org/lkml/
+</POST>
+<POST>
+<POSTER> Paul Mackerras &lt;pau...@samba.org&gt; </POSTER>
+<POSTDATE> 2007-08-16T18:30:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Linas Vepstas writes:
+&gt; My gut impression (maybe wrong?) is that the scaled time is,
+&gt; in a certain sense, &quot;more accurate&quot; than the unscaled time.
+">
+
+The &quot;unscaled&quot; time is just time, as in &quot;how many seconds did this
+task spend on the CPU&quot;.  It's what all the tools (except a certain
+proprietary workload manager) expect.  Top, ps, etc. get unhappy if
+the times reported (user, system, hardirq, softirq, idle, stolen)
+don't add up to elapsed wall-clock time.
+
+The &quot;scaled&quot; time is really CPU cycles divided by some arbitrary
+factor (the notional CPU frequency).  So yes it does give some
+indication of how much progress the task should have made, in some
+sense.
+
+Both measures are useful.  Because the current user API is in terms of
+real time rather than cycles, we have to continue reporting real time,
+not scaled time, which is why the existing interfaces report unscaled
+time, and the scaled time values are reported through a new extension
+to the taskstats interface.
+
+Paul.
+-
+To unsubscribe from this list: send the line &quot;unsubscribe linux-kernel&quot; in
+the body of a message to majord ... @vger.kernel.org
+More majordomo info at http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at http://www.tux.org/lkml/
+</POST>
+<POST>
+<POSTER> Michael Neuling &lt;mi...@neuling.org&gt; </POSTER>
+<POSTDATE> 2007-08-16T20:30:00 </POSTDATE>
+In message &lt;46C3FC41.4000 ... @linux.vnet.ibm.com&gt; you wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi, Michael,
+
+&gt; Thanks for doing this, this is really useful.
+
+&gt; Michael Neuling wrote:
+&gt; &gt; This adds two items to the taststats struct to account for user and
+&gt; &gt; system time based on scaling the CPU frequency and instruction issue
+&gt; &gt; rates.
+
+&gt; &gt; Adds account_(user|system)_time_scaled callbacks which architectures
+&gt; &gt; can use to account for time using this mechanism.
+
+&gt; &gt; Signed-off-by: Michael Neuling &lt;mi ... @neuling.org&gt;
+
+&gt; &gt; ---
+
+&gt; &gt;  include/linux/kernel_stat.h |    2 ++
+&gt; &gt;  include/linux/sched.h       |    2 +-
+&gt; &gt;  include/linux/taskstats.h   |    6 +++++-
+&gt; &gt;  kernel/fork.c               |    2 ++
+&gt; &gt;  kernel/sched.c              |   21 +++++++++++++++++++++
+&gt; &gt;  kernel/timer.c              |    7 +++++--
+&gt; &gt;  kernel/tsacct.c             |    4 ++++
+&gt; &gt;  7 files changed, 40 insertions(+), 4 deletions(-)
+
+&gt; &gt; Index: linux-2.6-ozlabs/include/linux/kernel_stat.h
+&gt; &gt; ===================================================================
+&gt; &gt; --- linux-2.6-ozlabs.orig/include/linux/kernel_stat.h
+&gt; &gt; +++ linux-2.6-ozlabs/include/linux/kernel_stat.h
+&gt; &gt; @@ -52,7 +52,9 @@ static inline int kstat_irqs(int irq)
+&gt; &gt;  }
+
+&gt; &gt;  extern void account_user_time(struct task_struct *, cputime_t);
+&gt; &gt; +extern void account_user_time_scaled(struct task_struct *, cputime_t);
+&gt; &gt;  extern void account_system_time(struct task_struct *, int, cputime_t);
+&gt; &gt; +extern void account_system_time_scaled(struct task_struct *, cputime_t);
+&gt; &gt;  extern void account_steal_time(struct task_struct *, cputime_t);
+
+&gt; &gt;  #endif /* _LINUX_KERNEL_STAT_H */
+&gt; &gt; Index: linux-2.6-ozlabs/include/linux/sched.h
+&gt; &gt; ===================================================================
+&gt; &gt; --- linux-2.6-ozlabs.orig/include/linux/sched.h
+&gt; &gt; +++ linux-2.6-ozlabs/include/linux/sched.h
+&gt; &gt; @@ -1020,7 +1020,7 @@ struct task_struct {
+&gt; &gt;       int __user *clear_child_tid;            /* CLONE_CHILD_CLEARTID */
+
+&gt; &gt;       unsigned int rt_priority;
+&gt; &gt; -     cputime_t utime, stime;
+&gt; &gt; +     cputime_t utime, stime, utimescaled, stimescaled;
+&gt; &gt;       unsigned long nvcsw, nivcsw; /* context switch counts */
+&gt; &gt;       struct timespec start_time;             /* monotonic time */
+&gt; &gt;       struct timespec real_start_time;        /* boot based time */
+&gt; &gt; Index: linux-2.6-ozlabs/include/linux/taskstats.h
+&gt; &gt; ===================================================================
+&gt; &gt; --- linux-2.6-ozlabs.orig/include/linux/taskstats.h
+&gt; &gt; +++ linux-2.6-ozlabs/include/linux/taskstats.h
+&gt; &gt; @@ -31,7 +31,7 @@
+&gt; &gt;   */
+
+&gt; &gt; -#define TASKSTATS_VERSION    5
+&gt; &gt; +#define TASKSTATS_VERSION    6
+&gt; &gt;  #define TS_COMM_LEN          32      /* should be &gt;= TASK_COMM_LEN
+&gt; &gt;                                        * in linux/sched.h */
+
+&gt; &gt; @@ -142,6 +142,10 @@ struct taskstats {
+&gt; &gt;       __u64   write_char;             /* bytes written */
+&gt; &gt;       __u64   read_syscalls;          /* read syscalls */
+&gt; &gt;       __u64   write_syscalls;         /* write syscalls */
+&gt; &gt; +
+&gt; &gt; +     /* time accounting for SMT machines */
+&gt; &gt; +     __u64   ac_utimescaled;         /* utime scaled on frequency etc */
+&gt; &gt; +     __u64   ac_stimescaled;         /* stime scaled on frequency etc */
+&gt; &gt;       /* Extended accounting fields end */
+
+&gt; I'd also request for you to add a cpu_scaled_run_real_total for use
+&gt; by delay accounting. cpu_scaled_run_real_total should be similar in
+&gt; functionality to cpu_run_real_total.
+">
+
+Will do.  Should I add cpu_scaled_run_real_total to the end of the
+struct taskstat, or next to cpu_run_real_total?
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;  #define TASKSTATS_HAS_IO_ACCOUNTING
+&gt; &gt; Index: linux-2.6-ozlabs/kernel/fork.c
+&gt; &gt; ===================================================================
+&gt; &gt; --- linux-2.6-ozlabs.orig/kernel/fork.c
+&gt; &gt; +++ linux-2.6-ozlabs/kernel/fork.c
+&gt; &gt; @@ -1045,6 +1045,8 @@ static struct task_struct *copy_process(
+
+&gt; &gt;       p-&gt;utime = cputime_zero;
+&gt; &gt;       p-&gt;stime = cputime_zero;
+&gt; &gt; +     p-&gt;utimescaled = cputime_zero;
+&gt; &gt; +     p-&gt;stimescaled = cputime_zero;
+
+&gt; &gt;  #ifdef CONFIG_TASK_XACCT
+&gt; &gt;       p-&gt;rchar = 0;                /* I/O counter: bytes read */
+&gt; &gt; Index: linux-2.6-ozlabs/kernel/sched.c
+&gt; &gt; ===================================================================
+&gt; &gt; --- linux-2.6-ozlabs.orig/kernel/sched.c
+&gt; &gt; +++ linux-2.6-ozlabs/kernel/sched.c
+&gt; &gt; @@ -3249,6 +3249,16 @@ void account_user_time(struct task_struc
+&gt; &gt;  }
+
+&gt; &gt;  /*
+&gt; &gt; + * Account scaled user cpu time to a process.
+&gt; &gt; + * @p: the process that the cpu time gets accounted to
+&gt; &gt; + * @cputime: the cpu time spent in user space since the last update
+&gt; &gt; + */
+&gt; &gt; +void account_user_time_scaled(struct task_struct *p, cputime_t cputime)
+&gt; &gt; +{
+&gt; &gt; +     p-&gt;utimescaled = cputime_add(p-&gt;utimescaled, cputime);
+&gt; &gt; +}
+&gt; &gt; +
+&gt; &gt; +/*
+&gt; &gt;   * Account system cpu time to a process.
+&gt; &gt;   * @p: the process that the cpu time gets accounted to
+&gt; &gt;   * @hardirq_offset: the offset to subtract from hardirq_count()
+&gt; &gt; @@ -3280,6 +3290,17 @@ void account_system_time(struct task_str
+&gt; &gt;  }
+
+&gt; &gt;  /*
+&gt; &gt; + * Account scaled system cpu time to a process.
+&gt; &gt; + * @p: the process that the cpu time gets accounted to
+&gt; &gt; + * @hardirq_offset: the offset to subtract from hardirq_count()
+&gt; &gt; + * @cputime: the cpu time spent in kernel space since the last update
+&gt; &gt; + */
+&gt; &gt; +void account_system_time_scaled(struct task_struct *p, cputime_t cputime)
+&gt; &gt; +{
+&gt; &gt; +     p-&gt;stimescaled = cputime_add(p-&gt;stimescaled, cputime);
+&gt; &gt; +}
+&gt; &gt; +
+&gt; &gt; +/*
+&gt; &gt;   * Account for involuntary wait time.
+&gt; &gt;   * @p: the process from which the cpu time has been stolen
+&gt; &gt;   * @steal: the cpu time spent in involuntary wait
+&gt; &gt; Index: linux-2.6-ozlabs/kernel/timer.c
+&gt; &gt; ===================================================================
+&gt; &gt; --- linux-2.6-ozlabs.orig/kernel/timer.c
+&gt; &gt; +++ linux-2.6-ozlabs/kernel/timer.c
+&gt; &gt; @@ -826,10 +826,13 @@ void update_process_times(int user_tick)
+&gt; &gt;       int cpu = smp_processor_id();
+
+&gt; &gt;       /* Note: this timer irq context must be accounted for as well. */
+&gt; &gt; -     if (user_tick)
+&gt; &gt; +     if (user_tick) {
+&gt; &gt;               account_user_time(p, jiffies_to_cputime(1));
+&gt; &gt; -     else
+&gt; &gt; +             account_user_time_scaled(p, jiffies_to_cputime(1));
+&gt; &gt; +     } else {
+&gt; &gt;               account_system_time(p, HARDIRQ_OFFSET, jiffies_to_cputime(1));
+&gt; &gt; +             account_system_time_scaled(p, jiffies_to_cputime(1));
+&gt; &gt; +     }
+
+&gt; I am a little confused here, scaled accounting and regular accounting
+&gt; go hand in hand?
+">
+
+We need to account for scaled and normal time in this generic code.
+All other calls to account_(user|system)_time are in arch code.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;       run_local_timers();
+&gt; &gt;       if (rcu_pending(cpu))
+&gt; &gt;               rcu_check_callbacks(cpu, user_tick);
+&gt; &gt; Index: linux-2.6-ozlabs/kernel/tsacct.c
+&gt; &gt; ===================================================================
+&gt; &gt; --- linux-2.6-ozlabs.orig/kernel/tsacct.c
+&gt; &gt; +++ linux-2.6-ozlabs/kernel/tsacct.c
+&gt; &gt; @@ -62,6 +62,10 @@ void bacct_add_tsk(struct taskstats *sta
+&gt; &gt;       rcu_read_unlock();
+&gt; &gt;       stats-&gt;ac_utime       = cputime_to_msecs(tsk-&gt;utime) * USEC_PER_MSEC;
+&gt; &gt;       stats-&gt;ac_stime       = cputime_to_msecs(tsk-&gt;stime) * USEC_PER_MSEC;
+&gt; &gt; +     stats-&gt;ac_utimescaled =
+&gt; &gt; +             cputime_to_msecs(tsk-&gt;utimescaled) * USEC_PER_MSEC;
+&gt; &gt; +     stats-&gt;ac_stimescaled =
+&gt; &gt; +             cputime_to_msecs(tsk-&gt;stimescaled) * USEC_PER_MSEC;
+&gt; &gt;       stats-&gt;ac_minflt = tsk-&gt;min_flt;
+&gt; &gt;       stats-&gt;ac_majflt = tsk-&gt;maj_flt;
+
+&gt; --
+&gt;    Warm Regards,
+&gt;    Balbir Singh
+&gt;    Linux Technology Center
+&gt;    IBM, ISTL
+">
+
+-
+To unsubscribe from this list: send the line &quot;unsubscribe linux-kernel&quot; in
+the body of a message to majord ... @vger.kernel.org
+More majordomo info at http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at http://www.tux.org/lkml/
+</POST>
+<POST>
+<POSTER> Michael Neuling &lt;mi...@neuling.org&gt; </POSTER>
+<POSTDATE> 2007-08-16T21:20:00 </POSTDATE>
+This adds items to the taststats struct to account for user and system
+time based on scaling the CPU frequency and instruction issue rates.
+
+Adds account_(user|system)_time_scaled callbacks which architectures
+can use to account for time using this mechanism.
+
+Signed-off-by: Michael Neuling &lt;mi ... @neuling.org&gt;
+---
+Updated based on comments from Balbir
+
+include/linux/kernel_stat.h |    2 ++
+include/linux/sched.h       |    2 +-
+include/linux/taskstats.h   |   11 +++++++++--
+kernel/delayacct.c          |    6 ++++++
+kernel/fork.c               |    2 ++
+kernel/sched.c              |   21 +++++++++++++++++++++
+kernel/timer.c              |    7 +++++--
+kernel/tsacct.c             |    4 ++++
+8 files changed, 50 insertions(+), 5 deletions(-)
+
+Index: linux-2.6-ozlabs/include/linux/kernel_stat.h
+===================================================================
+--- linux-2.6-ozlabs.orig/include/linux/kernel_stat.h
++++ linux-2.6-ozlabs/include/linux/kernel_stat.h
+@@ -52,7 +52,9 @@ static inline int kstat_irqs(int irq)
+}
+
+extern void account_user_time(struct task_struct *, cputime_t);
++extern void account_user_time_scaled(struct task_struct *, cputime_t);
+extern void account_system_time(struct task_struct *, int, cputime_t);
++extern void account_system_time_scaled(struct task_struct *, cputime_t);
+extern void account_steal_time(struct task_struct *, cputime_t);
+
+#endif /* _LINUX_KERNEL_STAT_H */
+Index: linux-2.6-ozlabs/include/linux/sched.h
+===================================================================
+--- linux-2.6-ozlabs.orig/include/linux/sched.h
++++ linux-2.6-ozlabs/include/linux/sched.h
+@@ -1020,7 +1020,7 @@ struct task_struct {
+int __user *clear_child_tid;            /* CLONE_CHILD_CLEARTID */
+
+unsigned int rt_priority;
+-       cputime_t utime, stime;
++       cputime_t utime, stime, utimescaled, stimescaled;
+unsigned long nvcsw, nivcsw; /* context switch counts */
+struct timespec start_time;             /* monotonic time */
+struct timespec real_start_time;        /* boot based time */
+Index: linux-2.6-ozlabs/include/linux/taskstats.h
+===================================================================
+--- linux-2.6-ozlabs.orig/include/linux/taskstats.h
++++ linux-2.6-ozlabs/include/linux/taskstats.h
+@@ -31,7 +31,7 @@
+*/
+
+-#define TASKSTATS_VERSION      5
++#define TASKSTATS_VERSION      6
+#define TS_COMM_LEN            32      /* should be &gt;= TASK_COMM_LEN
+* in linux/sched.h */
+
+@@ -85,9 +85,12 @@ struct taskstats {
+* On some architectures, value will adjust for cpu time stolen
+* from the kernel in involuntary waits due to virtualization.
+* Value is cumulative, in nanoseconds, without a corresponding count
+-        * and wraps around to zero silently on overflow
++        * and wraps around to zero silently on overflow.  The
++        * _scaled_ version accounts for cpus which can scale the
++        * number of instructions executed each cycle.
+*/
+__u64   cpu_run_real_total;
++       __u64   cpu_scaled_run_real_total;
+
+/* cpu &quot;virtual&quot; running time
+* Uses time intervals seen by the kernel i.e. no adjustment
+@@ -142,6 +145,10 @@ struct taskstats {
+__u64   write_char;             /* bytes written */
+__u64   read_syscalls;          /* read syscalls */
+__u64   write_syscalls;         /* write syscalls */
++
++       /* time accounting for SMT machines */
++       __u64   ac_utimescaled;         /* utime scaled on frequency etc */
++       __u64   ac_stimescaled;         /* stime scaled on frequency etc */
+/* Extended accounting fields end */
+
+#define TASKSTATS_HAS_IO_ACCOUNTING
+Index: linux-2.6-ozlabs/kernel/delayacct.c
+===================================================================
+--- linux-2.6-ozlabs.orig/kernel/delayacct.c
++++ linux-2.6-ozlabs/kernel/delayacct.c
+@@ -115,6 +115,12 @@ int __delayacct_add_tsk(struct taskstats
+tmp += timespec_to_ns(&amp;ts);
+d-&gt;cpu_run_real_total = (tmp &lt; (s64)d-&gt;cpu_run_real_total) ? 0 : tmp;
+
++       tmp = (s64)d-&gt;cpu_scaled_run_real_total;
++       cputime_to_timespec(tsk-&gt;utimescaled + tsk-&gt;stimescaled, &amp;ts);
++       tmp += timespec_to_ns(&amp;ts);
++       d-&gt;cpu_scaled_run_real_total =
++               (tmp &lt; (s64)d-&gt;cpu_scaled_run_real_total) ? 0 : tmp;
++
+/*
+* No locking available for sched_info (and too expensive to add one)
+* Mitigate by taking snapshot of values
+Index: linux-2.6-ozlabs/kernel/fork.c
+===================================================================
+--- linux-2.6-ozlabs.orig/kernel/fork.c
++++ linux-2.6-ozlabs/kernel/fork.c
+@@ -1045,6 +1045,8 @@ static struct task_struct *copy_process(
+
+p-&gt;utime = cputime_zero;
+p-&gt;stime = cputime_zero;
++       p-&gt;utimescaled = cputime_zero;
++       p-&gt;stimescaled = cputime_zero;
+
+#ifdef CONFIG_TASK_XACCT
+p-&gt;rchar = 0;                /* I/O counter: bytes read */
+Index: linux-2.6-ozlabs/kernel/sched.c
+===================================================================
+--- linux-2.6-ozlabs.orig/kernel/sched.c
++++ linux-2.6-ozlabs/kernel/sched.c
+@@ -3249,6 +3249,16 @@ void account_user_time(struct task_struc
+}
+
+/*
++ * Account scaled user cpu time to a process.
++ * @p: the process that the cpu time gets accounted to
++ * @cputime: the cpu time spent in user space since the last update
++ */
++void account_user_time_scaled(struct task_struct *p, cputime_t cputime)
++{
++       p-&gt;utimescaled = cputime_add(p-&gt;utimescaled, cputime);
++}
++
++/*
+* Account system cpu time to a process.
+* @p: the process that the cpu time gets accounted to
+* @hardirq_offset: the offset to subtract from hardirq_count()
+@@ -3280,6 +3290,17 @@ void account_system_time(struct task_str
+}
+
+/*
++ * Account scaled system cpu time to a process.
++ * @p: the process that the cpu time gets accounted to
++ * @hardirq_offset: the offset to subtract from hardirq_count()
++ * @cputime: the cpu time spent in kernel space since the last update
++ */
++void account_system_time_scaled(struct task_struct *p, cputime_t cputime)
++{
++       p-&gt;stimescaled = cputime_add(p-&gt;stimescaled, cputime);
++}
++
++/*
+* Account for involuntary wait time.
+* @p: the process from which the cpu time has been stolen
+* @steal: the cpu time spent in involuntary wait
+Index: linux-2.6-ozlabs/kernel/timer.c
+===================================================================
+--- linux-2.6-ozlabs.orig/kernel/timer.c
++++ linux-2.6-ozlabs/kernel/timer.c
+@@ -826,10 +826,13 @@ void update_process_times(int user_tick)
+int cpu = smp_processor_id();
+
+/* Note: this timer irq context must be accounted for as well. */
+-       if (user_tick)
++       if (user_tick) {
+account_user_time(p, jiffies_to_cputime(1));
+-       else
++               account_user_time_scaled(p, jiffies_to_cputime(1));
++       } else {
+account_system_time(p, HARDIRQ_OFFSET, jiffies_to_cputime(1));
++               account_system_time_scaled(p, jiffies_to_cputime(1));
++       }
+run_local_timers();
+if (rcu_pending(cpu))
+rcu_check_callbacks(cpu, user_tick);
+Index: linux-2.6-ozlabs/kernel/tsacct.c
+===================================================================
+--- linux-2.6-ozlabs.orig/kernel/tsacct.c
++++ linux-2.6-ozlabs/kernel/tsacct.c
+@@ -62,6 +62,10 @@ void bacct_add_tsk(struct taskstats *sta
+rcu_read_unlock();
+stats-&gt;ac_utime       = cputime_to_msecs(tsk-&gt;utime) * USEC_PER_MSEC;
+stats-&gt;ac_stime       = cputime_to_msecs(tsk-&gt;stime) * USEC_PER_MSEC;
++       stats-&gt;ac_utimescaled =
++               cputime_to_msecs(tsk-&gt;utimescaled) * USEC_PER_MSEC;
++       stats-&gt;ac_stimescaled =
++               cputime_to_msecs(tsk-&gt;stimescaled) * USEC_PER_MSEC;
+stats-&gt;ac_minflt = tsk-&gt;min_flt;
+stats-&gt;ac_majflt = tsk-&gt;maj_flt;
+
+-
+To unsubscribe from this list: send the line &quot;unsubscribe linux-kernel&quot; in
+the body of a message to majord ... @vger.kernel.org
+More majordomo info at http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at http://www.tux.org/lkml/
+</POST>
+<POST>
+<POSTER> Balbir Singh &lt;bal...@linux.vnet.ibm.com&gt; </POSTER>
+<POSTDATE> 2007-08-17T00:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Michael Neuling wrote:
+&gt;&gt; I'd also request for you to add a cpu_scaled_run_real_total for use
+&gt;&gt; by delay accounting. cpu_scaled_run_real_total should be similar in
+&gt;&gt; functionality to cpu_run_real_total.
+
+&gt; Will do.  Should I add cpu_scaled_run_real_total to the end of the
+&gt; struct taskstat, or next to cpu_run_real_total?
+">
+
+Please add it to the end, that helps maintain binary compatibility
+across all versions of taskstats.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt;    /* Note: this timer irq context must be accounted for as well. */
+&gt;&gt;&gt; -  if (user_tick)
+&gt;&gt;&gt; +  if (user_tick) {
+&gt;&gt;&gt;            account_user_time(p, jiffies_to_cputime(1));
+&gt;&gt;&gt; -  else
+&gt;&gt;&gt; +          account_user_time_scaled(p, jiffies_to_cputime(1));
+&gt;&gt;&gt; +  } else {
+&gt;&gt;&gt;            account_system_time(p, HARDIRQ_OFFSET, jiffies_to_cputime(1));
+&gt;&gt;&gt; +          account_system_time_scaled(p, jiffies_to_cputime(1));
+&gt;&gt;&gt; +  }
+&gt;&gt; I am a little confused here, scaled accounting and regular accounting
+&gt;&gt; go hand in hand?
+
+&gt; We need to account for scaled and normal time in this generic code.
+&gt; All other calls to account_(user|system)_time are in arch code.
+">
+
+So the assumption here is that we ran at full frequency during
+this time, is my understanding correct?
+
+--
+Warm Regards,
+Balbir Singh
+Linux Technology Center
+IBM, ISTL
+-
+To unsubscribe from this list: send the line &quot;unsubscribe linux-kernel&quot; in
+the body of a message to majord ... @vger.kernel.org
+More majordomo info at http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at http://www.tux.org/lkml/
+</POST>
+<POST>
+<POSTER> Michael Neuling &lt;mi...@neuling.org&gt; </POSTER>
+<POSTDATE> 2007-08-17T01:00:00 </POSTDATE>
+In message &lt;46C52872.9060 ... @linux.vnet.ibm.com&gt; you wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Michael Neuling wrote:
+&gt; &gt;&gt; I'd also request for you to add a cpu_scaled_run_real_total for use
+&gt; &gt;&gt; by delay accounting. cpu_scaled_run_real_total should be similar in
+&gt; &gt;&gt; functionality to cpu_run_real_total.
+
+&gt; &gt; Will do.  Should I add cpu_scaled_run_real_total to the end of the
+&gt; &gt; struct taskstat, or next to cpu_run_real_total?
+
+&gt; Please add it to the end, that helps maintain binary compatibility
+&gt; across all versions of taskstats.
+">
+
+OK
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;&gt;&gt;       /* Note: this timer irq context must be accounted for as well. */
+&gt; &gt;&gt;&gt; -     if (user_tick)
+&gt; &gt;&gt;&gt; +     if (user_tick) {
+&gt; &gt;&gt;&gt;               account_user_time(p, jiffies_to_cputime(1));
+&gt; &gt;&gt;&gt; -     else
+&gt; &gt;&gt;&gt; +             account_user_time_scaled(p, jiffies_to_cputime(1));
+&gt; &gt;&gt;&gt; +     } else {
+&gt; &gt;&gt;&gt;               account_system_time(p, HARDIRQ_OFFSET, jiffies_to_cputime(1));
+&gt; &gt;&gt;&gt; +             account_system_time_scaled(p, jiffies_to_cputime(1));
+&gt; &gt;&gt;&gt; +     }
+&gt; &gt;&gt; I am a little confused here, scaled accounting and regular accounting
+&gt; &gt;&gt; go hand in hand?
+
+&gt; &gt; We need to account for scaled and normal time in this generic code.
+&gt; &gt; All other calls to account_(user|system)_time are in arch code.
+
+&gt; So the assumption here is that we ran at full frequency during
+&gt; this time, is my understanding correct?
+">
+
+Yes.
+
+I guess we could keep a per CPU last scaling factor for this case
+(similar to what we are storing in the POWERPC paca)
+
+Mikey
+-
+To unsubscribe from this list: send the line &quot;unsubscribe linux-kernel&quot; in
+the body of a message to majord ... @vger.kernel.org
+More majordomo info at http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at http://www.tux.org/lkml/
+</POST>
+<POST>
+<POSTER> li...@austin.ibm.com (Linas Vepstas) </POSTER>
+<POSTDATE> 2007-08-17T13:20:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Fri, Aug 17, 2007 at 08:22:40AM +1000, Paul Mackerras wrote:
+&gt; Linas Vepstas writes:
+
+&gt; &gt; My gut impression (maybe wrong?) is that the scaled time is,
+&gt; &gt; in a certain sense, &quot;more accurate&quot; than the unscaled time.
+
+&gt; The &quot;unscaled&quot; time is just time, as in &quot;how many seconds did this
+&gt; task spend on the CPU&quot;.  It's what all the tools (except a certain
+&gt; proprietary workload manager) expect.  Top, ps, etc. get unhappy if
+&gt; the times reported (user, system, hardirq, softirq, idle, stolen)
+&gt; don't add up to elapsed wall-clock time.
+">
+
+OK, so to keep the tools happy, the total time needs to add up
+to wall-clock time.  Which tells me that the &quot;scaled idle time&quot;
+should be defined as &quot;wall clock time minus the other stuff&quot;.
+
+<QUOTE PREVIOUSPOST="
+&gt; The &quot;scaled&quot; time is really CPU cycles divided by some arbitrary
+&gt; factor (the notional CPU frequency).  So yes it does give some
+&gt; indication of how much progress the task should have made, in some
+&gt; sense.
+">
+
+Yes, good, that's what I was expecting.  As a sysadmin and/or
+back-of-the-envelope performance person, I would certainly like
+to have ps and top report the scaled time. When I do &quot;performance
+tuning&quot;, I almost always can get away with quick-n-dirty use of
+vmstat and top, and only rarely have to descend into more complex
+tools.  I'd hate to loose this quick-n-dirty utility, which,
+again ... my gut impression is that these numbers suddenly turn
+mostly meaningless.
+
+That is, if I run the same task 3 times over the next few hours,
+will vmstat/top/ps report more or less he same figures?  I'm
+concerned that they won't ... that I'll see different values
+come out, depending on whether the chip is overheating, or whether
+some other partition is stealing, or whatever causes this thing to
+dynamically scale.
+
+<QUOTE PREVIOUSPOST="
+&gt; Both measures are useful.  Because the current user API is in terms of
+&gt; real time rather than cycles, we have to continue reporting real time,
+&gt; not scaled time, which is why the existing interfaces report unscaled
+&gt; time, and the scaled time values are reported through a new extension
+&gt; to the taskstats interface.
+">
+
+This begs the question of &quot;what is the real, actual elapsed time?&quot;
+... currently, the &quot;real time&quot; depends very much on how often your
+process got scheduled -- but, if your process is scheduled but
+(due to scaling) isn't &quot;actually running&quot;, should that count towards
+the &quot;real time&quot;?
+
+---
+I supose that its inevitable that this stuff will get more complex;
+I'm just trying to make sure we don't end up doing this backwards,
+and deciding to change it around later.
+
+I already notice that &quot;stolen time&quot; is causing confusion in some
+areas.  Its disconcerting to have lots of cores, and lots of threads
+per core, only to find that some of your time has been &quot;stolen&quot;.
+I'm still wondering ... was this the right way to report this?
+
+--linas
+-
+To unsubscribe from this list: send the line &quot;unsubscribe linux-kernel&quot; in
+the body of a message to majord ... @vger.kernel.org
+More majordomo info at http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at http://www.tux.org/lkml/
+</POST>
+<POST>
+<POSTER> Balbir Singh &lt;bal...@linux.vnet.ibm.com&gt; </POSTER>
+<POSTDATE> 2007-08-17T15:10:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Andrew Morton wrote:
+&gt; On Fri, 17 Aug 2007 11:09:41 +1000
+&gt; Michael Neuling &lt;mi ... @neuling.org&gt; wrote:
+
+&gt;&gt; This adds items to the taststats struct to account for user and system
+&gt;&gt; time based on scaling the CPU frequency and instruction issue rates.
+
+&gt;&gt; Adds account_(user|system)_time_scaled callbacks which architectures
+&gt;&gt; can use to account for time using this mechanism.
+
+&gt;&gt; ...
+
+&gt;&gt; Index: linux-2.6-ozlabs/include/linux/kernel_stat.h
+&gt;&gt; ===================================================================
+&gt;&gt; --- linux-2.6-ozlabs.orig/include/linux/kernel_stat.h
+&gt;&gt; +++ linux-2.6-ozlabs/include/linux/kernel_stat.h
+&gt;&gt; @@ -52,7 +52,9 @@ static inline int kstat_irqs(int irq)
+&gt;&gt;  }
+
+&gt;&gt;  extern void account_user_time(struct task_struct *, cputime_t);
+&gt;&gt; +extern void account_user_time_scaled(struct task_struct *, cputime_t);
+&gt;&gt;  extern void account_system_time(struct task_struct *, int, cputime_t);
+&gt;&gt; +extern void account_system_time_scaled(struct task_struct *, cputime_t);
+&gt;&gt;  extern void account_steal_time(struct task_struct *, cputime_t);
+
+&gt;&gt;  #endif /* _LINUX_KERNEL_STAT_H */
+&gt;&gt; Index: linux-2.6-ozlabs/include/linux/sched.h
+&gt;&gt; ===================================================================
+&gt;&gt; --- linux-2.6-ozlabs.orig/include/linux/sched.h
+&gt;&gt; +++ linux-2.6-ozlabs/include/linux/sched.h
+&gt;&gt; @@ -1020,7 +1020,7 @@ struct task_struct {
+&gt;&gt;        int __user *clear_child_tid;            /* CLONE_CHILD_CLEARTID */
+
+&gt;&gt;        unsigned int rt_priority;
+&gt;&gt; -      cputime_t utime, stime;
+&gt;&gt; +      cputime_t utime, stime, utimescaled, stimescaled;
+
+&gt; Adding 8 or 16 bytes to the task_struct for all architectures for something
+&gt; which only powerpc uses?
+
+&gt; Is there any prospect that other CPUs can use this?
+
+&gt;&gt;        unsigned long nvcsw, nivcsw; /* context switch counts */
+&gt;&gt;        struct timespec start_time;             /* monotonic time */
+&gt;&gt;        struct timespec real_start_time;        /* boot based time */
+&gt;&gt; Index: linux-2.6-ozlabs/include/linux/taskstats.h
+&gt;&gt; ===================================================================
+&gt;&gt; --- linux-2.6-ozlabs.orig/include/linux/taskstats.h
+&gt;&gt; +++ linux-2.6-ozlabs/include/linux/taskstats.h
+&gt;&gt; @@ -31,7 +31,7 @@
+&gt;&gt;   */
+
+&gt;&gt; -#define TASKSTATS_VERSION     5
+&gt;&gt; +#define TASKSTATS_VERSION     6
+&gt;&gt;  #define TS_COMM_LEN           32      /* should be &gt;= TASK_COMM_LEN
+&gt;&gt;                                         * in linux/sched.h */
+
+&gt;&gt; @@ -85,9 +85,12 @@ struct taskstats {
+&gt;&gt;         * On some architectures, value will adjust for cpu time stolen
+&gt;&gt;         * from the kernel in involuntary waits due to virtualization.
+&gt;&gt;         * Value is cumulative, in nanoseconds, without a corresponding count
+&gt;&gt; -       * and wraps around to zero silently on overflow
+&gt;&gt; +       * and wraps around to zero silently on overflow.  The
+&gt;&gt; +       * _scaled_ version accounts for cpus which can scale the
+&gt;&gt; +       * number of instructions executed each cycle.
+&gt;&gt;         */
+&gt;&gt;        __u64   cpu_run_real_total;
+&gt;&gt; +      __u64   cpu_scaled_run_real_total;
+
+&gt;&gt;        /* cpu &quot;virtual&quot; running time
+&gt;&gt;         * Uses time intervals seen by the kernel i.e. no adjustment
+&gt;&gt; @@ -142,6 +145,10 @@ struct taskstats {
+&gt;&gt;        __u64   write_char;             /* bytes written */
+&gt;&gt;        __u64   read_syscalls;          /* read syscalls */
+&gt;&gt;        __u64   write_syscalls;         /* write syscalls */
+&gt;&gt; +
+&gt;&gt; +      /* time accounting for SMT machines */
+&gt;&gt; +      __u64   ac_utimescaled;         /* utime scaled on frequency etc */
+&gt;&gt; +      __u64   ac_stimescaled;         /* stime scaled on frequency etc */
+&gt;&gt;        /* Extended accounting fields end */
+
+&gt; umm, should we be adding new fields in the middle of this message?  I
+&gt; thought we should only add to the end, for back-compatibility, but maybe I
+&gt; misremember.
+">
+
+You remember correctly, I've asked Michael to make those changes.
+
+--
+Warm Regards,
+Balbir Singh
+Linux Technology Center
+IBM, ISTL
+-
+To unsubscribe from this list: send the line &quot;unsubscribe linux-kernel&quot; in
+the body of a message to majord ... @vger.kernel.org
+More majordomo info at http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at http://www.tux.org/lkml/
+</POST>
+<POST>
+<POSTER> Andrew Morton &lt;a...@linux-foundation.org&gt; </POSTER>
+<POSTDATE> 2007-08-17T15:10:00 </POSTDATE>
+On Fri, 17 Aug 2007 11:09:41 +1000
+
+<QUOTE PREVIOUSPOST="
+Michael Neuling &lt;mi ... @neuling.org&gt; wrote:
+&gt; This adds items to the taststats struct to account for user and system
+&gt; time based on scaling the CPU frequency and instruction issue rates.
+
+&gt; Adds account_(user|system)_time_scaled callbacks which architectures
+&gt; can use to account for time using this mechanism.
+
+&gt; ...
+
+&gt; Index: linux-2.6-ozlabs/include/linux/kernel_stat.h
+&gt; ===================================================================
+&gt; --- linux-2.6-ozlabs.orig/include/linux/kernel_stat.h
+&gt; +++ linux-2.6-ozlabs/include/linux/kernel_stat.h
+&gt; @@ -52,7 +52,9 @@ static inline int kstat_irqs(int irq)
+&gt;  }
+
+&gt;  extern void account_user_time(struct task_struct *, cputime_t);
+&gt; +extern void account_user_time_scaled(struct task_struct *, cputime_t);
+&gt;  extern void account_system_time(struct task_struct *, int, cputime_t);
+&gt; +extern void account_system_time_scaled(struct task_struct *, cputime_t);
+&gt;  extern void account_steal_time(struct task_struct *, cputime_t);
+
+&gt;  #endif /* _LINUX_KERNEL_STAT_H */
+&gt; Index: linux-2.6-ozlabs/include/linux/sched.h
+&gt; ===================================================================
+&gt; --- linux-2.6-ozlabs.orig/include/linux/sched.h
+&gt; +++ linux-2.6-ozlabs/include/linux/sched.h
+&gt; @@ -1020,7 +1020,7 @@ struct task_struct {
+&gt;    int __user *clear_child_tid;            /* CLONE_CHILD_CLEARTID */
+
+&gt;    unsigned int rt_priority;
+&gt; -  cputime_t utime, stime;
+&gt; +  cputime_t utime, stime, utimescaled, stimescaled;
+">
+
+Adding 8 or 16 bytes to the task_struct for all architectures for something
+which only powerpc uses?
+
+Is there any prospect that other CPUs can use this?
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;    unsigned long nvcsw, nivcsw; /* context switch counts */
+&gt;    struct timespec start_time;             /* monotonic time */
+&gt;    struct timespec real_start_time;        /* boot based time */
+&gt; Index: linux-2.6-ozlabs/include/linux/taskstats.h
+&gt; ===================================================================
+&gt; --- linux-2.6-ozlabs.orig/include/linux/taskstats.h
+&gt; +++ linux-2.6-ozlabs/include/linux/taskstats.h
+&gt; @@ -31,7 +31,7 @@
+&gt;   */
+
+&gt; -#define TASKSTATS_VERSION 5
+&gt; +#define TASKSTATS_VERSION 6
+&gt;  #define TS_COMM_LEN               32      /* should be &gt;= TASK_COMM_LEN
+&gt;                                     * in linux/sched.h */
+
+&gt; @@ -85,9 +85,12 @@ struct taskstats {
+&gt;     * On some architectures, value will adjust for cpu time stolen
+&gt;     * from the kernel in involuntary waits due to virtualization.
+&gt;     * Value is cumulative, in nanoseconds, without a corresponding count
+&gt; -   * and wraps around to zero silently on overflow
+&gt; +   * and wraps around to zero silently on overflow.  The
+&gt; +   * _scaled_ version accounts for cpus which can scale the
+&gt; +   * number of instructions executed each cycle.
+&gt;     */
+&gt;    __u64   cpu_run_real_total;
+&gt; +  __u64   cpu_scaled_run_real_total;
+
+&gt;    /* cpu &quot;virtual&quot; running time
+&gt;     * Uses time intervals seen by the kernel i.e. no adjustment
+&gt; @@ -142,6 +145,10 @@ struct taskstats {
+&gt;    __u64   write_char;             /* bytes written */
+&gt;    __u64   read_syscalls;          /* read syscalls */
+&gt;    __u64   write_syscalls;         /* write syscalls */
+&gt; +
+&gt; +  /* time accounting for SMT machines */
+&gt; +  __u64   ac_utimescaled;         /* utime scaled on frequency etc */
+&gt; +  __u64   ac_stimescaled;         /* stime scaled on frequency etc */
+&gt;    /* Extended accounting fields end */
+">
+
+umm, should we be adding new fields in the middle of this message?  I
+thought we should only add to the end, for back-compatibility, but maybe I
+misremember.
+
+-
+To unsubscribe from this list: send the line &quot;unsubscribe linux-kernel&quot; in
+the body of a message to majord ... @vger.kernel.org
+More majordomo info at http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at http://www.tux.org/lkml/
+</POST>
+<POST>
+<POSTER> Balbir Singh &lt;bal...@linux.vnet.ibm.com&gt; </POSTER>
+<POSTDATE> 2007-08-19T05:00:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Andrew Morton wrote:
+
+&gt;&gt;        unsigned int rt_priority;
+&gt;&gt; -      cputime_t utime, stime;
+&gt;&gt; +      cputime_t utime, stime, utimescaled, stimescaled;
+
+&gt; Adding 8 or 16 bytes to the task_struct for all architectures for something
+&gt; which only powerpc uses?
+
+&gt; Is there any prospect that other CPUs can use this?
+">
+
+Hi, Andrew,
+
+There is definitely the prospect for other architectures to use this
+feature
+
+x86 provides the APERF and MPERF model specific registers.
+The ratio of APERF to MPERF gives the current scaled load on the
+system (acpi-cpufreq, get_measured_perf()) I have been looking at
+exploiting this functionality for x-series, but ran into a problem;
+as per the specification, APERF and MPERF are to be reset to 0
+upon reading them. As a result, I am still figuring out a good
+way to share the data amongst the ondemand governor and utimescaled
+statistics.
+
+I think for now, we can
+
+1. Put utimescaled and stimescaled under an #ifdef for ARCH_POWERPC
+2. Add utimescaled and stimescaled and add a big fat comment stating
+that work for other architectures is on it's way.
+
+In either case, I think the functionality is useful and can be
+exploited by other architectures. The powerpc port is complete and
+I think the implementation would provide a good reference for
+other implementations to follow.
+
+--
+Warm Regards,
+Balbir Singh
+Linux Technology Center
+IBM, ISTL
+-
+To unsubscribe from this list: send the line &quot;unsubscribe linux-kernel&quot; in
+the body of a message to majord ... @vger.kernel.org
+More majordomo info at http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at http://www.tux.org/lkml/
+</POST>
+<POST>
+<POSTER> Michael Neuling &lt;mi...@neuling.org&gt; </POSTER>
+<POSTDATE> 2007-08-19T09:20:00 </POSTDATE>
+In message &lt;46C805B0.1000 ... @linux.vnet.ibm.com&gt; you wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Andrew Morton wrote:
+
+&gt; &gt;&gt;   unsigned int rt_priority;
+&gt; &gt;&gt; - cputime_t utime, stime;
+&gt; &gt;&gt; + cputime_t utime, stime, utimescaled, stimescaled;
+
+&gt; &gt; Adding 8 or 16 bytes to the task_struct for all architectures for something
+&gt; &gt; which only powerpc uses?
+
+&gt; &gt; Is there any prospect that other CPUs can use this?
+
+&gt; Hi, Andrew,
+
+&gt; There is definitely the prospect for other architectures to use this
+&gt; feature
+
+&gt; x86 provides the APERF and MPERF model specific registers.
+&gt; The ratio of APERF to MPERF gives the current scaled load on the
+&gt; system (acpi-cpufreq, get_measured_perf()) I have been looking at
+&gt; exploiting this functionality for x-series, but ran into a problem;
+&gt; as per the specification, APERF and MPERF are to be reset to 0
+&gt; upon reading them. As a result, I am still figuring out a good
+&gt; way to share the data amongst the ondemand governor and utimescaled
+&gt; statistics.
+
+&gt; I think for now, we can
+
+&gt; 1. Put utimescaled and stimescaled under an #ifdef for ARCH_POWERPC
+">
+
+... or even #ifdef TASKSTATS
+
+<QUOTE PREVIOUSPOST="
+&gt; 2. Add utimescaled and stimescaled and add a big fat comment stating
+&gt;    that work for other architectures is on it's way.
+
+&gt; In either case, I think the functionality is useful and can be
+&gt; exploited by other architectures. The powerpc port is complete and
+&gt; I think the implementation would provide a good reference for
+&gt; other implementations to follow.
+
+&gt; --
+&gt;    Warm Regards,
+&gt;    Balbir Singh
+&gt;    Linux Technology Center
+&gt;    IBM, ISTL
+">
+
+-
+To unsubscribe from this list: send the line &quot;unsubscribe linux-kernel&quot; in
+the body of a message to majord ... @vger.kernel.org
+More majordomo info at http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at http://www.tux.org/lkml/
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,269 @@
+<DOC>
+<DOCID> eng-NG-31-135591-9752703 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2008-01-07T23:06:00 </DATETIME>
+<BODY>
+<HEADLINE>
+proc to block
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> L A &lt;loren.abr...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2008-01-07T23:06:00 </POSTDATE>
+[Note:  parts of this message were removed to make it a legal post.]
+
+Hello all,
+
+Is there a way to turn a Proc into a block for the purposes of methods that yield to blocks?  It's not a necessity as I can always wrap the Proc in a block, I'm just curious.
+
+Thanks,
+Loren
+
+___________________________________________________________________________ _________
+Never miss a thing.  Make Yahoo your home page.
+http://www.yahoo.com/r/hs
+</POST>
+<POST>
+<POSTER> Gary Wright &lt;gwtm...@mac.com&gt; </POSTER>
+<POSTDATE> 2008-01-07T23:35:00 </POSTDATE>
+On Jan 7, 2008, at 11:06 PM, L A wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hello all,
+
+&gt; Is there a way to turn a Proc into a block for the purposes of
+&gt; methods that yield to blocks?  It's not a necessity as I can always
+&gt; wrap the Proc in a block, I'm just curious.
+">
+
+Just prefix the object you want to be passed as a block with '&amp;' in
+the argument list.
+
+p = proc { |x| x &gt; 10 }
+
+[1,5,10,20, 30].select &amp;p
+
+Gary Wright
+</POST>
+<POST>
+<POSTER> botp &lt;botp...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-07T23:36:00 </POSTDATE>
+On Jan 8, 2008 12:06 PM, L A &lt;loren.abr ... @yahoo.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Is there a way to turn a Proc into a block for the purposes of methods that yield to blocks?  It's not a necessity as I can always wrap the Proc in a block, I'm just curious.
+">
+
+maybe use the &amp; op, like
+
+p=proc{&quot;hi, i'm proc&quot;}
+#=&gt; #&lt;Proc:0x028cc40c@(irb):1&gt;
+p.call
+#=&gt; &quot;hi, i'm proc&quot;
+def q
+yield
+end
+#=&gt; nil
+q
+LocalJumpError: no block given
+from (irb):7:in `q'
+from (irb):9
+from :0
+q &amp;p
+#=&gt; &quot;hi, i'm proc&quot;
+(proc &amp;p).call
+#=&gt; &quot;hi, i'm proc&quot;
+
+i am not sure why you want to wrap a proc with a block though
+
+proc {p}
+#=&gt; #&lt;Proc:0x02898418@(irb):30&gt;
+(proc {p}).call
+#=&gt; #&lt;Proc:0x028cc40c@(irb):1&gt;
+(proc {p}).call.call
+#=&gt; &quot;hi, i'm proc&quot;
+
+kind regards -botp
+</POST>
+<POST>
+<POSTER> Rick DeNatale &lt;rick.denat...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-08T08:24:00 </POSTDATE>
+On Jan 7, 2008 11:35 PM, Gary Wright &lt;gwtm ... @mac.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 7, 2008, at 11:06 PM, L A wrote:
+
+&gt; &gt; Hello all,
+
+&gt; &gt; Is there a way to turn a Proc into a block for the purposes of
+&gt; &gt; methods that yield to blocks?  It's not a necessity as I can always
+&gt; &gt; wrap the Proc in a block, I'm just curious.
+
+&gt; Just prefix the object you want to be passed as a block with '&amp;' in
+&gt; the argument list.
+
+&gt; p = proc { |x| x &gt; 10 }
+
+&gt; [1,5,10,20, 30].select &amp;p
+">
+
+Except that this isn't part of the standard ruby library for 1.8. It
+relies on having a Symbol#to_proc method
+
+It is a common extension, for example Rails includes it.
+
+It IS part of Ruby 1.9 though.
+
+I'd suggest googling for &quot;ruby to_proc&quot;
+
+--
+Rick DeNatale
+
+My blog on Ruby
+http://talklikeaduck.denhaven2.com/
+</POST>
+<POST>
+<POSTER> Noah Easterly &lt;noah.easte...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-08T09:04:00 </POSTDATE>
+On Jan 8, 8:24 am, Rick DeNatale &lt;rick.denat ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 7, 2008 11:35 PM, Gary Wright &lt;gwtm ... @mac.com&gt; wrote:
+
+&gt; &gt; On Jan 7, 2008, at 11:06 PM, L A wrote:
+
+&gt; &gt; &gt; Hello all,
+
+&gt; &gt; &gt; Is there a way to turn a Proc into a block for the purposes of
+&gt; &gt; &gt; methods that yield to blocks?  It's not a necessity as I can always
+&gt; &gt; &gt; wrap the Proc in a block, I'm just curious.
+
+&gt; &gt; Just prefix the object you want to be passed as a block with '&amp;' in
+&gt; &gt; the argument list.
+
+&gt; &gt; p = proc { |x| x &gt; 10 }
+
+&gt; &gt; [1,5,10,20, 30].select &amp;p
+
+&gt; Except that this isn't part of the standard ruby library for 1.8. It
+&gt; relies on having a Symbol#to_proc method
+">
+
+Wait... what?
+
+No it doesn't.
+
+[ 1, 5, 10, 20, 30 ].map &amp;:to_a
+
+uses Symbol#to_proc
+
+p = proc { |x| x &gt; 10 }
+[1,5,10,20, 30].select &amp;p
+
+is standard ruby syntax, even from 1.6:
+
+&quot;If the last argument to a method is preceded by an ampersand, Ruby
+assumes that it is a Proc object. It removes it from the parameter
+list, converts the Proc object into a block, and associates it with
+the method.&quot;
+(see http://www.ruby-doc.org/docs/ProgrammingRuby/html/tut_methods.html#UD )
+</POST>
+<POST>
+<POSTER> Rick DeNatale &lt;rick.denat...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-08T10:39:00 </POSTDATE>
+On Jan 8, 2008 9:05 AM, Noah Easterly &lt;noah.easte ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 8, 8:24 am, Rick DeNatale &lt;rick.denat ... @gmail.com&gt; wrote:
+&gt; &gt; On Jan 7, 2008 11:35 PM, Gary Wright &lt;gwtm ... @mac.com&gt; wrote:
+&gt; &gt; &gt; Just prefix the object you want to be passed as a block with '&amp;' in
+&gt; &gt; &gt; the argument list.
+
+&gt; &gt; &gt; p = proc { |x| x &gt; 10 }
+
+&gt; &gt; &gt; [1,5,10,20, 30].select &amp;p
+
+&gt; &gt; Except that this isn't part of the standard ruby library for 1.8. It
+&gt; &gt; relies on having a Symbol#to_proc method
+
+&gt; Wait... what?
+
+&gt; No it doesn't.
+
+&gt;  [ 1, 5, 10, 20, 30 ].map &amp;:to_a
+
+&gt; uses Symbol#to_proc
+
+&gt;  p = proc { |x| x &gt; 10 }
+&gt;  [1,5,10,20, 30].select &amp;p
+
+&gt; is standard ruby syntax, even from 1.6:
+
+&gt; &quot;If the last argument to a method is preceded by an ampersand, Ruby
+&gt; assumes that it is a Proc object. It removes it from the parameter
+&gt; list, converts the Proc object into a block, and associates it with
+&gt; the method.&quot;
+">
+
+This isn't what I said.
+
+Gary suggested using a symbol as a proc, which requires that Symbol
+implement the to_proc method, which is NOT part of standard Ruby prior
+to 1.9.
+
+$ qri to_proc
+------------------------------------------------------ Multiple choices:
+
+Method#to_proc, Proc#to_proc, Test::Unit::Util::ProcWrapper#to_proc
+
+Now as I pointed out extending Symbol to implement to_proc is quite
+common, and many Rails programmers tend to think of the stuff in
+ActiveSupport as being standard Ruby, but it isn't.
+
+It's likely that Rails will change ActiveSupport to only add
+Symbol#to_proc if using Ruby &lt; 1.9 since 1.9 includes it, but that
+doesn't seem to have happened yet.
+http://dev.rubyonrails.org/ticket/8818
+
+--
+Rick DeNatale
+
+My blog on Ruby
+http://talklikeaduck.denhaven2.com/
+</POST>
+<POST>
+<POSTER> Sebastian Hungerecker &lt;sep...@googlemail.com&gt; </POSTER>
+<POSTDATE> 2008-01-08T10:55:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Rick DeNatale wrote:
+&gt; Gary suggested using a symbol as a proc
+">
+
+No, he didn't.
+
+--
+Jabber: sep ... @jabber.org
+ICQ: 205544826
+</POST>
+<POST>
+<POSTER> Gary Wright &lt;gwtm...@mac.com&gt; </POSTER>
+<POSTDATE> 2008-01-08T11:32:00 </POSTDATE>
+On Jan 8, 2008, at 10:39 AM, Rick DeNatale wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Gary suggested using a symbol as a proc, which requires that Symbol
+&gt; implement the to_proc method, which is NOT part of standard Ruby prior
+&gt; to 1.9.
+">
+
+Rick, you just misread my original post a bit.  I didn't mention
+Symbol#to_proc at all but I did hint at it by saying you 'just'
+prefix the argument with '&amp;'.  That sort of begs the question of
+what happens if the argument isn't an instance of Proc but I didn't
+want to muddy the waters at that point.  My example used a proc.
+
+Gary Wright
+</POST>
+</TEXT>
+</BODY>
+</DOC>

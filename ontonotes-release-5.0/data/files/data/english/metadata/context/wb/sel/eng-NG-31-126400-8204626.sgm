@@ -1,0 +1,118 @@
+<DOC>
+<DOCID> eng-NG-31-126400-8204626 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-07-04T05:41:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Add physical net device to Solaris zone
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> The Loeki &lt;the.lo...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-04T05:41:00 </POSTDATE>
+Hi all!
+
+I've got Solaris 10 with a testzone setup.
+I've dedicated a network interface for it, qfe0.
+
+Is there any way to get that complete physical interface qfe0 to the
+zone without having to plumb and configure it in the global zone?
+
+With add net there's always a virtual interface ànd it requires qfe0
+to be plumbed in the global zone;
+I've tried to add device match=/dev/qfe, but that didn't seem to work
+either.
+
+Is this at all possible? Thanks in advance!
+</POST>
+<POST>
+<POSTER> and...@cucumber.demon.co.uk (Andrew Gabriel) </POSTER>
+<POSTDATE> 2007-07-04T08:48:00 </POSTDATE>
+In article &lt;1183542109.377934.326 ... @q75g2000hsh.googlegroups.com&gt;,
+The Loeki &lt;the.lo ... @gmail.com&gt; writes:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi all!
+&gt; I've got Solaris 10 with a testzone setup.
+&gt; I've dedicated a network interface for it, qfe0.
+&gt; Is there any way to get that complete physical interface qfe0 to the
+&gt; zone without having to plumb and configure it in the global zone?
+&gt; With add net there's always a virtual interface ànd it requires qfe0
+&gt; to be plumbed in the global zone;
+">
+
+This is a limitation in the way routing works -- there's only one
+routing table for the whole system (that changes with IP instances,
+but not in Solaris 10 yet). You can have the vitual interface in the
+global zone 'DOWN' so it's not used.
+
+--
+Andrew Gabriel
+[email address is not usable -- followup in the newsgroup]
+</POST>
+<POST>
+<POSTER> nelson.bens...@gmail.com </POSTER>
+<POSTDATE> 2007-07-04T18:10:00 </POSTDATE>
+as Andrew said, not yet.  although as a nasty hack i wonder if
+plumbing it in the global zone without an address would work (urgh)
+
+the next release (07/07 - but that might be 08/07) has some pretty
+cool stuff to help with this sort of separation (ala ip-
+type=exclusive), whereby the interface doesn't 'appear' in the global
+zone (if the beta was anything to go by mind you)
+
+meaning something like this works
+d'oh~&gt; zonecfg -z kate
+kate: No such zone configured
+Use 'create' to begin configuring a new zone.
+zonecfg:kate&gt; create
+zonecfg:kate&gt; set zonepath=/zones/kate
+zonecfg:kate&gt; set autoboot=true
+zonecfg:kate&gt; set scheduling-class=FSS
+zonecfg:kate&gt; set ip-type=exclusive
+zonecfg:kate&gt; add net
+zonecfg:kate:net&gt; set physical=bge1
+zonecfg:kate:net&gt; end
+zonecfg:kate&gt; verify
+zonecfg:kate&gt; commit
+zonecfg:kate&gt; exit
+</POST>
+<POST>
+<POSTER> The Loeki &lt;the.lo...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-05T13:35:00 </POSTDATE>
+On Jul 5, 12:10 am, nelson.bens ... @gmail.com wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; as Andrew said, not yet.  although as a nasty hack i wonder if
+&gt; plumbing it in the global zone without an address would work (urgh)
+
+&gt; the next release (07/07 - but that might be 08/07) has some pretty
+&gt; cool stuff to help with this sort of separation (ala ip-
+&gt; type=exclusive), whereby the interface doesn't 'appear' in the global
+&gt; zone (if the beta was anything to go by mind you)
+
+&gt; meaning something like this works
+&gt; d'oh~&gt; zonecfg -z kate
+&gt; kate: No such zone configured
+&gt; Use 'create' to begin configuring a new zone.
+&gt; zonecfg:kate&gt; create
+&gt; zonecfg:kate&gt; set zonepath=/zones/kate
+&gt; zonecfg:kate&gt; set autoboot=true
+&gt; zonecfg:kate&gt; set scheduling-class=FSS
+&gt; zonecfg:kate&gt; set ip-type=exclusive
+&gt; zonecfg:kate&gt; add net
+&gt; zonecfg:kate:net&gt; set physical=bge1
+&gt; zonecfg:kate:net&gt; end
+&gt; zonecfg:kate&gt; verify
+&gt; zonecfg:kate&gt; commit
+&gt; zonecfg:kate&gt; exit
+">
+
+That's exactly what I'm looking for and it ís cuhl :-)
+
+On a side note: yes, plumbing it without an address and then using it
+in a zone does work :-)
+</POST>
+</TEXT>
+</BODY>
+</DOC>

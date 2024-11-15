@@ -1,0 +1,649 @@
+<DOC>
+<DOCID> eng-NG-31-127317-9210244 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-10T00:35:00 </DATETIME>
+<BODY>
+<HEADLINE>
+General FDS Users Approach to Specifying a Fire
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> N Kuzewicz &lt;nick.kuzew...@arup.com.au&gt; </POSTER>
+<POSTDATE> 2007-10-10T00:35:00 </POSTDATE>
+Hi
+
+I am interested in the impact that different methods of specifying
+your fire has on smoke temps/mass flow/etc...
+
+I have read an interesting paper which was presented at Interflam this
+year (filename 'vi046-Kim[1].pdf ' under the 'files' heading), which
+gave me a little further insight into the impact that FDS's background
+calcs has on a specific application.
+
+The paper aimed to simulate the Memorial Tunnel fire tests.  While
+undertaking their analysis they observed that the results in FDS
+deviated, so far as the amount of LV required to limit back layering,
+when compared with the real test results. The paper concludes that
+restoring the Baroclinic Torque (which the FDS user guide says is
+discounted when using LES) gives results which are more in accordance
+with the Memorial results. The FDS User's Guide indicates that this is
+because FDS makes the assumption that under most situations the
+predominate source of vorticity is provided by the fire and not by
+external induced flows (like the longitudinal ventilation in a tunnel
+case), which under most cases is probably true.
+
+Taking the above into consideration, my specific question relates to
+the specification of the fire. To date I have been using rule of thumb
+type guidelines which I have obtained by talking to various FDS users.
+This mainly relates to ensuring the HRRPUA is between two bounds,
+being a lower limit of 800kW/m2 and upper limit of 1200kW/m2, with a
+goal of ensuring enough energy is being simulated into the smoke at an
+early stage (where the fire is growing at a t2 rate). My
+interpretation of this reasoning was that if the HRRPUA is too low,
+the model may underestimate smoke temps at an early stage (since the
+growing HRR is averaged over the whole fire surface), and a HRRPUA
+that is too high may over estimate temps at the fully developed stage?
+
+Previously, to try to offset this impact I have used a 'growing' type
+fire which initially begins as a small obstruction but continues to
+grow (appropriate to the HRR) as time continues. For example, a fire
+which may have an area of 20m2 at peak HRR is added 1m2 at a time so
+that the HRR grows at the desired rate while still maintaining a semi-
+accurate area. I used this for a while but was never sure whether this
+was the correct approach.
+
+Basically, as far as I can tell there are three basic concepts for
+specifying your fire,
+
+1. You can use an accurate fire area and specify the realistic HRRPUA
+which may come straight out of SFPE or FEDG, etc. This accepts that
+while initial temps are underestimated, peak or steady-state
+conditions are more likely to be accurate.
+
+2. You can increase the HRRPUA and reduce the fire area (resulting in
+the same overall energy content). This approach requires some type of
+'rule of thumb' approach as to which bounds are appropriate. This
+attempts to bring the growing smoke/temp more in line with 'reality'
+and accepts that results may be over estimated at peak HRR.
+
+3. You could attempt to create a 'growing' fire which increases in
+area as time continues and maintains a consistent HRRPUA as well as
+fire perimeter.
+
+The main concern I have is that knowing that smoke buoyancy is such a
+dominant aspect, the way we specify the fire has the potential to have
+a large impact on outputs. Also, unlike mesh sensitivity, performing
+HRRPUA sensitivity tests are less obvious since you cant just vary the
+HRRPUA until results converge as such.
+
+Any information/thoughts/solutions/common approaches would be
+appreciated, since I assume this is something that most FDS users will
+have considered.
+
+Regards
+
+Nick Kuzewicz
+</POST>
+<POST>
+<POSTER> Kevin &lt;mcgra...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-10T09:09:00 </POSTDATE>
+There is a feature in FDS (U Guide, 8.2.6 Radially Spreading Fire)
+that attempts mimic a spreading fire while allowing the user to
+control the overall HRR. Maybe this is what you meant by Option 3. In
+any case, I implemented this feature several years ago based on this
+very type of discussion, but I've never had the occassion to use, and
+I have not received much feedback on it. This issue is tricky because
+it is both numerical and physical -- is a t2 fire a good &quot;model&quot; of
+fire growth, and if so, how do you apply one in FDS.
+
+A good rule of thumb for checking resolution in FDS is to consider D*/
+dx (U Guide, 6.3.4 Choosing the Right Mesh Dimensions). I usually
+apply this rule to the &quot;steady state&quot; HRR, but in fact, it applies to
+the transient start up as well. Given that FDS does not refine the
+mesh on the fly, you almost always &quot;under resolve&quot; the fire early on.
+Concentrating the fire within a smaller radius is a good way to better
+capture reality, but there still remains a resolution issue because D*
+is the characteristic fire diameter, not the actual one. D* is a
+function of the HRR only, whether it is spread out, or concentrated.
+
+As for Baroclinic Torque, I think that is a slightly different issue.
+BT is a source of vorticity that is important when you have very steep
+gradients in density (temperature), like at a flame sheet. When we do
+fire calcs with very fine resolution, we often invoke
+BAROCLINIC=.TRUE. because we are trying to capture the fire behavior
+as faithfully as we can. However, for simulations of smoke movement in
+large spaces where the fire itself is not well-resolved, we have not
+found the BT to play an important role, at least not compared to
+buoyancy. That being said, the Interflam paper that you cite is
+interesting, and it might suggest that BT is important at the
+interface between the hot smoke layer and the lower ambient. For now,
+a good idea is to run calcs with and without, and report your findings
+to the discussion group. We might find that we need to make the
+BAROCLINIC option .TRUE. by default.
+
+On Oct 9, 11:35 pm, N Kuzewicz &lt;nick.kuzew ... @arup.com.au&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi
+
+&gt; I am interested in the impact that different methods of specifying
+&gt; your fire has on smoke temps/mass flow/etc...
+
+&gt; I have read an interesting paper which was presented at Interflam this
+&gt; year (filename 'vi046-Kim[1].pdf ' under the 'files' heading), which
+&gt; gave me a little further insight into the impact that FDS's background
+&gt; calcs has on a specific application.
+
+&gt; The paper aimed to simulate the Memorial Tunnel fire tests.  While
+&gt; undertaking their analysis they observed that the results in FDS
+&gt; deviated, so far as the amount of LV required to limit back layering,
+&gt; when compared with the real test results. The paper concludes that
+&gt; restoring the Baroclinic Torque (which the FDS user guide says is
+&gt; discounted when using LES) gives results which are more in accordance
+&gt; with the Memorial results. The FDS User's Guide indicates that this is
+&gt; because FDS makes the assumption that under most situations the
+&gt; predominate source of vorticity is provided by the fire and not by
+&gt; external induced flows (like the longitudinal ventilation in a tunnel
+&gt; case), which under most cases is probably true.
+
+&gt; Taking the above into consideration, my specific question relates to
+&gt; the specification of the fire. To date I have been using rule of thumb
+&gt; type guidelines which I have obtained by talking to various FDS users.
+&gt; This mainly relates to ensuring the HRRPUA is between two bounds,
+&gt; being a lower limit of 800kW/m2 and upper limit of 1200kW/m2, with a
+&gt; goal of ensuring enough energy is being simulated into the smoke at an
+&gt; early stage (where the fire is growing at a t2 rate). My
+&gt; interpretation of this reasoning was that if the HRRPUA is too low,
+&gt; the model may underestimate smoke temps at an early stage (since the
+&gt; growing HRR is averaged over the whole fire surface), and a HRRPUA
+&gt; that is too high may over estimate temps at the fully developed stage?
+
+&gt; Previously, to try to offset this impact I have used a 'growing' type
+&gt; fire which initially begins as a small obstruction but continues to
+&gt; grow (appropriate to the HRR) as time continues. For example, a fire
+&gt; which may have an area of 20m2 at peak HRR is added 1m2 at a time so
+&gt; that the HRR grows at the desired rate while still maintaining a semi-
+&gt; accurate area. I used this for a while but was never sure whether this
+&gt; was the correct approach.
+
+&gt; Basically, as far as I can tell there are three basic concepts for
+&gt; specifying your fire,
+
+&gt; 1. You can use an accurate fire area and specify the realistic HRRPUA
+&gt; which may come straight out of SFPE or FEDG, etc. This accepts that
+&gt; while initial temps are underestimated, peak or steady-state
+&gt; conditions are more likely to be accurate.
+
+&gt; 2. You can increase the HRRPUA and reduce the fire area (resulting in
+&gt; the same overall energy content). This approach requires some type of
+&gt; 'rule of thumb' approach as to which bounds are appropriate. This
+&gt; attempts to bring the growing smoke/temp more in line with 'reality'
+&gt; and accepts that results may be over estimated at peak HRR.
+
+&gt; 3. You could attempt to create a 'growing' fire which increases in
+&gt; area as time continues and maintains a consistent HRRPUA as well as
+&gt; fire perimeter.
+
+&gt; The main concern I have is that knowing that smoke buoyancy is such a
+&gt; dominant aspect, the way we specify the fire has the potential to have
+&gt; a large impact on outputs. Also, unlike mesh sensitivity, performing
+&gt; HRRPUA sensitivity tests are less obvious since you cant just vary the
+&gt; HRRPUA until results converge as such.
+
+&gt; Any information/thoughts/solutions/common approaches would be
+&gt; appreciated, since I assume this is something that most FDS users will
+&gt; have considered.
+
+&gt; Regards
+
+&gt; Nick Kuzewicz
+">
+</POST>
+<POST>
+<POSTER> dr_jfloyd &lt;drjfl...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-10T10:06:00 </POSTDATE>
+If you care about the early timeline (say for smoke detection) then
+trying to do option 3 is probably the right thing to do.
+
+On Oct 10, 7:09 am, Kevin &lt;mcgra ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; There is a feature in FDS (U Guide, 8.2.6 Radially Spreading Fire)
+&gt; that attempts mimic a spreading fire while allowing the user to
+&gt; control the overall HRR. Maybe this is what you meant by Option 3. In
+&gt; any case, I implemented this feature several years ago based on this
+&gt; very type of discussion, but I've never had the occassion to use, and
+&gt; I have not received much feedback on it. This issue is tricky because
+&gt; it is both numerical and physical -- is a t2 fire a good &quot;model&quot; of
+&gt; fire growth, and if so, how do you apply one in FDS.
+
+&gt; A good rule of thumb for checking resolution in FDS is to consider D*/
+&gt; dx (U Guide, 6.3.4 Choosing the Right Mesh Dimensions). I usually
+&gt; apply this rule to the &quot;steady state&quot; HRR, but in fact, it applies to
+&gt; the transient start up as well. Given that FDS does not refine the
+&gt; mesh on the fly, you almost always &quot;under resolve&quot; the fire early on.
+&gt; Concentrating the fire within a smaller radius is a good way to better
+&gt; capture reality, but there still remains a resolution issue because D*
+&gt; is the characteristic fire diameter, not the actual one. D* is a
+&gt; function of the HRR only, whether it is spread out, or concentrated.
+
+&gt; As for Baroclinic Torque, I think that is a slightly different issue.
+&gt; BT is a source of vorticity that is important when you have very steep
+&gt; gradients in density (temperature), like at a flame sheet. When we do
+&gt; fire calcs with very fine resolution, we often invoke
+&gt; BAROCLINIC=.TRUE. because we are trying to capture the fire behavior
+&gt; as faithfully as we can. However, for simulations of smoke movement in
+&gt; large spaces where the fire itself is not well-resolved, we have not
+&gt; found the BT to play an important role, at least not compared to
+&gt; buoyancy. That being said, the Interflam paper that you cite is
+&gt; interesting, and it might suggest that BT is important at the
+&gt; interface between the hot smoke layer and the lower ambient. For now,
+&gt; a good idea is to run calcs with and without, and report your findings
+&gt; to the discussion group. We might find that we need to make the
+&gt; BAROCLINIC option .TRUE. by default.
+
+&gt; On Oct 9, 11:35 pm, N Kuzewicz &lt;nick.kuzew ... @arup.com.au&gt; wrote:
+
+&gt; &gt; Hi
+
+&gt; &gt; I am interested in the impact that different methods of specifying
+&gt; &gt; your fire has on smoke temps/mass flow/etc...
+
+&gt; &gt; I have read an interesting paper which was presented at Interflam this
+&gt; &gt; year (filename 'vi046-Kim[1].pdf ' under the 'files' heading), which
+&gt; &gt; gave me a little further insight into the impact that FDS's background
+&gt; &gt; calcs has on a specific application.
+
+&gt; &gt; The paper aimed to simulate the Memorial Tunnel fire tests.  While
+&gt; &gt; undertaking their analysis they observed that the results in FDS
+&gt; &gt; deviated, so far as the amount of LV required to limit back layering,
+&gt; &gt; when compared with the real test results. The paper concludes that
+&gt; &gt; restoring the Baroclinic Torque (which the FDS user guide says is
+&gt; &gt; discounted when using LES) gives results which are more in accordance
+&gt; &gt; with the Memorial results. The FDS User's Guide indicates that this is
+&gt; &gt; because FDS makes the assumption that under most situations the
+&gt; &gt; predominate source of vorticity is provided by the fire and not by
+&gt; &gt; external induced flows (like the longitudinal ventilation in a tunnel
+&gt; &gt; case), which under most cases is probably true.
+
+&gt; &gt; Taking the above into consideration, my specific question relates to
+&gt; &gt; the specification of the fire. To date I have been using rule of thumb
+&gt; &gt; type guidelines which I have obtained by talking to various FDS users.
+&gt; &gt; This mainly relates to ensuring the HRRPUA is between two bounds,
+&gt; &gt; being a lower limit of 800kW/m2 and upper limit of 1200kW/m2, with a
+&gt; &gt; goal of ensuring enough energy is being simulated into the smoke at an
+&gt; &gt; early stage (where the fire is growing at a t2 rate). My
+&gt; &gt; interpretation of this reasoning was that if the HRRPUA is too low,
+&gt; &gt; the model may underestimate smoke temps at an early stage (since the
+&gt; &gt; growing HRR is averaged over the whole fire surface), and a HRRPUA
+&gt; &gt; that is too high may over estimate temps at the fully developed stage?
+
+&gt; &gt; Previously, to try to offset this impact I have used a 'growing' type
+&gt; &gt; fire which initially begins as a small obstruction but continues to
+&gt; &gt; grow (appropriate to the HRR) as time continues. For example, a fire
+&gt; &gt; which may have an area of 20m2 at peak HRR is added 1m2 at a time so
+&gt; &gt; that the HRR grows at the desired rate while still maintaining a semi-
+&gt; &gt; accurate area. I used this for a while but was never sure whether this
+&gt; &gt; was the correct approach.
+
+&gt; &gt; Basically, as far as I can tell there are three basic concepts for
+&gt; &gt; specifying your fire,
+
+&gt; &gt; 1. You can use an accurate fire area and specify the realistic HRRPUA
+&gt; &gt; which may come straight out of SFPE or FEDG, etc. This accepts that
+&gt; &gt; while initial temps are underestimated, peak or steady-state
+&gt; &gt; conditions are more likely to be accurate.
+
+&gt; &gt; 2. You can increase the HRRPUA and reduce the fire area (resulting in
+&gt; &gt; the same overall energy content). This approach requires some type of
+&gt; &gt; 'rule of thumb' approach as to which bounds are appropriate. This
+&gt; &gt; attempts to bring the growing smoke/temp more in line with 'reality'
+&gt; &gt; and accepts that results may be over estimated at peak HRR.
+
+&gt; &gt; 3. You could attempt to create a 'growing' fire which increases in
+&gt; &gt; area as time continues and maintains a consistent HRRPUA as well as
+&gt; &gt; fire perimeter.
+
+&gt; &gt; The main concern I have is that knowing that smoke buoyancy is such a
+&gt; &gt; dominant aspect, the way we specify the fire has the potential to have
+&gt; &gt; a large impact on outputs. Also, unlike mesh sensitivity, performing
+&gt; &gt; HRRPUA sensitivity tests are less obvious since you cant just vary the
+&gt; &gt; HRRPUA until results converge as such.
+
+&gt; &gt; Any information/thoughts/solutions/common approaches would be
+&gt; &gt; appreciated, since I assume this is something that most FDS users will
+&gt; &gt; have considered.
+
+&gt; &gt; Regards
+
+&gt; &gt; Nick Kuzewicz- Hide quoted text -
+
+&gt; - Show quoted text -
+">
+</POST>
+<POST>
+<POSTER> Judith &lt;judith.sch...@gmx.de&gt; </POSTER>
+<POSTDATE> 2007-10-11T00:02:00 </POSTDATE>
+I've done some studies on how grid size &amp; the way to model growth
+(SPREAD_RATE or TAU_Q) affect plume temperatures and flame
+temperatures and will present the results at the Fire Modelling
+Conference in Spain next week.
+
+Once that conference is over I will summarize the results on this
+forum also.
+
+On Oct 10, 7:06 pm, dr_jfloyd &lt;drjfl ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; If you care about the early timeline (say for smoke detection) then
+&gt; trying to do option 3 is probably the right thing to do.
+
+&gt; On Oct 10, 7:09 am, Kevin &lt;mcgra ... @gmail.com&gt; wrote:
+
+&gt; &gt; There is a feature in FDS (U Guide, 8.2.6 Radially Spreading Fire)
+&gt; &gt; that attempts mimic a spreading fire while allowing the user to
+&gt; &gt; control the overall HRR. Maybe this is what you meant by Option 3. In
+&gt; &gt; any case, I implemented this feature several years ago based on this
+&gt; &gt; very type of discussion, but I've never had the occassion to use, and
+&gt; &gt; I have not received much feedback on it. This issue is tricky because
+&gt; &gt; it is both numerical and physical -- is a t2 fire a good &quot;model&quot; of
+&gt; &gt; fire growth, and if so, how do you apply one in FDS.
+
+&gt; &gt; A good rule of thumb for checking resolution in FDS is to consider D*/
+&gt; &gt; dx (U Guide, 6.3.4 Choosing the Right Mesh Dimensions). I usually
+&gt; &gt; apply this rule to the &quot;steady state&quot; HRR, but in fact, it applies to
+&gt; &gt; the transient start up as well. Given that FDS does not refine the
+&gt; &gt; mesh on the fly, you almost always &quot;under resolve&quot; the fire early on.
+&gt; &gt; Concentrating the fire within a smaller radius is a good way to better
+&gt; &gt; capture reality, but there still remains a resolution issue because D*
+&gt; &gt; is the characteristic fire diameter, not the actual one. D* is a
+&gt; &gt; function of the HRR only, whether it is spread out, or concentrated.
+
+&gt; &gt; As for Baroclinic Torque, I think that is a slightly different issue.
+&gt; &gt; BT is a source of vorticity that is important when you have very steep
+&gt; &gt; gradients in density (temperature), like at a flame sheet. When we do
+&gt; &gt; fire calcs with very fine resolution, we often invoke
+&gt; &gt; BAROCLINIC=.TRUE. because we are trying to capture the fire behavior
+&gt; &gt; as faithfully as we can. However, for simulations of smoke movement in
+&gt; &gt; large spaces where the fire itself is not well-resolved, we have not
+&gt; &gt; found the BT to play an important role, at least not compared to
+&gt; &gt; buoyancy. That being said, the Interflam paper that you cite is
+&gt; &gt; interesting, and it might suggest that BT is important at the
+&gt; &gt; interface between the hot smoke layer and the lower ambient. For now,
+&gt; &gt; a good idea is to run calcs with and without, and report your findings
+&gt; &gt; to the discussion group. We might find that we need to make the
+&gt; &gt; BAROCLINIC option .TRUE. by default.
+
+&gt; &gt; On Oct 9, 11:35 pm, N Kuzewicz &lt;nick.kuzew ... @arup.com.au&gt; wrote:
+
+&gt; &gt; &gt; Hi
+
+&gt; &gt; &gt; I am interested in the impact that different methods of specifying
+&gt; &gt; &gt; your fire has on smoke temps/mass flow/etc...
+
+&gt; &gt; &gt; I have read an interesting paper which was presented at Interflam this
+&gt; &gt; &gt; year (filename 'vi046-Kim[1].pdf ' under the 'files' heading), which
+&gt; &gt; &gt; gave me a little further insight into the impact that FDS's background
+&gt; &gt; &gt; calcs has on a specific application.
+
+&gt; &gt; &gt; The paper aimed to simulate the Memorial Tunnel fire tests.  While
+&gt; &gt; &gt; undertaking their analysis they observed that the results in FDS
+&gt; &gt; &gt; deviated, so far as the amount of LV required to limit back layering,
+&gt; &gt; &gt; when compared with the real test results. The paper concludes that
+&gt; &gt; &gt; restoring the Baroclinic Torque (which the FDS user guide says is
+&gt; &gt; &gt; discounted when using LES) gives results which are more in accordance
+&gt; &gt; &gt; with the Memorial results. The FDS User's Guide indicates that this is
+&gt; &gt; &gt; because FDS makes the assumption that under most situations the
+&gt; &gt; &gt; predominate source of vorticity is provided by the fire and not by
+&gt; &gt; &gt; external induced flows (like the longitudinal ventilation in a tunnel
+&gt; &gt; &gt; case), which under most cases is probably true.
+
+&gt; &gt; &gt; Taking the above into consideration, my specific question relates to
+&gt; &gt; &gt; the specification of the fire. To date I have been using rule of thumb
+&gt; &gt; &gt; type guidelines which I have obtained by talking to various FDS users.
+&gt; &gt; &gt; This mainly relates to ensuring the HRRPUA is between two bounds,
+&gt; &gt; &gt; being a lower limit of 800kW/m2 and upper limit of 1200kW/m2, with a
+&gt; &gt; &gt; goal of ensuring enough energy is being simulated into the smoke at an
+&gt; &gt; &gt; early stage (where the fire is growing at a t2 rate). My
+&gt; &gt; &gt; interpretation of this reasoning was that if the HRRPUA is too low,
+&gt; &gt; &gt; the model may underestimate smoke temps at an early stage (since the
+&gt; &gt; &gt; growing HRR is averaged over the whole fire surface), and a HRRPUA
+&gt; &gt; &gt; that is too high may over estimate temps at the fully developed stage?
+
+&gt; &gt; &gt; Previously, to try to offset this impact I have used a 'growing' type
+&gt; &gt; &gt; fire which initially begins as a small obstruction but continues to
+&gt; &gt; &gt; grow (appropriate to the HRR) as time continues. For example, a fire
+&gt; &gt; &gt; which may have an area of 20m2 at peak HRR is added 1m2 at a time so
+&gt; &gt; &gt; that the HRR grows at the desired rate while still maintaining a semi-
+&gt; &gt; &gt; accurate area. I used this for a while but was never sure whether this
+&gt; &gt; &gt; was the correct approach.
+
+&gt; &gt; &gt; Basically, as far as I can tell there are three basic concepts for
+&gt; &gt; &gt; specifying your fire,
+
+&gt; &gt; &gt; 1. You can use an accurate fire area and specify the realistic HRRPUA
+&gt; &gt; &gt; which may come straight out of SFPE or FEDG, etc. This accepts that
+&gt; &gt; &gt; while initial temps are underestimated, peak or steady-state
+&gt; &gt; &gt; conditions are more likely to be accurate.
+
+&gt; &gt; &gt; 2. You can increase the HRRPUA and reduce the fire area (resulting in
+&gt; &gt; &gt; the same overall energy content). This approach requires some type of
+&gt; &gt; &gt; 'rule of thumb' approach as to which bounds are appropriate. This
+&gt; &gt; &gt; attempts to bring the growing smoke/temp more in line with 'reality'
+&gt; &gt; &gt; and accepts that results may be over estimated at peak HRR.
+
+&gt; &gt; &gt; 3. You could attempt to create a 'growing' fire which increases in
+&gt; &gt; &gt; area as time continues and maintains a consistent HRRPUA as well as
+&gt; &gt; &gt; fire perimeter.
+
+&gt; &gt; &gt; The main concern I have is that knowing that smoke buoyancy is such a
+&gt; &gt; &gt; dominant aspect, the way we specify the fire has the potential to have
+&gt; &gt; &gt; a large impact on outputs. Also, unlike mesh sensitivity, performing
+&gt; &gt; &gt; HRRPUA sensitivity tests are less obvious since you cant just vary the
+&gt; &gt; &gt; HRRPUA until results converge as such.
+
+&gt; &gt; &gt; Any information/thoughts/solutions/common approaches would be
+&gt; &gt; &gt; appreciated, since I assume this is something that most FDS users will
+&gt; &gt; &gt; have considered.
+
+&gt; &gt; &gt; Regards
+
+&gt; &gt; &gt; Nick Kuzewicz- Hide quoted text -
+
+&gt; &gt; - Show quoted text -
+">
+</POST>
+<POST>
+<POSTER> &quot;Bryan Klein&quot; &lt;bryanwkl...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-11T07:25:00 </POSTDATE>
+Judith,
+The people who would care most about your work are more than likely on
+this Discussion Group.  I hope that you will share more than a summary
+here.
+In my opinion, you will reach a more complete audience through this
+group than in Spain, as I know that many of us will not be attending
+the Fire Modeling conference there.
+
+Everyone,
+We have created a new vehicle for open information access and I hope
+that the global Fire Modeling community realizes this and begins to
+take advantage of it.  This group is more than a place to point out
+problems with running FDS or Smokeview.  It is a platform to reach the
+most active people in this area of work and research.  If you have a
+paper or presentation that would be of interest to this group, please
+put it on the web somewhere and post a description and a link to it on
+this group.  If you don't know how or where to put it on the web,
+please email me and I will be happy to point you to some free
+resources for this.
+
+Best Regards,
+Bryan Klein
+
+On 10/11/07, Judith &lt;judith.sch ... @gmx.de&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I've done some studies on how grid size &amp; the way to model growth
+&gt; (SPREAD_RATE or TAU_Q) affect plume temperatures and flame
+&gt; temperatures and will present the results at the Fire Modelling
+&gt; Conference in Spain next week.
+
+&gt; Once that conference is over I will summarize the results on this
+&gt; forum also.
+
+&gt; On Oct 10, 7:06 pm, dr_jfloyd &lt;drjfl ... @gmail.com&gt; wrote:
+&gt; &gt; If you care about the early timeline (say for smoke detection) then
+&gt; &gt; trying to do option 3 is probably the right thing to do.
+
+&gt; &gt; On Oct 10, 7:09 am, Kevin &lt;mcgra ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; There is a feature in FDS (U Guide, 8.2.6 Radially Spreading Fire)
+&gt; &gt; &gt; that attempts mimic a spreading fire while allowing the user to
+&gt; &gt; &gt; control the overall HRR. Maybe this is what you meant by Option 3. In
+&gt; &gt; &gt; any case, I implemented this feature several years ago based on this
+&gt; &gt; &gt; very type of discussion, but I've never had the occassion to use, and
+&gt; &gt; &gt; I have not received much feedback on it. This issue is tricky because
+&gt; &gt; &gt; it is both numerical and physical -- is a t2 fire a good &quot;model&quot; of
+&gt; &gt; &gt; fire growth, and if so, how do you apply one in FDS.
+
+&gt; &gt; &gt; A good rule of thumb for checking resolution in FDS is to consider D*/
+&gt; &gt; &gt; dx (U Guide, 6.3.4 Choosing the Right Mesh Dimensions). I usually
+&gt; &gt; &gt; apply this rule to the &quot;steady state&quot; HRR, but in fact, it applies to
+&gt; &gt; &gt; the transient start up as well. Given that FDS does not refine the
+&gt; &gt; &gt; mesh on the fly, you almost always &quot;under resolve&quot; the fire early on.
+&gt; &gt; &gt; Concentrating the fire within a smaller radius is a good way to better
+&gt; &gt; &gt; capture reality, but there still remains a resolution issue because D*
+&gt; &gt; &gt; is the characteristic fire diameter, not the actual one. D* is a
+&gt; &gt; &gt; function of the HRR only, whether it is spread out, or concentrated.
+
+&gt; &gt; &gt; As for Baroclinic Torque, I think that is a slightly different issue.
+&gt; &gt; &gt; BT is a source of vorticity that is important when you have very steep
+&gt; &gt; &gt; gradients in density (temperature), like at a flame sheet. When we do
+&gt; &gt; &gt; fire calcs with very fine resolution, we often invoke
+&gt; &gt; &gt; BAROCLINIC=.TRUE. because we are trying to capture the fire behavior
+&gt; &gt; &gt; as faithfully as we can. However, for simulations of smoke movement in
+&gt; &gt; &gt; large spaces where the fire itself is not well-resolved, we have not
+&gt; &gt; &gt; found the BT to play an important role, at least not compared to
+&gt; &gt; &gt; buoyancy. That being said, the Interflam paper that you cite is
+&gt; &gt; &gt; interesting, and it might suggest that BT is important at the
+&gt; &gt; &gt; interface between the hot smoke layer and the lower ambient. For now,
+&gt; &gt; &gt; a good idea is to run calcs with and without, and report your findings
+&gt; &gt; &gt; to the discussion group. We might find that we need to make the
+&gt; &gt; &gt; BAROCLINIC option .TRUE. by default.
+
+&gt; &gt; &gt; On Oct 9, 11:35 pm, N Kuzewicz &lt;nick.kuzew ... @arup.com.au&gt; wrote:
+
+&gt; &gt; &gt; &gt; Hi
+
+&gt; &gt; &gt; &gt; I am interested in the impact that different methods of specifying
+&gt; &gt; &gt; &gt; your fire has on smoke temps/mass flow/etc...
+
+&gt; &gt; &gt; &gt; I have read an interesting paper which was presented at Interflam this
+&gt; &gt; &gt; &gt; year (filename 'vi046-Kim[1].pdf ' under the 'files' heading), which
+&gt; &gt; &gt; &gt; gave me a little further insight into the impact that FDS's background
+&gt; &gt; &gt; &gt; calcs has on a specific application.
+
+&gt; &gt; &gt; &gt; The paper aimed to simulate the Memorial Tunnel fire tests.  While
+&gt; &gt; &gt; &gt; undertaking their analysis they observed that the results in FDS
+&gt; &gt; &gt; &gt; deviated, so far as the amount of LV required to limit back layering,
+&gt; &gt; &gt; &gt; when compared with the real test results. The paper concludes that
+&gt; &gt; &gt; &gt; restoring the Baroclinic Torque (which the FDS user guide says is
+&gt; &gt; &gt; &gt; discounted when using LES) gives results which are more in accordance
+&gt; &gt; &gt; &gt; with the Memorial results. The FDS User's Guide indicates that this is
+&gt; &gt; &gt; &gt; because FDS makes the assumption that under most situations the
+&gt; &gt; &gt; &gt; predominate source of vorticity is provided by the fire and not by
+&gt; &gt; &gt; &gt; external induced flows (like the longitudinal ventilation in a tunnel
+&gt; &gt; &gt; &gt; case), which under most cases is probably true.
+
+&gt; &gt; &gt; &gt; Taking the above into consideration, my specific question relates to
+&gt; &gt; &gt; &gt; the specification of the fire. To date I have been using rule of thumb
+&gt; &gt; &gt; &gt; type guidelines which I have obtained by talking to various FDS users.
+&gt; &gt; &gt; &gt; This mainly relates to ensuring the HRRPUA is between two bounds,
+&gt; &gt; &gt; &gt; being a lower limit of 800kW/m2 and upper limit of 1200kW/m2, with a
+&gt; &gt; &gt; &gt; goal of ensuring enough energy is being simulated into the smoke at an
+&gt; &gt; &gt; &gt; early stage (where the fire is growing at a t2 rate). My
+&gt; &gt; &gt; &gt; interpretation of this reasoning was that if the HRRPUA is too low,
+&gt; &gt; &gt; &gt; the model may underestimate smoke temps at an early stage (since the
+&gt; &gt; &gt; &gt; growing HRR is averaged over the whole fire surface), and a HRRPUA
+&gt; &gt; &gt; &gt; that is too high may over estimate temps at the fully developed stage?
+
+&gt; &gt; &gt; &gt; Previously, to try to offset this impact I have used a 'growing' type
+&gt; &gt; &gt; &gt; fire which initially begins as a small obstruction but continues to
+&gt; &gt; &gt; &gt; grow (appropriate to the HRR) as time continues. For example, a fire
+&gt; &gt; &gt; &gt; which may have an area of 20m2 at peak HRR is added 1m2 at a time so
+&gt; &gt; &gt; &gt; that the HRR grows at the desired rate while still maintaining a semi-
+&gt; &gt; &gt; &gt; accurate area. I used this for a while but was never sure whether this
+&gt; &gt; &gt; &gt; was the correct approach.
+
+&gt; &gt; &gt; &gt; Basically, as far as I can tell there are three basic concepts for
+&gt; &gt; &gt; &gt; specifying your fire,
+
+&gt; &gt; &gt; &gt; 1. You can use an accurate fire area and specify the realistic HRRPUA
+&gt; &gt; &gt; &gt; which may come straight out of SFPE or FEDG, etc. This accepts that
+&gt; &gt; &gt; &gt; while initial temps are underestimated, peak or steady-state
+&gt; &gt; &gt; &gt; conditions are more likely to be accurate.
+
+&gt; &gt; &gt; &gt; 2. You can increase the HRRPUA and reduce the fire area (resulting in
+&gt; &gt; &gt; &gt; the same overall energy content). This approach requires some type of
+&gt; &gt; &gt; &gt; 'rule of thumb' approach as to which bounds are appropriate. This
+&gt; &gt; &gt; &gt; attempts to bring the growing smoke/temp more in line with 'reality'
+&gt; &gt; &gt; &gt; and accepts that results may be over estimated at peak HRR.
+
+&gt; &gt; &gt; &gt; 3. You could attempt to create a 'growing' fire which increases in
+&gt; &gt; &gt; &gt; area as time continues and maintains a consistent HRRPUA as well as
+&gt; &gt; &gt; &gt; fire perimeter.
+
+&gt; &gt; &gt; &gt; The main concern I have is that knowing that smoke buoyancy is such a
+&gt; &gt; &gt; &gt; dominant aspect, the way we specify the fire has the potential to have
+&gt; &gt; &gt; &gt; a large impact on outputs. Also, unlike mesh sensitivity, performing
+&gt; &gt; &gt; &gt; HRRPUA sensitivity tests are less obvious since you cant just vary the
+&gt; &gt; &gt; &gt; HRRPUA until results converge as such.
+
+&gt; &gt; &gt; &gt; Any information/thoughts/solutions/common approaches would be
+&gt; &gt; &gt; &gt; appreciated, since I assume this is something that most FDS users will
+&gt; &gt; &gt; &gt; have considered.
+
+&gt; &gt; &gt; &gt; Regards
+
+&gt; &gt; &gt; &gt; Nick Kuzewicz- Hide quoted text -
+
+&gt; &gt; &gt; - Show quoted text -
+">
+
+--
+Bryan Klein
+bryan.kl ... @nist.gov
+
+National Institute of Standards and Technology
+100 Bureau Drive, Mail Stop 8663
+Gaithersburg MD 20899
+Phone: 301 975 5171
+Fax: 301 975 4052
+</POST>
+<POST>
+<POSTER> &quot;A.Ferrari&quot; &lt;ferr...@hae.it&gt; </POSTER>
+<POSTDATE> 2007-10-24T08:53:00 </POSTDATE>
+On 11 Ott, 06:02, Judith &lt;judith.sch ... @gmx.de&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I've done some studies on howgridsize &amp; the way to model growth
+&gt; (SPREAD_RATE or TAU_Q) affect plume temperatures and flame
+&gt; temperatures and will present the results at the Fire Modelling
+&gt; Conference in Spain next week.
+
+&gt; Once that conference is over I will summarize the results on this
+&gt; forum also.
+">
+
+Judith,
+
+I've seen on the Cantabria University site that there is no way to
+access the proceedings of the conferenece, not even buying them.
+Therefore I also hope that you will be sharing your article with this
+group.
+
+Regards,
+Andrea
+</POST>
+</TEXT>
+</BODY>
+</DOC>

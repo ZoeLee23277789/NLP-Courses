@@ -1,0 +1,446 @@
+<DOC>
+<DOCID> eng-NG-31-126394-9138248 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-01T07:40:00 </DATETIME>
+<BODY>
+<HEADLINE>
+STL string and assignment operator. Plz Help.
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> developer28 &lt;aman.k.se...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-01T07:40:00 </POSTDATE>
+Hi,
+
+I would like to know the following.
+
+suppose i write.
+
+string str1 = &quot;TestString&quot;;
+
+string str2;
+
+str2 = str1
+
+Now can someone tell me how this assignment operator works internally.
+
+actually i do something like
+
+const char * temp =  str1.c_str();
+
+that converts it to a c type string.
+
+and then when i modify the contents of temp, it also affects str2.
+
+Now this makes me doubtful about the fact that internally both the
+objects are using the same pointer.
+
+Please forgive me if my query is too trivial.
+
+Thanks for any help.
+
+Regards,
+Aman.
+</POST>
+<POST>
+<POSTER> Markus Moll &lt;markus.m...@esat.kuleuven.ac.be&gt; </POSTER>
+<POSTDATE> 2007-10-01T08:24:00 </POSTDATE>
+Hi
+
+<QUOTE PREVIOUSPOST="
+developer28 wrote:
+&gt; actually i do something like
+
+&gt; const char * temp =  str1.c_str();
+
+&gt;  that converts it to a c type string.
+
+&gt; and then when i modify the contents of temp, it also affects str2.
+">
+
+You are not allowed to change the contents through a pointer obtained from
+c_str(): &quot;const charT* c_str() const; [...] Requires: The program shall not
+alter any of the values stored in the array. [...]&quot; (There is a reason why
+c_str() returns a pointer to _const_ char)
+
+Probably your implementation uses copy-on-write and you screw things up;
+technically you have undefined behavior anyway.
+
+Markus
+</POST>
+<POST>
+<POSTER> Erik Wikström &lt;Erik-wikst...@telia.com&gt; </POSTER>
+<POSTDATE> 2007-10-01T08:38:00 </POSTDATE>
+On 2007-10-01 13:40, developer28 wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi,
+
+&gt; I would like to know the following.
+
+&gt; suppose i write.
+
+&gt; string str1 = &quot;TestString&quot;;
+
+&gt; string str2;
+
+&gt; str2 = str1
+
+&gt; Now can someone tell me how this assignment operator works internally.
+">
+
+No, since I do not know how std::string (on your implementation) works.
+But I can make an educated guess.
+
+<QUOTE PREVIOUSPOST="
+&gt; actually i do something like
+
+&gt; const char * temp =  str1.c_str();
+
+&gt;  that converts it to a c type string.
+
+&gt; and then when i modify the contents of temp, it also affects str2.
+
+&gt; Now this makes me doubtful about the fact that internally both the
+&gt; objects are using the same pointer.
+">
+
+They are not using the same pointer, each string uses separate data. A
+simplified string class might look something like this:
+
+class String
+{
+int size;
+char* data;
+public:
+String&amp; operator=(const String&amp; s)
+{
+delete data;
+data = new char[s.size];
+strcpy(data, s.data);
+size = s.size;
+}
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+In other words the assignment operator creates a copy of the string.
+
+--
+Erik Wikström
+</POST>
+<POST>
+<POSTER> Barry &lt;dhb2...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-01T09:10:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+developer28 wrote:
+&gt; Hi,
+
+&gt; I would like to know the following.
+
+&gt; suppose i write.
+
+&gt; string str1 = &quot;TestString&quot;;
+
+&gt; string str2;
+
+&gt; str2 = str1
+
+&gt; Now can someone tell me how this assignment operator works internally.
+
+&gt; actually i do something like
+
+&gt; const char * temp =  str1.c_str();
+
+&gt;  that converts it to a c type string.
+
+&gt; and then when i modify the contents of temp, it also affects str2.
+
+&gt; Now this makes me doubtful about the fact that internally both the
+&gt; objects are using the same pointer.
+">
+
+[STD --
+21.3.1 basic_stringconstructors
+
+basic_string&lt;charT,traits,Allocator&gt;&amp;
+operator=(const basic_string&lt;charT,traits,Allocator&gt;&amp; str);
+
+16 Effects: If *this and str are not the same object, modifies *this as
+effects:
+
+data() points at the first element of an
+allocated copy of the array whose
+first element is pointed at by
+str.data()
+
+size() str.size()
+
+capacity() a value at least as large as size()
+
+If *this and str are the same object, the member has no effect.
+--End-STD]
+
+So std::string (basic_string&lt;char&gt;) does not share data with different
+instances.
+
+So the case you described here is not likely to happen if the
+implementation is standard-conformed.
+</POST>
+<POST>
+<POSTER> &quot;Chris ( Val )&quot; &lt;chris...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-01T10:36:00 </POSTDATE>
+On Oct 1, 9:40 pm, developer28 &lt;aman.k.se ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi,
+
+&gt; I would like to know the following.
+
+&gt; suppose i write.
+
+&gt; string str1 = &quot;TestString&quot;;
+
+&gt; string str2;
+
+&gt; str2 = str1
+
+&gt; Now can someone tell me how this assignment operator works internally.
+">
+
+Sorry, I can't help you with that.
+
+<QUOTE PREVIOUSPOST="
+&gt; actually i do something like
+
+&gt; const char * temp =  str1.c_str();
+
+&gt;  that converts it to a c type string.
+">
+
+Modifying a const char* is undefined behaviour, and that
+means that any results you see are possible, albeit right
+or wrong.
+
+--
+Chris Val
+</POST>
+<POST>
+<POSTER> Andre Kostur &lt;nntps...@kostur.net&gt; </POSTER>
+<POSTDATE> 2007-10-01T12:12:00 </POSTDATE>
+=?UTF-8?B?RXJpayBXaWtzdHLDtm0=?= &lt;Erik-wikst ... @telia.com&gt; wrote in
+news:1T5Mi.10145$ZA.6783@newsb.telia.net:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2007-10-01 13:40, developer28 wrote:
+&gt;&gt; Hi,
+
+&gt;&gt; I would like to know the following.
+
+&gt;&gt; suppose i write.
+
+&gt;&gt; string str1 = &quot;TestString&quot;;
+
+&gt;&gt; string str2;
+
+&gt;&gt; str2 = str1
+
+&gt;&gt; Now can someone tell me how this assignment operator works
+internally.
+
+&gt; No, since I do not know how std::string (on your implementation)
+works.
+&gt; But I can make an educated guess.
+
+&gt;&gt; actually i do something like
+
+&gt;&gt; const char * temp =  str1.c_str();
+
+&gt;&gt;  that converts it to a c type string.
+
+&gt;&gt; and then when i modify the contents of temp, it also affects str2.
+">
+
+How?  It's a pointer to const char.  You can't modify it without casting
+away the constness, and at that point you've entered the realm of
+Undefined Behaviour.
+</POST>
+<POST>
+<POSTER> James Kanze &lt;james.ka...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-02T03:48:00 </POSTDATE>
+On Oct 1, 1:40 pm, developer28 &lt;aman.k.se ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I would like to know the following.
+&gt; suppose i write.
+&gt; string str1 = &quot;TestString&quot;;
+&gt; string str2;
+&gt; str2 = str1
+&gt; Now can someone tell me how this assignment operator works internally.
+">
+
+No.  It varies from one implementation to the next.
+
+<QUOTE PREVIOUSPOST="
+&gt; actually i do something like
+&gt; const char * temp =  str1.c_str();
+">
+
+Which is something completely different.
+
+<QUOTE PREVIOUSPOST="
+&gt;  that converts it to a c type string.
+&gt; and then when i modify the contents of temp, it also affects str2.
+">
+
+I doubt it.  You mean that if later, you do something like:
+
+temp = NULL ;
+
+, the contents of str2 (or str1) change?  I've never seen
+anything like that, and I don't see how it could be.
+
+Technically, you cannot modify anything through temp, since it
+points to const.  The next version of the standard will have a
+non-const data() function, however, which is expressedly
+designed to allow modification of the string, e.g. by legacy C
+functions which take char* as pointers to a buffer.  In
+practice, you can reliably use this today as well, by casting
+away the const on the pointer returned by data(), or by using
+&amp;str[0].  It is, however, very dangerous; any modifications
+beyond str.size() will result in immediate undefined behavior.
+It should only be used when interfacing with legacy code.
+
+And of course, what happens in str.data() has nothing to do with
+assignment.
+
+<QUOTE PREVIOUSPOST="
+&gt; Now this makes me doubtful about the fact that internally both
+&gt; the objects are using the same pointer.
+">
+
+The specifications of std::basic_string are fairly complicated,
+intentionally, in order to allow different implementations.  The
+user visible semantics, however, are fairly clear, and that's
+all you need to worry about.
+
+--
+James Kanze (GABI Software)             email:james.ka ... @gmail.com
+Conseils en informatique orientée objet/
+Beratung in objektorientierter Datenverarbeitung
+9 place Sémard, 78210 St.-Cyr-l'École, France, +33 (0)1 30 23 00 34
+</POST>
+<POST>
+<POSTER> &quot;Jim Langston&quot; &lt;tazmas...@rocketmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-02T11:28:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;developer28&quot; &lt;aman.k.se ... @gmail.com&gt; wrote in message
+">
+
+news:1191238835.600028.12920@n39g2000hsh.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi,
+
+&gt; I would like to know the following.
+
+&gt; suppose i write.
+
+&gt; string str1 = &quot;TestString&quot;;
+
+&gt; string str2;
+
+&gt; str2 = str1
+
+&gt; Now can someone tell me how this assignment operator works internally.
+">
+
+Internally most likely the bytes that represent the string in str1 are
+copied into str2 byte for byte.
+
+<QUOTE PREVIOUSPOST="
+&gt; actually i do something like
+
+&gt; const char * temp =  str1.c_str();
+">
+
+Here you are not using std::strings copy constructor, you are using a const
+char* copy constructor.  The only thing that is copied is the value of the
+pointer that c_str() returns.
+
+<QUOTE PREVIOUSPOST="
+&gt; that converts it to a c type string.
+">
+
+No, that returns a pointer to a c-style string which is still internal to
+str1
+
+<QUOTE PREVIOUSPOST="
+&gt; and then when i modify the contents of temp, it also affects str2.
+">
+
+And this is not allowed,  This will provoke undefined behavior.  First off,
+it's a const char*, constant, you are not allowed to change the contents.
+Second, it is a temporary pointer, as soon as str1 changes for whatever
+reason that pointer can become invalidated.  Now, being undefined behavior
+it can pretty much do anything, including change the original string.  Or
+change str2.  Or str99283.  It is undefined behavior.  Don't do it.
+
+<QUOTE PREVIOUSPOST="
+&gt; Now this makes me doubtful about the fact that internally both the
+&gt; objects are using the same pointer.
+">
+
+Both of which objects?  str1 and str2?  They should be using their own
+pointers to their own sets of data.
+
+<QUOTE PREVIOUSPOST="
+&gt; Please forgive me if my query is too trivial.
+">
+</POST>
+<POST>
+<POSTER> Juha Nieminen &lt;nos...@thanks.invalid&gt; </POSTER>
+<POSTDATE> 2007-10-02T13:16:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+developer28 wrote:
+&gt; string str1 = &quot;TestString&quot;;
+
+&gt; string str2;
+
+&gt; str2 = str1
+
+&gt; Now can someone tell me how this assignment operator works internally.
+">
+
+It depends on the compiler.
+
+Some compilers implement std::string copying by using the
+copy-on-write technique. This means that only the pointer is copied and
+a reference count incremented. (The deep copy is made only if you try to
+modify one of the strings.)
+
+Other compilers do a deep copy.
+
+The standard doesn't enforce any specific method to be used.
+
+<QUOTE PREVIOUSPOST="
+&gt; actually i do something like
+
+&gt; const char * temp =  str1.c_str();
+
+&gt;  that converts it to a c type string.
+
+&gt; and then when i modify the contents of temp, it also affects str2.
+">
+
+As people have told you, you shouldn't do that. You are modifying
+the data behind a const pointer, which is asking for trouble.
+
+Anyways, this would indicate that the compiler you are using is using
+copy-on-write for std::string (and you are circumventing it with your
+modifying-const-data hack).
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,221 @@
+<DOC>
+<DOCID> eng-NG-31-126392-9136478 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-10T02:30:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Dead Code?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> jaysome &lt;jays...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-10T02:30:00 </POSTDATE>
+/*
+Does main1() have dead code that can never achieve 100% decision
+coverage? And is main2() a valid way of fixing it so that there is no
+dead code and the assert() never fires off and 100% decision coverage
+can be achieved?
+
+My answers are YES and YES. What are yours?
+*/
+
+#include &lt;assert.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+#define INPUT_FILENAME &quot;foo.dat&quot;
+
+static int main1(void);
+static int main2(void);
+
+static int main1(void)
+{
+FILE *fp;
+char line[132];
+
+fp = fopen(INPUT_FILENAME, &quot;r&quot;);
+if ( !fp )
+{
+fprintf(stderr, &quot;Error opening %s\n&quot;, INPUT_FILENAME);
+return EXIT_FAILURE;
+}
+
+if ( fgets(line, sizeof line, fp) )
+{
+size_t length = strlen(line);
+if ( length &gt; 0 )
+{
+printf(&quot;length == %lu\n&quot;, (unsigned long)length);
+}
+else
+{
+/* can this line ever be reached?*/
+printf(&quot;length == 0\n&quot;);
+}
+}
+
+return EXIT_SUCCESS;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+static int main2(void)
+{
+FILE *fp;
+char line[132];
+
+fp = fopen(INPUT_FILENAME, &quot;r&quot;);
+if ( !fp )
+{
+fprintf(stderr, &quot;Error opening %s\n&quot;, INPUT_FILENAME);
+return EXIT_FAILURE;
+}
+
+if ( fgets(line, sizeof line, fp) )
+{
+size_t length = strlen(line);
+assert(length &gt; 0);/*always true*/
+printf(&quot;length == %lu\n&quot;, (unsigned long)length);
+}
+
+return EXIT_SUCCESS;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+int main(void)
+{
+int status;
+status = main1();
+printf(&quot;main1() returned %d\n&quot;, status);
+status = main2();
+printf(&quot;main2() returned %d\n&quot;, status);
+return 0;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+/*
+Regards
+--
+jay
+
+Using of this superb tool today prompted my question:
+http://www.bullseye.com/
+*/
+</POST>
+<POST>
+<POSTER> cipher &lt;markus.doerschm...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-10T02:52:00 </POSTDATE>
+Hi!
+
+I would sy *no* to both questions. As you can see in the man-page of
+&quot;fgets&quot;, fgets reads characters from file until the max. allowed
+number is reached or a newline or end-of-file character is read. Plain
+text files can contain empty lines: open your favorite text editor,
+press &quot;Return&quot; a few times and save that file.
+According to man-page, fgets should only return a null pointer if eof
+is reached without reading a character from the file. I think, it will
+return a non-null pointer, if a newline is reading without transfering
+a character.
+
+Greetings,
+
+Markus
+</POST>
+<POST>
+<POSTER> Richard Heathfield &lt;r...@see.sig.invalid&gt; </POSTER>
+<POSTDATE> 2007-10-10T04:30:00 </POSTDATE>
+jaysome said:
+
+<QUOTE PREVIOUSPOST="
+&gt; /*
+&gt; Does main1() have dead code that can never achieve 100% decision
+&gt; coverage? And is main2() a valid way of fixing it so that there is no
+&gt; dead code and the assert() never fires off and 100% decision coverage
+&gt; can be achieved?
+
+&gt; My answers are YES and YES. What are yours?
+">
+
+The fgets function will return a null pointer if no characters were read
+from the stream, so the answer to the first part is YES. The answer to the
+second part kind of depends. *As written*, your program attempts to open
+&quot;foo.dat&quot; twice without an intervening fclose. Whether this can succeed is
+implementation-defined, so you might well have dead code in main2 - but of
+course that wouldn't be an issue if it replaced main1 rather than
+following it, which seems to be your intent.
+
+&lt;snip&gt;
+
+--
+Richard Heathfield &lt; http://www.cpax.org.uk &gt;
+Email: - http://www . +rjh@
+Google users: &lt; http://www.cpax.org.uk/prg/writings/googly.php &gt;
+&quot;Usenet is a strange place&quot; - dmr 29 July 1999
+</POST>
+<POST>
+<POSTER> Richard Heathfield &lt;r...@see.sig.invalid&gt; </POSTER>
+<POSTDATE> 2007-10-10T04:32:00 </POSTDATE>
+cipher said:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi!
+
+&gt; I would sy *no* to both questions. As you can see in the man-page of
+&gt; &quot;fgets&quot;, fgets reads characters from file until the max. allowed
+&gt; number is reached or a newline or end-of-file character is read. Plain
+&gt; text files can contain empty lines: open your favorite text editor,
+&gt; press &quot;Return&quot; a few times and save that file.
+">
+
+Yes, do that. Then read that file using fgets, and see how long your empty
+lines are. Then you'll realise that you were mistaken.
+
+--
+Richard Heathfield &lt; http://www.cpax.org.uk &gt;
+Email: - http://www . +rjh@
+Google users: &lt; http://www.cpax.org.uk/prg/writings/googly.php &gt;
+&quot;Usenet is a strange place&quot; - dmr 29 July 1999
+</POST>
+<POST>
+<POSTER> pac...@TheWorld.com (Alan Curry) </POSTER>
+<POSTDATE> 2007-10-10T04:36:00 </POSTDATE>
+In article &lt;tkrog35qppudp9lqhfrugj8n6bd1abj ... @4ax.com&gt;,
+
+<QUOTE PREVIOUSPOST="
+jaysome  &lt;jays ... @hotmail.com&gt; wrote:
+&gt;/*
+&gt;Does main1() have dead code that can never achieve 100% decision
+&gt;coverage? And is main2() a valid way of fixing it so that there is no
+&gt;dead code and the assert() never fires off and 100% decision coverage
+&gt;can be achieved?
+">
+
+Maybe. On my system I can the assertion to fail by feeding it a file that
+starts with a '\0' byte. Given a proper text file, the assertion would never
+fail. But if a user can give your program the wrong kind of file, through
+accident or malice, you better be prepared for weird things like that.
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt;  if ( fgets(line, sizeof line, fp) )
+&gt;  {
+&gt;    size_t length = strlen(line);
+&gt;    assert(length &gt; 0);/*always true*/
+&gt;    printf(&quot;length == %lu\n&quot;, (unsigned long)length);
+&gt;  }
+">
+
+--
+Alan Curry
+pac ... @world.std.com
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,245 @@
+<DOC>
+<DOCID> eng-NG-31-135600-8600045 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-03T11:44:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Reading non-text files
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Tricky &lt;Trickyh...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-03T11:44:00 </POSTDATE>
+How easy is it to read files that are not text into VHDL test benches?
+does it require writing of new libraries to handle different file
+types?
+
+Or is it simpler to just have the IO put into a text file if possible?
+</POST>
+<POST>
+<POSTER> Jonathan Bromley &lt;jonathan.brom...@MYCOMPANY.com&gt; </POSTER>
+<POSTDATE> 2007-09-03T12:02:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Mon, 03 Sep 2007 08:44:34 -0700, Tricky wrote:
+&gt;How easy is it to read files that are not text into VHDL test benches?
+">
+
+Not wildly difficult, but somewhat messy.
+
+<QUOTE PREVIOUSPOST="
+&gt;does it require writing of new libraries to handle different file
+&gt;types?
+">
+
+In practice, no; you can treat just about any file as a
+FILE OF CHARACTER and read the byte stream.  The VHDL
+standard does not mandate this behaviour, but it works
+in all simulators I've ever met.  Characters can be
+easily converted to/from their 0-255 integer equivalent
+using CHARACTER'POS and CHARACTER'VAL attribute-functions.
+
+<QUOTE PREVIOUSPOST="
+&gt;Or is it simpler to just have the IO put into a text file if possible?
+">
+
+Yes, much simpler.  Use an external utility (C, Perl, Tcl, you choose)
+to map your binary file formats to/from some VHDL-friendly text form.
+
+~~~~~~~~~~~~~~~~~~~~~~
+
+To get you started, here are my does-it-work-in-my-simulator
+test programs for binary files:
+
+------1. Write out a 256-byte binary file containing the byte
+------   values 0 to 255 in ascending order.
+
+entity binfile is end;
+
+architecture b of binfile is
+begin
+process
+type charfile is file of character;
+file f: charfile;
+begin
+file_open(f, &quot;junk.bin&quot;, write_mode);
+for i in character loop
+write(f, i);
+end loop;
+file_close(f);
+wait;
+end process;
+end;
+
+-----2. Read a binary file and display its contents byte-wise
+-----   on the console
+
+use std.textio.all;
+
+entity readfile is end;
+
+architecture f of readfile is
+type UnixFile is file of character;
+file Src: UnixFile;
+begin
+ReadBytes : process
+variable c: character;  -- char read from the file
+variable L: line;       -- used for displaying output
+begin
+file_open(Src, &quot;testfile&quot;, READ_MODE);
+while not endfile(Src) loop
+-- Get the next byte
+read(Src, c);
+-- See what we got: first as a character...
+write(L, character'IMAGE(c), field=&gt;5, justified=&gt;LEFT);
+-- and then as its ASCII code in decimal:
+write(L, character'POS(c), field=&gt;3, justified=&gt;RIGHT);
+writeline(OUTPUT, L);
+end loop;
+wait;
+end process;
+end;
+--
+Jonathan Bromley, Consultant
+
+DOULOS - Developing Design Know-how
+VHDL * Verilog * SystemC * e * Perl * Tcl/Tk * Project Services
+
+Doulos Ltd., 22 Market Place, Ringwood, BH24 1AW, UK
+jonathan.brom ... @MYCOMPANY.com
+http://www.MYCOMPANY.com
+
+The contents of this message may contain personal views which
+are not the views of Doulos Ltd., unless specifically stated.
+</POST>
+<POST>
+<POSTER> &quot;KJ&quot; &lt;kkjenni...@sbcglobal.net&gt; </POSTER>
+<POSTDATE> 2007-09-03T13:43:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Tricky&quot; &lt;Trickyh ... @gmail.com&gt; wrote in message
+">
+
+news:1188834274.223892.112280@50g2000hsm.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; How easy is it to read files that are not text into VHDL test benches?
+&gt; does it require writing of new libraries to handle different file
+&gt; types?
+">
+
+See Jonathon's reply
+
+<QUOTE PREVIOUSPOST="
+&gt; Or is it simpler to just have the IO put into a text file if possible?
+">
+
+'Simpler' only the first time....once you notice yourself continually
+creating 'text' versions of binary files for each new project that you work
+on you'll wonder why you didn't just do the binary file I/O yourself right
+from the git-go.
+
+The biggest drawback to not using the native binary file in the first place
+is that your simulation testbench now depends on other utilities to convert
+to/from text files in order to verify proper behaviour.
+
+KJ
+</POST>
+<POST>
+<POSTER> Duane Clark &lt;junkm...@junkmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-03T16:26:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Tricky wrote:
+&gt; How easy is it to read files that are not text into VHDL test benches?
+&gt; does it require writing of new libraries to handle different file
+&gt; types?
+
+&gt; Or is it simpler to just have the IO put into a text file if possible?
+">
+
+The standard read/write commands in VHDL use integers, and I guess use
+the endian order of the machine it is running on. I usually read non
+text files into an integer variable, and do an immediate
+conversion/unpacking, including byte swapping if needed. For integers
+and bits, that is very simple; I don't see an advantage to having a
+library. If I have a file with floating point data, I usually convert it
+to integers with Matlab.
+</POST>
+<POST>
+<POSTER> Jonathan Bromley &lt;jonathan.brom...@MYCOMPANY.com&gt; </POSTER>
+<POSTDATE> 2007-09-03T17:07:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Mon, 03 Sep 2007 20:26:04 GMT, Duane Clark wrote:
+&gt;The standard read/write commands in VHDL use integers
+">
+
+The only way to get truly &quot;standard&quot; (simulator-independent,
+system-independent) file I/O in VHDL is to use STD.TEXTIO,
+which allows you to read and write line-structured plain-text
+files in a truly tool- and system-independent manner.
+
+Any other files are tool- and system-dependent.  As Duane
+points out, even integers (4 bytes???) suffer byte-ordering
+issues.  The use of FILE OF CHARACTER, as I suggested, is
+tool-independent in practice; but even that comes with no
+guarantees.  FILE OF anything-else is a hostage to fortune;
+speaking only for myself, I would avoid it like the plague.
+--
+Jonathan Bromley, Consultant
+
+DOULOS - Developing Design Know-how
+VHDL * Verilog * SystemC * e * Perl * Tcl/Tk * Project Services
+
+Doulos Ltd., 22 Market Place, Ringwood, BH24 1AW, UK
+jonathan.brom ... @MYCOMPANY.com
+http://www.MYCOMPANY.com
+
+The contents of this message may contain personal views which
+are not the views of Doulos Ltd., unless specifically stated.
+</POST>
+<POST>
+<POSTER> Mike Treseler &lt;mike_trese...@comcast.net&gt; </POSTER>
+<POSTDATE> 2007-09-04T12:18:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Tricky wrote:
+&gt; How easy is it to read files that are not text into VHDL test benches?
+">
+
+Here is an example:
+http://home.comcast.net/~mike_treseler/char_file.vhd
+
+<QUOTE PREVIOUSPOST="
+&gt; Or is it simpler to just have the IO put into a text file if possible?
+">
+
+To test a synthesis entity I have to
+convert the test data to vector types.
+My testbench could do this, but
+I prefer to write a script or editor
+macro to convert the file to a vhdl constant array
+that the testbench can use directly.
+
+-- Mike Treseler
+</POST>
+<POST>
+<POSTER> &quot;Huibert J. Lincklaen Arriens&quot; &lt;H.J.LincklaenArri...@tudelft.nl&gt; </POSTER>
+<POSTDATE> 2007-09-11T05:33:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Tricky wrote:
+&gt; How easy is it to read files that are not text into VHDL test benches?
+&gt; does it require writing of new libraries to handle different file
+&gt; types?
+
+&gt; Or is it simpler to just have the IO put into a text file if possible?
+">
+
+You can find a VHDL package for reading and writing binary files (bytes
+and words of different sizes and endian order) that we use in a
+laboratory exercise in one of our courses on
+http://kobalt.et.tudelft.nl/~huib/
+
+Huibert J. Lincklaen Arriens
+Delft University of Technology
+the Netherlands
+</POST>
+</TEXT>
+</BODY>
+</DOC>

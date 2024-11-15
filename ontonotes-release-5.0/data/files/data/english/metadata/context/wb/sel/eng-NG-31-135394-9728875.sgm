@@ -1,0 +1,330 @@
+<DOC>
+<DOCID> eng-NG-31-135394-9728875 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-21T15:02:00 </DATETIME>
+<BODY>
+<HEADLINE>
+rtc drivers name normalization
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Alessandro Zummo &lt;alessandro.zu...@towertech.it&gt; </POSTER>
+<POSTDATE> 2007-10-21T15:02:00 </POSTDATE>
+Hello,
+
+I would like to start an effort to normalize the .driver.name field
+of the RTC drivers in the RTC subsystem.
+
+That field should ideally be prefixed with the string &quot;rtc-&quot; followed
+by the driver's name, like &quot;cmos&quot; or &quot;x1205&quot;.
+
+I'd appreciate if each author can provide a patch for
+his own driver(s) which leads in that direction.
+
+I'm sure there are situations in which this naming convention can lead
+to problems. If so is the case, please take a few minutes to explain
+me the issue.
+
+While you are there, please also double check that the MODULE_AUTHOR
+macro contains your name and email address.
+
+Yours faithfully,
+RTC subsystem maintainer :)
+
+--
+
+Best regards,
+
+Alessandro Zummo,
+Tower Technologies - Torino, Italy
+
+http://www.towertech.it
+</POST>
+<POST>
+<POSTER> Guennadi Liakhovetski &lt;g.liakhovet...@gmx.de&gt; </POSTER>
+<POSTDATE> 2007-10-22T05:44:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sun, 21 Oct 2007, Alessandro Zummo wrote:
+&gt;    I would like to start an effort to normalize the .driver.name field
+&gt;  of the RTC drivers in the RTC subsystem.
+
+&gt;    That field should ideally be prefixed with the string &quot;rtc-&quot; followed
+&gt;  by the driver's name, like &quot;cmos&quot; or &quot;x1205&quot;.
+">
+
+Ok, could you, please, explain why we want it? I cannot remember of any
+other drivers doing the same. For example, hwmon drivers, if you want an
+i2c comparison. I also haven't seen any drivers called with &quot;eth-&quot;, or
+&quot;scsi-&quot;. Ok, most ?ata drivers start with [sp]ata_, but, again, not all,
+and they use an underscore, not a minus as a separator... Same holds for
+source file names. Isn't putting a source file under the drivers/rtc
+directory enough to say it's an rtc driver? If you want to separate
+chip-drivers from generic interface sources, why not put them under a
+further sub-directory, similar to drivers/i2c/{chips,busses};
+drivers/usb/{host,serial,storage,...}?
+
+Thanks
+Guennadi
+---
+Guennadi Liakhovetski
+</POST>
+<POST>
+<POSTER> Alessandro Zummo &lt;alessandro.zu...@towertech.it&gt; </POSTER>
+<POSTDATE> 2007-10-22T05:58:00 </POSTDATE>
+On Mon, 22 Oct 2007 11:44:55 +0200 (CEST)
+
+<QUOTE PREVIOUSPOST="
+Guennadi Liakhovetski &lt;g.liakhovet ... @gmx.de&gt; wrote:
+
+&gt; On Sun, 21 Oct 2007, Alessandro Zummo wrote:
+
+&gt; &gt;    I would like to start an effort to normalize the .driver.name field
+&gt; &gt;  of the RTC drivers in the RTC subsystem.
+
+&gt; &gt;    That field should ideally be prefixed with the string &quot;rtc-&quot; followed
+&gt; &gt;  by the driver's name, like &quot;cmos&quot; or &quot;x1205&quot;.
+
+&gt; Ok, could you, please, explain why we want it? I cannot remember of any
+&gt; other drivers doing the same. For example, hwmon drivers, if you want an
+&gt; i2c comparison. I also haven't seen any drivers called with &quot;eth-&quot;, or
+&gt; &quot;scsi-&quot;. Ok, most ?ata drivers start with [sp]ata_, but, again, not all,
+&gt; and they use an underscore, not a minus as a separator... Same holds for
+&gt; source file names. Isn't putting a source file under the drivers/rtc
+&gt; directory enough to say it's an rtc driver? If you want to separate
+&gt; chip-drivers from generic interface sources, why not put them under a
+&gt; further sub-directory, similar to drivers/i2c/{chips,busses};
+&gt; drivers/usb/{host,serial,storage,...}?
+">
+
+The are two main reasons.
+
+1) We actually have a mix of
+
+chipname
+rtc-chipname
+chipname_rtc
+
+2) Some of the drivers have had a (partly) equivalent
+i2c-only old style driver.
+
+Both of these can lead to confusion, especially when you
+are dealing with platform devices. You might need to open
+the source code and check which name has been used. When you
+handle several platforms you can easily be confused.
+
+In order to address this issue, a coherent naming scheme
+is required.
+
+This is not at a source level, since that has already been solved
+when the rtc subsystem was born.
+
+The reasoning behind the underscore versus the minus character
+is that the underscore requires the shift key. this saves precious
+keystrokes than can be used to improve the code :)
+
+--
+
+Best regards,
+
+Alessandro Zummo,
+Tower Technologies - Torino, Italy
+
+http://www.towertech.it
+</POST>
+<POST>
+<POSTER> Paul Mundt &lt;let...@linux-sh.org&gt; </POSTER>
+<POSTDATE> 2007-10-24T04:15:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sun, Oct 21, 2007 at 09:02:07PM +0200, Alessandro Zummo wrote:
+&gt;   I'm sure there are situations in which this naming convention can lead
+&gt;  to problems. If so is the case, please take a few minutes to explain
+&gt;  me the issue.
+">
+
+For rtc-sh we've been using sh-rtc as the driver name for the platform
+devices, this has primarily been for consistency as most of the other
+sh platform devices follow the same pattern. Additionally, this is
+generally the only RTC that these parts have, so there's not a lot of
+risk of confusion from multiple rtc- prefixed drivers existing in the
+sysfs heirarchy. Given that, I'd prefer to leave the current driver name
+as it is.
+</POST>
+<POST>
+<POSTER> Alessandro Zummo &lt;alessandro.zu...@towertech.it&gt; </POSTER>
+<POSTDATE> 2007-10-24T13:46:00 </POSTDATE>
+On Wed, 24 Oct 2007 17:15:51 +0900
+
+<QUOTE PREVIOUSPOST="
+Paul Mundt &lt;let ... @linux-sh.org&gt; wrote:
+&gt; On Sun, Oct 21, 2007 at 09:02:07PM +0200, Alessandro Zummo wrote:
+&gt; &gt;   I'm sure there are situations in which this naming convention can lead
+&gt; &gt;  to problems. If so is the case, please take a few minutes to explain
+&gt; &gt;  me the issue.
+
+&gt; For rtc-sh we've been using sh-rtc as the driver name for the platform
+&gt; devices, this has primarily been for consistency as most of the other
+&gt; sh platform devices follow the same pattern. Additionally, this is
+&gt; generally the only RTC that these parts have, so there's not a lot of
+&gt; risk of confusion from multiple rtc- prefixed drivers existing in the
+&gt; sysfs heirarchy. Given that, I'd prefer to leave the current driver name
+&gt; as it is.
+">
+
+I must admit I don't know that platform. Is there any chance that an
+additional rtc (i2c, spi?) can be connected to the sh?
+
+--
+
+Best regards,
+
+Alessandro Zummo,
+Tower Technologies - Torino, Italy
+
+http://www.towertech.it
+</POST>
+<POST>
+<POSTER> Richard Purdie &lt;rpur...@rpsys.net&gt; </POSTER>
+<POSTDATE> 2007-10-24T17:10:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Wed, 2007-10-24 at 19:46 +0200, Alessandro Zummo wrote:
+&gt; On Wed, 24 Oct 2007 17:15:51 +0900
+&gt; Paul Mundt &lt;let ... @linux-sh.org&gt; wrote:
+
+&gt; &gt; On Sun, Oct 21, 2007 at 09:02:07PM +0200, Alessandro Zummo wrote:
+&gt; &gt; &gt;   I'm sure there are situations in which this naming convention can lead
+&gt; &gt; &gt;  to problems. If so is the case, please take a few minutes to explain
+&gt; &gt; &gt;  me the issue.
+
+&gt; &gt; For rtc-sh we've been using sh-rtc as the driver name for the platform
+&gt; &gt; devices, this has primarily been for consistency as most of the other
+&gt; &gt; sh platform devices follow the same pattern. Additionally, this is
+&gt; &gt; generally the only RTC that these parts have, so there's not a lot of
+&gt; &gt; risk of confusion from multiple rtc- prefixed drivers existing in the
+&gt; &gt; sysfs heirarchy. Given that, I'd prefer to leave the current driver name
+&gt; &gt; as it is.
+
+&gt;  I must admit I don't know that platform. Is there any chance that an
+&gt;  additional rtc (i2c, spi?) can be connected to the sh?
+">
+
+sa1100-rtc has a similar reason for its naming, if you grep
+arch/arm/mach-sa1100/generic.c you'll see a everything has the sa1100-
+or sa11x0- prefix which makes a lot of sense in that context.
+
+There are three users of the name in the tree:
+
+arch/arm/mach-pxa/generic.c:  .name           = &quot;sa1100-rtc&quot;,
+arch/arm/mach-sa1100/generic.c:       .name           = &quot;sa1100-rtc&quot;,
+drivers/rtc/rtc-sa1100.c:             .name           = &quot;sa1100-rtc&quot;,
+
+I don't really care what the name is too much but the current one
+doesn't seem to have caused anyone any confusion. You could attach
+serial or i2c rtc's to the SA1100/PXA processors but I see them being
+easily identifiable compared to the system one.
+
+Cheers,
+
+Richard
+</POST>
+<POST>
+<POSTER> David Brownell &lt;davi...@pacbell.net&gt; </POSTER>
+<POSTDATE> 2007-10-24T18:55:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; &gt; &gt; For rtc-sh we've been using sh-rtc as the driver name for the platform
+&gt; &gt; &gt; devices, this has primarily been for consistency as most of the other
+&gt; &gt; &gt; sh platform devices follow the same pattern.
+">
+
+Much the same for AT91 and OMAP1 too.  What we have here is a case
+where the pre-existing platform naming conventions are not the same
+as what the newer RTC framework uses.
+
+I'm not sure I'd agree that switching over to the RTC convention is
+appropriate ... and don't really like the implication that all those
+platform naming conventions should be abandoned!
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; &gt; Additionally, this is
+&gt; &gt; &gt; generally the only RTC that these parts have, so there's not a lot of
+&gt; &gt; &gt; risk of confusion from multiple rtc- prefixed drivers existing in the
+&gt; &gt; &gt; sysfs heirarchy. Given that, I'd prefer to leave the current driver name
+&gt; &gt; &gt; as it is.
+
+&gt; &gt;  I must admit I don't know that platform. Is there any chance that an
+&gt; &gt;  additional rtc (i2c, spi?) can be connected to the sh?
+">
+
+Certainly.  I have both AT91 and OMAP boards that have external
+RTCs.  In fact, one OMAP board has multiple such RTCs.  It's not
+really an arch issue (SH, the various ARM or PPC vendors, etc);
+it's an issue of custom (and semi-custom) system design.
+
+Some of the reasons to use an external RTC instead of the SOC one
+include being more power-efficient (mixed-signal silicon evidently
+has issues there, especially in smaller process geometries or lower
+voltages) and (for i2c) being more accessible to other CPUs in a
+board stack.
+
+<QUOTE PREVIOUSPOST="
+&gt; sa1100-rtc has a similar reason for its naming, if you grep
+&gt; arch/arm/mach-sa1100/generic.c you'll see a everything has the sa1100-
+&gt; or sa11x0- prefix which makes a lot of sense in that context.
+
+&gt; ...
+
+&gt;     You could attach
+&gt; serial or i2c rtc's to the SA1100/PXA processors but I see them being
+&gt; easily identifiable compared to the system one.
+">
+
+Yes.  Among other things they'll appear as children of the platform's
+SPI or I2C master device.
+
+- Dave
+</POST>
+<POST>
+<POSTER> David Brownell &lt;davi...@pacbell.net&gt; </POSTER>
+<POSTDATE> 2007-10-24T18:57:00 </POSTDATE>
+On Monday 22 October 2007, Alessandro Zummo wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;  2) Some of the drivers have had a (partly) equivalent
+&gt;  i2c-only old style driver.
+">
+
+That particular confusion goes away as soon as the old
+driver vanishes, right?  Most of those drivers are now
+deprecated...
+</POST>
+<POST>
+<POSTER> Alessandro Zummo &lt;alessandro.zu...@towertech.it&gt; </POSTER>
+<POSTDATE> 2007-10-29T08:24:00 </POSTDATE>
+On Wed, 24 Oct 2007 15:57:52 -0700
+
+<QUOTE PREVIOUSPOST="
+David Brownell &lt;davi ... @pacbell.net&gt; wrote:
+
+&gt; On Monday 22 October 2007, Alessandro Zummo wrote:
+&gt; &gt;  2) Some of the drivers have had a (partly) equivalent
+&gt; &gt;  i2c-only old style driver.
+
+&gt; That particular confusion goes away as soon as the old
+&gt; driver vanishes, right?  Most of those drivers are now
+&gt; deprecated...
+">
+
+Ok, given the general consensus is to keep
+the status quo, i'm just fine with it :)
+
+--
+
+Best regards,
+
+Alessandro Zummo,
+Tower Technologies - Torino, Italy
+
+http://www.towertech.it
+</POST>
+</TEXT>
+</BODY>
+</DOC>

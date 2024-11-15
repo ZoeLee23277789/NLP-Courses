@@ -1,0 +1,837 @@
+<DOC>
+<DOCID> eng-NG-31-126392-9136697 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-25T00:39:00 </DATETIME>
+<BODY>
+<HEADLINE>
+About time spent have big difference in two running
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> xianwei &lt;baikaish...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-25T00:39:00 </POSTDATE>
+#include    &lt;stdio.h&gt;
+#include    &lt;stdlib.h&gt;
+#include    &lt;time.h&gt;
+
+int
+main ( int argc, char *argv[] )
+{
+long    i = 10000000L;
+clock_t start, end;
+double  duration;
+
+printf(&quot;Time do %ld loop spent &quot;, i);
+start = clock();
+while (i--);
+end   = clock();
+
+duration = (double)(end - start) / CLOCKS_PER_SEC;
+printf(&quot;%f seconds\n&quot;, duration);
+
+return EXIT_SUCCESS;
+
+<QUOTE PREVIOUSPOST="
+}                               /* ----------  end of function main  ---------- */
+">
+
+I run the above the program,
+The first time I spent 0.031000 seconds.
+The second time I spent 0.015000 seconds
+If I  try again and again, the time spent on will 0.031 or 0.015
+seconds
+Why have such big difference?
+
+thank you!!!
+</POST>
+<POST>
+<POSTER> Eric Sosman &lt;esos...@ieee-dot-org.invalid&gt; </POSTER>
+<POSTDATE> 2007-09-25T08:15:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+xianwei wrote:
+&gt; #include    &lt;stdio.h&gt;
+&gt; #include    &lt;stdlib.h&gt;
+&gt; #include    &lt;time.h&gt;
+
+&gt; int
+&gt; main ( int argc, char *argv[] )
+&gt; {
+&gt;     long    i = 10000000L;
+&gt;     clock_t start, end;
+&gt;     double  duration;
+
+&gt;     printf(&quot;Time do %ld loop spent &quot;, i);
+&gt;     start = clock();
+&gt;     while (i--);
+&gt;     end   = clock();
+
+&gt;     duration = (double)(end - start) / CLOCKS_PER_SEC;
+&gt;     printf(&quot;%f seconds\n&quot;, duration);
+
+&gt;            return EXIT_SUCCESS;
+&gt; }                          /* ----------  end of function main  ---------- */
+
+&gt; I run the above the program,
+&gt; The first time I spent 0.031000 seconds.
+&gt; The second time I spent 0.015000 seconds
+&gt; If I  try again and again, the time spent on will 0.031 or 0.015
+&gt; seconds
+">
+
+Have you ever seen a hummingbird, and wondered
+how fast its wings flutter?  You might try to find
+an answer by measuring the time for ten million beats.
+So you set up your highly accurate wingbeat counter,
+and then you start your timer: an hourglass ...
+
+--
+Eric Sosman
+esos ... @ieee-dot-org.invalid
+</POST>
+<POST>
+<POSTER> &quot;Charlie Gordon&quot; &lt;n...@chqrlie.org&gt; </POSTER>
+<POSTDATE> 2007-09-25T08:18:00 </POSTDATE>
+&quot;xianwei&quot; &lt;baikaish ... @gmail.com&gt; a ¨¦crit dans le message de news:
+1190695176.006514.155 ... @k79g2000hse.googlegroups.com...
+
+<QUOTE PREVIOUSPOST="
+&gt; #include    &lt;stdio.h&gt;
+&gt; #include    &lt;stdlib.h&gt;
+&gt; #include    &lt;time.h&gt;
+
+&gt; int
+&gt; main ( int argc, char *argv[] )
+&gt; {
+&gt;    long    i = 10000000L;
+&gt;    clock_t start, end;
+&gt;    double  duration;
+
+&gt;    printf(&quot;Time do %ld loop spent &quot;, i);
+&gt;    start = clock();
+&gt;    while (i--);
+&gt;    end   = clock();
+
+&gt;    duration = (double)(end - start) / CLOCKS_PER_SEC;
+&gt;    printf(&quot;%f seconds\n&quot;, duration);
+
+&gt; return EXIT_SUCCESS;
+&gt; } /* ----------  end of function main  ---------- */
+
+&gt; I run the above the program,
+&gt; The first time I spent 0.031000 seconds.
+&gt; The second time I spent 0.015000 seconds
+&gt; If I  try again and again, the time spent on will 0.031 or 0.015
+&gt; seconds
+&gt; Why have such big difference?
+">
+
+I suspect the clock() function on your system has a granularity of around 15
+milliseconds.  If this is the case, the clock() function will return the
+same value for all calls during each 15 millisecond interval.  Depending on
+when exactly you start your measurements within that interval, a task
+lasting cloless than 15ms can be &quot;clocked&quot; as lasting 0ms or 15ms.
+Similarly, one that takes between 15 and 30 might be reposted as taking
+exactly 15ms or exactly 30ms.
+
+On top of this granularity issue, you should look into the clock() function.
+Does it measure elapsed time? total processor time? processor time spent in
+your program vs time spent in the system? or something else even...  Your
+&quot;timings&quot; will also be affected by other tasks the computer performs while
+your program executes, and many other characteristics of you system (cache
+memory, bus sharing with i/o devices, etc.)
+
+For your peticular concern, I suggest you try and synchronize your timing
+efforts with this small loop:
+
+clock_t last, start;
+
+last = start = clock();
+while (start == last) {
+start = clock();
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+You should try and measure longer computations, by repeating them in a loop
+or increasing the constants.
+
+You should consider using more accurate timing functions such as
+non-standard gettimeofday in Linux.
+
+You should repeat the tests many many times, and average the results,
+discarding extreme values.
+
+Effective code profiling is *very* difficult.  Drawing conclusions or making
+changes from profiling data is not easy either: what holds on one
+architecture does not necessarily on another one, even just slightly
+different.  There is no definitive truth in this domain.
+
+--
+Chqrlie
+</POST>
+<POST>
+<POSTER> xianwei &lt;baikaish...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-25T08:42:00 </POSTDATE>
+On Sep 25, 8:15 pm, Eric Sosman &lt;esos ... @ieee-dot-org.invalid&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;     Have you ever seen a hummingbird, and wondered
+&gt; how fast its wings flutter?  You might try to find
+&gt; an answer by measuring the time for ten million beats.
+">
+
+Thank you, you are right, I should replace one millions to ten
+millions.
+When I do that, the time keep in 0.285 - 0.231 seconds, I think this
+is
+well.
+
+To test  how fast humming wings flutter sound not like a good
+idea !! :-)
+</POST>
+<POST>
+<POSTER> xianwei &lt;baikaish...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-25T08:49:00 </POSTDATE>
+On Sep 25, 8:18 pm, &quot;Charlie Gordon&quot; &lt;n ... @chqrlie.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;xianwei&quot; &lt;baikaish ... @gmail.com&gt; a ¨¦crit dans le message de news:
+&gt; 1190695176.006514.155 ... @k79g2000hse.googlegroups.com...
+
+&gt; &gt; #include    &lt;stdio.h&gt;
+&gt; &gt; #include    &lt;stdlib.h&gt;
+&gt; &gt; #include    &lt;time.h&gt;
+
+&gt; &gt; int
+&gt; &gt; main ( int argc, char *argv[] )
+&gt; &gt; {
+&gt; &gt;    long    i = 10000000L;
+&gt; &gt;    clock_t start, end;
+&gt; &gt;    double  duration;
+
+&gt; &gt;    printf(&quot;Time do %ld loop spent &quot;, i);
+&gt; &gt;    start = clock();
+&gt; &gt;    while (i--);
+&gt; &gt;    end   = clock();
+
+&gt; &gt;    duration = (double)(end - start) / CLOCKS_PER_SEC;
+&gt; &gt;    printf(&quot;%f seconds\n&quot;, duration);
+
+&gt; &gt; return EXIT_SUCCESS;
+&gt; &gt; } /* ----------  end of function main  ---------- */
+
+&gt; &gt; I run the above the program,
+&gt; &gt; The first time I spent 0.031000 seconds.
+&gt; &gt; The second time I spent 0.015000 seconds
+&gt; &gt; If I  try again and again, the time spent on will 0.031 or 0.015
+&gt; &gt; seconds
+&gt; &gt; Why have such big difference?
+
+&gt; I suspect the clock() function on your system has a granularity of around 15
+&gt; milliseconds.  If this is the case, the clock() function will return the
+&gt; same value for all calls during each 15 millisecond interval.  Depending on
+&gt; when exactly you start your measurements within that interval, a task
+&gt; lasting cloless than 15ms can be &quot;clocked&quot; as lasting 0ms or 15ms.
+&gt; Similarly, one that takes between 15 and 30 might be reposted as taking
+&gt; exactly 15ms or exactly 30ms.
+">
+
+Thank you for you explanation about the question.
+
+<QUOTE PREVIOUSPOST="
+&gt; You should repeat the tests many many times, and average the results,
+&gt; discarding extreme values.
+">
+
+Yes, when I larger the loop times, the spent times differs in a small
+point.
+Thanks you enthusiasm.
+</POST>
+<POST>
+<POSTER> CBFalconer &lt;cbfalco...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-09-25T01:53:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+xianwei wrote:
+
+... snip ...
+
+&gt; I run the above the program,
+&gt; The first time I spent 0.031000 seconds.
+&gt; The second time I spent 0.015000 seconds
+&gt; If I  try again and again, the time spent on will 0.031 or 0.015
+&gt; seconds.  Why have such big difference?
+">
+
+Because the resolution of your clock is obviously roughly 0.0155 S.
+
+--
+Chuck F (cbfalconer at maineline dot net)
+Available for consulting/temporary embedded and systems.
+&lt; http://cbfalconer.home.att.net &gt;
+
+--
+Posted via a free Usenet account from http://www.teranews.com
+</POST>
+<POST>
+<POSTER> Eric Sosman &lt;Eric.Sos...@sun.com&gt; </POSTER>
+<POSTDATE> 2007-09-25T12:12:00 </POSTDATE>
+xianwei wrote On 09/25/07 08:42,:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 25, 8:15 pm, Eric Sosman &lt;esos ... @ieee-dot-org.invalid&gt; wrote:
+
+&gt;&gt;    Have you ever seen a hummingbird, and wondered
+&gt;&gt;how fast its wings flutter?  You might try to find
+&gt;&gt;an answer by measuring the time for ten million beats.
+
+&gt; Thank you, you are right, I should replace one millions to ten
+&gt; millions.
+&gt; When I do that, the time keep in 0.285 - 0.231 seconds, I think this
+&gt; is
+&gt; well.
+
+&gt; To test  how fast humming wings flutter sound not like a good
+&gt; idea !! :-)
+">
+
+The point is that the &quot;granularity&quot; of your measuring
+instrument influences how precisely you can measure.  An
+hourglass is fine for measuring durations on the order of,
+well, hours, but is not well suited for measuring milliseconds.
+There are ways to improve the measurement precision of a
+&quot;coarse&quot; clock; one of them is to measure more repetitions
+of the activity whose duration interests you.
+
+--
+Eric.Sos ... @sun.com
+</POST>
+<POST>
+<POSTER> Keith Thompson &lt;ks...@mib.org&gt; </POSTER>
+<POSTDATE> 2007-09-25T15:44:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+CBFalconer &lt;cbfalco ... @yahoo.com&gt; writes:
+&gt; xianwei wrote:
+&gt; ... snip ...
+
+&gt;&gt; I run the above the program,
+&gt;&gt; The first time I spent 0.031000 seconds.
+&gt;&gt; The second time I spent 0.015000 seconds
+&gt;&gt; If I  try again and again, the time spent on will 0.031 or 0.015
+&gt;&gt; seconds.  Why have such big difference?
+
+&gt; Because the resolution of your clock is obviously roughly 0.0155 S.
+">
+
+Most likely 1/60 second, but that's just a semi-educated guess.
+
+--
+Keith Thompson (The_Other_Keith) ks ... @mib.org  &lt; http://www.ghoti.net/~kst &gt;
+San Diego Supercomputer Center             &lt;*&gt;  &lt; http://users.sdsc.edu/~kst &gt;
+&quot;We must do something.  This is something.  Therefore, we must do this.&quot;
+-- Antony Jay and Jonathan Lynn, &quot;Yes Minister&quot;
+</POST>
+<POST>
+<POSTER> CBFalconer &lt;cbfalco...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-09-25T17:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Keith Thompson wrote:
+&gt; CBFalconer &lt;cbfalco ... @yahoo.com&gt; writes:
+&gt;&gt; xianwei wrote:
+
+&gt;&gt; ... snip ...
+
+&gt;&gt;&gt; I run the above the program,
+&gt;&gt;&gt; The first time I spent 0.031000 seconds.
+&gt;&gt;&gt; The second time I spent 0.015000 seconds
+&gt;&gt;&gt; If I  try again and again, the time spent on will 0.031 or 0.015
+&gt;&gt;&gt; seconds.  Why have such big difference?
+
+&gt;&gt; Because the resolution of your clock is obviously roughly 0.0155 S.
+
+&gt; Most likely 1/60 second, but that's just a semi-educated guess.
+">
+
+PCs can have some peculiar number, tied back to the old XT.
+
+--
+Chuck F (cbfalconer at maineline dot net)
+Available for consulting/temporary embedded and systems.
+&lt; http://cbfalconer.home.att.net &gt;
+
+--
+Posted via a free Usenet account from http://www.teranews.com
+</POST>
+<POST>
+<POSTER> &quot;Peter J. Holzer&quot; &lt;hjp-usen...@hjp.at&gt; </POSTER>
+<POSTDATE> 2007-09-26T08:56:00 </POSTDATE>
+On 2007-09-25 21:40, CBFalconer &lt;cbfalco ... @yahoo.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Keith Thompson wrote:
+&gt;&gt; CBFalconer &lt;cbfalco ... @yahoo.com&gt; writes:
+&gt;&gt;&gt; Because the resolution of your clock is obviously roughly 0.0155 S.
+
+&gt;&gt; Most likely 1/60 second, but that's just a semi-educated guess.
+
+&gt; PCs can have some peculiar number, tied back to the old XT.
+">
+
+That would be 1/18.2 seconds (or rather 1 / (4.77E6 / 4 / 65536)
+seconds). Was CLOCKS_PER_SEC actually a floating point constant on
+MS-DOS compilers? I don't remember but I guess it must have been.
+
+hp
+
+--
+_  | Peter J. Holzer    | I know I'd be respectful of a pirate
+|_|_) | Sysadmin WSR       | with an emu on his shoulder.
+| |   | h ... @hjp.at         |
+__/   | http://www.hjp.at/ |      -- Sam in &quot;Freefall&quot;
+</POST>
+<POST>
+<POSTER> &quot;Charlie Gordon&quot; &lt;n...@chqrlie.org&gt; </POSTER>
+<POSTDATE> 2007-09-26T11:44:00 </POSTDATE>
+&quot;Peter J. Holzer&quot; &lt;hjp-usen ... @hjp.at&gt; a écrit dans le message de news:
+slrnffklo3.a6i.hjp-usen ... @zeno.hjp.at...
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2007-09-25 21:40, CBFalconer &lt;cbfalco ... @yahoo.com&gt; wrote:
+&gt;&gt; Keith Thompson wrote:
+&gt;&gt;&gt; CBFalconer &lt;cbfalco ... @yahoo.com&gt; writes:
+&gt;&gt;&gt;&gt; Because the resolution of your clock is obviously roughly 0.0155 S.
+
+&gt;&gt;&gt; Most likely 1/60 second, but that's just a semi-educated guess.
+
+&gt;&gt; PCs can have some peculiar number, tied back to the old XT.
+
+&gt; That would be 1/18.2 seconds (or rather 1 / (4.77E6 / 4 / 65536)
+&gt; seconds). Was CLOCKS_PER_SEC actually a floating point constant on
+&gt; MS-DOS compilers? I don't remember but I guess it must have been.
+">
+
+For those who wonder why 18.2 Hz, that makes 64K ticks per hour.
+This may be the very reason for the rather odd original PC frequency:
+65536 * 65536 * 4 / 3600 = 4.772185 MHz
+
+--
+Chqrlie.
+</POST>
+<POST>
+<POSTER> Sjouke Burry &lt;burrynulnulf...@ppllaanneett.nnlll&gt; </POSTER>
+<POSTDATE> 2007-09-26T12:17:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Charlie Gordon wrote:
+&gt; &quot;Peter J. Holzer&quot; &lt;hjp-usen ... @hjp.at&gt; a écrit dans le message de news:
+&gt; slrnffklo3.a6i.hjp-usen ... @zeno.hjp.at...
+&gt;&gt; On 2007-09-25 21:40, CBFalconer &lt;cbfalco ... @yahoo.com&gt; wrote:
+&gt;&gt;&gt; Keith Thompson wrote:
+&gt;&gt;&gt;&gt; CBFalconer &lt;cbfalco ... @yahoo.com&gt; writes:
+&gt;&gt;&gt;&gt;&gt; Because the resolution of your clock is obviously roughly 0.0155 S.
+&gt;&gt;&gt;&gt; Most likely 1/60 second, but that's just a semi-educated guess.
+&gt;&gt;&gt; PCs can have some peculiar number, tied back to the old XT.
+&gt;&gt; That would be 1/18.2 seconds (or rather 1 / (4.77E6 / 4 / 65536)
+&gt;&gt; seconds). Was CLOCKS_PER_SEC actually a floating point constant on
+&gt;&gt; MS-DOS compilers? I don't remember but I guess it must have been.
+">
+
+No. CLOCKS_PER_SEC is (mostly) an int.
+
+Watcom compiler:
+#define CLOCKS_PER_SEC  100
+
+Microsoft C Compiler Version 2.00.000 V 6.00A
+#define CLOCKS_PER_SEC  1000
+
+Borland BC5 however disagrees.
+#define CLOCKS_PER_SEC 1000.0
+
+Digital Mars compiler:
+#define CLOCKS_PER_SEC ((clock_t)1000)
+</POST>
+<POST>
+<POSTER> rich...@cogsci.ed.ac.uk (Richard Tobin) </POSTER>
+<POSTDATE> 2007-09-26T12:56:00 </POSTDATE>
+In article &lt;46fa7e61$0$26056$426a7 ... @news.free.fr&gt;,
+
+<QUOTE PREVIOUSPOST="
+Charlie Gordon &lt;n ... @chqrlie.org&gt; wrote:
+&gt;This may be the very reason for the rather odd original PC frequency:
+&gt;65536 * 65536 * 4 / 3600 = 4.772185 MHz
+">
+
+No, that comes from the 4/3 the frequency of an NTSC colour
+sub-carrier oscillator.  I'm not sure if the PC had one of these
+anyway and it was reused, or if they were just cheap.
+
+-- Richard
+
+--
+&quot;Consideration shall be given to the need for as many as 32 characters
+in some alphabets&quot; - X3.4, 1963.
+</POST>
+<POST>
+<POSTER> &quot;Charlie Gordon&quot; &lt;n...@chqrlie.org&gt; </POSTER>
+<POSTDATE> 2007-09-27T05:52:00 </POSTDATE>
+&quot;Richard Tobin&quot; &lt;rich ... @cogsci.ed.ac.uk&gt; a écrit dans le message de news:
+fde2v7$1rt ... @pc-news.cogsci.ed.ac.uk...
+
+<QUOTE PREVIOUSPOST="
+&gt; In article &lt;46fa7e61$0$26056$426a7 ... @news.free.fr&gt;,
+&gt; Charlie Gordon &lt;n ... @chqrlie.org&gt; wrote:
+&gt;&gt;This may be the very reason for the rather odd original PC frequency:
+&gt;&gt;65536 * 65536 * 4 / 3600 = 4.772185 MHz
+
+&gt; No, that comes from the 4/3 the frequency of an NTSC colour
+&gt; sub-carrier oscillator.  I'm not sure if the PC had one of these
+&gt; anyway and it was reused, or if they were just cheap.
+">
+
+I am positive it did not, since the graphics was done on a separate adapter
+board.
+But you are right, these oscillators were common and cheap, and the
+frequency may not have been exactly what I stated.  The BIOS did take
+advantage of the 64K ticks in an hour, but there might have been an
+adjustment, I'll take a look.
+
+--
+Chqrlie.
+</POST>
+<POST>
+<POSTER> &quot;Peter J. Holzer&quot; &lt;hjp-usen...@hjp.at&gt; </POSTER>
+<POSTDATE> 2007-09-27T10:03:00 </POSTDATE>
+On 2007-09-26 16:17, Sjouke Burry &lt;burrynulnulf ... @ppllaanneett.nnlll&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Charlie Gordon wrote:
+&gt;&gt; &quot;Peter J. Holzer&quot; &lt;hjp-usen ... @hjp.at&gt; a écrit dans le message de news:
+&gt;&gt; slrnffklo3.a6i.hjp-usen ... @zeno.hjp.at...
+&gt;&gt;&gt; On 2007-09-25 21:40, CBFalconer &lt;cbfalco ... @yahoo.com&gt; wrote:
+&gt;&gt;&gt;&gt; PCs can have some peculiar number, tied back to the old XT.
+&gt;&gt;&gt; That would be 1/18.2 seconds (or rather 1 / (4.77E6 / 4 / 65536)
+&gt;&gt;&gt; seconds). Was CLOCKS_PER_SEC actually a floating point constant on
+&gt;&gt;&gt; MS-DOS compilers? I don't remember but I guess it must have been.
+
+&gt; No. CLOCKS_PER_SEC is (mostly) an int.
+
+&gt; Watcom compiler:
+&gt; #define CLOCKS_PER_SEC     100
+
+&gt; Microsoft C Compiler Version 2.00.000 V 6.00A
+&gt; #define CLOCKS_PER_SEC     1000
+
+&gt; Borland BC5 however disagrees.
+&gt; #define CLOCKS_PER_SEC 1000.0
+
+&gt; Digital Mars compiler:
+&gt; #define CLOCKS_PER_SEC ((clock_t)1000)
+">
+
+These examples are rather irrelevant since the clock frequency in these
+cases is (presumably) exactly 100 Hz or 1000 Hz. But in MS-DOS the
+frequency was 18.2 Hz. If CLOCKS_PER_SEC was defined as 18, that would
+have caused an error of about 1.1%, which I think would have been
+noticable. (Maybe I should get out my old Turbo-C++ 1.0 disks and have a
+look).
+
+hp
+
+--
+_  | Peter J. Holzer    | I know I'd be respectful of a pirate
+|_|_) | Sysadmin WSR       | with an emu on his shoulder.
+| |   | h ... @hjp.at         |
+__/   | http://www.hjp.at/ |      -- Sam in &quot;Freefall&quot;
+</POST>
+<POST>
+<POSTER> Sjouke Burry &lt;burrynulnulf...@ppllaanneett.nnlll&gt; </POSTER>
+<POSTDATE> 2007-09-27T13:34:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Peter J. Holzer wrote:
+&gt; On 2007-09-26 16:17, Sjouke Burry &lt;burrynulnulf ... @ppllaanneett.nnlll&gt; wrote:
+&gt;&gt; Charlie Gordon wrote:
+&gt;&gt;&gt; &quot;Peter J. Holzer&quot; &lt;hjp-usen ... @hjp.at&gt; a écrit dans le message de news:
+&gt;&gt;&gt; slrnffklo3.a6i.hjp-usen ... @zeno.hjp.at...
+&gt;&gt;&gt;&gt; On 2007-09-25 21:40, CBFalconer &lt;cbfalco ... @yahoo.com&gt; wrote:
+&gt;&gt;&gt;&gt;&gt; PCs can have some peculiar number, tied back to the old XT.
+&gt;&gt;&gt;&gt; That would be 1/18.2 seconds (or rather 1 / (4.77E6 / 4 / 65536)
+&gt;&gt;&gt;&gt; seconds). Was CLOCKS_PER_SEC actually a floating point constant on
+&gt;&gt;&gt;&gt; MS-DOS compilers? I don't remember but I guess it must have been.
+&gt;&gt; No. CLOCKS_PER_SEC is (mostly) an int.
+
+&gt;&gt; Watcom compiler:
+&gt;&gt; #define CLOCKS_PER_SEC 100
+
+&gt;&gt; Microsoft C Compiler Version 2.00.000 V 6.00A
+&gt;&gt; #define CLOCKS_PER_SEC 1000
+
+&gt;&gt; Borland BC5 however disagrees.
+&gt;&gt; #define CLOCKS_PER_SEC 1000.0
+
+&gt;&gt; Digital Mars compiler:
+&gt;&gt; #define CLOCKS_PER_SEC ((clock_t)1000)
+
+&gt; These examples are rather irrelevant since the clock frequency in these
+&gt; cases is (presumably) exactly 100 Hz or 1000 Hz. But in MS-DOS the
+&gt; frequency was 18.2 Hz. If CLOCKS_PER_SEC was defined as 18, that would
+&gt; have caused an error of about 1.1%, which I think would have been
+&gt; noticable. (Maybe I should get out my old Turbo-C++ 1.0 disks and have a
+&gt; look).
+
+&gt;    hp
+">
+
+Pardon me??? That whole list is from dos computers.
+However they all do modify their clockticks in some way.
+I have never seen a clocktick to have a one to one relation
+to the 18.2 HZ clock, they all modify that  to give a
+&quot;decimal&quot; clocktick.
+When however you print all clockchanges,you can recognize the
+relation to the systemclock.
+</POST>
+<POST>
+<POSTER> Keith Thompson &lt;ks...@mib.org&gt; </POSTER>
+<POSTDATE> 2007-09-27T18:34:00 </POSTDATE>
+&quot;Peter J. Holzer&quot; &lt;hjp-usen ... @hjp.at&gt; writes:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2007-09-26 16:17, Sjouke Burry &lt;burrynulnulf ... @ppllaanneett.nnlll&gt; wrote:
+&gt;&gt; Charlie Gordon wrote:
+&gt;&gt;&gt; &quot;Peter J. Holzer&quot; &lt;hjp-usen ... @hjp.at&gt; a écrit dans le message de news:
+&gt;&gt;&gt; slrnffklo3.a6i.hjp-usen ... @zeno.hjp.at...
+&gt;&gt;&gt;&gt; On 2007-09-25 21:40, CBFalconer &lt;cbfalco ... @yahoo.com&gt; wrote:
+&gt;&gt;&gt;&gt;&gt; PCs can have some peculiar number, tied back to the old XT.
+&gt;&gt;&gt;&gt; That would be 1/18.2 seconds (or rather 1 / (4.77E6 / 4 / 65536)
+&gt;&gt;&gt;&gt; seconds). Was CLOCKS_PER_SEC actually a floating point constant on
+&gt;&gt;&gt;&gt; MS-DOS compilers? I don't remember but I guess it must have been.
+
+&gt;&gt; No. CLOCKS_PER_SEC is (mostly) an int.
+
+&gt;&gt; Watcom compiler:
+&gt;&gt; #define CLOCKS_PER_SEC 100
+
+&gt;&gt; Microsoft C Compiler Version 2.00.000 V 6.00A
+&gt;&gt; #define CLOCKS_PER_SEC 1000
+
+&gt;&gt; Borland BC5 however disagrees.
+&gt;&gt; #define CLOCKS_PER_SEC 1000.0
+
+&gt;&gt; Digital Mars compiler:
+&gt;&gt; #define CLOCKS_PER_SEC ((clock_t)1000)
+
+&gt; These examples are rather irrelevant since the clock frequency in these
+&gt; cases is (presumably) exactly 100 Hz or 1000 Hz. But in MS-DOS the
+&gt; frequency was 18.2 Hz. If CLOCKS_PER_SEC was defined as 18, that would
+&gt; have caused an error of about 1.1%, which I think would have been
+&gt; noticable. (Maybe I should get out my old Turbo-C++ 1.0 disks and have a
+&gt; look).
+">
+
+CLOCKS_PER_SEC doesn't necessarily match the actual clock frequency.
+It just gives you the factor by which you need to scale the value
+returned by the clock() function.
+
+For example, a physical clock frequency of 18.2 Hz and a
+CLOCKS_PER_SEC value of 1000 would be consistent. Successive calls to
+clock() might return
+0
+55
+110
+165
+...
+989
+1044
+and so forth; each result exceeds the prievous one by 54 or 55.
+
+--
+Keith Thompson (The_Other_Keith) ks ... @mib.org  &lt; http://www.ghoti.net/~kst &gt;
+San Diego Supercomputer Center             &lt;*&gt;  &lt; http://users.sdsc.edu/~kst &gt;
+&quot;We must do something.  This is something.  Therefore, we must do this.&quot;
+-- Antony Jay and Jonathan Lynn, &quot;Yes Minister&quot;
+</POST>
+<POST>
+<POSTER> Ben Pfaff &lt;b...@cs.stanford.edu&gt; </POSTER>
+<POSTDATE> 2007-09-27T18:46:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Keith Thompson &lt;ks ... @mib.org&gt; writes:
+&gt; CLOCKS_PER_SEC doesn't necessarily match the actual clock frequency.
+&gt; It just gives you the factor by which you need to scale the value
+&gt; returned by the clock() function.
+">
+
+And in fact, CLOCKS_PER_SEC has the same value on all
+XSI-conformant UNIX systems, even though such systems are not
+required to have a clock that ticks at any particular frequency.
+--
+Ben Pfaff
+http://benpfaff.org
+</POST>
+<POST>
+<POSTER> &quot;Peter J. Holzer&quot; &lt;hjp-usen...@hjp.at&gt; </POSTER>
+<POSTDATE> 2007-09-29T03:20:00 </POSTDATE>
+On 2007-09-27 17:34, Sjouke Burry &lt;burrynulnulf ... @ppllaanneett.nnlll&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Peter J. Holzer wrote:
+&gt;&gt; On 2007-09-26 16:17, Sjouke Burry &lt;burrynulnulf ... @ppllaanneett.nnlll&gt; wrote:
+&gt;&gt;&gt; Charlie Gordon wrote:
+&gt;&gt;&gt;&gt; &quot;Peter J. Holzer&quot; &lt;hjp-usen ... @hjp.at&gt; a écrit dans le message de news:
+&gt;&gt;&gt;&gt; slrnffklo3.a6i.hjp-usen ... @zeno.hjp.at...
+&gt;&gt;&gt;&gt;&gt; On 2007-09-25 21:40, CBFalconer &lt;cbfalco ... @yahoo.com&gt; wrote:
+&gt;&gt;&gt;&gt;&gt;&gt; PCs can have some peculiar number, tied back to the old XT.
+&gt;&gt;&gt;&gt;&gt; That would be 1/18.2 seconds (or rather 1 / (4.77E6 / 4 / 65536)
+&gt;&gt;&gt;&gt;&gt; seconds). Was CLOCKS_PER_SEC actually a floating point constant on
+&gt;&gt;&gt;&gt;&gt; MS-DOS compilers? I don't remember but I guess it must have been.
+&gt;&gt;&gt; No. CLOCKS_PER_SEC is (mostly) an int.
+
+&gt;&gt;&gt; Watcom compiler:
+&gt;&gt;&gt; #define CLOCKS_PER_SEC     100
+
+&gt;&gt;&gt; Microsoft C Compiler Version 2.00.000 V 6.00A
+&gt;&gt;&gt; #define CLOCKS_PER_SEC     1000
+
+&gt;&gt;&gt; Borland BC5 however disagrees.
+&gt;&gt;&gt; #define CLOCKS_PER_SEC 1000.0
+
+&gt;&gt;&gt; Digital Mars compiler:
+&gt;&gt;&gt; #define CLOCKS_PER_SEC ((clock_t)1000)
+
+&gt;&gt; These examples are rather irrelevant since the clock frequency in these
+&gt;&gt; cases is (presumably) exactly 100 Hz or 1000 Hz. But in MS-DOS the
+&gt;&gt; frequency was 18.2 Hz. If CLOCKS_PER_SEC was defined as 18, that would
+&gt;&gt; have caused an error of about 1.1%, which I think would have been
+&gt;&gt; noticable. (Maybe I should get out my old Turbo-C++ 1.0 disks and have a
+&gt;&gt; look).
+
+&gt; Pardon me??? That whole list is from dos computers.
+&gt; However they all do modify their clockticks in some way.
+">
+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+That's the crux. If they modify the clockticks, they aren't the same any
+more. If a program does NOT modify the clock ticks, the frequency is
+18.2 Hz, which is not an integral number.
+
+<QUOTE PREVIOUSPOST="
+&gt; I have never seen a clocktick to have a one to one relation
+&gt; to the 18.2 HZ clock, they all modify that  to give a
+&gt; &quot;decimal&quot; clocktick.
+">
+
+I am positive that Turbo C (up to and including Turbo-C++ 1.0, which
+was the last version I've used) did not modify the clock rate, because
+on ocassion I needed a higher resolution and had to reprogram the timer
+chip myself. It is possible that clock did the conversion internally,
+as Keith suggests, but I doubt that, because:
+
+* I think I would remember it
+
+* I found some old benchmark code of mine, which contains a comment
+on the granularity of the times() function on Ultrix, but none on the
+granularity of clock on MS-DOS. I think I would have added a comment
+if granularity of clock was worse than CLOCKS_PER_SEC suggested.
+
+So, I think that CLOCKS_PER_SEC should have been 18.2 on Turbo-C, but I
+don't remember if they actually defined it as 18.2 or approximated it
+with 18. However, I notice that in your examples the Borland compiler is
+the only one which defines CLOCKS_PER_SEC as a floating point constant,
+which strongly suggests that it was 18.2 in earlier versions and when
+they changed it to 1000, they didn't want to break programs which
+(erroneously) assumed that CLOCKS_PER_SEC was of type double.
+
+hp
+
+--
+_  | Peter J. Holzer    | I know I'd be respectful of a pirate
+|_|_) | Sysadmin WSR       | with an emu on his shoulder.
+| |   | h ... @hjp.at         |
+__/   | http://www.hjp.at/ |      -- Sam in &quot;Freefall&quot;
+</POST>
+<POST>
+<POSTER> &quot;Peter J. Holzer&quot; &lt;hjp-usen...@hjp.at&gt; </POSTER>
+<POSTDATE> 2007-09-29T03:36:00 </POSTDATE>
+On 2007-09-27 22:34, Keith Thompson &lt;ks ... @mib.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Peter J. Holzer&quot; &lt;hjp-usen ... @hjp.at&gt; writes:
+&gt;&gt; On 2007-09-26 16:17, Sjouke Burry &lt;burrynulnulf ... @ppllaanneett.nnlll&gt; wrote:
+&gt;&gt;&gt; Charlie Gordon wrote:
+&gt;&gt;&gt;&gt; &quot;Peter J. Holzer&quot; &lt;hjp-usen ... @hjp.at&gt; a écrit dans le message de news:
+&gt;&gt;&gt;&gt; slrnffklo3.a6i.hjp-usen ... @zeno.hjp.at...
+&gt;&gt;&gt;&gt;&gt; On 2007-09-25 21:40, CBFalconer &lt;cbfalco ... @yahoo.com&gt; wrote:
+&gt;&gt;&gt;&gt;&gt;&gt; PCs can have some peculiar number, tied back to the old XT.
+&gt;&gt;&gt;&gt;&gt; That would be 1/18.2 seconds (or rather 1 / (4.77E6 / 4 / 65536)
+&gt;&gt;&gt;&gt;&gt; seconds). Was CLOCKS_PER_SEC actually a floating point constant on
+&gt;&gt;&gt;&gt;&gt; MS-DOS compilers? I don't remember but I guess it must have been.
+
+&gt;&gt;&gt; No. CLOCKS_PER_SEC is (mostly) an int.
+
+&gt;&gt;&gt; Watcom compiler:
+&gt;&gt;&gt; #define CLOCKS_PER_SEC     100
+
+&gt;&gt;&gt; Microsoft C Compiler Version 2.00.000 V 6.00A
+&gt;&gt;&gt; #define CLOCKS_PER_SEC     1000
+
+&gt;&gt;&gt; Borland BC5 however disagrees.
+&gt;&gt;&gt; #define CLOCKS_PER_SEC 1000.0
+
+&gt;&gt;&gt; Digital Mars compiler:
+&gt;&gt;&gt; #define CLOCKS_PER_SEC ((clock_t)1000)
+
+&gt;&gt; These examples are rather irrelevant since the clock frequency in these
+&gt;&gt; cases is (presumably) exactly 100 Hz or 1000 Hz. But in MS-DOS the
+&gt;&gt; frequency was 18.2 Hz. If CLOCKS_PER_SEC was defined as 18, that would
+&gt;&gt; have caused an error of about 1.1%, which I think would have been
+&gt;&gt; noticable. (Maybe I should get out my old Turbo-C++ 1.0 disks and have a
+&gt;&gt; look).
+
+&gt; CLOCKS_PER_SEC doesn't necessarily match the actual clock frequency.
+">
+
+I know, I have used systems where they didn't match (in fact I'm using
+one right now). I am quite sure that they did match on MS-DOS with the
+Turbo-C compilers, though. I should have written &quot;... the unit of time
+returned by clock is exactly 1/100 or 1/1000 second&quot; instead of &quot;...
+clock frequency ...&quot;.
+
+hp
+
+--
+_  | Peter J. Holzer    | I know I'd be respectful of a pirate
+|_|_) | Sysadmin WSR       | with an emu on his shoulder.
+| |   | h ... @hjp.at         |
+__/   | http://www.hjp.at/ |      -- Sam in &quot;Freefall&quot;
+</POST>
+<POST>
+<POSTER> Guy Macon &lt;http://www.guymacon.com/&gt; </POSTER>
+<POSTDATE> 2007-09-29T07:06:00 </POSTDATE>
+Just for reference:
+
+Assuming a stock IBM PC without the counter reprogrammed,
+the &quot;18.2 per second&quot; interrupt was derived as follows:
+
+The IBM PC Clock Crystal oscillates at 4770000 Hertz.
+4770000 / 4 / 65536  = 18.19610595703125 Hertz.
+
+This is close to 65536 ticks per hour:
+3600 Seconds (1 Hour) / 65536  = 18.20444... Hertz.
+
+And is related to a NTSC Color Crystal at 14318180 Hertz:
+14318180 / 12 / 65536 = 18.2065073649088541666... Hertz.
+
+That 4770000 Hertz IBM PC Crystal had a best case accuracy
+of +/- 0.0005%, a typical accuracy of +/- 0.002%, and a
+worst case accuracy of +/- 0.01%.  Some servers have oven
+stabilized crystals with an accuracy approaching 0.00001%
+(0.1 ppm).
+
+Also, There is a list of interrupts and IRQs here:
+http://docs.huihoo.com/help-pc/int-int_table.html
+
+--
+Guy Macon
+&lt; http://www.guymacon.com/ &gt;
+</POST>
+</TEXT>
+</BODY>
+</DOC>

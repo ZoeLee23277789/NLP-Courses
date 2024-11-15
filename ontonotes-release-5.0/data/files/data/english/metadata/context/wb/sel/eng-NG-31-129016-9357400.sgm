@@ -1,0 +1,104 @@
+<DOC>
+<DOCID> eng-NG-31-129016-9357400 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-11-03T20:27:00 </DATETIME>
+<BODY>
+<HEADLINE>
+transaction control
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Mike &lt;mg.ry...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T20:27:00 </POSTDATE>
+Is there any limit to the number of transactions that can be handled
+within a transaction? If I break the limit, what happens - an abort -
+a hang - or something unexpected?
+For example, if I process 20,000 records within a TRANS, how would I
+know if that is too many?
+
+thanks for your advice
+Mike
+</POST>
+<POST>
+<POSTER> Doug Dumitru &lt;d...@easyco.com&gt; </POSTER>
+<POSTDATE> 2007-11-04T01:01:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Mike wrote:
+&gt; Is there any limit to the number of transactions that can be handled
+&gt; within a transaction? If I break the limit, what happens - an abort -
+&gt; a hang - or something unexpected?
+&gt; For example, if I process 20,000 records within a TRANS, how would I
+&gt; know if that is too many?
+">
+
+A really quick look at the old GPL code implies that transactions are
+maintained in memory as a linked list of &quot;elements&quot; (I was going to say
+objects, but these are internal TXN_STACK structures, not basic
+objects).  These have *next pointers.  I don't see any fixed size
+arrays, nor would I expect Martin to code it like that anyway.
+
+So, unless you run the process out of memory, the sky's the limit.  If
+you do run the process out of memory, then it is likely to abort and not
+commit anything (which sort of makes sense).  Now, memory usage on
+transactions could be high.  If you are writing big items, the entire
+item appears to be buffered in RAM.
+
+No why you want 20,000 is beyond me, but I am sure there is a reason.
+
+Doug Dumitru
+
+<QUOTE PREVIOUSPOST="
+&gt; thanks for your advice
+&gt; Mike
+">
+</POST>
+<POST>
+<POSTER> &quot;Martin Phillips&quot; &lt;martinphill...@ladybridge.com&gt; </POSTER>
+<POSTDATE> 2007-11-04T05:35:00 </POSTDATE>
+Hi Mike,
+
+Doug is correct that we buffer transactions in memory, letting the
+underlying paging system cope with the vague possibility of running out of
+physical memory whilst still inside our 2Gb address limit.
+
+This decision was taken on the basis of best performance in a typical sized
+transaction. I agree with Doug that a 20,000 record update sounds somewhat
+unusual but you must have a reason to want to do it. If this is purely to
+ensure that no other user could be in there at the same time, you could use
+a file lock.
+
+Also, remember that updating 20,000 records in a single transaction requires
+a lock table with at least 20,000 entries.
+
+I would be interested to know just why you need such a big transaction.
+
+Martin Phillips
+Ladybridge Systems Ltd
+17b Coldstream Lane, Hardingstone, Northampton, NN4 6DB
++44-(0)1604-709200
+</POST>
+<POST>
+<POSTER> Mike &lt;mg.ry...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-04T09:30:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Also, remember that updating 20,000 records in a single transaction requires
+&gt; a lock table with at least 20,000 entries.
+
+&gt; I would be interested to know just why you need such a big transaction.
+">
+
+I am considering the most efficient way to &quot;process&quot; a number of
+entries - in that they get written back with a &quot;processed&quot; indicator.
+I want to ensure that all of the records get updated or none of them,
+
+I was considering whether transaction control would give me the same
+type of control that I can get within a sequel database using update
+and commit.
+
+Thanks for your comments and assistance
+
+MIke
+</POST>
+</TEXT>
+</BODY>
+</DOC>

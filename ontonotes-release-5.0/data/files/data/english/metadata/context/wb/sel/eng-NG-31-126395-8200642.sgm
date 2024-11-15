@@ -1,0 +1,308 @@
+<DOC>
+<DOCID> eng-NG-31-126395-8200642 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-14T15:10:00 </DATETIME>
+<BODY>
+<HEADLINE>
+vm86.c audit_syscall_exit() call trashes registers
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Chuck Anderson &lt;c...@WPI.EDU&gt; </POSTER>
+<POSTDATE> 2007-08-14T15:10:00 </POSTDATE>
+Please Cc: any replies, as we are not subscribed to linux-kernel.
+Thanks.
+
+Somewhere around 2.6.16.12 a call to audit_syscall_exit was added to
+vm86.c:
+
+static void do_sys_vm86(struct kernel_vm86_struct *info, struct task_struct *tsk)
+{
+struct tss_struct *tss;
++       long eax;
+/*
+* make sure the vm86() system call doesn't try to do anything silly
+*/
+@@ -305,13 +307,19 @@ static void do_sys_vm86(struct kernel_vm
+tsk-&gt;thread.screen_bitmap = info-&gt;screen_bitmap;
+if (info-&gt;flags &amp; VM86_SCREEN_BITMAP)
+mark_screen_rdonly(tsk-&gt;mm);
++       __asm__ __volatile__(&quot;xorl %eax,%eax; movl %eax,%fs; movl %eax,%gs\n\t&quot;);
++       __asm__ __volatile__(&quot;movl %%eax, %0\n&quot; :&quot;=r&quot;(eax));
++
++       /*call audit_syscall_exit since we do not exit via the normal paths */
++       if (unlikely(current-&gt;audit_context))
++               audit_syscall_exit(current, AUDITSC_RESULT(eax), eax);
++
+__asm__ __volatile__(
+-               &quot;xorl %%eax,%%eax; movl %%eax,%%fs; movl %%eax,%%gs\n\t&quot;
+&quot;movl %0,%%esp\n\t&quot;
+&quot;movl %1,%%ebp\n\t&quot;
+&quot;jmp resume_userspace&quot;
+: /* no outputs */
+-               :&quot;r&quot; (&amp;info-&gt;regs), &quot;r&quot; (task_thread_info(tsk)) : &quot;ax&quot;);
++               :&quot;r&quot; (&amp;info-&gt;regs), &quot;r&quot; (task_thread_info(tsk)));
+/* we never return here */
+}
+
+This appears to have caused intermittent data corruption of the
+results of the vm86() call that the X server uses to get EDID data
+from the monitor via the VESA BIOS.  After removing the
+audit_syscall_exit() call, the problems mentioned in these bugzillas
+disappear:
+
+Fetch of EDID 128 byte buffer by X server through vm86 INT 10 call is flaky.
+http://bugzilla.kernel.org/show_bug.cgi?id=8633
+
+RHEL 5 fails to get EDID data from monitor and sets low resolution
+https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=236416
+
+If I'm reading correctly, it appears that the code above trashes the
+%fs and %gs registers, or otherwise doesn't leave them at zero before
+returning from the system call as the old code did.  Is this a correct
+analysis?  How should this be fixed?
+
+Thanks.
+
+-Chuck
+-
+To unsubscribe from this list: send the line &quot;unsubscribe linux-kernel&quot; in
+the body of a message to majord ... @vger.kernel.org
+More majordomo info at http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at http://www.tux.org/lkml/
+</POST>
+<POST>
+<POSTER> Andi Kleen &lt;a...@firstfloor.org&gt; </POSTER>
+<POSTDATE> 2007-08-14T15:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Chuck Anderson &lt;c ... @WPI.EDU&gt; writes:
+
+&gt; If I'm reading correctly, it appears that the code above trashes the
+&gt; %fs and %gs registers, or otherwise doesn't leave them at zero before
+&gt; returning from the system call as the old code did.  Is this a correct
+&gt; analysis?
+">
+
+The kernel runs with defined fs -- saved and set at system call entry/exit --
+and shouldn't touch gs (except on a context switch, but then it should
+be set back when you get scheduled again)
+
+It's in theory possible that something went wrong with the gs saving
+for the vm86 path, but this changed long 2.6.16. But I assume
+when you just remove the call in 2.6.16 it already works? If yes
+it cannot be that (2.6.16 didn't use either fs or gs in the kernel)
+
+<QUOTE PREVIOUSPOST="
+&gt; How should this be fixed?
+">
+
+The problem first needs to be fully understood. Do you have more
+details on the corruption?
+
+One suspicious thing is that the audit code does mutex_lock(&amp;tty_mutex)
+and could sleep there. It's a long shot, but does the problem go
+away when you comment that out? [such a patch is incorrect in theory,
+but should be unlikely enough to crash for a quick test]
+
+But actually sleeping should be ok here and a preemptible kernel could do
+it anyways.
+
+-Andi
+-
+To unsubscribe from this list: send the line &quot;unsubscribe linux-kernel&quot; in
+the body of a message to majord ... @vger.kernel.org
+More majordomo info at http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at http://www.tux.org/lkml/
+</POST>
+<POST>
+<POSTER> William Cattey &lt;w...@MIT.EDU&gt; </POSTER>
+<POSTDATE> 2007-08-14T17:20:00 </POSTDATE>
+The corruption originally looked like a race condition.
+
+Sometimes the EDID buffer would be all zeros.
+Sometimes it would contain partial data, and then the rest of the
+buffer filled with zeros.
+The amount of data transferred into the buffer before going to all
+zeros is non-deterministic.
+
+When we put a known value in each byte of the buffer before making
+the vm86 call, the known data would always be overwritten either with
+EDID data or zeros.
+
+-Bill
+
+----
+
+William Cattey
+Linux Platform Coordinator
+MIT Information Services &amp; Technology
+
+W92-176, 617-253-0140, w ... @mit.edu
+http://web.mit.edu/wdc/www/
+
+On Aug 14, 2007, at 4:42 PM, Andi Kleen wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Chuck Anderson &lt;c ... @WPI.EDU&gt; writes:
+
+&gt;&gt; If I'm reading correctly, it appears that the code above trashes the
+&gt;&gt; %fs and %gs registers, or otherwise doesn't leave them at zero before
+&gt;&gt; returning from the system call as the old code did.  Is this a
+&gt;&gt; correct
+&gt;&gt; analysis?
+
+&gt; The kernel runs with defined fs -- saved and set at system call
+&gt; entry/exit --
+&gt; and shouldn't touch gs (except on a context switch, but then it should
+&gt; be set back when you get scheduled again)
+
+&gt; It's in theory possible that something went wrong with the gs saving
+&gt; for the vm86 path, but this changed long 2.6.16. But I assume
+&gt; when you just remove the call in 2.6.16 it already works? If yes
+&gt; it cannot be that (2.6.16 didn't use either fs or gs in the kernel)
+
+&gt;&gt; How should this be fixed?
+
+&gt; The problem first needs to be fully understood. Do you have more
+&gt; details on the corruption?
+
+&gt; One suspicious thing is that the audit code does mutex_lock
+&gt; (&amp;tty_mutex)
+&gt; and could sleep there. It's a long shot, but does the problem go
+&gt; away when you comment that out? [such a patch is incorrect in theory,
+&gt; but should be unlikely enough to crash for a quick test]
+
+&gt; But actually sleeping should be ok here and a preemptible kernel
+&gt; could do
+&gt; it anyways.
+
+&gt; -Andi
+">
+
+-
+To unsubscribe from this list: send the line &quot;unsubscribe linux-kernel&quot; in
+the body of a message to majord ... @vger.kernel.org
+More majordomo info at http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at http://www.tux.org/lkml/
+</POST>
+<POST>
+<POSTER> Andi Kleen &lt;a...@firstfloor.org&gt; </POSTER>
+<POSTDATE> 2007-08-14T18:00:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Tue, Aug 14, 2007 at 04:52:54PM -0400, William Cattey wrote:
+&gt; The corruption originally looked like a race condition.
+
+&gt; Sometimes the EDID buffer would be all zeros.
+&gt; Sometimes it would contain partial data, and then the rest of the
+&gt; buffer filled with zeros.
+&gt; The amount of data transferred into the buffer before going to all
+&gt; zeros is non-deterministic.
+
+&gt; When we put a known value in each byte of the buffer before making
+&gt; the vm86 call, the known data would always be overwritten either with
+&gt; EDID data or zeros.
+">
+
+Hmm, that might be consistent with something going wrong with sleeping.
+Was the system under high load? Perhaps something else can thrash
+some real mode state when you sleep. On the other hand vm86 in user
+mode can schedule anyways, so it might have already happened.
+
+But I think the mutex was actually added post 2.6.16 so if you saw
+it in 2.6.16 already it might have been something else.
+
+Also when audit is not enabled (did you have it enabled?) the audit
+function doesn't do very much?
+
+If you can reliably reproduce it one way might be to comment
+out more and more of the audit code until you find who causes
+the corruption (that might cause some corrupted audit data,
+but that should be fine for testing)
+
+-Andi
+-
+To unsubscribe from this list: send the line &quot;unsubscribe linux-kernel&quot; in
+the body of a message to majord ... @vger.kernel.org
+More majordomo info at http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at http://www.tux.org/lkml/
+</POST>
+<POST>
+<POSTER> William Cattey &lt;w...@MIT.EDU&gt; </POSTER>
+<POSTDATE> 2007-08-14T18:00:00 </POSTDATE>
+The system was otherwise completely idle.  The only active task was
+starting the X server.
+
+The failure is 100% reproducible on my test system.
+
+We have not run a lot of different kernels per se.  We ran 2.6.9, and
+it was fine.  When we ran RHEL 5, it came with 2.6.18.  All we really
+did was rebuild 2.6.18 with that chunk of code removed, and the
+problem went away.  Mind you, when that chunk of code was removed,
+there were a ton of errors about multiply freed audit blocks.  But at
+least the X server EDID transfer was successful.
+
+As far as enabling/disabling the audit functionality:  I'm clueless
+about it. I think RHEL turned it on by default, but I don't know how
+to turn it on or off myself.
+
+I will also note that the small stand-alone utility read_edid never
+failed.  It was only when vm86 was called from inside of the X
+server.  So perhaps there's a race condition with memory not being
+where it's expected to be when a large app calls out to real mode?
+
+-Bill
+
+----
+
+William Cattey
+Linux Platform Coordinator
+MIT Information Services &amp; Technology
+
+W92-176, 617-253-0140, w ... @mit.edu
+http://web.mit.edu/wdc/www/
+
+On Aug 14, 2007, at 5:28 PM, Andi Kleen wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Tue, Aug 14, 2007 at 04:52:54PM -0400, William Cattey wrote:
+&gt;&gt; The corruption originally looked like a race condition.
+
+&gt;&gt; Sometimes the EDID buffer would be all zeros.
+&gt;&gt; Sometimes it would contain partial data, and then the rest of the
+&gt;&gt; buffer filled with zeros.
+&gt;&gt; The amount of data transferred into the buffer before going to all
+&gt;&gt; zeros is non-deterministic.
+
+&gt;&gt; When we put a known value in each byte of the buffer before making
+&gt;&gt; the vm86 call, the known data would always be overwritten either with
+&gt;&gt; EDID data or zeros.
+
+&gt; Hmm, that might be consistent with something going wrong with
+&gt; sleeping.
+&gt; Was the system under high load? Perhaps something else can thrash
+&gt; some real mode state when you sleep. On the other hand vm86 in user
+&gt; mode can schedule anyways, so it might have already happened.
+
+&gt; But I think the mutex was actually added post 2.6.16 so if you saw
+&gt; it in 2.6.16 already it might have been something else.
+
+&gt; Also when audit is not enabled (did you have it enabled?) the audit
+&gt; function doesn't do very much?
+
+&gt; If you can reliably reproduce it one way might be to comment
+&gt; out more and more of the audit code until you find who causes
+&gt; the corruption (that might cause some corrupted audit data,
+&gt; but that should be fine for testing)
+
+&gt; -Andi
+">
+
+-
+To unsubscribe from this list: send the line &quot;unsubscribe linux-kernel&quot; in
+the body of a message to majord ... @vger.kernel.org
+More majordomo info at http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at http://www.tux.org/lkml/
+</POST>
+</TEXT>
+</BODY>
+</DOC>

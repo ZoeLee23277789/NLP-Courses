@@ -1,0 +1,415 @@
+<DOC>
+<DOCID> eng-NG-31-135456-9738036 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-12-07T10:36:00 </DATETIME>
+<BODY>
+<HEADLINE>
+What causes a STKOVF
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Joe Sewell &lt;ultra...@spamcop.net&gt; </POSTER>
+<POSTDATE> 2007-12-07T10:36:00 </POSTDATE>
+The following involves OpenVMS V8.3A with various ECOs applied. It
+happens in a DECwindows app. I'd have to find out hardware &amp; firmware
+details, if necessary.
+
+Okay, I've read the OpenVMS FAQ and the pertinent portions of Hoff's
+Wizard stuff on stack overflow exceptions, but most of them simply say
+&quot;get a reproducer and talk with the support center.&quot;
+
+First off, I don't know how to reproduce the particular stack overflow
+we're seeing (it's in a large multiprocess system with external inputs
+out the wazoo); I'm not even sure I know if it was operator actions
+that caused it or the external inputs. The code for just the one
+process that got the SS$_STKOVF exception is huge.
+
+What I need is an idea of when the RTL or lower layers detect a &quot;stack
+overflow&quot; in a non-threaded situation (though it's a DECwindows app,
+just in case it's multithreading for some reason), so I might get some
+idea of where to look. (The place where the exception happened didn't
+reveal too much.)
+
+It sounds like the RTL actually pre-checks for a case where pushing n
+bytes onto the stack would cause the stack to overflow the thread's
+stated stack size (in a multithreaded app), and signal SS$_STKOVF
+before it goes off the deep end. What does it do for a single threaded
+app?
+</POST>
+<POST>
+<POSTER> Volker Halle &lt;volker_ha...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-07T11:34:00 </POSTDATE>
+Joe,
+
+can you create a process dump ? SET PROC/DUMP before running the image
+or use RUN/DUMP for a detached process. Then you have the complete
+process address space (including the stack) available for analysis
+with ANAL/PROC.
+
+Volker.
+</POST>
+<POST>
+<POSTER> Bob Gezelter &lt;gezel...@rlgsc.com&gt; </POSTER>
+<POSTDATE> 2007-12-07T15:03:00 </POSTDATE>
+On Dec 7, 10:36 am, Joe Sewell &lt;ultra ... @spamcop.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; The following involves OpenVMS V8.3A with various ECOs applied. It
+&gt; happens in a DECwindows app. I'd have to find out hardware &amp; firmware
+&gt; details, if necessary.
+
+&gt; Okay, I've read the OpenVMS FAQ and the pertinent portions of Hoff's
+&gt; Wizard stuff on stack overflow exceptions, but most of them simply say
+&gt; &quot;get a reproducer and talk with the support center.&quot;
+
+&gt; First off, I don't know how to reproduce the particular stack overflow
+&gt; we're seeing (it's in a large multiprocess system with external inputs
+&gt; out the wazoo); I'm not even sure I know if it was operator actions
+&gt; that caused it or the external inputs. The code for just the one
+&gt; process that got the SS$_STKOVF exception is huge.
+
+&gt; What I need is an idea of when the RTL or lower layers detect a &quot;stack
+&gt; overflow&quot; in a non-threaded situation (though it's a DECwindows app,
+&gt; just in case it's multithreading for some reason), so I might get some
+&gt; idea of where to look. (The place where the exception happened didn't
+&gt; reveal too much.)
+
+&gt; It sounds like the RTL actually pre-checks for a case where pushing n
+&gt; bytes onto the stack would cause the stack to overflow the thread's
+&gt; stated stack size (in a multithreaded app), and signal SS$_STKOVF
+&gt; before it goes off the deep end. What does it do for a single threaded
+&gt; app?
+">
+
+Joe,
+
+First, let me welcome you to posting in COMP.OS.VMS.
+
+The actual details of the stack overflow handling are likely (I do not
+have one of my copies handy) in the Internals and Data Structures
+manual. The gross details of this have not changed in a VERY long
+time.
+
+I would also be concerned about the possibility that someone has
+overwitten a saved stack pointer in a call frame, and as a result the
+stack is effectively corupt when the RETURN is executed. These can be
+devilishly difficult to localize (been there, done that).
+
+There are a variety of strategies that can be used to localize this
+type of problem. Which is appropriate depends on many factors. The
+most central question is: What (if any) tracking/debugging code is
+already present in your application that can help reduce the size of
+the search.
+
+- Bob Gezelter, http://www.rlgsc.com
+</POST>
+<POST>
+<POSTER> koeh...@eisner.nospam.encompasserve.org (Bob Koehler) </POSTER>
+<POSTDATE> 2007-12-07T16:43:00 </POSTDATE>
+In article &lt;854de914-e03c-4f8b-bf33-dd0df67af ... @a39g2000pre.googlegroups.com&gt;, Bob Gezelter &lt;gezel ... @rlgsc.com&gt; writes:
+
+<QUOTE PREVIOUSPOST="
+&gt; I would also be concerned about the possibility that someone has
+&gt; overwitten a saved stack pointer in a call frame, and as a result the
+&gt; stack is effectively corupt when the RETURN is executed. These can be
+&gt; devilishly difficult to localize (been there, done that).
+">
+
+One of the first problems I had to debug on my first Alpha was a
+return to 0.  I'd never seen one on a VAX and it didn't occur to me
+that a program running on VMS could do such a stupid thing until I
+saw it.  What I got first was a last-chance exception handler dump
+of registers that didn't point anywhere usefull.  (At that point the
+process seems to have no stack, so no traceback handler).
+
+A process dump in that case didn't tell me anything I didn't already
+know, return to 0 pretty much wiped out pointers to everything
+usefull.
+
+I had to run with the debugger many times, doing a binary search for
+the line of code that caused the error, and then study the machine
+listing to figure out what was going on.  (Reading through compiler
+generated prolog code is such fun!  Made me really miss CALLx/RET!)
+</POST>
+<POST>
+<POSTER> Joe Sewell &lt;ultra...@spamcop.net&gt; </POSTER>
+<POSTDATE> 2007-12-10T10:44:00 </POSTDATE>
+On Dec 7, 11:34 am, Volker Halle &lt;volker_ha ... @hotmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Joe,
+
+&gt; can you create a process dump ? SET PROC/DUMP before running the image
+&gt; or use RUN/DUMP for a detached process. Then you have the complete
+&gt; process address space (including the stack) available for analysis
+&gt; with ANAL/PROC.
+
+&gt; Volker.
+">
+
+In this case, we do have process dumps (an unusual occurrence). I
+haven't seen anything that leaps out at me yet.
+</POST>
+<POST>
+<POSTER> Joe Sewell &lt;ultra...@spamcop.net&gt; </POSTER>
+<POSTDATE> 2007-12-10T10:45:00 </POSTDATE>
+On Dec 7, 3:03 pm, Bob Gezelter &lt;gezel ... @rlgsc.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 7, 10:36 am, Joe Sewell &lt;ultra ... @spamcop.net&gt; wrote:
+
+&gt; &gt; The following involves OpenVMS V8.3A with various ECOs applied. It
+&gt; &gt; happens in a DECwindows app. I'd have to find out hardware &amp; firmware
+&gt; &gt; details, if necessary.
+
+&gt; &gt; Okay, I've read the OpenVMS FAQ and the pertinent portions of Hoff's
+&gt; &gt; Wizard stuff on stack overflow exceptions, but most of them simply say
+&gt; &gt; &quot;get a reproducer and talk with the support center.&quot;
+
+&gt; &gt; First off, I don't know how to reproduce the particular stack overflow
+&gt; &gt; we're seeing (it's in a large multiprocess system with external inputs
+&gt; &gt; out the wazoo); I'm not even sure I know if it was operator actions
+&gt; &gt; that caused it or the external inputs. The code for just the one
+&gt; &gt; process that got the SS$_STKOVF exception is huge.
+
+&gt; &gt; What I need is an idea of when the RTL or lower layers detect a &quot;stack
+&gt; &gt; overflow&quot; in a non-threaded situation (though it's a DECwindows app,
+&gt; &gt; just in case it's multithreading for some reason), so I might get some
+&gt; &gt; idea of where to look. (The place where the exception happened didn't
+&gt; &gt; reveal too much.)
+
+&gt; &gt; It sounds like the RTL actually pre-checks for a case where pushing n
+&gt; &gt; bytes onto the stack would cause the stack to overflow the thread's
+&gt; &gt; stated stack size (in a multithreaded app), and signal SS$_STKOVF
+&gt; &gt; before it goes off the deep end. What does it do for a single threaded
+&gt; &gt; app?
+
+&gt; Joe,
+
+&gt; First, let me welcome you to posting in COMP.OS.VMS.
+
+&gt; The actual details of the stack overflow handling are likely (I do not
+&gt; have one of my copies handy) in the Internals and Data Structures
+&gt; manual. The gross details of this have not changed in a VERY long
+&gt; time.
+
+&gt; I would also be concerned about the possibility that someone has
+&gt; overwitten a saved stack pointer in a call frame, and as a result the
+&gt; stack is effectively corupt when the RETURN is executed. These can be
+&gt; devilishly difficult to localize (been there, done that).
+
+&gt; There are a variety of strategies that can be used to localize this
+&gt; type of problem. Which is appropriate depends on many factors. The
+&gt; most central question is: What (if any) tracking/debugging code is
+&gt; already present in your application that can help reduce the size of
+&gt; the search.
+
+&gt; - Bob Gezelter, http://www.rlgsc.com
+">
+
+I've got a 5.5 version handy; wish I had thought of that sooner.
+Thanks.
+
+It's possible that something smashed the stack, but all the call
+frames look correct otherwise, something that I've found to be rare
+when the stack gets puked upon.
+</POST>
+<POST>
+<POSTER> Joe Sewell &lt;ultra...@spamcop.net&gt; </POSTER>
+<POSTDATE> 2007-12-10T10:46:00 </POSTDATE>
+On Dec 7, 4:43 pm, koeh ... @eisner.nospam.encompasserve.org (Bob
+
+<QUOTE PREVIOUSPOST="
+Koehler) wrote:
+&gt; In article &lt;854de914-e03c-4f8b-bf33-dd0df67af ... @a39g2000pre.googlegroups.com&gt;, Bob Gezelter &lt;gezel ... @rlgsc.com&gt; writes:
+
+&gt; &gt; I would also be concerned about the possibility that someone has
+&gt; &gt; overwitten a saved stack pointer in a call frame, and as a result the
+&gt; &gt; stack is effectively corupt when the RETURN is executed. These can be
+&gt; &gt; devilishly difficult to localize (been there, done that).
+
+&gt;    One of the first problems I had to debug on my first Alpha was a
+&gt;    return to 0.  I'd never seen one on a VAX and it didn't occur to me
+&gt;    that a program running on VMS could do such a stupid thing until I
+&gt;    saw it.  What I got first was a last-chance exception handler dump
+&gt;    of registers that didn't point anywhere usefull.  (At that point the
+&gt;    process seems to have no stack, so no traceback handler).
+
+&gt;    A process dump in that case didn't tell me anything I didn't already
+&gt;    know, return to 0 pretty much wiped out pointers to everything
+&gt;    usefull.
+
+&gt;    I had to run with the debugger many times, doing a binary search for
+&gt;    the line of code that caused the error, and then study the machine
+&gt;    listing to figure out what was going on.  (Reading through compiler
+&gt;    generated prolog code is such fun!  Made me really miss CALLx/RET!)
+">
+
+Been there, done that. The problem is we cannot seem to reproduce this
+reliably; all I've got is the afore-mentioned process dump.
+</POST>
+<POST>
+<POSTER> John Reagan &lt;john.rea...@hp.com&gt; </POSTER>
+<POSTDATE> 2007-12-10T10:55:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Joe Sewell wrote:
+&gt; What I need is an idea of when the RTL or lower layers detect a &quot;stack
+&gt; overflow&quot; in a non-threaded situation (though it's a DECwindows app,
+&gt; just in case it's multithreading for some reason), so I might get some
+&gt; idea of where to look. (The place where the exception happened didn't
+&gt; reveal too much.)
+
+&gt; It sounds like the RTL actually pre-checks for a case where pushing n
+&gt; bytes onto the stack would cause the stack to overflow the thread's
+&gt; stated stack size (in a multithreaded app), and signal SS$_STKOVF
+&gt; before it goes off the deep end. What does it do for a single threaded
+&gt; app?
+">
+
+To answer your question:  In a multi-threaded/multi-stacked application,
+each stack is a fixed size (no automatic expansion) and there are
+'yellow zones' to help DECthreads know when you are near the edge of the
+stack.  The Calling Standard has lots of details on how stack checking
+is implemented by the compilers.
+
+In a traditional single-stack application, there is no yellow zone since
+there is automatic stack expansion.  The stack will expand and expand
+until you run out of page file quota.  You'll eventually end up with an
+ACCVIO I believe.
+
+--
+John Reagan
+OpenVMS Pascal/Macro-32/COBOL Project Leader
+Hewlett-Packard Company
+</POST>
+<POST>
+<POSTER> Volker Halle &lt;volker_ha...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-10T11:33:00 </POSTDATE>
+Joe,
+
+if you have process dumps available, that's a starting point.
+
+Start with DBG&gt; SHOW CALL
+
+Which routine/module is the first (top-most) in the call chain ?
+Always the same in all the dumps ?
+What does DBG&gt; EXA/INS tell you ?
+
+Volker.
+</POST>
+<POST>
+<POSTER> Volker Halle &lt;volker_ha...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-10T12:00:00 </POSTDATE>
+Joe,
+
+you'll get a STKOVF (instead of just an ACCVIO), if the process is
+running a Thread Manager (like PTHREADs) or you're not running on the
+process's initial kernel thread. Use SDA&gt; SHOW PROC/IMA to see,
+whether PTHREAD$RTL is in the image list. I'll bet it is for a
+DECwindows image.
+
+Check the stack pointer SP with DBG&gt; EX SP
+
+then examine the stack addresses and limits
+
+DBG&gt; SDA
+SDA&gt; EXA ctl$aq_stack;20
+SDA&gt; EXA ctl$aq_stacklim;20
+
+SDA will show 1 quadword for each stack (offset 0=kernel, then exec,
+super, user)
+
+Try to figure out, if the current SP is near the limits (or outside)
+the stack.
+
+Volker.
+</POST>
+<POST>
+<POSTER> VAXman-  @SendSpamHere.ORG </POSTER>
+<POSTDATE> 2007-12-10T16:00:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+In article &lt;fjjnnu$36 ... @usenet01.boi.hp.com&gt;, John Reagan &lt;john.rea ... @hp.com&gt; writes:
+
+&gt;Joe Sewell wrote:
+
+&gt;&gt; What I need is an idea of when the RTL or lower layers detect a &quot;stack
+&gt;&gt; overflow&quot; in a non-threaded situation (though it's a DECwindows app,
+&gt;&gt; just in case it's multithreading for some reason), so I might get some
+&gt;&gt; idea of where to look. (The place where the exception happened didn't
+&gt;&gt; reveal too much.)
+
+&gt;&gt; It sounds like the RTL actually pre-checks for a case where pushing n
+&gt;&gt; bytes onto the stack would cause the stack to overflow the thread's
+&gt;&gt; stated stack size (in a multithreaded app), and signal SS$_STKOVF
+&gt;&gt; before it goes off the deep end. What does it do for a single threaded
+&gt;&gt; app?
+
+&gt;To answer your question:  In a multi-threaded/multi-stacked application,
+&gt;each stack is a fixed size (no automatic expansion) and there are
+&gt;'yellow zones' to help DECthreads know when you are near the edge of the
+&gt;stack.  The Calling Standard has lots of details on how stack checking
+&gt;is implemented by the compilers.
+
+&gt;In a traditional single-stack application, there is no yellow zone since
+&gt;there is automatic stack expansion.  The stack will expand and expand
+&gt;until you run out of page file quota.  You'll eventually end up with an
+&gt;ACCVIO I believe.
+">
+
+I thought he said it wasn't threaded in the initial post.  I came across
+many of these when working on a DECthreaded application.  I setup a file
+of configuration parameters and one was a stack size value to pass along
+to pthread_attr_setstacksize().
+
+--
+VAXman- A Bored Certified VMS Kernel Mode Hacker   VAXman(at)TMESIS(dot)COM
+
+&quot;Well my son, life is like a beanstalk, isn't it?&quot;
+
+http://tmesis.com/drat.html
+</POST>
+<POST>
+<POSTER> Joe Sewell &lt;ultra...@spamcop.net&gt; </POSTER>
+<POSTDATE> 2007-12-13T08:30:00 </POSTDATE>
+On Dec 10, 12:00 pm, Volker Halle &lt;volker_ha ... @hotmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Joe,
+
+&gt; you'll get a STKOVF (instead of just an ACCVIO), if the process is
+&gt; running a Thread Manager (like PTHREADs) or you're not running on the
+&gt; process's initial kernel thread. Use SDA&gt; SHOW PROC/IMA to see,
+&gt; whether PTHREAD$RTL is in the image list. I'll bet it is for a
+&gt; DECwindows image.
+
+&gt; Check the stack pointer SP with DBG&gt; EX SP
+
+&gt; then examine the stack addresses and limits
+
+&gt; DBG&gt; SDA
+&gt; SDA&gt; EXA ctl$aq_stack;20
+&gt; SDA&gt; EXA ctl$aq_stacklim;20
+
+&gt; SDA will show 1 quadword for each stack (offset 0=kernel, then exec,
+&gt; super, user)
+
+&gt; Try to figure out, if the current SP is near the limits (or outside)
+&gt; the stack.
+
+&gt; Volker.
+">
+
+Thanks for the info; I'll do this.
+
+You say that you wouldn't be surprised if a DECwindows image is
+multithreaded. I cannot speak for what DECwindows itself is doing, but
+*we* aren't multithreading it. On the other hand, I *do* see PTHREAD
+$RTL high up in the call stack.
+
+Assuming DECwindows is instigating multithreading (or perhaps the
+X11R6 update -- that makes Xt &quot;thread safe&quot; -- does just enough to
+kick this in), then much is explained.
+</POST>
+</TEXT>
+</BODY>
+</DOC>

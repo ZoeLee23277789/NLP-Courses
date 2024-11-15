@@ -1,0 +1,213 @@
+<DOC>
+<DOCID> eng-NG-31-126397-7105898 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-04-14T05:43:00 </DATETIME>
+<BODY>
+<HEADLINE>
+what the problem about this short code?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;dolphin&quot; &lt;jdxyw2...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-04-14T05:43:00 </POSTDATE>
+import javax.media.Manager;
+
+import javax.media.bean.playerbean.MediaPlayer;
+import java.lang.String;
+
+public class Player1 {
+MediaPlayer mp1 = new MediaPlayer();
+public Player1(){
+mp1.setMediaLocation(new String("file:\\d:\\music\\11.wma"));
+}
+public static void main(String[] args){
+Player1 player1=new Player1();
+player1.mp1.start();
+}
+}
+
+it says that  Cannot find a Player for :file:\d:\music\11.wma.what the
+problem?
+</POST>
+<POST>
+<POSTER> &quot;Andrew Thompson&quot; &lt;u32984@uwe&gt; </POSTER>
+<POSTDATE> 2007-04-14T06:14:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+dolphin wrote:
+">
+
+..
+
+<QUOTE PREVIOUSPOST="
+>    mp1.setMediaLocation(new String(&quot;file:\\d:\\music\\11.wma&quot;));
+..
+>it says that  Cannot find a Player for :file:\d:\music\11.wma.what the
+>problem?
+">
+
+MediaPlayer is based on JMF*, which only supports
+the formats listed here.
+< http://java.sun.com/products/java-media/jmf/2.1.1/formats.html >
+WMA is not listed, WMA is not supported.
+
+* JMF has been effectively abondoned by Sun, there may
+be other projects that 'plug-in' to JMF and provide support
+for newer/more formats - you'd need to search.
+
+--
+Andrew Thompson
+http://www.athompson.info/andrew/
+
+Message posted via http://www.javakb.com
+</POST>
+<POST>
+<POSTER> Jussi Piitulainen &lt;jpiit...@ling.helsinki.fi&gt; </POSTER>
+<POSTDATE> 2007-04-14T06:37:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+dolphin writes:
+> import javax.media.Manager;
+
+> import javax.media.bean.playerbean.MediaPlayer;
+> import java.lang.String;
+
+> public class Player1 {
+>    MediaPlayer mp1 = new MediaPlayer();
+>    public Player1(){
+>    mp1.setMediaLocation(new String(&quot;file:\\d:\\music\\11.wma&quot;));
+>    }
+>    public static void main(String[] args){
+>            Player1 player1=new Player1();
+>            player1.mp1.start();
+>    }
+>    }
+
+> it says that Cannot find a Player for :file:\d:\music\11.wma.what
+> the problem?
+">
+
+I don't know about media players, but I have a couple of suggestions.
+
+First, importing any java.lang.* class is redundant in a bad way: it
+doesn't affect the meaning of the program, but it leaves a reader of
+the code looking for an explanation.
+
+Second, never write
+
+new String("foo")
+
+for any literal "foo". Instead, write just
+
+"foo"
+
+and it will be a perfectly adequate String. Or if you are trying to
+appear paranoid, consider something like this:
+
+(String)new String(new String((String)((String)"foo").toString()))
+
+Well, just don't.
+
+Third, and this may actually help you, you can write an even simpler
+test program and so eliminate some possibilities of error:
+
+import javax.media.Manager;
+import javax.media.bean.playerbean.MediaPlayer;
+
+public class Player1 {
+public static void main(String[] args) {
+MediaPlayer mp1 = new MediaPlayer();
+mp1.setMediaLocation("file:\\d:\\music\\11.wma");
+mp1.start();
+}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+Oh, and please, include the actual error message. Cut and paste, or
+otherwise copy it _exactly_. Any paraphrase is likely to distort it
+when you don't already know what the message means.
+</POST>
+<POST>
+<POSTER> Lew &lt;l...@nospam.lewscanon.com&gt; </POSTER>
+<POSTDATE> 2007-04-14T10:52:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jussi Piitulainen wrote:
+> dolphin writes:
+
+>> import javax.media.Manager;
+
+>> import javax.media.bean.playerbean.MediaPlayer;
+>> import java.lang.String;
+
+>> public class Player1 {
+>>        MediaPlayer mp1 = new MediaPlayer();
+>>        public Player1(){
+>>        mp1.setMediaLocation(new String(&quot;file:\\d:\\music\\11.wma&quot;));
+>>        }
+>>        public static void main(String[] args){
+>>                Player1 player1=new Player1();
+>>                player1.mp1.start();
+>>        }
+>>        }
+
+>> it says that Cannot find a Player for :file:\d:\music\11.wma.what
+>> the problem?
+
+> I don't know about media players, but I have a couple of suggestions.
+
+> First, importing any java.lang.* class is redundant in a bad way: it
+> doesn't affect the meaning of the program, but it leaves a reader of
+> the code looking for an explanation.
+
+> Second, never write
+
+>  new String(&quot;foo&quot;)
+
+> for any literal &quot;foo&quot;. Instead, write just
+
+>  &quot;foo&quot;
+
+> and it will be a perfectly adequate String. Or if you are trying to
+> appear paranoid, consider something like this:
+
+>  (String)new String(new String((String)((String)&quot;foo&quot;).toString()))
+">
+
+Furthermore, URLs take forward slashes, not backslashes.
+
+--
+Lew
+</POST>
+<POST>
+<POSTER> &quot;Daniel Gee&quot; &lt;zef...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-04-15T04:01:00 </POSTDATE>
+They take both forward and back if you're on windows, Which you almost
+definitely are if your path has a drive letter in it.
+</POST>
+<POST>
+<POSTER> Lew &lt;l...@nospam.lewscanon.com&gt; </POSTER>
+<POSTDATE> 2007-04-15T04:12:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Daniel Gee wrote:
+> They take both forward and back if you're on windows, Which you almost
+> definitely are if your path has a drive letter in it.
+">
+
+So you are abandoning the "Universal" part of "Univeral Resource Locator" to
+be Windows-specific.
+
+By putting the "file:" protocol lead in the string, one is signaling that one
+is using a URL, which requires forward slashes, according to RFC 1738.
+
+<QUOTE PREVIOUSPOST="
+> Some URL schemes (such as the ftp, http, and file schemes) contain names that can be considered hierarchical; the components of the hierarchy are separated by &quot;/&quot;.
+">
+
+Windows's sloppiness doesn't excuse programmer sloppiness.
+
+--
+Lew
+</POST>
+</TEXT>
+</BODY>
+</DOC>

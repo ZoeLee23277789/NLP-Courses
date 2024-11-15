@@ -1,0 +1,1844 @@
+<DOC>
+<DOCID> eng-NG-31-135458-9738855 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2008-01-20T18:34:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Wrong Wireless Router on Slackware 12
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> vtcodger &lt;Donald.Ken...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-20T18:34:00 </POSTDATE>
+I'm well into the process of moving from Windows to Linux.  I can
+handle most of the problems myself, but there are a handful that have
+me fairly baffled.  I thought I'd post a few of them over the next
+month and see if anyone here has a thought.
+
+Problem 1:  I have an AcerPower 1000 with one of those $#%@) Broadcom
+Wireless chips that doesn't work with the Linux Broadcom driver.
+Against all odds, ndisdriver actually works and it only took be about
+16 hours to set it up.  Worked fine under Slackware 11.  On Slackware
+12.0, it works ... except ...
+
+If I run the following commands manually, everything is fine:
+
+modprobe ndiswrapper
+modprobe ndiswrapper ESSID51 WRT54GK
+ifconfig eth0 down
+ifconfig wlan0 up
+#iwconfig wlan0 ESSID WRT54GK           #This doesn't help
+#iwconfig wlan0 ap 00:18:F8:BD:59:78  #Nor does this
+dhcpcd wlan0
+
+If I run the same commands in /etc/rc.d/rc.local, the wireless
+interface works but instead of connecting to the router called
+WRT54GK, it picks a router according to some set of arbitrary rules
+that are opaque to me.  Sometimes it is WRT54GK and everything is
+fine.  Sometimes it is my kid's router which has a different ID and is
+on a different subnet.  Not so good.  So mostly I just use the wired
+eth0 interface.
+
+iwlist scanning shows both routers.
+
+Someday I'd like to get rid of the 50 foot patch cable running under
+beds, through a closet and across the hall.
+
+Anyone have any thoughts?
+</POST>
+<POST>
+<POSTER> Thomas Overgaard &lt;tho...@post2.tele.dk&gt; </POSTER>
+<POSTDATE> 2008-01-21T10:57:00 </POSTDATE>
+vtcodger wrote :
+
+<QUOTE PREVIOUSPOST="
+&gt; Anyone have any thoughts?
+">
+
+Take a look at the wireless section of /etc/rc.d/rc.inet1.conf its here
+ndiswrapper should be loaded from and all setting like ESSID are read
+from here.
+--
+Thomas O.
+
+This area is designed to become quite warm during normal operation.
+</POST>
+<POST>
+<POSTER> Realto Margarino &lt;r...@justlinux.ca&gt; </POSTER>
+<POSTDATE> 2008-01-21T21:27:00 </POSTDATE>
+vtcodger &lt;Donald.Ken ... @gmail.com&gt; says:
+
+<QUOTE PREVIOUSPOST="
+&gt;I'm well into the process of moving from Windows to Linux.
+">
+
+The enlightened user doesn't &quot;move&quot; from windows to linux.  The
+enlightened user uses the OS best suited to the task at hand.
+
+<QUOTE PREVIOUSPOST="
+&gt;I can handle most of the problems myself, but there are a handful
+&gt;that have me fairly baffled.  I thought I'd post a few of them over
+&gt;the next month and see if anyone here has a thought.
+&gt;Problem 1:  I have an AcerPower 1000 with one of those $#%@) Broadcom
+&gt;Wireless chips that doesn't work with the Linux Broadcom driver.
+&gt;Against all odds, ndisdriver actually works and it only took be about
+&gt;16 hours to set it up.  Worked fine under Slackware 11.  On Slackware
+&gt;12.0, it works ... except ...
+">
+
+Why did you change from 11 to 12?  Perhaps you should simply go back
+to 11?  Or perhaps you should just stay with windows in the fist
+place?
+
+<QUOTE PREVIOUSPOST="
+&gt;If I run the following commands manually, everything is fine:
+&gt;modprobe ndiswrapper
+&gt;modprobe ndiswrapper ESSID51 WRT54GK
+&gt;ifconfig eth0 down
+&gt;ifconfig wlan0 up
+&gt;#iwconfig wlan0 ESSID WRT54GK           #This doesn't help
+&gt;#iwconfig wlan0 ap 00:18:F8:BD:59:78  #Nor does this
+&gt;dhcpcd wlan0
+&gt;If I run the same commands in /etc/rc.d/rc.local, the wireless
+&gt;interface works but instead of connecting to the router called
+&gt;WRT54GK, it picks a router according to some set of arbitrary rules
+&gt;that are opaque to me.  Sometimes it is WRT54GK and everything is
+&gt;fine.  Sometimes it is my kid's router which has a different ID and is
+&gt;on a different subnet.  Not so good.  So mostly I just use the wired
+&gt;eth0 interface.
+">
+
+The rules aren't &quot;arbitrary.&quot;  Nothing in computing is ever
+&quot;arbitrary&quot;, be definition.
+
+If your purpose is to connect to the internet and your system does
+it fine using windoze, then there is no reason to change to linux.
+And, if you do need to change, there is no reason to change from
+Slackware 11 to 12 if 11 works ok.  And according to you, 11 works
+ok.
+
+cordially, as always,
+
+rm
+</POST>
+<POST>
+<POSTER> Alan_C &lt;mtbr022...@sbcglobalDOT.net&gt; </POSTER>
+<POSTDATE> 2008-01-21T22:58:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+vtcodger wrote:
+">
+
+[ . . ]
+
+<QUOTE PREVIOUSPOST="
+&gt; If I run the same commands in /etc/rc.d/rc.local, the wireless
+&gt; interface works but instead of connecting to the router called
+&gt; WRT54GK, it picks a router according to some set of arbitrary rules
+&gt; that are opaque to me.  Sometimes it is WRT54GK and everything is
+&gt; fine.  Sometimes it is my kid's router which has a different ID and is
+&gt; on a different subnet.  Not so good.
+">
+
+http://www.linuxquestions.org/questions/slackware-14/wireless-cant-ge...
+
+(from several different) Specifically told it to hook Netgear, thus:
+
+iwconfig ath0 essid NETGEAR
+
+I think I put that line in rc.inet1.conf
+
+I don't use rc.local for wireless
+
+--
+Joe abc
+</POST>
+<POST>
+<POSTER> Tom N &lt;t...@somewhere.invalid&gt; </POSTER>
+<POSTDATE> 2008-01-21T23:10:00 </POSTDATE>
+On 2008-01-22, Alan_C &lt;mtbr022 ... @sbcglobalDOT.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; vtcodger wrote:
+&gt; [ . . ]
+&gt;&gt; If I run the same commands in /etc/rc.d/rc.local, the wireless
+&gt;&gt; interface works but instead of connecting to the router called
+&gt;&gt; WRT54GK, it picks a router according to some set of arbitrary rules
+&gt;&gt; that are opaque to me.  Sometimes it is WRT54GK and everything is
+&gt;&gt; fine.  Sometimes it is my kid's router which has a different ID and is
+&gt;&gt; on a different subnet.  Not so good.
+
+&gt; http://www.linuxquestions.org/questions/slackware-14/wireless-cant-ge...
+
+&gt; (from several different) Specifically told it to hook Netgear, thus:
+
+&gt; iwconfig ath0 essid NETGEAR
+
+&gt; I think I put that line in rc.inet1.conf
+
+&gt; I don't use rc.local for wireless
+">
+
+Are you the famous Alan Connor that &quot;Dan C&quot; hates so much?
+
+A living legend!
+
+If so, I can see why he hates you: you obviously know something about
+computers and aren't intimidated by him, two unforgivable sins in
+what passes for his mind.
+
+Salute,
+
+Tom
+
+--
+calhobbit
+at gee mail dot com
+</POST>
+<POST>
+<POSTER> Alan_C &lt;mtbr022...@sbcglobalDOT.net&gt; </POSTER>
+<POSTDATE> 2008-01-22T00:28:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Tom N wrote:
+&gt; On 2008-01-22, Alan_C &lt;mtbr022 ... @sbcglobalDOT.net&gt; wrote:
+&gt;&gt; vtcodger wrote:
+&gt;&gt; [ . . ]
+">
+
+[ . . ]
+
+<QUOTE PREVIOUSPOST="
+&gt; Are you the famous Alan Connor &lt;snipped&gt;
+">
+
+Nope.  My last name begins with a C but it is not Connor.  I guess I'm need
+to rid my thing of Alan_C
+
+Too many Alan's around here.  (signing Joe did not help)
+
+[ . . ]
+
+--
+rumplestiltskin aka Joe abc
+</POST>
+<POST>
+<POSTER> Dan C &lt;youmustbejok...@lan.invalid&gt; </POSTER>
+<POSTDATE> 2008-01-22T00:02:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Mon, 21 Jan 2008 21:28:08 -0800, Alan_C wrote:
+&gt;&gt; Are you the famous Alan Connor &lt;snipped&gt;
+&gt; Nope.  My last name begins with a C but it is not Connor.  I guess I'm need
+&gt; to rid my thing of Alan_C
+">
+
+Yeah, I'd change it.  The dickmunch that you're responding to is the
+&quot;real&quot; Alan Connor, and thinks nobody actually knows it.  He's a
+delusional fool.  You don't want to be confused with him, trust me.
+
+--
+&quot;Tom N&quot; - the latest nymshift of &quot;Alan Connor&quot;.
+Read more about the netkook Alan Connor here:
+http://www.pearlgates.net/nanae/kooks/ac/fga.shtml
+</POST>
+<POST>
+<POSTER> Dan C &lt;youmustbejok...@lan.invalid&gt; </POSTER>
+<POSTDATE> 2008-01-22T00:04:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Tue, 22 Jan 2008 05:10:52 +0100, Tom N wrote:
+">
+
+&lt;snip&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; Are you the famous Alan Connor that &quot;Dan C&quot; hates so much?
+">
+
+Dan C doesn't &quot;hate&quot; him, he just laughs at him for the fool he is.
+
+Which is you, &quot;Tom N&quot;, who is really &quot;Alan Connor&quot;.  You're not fooling
+anyone.
+
+<QUOTE PREVIOUSPOST="
+&gt; A living legend!
+">
+
+An utter and complete moron.
+
+--
+&quot;Tom N&quot; - the latest nymshift of &quot;Alan Connor&quot;.
+Read more about the netkook Alan Connor here:
+http://www.pearlgates.net/nanae/kooks/ac/fga.shtml
+</POST>
+<POST>
+<POSTER> Tom N &lt;t...@somewhere.invalid&gt; </POSTER>
+<POSTDATE> 2008-01-22T00:27:00 </POSTDATE>
+On 2008-01-22, Alan_C &lt;mtbr022 ... @sbcglobalDOT.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Tom N wrote:
+
+&gt;&gt; On 2008-01-22, Alan_C &lt;mtbr022 ... @sbcglobalDOT.net&gt; wrote:
+&gt;&gt;&gt; vtcodger wrote:
+&gt;&gt;&gt; [ . . ]
+&gt; [ . . ]
+
+&gt;&gt; Are you the famous Alan Connor &lt;snipped&gt;
+
+&gt; Nope.  My last name begins with a C but it is not Connor.  I guess I'm need
+&gt; to rid my thing of Alan_C
+">
+
+I don't see why.
+
+I'm probably the only person around who didn't recognize your handle.
+
+Even &quot;Dan C&quot; obviously does, or you'd have baen barraged by now by him
+under a half-dozen names.
+
+<QUOTE PREVIOUSPOST="
+&gt; Too many Alan's around here.  (signing Joe did not help)
+">
+
+I saw that, but it didn't make sense to me. Because of what
+was in your from header.  I figured it was some kind of
+inside joke.
+
+<QUOTE PREVIOUSPOST="
+&gt; [ . . ]
+">
+
+Thanks,
+
+Tom
+
+--
+calhobbit
+at gee mail dot com
+</POST>
+<POST>
+<POSTER> mtbr &lt;mtbr022...@sbcglobalDOT.net&gt; </POSTER>
+<POSTDATE> 2008-01-22T13:05:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Alan_C wrote:
+&gt; vtcodger wrote:
+&gt; [ . . ]
+[ . . ]
+&gt; (from several different) Specifically told it to hook Netgear, thus:
+
+&gt; iwconfig ath0 essid NETGEAR
+
+&gt; I think I put that line in rc.inet1.conf
+">
+
+I recalled that I haven't put that line anywhere yet.
+
+That line is a command I ran in xterm (konsole) as root.  It works.  From
+several different broadcasting wireless routers, it hooks up only to the
+specified router.
+
+But I also recalled that I'm using the madwifi driver and tools whereas you
+reported ndis in your case.
+
+Thus you may need to discover if equivalents to the (above, ie iwconfig)
+listed madwifi tools command exist for or when using ndis.  Or, are some of
+the tools interchangeable back and forth between ndis and madwifi?
+
+I didn't care to &quot;fool&quot; Linux into using a Windows driver (ndis).
+
+So I looked the Linux HCL for wireless card and then got my pcmcia card.
+
+--
+Joe abc
+</POST>
+<POST>
+<POSTER> mtbr &lt;mtbr022...@sbcglobalDOT.net&gt; </POSTER>
+<POSTDATE> 2008-01-22T13:24:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Alan_C wrote:
+&gt; vtcodger wrote:
+&gt; [ . . ]
+[ . . ]
+&gt; iwconfig ath0 essid NETGEAR
+">
+
+Didn't I have to go:
+
+ifconfig ath0 up
+
+(wlan0 for you rather than ath0)
+
+first, before the above iwconfig command.  I can't remember and laptop is
+not on at the moment.
+
+I just saw your orig post once again, that you had it working using
+modprobe.
+
+I'm not up on ndis and the difference in the tools commands between madwifi
+and ndis.
+
+I'm unaware if your listed modprobe command is totally correct or not. (I
+*do question* it since modprobe loads kernel module).
+
+Probably you need to verify about the correct command/method in ndis to tell
+it to hook up only to a certain router.
+
+Where's the ndis doc/man/howto's/articles at?
+
+--
+Joe abc
+</POST>
+<POST>
+<POSTER> Chick Tower &lt;c.to...@deadspam.com&gt; </POSTER>
+<POSTDATE> 2008-01-24T23:14:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Tue, 22 Jan 2008 05:10:52 +0100, Tom N wrote:
+&gt; Are you the famous Alan Connor that &quot;Dan C&quot; hates so much?
+">
+
+It just occurred to me how similar the names Dan C and Tom N are.
+Neither use periods after their last initial, both of which are
+consonants. They both have three-letter first names,
+consonant-vowel-consonant.  The names are common nicknames for Daniel and
+Thomas, which both have six letters in them.  If you take their names, add
+a &quot;u&quot;, an rearrange them, you get &quot;damn count.&quot;  Is it more likely that
+those are all coincidences, or that Dan C == Tom N?
+
+--
+Chick Tower
+
+For e-mail:  aols2 DOT sent DOT towerboy AT xoxy DOT net
+</POST>
+<POST>
+<POSTER> Dan C &lt;youmustbejok...@lan.invalid&gt; </POSTER>
+<POSTDATE> 2008-01-25T00:11:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Thu, 24 Jan 2008 22:14:09 -0600, Chick Tower wrote:
+&gt; It just occurred to me how similar the names Dan C and Tom N are.
+&gt; Neither use periods after their last initial, both of which are
+&gt; consonants. They both have three-letter first names,
+&gt; consonant-vowel-consonant.  The names are common nicknames for Daniel and
+&gt; Thomas, which both have six letters in them.  If you take their names, add
+&gt; a &quot;u&quot;, an rearrange them, you get &quot;damn count.&quot;  Is it more likely that
+&gt; those are all coincidences, or that Dan C == Tom N?
+">
+
+LOL!  Nope.  Get a clue.
+
+Is that you again, ANC?
+
+--
+&quot;Ubuntu&quot; -- an African word, meaning &quot;Slackware is too hard for me&quot;.
+</POST>
+<POST>
+<POSTER> Tom N &lt;t...@somewhere.invalid&gt; </POSTER>
+<POSTDATE> 2008-01-25T03:05:00 </POSTDATE>
+On 2008-01-25, Chick Tower &lt;c.to ... @deadspam.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Tue, 22 Jan 2008 05:10:52 +0100, Tom N wrote:
+
+&gt;&gt; Are you the famous Alan Connor that &quot;Dan C&quot; hates so much?
+
+&gt; It just occurred to me how similar the names Dan C and Tom N are.
+&gt; Neither use periods after their last initial, both of which are
+&gt; consonants. They both have three-letter first names,
+&gt; consonant-vowel-consonant.  The names are common nicknames for Daniel and
+&gt; Thomas, which both have six letters in them.  If you take their names, add
+&gt; a &quot;u&quot;, an rearrange them, you get &quot;damn count.&quot;  Is it more likely that
+&gt; those are all coincidences, or that Dan C == Tom N?
+">
+
+It just occurred to me, after reading this and several other recent posts
+of yours (not the ones on the troll bait threads) that you
+are a just another motormouthed fucking punk who shits on the internet
+when he doesn't have anything better to do.
+
+You will now get out of my newsreader and stay out.
+
+Talk to Dan C. He's just your speed.
+
+Tom
+
+--
+calhobbit
+at gee mail dot com
+</POST>
+<POST>
+<POSTER> hel...@hullen.de (Helmut Hullen) </POSTER>
+<POSTDATE> 2008-01-25T03:16:00 </POSTDATE>
+Hallo, Chick,
+
+Du meintest am 24.01.08:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Are you the famous Alan Connor that &quot;Dan C&quot; hates so much?
+&gt; It just occurred to me how similar the names Dan C and Tom N are.
+">
+
+They are trolls. Why do you feed them?
+
+Viele Gruesse
+Helmut
+
+&quot;Ubuntu&quot; - an African word, meaning &quot;Slackware is too hard for me&quot;.
+</POST>
+<POST>
+<POSTER> Mark South &lt;mark.so...@null.invalid&gt; </POSTER>
+<POSTDATE> 2008-01-25T06:06:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Fri, 25 Jan 2008 09:16:00 +0100, Helmut Hullen wrote:
+&gt; Hallo, Chick,
+
+&gt; Du meintest am 24.01.08:
+
+&gt;&gt;&gt; Are you the famous Alan Connor that &quot;Dan C&quot; hates so much?
+
+&gt;&gt; It just occurred to me how similar the names Dan C and Tom N are.
+
+&gt; They are trolls. Why do you feed them?
+
+&gt; Viele Gruesse
+&gt; Helmut
+
+&gt; &quot;Ubuntu&quot; - an African word, meaning &quot;Slackware is too hard for me&quot;.
+">
+
+I'd just like to point out that you are beginning to look like a bot.
+
+Oh, and: you signature got b0rk3n.
+</POST>
+<POST>
+<POSTER> hel...@hullen.de (Helmut Hullen) </POSTER>
+<POSTDATE> 2008-01-25T06:39:00 </POSTDATE>
+Hallo, Mark,
+
+Du meintest am 25.01.08:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; They are trolls. Why do you feed them?
+&gt; I'd just like to point out that you are beginning to look like a bot.
+">
+
+May be.
+I try to find slackware informations in this newsgroup. But I find
+mostly (?) troll discussions. Troll freedings.
+
+No other newsgroup I'm reading (about 60 newsgroups) has so much trolls.
+That's bad for the image, for the reputation of slackware.
+
+Viele Gruesse
+Helmut
+
+&quot;Ubuntu&quot; - an African word, meaning &quot;Slackware is too hard for me&quot;.
+</POST>
+<POST>
+<POSTER> Mark South &lt;mark.so...@null.invalid&gt; </POSTER>
+<POSTDATE> 2008-01-25T08:13:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Fri, 25 Jan 2008 12:39:00 +0100, Helmut Hullen wrote:
+&gt; Hallo, Mark,
+
+&gt; Du meintest am 25.01.08:
+
+&gt;&gt;&gt; They are trolls. Why do you feed them?
+
+&gt;&gt; I'd just like to point out that you are beginning to look like a bot.
+
+&gt; May be.
+">
+
+:-)
+
+<QUOTE PREVIOUSPOST="
+&gt; I try to find slackware informations in this newsgroup. But I find
+&gt; mostly (?) troll discussions. Troll freedings.
+">
+
+That's the way it looks from where I'm sitting too.
+
+<QUOTE PREVIOUSPOST="
+&gt; No other newsgroup I'm reading (about 60 newsgroups) has so much trolls.
+">
+
+It's normally even worse in alt.os.linux.ubuntu, if that makes you feel
+any better.
+
+<QUOTE PREVIOUSPOST="
+&gt; That's bad for the image, for the reputation of slackware.
+">
+
+The only solution would be for there to be more Slackware discussion.  As
+it is, the trolls are mostly filling in empty space :-(
+
+<QUOTE PREVIOUSPOST="
+&gt; Viele Gruesse
+">
+
+Mes meilleurs pour un bon weekend.
+</POST>
+<POST>
+<POSTER> loki harfagr &lt;l...@theDarkDesign.free.fr&gt; </POSTER>
+<POSTDATE> 2008-01-25T08:38:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Fri, 25 Jan 2008 14:13:28 +0100, Mark South wrote:
+&gt; On Fri, 25 Jan 2008 12:39:00 +0100, Helmut Hullen wrote:
+
+&gt;&gt; Hallo, Mark,
+
+&gt;&gt; Du meintest am 25.01.08:
+
+&gt;&gt;&gt;&gt; They are trolls. Why do you feed them?
+
+&gt;&gt;&gt; I'd just like to point out that you are beginning to look like a bot.
+
+&gt;&gt; May be.
+
+&gt; :-)
+
+&gt;&gt; I try to find slackware informations in this newsgroup. But I find
+&gt;&gt; mostly (?) troll discussions. Troll freedings.
+
+&gt; That's the way it looks from where I'm sitting too.
+">
+
+And it doesn't get better when seen from here ;D)
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; No other newsgroup I'm reading (about 60 newsgroups) has so much
+&gt;&gt; trolls.
+">
+
+You're quite lucky then! From time to time even *.dev.null,
+junk and *.test groups get flooded by trolls and/or spammers :D)
+
+<QUOTE PREVIOUSPOST="
+&gt; It's normally even worse in alt.os.linux.ubuntu, if that makes you feel
+&gt; any better.
+">
+
+Ubuntu? That sig b0rk3r?
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; That's bad for the image, for the reputation of slackware.
+
+&gt; The only solution would be for there to be more Slackware discussion.
+">
+
+That's true, and if you look very closely to the group there is
+but the problem with Slackware is taht it's almost perfect so
+questions are few, except when there are flood from newcomers
+already slightly shocked by a previous OS or WM ;-)
+
+&quot;We all live on the edge of town
+Where we all live, ain't a soul around
+People start a-comin', all we do is just a-grin
+Said we've gotta move out 'cause city's movin' in&quot;
+
+<QUOTE PREVIOUSPOST="
+&gt; As it is, the trolls are mostly filling in empty space :-(
+">
+
+Ah, that's just empty space afterall, and you know there's always
+room for a beer when all empty space is full ;-)
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Viele Gruesse
+
+&gt; Mes meilleurs pour un bon weekend.
+">
+
+^
+¿voeux?
+
+Adessias!
+</POST>
+<POST>
+<POSTER> Tom N &lt;t...@somewhere.invalid&gt; </POSTER>
+<POSTDATE> 2008-01-25T09:06:00 </POSTDATE>
+On 2008-01-25, Mark South &lt;mark.so ... @null.invalid&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; The only solution would be for there to be more Slackware discussion.  As
+&gt; it is, the trolls are mostly filling in empty space :-(
+">
+
+The regulars are more concerned with suppressing any deviations from
+the mandates of the living god PV than they are with discussing Slackware.
+
+PV has decreed that KDE is to be the user interface used by Slackers,
+and therefore it's written in stone and not to be questioned by mere
+mortals.
+
+(Yes, that's sarcasm.)
+
+So instead of participating in what could be a truly edifying discussion,
+they have heaped abuse upon me, much of it quite subtle, but abuse
+never-the-less.
+
+Trolling, thus adding to the problem.
+
+Helmut has decided that I am a troll for daring to deviate from the
+Party Line. (National Socialists Party, Slackware Branch?)
+
+And more than half of the regulars respond to Dan C's and Realto Margarino's
+posts (they are both the same person, as are half of the 'other' trolls)
+on a regular basis.
+
+You reap what you sow.
+
+Nobody's telling ME what I can talk about, I can assure you that.
+I'll see this group destroyed before I'll allow that to happen.
+
+Tom
+
+--
+calhobbit
+at gee mail dot com
+</POST>
+<POST>
+<POSTER> Robby Workman &lt;newsgro...@rlworkman.net&gt; </POSTER>
+<POSTDATE> 2008-01-25T11:00:00 </POSTDATE>
+On 2008-01-25, Tom N &lt;t ... @somewhere.invalid&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2008-01-25, Mark South &lt;mark.so ... @null.invalid&gt; wrote:
+
+&gt;&gt; The only solution would be for there to be more Slackware discussion.  As
+&gt;&gt; it is, the trolls are mostly filling in empty space :-(
+
+&gt; The regulars are more concerned with suppressing any deviations from
+&gt; the mandates of the living god PV than they are with discussing Slackware.
+
+&gt; PV has decreed that KDE is to be the user interface used by Slackers,
+&gt; and therefore it's written in stone and not to be questioned by mere
+&gt; mortals.
+
+&gt; (Yes, that's sarcasm.)
+">
+
+No, that's bullshit.
+
+<QUOTE PREVIOUSPOST="
+&gt; You reap what you sow.
+">
+
+You'd better hope for crop failure.
+
+<QUOTE PREVIOUSPOST="
+&gt; Nobody's telling ME what I can talk about, I can assure you that.
+&gt; I'll see this group destroyed before I'll allow that to happen.
+">
+
+You have an inflated sense of self-importance.
+
+Nobody gives a rat's rectum what type of desktop environment you use.
+YOU use whatever suits your needs, and I will use whatever suits MY needs.
+
+-RW
+</POST>
+<POST>
+<POSTER> Mark South &lt;mark.so...@null.invalid&gt; </POSTER>
+<POSTDATE> 2008-01-25T12:38:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Fri, 25 Jan 2008 13:38:10 +0000, loki harfagr wrote:
+&gt; On Fri, 25 Jan 2008 14:13:28 +0100, Mark South wrote:
+
+&gt;&gt; On Fri, 25 Jan 2008 12:39:00 +0100, Helmut Hullen wrote:
+
+&gt;&gt;&gt; Hallo, Mark,
+
+&gt;&gt;&gt; Du meintest am 25.01.08:
+
+&gt;&gt;&gt;&gt;&gt; They are trolls. Why do you feed them?
+
+&gt;&gt;&gt;&gt; I'd just like to point out that you are beginning to look like a bot.
+
+&gt;&gt;&gt; May be.
+
+&gt;&gt; :-)
+
+&gt;&gt;&gt; I try to find slackware informations in this newsgroup. But I find
+&gt;&gt;&gt; mostly (?) troll discussions. Troll freedings.
+
+&gt;&gt; That's the way it looks from where I'm sitting too.
+
+&gt;  And it doesn't get better when seen from here ;D)
+
+&gt;&gt;&gt; No other newsgroup I'm reading (about 60 newsgroups) has so much
+&gt;&gt;&gt; trolls.
+
+&gt;  You're quite lucky then! From time to time even *.dev.null,
+&gt; junk and *.test groups get flooded by trolls and/or spammers :D)
+">
+
+The latest is the floods of long articles full of random text, posted
+with the same names and details as existing posters.
+
+I can't think why they do it unless they are mail spambots that are
+picking up on O*tl**k Expr*ss posting history.  Or something.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; It's normally even worse in alt.os.linux.ubuntu, if that makes you feel
+&gt;&gt; any better.
+
+&gt;  Ubuntu? That sig b0rk3r?
+">
+
+It doesn't generally break sigs, it's just that Dan C hasn't gotten over
+the scare it gave him when he tried it ;-)
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; That's bad for the image, for the reputation of slackware.
+
+&gt;&gt; The only solution would be for there to be more Slackware discussion.
+
+&gt;  That's true, and if you look very closely to the group there is
+&gt; but the problem with Slackware is taht it's almost perfect so questions
+&gt; are few, except when there are flood from newcomers already slightly
+&gt; shocked by a previous OS or WM ;-)
+">
+
+That and the fact that people asking questions about Slackware related
+distros are told to &amp;%ç&amp;*ç$ off and die, and that newbies take one look
+in here and run away.  (Quite rightly too!)
+
+Basically, I am agreeing with Helmut.
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;We all live on the edge of town
+&gt; Where we all live, ain't a soul around People start a-comin', all we do
+&gt; is just a-grin Said we've gotta move out 'cause city's movin' in&quot;
+">
+
+I'm pretty sure that's not Puccini.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; As it is, the trolls are mostly filling in empty space :-(
+
+&gt;  Ah, that's just empty space afterall, and you know there's always
+&gt; room for a beer when all empty space is full ;-)
+">
+
+It's Friday, and I'm making sure to keep an empty space for just that
+purpose.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; Viele Gruesse
+
+&gt;&gt; Mes meilleurs pour un bon weekend.
+&gt;                ^
+&gt;             ¿voeux?
+">
+
+In informal French, the &quot;voeux&quot; is often left implied, as in English one
+normally signs off with &quot;all the best&quot;, short for &quot;wishing you all the
+best&quot;.
+
+But you probably already knew that, and you think it's funny to troll me
+in this thread :-)
+
+<QUOTE PREVIOUSPOST="
+&gt;  Adessias!
+">
+
+Wishing you six of the best,
+Mark
+--
+Signature was unable to translate Ubuntu into Hakka
+</POST>
+<POST>
+<POSTER> the_bmac &lt;b...@c.com&gt; </POSTER>
+<POSTDATE> 2008-01-25T12:59:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Chick Tower wrote:
+">
+
+&lt;snip&gt;
+Stop that.  You know uber-NOOB can't help him/herself.  Any more baiting like that and I'm going to
+start suspecting that you're one of those people who likes to pull the wings off flies.
+
+--
+let's review the rules
+1.  Feed a cold
+2.  Starve a troll
+</POST>
+<POST>
+<POSTER> loki harfagr &lt;l...@theDarkDesign.free.fr&gt; </POSTER>
+<POSTDATE> 2008-01-25T14:03:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Fri, 25 Jan 2008 18:38:04 +0100, Mark South wrote:
+&gt; On Fri, 25 Jan 2008 13:38:10 +0000, loki harfagr wrote:
+
+...
+
+&gt;&gt;&gt;&gt; I try to find slackware informations in this newsgroup. But I find
+&gt;&gt;&gt;&gt; mostly (?) troll discussions. Troll freedings.
+
+&gt;&gt;&gt; That's the way it looks from where I'm sitting too.
+
+&gt;&gt;  And it doesn't get better when seen from here ;D)
+
+&gt;&gt;&gt;&gt; No other newsgroup I'm reading (about 60 newsgroups) has so much
+&gt;&gt;&gt;&gt; trolls.
+
+&gt;&gt;  You're quite lucky then! From time to time even *.dev.null,
+&gt;&gt; junk and *.test groups get flooded by trolls and/or spammers :D)
+
+&gt; The latest is the floods of long articles full of random text, posted
+&gt; with the same names and details as existing posters.
+
+&gt; I can't think why they do it unless they are mail spambots that are
+&gt; picking up on O*tl**k Expr*ss posting history.  Or something.
+">
+
+Most prolly &quot;something&quot;, in EU that's essentially from people
+paid by govs and kin to pressure down people until they're
+numb enough to think that crooks are eagles and commershil
+streaming is the same as free exchange. In short SP and RIAA
+got angry at being flashed going too far at putting out the
+fire with gasoline (or Cactus cripplers on CDs) so they're sending
+out their dummies and boys for ribs.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt;&gt; That's bad for the image, for the reputation of slackware.
+&gt;&gt;&gt; The only solution would be for there to be more Slackware discussion.
+&gt;&gt;  That's true, and if you look very closely to the group there is
+&gt;&gt; but the problem with Slackware is taht it's almost perfect so questions
+&gt;&gt; are few, except when there are flood from newcomers already slightly
+&gt;&gt; shocked by a previous OS or WM ;-)
+
+&gt; That and the fact that people asking questions about Slackware related
+&gt; distros are told to &amp;%ç&amp;*ç$ off and die, and that newbies take one look
+&gt; in here and run away.  (Quite rightly too!)
+">
+
+Er... Do you mean you think someone would pay attention to a post
+that'd be only a sequence of random 4 letters words?
+
+<QUOTE PREVIOUSPOST="
+&gt; Basically, I am agreeing with Helmut.
+">
+
+About which basical point? If we're going *that far* in virtualization
+of semantics I'd even basically admit I'm on the same page as 'Dan C'
+though I'm not reading that page with the same spectacles ;D)
+If you meant you're agreeing with Helmut that a .sig *has* to be
+b0rk3n an *must* contain slanderous and childish allegations you
+can count me out ;D)
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; &quot;We all live on the edge of town
+&gt;&gt; Where we all live, ain't a soul around People start a-comin', all we do
+&gt;&gt; is just a-grin Said we've gotta move out 'cause city's movin' in&quot;
+
+&gt; I'm pretty sure that's not Puccini.
+">
+
+Certainly not, although Stefano Tallarico and Giacomo are related
+on .it atavism :-)
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; As it is, the trolls are mostly filling in empty space :-(
+
+&gt;&gt;  Ah, that's just empty space afterall, and you know there's always
+&gt;&gt; room for a beer when all empty space is full ;-)
+
+&gt; It's Friday, and I'm making sure to keep an empty space for just that
+&gt; purpose.
+">
+
+I'll try my best to do the same, best wishes for you
+and good luck with your six 6-pack-s !-)
+</POST>
+<POST>
+<POSTER> Mark South &lt;mark.so...@null.invalid&gt; </POSTER>
+<POSTDATE> 2008-01-25T15:16:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Fri, 25 Jan 2008 19:03:29 +0000, loki harfagr wrote:
+&gt; On Fri, 25 Jan 2008 18:38:04 +0100, Mark South wrote:
+
+&gt;&gt; On Fri, 25 Jan 2008 13:38:10 +0000, loki harfagr wrote:
+
+&gt; ...
+
+&gt;&gt;&gt;&gt;&gt; I try to find slackware informations in this newsgroup. But I find
+&gt;&gt;&gt;&gt;&gt; mostly (?) troll discussions. Troll freedings.
+
+&gt;&gt;&gt;&gt; That's the way it looks from where I'm sitting too.
+
+&gt;&gt;&gt;  And it doesn't get better when seen from here ;D)
+
+&gt;&gt;&gt;&gt;&gt; No other newsgroup I'm reading (about 60 newsgroups) has so much
+&gt;&gt;&gt;&gt;&gt; trolls.
+
+&gt;&gt;&gt;  You're quite lucky then! From time to time even *.dev.null,
+&gt;&gt;&gt; junk and *.test groups get flooded by trolls and/or spammers :D)
+
+&gt;&gt; The latest is the floods of long articles full of random text, posted
+&gt;&gt; with the same names and details as existing posters.
+
+&gt;&gt; I can't think why they do it unless they are mail spambots that are
+&gt;&gt; picking up on O*tl**k Expr*ss posting history.  Or something.
+
+&gt;  Most prolly &quot;something&quot;, in EU that's essentially from people
+&gt; paid by govs and kin to pressure down people until they're numb enough
+&gt; to think that crooks are eagles and commershil streaming is the same as
+&gt; free exchange. In short SP and RIAA got angry at being flashed going too
+&gt; far at putting out the fire with gasoline (or Cactus cripplers on CDs)
+&gt; so they're sending out their dummies and boys for ribs.
+">
+
+Hmm.  Let's try the logic:
+
+Dumb spam postings that make no sense are made on the Net.
+The RIAA are dumb and evil.
+The RIAA mainly does stuff that makes no sense.
+Spam postings are evil.
+
+ERGO: The RIAA is behind the senseless spam postings.
+
+Eehah, works for me!  :-)
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt;&gt;&gt; That's bad for the image, for the reputation of slackware.
+&gt;&gt;&gt;&gt; The only solution would be for there to be more Slackware discussion.
+&gt;&gt;&gt;  That's true, and if you look very closely to the group there is
+&gt;&gt;&gt; but the problem with Slackware is taht it's almost perfect so
+&gt;&gt;&gt; questions are few, except when there are flood from newcomers already
+&gt;&gt;&gt; slightly shocked by a previous OS or WM ;-)
+
+&gt;&gt; That and the fact that people asking questions about Slackware related
+&gt;&gt; distros are told to &amp;%ç&amp;*ç$ off and die, and that newbies take one look
+&gt;&gt; in here and run away.  (Quite rightly too!)
+
+&gt;  Er... Do you mean you think someone would pay attention to a post
+&gt; that'd be only a sequence of random 4 letters words?
+">
+
+It tends to be the same 4-letter word, usually.  In Dan's case, normally
+followed by &quot;windroid&quot;, although I notice that he currently appears to
+prefer &quot;STFU n00b&quot;  :-)
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Basically, I am agreeing with Helmut.
+
+&gt; About which basical point? If we're going *that far* in virtualization
+&gt; of semantics I'd even basically admit I'm on the same page as 'Dan C'
+&gt; though I'm not reading that page with the same spectacles ;D)
+">
+
+About something or other.  It's now so far upthread that I'd need my axe
+and crampons to get up there to check.
+
+<QUOTE PREVIOUSPOST="
+&gt;  If you meant you're agreeing with Helmut that a .sig *has* to be
+&gt; b0rk3n an *must* contain slanderous and childish allegations you can
+&gt; count me out ;D)
+">
+
+Well, my .sig has been missing since at least 2002, barring occasional
+appearances, but I really think it only comes back now and then to check
+if I've stocked the fridge with beer.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; &quot;We all live on the edge of town
+&gt;&gt;&gt; Where we all live, ain't a soul around People start a-comin', all we
+&gt;&gt;&gt; do is just a-grin Said we've gotta move out 'cause city's movin' in&quot;
+
+&gt;&gt; I'm pretty sure that's not Puccini.
+
+&gt;  Certainly not, although Stefano Tallarico and Giacomo are related
+&gt; on .it atavism :-)
+">
+
+One of my close neighbours turns out to be related to the mathematical
+Bernoulli family, so anything's possible.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt;&gt; As it is, the trolls are mostly filling in empty space :-(
+
+&gt;&gt;&gt;  Ah, that's just empty space afterall, and you know there's always
+&gt;&gt;&gt; room for a beer when all empty space is full ;-)
+
+&gt;&gt; It's Friday, and I'm making sure to keep an empty space for just that
+&gt;&gt; purpose.
+
+&gt; I'll try my best to do the same, best wishes for you and good luck with
+&gt; your six 6-pack-s !-)
+">
+
+Cheers!
+Mark
+--
+Signature is so happy that it's offering to buy the next round.
+</POST>
+<POST>
+<POSTER> Tom N &lt;t...@somewhere.invalid&gt; </POSTER>
+<POSTDATE> 2008-01-25T20:54:00 </POSTDATE>
+On 2008-01-25, Robby Workman &lt;newsgro ... @rlworkman.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2008-01-25, Tom N &lt;t ... @somewhere.invalid&gt; wrote:
+&gt;&gt; On 2008-01-25, Mark South &lt;mark.so ... @null.invalid&gt; wrote:
+
+&gt;&gt;&gt; The only solution would be for there to be more Slackware discussion.  As
+&gt;&gt;&gt; it is, the trolls are mostly filling in empty space :-(
+
+&gt;&gt; The regulars are more concerned with suppressing any deviations from
+&gt;&gt; the mandates of the living god PV than they are with discussing Slackware.
+
+&gt;&gt; PV has decreed that KDE is to be the user interface used by Slackers,
+&gt;&gt; and therefore it's written in stone and not to be questioned by mere
+&gt;&gt; mortals.
+
+&gt;&gt; (Yes, that's sarcasm.)
+
+&gt; No, that's bullshit.
+">
+
+In part. Mostly, we are dealing with lazy fuckers from the
+Windows world who want to use Linux but don't want to learn
+anything new, so they use KDE.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; You reap what you sow.
+
+&gt; You'd better hope for crop failure.
+">
+
+I'll hope for whatever I want to hope for.
+
+And I'll work towards achieving it.
+
+If my choices bother you, you can always fuck yourself.
+
+If you think you can stop me, you are as stupid as the
+trolls.
+
+Whom, as near as I can tell, are quite literally insane.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Nobody's telling ME what I can talk about, I can assure you that.
+&gt;&gt; I'll see this group destroyed before I'll allow that to happen.
+
+&gt; You have an inflated sense of self-importance.
+">
+
+No. I just know how to manipulate trolls and schoolyard bullies,
+of which there are plenty among the regulars here.
+
+<QUOTE PREVIOUSPOST="
+&gt; Nobody gives a rat's rectum what type of desktop environment you use.
+&gt; YOU use whatever suits your needs, and I will use whatever suits MY needs.
+
+&gt; -RW
+">
+
+Of course. And I will say what I have to say on this group, and you'll
+live with it. If you try to harass me for saying it, I'll make you wear a gag
+when you are in my newsreader, as I have done with a number of the
+punks here who think they own this public forum.
+
+Tom
+
+--
+calhobbit
+at gee mail dot com
+</POST>
+<POST>
+<POSTER> Robby Workman &lt;newsgro...@rlworkman.net&gt; </POSTER>
+<POSTDATE> 2008-01-26T00:04:00 </POSTDATE>
+On 2008-01-26, Tom N &lt;t ... @somewhere.invalid&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2008-01-25, Robby Workman &lt;newsgro ... @rlworkman.net&gt; wrote:
+&gt;&gt; On 2008-01-25, Tom N &lt;t ... @somewhere.invalid&gt; wrote:
+
+&gt;&gt;&gt; You reap what you sow.
+
+&gt;&gt; You'd better hope for crop failure.
+
+&gt; I'll hope for whatever I want to hope for.
+
+&gt; And I'll work towards achieving it.
+
+&gt; If my choices bother you, you can always fuck yourself.
+
+&gt; If you think you can stop me, you are as stupid as the
+&gt; trolls.
+">
+
+See, THAT is why you should hope for crop failure.
+
+Oh, and whether I can or can't stop you is irrelevant; what matters
+is whether you're worth the time and effort it would require.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; Nobody's telling ME what I can talk about, I can assure you that.
+&gt;&gt;&gt; I'll see this group destroyed before I'll allow that to happen.
+
+&gt;&gt; You have an inflated sense of self-importance.
+
+&gt; No. I just know how to manipulate trolls and schoolyard bullies,
+&gt; of which there are plenty among the regulars here.
+">
+
+Yes indeed.  It's funny how spewing misinformation and misunderstanding
+to an audience will manipulate the &quot;trolls&quot; and &quot;bullies&quot; to try and
+clear it all up.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Nobody gives a rat's rectum what type of desktop environment you use.
+&gt;&gt; YOU use whatever suits your needs, and I will use whatever suits MY needs.
+
+&gt; Of course. And I will say what I have to say on this group, and you'll
+&gt; live with it. If you try to harass me for saying it, I'll make you wear a gag
+&gt; when you are in my newsreader, as I have done with a number of the
+&gt; punks here who think they own this public forum.
+">
+
+Go ahead and add me to your list; it's just as well, I suppose - if nothing
+else, the statement I made about a month ago is just as true today:
+You can't reason someone out of something they weren't reasoned into.
+
+Tom, you may very well be the smartest guy in your circle of friends,
+but around here, you seem to be just shy of a beer fart skid mark in
+tighty whities.  Keep it up though; you might get to shit stain status
+one of these days.
+
+** Note: when you decide to play dirty by telling someone to &quot; go f*ck
+yourself,&quot; this is what happens.
+
+-RW
+</POST>
+<POST>
+<POSTER> Dan C &lt;youmustbejok...@lan.invalid&gt; </POSTER>
+<POSTDATE> 2008-01-26T00:08:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sat, 26 Jan 2008 05:04:42 +0000, Robby Workman wrote:
+">
+
+&lt;modquote&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; Tom, you may very well be the smartest guy in your circle of friends,
+&gt; but around here, you seem to be just shy of a beer fart skid mark in
+&gt; tighty whities.  Keep it up though; you might get to shit stain status
+&gt; one of these days.
+">
+
+&lt;/modquote&gt;
+
+Damn, I'm jealous...  ;)  Well done!
+
+--
+&quot;Tom N&quot; - the latest nymshift of &quot;Alan Connor&quot;.
+Read more about the netkook Alan Connor here:
+http://www.pearlgates.net/nanae/kooks/ac/fga.shtml
+</POST>
+<POST>
+<POSTER> Dan C &lt;youmustbejok...@lan.invalid&gt; </POSTER>
+<POSTDATE> 2008-01-26T00:39:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sat, 26 Jan 2008 02:54:46 +0100, Tom N wrote:
+&gt; I'll hope for whatever I want to hope for.
+&gt; And I'll work towards achieving it.
+">
+
+All right!  It's great to see you have a goal in life.
+
+Here's a recent photo of Tom out hunting for Bigfoot.  Bagging a trophy
+Bigfoot is Tom (Alan Connor)'s biggest hope and dream in the world.  I
+guess he doesn't know that deer is there, but he will soon... Even the
+woodland animals don't give him any respect.
+
+http://brandybuck.890m.com/pics/deer.jpg
+
+Pitiful, isn't he?
+
+--
+&quot;Tom N&quot; - the latest nymshift of &quot;Alan Connor&quot;.
+Read more about the netkook Alan Connor here:
+http://www.pearlgates.net/nanae/kooks/ac/fga.shtml
+</POST>
+<POST>
+<POSTER> Tom N &lt;t...@somewhere.invalid&gt; </POSTER>
+<POSTDATE> 2008-01-26T01:15:00 </POSTDATE>
+On 2008-01-26, Robby Workman &lt;newsgro ... @rlworkman.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2008-01-26, Tom N &lt;t ... @somewhere.invalid&gt; wrote:
+&gt;&gt; On 2008-01-25, Robby Workman &lt;newsgro ... @rlworkman.net&gt; wrote:
+&gt;&gt;&gt; On 2008-01-25, Tom N &lt;t ... @somewhere.invalid&gt; wrote:
+
+&gt;&gt;&gt;&gt; You reap what you sow.
+
+&gt;&gt;&gt; You'd better hope for crop failure.
+
+&gt;&gt; I'll hope for whatever I want to hope for.
+
+&gt;&gt; And I'll work towards achieving it.
+
+&gt;&gt; If my choices bother you, you can always fuck yourself.
+
+&gt;&gt; If you think you can stop me, you are as stupid as the
+&gt;&gt; trolls.
+
+&gt; See, THAT is why you should hope for crop failure.
+
+&gt; Oh, and whether I can or can't stop you is irrelevant; what matters
+&gt; is whether you're worth the time and effort it would require.
+">
+
+Okay. Time for you to shut your punk mouth. I'll do what I want
+and you'll live with it. If something real happens to hurt me,
+I'll find out who was responsible and I'll hurt them and I'll get
+away with it. I am not a troll. I am not limited to the Internet.
+And I make a lot more money than I spend.
+
+The only reason Dan C is still capable of operating a computer is
+that he's incapable of doing anything real to hurt anyone. He's
+just a big mouth.
+
+Tom
+</POST>
+<POST>
+<POSTER> Tom N &lt;t...@somewhere.invalid&gt; </POSTER>
+<POSTDATE> 2008-01-26T01:34:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; On 2008-01-26, Robby Workman &lt;newsgro ... @rlworkman.net&gt; wrote:
+">
+
+Just ask yourself this question, Robby: Is there anyone who might be
+involved in my efforts to harm someone on this group who wouldn't
+sell me out for $10K in used twenties?
+
+I could do that 50 times and not even notice it, and I am retired.
+I also have access to a very fast private plane...
+
+Tom
+</POST>
+<POST>
+<POSTER> Two Ravens &lt;two-rav...@operamail.org&gt; </POSTER>
+<POSTDATE> 2008-01-26T04:15:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Robby Workman wrote:
+&gt; Go ahead and add me to your list...
+">
+
+A request which would seem to confirm the observation made by Keith
+earlier that this may have indeed become a new 'BOZO' list.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Keith Keller wrote:
+
+&gt;&gt;&gt; So, it is the BOZO list, then?
+">
+
+Perhaps all those wishing to join should append their names below the
+last of the lists published by 'Tom'. Viz:
+
+<QUOTE PREVIOUSPOST="
+&gt; Realto Margarino
+&gt; Dan C
+&gt; Mr. Paul
+&gt; alex
+&gt; Res
+&gt; mr.b
+&gt; james
+&gt; Keith Keller
+&gt; Old Man
+&gt; Dong M
+&gt; Tom N Sucks  &lt;&lt;&lt;----- is this aols or a first grade schoolyard?
+&gt; Franklin
+&gt; swede
+&gt; Helmut Hullen*
+&gt; the_bmac
+&gt; grant
+&gt; Phil McCrackin
+&gt; Alex
+&gt; Chris Sorenson
+">
+
+Those applying to be added to the list:
+Robby Workman
+Myself, Two Ravens
+
+However as Dan C, a man of trenchant opinions, forthrightly expressed,
+writes, I doubt that being on the list will guarantee that Tom
+N 'killfiles' those on it. We can however, but hold on to the hope that
+he will.
+
+--
+Two Ravens
+&quot;...hit the squirrel...&quot;
+</POST>
+<POST>
+<POSTER> Beej Jorgensen &lt;b...@beej.us&gt; </POSTER>
+<POSTDATE> 2008-01-26T04:59:00 </POSTDATE>
+Tom N  &lt;t ... @somewhere.invalid&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;If you think you can stop me, you are as stupid as the trolls.  Whom,
+&gt;as near as I can tell, are quite literally insane.
+">
+
+Or do you mean &quot;who&quot;?  I mean, it's the subject of the sentence, so it
+makes sense that the pronoun &quot;who&quot; would be there, not the object form
+&quot;whom&quot;.
+
+Right?
+
+-Beej
+</POST>
+<POST>
+<POSTER> Tom N &lt;t...@somewhere.invalid&gt; </POSTER>
+<POSTDATE> 2008-01-26T05:19:00 </POSTDATE>
+On 2008-01-26, Beej Jorgensen &lt;b ... @beej.us&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Tom N  &lt;t ... @somewhere.invalid&gt; wrote:
+&gt;&gt;If you think you can stop me, you are as stupid as the trolls.  Whom,
+&gt;&gt;as near as I can tell, are quite literally insane.
+
+&gt; Or do you mean &quot;who&quot;?  I mean, it's the subject of the sentence, so it
+&gt; makes sense that the pronoun &quot;who&quot; would be there, not the object form
+&gt; &quot;whom&quot;.
+
+&gt; Right?
+">
+
+:-)
+
+I don't know. Or care.
+
+Ever listen to cartalk on NPR? I'm like Tommy. I don't waste my time solving puzzles
+that don't exist except to waste your time.
+
+Ain't that a wise to live choice?
+
+Tom
+
+--
+calhobbit
+at gee mail dot com
+</POST>
+<POST>
+<POSTER> Two Ravens &lt;two-rav...@operamail.org&gt; </POSTER>
+<POSTDATE> 2008-01-26T05:39:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Tom N wrote:
+&gt; PV has decreed that KDE is to be the user interface used by Slackers,
+&gt; and therefore it's written in stone and not to be questioned by mere
+&gt; mortals.
+">
+
+If that were to be the case, surely there would be no need for the
+command xwmconfig ? Which, if I recall correctly, gives one a choice of
+somewhere between 6 or 7 Window managers, there is also the choice one
+can exercise, not to use one at all.
+--
+Two Ravens
+&quot;...hit the squirrel...&quot;
+</POST>
+<POST>
+<POSTER> Mark South &lt;mark.so...@null.invalid&gt; </POSTER>
+<POSTDATE> 2008-01-26T05:46:00 </POSTDATE>
+Supplicant Address:
+
+Mark South
+Usenetland
+
+Supplicee Address:
+
+The AOLS Management Committee
+Usenet Central
+
+Dear Sirs,
+
+I hear that there is a new Cool Table[TM] on AOLS, namely, the 733t tr077
+715t.
+
+I respectfully ask you to consider my application in the light of my long
+experience and eminent qualifications for the role.  My writings speak
+for themselves, and as we always say where I come from, GIYF.
+
+<QUOTE PREVIOUSPOST="
+On Sat, 26 Jan 2008 09:15:39 +0000, Two Ravens wrote:
+&gt; Those applying to be added to the list: Robby Workman
+&gt; Myself, Two Ravens
+">
+
+Et moi-même: Mark South.
+
+With sincerest regards for your continued well-being.
+I remain yours faithfully,
+Mark South (Usenet Denizen and Keeper of the WPA Keys)
+--
+Signature is thinking of getting a Mac....
+</POST>
+<POST>
+<POSTER> Tom N &lt;t...@somewhere.invalid&gt; </POSTER>
+<POSTDATE> 2008-01-26T06:12:00 </POSTDATE>
+On 2008-01-26, Tom N &lt;t ... @somewhere.invalid&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2008-01-26, Beej Jorgensen &lt;b ... @beej.us&gt; wrote:
+&gt;&gt; Tom N  &lt;t ... @somewhere.invalid&gt; wrote:
+&gt;&gt;&gt;If you think you can stop me, you are as stupid as the trolls.  Whom,
+&gt;&gt;&gt;as near as I can tell, are quite literally insane.
+
+&gt;&gt; Or do you mean &quot;who&quot;?  I mean, it's the subject of the sentence, so it
+&gt;&gt; makes sense that the pronoun &quot;who&quot; would be there, not the object form
+&gt;&gt; &quot;whom&quot;.
+
+&gt;&gt; Right?
+
+&gt;:-)
+
+&gt; I don't know. Or care.
+
+&gt; Ever listen to cartalk on NPR? I'm like Tommy. I don't waste my time solving puzzles
+&gt; that don't exist except to waste your time.
+">
+
+You know, Beej, it just occurred to me that the puzzle I am trying to solve at the
+moment, is KDE, the Korporate Desktop Environment: www.kde.org
+
+The more I examine it, the more it becomes obvious that it is nothing but a collection
+of programs, apps and utilities, that are knitted together by a menu tree.
+
+All I have to do to create the shell equivalent, a shell desktop, is to create a bash menu
+tree that has all of the equivalent programs. Because I run X, I could use many of the K
+programs, but since the console apps are generally superior, I'd prefer to use them.
+
+No need to have the main menu, or submenus, cluttering up my working screen when I
+can have it come up in window 6 at startx  and get there with just Ctrl-t 6. Any app or utility
+or script I choose to run from the menu will open in its own window (if any), and I'll automatically
+&quot;be there&quot; with it. The menu stays accessible like it is.
+
+So what I'm saying, is that KDE is an illusion. It's a bunch of hype and technocratic
+bullshit wrapped in a pretty package. It's just collection of programs knitted together
+by a menu tree. Big woo. Some eye-candy to impress the peasants who think that clicking
+on a cutesy icon is superior to entering a number.
+
+Tom
+
+--
+calhobbit
+at gee mail dot com
+</POST>
+<POST>
+<POSTER> Tom N &lt;t...@somewhere.invalid&gt; </POSTER>
+<POSTDATE> 2008-01-26T06:14:00 </POSTDATE>
+You know, I think that idiot Dan C actually thinks that we don't
+know that he's Two Ravens. Or any of the other names he hides behind
+in order to bless us with garbage that almost no one even reads.
+
+Tom
+</POST>
+<POST>
+<POSTER> Beej Jorgensen &lt;b...@beej.us&gt; </POSTER>
+<POSTDATE> 2008-01-26T06:33:00 </POSTDATE>
+Tom N  &lt;t ... @somewhere.invalid&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;All I have to do to create the shell equivalent, a shell desktop, is to
+&gt;create a bash menu tree that has all of the equivalent programs.
+">
+
+Sounds good!  Just let us know when you get the site up.
+
+Lots of Linux users do their own thing and heavily optimize their
+systems in the manner that best suits their work.  You can be part of
+this proud tradition.
+
+-Beej
+</POST>
+<POST>
+<POSTER> Tom N &lt;t...@somewhere.invalid&gt; </POSTER>
+<POSTDATE> 2008-01-26T07:07:00 </POSTDATE>
+On 2008-01-26, Beej Jorgensen &lt;b ... @beej.us&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Tom N  &lt;t ... @somewhere.invalid&gt; wrote:
+&gt;&gt;All I have to do to create the shell equivalent, a shell desktop, is to
+&gt;&gt;create a bash menu tree that has all of the equivalent programs.
+
+&gt; Sounds good!  Just let us know when you get the site up.
+">
+
+I already have the menu, but I do so many things with aliases that
+it's not as complete as the one used to run KDE.
+
+I'll make it that complete and put it up on my FTP server. It's up
+most of the time, though I usually just use it for file sharing with
+individuals. (Better than mail attachments).
+
+Although the way I do it now is better. But there's no problem having
+the same commands on the menu, too.
+
+How do I remember all those aliases? Mostly because they have clues to their
+use expressed in the choice of letters. For example, if I can't remember an
+alias I enter the alias &quot;al&quot; and I get a list of them catted to the screen.
+
+alias al='grep ^alias /etc/profile'
+
+Here's a sample of the output:
+
+alias fm='fetchmail &amp;&amp; mutt -y'
+alias ls='ls -shF'
+alias ff='/usr/bin/firefox &amp;'
+alias cw='/sbin/dhcpcd -d'   #clearwire up
+alias cwd='/sbin/dhcpcd -k'  #clearwire down
+alias v='vi'                 #nvi
+alias al='grep ^alias /etc/profile'
+alias l='less'
+alias sl= `slrn -C- -f /home/hokomo/.jnewsrc-aioe'
+alias sp=`slrnpull -d /var/spool/slrnpull -h aioe.org'
+alias j='jobs'
+alias a='apropos'
+alias ftp='ftpserver.sh &amp;'           #ftp server no uploads
+alias ftpu='ftpserver-upload.sh &amp;'   #ftp server with uploads
+alias cl='watch -t -n 1 date'        # 'clock' with 'secondhand'
+alias li='links -html-numbered-links 1 -enable-javascript 1 -html-tables 1 -html-frames 1 -html-image-names 1'
+...
+
+<QUOTE PREVIOUSPOST="
+&gt; Lots of Linux users do their own thing and heavily optimize their
+&gt; systems in the manner that best suits their work.  You can be part of
+&gt; this proud tradition.
+">
+
+Thanks for that, Beej. I think I can take it one step further and create a
+minimalist replacement for KDE. Am trying.
+
+What I really need is to be good enough with awk to be able
+to write a script that will allow a user to easily edit the
+menu script and alias file, entering their own choices of
+applications. No reason that I can't bundle screen and ratpoison
+along with the menu and other scripts, in the same package...
+
+Total would only be about 1M, unpacked, and they could both
+be pre-configured for a default layout, including the xinitrc.
+
+Got an awk book coming in by UPS any day now.
+
+Tom
+
+--
+calhobbit
+at gee mail dot com
+</POST>
+<POST>
+<POSTER> Joost Kremers &lt;joostkrem...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2008-01-26T07:24:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Tom N wrote:
+&gt; alias al='grep ^alias /etc/profile'
+">
+
+just try 'alias'.
+
+--
+Joost Kremers                                      joostkrem ... @yahoo.com
+Selbst in die Unterwelt dringt durch Spalten Licht
+EN:SiS(9)
+</POST>
+<POST>
+<POSTER> Two Ravens &lt;two-rav...@operamail.org&gt; </POSTER>
+<POSTDATE> 2008-01-26T11:44:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Tom N wrote:
+&gt; You know, I think that idiot Dan C actually thinks that we don't
+&gt; know that he's Two Ravens. Or any of the other names he hides behind
+&gt; in order to bless us with garbage that almost no one even reads.
+">
+
+Dan C and I have the following in common.
+
+a) We have both served our respective communities in uniform, he in the
+Military, (either the US Navy or the Marine Corps I seem to recall), I
+in one of the 'Civil' Uniformed services.
+
+b) We are both male and both retired from our respective services.
+
+From those common points we begin to differ, he has probably been
+decorated more than I. He is, to the best of my knowledge, both a
+resident and citizen of the US, I am a resident and citizen of one the
+English speaking Nations/States of Europe. If you can't differentiate
+by reading the headers to our respective posts then that is yet another
+skill you may wish to acquire, as you recently did in discovering that
+Google Groups will provide posting histories for you.
+
+--
+Two Ravens
+&quot;...hit the squirrel...&quot;
+</POST>
+<POST>
+<POSTER> Tom N &lt;t...@somewhere.invalid&gt; </POSTER>
+<POSTDATE> 2008-01-26T11:56:00 </POSTDATE>
+On 2008-01-26, Joost Kremers &lt;joostkrem ... @yahoo.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Tom N wrote:
+&gt;&gt; alias al='grep ^alias /etc/profile'
+
+&gt; just try 'alias'.
+">
+
+:-/
+
+That's embarassing!
+
+But I needed to know. Thanks, Joost.
+
+So I'm going to alias al to alias...
+
+Hmmmm...
+
+Tom
+
+--
+calhobbit
+at gee mail dot com
+</POST>
+<POST>
+<POSTER> Dan C &lt;youmustbejok...@lan.invalid&gt; </POSTER>
+<POSTDATE> 2008-01-26T12:17:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sat, 26 Jan 2008 13:07:39 +0100, Tom N wrote:
+&gt; alias al='grep ^alias /etc/profile'
+">
+
+LOL!
+
+n00b.
+
+--
+&quot;Tom N&quot; - the latest nymshift of &quot;Alan Connor&quot;.
+Read more about the netkook Alan Connor here:
+http://www.pearlgates.net/nanae/kooks/ac/fga.shtml
+</POST>
+<POST>
+<POSTER> Dan C &lt;youmustbejok...@lan.invalid&gt; </POSTER>
+<POSTDATE> 2008-01-26T12:20:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sat, 26 Jan 2008 12:14:30 +0100, Tom N wrote:
+&gt; You know, I think that idiot Dan C actually thinks that we don't
+&gt; know that he's Two Ravens. Or any of the other names he hides behind
+&gt; in order to bless us with garbage that almost no one even reads.
+">
+
+Har!  As I've told you more than once, Alan, I post under *only* this
+name.  Something which is easily verified by looking at headers.  If you
+weren't such a helpless n00b (and stupid), you'd already know that.
+
+Do you fly your very fast private airplane when you go on Bigfoot hunting
+trips?
+
+--
+&quot;Tom N&quot; - the latest nymshift of &quot;Alan Connor&quot;.
+Read more about the netkook Alan Connor here:
+http://www.pearlgates.net/nanae/kooks/ac/fga.shtml
+</POST>
+<POST>
+<POSTER> Robby Workman &lt;newsgro...@rlworkman.net&gt; </POSTER>
+<POSTDATE> 2008-01-26T13:25:00 </POSTDATE>
+On 2008-01-26, Tom N &lt;t ... @somewhere.invalid&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; On 2008-01-26, Robby Workman &lt;newsgro ... @rlworkman.net&gt; wrote:
+
+&gt; Just ask yourself this question, Robby: Is there anyone who might be
+&gt; involved in my efforts to harm someone on this group who wouldn't
+&gt; sell me out for $10K in used twenties?
+
+&gt; I could do that 50 times and not even notice it, and I am retired.
+&gt; I also have access to a very fast private plane...
+
+&gt; Tom
+">
+
+Only one of us has made veiled threats agains other posters here.
+It happens to be the same one who bitches and moans about the
+&quot;schoolyard bullies&quot; who keep picking on him.  Hint: it's YOU.
+If you don't like schoolyard bullies, stop being one.  If you want
+people to stop picking on you, stop acting like a douchebag.
+If you want me to start being civil again, YOU start being civil
+again.
+
+In short, I have no desire to harm you or anyone else who isn't
+posing a threat to my or someone else's rights.  Keep yourself out
+of that category, and you're in no danger from me.
+
+-RW
+</POST>
+<POST>
+<POSTER> Robby Workman &lt;newsgro...@rlworkman.net&gt; </POSTER>
+<POSTDATE> 2008-01-26T13:31:00 </POSTDATE>
+On 2008-01-26, Tom N &lt;t ... @somewhere.invalid&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2008-01-26, Robby Workman &lt;newsgro ... @rlworkman.net&gt; wrote:
+&gt;&gt; On 2008-01-26, Tom N &lt;t ... @somewhere.invalid&gt; wrote:
+&gt;&gt;&gt; On 2008-01-25, Robby Workman &lt;newsgro ... @rlworkman.net&gt; wrote:
+&gt;&gt;&gt;&gt; On 2008-01-25, Tom N &lt;t ... @somewhere.invalid&gt; wrote:
+
+&gt;&gt;&gt;&gt;&gt; You reap what you sow.
+
+&gt;&gt;&gt;&gt; You'd better hope for crop failure.
+
+&gt;&gt;&gt; I'll hope for whatever I want to hope for.
+
+&gt;&gt;&gt; And I'll work towards achieving it.
+
+&gt;&gt;&gt; If my choices bother you, you can always fuck yourself.
+
+&gt;&gt;&gt; If you think you can stop me, you are as stupid as the
+&gt;&gt;&gt; trolls.
+
+&gt;&gt; See, THAT is why you should hope for crop failure.
+
+&gt;&gt; Oh, and whether I can or can't stop you is irrelevant; what matters
+&gt;&gt; is whether you're worth the time and effort it would require.
+
+&gt; Okay. Time for you to shut your punk mouth. I'll do what I want
+&gt; and you'll live with it. If something real happens to hurt me,
+&gt; I'll find out who was responsible and I'll hurt them and I'll get
+&gt; away with it. I am not a troll. I am not limited to the Internet.
+&gt; And I make a lot more money than I spend.
+">
+
+Again: See, THAT is why you should hope for crop failure.
+
+I guess I wasn't clear in my comment on &quot;whether you're worth the
+time and effort [stopping you] would require.&quot;
+
+YOU'RE NOT.  NOT AT ALL.
+
+Therefore, if &quot;something real happens to hurt [you],&quot; it won't have come
+from me, unless it was in response to a real attempt from you toward me.
+
+-RW
+</POST>
+<POST>
+<POSTER> Chick Tower &lt;c.to...@deadspam.com&gt; </POSTER>
+<POSTDATE> 2008-01-26T21:06:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sat, 26 Jan 2008 12:24:08 +0000, Joost Kremers wrote:
+&gt; Tom N wrote:
+&gt;&gt; alias al='grep ^alias /etc/profile'
+
+&gt; just try 'alias'.
+">
+
+That's too hard to remember.
+
+--
+Chick Tower
+
+For e-mail:  aols2 DOT sent DOT towerboy AT xoxy DOT net
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,698 @@
+<DOC>
+<DOCID> eng-NG-31-134602-8570627 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-14T19:10:00 </DATETIME>
+<BODY>
+<HEADLINE>
+[FTR} Unordered radix trees
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> c...@tiac.net (Richard Harter) </POSTER>
+<POSTDATE> 2007-08-14T19:10:00 </POSTDATE>
+(FTR = For The Record)
+
+UNORDERED RADIX TREES
+
+Table of contents
+0. Introduction
+1. Statement of the task
+2. Parameterized selection trees
+2.1 Discrimination functions
+2.2 Parameter selection functions
+2.3 Tree construction
+2.4 An example
+3. Radix based trees
+4. Ordered radix trees
+5. Unordered radix trees
+5.1 An example
+5.2 A forest of trees
+5.3 Basic operations
+5.3.1 Searches
+5.3.2 Insertions
+5.3.3 Deletions
+5.4  Parameter selection functions
+5.5 Node structure
+5.6 Choice of radix
+5.7 Performance - best, worst, and average
+5.8 Implementation considerations
+6. Comparison with other algorithms
+7. Online implementations
+
+0. Introduction
+
+This document presents an apparently novel data structure for
+storing and retrieving key/value pairs that I call unordered
+radix trees.  It is the successor to a sequence of writings
+beginning with a casual remark in a usenet exchange, followed by
+several elaborations of the basic idea.  It is my hope that the
+current document is a clearer presentation.
+
+One of the common tasks in computer programming is to look up
+a value for a key.  For example, suppose we have a table with
+three columns, employee name, employee number, and employee
+title.  Given an employee name we want to find the row containing
+that name.  The employee name is the key; the address of the row
+is the value.  Another example is a symbol table.  Given an
+identifier (the key) we want to look up the data associated with
+that identifier (the value).  Here is an example;
+Name            Number          Title
+Mary Jones      00017           Librarian
+Peter Smith     00231           Janitor
+Donald Duck     00119           Librarian
+
+There are a wide variety of algorithms and data structures that
+are used for storing, searching, and modifying (key,value) data.
+They include linked lists, hash tables, binary search trees and
+tries.
+
+This note introduces a class of data storage structures called
+unordered radix trees .  Unordered radix trees are a subclass of
+a more general class of data storage structures called radix
+based trees, which in turn are a subclass of a still more general
+class of data storage structures called parameterized selection
+trees.
+
+Parameterized selection trees are an alternative to comparison
+trees and to hash tables for efficient storage of and retrieval
+of (key,value) pairs.  In many applications parameterized
+selection trees are computationally superior to the alternatives.
+We show that unordered radix trees are particularly efficient
+in this regard.
+
+1. Statement of the task
+
+The objective is to define a data structure to hold key/value
+pairs.  The data structure must be dynamic; i.e., we must be able
+to add and delete pairs.  We must also be able to search the
+structure for a pair containing a designated key.
+
+At any one time all of the keys are distinct; i.e., for any key K
+there is at most one pair containing K.  On the other hand values
+may be duplicated, i.e., there can be two pairs with different
+keys but the same value.
+
+In our little table above, the key could be the employee name,
+and the value the index of the record containing the employee
+name.  On the other hand, the employee title is not a valid key
+since there is more than one librarian.
+
+The only kind of search that is required is to search for an
+exact match.  That is, given a key, we only look for the unique
+pair containing that key - if it exists.  What this means is that
+an order relationship need not be defined on the keys nor, if one
+is defined, that the data structure needs to preserve it.
+
+2. Parameterized selection trees
+
+The core idea in the parameterized selection tree concept is to
+replace expensive operations that require examining the entire
+key by cheaper operations that only require determining some
+specific attribute value of the key.  Since we are only checking
+attribute values the tree does not have to contain the actual
+key/value pairs; all it needs to do is to contain the attribute
+values of the keys.
+
+Each node in a tree contains an attribute specification (the
+parameter) and a set of components, each component corresponding
+to a different value of the attribute.  Each component either
+points to a datum (a key/value pair) or to a sub-node.  (The
+actual content of an implementation of a particular algorithm may
+differ but the parameter and the components will be there in some
+form.)
+
+To construct a parameterized selection tree we need two simple
+functions, a discrimination function f, and a parameter selection
+function g.
+
+2.1 Discrimination functions
+
+Discrimination functions have two arguments, a parameter and a
+key.  Let p be any attribute specification, k be any key, and let
+k1 and k2 be two distinct keys.  Then to be a valid discrimination
+function f must satisfy:
+
+(1) There is at least one p such that f(p,k1) .ne. f(p,k2)
+(2) The number of possible values of f(p,k) is bounded.
+(3) The cost of f is bounded; i.e, it is an O(1) function.
+
+Requirement (1) says that we can always find a parameter value to
+use so that f discriminates between two given keys.  Requirement
+(2) ensures that the cost of searching a node for a matching
+attribute value is bounded.  It also implies that for any value
+of p f may distinguish between unequal elements but is not
+guaranteed to do so, and that it makes different distinctions for
+different values of p.  Requirement (3) ensures that the cost of
+traversing the tree is proportional to the path length.
+
+2.2 Parameter selection functions
+
+Given two distinct keys k1 and k2 the parameter selection
+function g returns a parameter value p that discriminates
+between k1 and k2.  That is, p satisfies
+
+f(p,k1) .ne. f(p,k2)
+
+Unlike discrimination functions which is required to be O(1), the
+cost of the parameter selection function g can be data dependent.
+However for performance reasons it should be no worse than
+O(log(n)).
+
+2.3 Tree construction
+
+The following is pseudocode for searching a tree for a leaf node
+
+node := root  # start at the top of the tree
+loop
+attribute value := f(node parameter,key)
+is there is no component with that attribute value?
+then escape loop saying no leaf
+else is it a leaf node?
+then escape saying leaf
+else descend
+end
+
+Searches and inserts both use the basic search pattern.  Searches
+that terminate with &quot;no leaf&quot; fail.  If there is a terminating
+leaf node there must be a verification check to ensure  that the
+leaf key and the search key are in fact the same.
+
+When inserts terminate with &quot;no leaf&quot; a new component is created
+in the node to contain the leaf.  When inserts fail with &quot;leaf&quot;
+we call g(leaf key, insert key) to find a parameter value that
+discriminates between them.  If there is none, the two keys are
+identical and the insert fails.  If there is a discrimination the
+leaf node is replaced by a sub node containing two components.
+
+Deletions also use the basic search loop to find a key matching
+the key to be deleted.  When one is found the component is
+deleted; if there is only one component remaining the node is
+deleted and the component is moved up to the parent.
+
+2.4 An example - the animal game
+
+The principal examples of parameterized selection trees are the
+radix based trees discussed below.  A simple example is the
+animal game.  Here is a transcript of a typical session (computer
+in upper case, human in lower case):
+
+THINK OF AN ANIMAL?
+okay
+
+DOES IT HAVE FOUR LEGS?
+yes
+
+IS IT GREEN?
+no
+
+IS IT A HORSE?
+no
+
+WHAT IS IT?
+an aardvark
+
+TELL ME SOMETHING ABOUT AARDVARKS THAT ISN'T TRUE OF HORSES
+aardvarks eat ants
+
+In this case the parameter is the property (has four legs, is
+green, eats ants, etc) with two components in each node.  The
+parameter is the question and the attribute values are yes and
+no.  Leaf nodes contain the name of an animal and sub nodes have
+the next question.
+
+3. Radix based trees
+
+The term, radix tree, seems to have preempted to refer to
+Patricia trees, e.g., the wikipedia entry for radix trees.  The
+usage is by no means universal, e.g., the usage in the linux
+kernel.  The preemption is unfortunate; &quot;radix tree&quot; is the
+natural term for the general class of trees that I shall call
+radix based trees.
+
+In radix based trees the key is treated as a sequence of r-bits
+where an r-bit is an integer in some radix R.  The radix usually
+is a small power of a power of 2, i.e, 2, 4, 16, and 256.  R need
+not be fixed; in mixed radix trees the value of R varies with the
+index.
+
+Radix based trees are parameterized selection trees, with the
+parameter p being the p'th position in the sequence.  In the
+component set the attribute values are r-bits in the p'th
+position.
+
+There are two general classes of radix based trees, ordered trees
+and unordered trees.  In ordered trees the position indices
+increase monotonically as one descends down the tree; in
+unordered trees they can skip around.  Ordered radix trees
+preserve the ordering of the keys; unordered radix trees do not.
+
+The number of components in a node can vary from 1 to R.  There
+are various ways to establish space for the components.  A common
+method is to have an array with R slots that is indexed by the
+possible r-bit values.
+
+In addition there are character sequences where the character
+encoding length is variable.  Strictly speaking, variable
+encoding length character string trees are not radix based trees.
+However they can be managed using ordered radix tree methods -
+but not unordered radix tree methods.
+
+4. Ordered radix trees
+
+The basic ordered radix tree is the trie.  In a trie each node
+has R slots where R is the radix.  Each slot either has no data
+or a leaf/subnode flag and a pointer that either points to the
+value of a key/value pair or to a subnode.  (There are many
+variations possible in the organization of the data.)
+
+The critical factor in trie performance is the method used to
+handle slots in the nodes.  The simplest method (and the one
+usually associated with tries) is an array with R entries.  The
+problem with using arrays is usually there will be empty slots.
+This has two aspects, the first being that we need a special mark
+for empty slots, and the second being that a large part of the
+structure will be empty slots, i.e., there will be a significant
+waste of space.  This waste can be quite spectacular if R is
+large.
+
+The alternative is some form of list (possibly a variable length
+array).  The issue here is that when R is large the cost of
+searching for a slot increases linearly with the number of filled
+slots.
+
+One way to reduce the amount of space used is to terminate the
+search when there are no more alternatives left, i.e., when there
+is only one possible suffix.  Patricia trees extend this
+technique by coalescing nodes that only have one active slot.
+(Binary Patricia trees (R=2) have convenient implementation
+properties and many use the term Patricia tree to be a binary
+Patricia tree.)
+
+Patricia trees have the property that internal nodes have at
+least two filled slots.  This is particularly space efficient
+when R=2.  The downside is that some method must be used to
+annotate the coalesced nodes.  One way to characterize Patricia
+trees is to say that there are two kinds of nodes, one holding R
+slots and one holding a single slot.
+
+An important feature of ordered radix trees is that all variants
+are isomorphic.  That is, given a set S of key/value pairs and a
+radix R, there is a unique ordered radix tree.  The reason for
+this is that at each node including the node content is well
+determined.  In contrast comparison trees, e.g., binary search
+trees, are not uniquely determined by S.
+
+5. Unordered radix trees
+
+The key features of unordered radix trees (UR Trees) are (a) the
+position indices in the nodes are not ordered as we descend down
+the tree, (b) that every node has at least two components, and
+(c) the information in the tree about the keys is incomplete.
+Unlike ordered radix trees UR trees are not unique; the structure
+of an UR tree depends both upon the parameter selection function
+used and on the order in which the pairs are inserted.
+
+5.1 An example
+
+Here is a simple example taken from the wikipedia article on
+Patricia trees.  We have the following seven keys that we will
+enter into a UR tree in order.
+
+romane
+romanus
+romulus
+rubens
+ruber
+rubicon
+rubicundus
+
+When we insert &quot;romane&quot; we produce a tree with a single node that
+looks like this:
+
+0: r
+romane
+
+(The diagram shows the index followed by colon followed by each
+of r-bit values occurring in the node.  Below each node is a key
+if the node is a leaf node or a vertical bar if the node has a
+sub node.)
+
+When we insert &quot;romanus&quot; we create a sub-node for r-bit 'r' at
+index 0.  The two keys (the leaf key and the key being inserted)
+differ at index 5.  We create a sub-node to get
+
+0: r
+|
+5: e-------u
+romane  romanus
+
+Note that the paths to &quot;romane&quot; and &quot;romanus&quot; do not inspect the
+r-bits at indices 1 through 4.  Next we insert &quot;romulus&quot;.  The
+tree now looks like this:
+
+0: r
+|
+5: e-------u
+romane  |
+3: a-------u
+romanus romulus
+
+After inserting the remaining elements (assuming all keys have
+trailing blanks - see section 5.2) the tree looks this:
+
+0:r
+|
+5: ' '----e------o-------s------u
+ruber  romane rubicon rubens |
+3: a-------i----------u
+romanus rubicundus romulus
+
+In the wikipedia article the depth of the comparable Patricia
+tree is four whereas the depth of the UR tree above is three.
+Furthermore the average path length in the UR tree is 2.4 whereas
+the average path length in the Patricia tree is 3.7.  Shorter
+path lengths are typical for UR trees when data is entered in
+sorted order.
+
+More importantly the number of r-bits in a key that are
+examined during a UR tree search or insert is O(log N) whereas
+the number examined in a OR tree search or insert is O(L)
+where N is the number of pairs and L is the average key length.
+Since the keys are unique L &gt;= log2(N).  That is, in principle UR
+trees are always more efficient than the corresponding OR trees
+for failed searches and inserts.  However a successful search is
+always O(L) regardless of algorithm because we need to examine
+all r-bits of a key to verify success.
+
+5.2 A forest of trees
+
+One of the little difficulties that arises in the implementing
+radix trees is the handling of keys that are of different
+lengths.  In unordered radix trees what can happen is that, in
+effect, we skip past the end of a key.  For example, suppose that
+our key is the string &quot;ruber&quot;, that the root node position is the
+first character of the string, and that the entry for &quot;r&quot; points
+to a sub-node.  Suppose further that in the sub-node the node
+position is six, i.e., it is after the end of our
+key.  How we handle this?
+
+There are a number of methods that could be used.  For example we
+could have a special tag value signifying &quot;end of key&quot; and treat
+each key as having an infinite number of &quot;end of key&quot; tags as a
+tail.
+
+Perhaps the simplest method is to have a separate tree for each
+different key length; in other words to have a forest of trees.
+Since all keys in a given tree have the same length the problem
+of skipping past the end of a tree never arises.  In consequence
+the search code can be simpler.
+
+A further benefit of a forest of trees is that individual root
+nodes can be found with a table lookup in a table indexed by key
+length, making the entire tree broader and shallower.
+
+5.3 Basic operations
+
+The three basic operations are searches, insertions, and
+deletions.
+
+5.3.1 Searches
+
+The input to a search is a key; if the key is found the
+corresponding value is returned.  The search operation uses the
+basic search loop (see 2.3) to find a leaf node potentially
+matching the key being sought.  If no potential match is found we
+report failure.  If one is found we compare the key and the
+potential match.  If they match we report success and return the
+corresponding value.  If no match is found we report failure.
+
+5.3.2 Insertions
+
+An insertion has two inputs - a key/value pair and a flag
+specifying what is to be done if the key already exists in the
+tree.  The basic search loop is used first.  If a node is found
+that does not have a component for the key a leaf component is
+created for the key/value pair and we return the value.  If a
+leaf component is reached we check to see whether the leaf key
+and the key being inserted differ.  If they do we create a
+subnode containing the leaf key and the insert key.  If they
+don't the action taken depends on the input flag.  If it says
+&quot;replace&quot; then the old value is discarded and is replaced by the
+new value; the new value is returned.  If it doesn't say
+&quot;replace&quot; the old value is returned.
+
+5.3.3 Deletions
+
+A deletion has one input, the key of the key/value pair being
+deleted.  (In some applications the value must be checked also.)
+The deletion operation either returns &quot;succeeded&quot; or &quot;failed&quot;.
+Again we search the tree for the key.  If it is not found we
+return &quot;failed&quot;.  If it is found it will be in a
+leaf component.  It is a straightforward matter to delete the
+component.
+
+If there is more than one remaining component nothing more need
+be done.  When there is only one remaining there are two possible
+courses of action:
+
+(A) Snip the single remaining component.  If it is a leaf
+component move it up to its parent.  If it is a subnode component
+let its parent point to the subnode.
+
+(B) Leave the node as is.  Whenever a singleton leaf component is
+deleted, delete all singletons above it up to the first
+non-singleton.
+
+Course (a) is probably simpler and more efficient in most
+implementations; however course (b) will require fewer node
+deletions.
+
+5.4  Parameter selection functions
+
+For UR trees a parameter selection function takes two keys as
+input and returns either an index at which the two keys differ or
+a flag value (typically -1) indicating that they are the same.
+
+There are many possible parameter selection functions that could
+be used; however there aren't many possibilities if we keep in
+mind that the code should be simple and fast.  There are some
+obvious possibilities:
+
+(a) Begin at the beginning of the keys and search forward until a
+difference is found.  This is simple and fast.  The disadvantage
+are that we are continually rescanning the beginning of the keys.
+Alternatively, begin at the end of the keys and search backwards.
+A backwards search can be advantageous if keys often share long
+prefixes.
+
+(b) Start at the current position in the keys and search forward
+until a difference is found or until the end of key is found.  If
+no difference is found start at the beginning of the key and
+search up to the current position until a difference is found.
+The disadvantage here is that the loop logic is more expensive.
+The advantage is that the search will tend to skip long matching
+subsequences.
+
+5.5 Node structure
+
+At a minimum a node contains (a) an index into an r-bit sequence,
+and (b) a set of component records.  A component record contains
+
+(1) An explicit or implicit r-bit value.
+(2) A flag specifying whether it is a leaf component or
+a subnode component.
+(3) A pointer/reference to leaf data or subnode link as
+needed.
+
+The actual structure can vary considerably.  The principal factor
+is the method used for storing the components, the main choices
+being r-bit indexed arrays and lists.
+
+When the components are in an r-bit indexed array the r-bit value
+is implicit.  On the other hand a flag is now needed to say
+whether an array slot has data or not.  This flag can be implicit
+if the implementation language has a nil pointer.  It is natural
+to put the leaf/subnode flag in a separate bit array.
+
+When the components are in a list or variable length array it is
+more convenient to keep items 1-3 together in an explicit record.
+In general the node will also have to have information about the
+list or variable length array.
+
+Storage use is less if item 3 can be dual nature, i.e. there can
+be a record variable that can either be a leaf reference or a
+subnode link as needed.  For example in C one could use void
+pointers or unions.
+
+Another alternative is to include a key/value descriptor in the
+record.
+
+5.6 Choice of radix
+
+In principle any radix could be used; in practice on binary
+machines with power of 2 word lengths the feasible radices are of
+the form 2^2^r, i.e., 2, 4, 16, and 256.  Each choice has its own
+implications for performance and storage usage.  As a general
+rule the larger the radix the broader and shallower the tree.
+Broad and shallow is computationally more efficient provided that
+components can be located efficiently.  The catch is that the
+techniques that provide efficient location, e.g., array
+addressing and sentinel delimited searches, tend to be more space
+expensive.
+
+For R=256 the better choice is to use dynamic arrays with
+sentinel delimited searches.  For smaller values of R the better
+choice is to use r-bit indexed arrays.  The best choice depends
+upon the data; however R=16 and R=4 are probably best.
+
+5.7 Performance - best, worst, and average
+
+In discussing performance there are two numbers to keep in mind,
+N, the number of entries, and L, the average length of a key.
+Since the keys are unique L is at least log(N); however it can be
+substantially greater.
+
+Since a UR tree has at least two components at each node on
+average the tree depth D is O(log N).  In the best case D is
+also O(log N); however in the worst case D is O(min(N,L)).
+
+Here is a worst case set of keys: Each key is all ones except for
+a single 0.  The key length, L, is much greater than N, and the
+locations of the zeroes are random.  In this case the tree depth
+D is N.
+
+There are four cases to consider - susccessful searches,
+unsuccessful searches, insertions, and deletions.  All operations
+use the basic search loop.
+
+A search will either find no leaf matching the key or will find a
+leaf that potentially matches the key.  If there is no potential
+match the cost is the search. The costs for the search loop are
+O(1) best case and O(D) average and worst case.
+
+It should be kept in mind the order function results are somewhat
+misleading; in applications the dominant factor is the constant
+in front.
+
+Searching for a key: If there is a potential match a verification
+pass must be made when searching for a key.  The verification
+cost for a successful match is O(L); for a failed match it is
+O(1) best case and O(L) average and worst case.  If there is no
+potential match there is no verification cost.
+
+Inserting a key/value pair: If the search does not find a
+potentially matching leaf node one will be created at a cost of
+O(1).  If one is found the difference function must be run to
+find a splitting point.  If none is found the cost is O(L); if
+one is found the cost is O(1) average and best cases, and O(L)
+worst case.
+
+Deleting a key/value pair: The cost of deleting a key/value pair
+is the same as that of searching for it.  The additional cost of
+deletion is O(1).
+
+5.8 Implementation considerations
+
+A critical decision in designing an implementation is deciding
+where and how the key/value data should be stored and who is
+responsible for maintaining it.  In the implementations I have
+done I assumed that the user is responsible for storing and
+maintaining the content of the pairs.  The view is that the UR
+tree code and its trees are a separate facility from the data
+storage management.  However the implementations (written in C)
+do keep description records consisting of (a) a pointer to the
+text of the key, (b) the key length, and (c) the value (if it is
+an integer and otherwise a pointer).
+
+Storage allocation is a major issue in tree algorithms.  Fast,
+cheap allocation of node space is a must; otherwise allocation
+costs dominate.
+
+6. Comparison with other algorithms
+
+The major alternatives are hash tables, comparison trees (binary
+search trees), and ordered radix trees.  There are also various
+hybrids such as ternary trees.
+
+All successful searches, regardless of the algorithm, have a
+verification cost that is O(L).  That is, a search for a key must
+check that all bits of a candidate in the data structure actually
+does match the requested key in all bits.  This implies that all
+search algorithms are at least O(L) when the search is
+successful.
+
+Unsuccessful searches in radix based trees need not be O(L);
+however the average cost must be at least O(log N) and the worst
+case will be O(L).  Insertion costs are the same as those of
+unsuccessful search, i.e., an insertion has the cost of an
+unsuccessful search followed by an O(1) cost to create a new
+entry.
+
+That said, order function comparisons are not terribly
+informative about the relative merits of the major algorithms.
+The exception is comparison trees, e.g.  binary search trees.
+They require O(log N) comparisons.  However the cost of a
+comparison is O(L).  Therefore searches in comparison tree
+algorithms are O(L*log N).  In practice as well as in
+theory binary search trees are computationally inferior to hash
+tables and radix based trees.
+
+Hash tables require O(L) operations to compute the hash value.
+Given the hash value (and favorable circumstances) the cost of
+searching is O(1).  In consequence hash tables require O(L)
+operations for all operations.  Hash tables have a bad worst case
+- O(N) independent of L.
+
+Unordered radix trees have an O(log N) successful search cost,
+which is theoretically better than the successful search costs
+for hash tables.  The catch is because hashes are done with
+byte or word operations there is increased efficiency because of
+the intrinsic parallelism of byte and word operations whereas
+with unordered radix trees the corresponding increase in
+efficiency depends upon k, the average number of components per
+node, which is typically lower than the intrinsic parallelism
+factor.
+
+That said, timing studies indicate that unordered radix trees
+are superior to hash tables except when (a) all keys are quite
+short (less than 10), and (b) the number of pairs is large (more
+than 100000) and the key sizes are modest.  If the key sizes are
+quite large (greater than 25) unordered radix trees are sharply
+superior.
+
+Note: The original timing studies were done assuming that the
+cost of hashing a key was the only significant cost in hash
+tables.  The actual costs are substantially greater, depending
+upon implementation.
+
+7. Implementations available online
+
+I have done two implementations that are available online.  The
+initial implementation was called htree; there are three files
+(not zipped), a C source file, a C include file, and a readme.txt
+file.  The URLs are:
+
+http://home.tiac.net/~cri_a/source_code/htree/htree.c
+http://home.tiac.net/~cri_a/source_code/htree/htree.h
+http://home.tiac.net/~cri_a/source_code/htree/readme.txt
+
+The second implementation was called urtree; there are also three
+files, a C source file, and two C include files.  The URLs are:
+
+http://home.tiac.net/~cri_a/source_code/urtee/urtee.c
+http://home.tiac.net/~cri_a/source_code/urtee/urtee_private.h
+http://home.tiac.net/~cri_a/source_code/urtee/urtee_public.h
+
+The htree implementation uses a radix of 256 and is fairly
+prolifigate in its use of storage.  The urtree implementation
+uses a radix of 16 and is much more efficient in its use of
+storage.  Both have similar timing considerations.
+
+There is a previous article entitled &quot;A (possibly) fast, novel
+search technique&quot; that was a preliminary exploration of the
+unordered radix trees concept.  It has been superceded by this
+article.
+</POST>
+</TEXT>
+</BODY>
+</DOC>

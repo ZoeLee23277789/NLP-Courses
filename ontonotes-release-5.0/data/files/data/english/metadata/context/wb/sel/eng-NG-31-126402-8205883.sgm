@@ -1,0 +1,2790 @@
+<DOC>
+<DOCID> eng-NG-31-126402-8205883 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-07-22T03:03:00 </DATETIME>
+<BODY>
+<HEADLINE>
+@arts
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Wade Ward&quot; &lt;zaxf...@invalid.net&gt; </POSTER>
+<POSTDATE> 2007-07-22T03:03:00 </POSTDATE>
+I'm picking apart the following script:
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Net::NNTP;
+use Date::Parse;
+
+my $nsrv='newsgroups.comcast.net';
+my $grp='comp.lang.perl.misc';
+my $USER = '';
+my $PASS = '';
+
+my $nntp=Net::NNTP-&gt;new($nsrv) or die &quot;Can't login to `$nsrv'$!\n&quot;;
+$nntp-&gt;authinfo($USER,$PASS) or die $!;
+my (undef, $first, $last, undef)=$nntp-&gt;group($grp)
+or die &quot;Can't access $grp\n&quot;;
+
+my ($since, @arts)=time-10*60*60;
+for (reverse $first..$last) {
+my %hdr=map /^(\S[^:]+):\s(.*)$/g, @{$nntp-&gt;head($_)};
+defined(my $date=$hdr{'NNTP-Posting-Date'}) or next;
+defined(my $time=str2time $date)
+or warn &quot;Couldn't parse date for article $_ ($date)\n&quot;
+and next;
+last if $time &lt; $since;
+unshift @arts, $_;
+}
+
+$nntp-&gt;article($_,\*STDOUT) for @arts;
+
+__END__
+The first symbol I don't understand is @arts.  It looks like a special
+variable to me, as I think $_ is as well.  I find no reference for it in my
+7-yr old version of Programming Perl.  I looked for it as well at cpan's
+date::parse and found nothing.  What is @arts ?
+--
+Wade Ward
+</POST>
+<POST>
+<POSTER> Tad McClellan &lt;ta...@seesig.invalid&gt; </POSTER>
+<POSTDATE> 2007-07-22T00:23:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Wade Ward &lt;zaxf ... @invalid.net&gt; wrote:
+&gt; What is @arts ?
+">
+
+An array.
+
+--
+Tad McClellan
+email: perl -le &quot;print scalar reverse qq/moc.noitatibaher\100cmdat/&quot;
+</POST>
+<POST>
+<POSTER> Michele Dondi &lt;bik.m...@tiscalinet.it&gt; </POSTER>
+<POSTDATE> 2007-07-22T04:00:00 </POSTDATE>
+On Sun, 22 Jul 2007 00:03:42 -0700, &quot;Wade Ward&quot; &lt;zaxf ... @invalid.net&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;Subject: @arts
+">
+
+Please, put the subject of your post in the Subject. Knowing who you
+are I had guessed it had to do with some code posted earlier by
+someone -actually me-. Reading further, if it actually were a special
+variable, then the subject may have been moderately fine. Since it
+isn't, and in any case just to be sure, you may have chosen something
+like: &quot;@arts: a special variable?&quot;
+
+<QUOTE PREVIOUSPOST="
+&gt;  my ($since, @arts)=time-10*60*60;
+">
+
+^^^^^
+1
+
+<QUOTE PREVIOUSPOST="
+&gt;      unshift @arts, $_;
+">
+
+^^^^^
+2
+
+<QUOTE PREVIOUSPOST="
+&gt;  $nntp-&gt;article($_,\*STDOUT) for @arts;
+">
+
+^^^^^
+3
+
+<QUOTE PREVIOUSPOST="
+&gt;The first symbol I don't understand is @arts.  It looks like a special
+&gt;variable to me, as I think $_ is as well.  I find no reference for it in my
+">
+
+No, it isn't. *What* precisely led you to think that?
+
+<QUOTE PREVIOUSPOST="
+&gt;7-yr old version of Programming Perl.  I looked for it as well at cpan's
+&gt;date::parse and found nothing.  What is @arts ?
+">
+
+It is a common lexical variable appearing in the script exactly in the
+three statements above: the first one (1) is the declaration, so to
+answer your question @arts is an array that starts as its life as an
+empty one. Then (2) it gets increasingly filled in &quot;reverse&quot; order.
+Last (3) it gets iterated over, period.
+
+Michele
+--
+{$_=pack'B8'x25,unpack'A8'x32,$a^=sub{pop^pop}-&gt;(map substr
+(($a||=join'',map--$|x$_,(unpack'w',unpack'u','G^&lt;R&lt;Y]*YB='
+.'KYU;*EVH[.FHF2W+#&quot;\Z*5TI/ER&lt;Z`S(G.DZZ9OX0Z')=~/./g)x2,$_,
+256),7,249);s/[^\w,]/ /g;$ \=/^J/?$/:&quot;\r&quot;;print,redo}#JAPH,
+</POST>
+<POST>
+<POSTER> &quot;Jürgen Exner&quot; &lt;jurge...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-22T05:19:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Wade Ward wrote:
+&gt; The first symbol I don't understand is @arts.  It looks like a special
+">
+
+Oh come on! Are you saying you have never seen an array before? How long
+have you been programming Perl?
+
+<QUOTE PREVIOUSPOST="
+&gt; variable to me, as I think $_ is as well.
+">
+
+Yes, $_ is special in so far as _many_ Perl functions will use it as the
+default operand if you don't explicitely specify a different one.
+
+<QUOTE PREVIOUSPOST="
+&gt; I find no reference for it
+&gt; in my 7-yr old version of Programming Perl.
+">
+
+My 11 year old copy of Programming Perl introduces arrays on page 6 and $_
+on page 53.
+
+jue
+</POST>
+<POST>
+<POSTER> &quot;Wade Ward&quot; &lt;zaxf...@invalid.net&gt; </POSTER>
+<POSTDATE> 2007-07-22T16:08:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Jürgen Exner&quot; &lt;jurge ... @hotmail.com&gt; wrote in message
+">
+
+news:GiFoi.2436$0v4.1803@trndny01 ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Wade Ward wrote:
+&gt;&gt; The first symbol I don't understand is @arts.  It looks like a special
+
+&gt; Oh come on! Are you saying you have never seen an array before? How long
+&gt; have you been programming Perl?
+">
+
+One month.
+
+3 things led me to think that it was a special symbol.
+1)  It arose in the context of a module that post-dates my reference.
+
+2)  I didn't see anything that looked like a declaration to me.  Apparently,
+this is the declaration:
+my ($since, @arts)=time-10*60*60;
+RHS looks like a scalar.  Before I modified the 24*60*60 to a smaller number
+so as not to have 40k of output, it looked like time-24*60*60 would be a
+biggish integer.  I was thinking that this got assigned to $since, and that
+@arts was something like zone in str2time(DATE [, ZONE]), that is, some type
+of argument.  In C and fortran, the declarations of arrays are
+unmistakeable.
+
+3)  There exist special variables that begin with @ and look a lot like
+@arts.
+--
+Wade Ward
+</POST>
+<POST>
+<POSTER> Tad McClellan &lt;ta...@seesig.invalid&gt; </POSTER>
+<POSTDATE> 2007-07-22T15:17:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Wade Ward &lt;zaxf ... @invalid.net&gt; wrote:
+&gt; 3)  There exist special variables that begin with @ and look a lot like
+&gt; @arts.
+">
+
+Please share your knowledge with me then.
+
+Here are all of Perl's special variables that begin with @
+that I can find:
+
+@LAST_MATCH_END
+@+
+@LAST_MATCH_START
+@-
+@ARGV
+@F
+@INC
+@_
+
+Which one of those looks like @arts to you?
+
+--
+Tad McClellan
+email: perl -le &quot;print scalar reverse qq/moc.noitatibaher\100cmdat/&quot;
+</POST>
+<POST>
+<POSTER> Michele Dondi &lt;bik.m...@tiscalinet.it&gt; </POSTER>
+<POSTDATE> 2007-07-22T15:26:00 </POSTDATE>
+On Sun, 22 Jul 2007 13:08:54 -0700, &quot;Wade Ward&quot; &lt;zaxf ... @invalid.net&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;3 things led me to think that it was a special symbol.
+&gt;1)  It arose in the context of a module that post-dates my reference.
+">
+
+If it were a variable exported by a module, then it wouldn't have been
+a (Perl) special variable.
+
+perldoc Exporter
+perldoc perlvar
+
+<QUOTE PREVIOUSPOST="
+&gt;2)  I didn't see anything that looked like a declaration to me.  Apparently,
+&gt;this is the declaration:
+&gt;my ($since, @arts)=time-10*60*60;
+&gt;RHS looks like a scalar.  Before I modified the 24*60*60 to a smaller number
+">
+
+LHS is a list, thus RHS is a list, comprising one element, that gets
+assigned to $since, @arts remains as empty as if it had been declared
+like
+
+my @arts;
+
+<QUOTE PREVIOUSPOST="
+&gt;so as not to have 40k of output, it looked like time-24*60*60 would be a
+&gt;biggish integer.  I was thinking that this got assigned to $since, and that
+">
+
+Given the well known return value of time(), which you must have
+*surely* looked up in
+
+perldoc -f time
+
+it is obvious that the value you're dealing with is a &quot;biggish
+integer.&quot;
+
+<QUOTE PREVIOUSPOST="
+&gt;@arts was something like zone in str2time(DATE [, ZONE]), that is, some type
+">
+
+Well, that's because str2time() takes arguments while my() is not
+really a function, but a compiler directive, that wants a list of
+variables, or undef values, period.
+
+<QUOTE PREVIOUSPOST="
+&gt;of argument.  In C and fortran, the declarations of arrays are
+&gt;unmistakeable.
+">
+
+In Perl, they can be, even though in all earnestness you're the first
+one to make this mistake, that I know. And I'm even more surprised
+that you didn't misinterpret in the same way another similar
+assignment:
+
+my (undef, $first, $last, undef)=$nntp-&gt;group($grp)
+
+which came earlier in the code.
+
+<QUOTE PREVIOUSPOST="
+&gt;3)  There exist special variables that begin with @ and look a lot like
+&gt;@arts.
+">
+
+None that I know. The closest one that springs to mind being
+&lt;c&gt;@ARGV&lt;/c&gt;, but then the vast majority Perl special variables are
+punctuation ones, while the few remaining one are all uppercase, with
+the exception of $a and $b.
+
+Michele
+--
+{$_=pack'B8'x25,unpack'A8'x32,$a^=sub{pop^pop}-&gt;(map substr
+(($a||=join'',map--$|x$_,(unpack'w',unpack'u','G^&lt;R&lt;Y]*YB='
+.'KYU;*EVH[.FHF2W+#&quot;\Z*5TI/ER&lt;Z`S(G.DZZ9OX0Z')=~/./g)x2,$_,
+256),7,249);s/[^\w,]/ /g;$ \=/^J/?$/:&quot;\r&quot;;print,redo}#JAPH,
+</POST>
+<POST>
+<POSTER> &quot;Wade Ward&quot; &lt;zaxf...@invalid.net&gt; </POSTER>
+<POSTDATE> 2007-07-22T18:53:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Tad McClellan&quot; &lt;ta ... @seesig.invalid&gt; wrote in message
+">
+
+news:slrnfa7b6f.siu.tadmc@tadmc30.sbcglobal.net ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Wade Ward &lt;zaxf ... @invalid.net&gt; wrote:
+
+&gt;&gt; 3)  There exist special variables that begin with @ and look a lot like
+&gt;&gt; @arts.
+
+&gt; Please share your knowledge with me then.
+">
+
+Believe it or not, I didn't start this thread to look like an idiot,
+although I seem to have achieved this.
+
+<QUOTE PREVIOUSPOST="
+&gt; Here are all of Perl's special variables that begin with @
+&gt; that I can find:
+
+&gt;   @LAST_MATCH_END
+&gt;   @+
+&gt;   @LAST_MATCH_START
+&gt;   @-
+&gt;   @ARGV
+&gt;   @F
+&gt;   @INC
+&gt;   @_
+
+&gt; Which one of those looks like @arts to you?
+">
+
+@argv has 1)an initial @, 2)a subsequent 'ar' and 3) 5 letters total.  If
+you put it in the above list and asked reasonable people lacking perl
+experience which one of these things is not like the other, I think any
+guess would follow.  Perl certainly has a motley assortment of funky-looking
+variables, probably beginning with $_.  A person can go cross-eyed looking
+at all the things that begin with $.
+--
+Wade Ward
+</POST>
+<POST>
+<POSTER> &quot;Wade Ward&quot; &lt;zaxf...@invalid.net&gt; </POSTER>
+<POSTDATE> 2007-07-22T19:47:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Michele Dondi&quot; &lt;bik.m ... @tiscalinet.it&gt; wrote in message
+">
+
+news:91b7a397f1pgb967hbcmpnhe8p186qp1gc@4ax.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sun, 22 Jul 2007 13:08:54 -0700, &quot;Wade Ward&quot; &lt;zaxf ... @invalid.net&gt;
+&gt; wrote:
+&gt; If it were a variable exported by a module, then it wouldn't have been
+&gt; a (Perl) special variable.
+
+&gt;  perldoc Exporter
+&gt;  perldoc perlvar
+">
+
+I looked through these.  Exporter is simply over my head right now.  perlvar
+shows special functions beginning with @ as arrays.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;2)  I didn't see anything that looked like a declaration to me.
+&gt;&gt;Apparently,
+&gt;&gt;this is the declaration:
+&gt;&gt;my ($since, @arts)=time-10*60*60;
+&gt;&gt;RHS looks like a scalar.  Before I modified the 24*60*60 to a smaller
+&gt;&gt;number
+
+&gt; LHS is a list, thus RHS is a list, comprising one element, that gets
+&gt; assigned to $since, @arts remains as empty as if it had been declared
+&gt; like
+
+&gt;  my @arts;
+
+&gt;&gt;so as not to have 40k of output, it looked like time-24*60*60 would be a
+&gt;&gt;biggish integer.  I was thinking that this got assigned to $since, and
+&gt;&gt;that
+
+&gt; Given the well known return value of time(), which you must have
+&gt; *surely* looked up in
+
+&gt;  perldoc -f time
+
+&gt; it is obvious that the value you're dealing with is a &quot;biggish
+&gt; integer.&quot;
+">
+
+Now, indeed, I have looked at that, but my reason for thinking that
+time-24*60*60 was going to be a biggish integer was that with the
+difference, it didn't look like there was a difference in type and 24*60*60
+is manifestly an integer.  To firm up the notion, I wrote this little
+script:
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+my $var=time();
+print &quot;Time is &quot;, $var,&quot;\n&quot;;
+
+__END__
+which gives: Time is 1185146611 .
+Why didn't this work until I put 'my' in front of $var ?
+
+<QUOTE PREVIOUSPOST="
+&gt; one to make this mistake, that I know. And I'm even more surprised
+&gt; that you didn't misinterpret in the same way another similar
+&gt; assignment:
+
+&gt;  my (undef, $first, $last, undef)=$nntp-&gt;group($grp)
+">
+
+That one didn't throw me so much, because I've read cpan's net::nntp
+serially and saw:
+In an array context the return value is a list containing, the number of
+articles in the group, the number of the first article, the number of the
+last article and the group name.
+
+It would seem that you didn't want the number of articles in the group or
+the group name, and left it undef.  Is undef a function in this usage?
+$first and $last would be scalars that you used.
+
+<QUOTE PREVIOUSPOST="
+&gt; None that I know. The closest one that springs to mind being
+&gt; &lt;c&gt;@ARGV&lt;/c&gt;, but then the vast majority Perl special variables are
+&gt; punctuation ones, while the few remaining one are all uppercase, with
+&gt; the exception of $a and $b.
+">
+
+$a and $b have special meanings in sorting, according to perlvar.
+
+Thanks for your help.
+--
+Wade Ward
+</POST>
+<POST>
+<POSTER> Michele Dondi &lt;bik.m...@tiscalinet.it&gt; </POSTER>
+<POSTDATE> 2007-07-22T17:43:00 </POSTDATE>
+On Sun, 22 Jul 2007 15:53:57 -0700, &quot;Wade Ward&quot; &lt;zaxf ... @invalid.net&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;guess would follow.  Perl certainly has a motley assortment of funky-looking
+&gt;variables, probably beginning with $_.  A person can go cross-eyed looking
+">
+
+Don't imagine them to be more than they actually are.
+
+Michele
+--
+{$_=pack'B8'x25,unpack'A8'x32,$a^=sub{pop^pop}-&gt;(map substr
+(($a||=join'',map--$|x$_,(unpack'w',unpack'u','G^&lt;R&lt;Y]*YB='
+.'KYU;*EVH[.FHF2W+#&quot;\Z*5TI/ER&lt;Z`S(G.DZZ9OX0Z')=~/./g)x2,$_,
+256),7,249);s/[^\w,]/ /g;$ \=/^J/?$/:&quot;\r&quot;;print,redo}#JAPH,
+</POST>
+<POST>
+<POSTER> Michele Dondi &lt;bik.m...@tiscalinet.it&gt; </POSTER>
+<POSTDATE> 2007-07-22T17:47:00 </POSTDATE>
+On Sun, 22 Jul 2007 19:17:01 GMT, Tad McClellan &lt;ta ... @seesig.invalid&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;Here are all of Perl's special variables that begin with @
+&gt;that I can find:
+
+&gt;   @LAST_MATCH_END
+">
+
+^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
+
+<QUOTE PREVIOUSPOST="
+&gt;   @+
+&gt;   @LAST_MATCH_START
+">
+
+^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^
+
+<QUOTE PREVIOUSPOST="
+&gt;   @-
+&gt;   @ARGV
+&gt;   @F
+&gt;   @INC
+&gt;   @_
+">
+
+And those two are not Perl's but English.pm's.
+
+Michele
+--
+{$_=pack'B8'x25,unpack'A8'x32,$a^=sub{pop^pop}-&gt;(map substr
+(($a||=join'',map--$|x$_,(unpack'w',unpack'u','G^&lt;R&lt;Y]*YB='
+.'KYU;*EVH[.FHF2W+#&quot;\Z*5TI/ER&lt;Z`S(G.DZZ9OX0Z')=~/./g)x2,$_,
+256),7,249);s/[^\w,]/ /g;$ \=/^J/?$/:&quot;\r&quot;;print,redo}#JAPH,
+</POST>
+<POST>
+<POSTER> Michele Dondi &lt;bik.m...@tiscalinet.it&gt; </POSTER>
+<POSTDATE> 2007-07-22T18:05:00 </POSTDATE>
+On Sun, 22 Jul 2007 16:47:03 -0700, &quot;Wade Ward&quot; &lt;zaxf ... @invalid.net&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; #!/usr/bin/perl
+
+&gt;  use strict;
+&gt;  use warnings;
+&gt;my $var=time();
+&gt;print &quot;Time is &quot;, $var,&quot;\n&quot;;
+
+&gt;  __END__
+&gt;which gives: Time is 1185146611 .
+&gt;Why didn't this work until I put 'my' in front of $var ?
+">
+
+Because that's why you're using strict at all: to restrict your
+freedom in a way that will allow you to easily avoid some common
+programming mistakes. *Of course* you have read
+
+perldoc strict
+
+haven't you?
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;  my (undef, $first, $last, undef)=$nntp-&gt;group($grp)
+[snip]
+&gt;It would seem that you didn't want the number of articles in the group or
+&gt;the group name, and left it undef.  Is undef a function in this usage?
+&gt;$first and $last would be scalars that you used.
+">
+
+Yes, it is a function, and as with all functions, you can read about
+it at
+
+perldoc -f undef
+
+undef in that usage is still a function, but you're only using its
+return value, which is actually its most common use, at first sight.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; None that I know. The closest one that springs to mind being
+&gt;&gt; &lt;c&gt;@ARGV&lt;/c&gt;, but then the vast majority Perl special variables are
+&gt;&gt; punctuation ones, while the few remaining one are all uppercase, with
+&gt;&gt; the exception of $a and $b.
+&gt;$a and $b have special meanings in sorting, according to perlvar.
+">
+
+Indeed.
+
+Michele
+--
+{$_=pack'B8'x25,unpack'A8'x32,$a^=sub{pop^pop}-&gt;(map substr
+(($a||=join'',map--$|x$_,(unpack'w',unpack'u','G^&lt;R&lt;Y]*YB='
+.'KYU;*EVH[.FHF2W+#&quot;\Z*5TI/ER&lt;Z`S(G.DZZ9OX0Z')=~/./g)x2,$_,
+256),7,249);s/[^\w,]/ /g;$ \=/^J/?$/:&quot;\r&quot;;print,redo}#JAPH,
+</POST>
+<POST>
+<POSTER> &quot;Peter Wyzl&quot; &lt;wyze...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-07-22T18:53:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Wade Ward&quot; &lt;zaxf ... @invalid.net&gt; wrote in message
+">
+
+news:_PudnYF7Q5eySj_bnZ2dnUVZ_rmjnZ2d@comcast.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; I'm picking apart the following script:
+&gt; #!/usr/bin/perl
+">
+
+You will almost certainly get a lot of benefit from this book...
+
+http://slashdot.org/books/00/01/24/1156247.shtml
+
+P
+</POST>
+<POST>
+<POSTER> &quot;Wade Ward&quot; &lt;zaxf...@invalid.net&gt; </POSTER>
+<POSTDATE> 2007-07-22T23:35:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Peter Wyzl&quot; &lt;wyze ... @yahoo.com&gt; wrote in message
+">
+
+news:vdRoi.10614$4A1.8410@news-server.bigpond.net.au ...
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Wade Ward&quot; &lt;zaxf ... @invalid.net&gt; wrote in message
+&gt; news:_PudnYF7Q5eySj_bnZ2dnUVZ_rmjnZ2d@comcast.com ...
+&gt;&gt; I'm picking apart the following script:
+&gt;&gt; #!/usr/bin/perl
+
+&gt; You will almost certainly get a lot of benefit from this book...
+
+&gt; http://slashdot.org/books/00/01/24/1156247.shtml
+">
+
+That looks promising.  If the knock on it is that it is too mathematical,
+then that would likely be more of an attraction to me, as my bachelors was
+in math.  I just blew my book budget for the month on a fortran title, but I
+could pick it up next month.
+--
+WW
+</POST>
+<POST>
+<POSTER> &quot;John W. Krahn&quot; &lt;du...@example.com&gt; </POSTER>
+<POSTDATE> 2007-07-22T22:28:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Michele Dondi wrote:
+&gt; On Sun, 22 Jul 2007 16:47:03 -0700, &quot;Wade Ward&quot; &lt;zaxf ... @invalid.net&gt;
+&gt; wrote:
+
+&gt;&gt;&gt;  my (undef, $first, $last, undef)=$nntp-&gt;group($grp)
+&gt; [snip]
+&gt;&gt; It would seem that you didn't want the number of articles in the group or
+&gt;&gt; the group name, and left it undef.  Is undef a function in this usage?
+&gt;&gt; $first and $last would be scalars that you used.
+
+&gt; Yes, it is a function, and as with all functions, you can read about
+&gt; it at
+
+&gt;   perldoc -f undef
+
+&gt; undef in that usage is still a function, but you're only using its
+&gt; return value, which is actually its most common use, at first sight.
+">
+
+In the example above the return value of undef is *not* being used.  In that
+example undef is used as a &quot;place holder&quot; and it receives one of the values in
+the list (and discards it.)
+
+John
+--
+Perl isn't a toolbox, but a small machine shop where you
+can special-order certain sorts of tools at low cost and
+in short order.                            -- Larry Wall
+</POST>
+<POST>
+<POSTER> &quot;Wade Ward&quot; &lt;zaxf...@invalid.net&gt; </POSTER>
+<POSTDATE> 2007-07-23T01:49:00 </POSTDATE>
+&quot;John W. Krahn&quot; &lt;du ... @example.com&gt; wrote in message
+news:jnUoi.59258$tB5.46200@edtnps90 ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Michele Dondi wrote:
+&gt;&gt; On Sun, 22 Jul 2007 16:47:03 -0700, &quot;Wade Ward&quot; &lt;zaxf ... @invalid.net&gt;
+&gt;&gt; wrote:
+
+&gt;&gt;&gt;&gt;  my (undef, $first, $last, undef)=$nntp-&gt;group($grp)
+&gt;&gt; [snip]
+&gt;&gt;&gt; It would seem that you didn't want the number of articles in the group
+&gt;&gt;&gt; or the group name, and left it undef.  Is undef a function in this
+&gt;&gt;&gt; usage? $first and $last would be scalars that you used.
+
+&gt;&gt; Yes, it is a function, and as with all functions, you can read about
+&gt;&gt; it at
+
+&gt;&gt;   perldoc -f undef
+
+&gt;&gt; undef in that usage is still a function, but you're only using its
+&gt;&gt; return value, which is actually its most common use, at first sight.
+
+&gt; In the example above the return value of undef is *not* being used.  In
+&gt; that example undef is used as a &quot;place holder&quot; and it receives one of the
+&gt; values in the list (and discards it.)
+">
+
+...and it's a good notation if you want a newcomer to follow your source
+script.  He could have just as easily written:
+my ($errno2, $first, $last, $debug1)=$nntp-&gt;group($grp);
+and been, I believe, semantically correct.
+--
+Wade Ward
+</POST>
+<POST>
+<POSTER> &quot;Vronans&quot; &lt;vron...@nowheresville.spamwall&gt; </POSTER>
+<POSTDATE> 2007-07-23T04:13:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Wade Ward&quot; &lt;zaxf ... @invalid.net&gt; wrote in message
+">
+
+news:2J6dnRlDn_V7KD7bnZ2dnUVZ_v2unZ2d@comcast.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Tad McClellan&quot; &lt;ta ... @seesig.invalid&gt; wrote in message
+&gt; news:slrnfa7b6f.siu.tadmc@tadmc30.sbcglobal.net ...
+&gt;&gt; Wade Ward &lt;zaxf ... @invalid.net&gt; wrote:
+
+&gt;&gt;&gt; 3)  There exist special variables that begin with @ and look a lot
+&gt;&gt;&gt; like
+&gt;&gt;&gt; @arts.
+
+&gt;&gt; Please share your knowledge with me then.
+&gt; Believe it or not, I didn't start this thread to look like an idiot,
+&gt; although I seem to have achieved this.
+">
+
+There are some here which chose to treat you as such, rather then
+attempt to see what your problem really was*, one of which conveniently
+snipped the part** of your post that described why you thought @arts was
+special:
+
+[[ &quot;Wade Ward&quot; wrote &lt; news:CNSdnWsIpuaqEj7bnZ2dnUVZ_gydnZ2d@comcast.com &gt;
+
+&gt; 2)  I didn't see anything that looked like a declaration to me.
+Apparently,
+&gt; this is the declaration:
+&gt; my ($since, @arts)=time-10*60*60;
+&gt; RHS looks like a scalar.  Before I modified the 24*60*60 to a
+smaller number
+&gt; so as not to have 40k of output, it looked like time-24*60*60 would
+be a
+&gt; biggish integer.  I was thinking that this got assigned to $since,
+and that
+&gt; @arts was something like zone in str2time(DATE [, ZONE]), that is,
+some type
+&gt; of argument.  In C and fortran, the declarations of arrays are
+&gt; unmistakeable.
+]]
+
+* The only valid gripe I've seen thus far is the original Subject line,
+which could of been a little more descriptive.
+
+** There really was no reason to remove that part, unless one is too
+busy thinking up their next clever quip.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Here are all of Perl's special variables that begin with @
+&gt;&gt; that I can find:
+
+&gt;&gt;   @LAST_MATCH_END
+&gt;&gt;   @+
+&gt;&gt;   @LAST_MATCH_START
+&gt;&gt;   @-
+&gt;&gt;   @ARGV
+&gt;&gt;   @F
+&gt;&gt;   @INC
+&gt;&gt;   @_
+
+&gt;&gt; Which one of those looks like @arts to you?
+">
+
+You missed his point entirely (see quoted text from OP's original post.)
+
+The root of his problem seems to be with this line:
+==&gt; my ($since, @arts)=time-10*60*60;
+
+This construct doesn't seem to make sense to me, as the array does not
+appear to be used at all:
+% perl -e 'my ($since, @arts)=time-10*60*60; print &quot;[$since]\n\n[&quot;.
+join(&quot;]\n[&quot;, @arts). &quot;]\n\n&quot;;'
+[1185142005]
+
+[]
+
+As the OP pointed out (see quote above), the result of 'time-10*60*60'
+is a scalar, so is there any reason why an array would be used in such a
+place? It seems pointless to me, but I admit there could be some
+instances my little test doesn't reveal (different result from time() on
+another platform is the only thing that comes to mind, although I'd
+doubt that.)
+</POST>
+<POST>
+<POSTER> &quot;Dr.Ruud&quot; &lt;rvtol+n...@isolution.nl&gt; </POSTER>
+<POSTDATE> 2007-07-23T05:10:00 </POSTDATE>
+Wade Ward &lt;zaxfuuq(AT)invalid.net&gt; schreef:
+
+If I assume correctly, and you didn't ask Katie for consent, you are
+abusing invalid.net.
+Read RFC 2606, there is a link on http://www.example.com/
+
+<QUOTE PREVIOUSPOST="
+&gt; John W. Krahn:
+&gt;&gt; In the example above the return value of undef is *not* being used.
+&gt;&gt; In that example undef is used as a &quot;place holder&quot; and it receives
+&gt;&gt; one of the values in the list (and discards it.)
+&gt; ...and it's a good notation if you want a newcomer to follow your
+&gt; source script.  He could have just as easily written:
+&gt; my ($errno2, $first, $last, $debug1)=$nntp-&gt;group($grp);
+&gt; and been, I believe, semantically correct.
+">
+
+Whitespace is cheap. Best put a blank line between the old text and your
+reply.
+
+And around the &quot;=&quot;. A nice article by Abigail on this:
+http://perl.abigail.be/Musings/coding_guidelines.html
+
+All small investments, expect high returns.
+
+--
+Affijn, Ruud
+
+&quot;Gewoon is een tijger.&quot;
+</POST>
+<POST>
+<POSTER> Michele Dondi &lt;bik.m...@tiscalinet.it&gt; </POSTER>
+<POSTDATE> 2007-07-23T06:37:00 </POSTDATE>
+On Mon, 23 Jul 2007 01:13:01 -0700, &quot;Vronans&quot;
+
+<QUOTE PREVIOUSPOST="
+&lt;vron ... @nowheresville.spamwall&gt; wrote:
+&gt;&gt;&gt; Please share your knowledge with me then.
+&gt;&gt; Believe it or not, I didn't start this thread to look like an idiot,
+&gt;&gt; although I seem to have achieved this.
+
+&gt;There are some here which chose to treat you as such, rather then
+">
+
+Well, being admittedly barely beyond the hello world level, asking for
+ready made code, and evidently wanting to understand it without prior
+knowledge of basic Perl somewhat justifies that.
+
+<QUOTE PREVIOUSPOST="
+&gt;attempt to see what your problem really was*, one of which conveniently
+&gt;snipped the part** of your post that described why you thought @arts was
+">
+
+I addressed all three points. Anyway, some knowledge of *basic* Perl
+wouldn't have raised the one you're stressing.
+
+<QUOTE PREVIOUSPOST="
+&gt;** There really was no reason to remove that part, unless one is too
+&gt;busy thinking up their next clever quip.
+">
+
+I didn't remove it.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; Which one of those looks like @arts to you?
+
+&gt;You missed his point entirely (see quoted text from OP's original post.)
+">
+
+No, he didn't, quoted text from the OP's OP notwithstanding. It just
+doesn't &quot;look like&quot; any (array) special variable: cum grano salis,
+obvioulsy - because &quot;to look like&quot; is subjective.
+
+<QUOTE PREVIOUSPOST="
+&gt;The root of his problem seems to be with this line:
+&gt; ==&gt; my ($since, @arts)=time-10*60*60;
+
+&gt;This construct doesn't seem to make sense to me, as the array does not
+">
+
+Sorry for you. It does for me, if you don't like it just remove it.
+
+<QUOTE PREVIOUSPOST="
+&gt;appear to be used at all:
+">
+
+In fact, it's declared but not really used. Should it have? Why so, my
+lord? It's used a few lines later -where it makes sense to use it-,
+and it's declared as closely as possible to where it's used, which is
+what we always recommend. So what?
+
+<QUOTE PREVIOUSPOST="
+&gt;As the OP pointed out (see quote above), the result of 'time-10*60*60'
+&gt;is a scalar, so is there any reason why an array would be used in such a
+&gt;place? It seems pointless to me, but I admit there could be some
+">
+
+Yes, the alternative would have been:
+
+my $since=time-10*60*60;
+my @arts;
+
+which takes more typing, more vertical space, one more statement and
+doesn't give any more readability.
+
+<QUOTE PREVIOUSPOST="
+&gt;instances my little test doesn't reveal (different result from time() on
+&gt;another platform is the only thing that comes to mind, although I'd
+&gt;doubt that.)
+">
+
+Nah, no such big issues. Just a tiny personal preference.
+
+Michele
+--
+{$_=pack'B8'x25,unpack'A8'x32,$a^=sub{pop^pop}-&gt;(map substr
+(($a||=join'',map--$|x$_,(unpack'w',unpack'u','G^&lt;R&lt;Y]*YB='
+.'KYU;*EVH[.FHF2W+#&quot;\Z*5TI/ER&lt;Z`S(G.DZZ9OX0Z')=~/./g)x2,$_,
+256),7,249);s/[^\w,]/ /g;$ \=/^J/?$/:&quot;\r&quot;;print,redo}#JAPH,
+</POST>
+<POST>
+<POSTER> Michele Dondi &lt;bik.m...@tiscalinet.it&gt; </POSTER>
+<POSTDATE> 2007-07-23T06:42:00 </POSTDATE>
+On Mon, 23 Jul 2007 02:28:31 GMT, &quot;John W. Krahn&quot; &lt;du ... @example.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; undef in that usage is still a function, but you're only using its
+&gt;&gt; return value, which is actually its most common use, at first sight.
+
+&gt;In the example above the return value of undef is *not* being used.  In that
+&gt;example undef is used as a &quot;place holder&quot; and it receives one of the values in
+&gt;the list (and discards it.)
+">
+
+Yes, you're perfectly right: let's call it an extra bit of syntactic
+sugar!
+
+Michele
+--
+{$_=pack'B8'x25,unpack'A8'x32,$a^=sub{pop^pop}-&gt;(map substr
+(($a||=join'',map--$|x$_,(unpack'w',unpack'u','G^&lt;R&lt;Y]*YB='
+.'KYU;*EVH[.FHF2W+#&quot;\Z*5TI/ER&lt;Z`S(G.DZZ9OX0Z')=~/./g)x2,$_,
+256),7,249);s/[^\w,]/ /g;$ \=/^J/?$/:&quot;\r&quot;;print,redo}#JAPH,
+</POST>
+<POST>
+<POSTER> Michele Dondi &lt;bik.m...@tiscalinet.it&gt; </POSTER>
+<POSTDATE> 2007-07-23T06:46:00 </POSTDATE>
+On Sun, 22 Jul 2007 22:49:02 -0700, &quot;Wade Ward&quot; &lt;zaxf ... @invalid.net&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;...and it's a good notation if you want a newcomer to follow your source
+&gt;script.  He could have just as easily written:
+&gt;my ($errno2, $first, $last, $debug1)=$nntp-&gt;group($grp);
+&gt;and been, I believe, semantically correct.
+">
+
+No point in declaring variables you won't be using. But definitely I
+would have chosen more descriptive name. $errno2 and $debug1 are
+certainly confusing...
+
+Michele
+--
+{$_=pack'B8'x25,unpack'A8'x32,$a^=sub{pop^pop}-&gt;(map substr
+(($a||=join'',map--$|x$_,(unpack'w',unpack'u','G^&lt;R&lt;Y]*YB='
+.'KYU;*EVH[.FHF2W+#&quot;\Z*5TI/ER&lt;Z`S(G.DZZ9OX0Z')=~/./g)x2,$_,
+256),7,249);s/[^\w,]/ /g;$ \=/^J/?$/:&quot;\r&quot;;print,redo}#JAPH,
+</POST>
+<POST>
+<POSTER> Michele Dondi &lt;bik.m...@tiscalinet.it&gt; </POSTER>
+<POSTDATE> 2007-07-23T07:10:00 </POSTDATE>
+On Mon, 23 Jul 2007 11:10:25 +0200, &quot;Dr.Ruud&quot;
+
+<QUOTE PREVIOUSPOST="
+&lt;rvtol+n ... @isolution.nl&gt; wrote:
+&gt;&gt; source script.  He could have just as easily written:
+&gt;&gt; my ($errno2, $first, $last, $debug1)=$nntp-&gt;group($grp);
+&gt;&gt; and been, I believe, semantically correct.
+
+&gt;Whitespace is cheap. Best put a blank line between the old text and your
+&gt;reply.
+">
+
+No, to be honest, that's me! I must say I mostly follow the style
+guidelines of perlstyle: not that I've read them and chosen to stick
+with them, just out of sense. Yet, in some respects I deviate from
+them, which is the case with horizontal space, e.g. below some commas
+or around some assignments: but it depends on how readable I find them
+to be...
+
+Michele
+--
+{$_=pack'B8'x25,unpack'A8'x32,$a^=sub{pop^pop}-&gt;(map substr
+(($a||=join'',map--$|x$_,(unpack'w',unpack'u','G^&lt;R&lt;Y]*YB='
+.'KYU;*EVH[.FHF2W+#&quot;\Z*5TI/ER&lt;Z`S(G.DZZ9OX0Z')=~/./g)x2,$_,
+256),7,249);s/[^\w,]/ /g;$ \=/^J/?$/:&quot;\r&quot;;print,redo}#JAPH,
+</POST>
+<POST>
+<POSTER> Michele Dondi &lt;bik.m...@tiscalinet.it&gt; </POSTER>
+<POSTDATE> 2007-07-23T10:01:00 </POSTDATE>
+On Mon, 23 Jul 2007 13:10:34 +0200, Michele Dondi
+
+<QUOTE PREVIOUSPOST="
+&lt;bik.m ... @tiscalinet.it&gt; wrote:
+&gt;them, which is the case with horizontal space, e.g. below some commas
+">
+
+^^^^^^^^^^             ^^^^^
+^^^^^^^^^^             ^^^^^
+
+Grr!
+
+Michele
+--
+{$_=pack'B8'x25,unpack'A8'x32,$a^=sub{pop^pop}-&gt;(map substr
+(($a||=join'',map--$|x$_,(unpack'w',unpack'u','G^&lt;R&lt;Y]*YB='
+.'KYU;*EVH[.FHF2W+#&quot;\Z*5TI/ER&lt;Z`S(G.DZZ9OX0Z')=~/./g)x2,$_,
+256),7,249);s/[^\w,]/ /g;$ \=/^J/?$/:&quot;\r&quot;;print,redo}#JAPH,
+</POST>
+<POST>
+<POSTER> &quot;Vronans&quot; &lt;vron...@nowheresville.spamwall&gt; </POSTER>
+<POSTDATE> 2007-07-23T12:12:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Michele Dondi wrote:
+&gt; On Mon, 23 Jul 2007 01:13:01 -0700, &quot;Vronans&quot;
+&gt; &lt;vron ... @nowheresville.spamwall&gt; wrote:
+&gt;&gt; &quot;Wade Ward&quot; &lt;zaxf ... @invalid.net&gt; wrote in message
+&gt;&gt; news:2J6dnRlDn_V7KD7bnZ2dnUVZ_v2unZ2d@comcast.com ...
+&gt;&gt;&gt; &quot;Tad McClellan&quot; &lt;ta ... @seesig.invalid&gt; wrote in message
+">
+
+(Please don't leave quotes without their applicable attributions.)
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt;&gt; Please share your knowledge with me then.
+&gt;&gt;&gt; Believe it or not, I didn't start this thread to look like an idiot,
+&gt;&gt;&gt; although I seem to have achieved this.
+
+&gt;&gt; There are some here which chose to treat you as such, rather then
+
+&gt; Well, being admittedly barely beyond the hello world level, asking for
+&gt; ready made code, and evidently wanting to understand it without prior
+&gt; knowledge of basic Perl somewhat justifies that.
+">
+
+You don't know his level of knowledge. He may certainly be new to Perl,
+that doesn't make him incompetent, and simply being a beginner does NOT
+justify treating people like idiots, and in fact you've perfectly
+demonstrated the real problem in this group.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; attempt to see what your problem really was*, one of which
+&gt;&gt; conveniently snipped the part** of your post that described why you
+&gt;&gt; thought @arts was
+
+&gt; I addressed all three points. Anyway, some knowledge of *basic* Perl
+&gt; wouldn't have raised the one you're stressing.
+">
+
+I never said you didn't. But seeing as you snipped the attribution
+(reinserted) which would of made that clear...
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; ** There really was no reason to remove that part, unless one is too
+&gt;&gt; busy thinking up their next clever quip.
+
+&gt; I didn't remove it.
+">
+
+See last previous response.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt;&gt; Which one of those looks like @arts to you?
+
+&gt;&gt; You missed his point entirely (see quoted text from OP's original
+&gt;&gt; post.)
+
+&gt; No, he didn't, quoted text from the OP's OP notwithstanding.
+">
+
+Oh so now you admit I wasn't addressing you. How nice of you.
+
+<QUOTE PREVIOUSPOST="
+&gt; It just doesn't &quot;look like&quot; any (array) special variable:
+&gt; cum grano salis, obvioulsy - because &quot;to look like&quot; is
+&gt; subjective.
+">
+
+So what? Why would it REALLY matter if it doesn't look like a special
+variable to any of us who know better? He didn't know, to him, the way
+it was being used (see code quoted directly below), looked special. Who
+the hell are you to imply what the OP thought, especially when he
+already put such forth, and it was snipped with out any regard.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; The root of his problem seems to be with this line:
+&gt;&gt; ==&gt; my ($since, @arts)=time-10*60*60;
+
+&gt;&gt; This construct doesn't seem to make sense to me, as the array does
+&gt;&gt; not
+
+&gt; Sorry for you. It does for me, if you don't like it just remove it.
+">
+
+Thanks for actually addressing the question...
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; appear to be used at all:
+
+&gt; In fact, it's declared but not really used. Should it have? Why so, my
+&gt; lord? It's used a few lines later -where it makes sense to use it-,
+&gt; and it's declared as closely as possible to where it's used, which is
+&gt; what we always recommend. So what?
+">
+
+I know it's declared, but the point was why use would it have IN THAT
+PLACE. The fact that it was declared was NEVER the issue. If you and
+others weren't so busy displaying just how much 'higher' then everyone
+you are you may have caught that.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; As the OP pointed out (see quote above), the result of
+&gt;&gt; 'time-10*60*60' is a scalar, so is there any reason why an array
+&gt;&gt; would be used in such a place? It seems pointless to me, but I admit
+&gt;&gt; there could be some
+
+&gt; Yes, the alternative would have been:
+
+&gt;  my $since=time-10*60*60;
+&gt;  my @arts;
+
+&gt; which takes more typing, more vertical space, one more statement and
+&gt; doesn't give any more readability.
+">
+
+Actually I'd wager that it does make it more clearer to more people than
+the previous version. The previous version, while saving a line, can be
+difficult to parse by the untrained mind (or even a more trained one at
+first glance.) Normally when one declares a list of variables and throws
+in an assignment, one assigns a list, not a scalar, as well. Assigning a
+scalar instead can be useful in this case, but you should be surprised
+when someone gets confused who has not touched on advanced use of
+otherwise trivial constructs.
+
+OTOH, was has to learn somewhere, though I'm sure how that warrents
+treating someone as inferior.
+</POST>
+<POST>
+<POSTER> pac...@TheWorld.com (Alan Curry) </POSTER>
+<POSTDATE> 2007-07-23T14:17:00 </POSTDATE>
+In article &lt;ua09a3de7q76umtils6ae1fqht2r58a ... @4ax.com&gt;,
+Michele Dondi  &lt;bik.m ... @tiscalinet.it&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;On Mon, 23 Jul 2007 01:13:01 -0700, &quot;Vronans&quot;
+&gt;&lt;vron ... @nowheresville.spamwall&gt; wrote:
+
+&gt;&gt;The root of his problem seems to be with this line:
+&gt;&gt; ==&gt; my ($since, @arts)=time-10*60*60;
+
+&gt;&gt;This construct doesn't seem to make sense to me, as the array does not
+[...]
+&gt;&gt;As the OP pointed out (see quote above), the result of 'time-10*60*60'
+&gt;&gt;is a scalar, so is there any reason why an array would be used in such a
+&gt;&gt;place? It seems pointless to me, but I admit there could be some
+
+&gt;Yes, the alternative would have been:
+
+&gt;  my $since=time-10*60*60;
+&gt;  my @arts;
+
+&gt;which takes more typing, more vertical space, one more statement and
+&gt;doesn't give any more readability.
+">
+
+Actually I think that does add readability. With the original, if you're
+interested in the initial value of @arts, you have to mentally parse the time
+expression first, just to find out there's nothing there initializing @arts.
+
+Here's another variation:
+
+my ($since, @arts)=(time-10*60*60, ());
+
+This way there's a clear correspondence of terms on the left and right, and
+the empty parentheses correspond to @arts, and you still got it packed all in
+one statement.
+
+--
+Alan Curry
+pac ... @world.std.com
+</POST>
+<POST>
+<POSTER> &quot;Jürgen Exner&quot; &lt;jurge...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-23T15:07:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Alan Curry wrote:
+&gt; Michele Dondi  &lt;bik.m ... @tiscalinet.it&gt; wrote:
+&gt;&gt; Yes, the alternative would have been:
+
+&gt;&gt;  my $since=time-10*60*60;
+&gt;&gt;  my @arts;
+
+&gt;&gt; which takes more typing, more vertical space, one more statement and
+&gt;&gt; doesn't give any more readability.
+
+&gt; Actually I think that does add readability. With the original, if
+&gt; you're interested in the initial value of @arts, you have to mentally
+&gt; parse the time expression first, just to find out there's nothing
+&gt; there initializing @arts.
+">
+
+I strongly agree!
+
+<QUOTE PREVIOUSPOST="
+&gt; Here's another variation:
+
+&gt; my ($since, @arts)=(time-10*60*60, ());
+
+&gt; This way there's a clear correspondence of terms on the left and
+&gt; right, and the empty parentheses correspond to @arts, and you still
+&gt; got it packed all in one statement.
+">
+
+A tad to confusing to me (packing too much stuff into a single statement).
+
+jue
+</POST>
+<POST>
+<POSTER> Michele Dondi &lt;bik.m...@tiscalinet.it&gt; </POSTER>
+<POSTDATE> 2007-07-23T15:44:00 </POSTDATE>
+On Mon, 23 Jul 2007 09:12:59 -0700, &quot;Vronans&quot;
+
+<QUOTE PREVIOUSPOST="
+&lt;vron ... @nowheresville.spamwall&gt; wrote:
+&gt;(Please don't leave quotes without their applicable attributions.)
+">
+
+Why not? I was only addressing directly what you wrote, leaving *some*
+quotes just to show, in some cases, that you were replying to someone
+who was replying to someone who wrote something. But I didn't enter in
+a delicate philological argumentation about who precisely wrote what.
+
+Of course I'm false and bastard and deceipt is my most powerful
+weapon: since my priority is to treat newbies like idiots and spread
+lies, there was a secret plot you don't know about... HAHAHA!
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt;&gt;&gt; Please share your knowledge with me then.
+&gt;&gt;&gt;&gt; Believe it or not, I didn't start this thread to look like an idiot,
+&gt;&gt;&gt;&gt; although I seem to have achieved this.
+">
+
+Not hard to know recognize the last two lines as Merril's: how strange
+that he recognizes having acted like an idiot in the first place,
+before you poo^Hpped out of hammerspace to &quot;defend&quot; him...
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Well, being admittedly barely beyond the hello world level, asking for
+&gt;&gt; ready made code, and evidently wanting to understand it without prior
+&gt;&gt; knowledge of basic Perl somewhat justifies that.
+
+&gt;You don't know his level of knowledge. He may certainly be new to Perl,
+">
+
+I *do* know his level of knowledge: I didn't come out of the factory
+with full Perl knowledge preinstalled. I had to learn it. So I have
+been at that level before. And I'm still learning. Strangely enough,
+I've learnt more from the dirty bastards known as the regulars here
+than from anyone else.
+
+Said this, there are newbies who act like idiots and newbies who
+don't. Newbies who get treated like idiots and newbies who don't.
+Generally, with a strong cause-effect relationship based on the
+obvious correspondence between the two.
+
+<QUOTE PREVIOUSPOST="
+&gt;that doesn't make him incompetent, and simply being a beginner does NOT
+&gt;justify treating people like idiots, and in fact you've perfectly
+">
+
+In fact it doesn't seem to me that he treated people like idiots,
+well: not here. In fact he was always very kind and polite.
+
+<QUOTE PREVIOUSPOST="
+&gt;demonstrated the real problem in this group.
+">
+
+Yeah, it's been said before. You all ranters should join and make a
+party. (Either political or the other way, whichever you like best - I
+suggest D+B for the music in both cases.) FWIW I've ranked rather high
+amongst top 10 clpmisc turds. I still wonder how precisely the little
+troll (and &quot;someone else&quot;) contributed positively to the group, BTW...
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; I addressed all three points. Anyway, some knowledge of *basic* Perl
+&gt;&gt; wouldn't have raised the one you're stressing.
+
+&gt;I never said you didn't. But seeing as you snipped the attribution
+&gt;(reinserted) which would of made that clear...
+">
+
+I never said you said I didn't. We're simply a community, and anyone
+is free to contribute to the extent she likes. My claim still stands:
+knowledge of *basic* Perl wouldn't have raised the particular point.
+Also, if a theorem asserts that e.g. &quot;all three conditions&quot; are
+satisfied, then just showing that one of them is not disproves the
+theorem as a whole. It is much similar here: the OP had three points,
+each of them too weak. Did Tad address one? it was enough!
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt;&gt;&gt; Which one of those looks like @arts to you?
+
+&gt;&gt;&gt; You missed his point entirely (see quoted text from OP's original
+&gt;&gt;&gt; post.)
+
+&gt;&gt; No, he didn't, quoted text from the OP's OP notwithstanding.
+
+&gt;Oh so now you admit I wasn't addressing you. How nice of you.
+">
+
+I didn't claim the contrary. I'm not so susceptible to *alleged*
+personal attacks...
+
+And Tad didn't miss the point: you're acting much like those students
+who have done a wrong exercise and go to the teacher to say: &quot;but you
+didn't understand my reasononing...&quot; Whatever... if the result is
+wrong, it's wrong. Basic logic, basic logic. No matter what Merril's
+reasoning was: @arts looks like no predefined array variable.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; It just doesn't &quot;look like&quot; any (array) special variable:
+&gt;&gt; cum grano salis, obvioulsy - because &quot;to look like&quot; is
+&gt;&gt; subjective.
+
+&gt;So what? Why would it REALLY matter if it doesn't look like a special
+&gt;variable to any of us who know better? He didn't know, to him, the way
+">
+
+Well, I wrote &quot;cum grano salis&quot;, just to be safe: but I bet even my
+mom would not find @arts NOT to look like any of the predefined array
+variables... Please adopt some grains of salt too!
+
+<QUOTE PREVIOUSPOST="
+&gt;it was being used (see code quoted directly below), looked special. Who
+">
+
+No, it doesn't look special in any way. It's only special in causing
+me a deflagrant orchitis because of your paranoic crusade.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; In fact, it's declared but not really used. Should it have? Why so, my
+&gt;&gt; lord? It's used a few lines later -where it makes sense to use it-,
+&gt;&gt; and it's declared as closely as possible to where it's used, which is
+&gt;&gt; what we always recommend. So what?
+
+&gt;I know it's declared, but the point was why use would it have IN THAT
+&gt;PLACE. The fact that it was declared was NEVER the issue. If you and
+">
+
+BECAUSE IF NOT IN THAT PLACE, THE LINE BELOW. The line above is
+already a declaration. I see no reason to have two separate
+declarations where one would suffice. It is common practice. One of
+the variables is also initalized. It is also common practice to
+initialize only some variables when declaring several, within the
+limits of the expressive power of the language. So I did, huh!
+
+<QUOTE PREVIOUSPOST="
+&gt;others weren't so busy displaying just how much 'higher' then everyone
+&gt;you are you may have caught that.
+">
+
+No, we caught it, but as too good a person, at least wrt the rest of
+us, you probably just can't understand how well does it make you feel
+to show how higher you are...
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Yes, the alternative would have been:
+
+&gt;&gt;  my $since=time-10*60*60;
+&gt;&gt;  my @arts;
+
+&gt;&gt; which takes more typing, more vertical space, one more statement and
+&gt;&gt; doesn't give any more readability.
+
+&gt;Actually I'd wager that it does make it more clearer to more people than
+&gt;the previous version. The previous version, while saving a line, can be
+">
+
+Yes, more clear to a complete Perl non-knower. Who wouldn't understand
+what that @ means anyway.
+
+<QUOTE PREVIOUSPOST="
+&gt;difficult to parse by the untrained mind (or even a more trained one at
+&gt;first glance.) Normally when one declares a list of variables and throws
+">
+
+No, just as easy for a *minimally* trained mind.
+
+<QUOTE PREVIOUSPOST="
+&gt;in an assignment, one assigns a list, not a scalar, as well. Assigning a
+">
+
+In fact a list is assigned, containing only one element.
+
+If you for some reason think that it *improves* readability, add a
+pair of parens:
+
+my ($since, @arts)=(time-10*60*60);
+
+<QUOTE PREVIOUSPOST="
+&gt;scalar instead can be useful in this case, but you should be surprised
+&gt;when someone gets confused who has not touched on advanced use of
+&gt;otherwise trivial constructs.
+">
+
+&quot;Advanced&quot;? You must be a comedian! Would you really regard that as
+&quot;advanced&quot;?!?
+
+<QUOTE PREVIOUSPOST="
+&gt;OTOH, was has to learn somewhere, though I'm sure how that warrents
+&gt;treating someone as inferior.
+">
+
+Huh?!?
+
+Michele
+--
+{$_=pack'B8'x25,unpack'A8'x32,$a^=sub{pop^pop}-&gt;(map substr
+(($a||=join'',map--$|x$_,(unpack'w',unpack'u','G^&lt;R&lt;Y]*YB='
+.'KYU;*EVH[.FHF2W+#&quot;\Z*5TI/ER&lt;Z`S(G.DZZ9OX0Z')=~/./g)x2,$_,
+256),7,249);s/[^\w,]/ /g;$ \=/^J/?$/:&quot;\r&quot;;print,redo}#JAPH,
+</POST>
+<POST>
+<POSTER> &quot;Vronans&quot; &lt;vron...@nowheresville.spamwall&gt; </POSTER>
+<POSTDATE> 2007-07-23T17:46:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Michele Dondi wrote:
+&gt; On Mon, 23 Jul 2007 09:12:59 -0700, &quot;Vronans&quot;
+&gt; &lt;vron ... @nowheresville.spamwall&gt; wrote:
+&gt;&gt; &quot;Wade Ward&quot; &lt;zaxf ... @invalid.net&gt; wrote in message
+&gt;&gt; news:2J6dnRlDn_V7KD7bnZ2dnUVZ_v2unZ2d@comcast.com ...
+
+&gt;&gt; &quot;Tad McClellan&quot; &lt;ta ... @seesig.invalid&gt; wrote in message
+&gt;&gt; news:slrnfa7b6f.siu.tadmc@tadmc30.sbcglobal.net ...
+&gt;&gt;&gt; Wade Ward &lt;zaxf ... @invalid.net&gt; wrote:
+">
+
+(Please don't leave quotes without their *applicable* attributions.)
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; (Please don't leave quotes without their applicable attributions.)
+
+&gt; Why not?
+">
+
+Because it's the proper thing to do (considing you and others are
+sometimes pushing posting etiquette, but it doesn't apply to you,
+right?)
+
+Also, it just plain makes things more difficult to follow in general.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt;&gt;&gt;&gt; Please share your knowledge with me then.
+&gt;&gt;&gt;&gt;&gt; Believe it or not, I didn't start this thread to look like an
+&gt;&gt;&gt;&gt;&gt; idiot, although I seem to have achieved this.
+
+&gt; Not hard to know recognize the last two lines as Merril's: how strange
+&gt; that he recognizes having acted like an idiot in the first place,
+&gt; before you poo^Hpped out of hammerspace to &quot;defend&quot; him...
+">
+
+Yes, because that how he felt was being treated, and you only confirmed
+it:
+
+<QUOTE PREVIOUSPOST="
+Michele Dondi wrote:
+">
+
+&lt;ua09a3de7q76umtils6ae1fqht2r58a ... @4ax.com&gt;
+[[
+&gt; Well, being admittedly barely beyond the hello world level, asking
+for
+&gt; ready made code, and evidently wanting to understand it without
+prior
+&gt; knowledge of basic Perl somewhat justifies that.
+]]
+
+There wouldn't be a reason to defend if there wasn't something to defend
+from.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; Well, being admittedly barely beyond the hello world level, asking
+&gt;&gt;&gt; for ready made code, and evidently wanting to understand it without
+&gt;&gt;&gt; prior knowledge of basic Perl somewhat justifies that.
+
+&gt;&gt; You don't know his level of knowledge. He may certainly be new to
+&gt;&gt; Perl,
+
+&gt; I *do* know his level of knowledge: I didn't come out of the factory
+&gt; with full Perl knowledge preinstalled. I had to learn it. So I have
+&gt; been at that level before. And I'm still learning. Strangely enough,
+&gt; I've learnt more from the dirty bastards known as the regulars here
+&gt; than from anyone else.
+">
+
+Yet you join in with the &quot;dirty bastards&quot;... this is akin to a victim
+growing up to become a bully (though in your case I'd say to a lesser
+extent, but rooted in the same syndrome nonetheless.)
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; that doesn't make him incompetent, and simply being a beginner does
+&gt;&gt; NOT justify treating people like idiots, and in fact you've perfectly
+
+&gt; In fact it doesn't seem to me that he treated people like idiots,
+&gt; well: not here. In fact he was always very kind and polite.
+
+&gt;&gt; demonstrated the real problem in this group.
+
+&gt; Yeah, it's been said before. You all ranters should join and make a
+&gt; party.
+">
+
+You mean like your &quot;elitist&quot; party?
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; I addressed all three points. Anyway, some knowledge of *basic* Perl
+&gt;&gt;&gt; wouldn't have raised the one you're stressing.
+
+&gt;&gt; I never said you didn't. But seeing as you snipped the attribution
+&gt;&gt; (reinserted) which would of made that clear...
+
+&gt; I never said you said I didn't.
+">
+
+You clearly implied it, and my response in the segment was directed at
+someone else (again, the attributions make that clear... when you don't
+snip them.)
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt;&gt;&gt;&gt; Which one of those looks like @arts to you?
+
+&gt;&gt;&gt;&gt; You missed his point entirely (see quoted text from OP's original
+&gt;&gt;&gt;&gt; post.)
+
+&gt;&gt;&gt; No, he didn't, quoted text from the OP's OP notwithstanding.
+
+&gt;&gt; Oh so now you admit I wasn't addressing you. How nice of you.
+&gt; And Tad didn't miss the point: you're acting much like those students
+&gt; who have done a wrong exercise and go to the teacher to say: &quot;but you
+&gt; didn't understand my reasononing...&quot; Whatever... if the result is
+&gt; wrong, it's wrong. Basic logic, basic logic. No matter what Merril's
+&gt; reasoning was: @arts looks like no predefined array variable.
+">
+
+More like, it's when a teacher refuses to admit they miss-understood
+something the student brought up, and throw out any rational which seems
+to work for them.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; It just doesn't &quot;look like&quot; any (array) special variable:
+&gt;&gt;&gt; cum grano salis, obvioulsy - because &quot;to look like&quot; is
+&gt;&gt;&gt; subjective.
+
+&gt;&gt; So what? Why would it REALLY matter if it doesn't look like a special
+&gt;&gt; variable to any of us who know better? He didn't know, to him, the
+&gt;&gt; way
+
+&gt; Well, I wrote &quot;cum grano salis&quot;, just to be safe: but I bet even my
+&gt; mom would not find @arts NOT to look like any of the predefined array
+&gt; variables... Please adopt some grains of salt too!
+">
+
+I don't remember anyone saying it looked like a predefined var, only a
+&quot;special&quot; var, which could be different things. Again, get off the high
+horse and come back down to earth and try to see things through the OP's
+eyes. If you've NEVER seen such a construct like the one given before it
+may look special. I don't know why you cannot understand that.
+</POST>
+<POST>
+<POSTER> Michele Dondi &lt;bik.m...@tiscalinet.it&gt; </POSTER>
+<POSTDATE> 2007-07-23T18:51:00 </POSTDATE>
+On Mon, 23 Jul 2007 14:46:43 -0700, &quot;Vronans&quot;
+
+<QUOTE PREVIOUSPOST="
+&lt;vron ... @nowheresville.spamwall&gt; wrote:
+&gt;Because it's the proper thing to do (considing you and others are
+&gt;sometimes pushing posting etiquette, but it doesn't apply to you,
+&gt;right?)
+">
+
+Well, NO-body has ever complained in several years, and I can't
+remember anybody considering my posts hard to read because of bad
+netiquette. So I won't do what you suggest unless there's a compelling
+reason to do so, e.g. precisely track who's saying what.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Not hard to know recognize the last two lines as Merril's: how strange
+&gt;&gt; that he recognizes having acted like an idiot in the first place,
+&gt;&gt; before you poo^Hpped out of hammerspace to &quot;defend&quot; him...
+
+&gt;Yes, because that how he felt was being treated, and you only confirmed
+&gt;it:
+
+&gt;Michele Dondi wrote:
+&gt;&lt;ua09a3de7q76umtils6ae1fqht2r58a ... @4ax.com&gt;
+&gt;[[
+&gt;  &gt; Well, being admittedly barely beyond the hello world level, asking
+&gt;for
+&gt;  &gt; ready made code, and evidently wanting to understand it without
+&gt;prior
+&gt;  &gt; knowledge of basic Perl somewhat justifies that.
+&gt;]]
+
+&gt;There wouldn't be a reason to defend if there wasn't something to defend
+&gt;from.
+">
+
+So why didn't he feel the same himself and in some way apologized for
+having acted like an idiot instead? And since you're the self
+proclaimed Zorro of clmpmisc, would you explain *what*, precisely,
+should he be defended from?
+
+I'm just expressing a judgment, and I'm not talking in absolute terms:
+e.g. &quot;you're *certainly* an idiot&quot;. I'm saying that a certain
+behaviour *somewhat* (a word which you quote with great precision but
+with which you don't seem to be particularly familiar) justifies the
+fact that a person can be considered an idiot. And I'm convinced about
+that! I support my claim indeed.
+
+Still I didn't say anything false about our friend Merrill, in fact he
+himself claimed to be IN HIS OWN WORDS &quot;barely beyond hello world&quot;, he
+himself DID ask for ready made code, trying to make it work in some
+manner. So did I say anything false just to insult?
+
+I already wrote in another post in another thread, that my judgement
+is that his chosen path for learning is not a good one. One should get
+familiar at least with a bare minimum of Perl first. Hello world is
+not enough, period.
+
+<QUOTE PREVIOUSPOST="
+&gt;Yet you join in with the &quot;dirty bastards&quot;... this is akin to a victim
+&gt;growing up to become a bully (though in your case I'd say to a lesser
+&gt;extent, but rooted in the same syndrome nonetheless.)
+">
+
+No, no, one of the worst cases... I've been *terrorized* for years
+(you know, nightmares and all) till I joined them and I was happy
+again!!
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Yeah, it's been said before. You all ranters should join and make a
+&gt;&gt; party.
+
+&gt;You mean like your &quot;elitist&quot; party?
+">
+
+Yeah, but of opposite sign: don't forget it!
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Well, I wrote &quot;cum grano salis&quot;, just to be safe: but I bet even my
+&gt;&gt; mom would not find @arts NOT to look like any of the predefined array
+&gt;&gt; variables... Please adopt some grains of salt too!
+
+&gt;I don't remember anyone saying it looked like a predefined var, only a
+&gt;&quot;special&quot; var, which could be different things. Again, get off the high
+">
+
+Ok, please explain me what a special var is that is not a predefined
+var, because then I don't know. The meaning of &quot;predefined variable&quot;
+is well defined... that of &quot;special variable&quot;... I don't have the
+slightest idea.
+
+<QUOTE PREVIOUSPOST="
+&gt;horse and come back down to earth and try to see things through the OP's
+&gt;eyes. If you've NEVER seen such a construct like the one given before it
+&gt;may look special. I don't know why you cannot understand that.
+">
+
+First I would have to understand what &quot;special&quot; means in this context.
+And no, I can't think of myself as a very beginner finding
+
+my (undef, $first, $last, undef)=$nntp-&gt;group($grp)
+or die &quot;Can't access $grp\n&quot;;
+
+&quot;normal&quot; and
+
+my ($since, @arts)=time-10*60*60;
+
+&quot;special&quot;. Either both or probably none.
+
+Michele
+--
+{$_=pack'B8'x25,unpack'A8'x32,$a^=sub{pop^pop}-&gt;(map substr
+(($a||=join'',map--$|x$_,(unpack'w',unpack'u','G^&lt;R&lt;Y]*YB='
+.'KYU;*EVH[.FHF2W+#&quot;\Z*5TI/ER&lt;Z`S(G.DZZ9OX0Z')=~/./g)x2,$_,
+256),7,249);s/[^\w,]/ /g;$ \=/^J/?$/:&quot;\r&quot;;print,redo}#JAPH,
+</POST>
+<POST>
+<POSTER> Michele Dondi &lt;bik.m...@tiscalinet.it&gt; </POSTER>
+<POSTDATE> 2007-07-23T18:53:00 </POSTDATE>
+On Mon, 23 Jul 2007 18:17:34 +0000 (UTC), pac ... @TheWorld.com (Alan
+
+<QUOTE PREVIOUSPOST="
+Curry) wrote:
+&gt;Actually I think that does add readability. With the original, if you're
+&gt;interested in the initial value of @arts, you have to mentally parse the time
+&gt;expression first, just to find out there's nothing there initializing @arts.
+
+&gt;Here's another variation:
+
+&gt;my ($since, @arts)=(time-10*60*60, ());
+
+&gt;This way there's a clear correspondence of terms on the left and right, and
+&gt;the empty parentheses correspond to @arts, and you still got it packed all in
+&gt;one statement.
+">
+
+Unfortunately my religion would prhibit me from doing so. Moreover, it
+would make me suspect with some apprehension I've switched to lisp.
+
+Michele
+--
+{$_=pack'B8'x25,unpack'A8'x32,$a^=sub{pop^pop}-&gt;(map substr
+(($a||=join'',map--$|x$_,(unpack'w',unpack'u','G^&lt;R&lt;Y]*YB='
+.'KYU;*EVH[.FHF2W+#&quot;\Z*5TI/ER&lt;Z`S(G.DZZ9OX0Z')=~/./g)x2,$_,
+256),7,249);s/[^\w,]/ /g;$ \=/^J/?$/:&quot;\r&quot;;print,redo}#JAPH,
+</POST>
+<POST>
+<POSTER> Wade Ward &lt;zaxf...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-23T19:52:00 </POSTDATE>
+On Jul 23, 6:53 pm, Michele Dondi &lt;bik.m ... @tiscalinet.it&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Mon, 23 Jul 2007 18:17:34 +0000 (UTC), pac ... @TheWorld.com (Alan
+
+&gt; Curry) wrote:
+&gt; &gt;Actually I think that does add readability. With the original, if you're
+&gt; &gt;interested in the initial value of @arts, you have to mentally parse the time
+&gt; &gt;expression first, just to find out there's nothing there initializing @arts.
+
+&gt; &gt;Here's another variation:
+
+&gt; &gt;my ($since, @arts)=(time-10*60*60, ());
+
+&gt; &gt;This way there's a clear correspondence of terms on the left and right, and
+&gt; &gt;the empty parentheses correspond to @arts, and you still got it packed all in
+&gt; &gt;one statement.
+
+&gt; Unfortunately my religion would prhibit me from doing so. Moreover, it
+&gt; would make me suspect with some apprehension I've switched to lisp.
+">
+
+I can't connect to comcast now, so I'm posting at the library through
+the google portal.  I hope that this doesn't change my identity in a
+distracting way.  Here is the script in question:
+
+my @arts; #array declaration
+my $since = time - (10*60*60);
+for (reverse $first..$last) {
+#for (my $i = $first; $i &lt;= $last; $i--){
+my %hdr=map /^(\S[^:]+):\s(.*)$/g, @{$nntp-&gt;head($_)};
+defined(my $date=$hdr{'NNTP-Posting-Date'}) or next;
+defined(my $time=str2time $date)
+or warn &quot;Couldn't parse date for article $_ ($date)\n&quot;
+and next;
+last if $time &lt; $since;
+unshift @arts, $_;
+}
+
+$nntp-&gt;article($_,\*STDOUT) for @arts;
+__END__
+I was trying to pick apart the control mechanism to ascertain
+details from the above.  Are these statements equivalent:
+for (reverse $first..$last) {
+for (my $i = $first; $i &lt;= $last; $i--){
+?  My reference shows only the three part 'for' syntax.  If I leave
+out the reverse, I get no output at all.
+
+It appears that the only thing going to STDOUT is @arts.  What
+dimensions does @arts have?  I don't think the compiler can know in
+advance.  I would think that one dimension of @arts would have to be
+the difference between $first and $last.  There's a lot more
+wiggleroom in perl's syntax than say, fortran, where this might be the
+equivalent:
+real, dimension(:), allocatable :: arts
+read *, n
+allocate(arts(n))
+:
+deallocate(arts)
+
+Am I correct that each entry of @arts contains an entire usenet
+message?
+--
+Wade Ward
+</POST>
+<POST>
+<POSTER> &quot;Vronans&quot; &lt;vron...@nowheresville.spamwall&gt; </POSTER>
+<POSTDATE> 2007-07-23T20:07:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Michele Dondi wrote:
+&gt; On Mon, 23 Jul 2007 14:46:43 -0700, &quot;Vronans&quot;
+&gt; &lt;vron ... @nowheresville.spamwall&gt; wrote:
+
+&gt;&gt; Because it's the proper thing to do (considing you and others are
+&gt;&gt; sometimes pushing posting etiquette, but it doesn't apply to you,
+&gt;&gt; right?)
+
+&gt; Well, NO-body has ever complained in several years, and I can't
+&gt; remember anybody considering my posts hard to read because of bad
+&gt; netiquette. So I won't do what you suggest unless there's a compelling
+&gt; reason to do so, e.g. precisely track who's saying what.
+">
+
+It seems others are able to properly attribute their quotes and I've
+seen not-so-regular people asked to do exactly as I've asked you (when
+they quote without giving information as to who said it.) Yet you've
+once again proven that the regulars are above what they preach.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; Not hard to know recognize the last two lines as Merril's: how
+&gt;&gt;&gt; strange that he recognizes having acted like an idiot in the first
+&gt;&gt;&gt; place, before you poo^Hpped out of hammerspace to &quot;defend&quot; him...
+">
+
+To whom belongs the above quote?
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Yes, because that how he felt was being treated, and you only
+&gt;&gt; confirmed it:
+
+&gt;&gt; Michele Dondi wrote:
+&gt;&gt; &lt;ua09a3de7q76umtils6ae1fqht2r58a ... @4ax.com&gt;
+&gt;&gt; [[
+&gt;&gt;  &gt; Well, being admittedly barely beyond the hello world level, asking
+&gt;&gt; for
+&gt;&gt;  &gt; ready made code, and evidently wanting to understand it without
+&gt;&gt; prior
+&gt;&gt;  &gt; knowledge of basic Perl somewhat justifies that.
+&gt;&gt; ]]
+
+&gt;&gt; There wouldn't be a reason to defend if there wasn't something to
+&gt;&gt; defend from.
+
+&gt; So why didn't he feel the same himself and in some way apologized for
+&gt; having acted like an idiot instead?
+">
+
+Cite me an instance where he admits to being an idiot.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; Well, I wrote &quot;cum grano salis&quot;, just to be safe: but I bet even my
+&gt;&gt;&gt; mom would not find @arts NOT to look like any of the predefined
+&gt;&gt;&gt; array variables... Please adopt some grains of salt too!
+">
+
+Who wrote this?
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; I don't remember anyone saying it looked like a predefined var, only
+&gt;&gt; a &quot;special&quot; var, which could be different things. Again, get off the
+&gt;&gt; high
+
+&gt; Ok, please explain me what a special var is that is not a predefined
+&gt; var, because then I don't know. The meaning of &quot;predefined variable&quot;
+&gt; is well defined... that of &quot;special variable&quot;... I don't have the
+&gt; slightest idea.
+">
+
+Sigh. Why do you keep (intentionally?) dancing around the point? It's
+what the OP seemed to -think- it was. Again, you refuse to try to see
+things from HIS perspective, which is a common problem.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; horse and come back down to earth and try to see things through the
+&gt;&gt; OP's eyes. If you've NEVER seen such a construct like the one given
+&gt;&gt; before it may look special. I don't know why you cannot understand
+&gt;&gt; that.
+
+&gt; First I would have to understand what &quot;special&quot; means in this context.
+&gt; And no, I can't think of myself as a very beginner finding
+">
+
+Bring your head back above shoulder level and get to me. If you can't
+understand that the OP saw it as possibly special from HIS
+point-of-view, then please quit while you're ahead because nothing
+useful is being added to this thread.
+</POST>
+<POST>
+<POSTER> Tad McClellan &lt;ta...@seesig.invalid&gt; </POSTER>
+<POSTDATE> 2007-07-23T21:22:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Wade Ward &lt;zaxf ... @gmail.com&gt; wrote:
+&gt; Are these statements equivalent:
+&gt;  for (reverse $first..$last) {
+&gt;  for (my $i = $first; $i &lt;= $last; $i--){
+">
+
+What values are in $first and $last?
+
+<QUOTE PREVIOUSPOST="
+&gt; ?  My reference shows only the three part 'for' syntax.
+">
+
+From the &quot;Foreach Loops&quot; section in the *authoritative* reference
+(perlsyn.pod):
+
+The C&lt;foreach&gt; keyword is actually a synonym for the C&lt;for&gt; keyword, so
+you can use C&lt;foreach&gt; for readability or C&lt;for&gt; for brevity.
+
+<QUOTE PREVIOUSPOST="
+&gt; If I leave
+&gt; out the reverse, I get no output at all.
+">
+
+Then it must be that $last &lt; $first.
+
+The range operator does not work going backwards.
+
+--
+Tad McClellan
+email: perl -le &quot;print scalar reverse qq/moc.noitatibaher\100cmdat/&quot;
+</POST>
+<POST>
+<POSTER> Tad McClellan &lt;ta...@seesig.invalid&gt; </POSTER>
+<POSTDATE> 2007-07-23T21:22:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Vronans &lt;vron ... @nowheresville.spamwall&gt; wrote:
+&gt; Michele Dondi wrote:
+&gt;&gt; On Mon, 23 Jul 2007 01:13:01 -0700, &quot;Vronans&quot;
+&gt;&gt; &lt;vron ... @nowheresville.spamwall&gt; wrote:
+&gt;&gt;&gt; &quot;Wade Ward&quot; &lt;zaxf ... @invalid.net&gt; wrote in message
+&gt;&gt;&gt; news:2J6dnRlDn_V7KD7bnZ2dnUVZ_v2unZ2d@comcast.com ...
+&gt;&gt;&gt;&gt; &quot;Tad McClellan&quot; &lt;ta ... @seesig.invalid&gt; wrote in message
+&gt;&gt;&gt;&gt;&gt; Please share your knowledge with me then.
+&gt;&gt;&gt;&gt; Believe it or not, I didn't start this thread to look like an idiot,
+&gt;&gt;&gt;&gt; although I seem to have achieved this.
+&gt;&gt;&gt; There are some here which chose to treat you as such, rather then
+
+&gt;&gt; Well, being admittedly barely beyond the hello world level, asking for
+&gt;&gt; ready made code, and evidently wanting to understand it without prior
+&gt;&gt; knowledge of basic Perl somewhat justifies that.
+
+&gt; You don't know his level of knowledge.
+">
+
+I know that he didn't read (or maybe just didn't understand) the
+first few paragraphs of perldata.pod:
+
+...
+Usually this name is a single I&lt;identifier&gt;,
+that is, a string beginning with a letter or underscore, and
+containing letters, underscores, and digits.
+...
+Perl also has its own built-in variables whose names don't follow
+these rules.  They have strange names so they don't accidentally
+collide with one of your normal variables.
+
+i.e. built-in variable names never start (after the sigil character)
+with a lower case letter.
+
+(except for the 2 exceptions already mentioned in this thread.)
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; ** There really was no reason to remove that part, unless one is too
+&gt;&gt;&gt; busy thinking up their next clever quip.
+">
+
+There was a very carefully thought-out reason for removing
+that part. Namely that it was not relevant to the point that
+I wanted to make about Perl's variable naming conventions.
+
+<QUOTE PREVIOUSPOST="
+&gt; Why would it REALLY matter if it doesn't look like a special
+&gt; variable to any of us who know better? He didn't know,
+">
+
+And now he does.
+
+Might it be because I posting a list of all of them, allowing him
+to divine for himself (and thus remember better) what built-in variable
+names look like?
+
+Leading someone to the answer rather than simply telling them the
+answer is an effective teaching method.
+
+Just because I do not give a direct answer to the question that
+was asked does not imply the evilness that you convey upon my intents.
+
+<QUOTE PREVIOUSPOST="
+&gt; to him, the way
+&gt; it was being used (see code quoted directly below), looked special.
+">
+
+My point was that how it was being used is irrelevant, since it
+does not follow the naming conventions for built-in variables,
+it then follows that it is not special.
+
+<QUOTE PREVIOUSPOST="
+&gt; Who
+&gt; the hell are you to imply what the OP thought,
+">
+
+Who the hell are you to imply what I thought?
+
+(See? You do it too! We all do. Get used to it.)
+
+<QUOTE PREVIOUSPOST="
+&gt; especially when he
+&gt; already put such forth, and it was snipped with out any regard.
+">
+
+As explained above, it was snipped with explicitly careful regard.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; The root of his problem seems to be with this line:
+&gt;&gt;&gt; ==&gt; my ($since, @arts)=time-10*60*60;
+">
+
+The root of the problem in the part I quoted was that @arts does
+not start with punctuation or upper case, and is therefore not
+a special variable.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; This construct doesn't seem to make sense to me,
+">
+
+Me either.
+
+I'd call it crap code.
+
+But I didn't want to talk about the crap code and muddy up the
+simple rule that can be used forevermore to distinguish special
+variables.
+
+So I snipped it.
+
+<QUOTE PREVIOUSPOST="
+&gt; I know it's declared, but the point was why use would it have IN THAT
+&gt; PLACE.
+">
+
+None, other than obfuscation (which is Bad in production code).
+
+<QUOTE PREVIOUSPOST="
+&gt; others weren't so busy displaying just how much 'higher' then everyone
+&gt; you are you may have caught that.
+">
+
+You do me a disservice.
+
+I was not being &quot;higher&quot;, I was leading him to education.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Yes, the alternative would have been:
+
+&gt;&gt;  my $since=time-10*60*60;
+&gt;&gt;  my @arts;
+">
+
+Which is very much better...
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; which takes more typing, more vertical space, one more statement and
+">
+
+... despite its small cost.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; doesn't give any more readability.
+">
+
+Removing &quot;startle factor&quot; does indeed increase readability.
+
+Would the OP have had the misunderstandings he evidenced if it
+had been written that way? I think not.
+
+Crap code stinks. After sprinkling cologne on it, it still stinks.
+
+(so save the cologne :-)
+
+<QUOTE PREVIOUSPOST="
+&gt; Actually I'd wager that it does make it more clearer to more people than
+&gt; the previous version.
+">
+
+Indeed.
+
+<QUOTE PREVIOUSPOST="
+&gt; OTOH, was has to learn somewhere, though I'm sure how that warrents
+&gt; treating someone as inferior.
+">
+
+You are reading in things that are just not there.
+
+--
+Tad McClellan
+email: perl -le &quot;print scalar reverse qq/moc.noitatibaher\100cmdat/&quot;
+</POST>
+<POST>
+<POSTER> Tad McClellan &lt;ta...@seesig.invalid&gt; </POSTER>
+<POSTDATE> 2007-07-23T21:22:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Michele Dondi &lt;bik.m ... @tiscalinet.it&gt; wrote:
+&gt; On Mon, 23 Jul 2007 09:12:59 -0700, &quot;Vronans&quot;
+&gt;&lt;vron ... @nowheresville.spamwall&gt; wrote:
+
+&gt;&gt;(Please don't leave quotes without their applicable attributions.)
+
+&gt; Why not? I was only addressing directly what you wrote, leaving *some*
+&gt; quotes just to show, in some cases, that you were replying to someone
+&gt; who was replying to someone who wrote something. But I didn't enter in
+&gt; a delicate philological argumentation about who precisely wrote what.
+
+&gt; Of course I'm false and bastard and deceipt is my most powerful
+&gt; weapon: since my priority is to treat newbies like idiots and spread
+&gt; lies, there was a secret plot you don't know about... HAHAHA!
+">
+
+I am voting at the next Cabal meeting to have you expelled
+for giving away our secrets!
+
+--
+Tad McClellan
+email: perl -le &quot;print scalar reverse qq/moc.noitatibaher\100cmdat/&quot;
+</POST>
+<POST>
+<POSTER> &quot;Mumia W.&quot; &lt;paduille.4061.mumia.w+nos...@earthlink.net&gt; </POSTER>
+<POSTDATE> 2007-07-23T21:35:00 </POSTDATE>
+On 07/23/2007 06:52 PM, Wade Ward wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; [...]
+&gt; It appears that the only thing going to STDOUT is @arts.  What
+&gt; dimensions does @arts have?  [...]
+">
+
+I suggest you learn to walk before you run. You're nowhere near
+proficient enough with Perl to consider writing an NNTP client.
+
+Read these Perl documents:
+
+perl
+perlintro
+perltoc
+
+perlreftut
+perldsc
+perllol
+perlboot
+
+These documents should be available through the ActiveState help menus
+and also through the perldoc utility, e.g.
+Start-&gt;Run-&gt;&quot;perldoc perlintro&quot;
+
+You claimed that you started learning Perl two weeks ago. Your questions
+are too basic for someone who's been studying Perl for two weeks.
+
+Please spend the next couple of weeks learning Perl, then come back to
+your news client.
+
+Posting Guidelines for comp.lang.perl.misc:
+http://www.augustmail.com/~tadmc/clpmisc/clpmisc_guidelines.html
+</POST>
+<POST>
+<POSTER> Sherm Pendley &lt;spamt...@dot-app.org&gt; </POSTER>
+<POSTDATE> 2007-07-23T21:46:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Mumia W.&quot; &lt;paduille.4061.mumia.w+nos ... @earthlink.net&gt; writes:
+&gt; On 07/23/2007 06:52 PM, Wade Ward wrote:
+&gt;&gt; [...]
+&gt;&gt; It appears that the only thing going to STDOUT is @arts.  What
+&gt;&gt; dimensions does @arts have?  [...]
+
+&gt; I suggest you learn to walk before you run. You're nowhere near
+&gt; proficient enough with Perl to consider writing an NNTP client.
+">
+
+...
+
+<QUOTE PREVIOUSPOST="
+&gt; You claimed that you started learning Perl two weeks ago. Your
+&gt; questions are too basic for someone who's been studying Perl for two
+&gt; weeks.
+">
+
+I would say that they're indicatave of someone who's spent two weeks in
+way over his head. Grabbing an already-written script and poking about
+at random is not a good way to learn anything - even if you do happen to
+get the desired results, you haven't established a base upon which to
+form an understanding of *how* you got them.
+
+sherm--
+
+--
+Web Hosting by West Virginians, for West Virginians: http://wv-www.net
+Cocoa programming in Perl: http://camelbones.sourceforge.net
+</POST>
+<POST>
+<POSTER> &quot;Wade Ward&quot; &lt;zaxf...@invalid.net&gt; </POSTER>
+<POSTDATE> 2007-07-23T22:39:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Tad McClellan&quot; &lt;ta ... @seesig.invalid&gt; wrote in message
+">
+
+news:slrnfaahn3.iil.tadmc@tadmc30.sbcglobal.net ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Wade Ward &lt;zaxf ... @gmail.com&gt; wrote:
+
+&gt;&gt; Are these statements equivalent:
+&gt;&gt;  for (reverse $first..$last) {
+&gt;&gt;  for (my $i = $first; $i &lt;= $last; $i--){
+
+&gt; What values are in $first and $last?
+">
+
+I've got them backwards.  They're scalars with $last presumably greater than
+or equal to $first.  I couldn't test the script because comcast's server was
+down when I wrote it.
+--
+WW
+</POST>
+<POST>
+<POSTER> &quot;Wade Ward&quot; &lt;zaxf...@invalid.net&gt; </POSTER>
+<POSTDATE> 2007-07-23T22:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Mumia W.&quot; &lt;paduille.4061.mumia.w+nos ... @earthlink.net&gt; wrote in message
+">
+
+news:oHcpi.9968$rR.9820@newsread2.news.pas.earthlink.net ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On 07/23/2007 06:52 PM, Wade Ward wrote:
+&gt;&gt; [...]
+&gt;&gt; It appears that the only thing going to STDOUT is @arts.  What
+&gt;&gt; dimensions does @arts have?  [...]
+
+&gt; I suggest you learn to walk before you run. You're nowhere near proficient
+&gt; enough with Perl to consider writing an NNTP client.
+
+&gt; Read these Perl documents:
+
+&gt; perl
+&gt; perlintro
+&gt; perltoc
+
+&gt; perlreftut
+&gt; perldsc
+&gt; perllol
+&gt; perlboot
+
+&gt; These documents should be available through the ActiveState help menus and
+&gt; also through the perldoc utility, e.g.
+&gt; Start-&gt;Run-&gt;&quot;perldoc perlintro&quot;
+
+&gt; You claimed that you started learning Perl two weeks ago. Your questions
+&gt; are too basic for someone who's been studying Perl for two weeks.
+
+&gt; Please spend the next couple of weeks learning Perl, then come back to
+&gt; your news client.
+
+&gt; Posting Guidelines for comp.lang.perl.misc:
+&gt; http://www.augustmail.com/~tadmc/clpmisc/clpmisc_guidelines.html
+">
+
+Thank you for your reading suggestions.
+--
+WW
+</POST>
+<POST>
+<POSTER> &quot;Wade Ward&quot; &lt;zaxf...@invalid.net&gt; </POSTER>
+<POSTDATE> 2007-07-23T22:45:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Sherm Pendley&quot; &lt;spamt ... @dot-app.org&gt; wrote in message
+">
+
+news:m2wswqtvyo.fsf@dot-app.org ...
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Mumia W.&quot; &lt;paduille.4061.mumia.w+nos ... @earthlink.net&gt; writes:
+
+&gt;&gt; On 07/23/2007 06:52 PM, Wade Ward wrote:
+&gt;&gt;&gt; [...]
+&gt;&gt;&gt; It appears that the only thing going to STDOUT is @arts.  What
+&gt;&gt;&gt; dimensions does @arts have?  [...]
+
+&gt;&gt; I suggest you learn to walk before you run. You're nowhere near
+&gt;&gt; proficient enough with Perl to consider writing an NNTP client.
+
+&gt; ...
+
+&gt;&gt; You claimed that you started learning Perl two weeks ago. Your
+&gt;&gt; questions are too basic for someone who's been studying Perl for two
+&gt;&gt; weeks.
+
+&gt; I would say that they're indicatave of someone who's spent two weeks in
+&gt; way over his head. Grabbing an already-written script and poking about
+&gt; at random is not a good way to learn anything - even if you do happen to
+&gt; get the desired results, you haven't established a base upon which to
+&gt; form an understanding of *how* you got them.
+">
+
+I'm not considering writing an nntp client.  As far as I'm concerned, I just
+wrote one.  But you're right that I'm going to take a couple steps backward
+right now.
+--
+Wade Ward
+</POST>
+<POST>
+<POSTER> Michele Dondi &lt;bik.m...@tiscalinet.it&gt; </POSTER>
+<POSTDATE> 2007-07-24T04:42:00 </POSTDATE>
+On Mon, 23 Jul 2007 17:07:40 -0700, &quot;Vronans&quot;
+
+<QUOTE PREVIOUSPOST="
+&lt;vron ... @nowheresville.spamwall&gt; wrote:
+&gt;&gt; Well, NO-body has ever complained in several years, and I can't
+&gt;&gt; remember anybody considering my posts hard to read because of bad
+&gt;&gt; netiquette. So I won't do what you suggest unless there's a compelling
+&gt;&gt; reason to do so, e.g. precisely track who's saying what.
+
+&gt;It seems others are able to properly attribute their quotes and I've
+&gt;seen not-so-regular people asked to do exactly as I've asked you (when
+">
+
+Show me an instance where this happend.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt;&gt; Not hard to know recognize the last two lines as Merril's: how
+&gt;&gt;&gt;&gt; strange that he recognizes having acted like an idiot in the first
+&gt;&gt;&gt;&gt; place, before you poo^Hpped out of hammerspace to &quot;defend&quot; him...
+
+&gt;To whom belongs the above quote?
+">
+
+To me and you should know. All quotes in the previous post are either
+mine of yours. To understand who's saying what it's enough to count
+quote signs and apply a tiny bit of arithmetic mod 2, at the level of
+a child...
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; So why didn't he feel the same himself and in some way apologized for
+&gt;&gt; having acted like an idiot instead?
+">
+
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+<QUOTE PREVIOUSPOST="
+&gt;Cite me an instance where he admits to being an idiot.
+">
+
+^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
+
+Funny, you insist so much on proper quoting, but then you probably
+must have some reading problems, or like to omit details if it's to
+your own advantage. I never wrote he admitted to be an idiot. He
+didn't, he's not an idiot. I never wrote he is an idiot. I do not
+think HE is an idiot. He admitted having acted like an idiot, which is
+something that occasionally happens to quite about anybody. I think he
+did act like an idiot. I think I am acting like an idiot, still
+replying to your pointless provocations. I think you're an idiot and,
+in your case, I'm more and more convinced you're actually an idiot.
+
+On Sun, 22 Jul 2007 15:53:57 -0700, &quot;Wade Ward&quot; &lt;zaxf ... @invalid.net&gt;
+
+<QUOTE PREVIOUSPOST="
+in &lt;2J6dnRlDn_V7KD7bnZ2dnUVZ_v2un ... @comcast.com&gt; wrote:
+">
+
+: Believe it or not, I didn't start this thread to look like an idiot,
+: although I seem to have achieved this.
+
+WHAT DOES THIS MEAN?!?
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Ok, please explain me what a special var is that is not a predefined
+&gt;&gt; var, because then I don't know. The meaning of &quot;predefined variable&quot;
+&gt;&gt; is well defined... that of &quot;special variable&quot;... I don't have the
+&gt;&gt; slightest idea.
+
+&gt;Sigh. Why do you keep (intentionally?) dancing around the point? It's
+&gt;what the OP seemed to -think- it was. Again, you refuse to try to see
+&gt;things from HIS perspective, which is a common problem.
+">
+
+No, I saw things from HIS perspective. Your poor attempt at
+distinguishing between a predefined var and a mythological var
+notwithstand, it is clear that the OP meant the former, as he wrote:
+
+: The first symbol I don't understand is @arts.  It looks like a special
+: variable to me, as I think $_ is as well.  I find no reference for it in my
+
+<QUOTE PREVIOUSPOST="
+&gt;Bring your head back above shoulder level and get to me. If you can't
+&gt;understand that the OP saw it as possibly special from HIS
+&gt;point-of-view, then please quit while you're ahead because nothing
+&gt;useful is being added to this thread.
+">
+
+In fact, nothing useful is being added to this thread since you
+poo^Hpped in: get off your OWN high Zorro's horse and face reality -
+the person you're so heartedly trying to &quot;defend&quot; never asked you to
+do so, never felt like he needed that, is perfectly satisfied with the
+group, is bringing on peaceful discussions with us (I just replied to
+two posts of his), never felt abused, insulted, being called an idiot
+and so on: it's just YOU, YOU, YOU.
+
+Please at least wait someone who will rant in the first place, then
+join him or her. To me, you're just looking ridiculous.
+
+Michele
+--
+{$_=pack'B8'x25,unpack'A8'x32,$a^=sub{pop^pop}-&gt;(map substr
+(($a||=join'',map--$|x$_,(unpack'w',unpack'u','G^&lt;R&lt;Y]*YB='
+.'KYU;*EVH[.FHF2W+#&quot;\Z*5TI/ER&lt;Z`S(G.DZZ9OX0Z')=~/./g)x2,$_,
+256),7,249);s/[^\w,]/ /g;$ \=/^J/?$/:&quot;\r&quot;;print,redo}#JAPH,
+</POST>
+<POST>
+<POSTER> Michele Dondi &lt;bik.m...@tiscalinet.it&gt; </POSTER>
+<POSTDATE> 2007-07-24T05:04:00 </POSTDATE>
+On Mon, 23 Jul 2007 23:52:00 -0000, Wade Ward &lt;zaxf ... @gmail.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;I can't connect to comcast now, so I'm posting at the library through
+&gt;the google portal.  I hope that this doesn't change my identity in a
+&gt;distracting way.  Here is the script in question:
+">
+
+No, it doesn't.
+
+<QUOTE PREVIOUSPOST="
+&gt;  I was trying to pick apart the control mechanism to ascertain
+&gt;details from the above.  Are these statements equivalent:
+&gt; for (reverse $first..$last) {
+&gt; for (my $i = $first; $i &lt;= $last; $i--){
+">
+
+No, they aren't. Since $first &lt; $last, then the second one would have
+to be
+
+for (my $i = $last; $i &gt;= $first; $i--){
+
+<QUOTE PREVIOUSPOST="
+&gt;?  My reference shows only the three part 'for' syntax.  If I leave
+">
+
+If that is true, which I doubt, then you may happily throw your book
+in the trash bin. Actually Perl-style for loops are generally
+preferred to C-style ones in most situations: granted, the latter ones
+also have their usefulness. But it happens very rarely that you have
+to use them. As you can see, the syntax in the first case is much more
+terse than in the second one and FWIM (not much, as usual, but fine to
+know) ISTR that the corresponding loop is much more performant.
+
+Just think that in Perl 6 the two loops which are in fact two
+completely different beasts, have been disambiguated with the former
+still being called C&lt;for&gt; and the latter C&lt;loop&gt;, which takes one more
+char in view of huffmanization: expected to be used on a much more
+sparse basis a priori.
+
+<QUOTE PREVIOUSPOST="
+&gt;out the reverse, I get no output at all.
+">
+
+Well, that's obvious: the loop exits early if $time &lt; $since, which is
+likely to happen on $first. This is why I started from $last instead.
+
+perldoc -f reverse
+
+<QUOTE PREVIOUSPOST="
+&gt;It appears that the only thing going to STDOUT is @arts.  What
+">
+
+I'm not really sure what you mean. The whole USENET article, if it is
+downloaded, is printed to STDOUT.
+
+<QUOTE PREVIOUSPOST="
+&gt;dimensions does @arts have?  I don't think the compiler can know in
+">
+
+&quot;Dimension&quot;? What do you mean? It is a one dimensional array
+containing message ids.
+
+<QUOTE PREVIOUSPOST="
+&gt;advance.  I would think that one dimension of @arts would have to be
+&gt;the difference between $first and $last.  There's a lot more
+">
+
+No, it starts empty and within the loop it is filled up with message
+ids starting from the smallest one that is within the time constraint
+up to the biggest one on the server, which is still $last. Of course I
+may have used List::Util::first to get the real first value I was
+interested in, but I dind't see a particular need to do so.
+
+<QUOTE PREVIOUSPOST="
+&gt;wiggleroom in perl's syntax than say, fortran, where this might be the
+">
+
+I don't know what wiggleroom stands for, but I think you're right.
+TMTOWTDI.
+
+<QUOTE PREVIOUSPOST="
+&gt;Am I correct that each entry of @arts contains an entire usenet
+&gt;message?
+">
+
+No, completely wrong.
+
+print &quot;@arts\n&quot;;  # to check.
+
+You still seem not to have read very carefully Net::NNTP's docs,
+because there it is clearly explained what the methods return and
+accept.
+
+Michele
+--
+{$_=pack'B8'x25,unpack'A8'x32,$a^=sub{pop^pop}-&gt;(map substr
+(($a||=join'',map--$|x$_,(unpack'w',unpack'u','G^&lt;R&lt;Y]*YB='
+.'KYU;*EVH[.FHF2W+#&quot;\Z*5TI/ER&lt;Z`S(G.DZZ9OX0Z')=~/./g)x2,$_,
+256),7,249);s/[^\w,]/ /g;$ \=/^J/?$/:&quot;\r&quot;;print,redo}#JAPH,
+</POST>
+<POST>
+<POSTER> Michele Dondi &lt;bik.m...@tiscalinet.it&gt; </POSTER>
+<POSTDATE> 2007-07-24T05:06:00 </POSTDATE>
+On Tue, 24 Jul 2007 01:35:16 GMT, &quot;Mumia W.&quot;
+
+<QUOTE PREVIOUSPOST="
+&lt;paduille.4061.mumia.w+nos ... @earthlink.net&gt; wrote:
+&gt;&gt; It appears that the only thing going to STDOUT is @arts.  What
+&gt;&gt; dimensions does @arts have?  [...]
+
+&gt;I suggest you learn to walk before you run. You're nowhere near
+&gt;proficient enough with Perl to consider writing an NNTP client.
+">
+
+Merrill, I know that this may seem offensive to you, but I
+wholeheartedly second this suggestion. It's just a matter of say a
+month or so: get familiar with basic Perl syntax and semantics first.
+Then life will be easier.
+
+Michele
+--
+{$_=pack'B8'x25,unpack'A8'x32,$a^=sub{pop^pop}-&gt;(map substr
+(($a||=join'',map--$|x$_,(unpack'w',unpack'u','G^&lt;R&lt;Y]*YB='
+.'KYU;*EVH[.FHF2W+#&quot;\Z*5TI/ER&lt;Z`S(G.DZZ9OX0Z')=~/./g)x2,$_,
+256),7,249);s/[^\w,]/ /g;$ \=/^J/?$/:&quot;\r&quot;;print,redo}#JAPH,
+</POST>
+<POST>
+<POSTER> anno4...@radom.zrz.tu-berlin.de </POSTER>
+<POSTDATE> 2007-07-24T07:43:00 </POSTDATE>
+Vronans &lt;vron ... @nowheresville.spamwall&gt; wrote in comp.lang.perl.misc:
+
+<QUOTE PREVIOUSPOST="
+&gt; * The only valid gripe I've seen thus far is the original Subject line,
+&gt; which could of been a little more descriptive.
+">
+
+^^
+
+Ah, that one is harder to catch than &quot;jsut&quot;.
+
+Anno
+</POST>
+<POST>
+<POSTER> Michele Dondi &lt;bik.m...@tiscalinet.it&gt; </POSTER>
+<POSTDATE> 2007-07-24T15:24:00 </POSTDATE>
+On Tue, 24 Jul 2007 11:46:10 GMT, &quot;Jürgen Exner&quot;
+
+<QUOTE PREVIOUSPOST="
+&lt;jurge ... @hotmail.com&gt; wrote:
+&gt;&gt; What dimensions does @arts have?
+
+&gt;Oh please, arrays in Perl are _always_ linear.
+&gt;If you want a more complex data structure you would use e.g. an array of
+&gt;references to whatever
+">
+
+On a second thought I suspect he used the term dimension in a sense
+akin to that of &quot;unit of measure&quot;, as in &quot;dimentional analysis&quot;. So
+chances are that he may be asking about the nature of the elements in
+the array.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; I would think that one dimension of @arts would have to be
+&gt;&gt; the difference between $first and $last.
+
+&gt;What? Why would the size of an array be a dimension of the array?
+">
+
+Yes, in this sense my interpretation above does less sense: anyway I
+can't think of one that would do more.
+
+Michele
+--
+{$_=pack'B8'x25,unpack'A8'x32,$a^=sub{pop^pop}-&gt;(map substr
+(($a||=join'',map--$|x$_,(unpack'w',unpack'u','G^&lt;R&lt;Y]*YB='
+.'KYU;*EVH[.FHF2W+#&quot;\Z*5TI/ER&lt;Z`S(G.DZZ9OX0Z')=~/./g)x2,$_,
+256),7,249);s/[^\w,]/ /g;$ \=/^J/?$/:&quot;\r&quot;;print,redo}#JAPH,
+</POST>
+<POST>
+<POSTER> &quot;Vronans&quot; &lt;vron...@nowheresville.spamwall&gt; </POSTER>
+<POSTDATE> 2007-07-24T18:17:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Michele Dondi wrote:
+&gt; On Mon, 23 Jul 2007 17:07:40 -0700, &quot;Vronans&quot;
+&gt; &lt;vron ... @nowheresville.spamwall&gt; wrote:
+
+&gt;&gt;&gt; Well, NO-body has ever complained in several years, and I can't
+&gt;&gt;&gt; remember anybody considering my posts hard to read because of bad
+&gt;&gt;&gt; netiquette. So I won't do what you suggest unless there's a
+&gt;&gt;&gt; compelling reason to do so, e.g. precisely track who's saying what.
+
+&gt;&gt; It seems others are able to properly attribute their quotes and I've
+&gt;&gt; seen not-so-regular people asked to do exactly as I've asked you
+&gt;&gt; (when
+
+&gt; Show me an instance where this happend.
+">
+
+Do your own research. This is by far nothing new. Unless you just came
+on UseNet, you would know full well what I mean. In various groups I've
+seen people who have removed some or all attributions and asked to fix
+them. Again, this has been happening for years across UseNet.
+
+It boils down to common courtesy, something you seem to be having
+trouble with.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt;&gt;&gt; Not hard to know recognize the last two lines as Merril's: how
+&gt;&gt;&gt;&gt;&gt; strange that he recognizes having acted like an idiot in the first
+&gt;&gt;&gt;&gt;&gt; place, before you poo^Hpped out of hammerspace to &quot;defend&quot; him...
+
+&gt;&gt; To whom belongs the above quote?
+
+&gt; To me and you should know. All quotes in the previous post are either
+&gt; mine of yours. To understand who's saying what it's enough to count
+&gt; quote signs
+">
+
+Now I think you are deliberately flying around the point. Yes, you could
+count the quote signs, but what good does that do if you don't know WHO
+wrote it in the first place (since you chopped off the attributions that
+would of made that clear.)
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sun, 22 Jul 2007 15:53:57 -0700, &quot;Wade Ward&quot; &lt;zaxf ... @invalid.net&gt;
+&gt; in &lt;2J6dnRlDn_V7KD7bnZ2dnUVZ_v2un ... @comcast.com&gt; wrote:
+
+&gt;&gt; Believe it or not, I didn't start this thread to look like an idiot,
+&gt;&gt; although I seem to have achieved this.
+
+&gt; WHAT DOES THIS MEAN?!?
+">
+
+Yes, he believes he has achieved it because thats the kind of responses
+he got from the likes of you. Yeah, keep pretending you have no clue
+what I'm talkign about, because I think you know full well.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; Ok, please explain me what a special var is that is not a predefined
+&gt;&gt;&gt; var, because then I don't know. The meaning of &quot;predefined variable&quot;
+&gt;&gt;&gt; is well defined... that of &quot;special variable&quot;... I don't have the
+&gt;&gt;&gt; slightest idea.
+
+&gt;&gt; Sigh. Why do you keep (intentionally?) dancing around the point? It's
+&gt;&gt; what the OP seemed to -think- it was. Again, you refuse to try to see
+&gt;&gt; things from HIS perspective, which is a common problem.
+
+&gt; No, I saw things from HIS perspective.
+">
+
+You didn't show it.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; The first symbol I don't understand is @arts.  It looks like a
+&gt;&gt; special variable to me, as I think $_ is as well.  I find no
+&gt;&gt; reference for it in my
+
+&gt;&gt; Bring your head back above shoulder level and get to me. If you can't
+&gt;&gt; understand that the OP saw it as possibly special from HIS
+&gt;&gt; point-of-view, then please quit while you're ahead because nothing
+&gt;&gt; useful is being added to this thread.
+
+&gt; In fact, nothing useful is being added to this thread since you
+&gt; poo^Hpped in
+">
+
+Oh, and once again you owe no blame what so ever to that, right?
+
+0110011001110101011000110110101101101001011011100110011100100000
+0110100001111001011100000110111101100011011100100110100101110100
+0110000101101100001000000110010101101100011010010111010001101001
+0111001101110100001000000110000101110011011100110110100001101111
+011011000110010101110011001011100010111000101110
+</POST>
+<POST>
+<POSTER> Martijn Lievaart &lt;m...@rtij.nl.invlalid&gt; </POSTER>
+<POSTDATE> 2007-07-24T18:58:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Tue, 24 Jul 2007 10:42:28 +0200, Michele Dondi wrote:
+&gt;&gt;&gt;&gt;&gt; Not hard to know recognize the last two lines as Merril's: how
+&gt;&gt;&gt;&gt;&gt; strange that he recognizes having acted like an idiot in the first
+&gt;&gt;&gt;&gt;&gt; place, before you poo^Hpped out of hammerspace to &quot;defend&quot; him...
+
+&gt;&gt;To whom belongs the above quote?
+
+&gt; To me and you should know. All quotes in the previous post are either
+&gt; mine of yours. To understand who's saying what it's enough to count
+&gt; quote signs and apply a tiny bit of arithmetic mod 2, at the level of a
+&gt; child...
+">
+
+No, I don't know. Please attribute properly. It's the polite thing to do.
+Everyone else does it.
+
+In the case above, I know it is the nth poster before this post. Who? I
+don't know. Vronans is very right to ask you to attribute properly. If
+someone (like me here) responds to a thread, it gets impossible to sort
+out the attributions. But without attributions, one cannot know who
+contributed. Take this post. Yes, you say in this post the above quote is
+by your hand, but in a normal conversation it would be impossible to
+backtrace who the quote belongs to.
+
+Please attribute properly. It's good form, but more, it makes it easier
+to read your posts.
+
+M4
+</POST>
+<POST>
+<POSTER> &quot;Wade Ward&quot; &lt;zaxf...@invalid.net&gt; </POSTER>
+<POSTDATE> 2007-07-24T13:07:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Martijn Lievaart&quot; &lt;m ... @rtij.nl.invlalid&gt; wrote in message
+">
+
+news:pan.2007.07.24.22.59.18@rtij.nl.invlalid ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Tue, 24 Jul 2007 10:42:28 +0200, Michele Dondi wrote:
+
+&gt;&gt;&gt;&gt;&gt;&gt; Not hard to know recognize the last two lines as Merril's: how
+&gt;&gt;&gt;&gt;&gt;&gt; strange that he recognizes having acted like an idiot in the first
+&gt;&gt;&gt;&gt;&gt;&gt; place, before you poo^Hpped out of hammerspace to &quot;defend&quot; him...
+
+&gt;&gt;&gt;To whom belongs the above quote?
+
+&gt;&gt; To me and you should know. All quotes in the previous post are either
+&gt;&gt; mine of yours. To understand who's saying what it's enough to count
+&gt;&gt; quote signs and apply a tiny bit of arithmetic mod 2, at the level of a
+&gt;&gt; child...
+
+&gt; No, I don't know. Please attribute properly. It's the polite thing to do.
+&gt; Everyone else does it.
+
+&gt; In the case above, I know it is the nth poster before this post. Who? I
+&gt; don't know. Vronans is very right to ask you to attribute properly. If
+&gt; someone (like me here) responds to a thread, it gets impossible to sort
+&gt; out the attributions. But without attributions, one cannot know who
+&gt; contributed. Take this post. Yes, you say in this post the above quote is
+&gt; by your hand, but in a normal conversation it would be impossible to
+&gt; backtrace who the quote belongs to.
+
+&gt; Please attribute properly. It's good form, but more, it makes it easier
+&gt; to read your posts.
+">
+
+I think the thrust of Vronans indictment is that there is a tendency in the
+heavy-volume comp.lang groups for a certain mean-spiritedness.  As a
+permanent graduate of comp.lang.c, I experienced there an incivility which
+the sharp orders here had not approached.
+
+One reason I keep a distinctive response email identity on my news client is
+that if someone wants to killfile me, there is nothing I would rather him do
+than allow me to enjoy usenet without him/her.  Perl is also unusual in that
+it is perfectly topical to talk about usenet posts here, for example, the
+type of data you get from net::nntp module.
+--
+WW
+</POST>
+<POST>
+<POSTER> &quot;Wade Ward&quot; &lt;zaxf...@invalid.net&gt; </POSTER>
+<POSTDATE> 2007-07-24T13:09:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Michele Dondi&quot; &lt;bik.m ... @tiscalinet.it&gt; wrote in message
+">
+
+news:g6gba3poi7h9en4unhp8rbghdajnuj4gj6@4ax.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Tue, 24 Jul 2007 01:35:16 GMT, &quot;Mumia W.&quot;
+&gt; &lt;paduille.4061.mumia.w+nos ... @earthlink.net&gt; wrote:
+
+&gt;&gt;&gt; It appears that the only thing going to STDOUT is @arts.  What
+&gt;&gt;&gt; dimensions does @arts have?  [...]
+
+&gt;&gt;I suggest you learn to walk before you run. You're nowhere near
+&gt;&gt;proficient enough with Perl to consider writing an NNTP client.
+
+&gt; Merrill, I know that this may seem offensive to you, but I
+&gt; wholeheartedly second this suggestion. It's just a matter of say a
+&gt; month or so: get familiar with basic Perl syntax and semantics first.
+&gt; Then life will be easier.
+">
+
+Am I arguing?  I haven't got the upper hand on perl control structures, but
+I did renew my reference today.  I have a lot of reading to do.
+--
+WW
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,329 @@
+<DOC>
+<DOCID> eng-NG-31-126394-8200081 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-08T18:10:00 </DATETIME>
+<BODY>
+<HEADLINE>
+C++ Feature Help
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;cheesi...@gmail.com&quot; &lt;cheesi...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-08T18:10:00 </POSTDATE>
+hi All,
+
+1. Can I declare some of template functions into a class? a concrete
+class, not the template class.
+
+2. How do I do the function pointer in C++? Since that function
+pointer is able to aceess any the functions inside any class.
+
+Please advice.
+
+Thanks.
+
+Chee Siong
+</POST>
+<POST>
+<POSTER> &quot;H.S.&quot; &lt;hs.saDELETEME...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-08T18:11:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+cheesi ... @gmail.com wrote:
+
+&gt; 2. How do I do the function pointer in C++? Since that function
+&gt; pointer is able to aceess any the functions inside any class.
+">
+
+Perhaps this will help:
+
+http://www.parashift.com/c++-faq-lite/pointers-to-members.html
+
+regards,
+-&gt;HS
+</POST>
+<POST>
+<POSTER> &quot;Victor Bazarov&quot; &lt;v.Abaza...@comAcast.net&gt; </POSTER>
+<POSTDATE> 2007-08-08T18:14:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+cheesi ... @gmail.com wrote:
+&gt; 1. Can I declare some of template functions into a class? a concrete
+&gt; class, not the template class.
+">
+
+Yes, you should be able to.
+
+<QUOTE PREVIOUSPOST="
+&gt; 2. How do I do the function pointer in C++?
+">
+
+You don't &quot;do&quot; a function pointer.  You can declare it, like this:
+
+void (*functionpointer)(int, double);
+
+'functionpointer' is a pointer to a function that takes two arguments
+and returns nothing.
+
+<QUOTE PREVIOUSPOST="
+&gt; Since that function
+&gt; pointer is able to aceess any the functions inside any class.
+">
+
+Pointers to non-static member functions are not compatible with plain
+pointers to functions.  What book on C++ are you reading that does not
+explain those concepts?
+
+V
+--
+Please remove capital 'A's when replying by e-mail
+I do not respond to top-posted replies, please don't ask
+</POST>
+<POST>
+<POSTER> &quot;Jim Langston&quot; &lt;tazmas...@rocketmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-08T20:38:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Victor Bazarov&quot; &lt;v.Abaza ... @comAcast.net&gt; wrote in message
+">
+
+news:f9df7j$76v$1@news.datemas.de ...
+
+<QUOTE PREVIOUSPOST="
+&gt; cheesi ... @gmail.com wrote:
+&gt;&gt; 1. Can I declare some of template functions into a class? a concrete
+&gt;&gt; class, not the template class.
+
+&gt; Yes, you should be able to.
+">
+
+I didn't believe it, so I tried it, and you're right, it does work.  The
+output of the following program is
+10 3.14159
+
+#include &lt;iostream&gt;
+
+class Foo
+{
+public:
+template &lt;class T&gt; T Bar( T t ) { return t; };
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+int main()
+{
+Foo MyFoo;
+
+std::cout &lt;&lt; MyFoo.Bar&lt;int&gt;( 10 ) &lt;&lt; &quot; &quot; &lt;&lt; MyFoo.Bar&lt;double&gt;(
+3.1415926 );
+
+return 0;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+At first I couldn't understand how it could work, wouldn't there need to be
+an instance of the class for each type?  Then I realized the compiler only
+has to make one copy of the method for each type.  Interesting.  Static
+variables (of type T anyway) don't seem to be saved between calls however.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; 2. How do I do the function pointer in C++?
+
+&gt; You don't &quot;do&quot; a function pointer.  You can declare it, like this:
+
+&gt;    void (*functionpointer)(int, double);
+
+&gt; 'functionpointer' is a pointer to a function that takes two arguments
+&gt; and returns nothing.
+
+&gt;&gt; Since that function
+&gt;&gt; pointer is able to aceess any the functions inside any class.
+
+&gt; Pointers to non-static member functions are not compatible with plain
+&gt; pointers to functions.  What book on C++ are you reading that does not
+&gt; explain those concepts?
+">
+</POST>
+<POST>
+<POSTER> &quot;Victor Bazarov&quot; &lt;v.Abaza...@comAcast.net&gt; </POSTER>
+<POSTDATE> 2007-08-08T22:25:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jim Langston wrote:
+&gt; &quot;Victor Bazarov&quot; &lt;v.Abaza ... @comAcast.net&gt; wrote in message
+&gt; news:f9df7j$76v$1@news.datemas.de ...
+&gt;&gt; cheesi ... @gmail.com wrote:
+&gt;&gt;&gt; 1. Can I declare some of template functions into a class? a concrete
+&gt;&gt;&gt; class, not the template class.
+
+&gt;&gt; Yes, you should be able to.
+
+&gt; I didn't believe it, so I tried it, and you're right, it does work.
+">
+
+What book are you reading that doesn't explain member templates?
+
+<QUOTE PREVIOUSPOST="
+&gt; The output of the following program is
+&gt; 10 3.14159
+
+&gt; #include &lt;iostream&gt;
+
+&gt; class Foo
+&gt; {
+&gt; public:
+&gt;    template &lt;class T&gt; T Bar( T t ) { return t; };
+&gt; };
+
+&gt; int main()
+&gt; {
+&gt;    Foo MyFoo;
+
+&gt;    std::cout &lt;&lt; MyFoo.Bar&lt;int&gt;( 10 ) &lt;&lt; &quot; &quot; &lt;&lt; MyFoo.Bar&lt;double&gt;(
+&gt; 3.1415926 );
+">
+
+You don't even need to specify the template argument.  '10' is int
+and '3.14...' is a double.  The compiler will deduce the template
+argument from the function call.
+
+<QUOTE PREVIOUSPOST="
+&gt;    return 0;
+&gt; }
+
+&gt; At first I couldn't understand how it could work, wouldn't there need
+&gt; to be an instance of the class for each type?  Then I realized the
+&gt; compiler only has to make one copy of the method for each type.
+&gt; Interesting.  Static variables (of type T anyway) don't seem to be
+&gt; saved between calls however.
+">
+
+What static variables?
+
+<QUOTE PREVIOUSPOST="
+&gt; [..]
+">
+
+V
+--
+Please remove capital 'A's when replying by e-mail
+I do not respond to top-posted replies, please don't ask
+</POST>
+<POST>
+<POSTER> James Kanze &lt;james.ka...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-09T07:45:00 </POSTDATE>
+On Aug 9, 2:38 am, &quot;Jim Langston&quot; &lt;tazmas ... @rocketmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Victor Bazarov&quot; &lt;v.Abaza ... @comAcast.net&gt; wrote in message
+&gt; news:f9df7j$76v$1@news.datemas.de ...
+&gt; &gt; cheesi ... @gmail.com wrote:
+&gt; &gt;&gt; 1. Can I declare some of template functions into a class? a concrete
+&gt; &gt;&gt; class, not the template class.
+&gt; &gt; Yes, you should be able to.
+&gt; I didn't believe it,
+">
+
+You probably learned C++ a long time ago, then.  You couldn't do
+it in ARM C++; it was added by the standardization committee.
+
+<QUOTE PREVIOUSPOST="
+&gt; so I tried it, and you're right, it does work.  The
+&gt; output of the following program is
+&gt; 10 3.14159
+&gt; #include &lt;iostream&gt;
+&gt; class Foo
+&gt; {
+&gt; public:
+&gt;     template &lt;class T&gt; T Bar( T t ) { return t; };
+&gt; };
+&gt; int main()
+&gt; {
+&gt;     Foo MyFoo;
+
+&gt;     std::cout &lt;&lt; MyFoo.Bar&lt;int&gt;( 10 ) &lt;&lt; &quot; &quot; &lt;&lt; MyFoo.Bar&lt;double&gt;(
+&gt; 3.1415926 );
+&gt;     return 0;
+&gt; }
+&gt; At first I couldn't understand how it could work, wouldn't
+&gt; there need to be an instance of the class for each type?  Then
+&gt; I realized the compiler only has to make one copy of the
+&gt; method for each type.  Interesting.  Static variables (of type
+&gt; T anyway) don't seem to be saved between calls however.
+">
+
+They should be.  Could you give an example?  (Remember that a
+function template is NOT a function.  Each instantiation of a
+function template is a function.  So each instantiation will
+have its own local static variables.)
+
+--
+James Kanze (GABI Software)             email:james.ka ... @gmail.com
+Conseils en informatique orientée objet/
+Beratung in objektorientierter Datenverarbeitung
+9 place Sémard, 78210 St.-Cyr-l'École, France, +33 (0)1 30 23 00 34
+</POST>
+<POST>
+<POSTER> &quot;Jim Langston&quot; &lt;tazmas...@rocketmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-10T06:59:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;James Kanze&quot; &lt;james.ka ... @gmail.com&gt; wrote in message
+">
+
+news:1186659902.545296.134820@57g2000hsv.googlegroups.com ...
+On Aug 9, 2:38 am, &quot;Jim Langston&quot; &lt;tazmas ... @rocketmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Victor Bazarov&quot; &lt;v.Abaza ... @comAcast.net&gt; wrote in message
+&gt; news:f9df7j$76v$1@news.datemas.de ...
+&gt; &gt; cheesi ... @gmail.com wrote:
+&gt; &gt;&gt; 1. Can I declare some of template functions into a class? a concrete
+&gt; &gt;&gt; class, not the template class.
+&gt; &gt; Yes, you should be able to.
+&gt; I didn't believe it,
+">
+
+You probably learned C++ a long time ago, then.  You couldn't do
+it in ARM C++; it was added by the standardization committee.
+
+<QUOTE PREVIOUSPOST="
+&gt; so I tried it, and you're right, it does work.  The
+&gt; output of the following program is
+&gt; 10 3.14159
+&gt; #include &lt;iostream&gt;
+&gt; class Foo
+&gt; {
+&gt; public:
+&gt;     template &lt;class T&gt; T Bar( T t ) { return t; };
+&gt; };
+&gt; int main()
+&gt; {
+&gt;     Foo MyFoo;
+
+&gt;     std::cout &lt;&lt; MyFoo.Bar&lt;int&gt;( 10 ) &lt;&lt; &quot; &quot; &lt;&lt; MyFoo.Bar&lt;double&gt;(
+&gt; 3.1415926 );
+&gt;     return 0;
+&gt; }
+&gt; At first I couldn't understand how it could work, wouldn't
+&gt; there need to be an instance of the class for each type?  Then
+&gt; I realized the compiler only has to make one copy of the
+&gt; method for each type.  Interesting.  Static variables (of type
+&gt; T anyway) don't seem to be saved between calls however.
+">
+
+They should be.  Could you give an example?  (Remember that a
+function template is NOT a function.  Each instantiation of a
+function template is a function.  So each instantiation will
+have its own local static variables.)
+
+==========
+
+I wish I had saved the code I was experimenting with.  Because I thought the
+same thing, and right now it is saving the instances of the static T
+variables between calls, but it wasn't before.  Unfortunately, I can't
+reproduce it.  I did what I thought was the exact same thing but now it's
+retaining the value.  Either some compiler bug, or most likely, PBKAC.
+</POST>
+</TEXT>
+</BODY>
+</DOC>
