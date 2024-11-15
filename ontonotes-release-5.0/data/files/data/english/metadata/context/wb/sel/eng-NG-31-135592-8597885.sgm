@@ -1,0 +1,2024 @@
+<DOC>
+<DOCID> eng-NG-31-135592-8597885 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-03T06:13:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Filling individual cells in a grid
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Joop Van den tillaart &lt;tillaar...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-03T06:13:00 </POSTDATE>
+Hi guys,
+
+can someone please lend me a hand in this. I have a piece of code that
+generates a grid like structure. All the cells in this grid now have 2
+properties namely a celltype and a cell distance (to cells with type 1).
+
+For now the code can only define celltypes to rows and columns. I need
+to add a piece of code that will let me define celltypes to individual
+cells. Does anyone know how I can achieve this and what pieces of code I
+need to add?
+
+I could really use a hand of someone more experienced in Ruby as I am.
+Thanks in advance!
+
+Greets tillaart36...
+
+Attachments:
+http://www.ruby-forum.com/attachment/218/testgrid3.rb
+
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> &quot;Todd Benson&quot; &lt;caduce...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-03T07:12:00 </POSTDATE>
+On 9/3/07, Joop Van den tillaart &lt;tillaar ... @hotmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi guys,
+
+&gt; can someone please lend me a hand in this. I have a piece of code that
+&gt; generates a grid like structure. All the cells in this grid now have 2
+&gt; properties namely a celltype and a cell distance (to cells with type 1).
+
+&gt; For now the code can only define celltypes to rows and columns. I need
+&gt; to add a piece of code that will let me define celltypes to individual
+&gt; cells. Does anyone know how I can achieve this and what pieces of code I
+&gt; need to add?
+
+&gt; I could really use a hand of someone more experienced in Ruby as I am.
+&gt; Thanks in advance!
+
+&gt; Greets tillaart36...
+
+&gt; Attachments:
+&gt; http://www.ruby-forum.com/attachment/218/testgrid3.rb
+">
+
+With your current code...
+
+grid[1,1].type = 3
+grid[1,1].distance_road = 5
+
+Todd
+</POST>
+<POST>
+<POSTER> Joop Van den tillaart &lt;tillaar...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-03T07:22:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; With your current code...
+
+&gt; grid[1,1].type = 3
+&gt; grid[1,1].distance_road = 5
+
+&gt; Todd
+">
+
+Hey,
+
+thanks for your help. I was working the code myself and found another
+way of individual filling but your way is much cleaner I think. Is there
+also a way of filling a group of cells (which is not a full column or a
+full row)?
+
+All the cells with type 1 are are already defined and then I need to
+fill like 60% of the remaining cells with type 3 and the other 40% with
+type 4. I think I need to add a method to the code which lets me do that
+but I'm don't have much experience with ruby so I don't know how to do
+this...
+
+Can anybody help me further on this?
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> Joop Van den tillaart &lt;tillaar...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-03T08:40:00 </POSTDATE>
+Is there no one else who can help me out a bit?
+
+Thanks...
+
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> &quot;Logan Capaldo&quot; &lt;logancapa...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-03T08:54:00 </POSTDATE>
+On 9/3/07, Joop Van den tillaart &lt;tillaar ... @hotmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Is there no one else who can help me out a bit?
+
+&gt; Thanks...
+
+&gt; --
+&gt; Posted via http://www.ruby-forum.com/ .
+">
+
+it's been less than three hours since you posted your original
+question. Patience is a wonderful thing.
+</POST>
+<POST>
+<POSTER> &quot;Logan Capaldo&quot; &lt;logancapa...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-03T08:59:00 </POSTDATE>
+On 9/3/07, Joop Van den tillaart &lt;tillaar ... @hotmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Is there no one else who can help me out a bit?
+
+&gt; Thanks...
+
+&gt; --
+&gt; Posted via http://www.ruby-forum.com/ .
+">
+
+it's been less than three hours since you posted your original
+question. Patience is a wonderful thing.
+</POST>
+<POST>
+<POSTER> Morton Goldberg &lt;m_goldb...@ameritech.net&gt; </POSTER>
+<POSTDATE> 2007-09-03T10:24:00 </POSTDATE>
+On Sep 3, 2007, at 8:40 AM, Joop Van den tillaart wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Is there no one else who can help me out a bit?
+">
+
+OK, I'll make some suggestions.
+1. I think you could make your life a lot easier if you gave your
+cell objects more info about where they live.
+2. I suggest you fill @grid with cells during initialization.
+3. I suggest you include Enumerable in your Grid class. Then you only
+have to define Grid#each to get map, collect, and whole more for free.
+
+&lt;code&gt;
+class Cell
+attr_accessor :type, :distance_road
+attr_reader :i
+def initialize(grid, i)
+@my_grid = grid
+@i = i
+end
+def xy
+@i.divmod(@my_grid.width).reverse
+end
+def inspect
+&quot;Cell[#{@i}, #{xy.inspect}, #{type}, #{distance_road}]&quot;
+end
+end
+class Grid
+include Enumerable
+attr :width, :heigh
+def initialize(width, height)
+@grid = Array.new(width * height) { |i| Cell.new(self, i) }
+@width = width
+@height = height
+end
+def [](x, y)
+raise IndexError.new(&quot;Index (#{x}, #{y}) out of range&quot;) \
+if x &lt; 0 || y &lt; 0 || x &gt;= @width || y &gt;= @width
+@grid[y * width + x]
+end
+def []=(x, y, value)
+raise IndexError.new(&quot;Index (#{x}, #{y}) out of range&quot;) \
+if x &lt; 0 || y &lt; 0 || x &gt;= @width || y &gt;= @width
+@grid[y * width + x] = value
+end
+def each
+@grid.each { |cell| yield cell }
+end
+end
+
+# Now you can do all kinds of neat things.
+
+g = Grid.new(2, 2)
+p g
+g.map { |cell| cell.type = 0; cell.distance_road = cell.i % 2 }
+p g
+h = g.select { |cell| cell.distance_road == 1 }
+h.each { |cell| cell.type = 42 }
+p g
+p g.any? { |cell| cell.type == 42 }
+p g.all? { |cell| g[*cell.xy] == cell }
+&lt;/code&gt;
+
+&lt;result&gt;
+#&lt;Grid:0x7b128 @width=2,
+@grid=[Cell[0, [0, 0], , ], Cell[1, [1, 0], , ],
+Cell[2, [0, 1], , ], Cell[3, [1, 1], , ]],
+@height=2&gt;
+#&lt;Grid:0x7b1a0 @width=2,
+@grid=[Cell[0, [0, 0], 0, 0], Cell[1, [1, 0], 0, 1],
+Cell[2, [0, 1], 0, 0], Cell[3, [1, 1], 0, 1]],
+@height=2&gt;
+#&lt;Grid:0x7b1a0 @width=2,
+@grid=[Cell[0, [0, 0], 0, 0], Cell[1, [1, 0], 42, 1],
+Cell[2, [0, 1], 0, 0], Cell[3, [1, 1], 42, 1]],
+@height=2&gt;
+true
+true
+&lt;/result&gt;
+
+Regards, Morton
+</POST>
+<POST>
+<POSTER> Joop Van den tillaart &lt;tillaar...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-03T12:04:00 </POSTDATE>
+Wow, thanks for your help...
+
+Im trying it out right now...
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> Joop Van den tillaart &lt;tillaar...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-06T07:44:00 </POSTDATE>
+Joop Van den tillaart wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Wow, thanks for your help...
+
+&gt; Im trying it out right now...
+">
+
+Hey all you guys...
+
+me and someone of my university have set up a new way of generating the
+grid.
+
+For now it generates a grid of 20x20 with 2 columns and 1 row filled
+with celltype 1. The other cells are set to value 0.
+
+I want the remaining cells with value 0 to be divided in say 60% type 2
+and the remaining 40% (of the remaining 0 cells) to be valued as type 3.
+
+Does anyone know how to do this in a neat way (from a programmers point
+of view) and if so can anyone share some techniques with me?
+
+See the attachment for the new generating of the grid.
+
+Thanks in advance!
+
+Attachments:
+http://www.ruby-forum.com/attachment/233/testje.rb
+
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> Morton Goldberg &lt;m_goldb...@ameritech.net&gt; </POSTER>
+<POSTDATE> 2007-09-06T10:56:00 </POSTDATE>
+On Sep 6, 2007, at 7:44 AM, Joop Van den tillaart wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Joop Van den tillaart wrote:
+&gt;&gt; Wow, thanks for your help...
+
+&gt;&gt; Im trying it out right now...
+
+&gt; Hey all you guys...
+
+&gt; me and someone of my university have set up a new way of generating
+&gt; the
+&gt; grid.
+
+&gt; For now it generates a grid of 20x20 with 2 columns and 1 row filled
+&gt; with celltype 1. The other cells are set to value 0.
+
+&gt; I want the remaining cells with value 0 to be divided in say 60%
+&gt; type 2
+&gt; and the remaining 40% (of the remaining 0 cells) to be valued as
+&gt; type 3.
+
+&gt; Does anyone know how to do this in a neat way (from a programmers
+&gt; point
+&gt; of view) and if so can anyone share some techniques with me?
+">
+
+Are you asking for a random 40% of the cells to be assigned type 3
+state while the remaining 60% is assigned type 2? Or is there some
+other criterion?
+
+<QUOTE PREVIOUSPOST="
+&gt; See the attachment for the new generating of the grid.
+">
+
+I looked at your code and here are some comments:
+
+!. I think you got x and y interchanged. You won't see the problem as
+long you are using square grids. So try it with 20-wide by 15-high
+grid. The way you have set it up, it is impossible to traverse the
+grid from top to bottom, right-to-left, with Grid#each, which is
+something you are going to want to do. Compare print_field_values to
+print_grid in the code below.
+
+2. Look at how I rewrote Grid#[] below.
+
+3. Since you are using OpenStructs to model your cells, I can't see
+how you going to write a useful Grid#[]=, but the one you have now
+can't possibly work.
+
+Regards, Morton
+
+&lt;code&gt;
+require 'ostruct'
+
+class Grid
+include Enumerable
+
+# def initialize(width, height)
+#   @grid = Array.new(width) do |x|
+#     Array.new(height) do |y|
+#       OpenStruct.new(:x =&gt; x, :y =&gt; y, :grid =&gt; self)
+#     end
+#   end
+# end
+
+def initialize(width, height)
+@grid = Array.new(height) do |row|
+Array.new(width) do |col|
+OpenStruct.new(:x =&gt; col, :y =&gt; row, :grid =&gt; self)
+end
+end
+end
+
+def width
+@grid.first.size
+end
+
+def height
+@grid.size
+end
+
+# def width
+#   @grid.size
+# end
+#
+# def height
+#   @grid.first.size
+# end
+
+def each
+@grid.each do |row|
+row.each do |cell|
+yield cell
+end
+end
+end
+
+def [](x, y)
+@grid[y][x] if @grid[y]
+end
+
+# def [](x, y)
+#   return @grid[x][y] if @grid[x]
+#   nil
+# end
+
+# This can't work -- super[x][y] means (self.(Object#[](x))).[](y)
+# which can't possibly be what is wanted.
+# def []=(x, y, value)
+#   if @grid[x] &amp;&amp; @grid[x][y]
+#     super[x][y] = value
+#   else
+#     raise IndexError.new
+#   end
+# end
+
+def print_field_values(field_name = :cell_type)
+each_with_index do |cell, i|
+print &quot;%02d &quot; % cell.send(field_name)
+puts if i % width == width - 1
+end
+end
+
+end
+
+def print_grid(grid, field_name = :cell_type)
+grid.height.times do |y|
+grid.width.times do |x|
+print &quot;%02d &quot; % grid[x,y].send(field_name)
+end
+puts
+end
+end
+
+def calculate_distance(grid, field_name)
+updated = true
+while updated do
+updated = false
+grid.each do |cell|
+for x in (cell.x - 1)..(cell.x + 1)
+for y in (cell.y - 1)..(cell.y + 1)
+neighbour = grid[x, y]
+next if neighbour.nil? || cell == neighbour || x&lt;0 || y&lt; 0
+if neighbour.send(field_name) &amp;&amp; (cell.send
+(field_name).nil? || neighbour.send(field_name) + 1 &lt; cell.send
+(field_name))
+cell.send(field_name.to_s + &quot;=&quot;, neighbour.send
+(field_name) + 1)
+updated = true
+end
+end
+end
+end
+end
+end
+
+grid = Grid.new(20, 15)
+grid.each { |cell| cell.cell_type = 0 }
+grid.height.times { |y| grid[19,y].cell_type = 1 }
+grid.height.times { |y| grid[9,y].cell_type = 1 }
+grid.width.times { |x| grid[x,9].cell_type = 1 }
+grid.each do |cell|
+if cell.cell_type == 1
+cell.distance_road = 0
+cell.locked = true
+end
+end
+
+grid.each do |cell|
+if cell.cell_type == 0
+cell.cell_type = 2
+end
+end
+
+print_grid(grid, :cell_type)
+puts
+grid.print_field_values(:cell_type)
+&lt;/code&gt;
+</POST>
+<POST>
+<POSTER> Joop Van den tillaart &lt;tillaar...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-06T11:38:00 </POSTDATE>
+hi thanks for your help,
+
+im not sure what you meant with your comments but i will look into
+them...again thanks...
+
+And my goal for filling the cells is as you say...the remaining cells
+just have to be filled with say 60% type 2 en the remaining 40% of cells
+with type 3. This can be done random or just first 60% type2 and the
+other type 3.
+
+When this is completed i need to make an algorithm that starts swapping
+celltypes depending on neighbour cells and distances to other cells...i
+won't go to deep into this but it doesn't matter how the cells in the
+first stage are filled...just the types 1 are on a own place because
+they characterize a road which is laid in before the algorithm starts
+swapping...
+
+So can anyone tell how to define the first 60% as type 2 and the
+remaining cells with type 0 to type 3??
+
+thanks!
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> Morton Goldberg &lt;m_goldb...@ameritech.net&gt; </POSTER>
+<POSTDATE> 2007-09-06T16:47:00 </POSTDATE>
+On Sep 6, 2007, at 11:38 AM, Joop Van den tillaart wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; hi thanks for your help,
+">
+
+You're welcome.
+
+<QUOTE PREVIOUSPOST="
+&gt; im not sure what you meant with your comments but i will look into
+&gt; them...again thanks.
+">
+
+I'm trying to keep you from shooting yourself in the foot :)
+
+<QUOTE PREVIOUSPOST="
+&gt; And my goal for filling the cells is as you say...the remaining cells
+&gt; just have to be filled with say 60% type 2 en the remaining 40% of
+&gt; cells
+&gt; with type 3. This can be done random or just first 60% type2 and the
+&gt; other type 3.
+
+&gt; When this is completed i need to make an algorithm that starts
+&gt; swapping
+&gt; celltypes depending on neighbour cells and distances to other
+&gt; cells...i
+&gt; won't go to deep into this but it doesn't matter how the cells in the
+&gt; first stage are filled...just the types 1 are on a own place because
+&gt; they characterize a road which is laid in before the algorithm starts
+&gt; swapping...
+
+&gt; So can anyone tell how to define the first 60% as type 2 and the
+&gt; remaining cells with type 0 to type 3??
+">
+
+&lt;code&gt;
+require 'ostruct'
+
+class Grid
+include Enumerable
+
+def initialize(width, height)
+@grid = Array.new(height) do |row|
+Array.new(width) do |col|
+OpenStruct.new(:x =&gt; col, :y =&gt; row, :grid =&gt; self)
+end
+end
+end
+
+def width
+@grid.first.size
+end
+
+def height
+@grid.size
+end
+
+def each
+@grid.each do |row|
+row.each do |cell|
+yield cell
+end
+end
+end
+
+def [](x, y)
+@grid[y][x] if @grid[y]
+end
+
+def print_field_values(field_name = :cell_type)
+each_with_index do |cell, i|
+print &quot;%02d &quot; % cell.send(field_name)
+puts if i % width == width - 1
+end
+end
+
+end
+
+grid = Grid.new(20, 15)
+grid.each { |cell| cell.cell_type = 0 }
+grid.height.times { |y| grid[19,y].cell_type = 1 }
+grid.height.times { |y| grid[9,y].cell_type = 1 }
+grid.width.times { |x| grid[x,9].cell_type = 1 }
+grid.each do |cell|
+if cell.cell_type == 1
+cell.distance_road = 0
+cell.locked = true
+end
+end
+
+zero_cells = grid.select { |cell| cell.cell_type == 0 }
+n = (0.6 * zero_cells.size).round
+zero_cells[0..n-1].each { |cell| cell.cell_type = 2 }
+zero_cells[n..-1].each { |cell| cell.cell_type = 3 }
+grid.print_field_values
+&lt;/code&gt;
+
+Regards, Morton
+</POST>
+<POST>
+<POSTER> Morton Goldberg &lt;m_goldb...@ameritech.net&gt; </POSTER>
+<POSTDATE> 2007-09-06T18:07:00 </POSTDATE>
+On Sep 6, 2007, at 4:47 PM, Morton Goldberg wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &lt;code&gt;
+&gt; zero_cells = grid.select { |cell| cell.cell_type == 0 }
+&gt; n = (0.6 * zero_cells.size).round
+&gt; zero_cells[0..n-1].each { |cell| cell.cell_type = 2 }
+&gt; zero_cells[n..-1].each { |cell| cell.cell_type = 3 }
+&gt; grid.print_field_values
+&gt; &lt;/code&gt;
+">
+
+I've thought of a more efficient way.
+
+&lt;code&gt;
+zero_cells = grid.select { |cell| cell.cell_type == 0 }
+n = zero_cells.size
+k = (0.6 * n).round
+(0...k).each { |i| zero_cells[i].cell_type = 2 }
+(k...n).each { |i| zero_cells[i].cell_type = 3 }
+&lt;/code&gt;
+
+Regards, Morton
+</POST>
+<POST>
+<POSTER> Joop Van den tillaart &lt;tillaar...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-07T06:11:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Morton Goldberg wrote:
+&gt; On Sep 6, 2007, at 4:47 PM, Morton Goldberg wrote:
+
+&gt;I've thought of a more efficient way.
+">
+
+Hey man,
+
+again thanks for your help...as you will have noticed I'm not an expert
+at ruby but I'm sure appreciating the help I get from you people...
+
+Let me have a go with this code and see where it gets me...
+
+Thanks again!
+
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> Joop Van den tillaart &lt;tillaar...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-11T04:57:00 </POSTDATE>
+Hi guys,
+
+i'm back with a new problem with my grid:
+
+I have three celltypes:
+
+1 = road
+2 = housing
+3 = green
+
+Each type has a table where preference scores are stored regarding the
+adjacency of other celltypes...these are stored in the hash ATable...
+
+Now i have to code an algorithm that iterates over all cells and which
+calculates adjacency scores...I have made a word document where i try to
+explain what the algorithm needs to do. Me and a teacher have coded two
+things for this:
+
+----------------------------
+def scoreA(cell)
+# here the algorithm has to be placed
+end
+----------------------------
+
+The adjacency score of one cell needs to be calculated within this
+method...
+
+----------------------------
+for cell1 in grid
+for cell2 in grid
+#    # compare cell1 with cell2
+next if cell1 == cell2
+next if cell1.locked || cell2.locked
+
+# calculate score for two cells together
+a_before = scoreA(cell1) + scoreA(cell2)
+
+# swap cells
+cell1.cell_type, cell2.cell_type = cell2.cell_type, cell1.cell_type
+
+# calculate score for two cells together
+a_after = scoreA(cell1) + scoreA(cell2)
+
+# if last score is lower or even as the score before swap, then swap
+cells back to first situation
+if a_after &lt;= a_before
+cell1.cell_type, cell2.cell_type = cell2.cell_type, cell1.cell_type
+end
+end
+end
+----------------------------
+
+the whole swapping procedure should be in this code above...
+
+Now I think i have to design the code which calculates the score of one
+cell regarding its neighbouring cells with the help of the ATable hash.
+This piece of code has to be in the method scoreA(cell)...
+
+but I'm really stuck in how to do this. Besides that I realize that it
+is a long story / question I ask so maybe it won't get much reply, but
+on the other hand if someone is interested in helping me out a bit I
+would be very grateful...
+
+Anyways I have attached my ruby file and a word document in which i
+tried to explain the procedure of the algorithm...
+
+Thanks in advance!
+
+Attachments:
+http://www.ruby-forum.com/attachment/265/testje.rb
+
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> Joop Van den tillaart &lt;tillaar...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-11T04:59:00 </POSTDATE>
+and the word document...
+
+Attachments:
+http://www.ruby-forum.com/attachment/266/procedure_algorithm_adjacenc...
+
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> Joop Van den tillaart &lt;tillaar...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-11T04:59:00 </POSTDATE>
+part b
+
+Attachments:
+http://www.ruby-forum.com/attachment/267/procedure_algorithm_adjacenc...
+
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> Morton Goldberg &lt;m_goldb...@ameritech.net&gt; </POSTER>
+<POSTDATE> 2007-09-11T07:04:00 </POSTDATE>
+On Sep 11, 2007, at 4:57 AM, Joop Van den tillaart wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi guys,
+
+&gt; i'm back with a new problem with my grid:
+
+&gt; I have three celltypes:
+
+&gt; 1 = road
+&gt; 2 = housing
+&gt; 3 = green
+
+&gt; Each type has a table where preference scores are stored regarding the
+&gt; adjacency of other celltypes...these are stored in the hash ATable...
+
+&gt; Now i have to code an algorithm that iterates over all cells and which
+&gt; calculates adjacency scores...I have made a word document where i
+&gt; try to
+&gt; explain what the algorithm needs to do. Me and a teacher have coded
+&gt; two
+&gt; things for this:
+
+&gt; ----------------------------
+&gt; def scoreA(cell)
+&gt;   # here the algorithm has to be placed
+&gt; end
+&gt; ----------------------------
+
+&gt; The adjacency score of one cell needs to be calculated within this
+&gt; method...
+
+&gt; ----------------------------
+&gt; for cell1 in grid
+&gt;   for cell2 in grid
+&gt; #    # compare cell1 with cell2
+&gt;     next if cell1 == cell2
+&gt;     next if cell1.locked || cell2.locked
+
+&gt;     # calculate score for two cells together
+&gt;     a_before = scoreA(cell1) + scoreA(cell2)
+
+&gt;     # swap cells
+&gt;     cell1.cell_type, cell2.cell_type = cell2.cell_type,
+&gt; cell1.cell_type
+
+&gt;     # calculate score for two cells together
+&gt;     a_after = scoreA(cell1) + scoreA(cell2)
+
+&gt;     # if last score is lower or even as the score before swap, then
+&gt; swap
+&gt; cells back to first situation
+&gt;     if a_after &lt;= a_before
+&gt;     cell1.cell_type, cell2.cell_type = cell2.cell_type,
+&gt; cell1.cell_type
+&gt;     end
+&gt;   end
+&gt; end
+&gt; ----------------------------
+">
+
+I see one problem with the above code -- it walks the entire
+adjacency matrix. It would be better to redesign it to walk only on
+either the upper or the lower triangular sub-matrix. Then you only
+need to deal with each distinct cell pairing once.
+
+<QUOTE PREVIOUSPOST="
+&gt; Attachments:
+">
+
+Sorry. There is no way that I'm going to open a Word document of
+unknown content on my computer.
+
+Regards, Morton
+</POST>
+<POST>
+<POSTER> Joop Van den tillaart &lt;tillaar...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-11T07:57:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Morton Goldberg wrote:
+&gt; On Sep 11, 2007, at 4:57 AM, Joop Van den tillaart wrote:
+
+&gt;&gt; Each type has a table where preference scores are stored regarding the
+&gt;&gt; def scoreA(cell)
+&gt;&gt; #    # compare cell1 with cell2
+&gt;&gt;     # calculate score for two cells together
+&gt;&gt; end
+&gt;&gt; ----------------------------
+
+&gt; I see one problem with the above code -- it walks the entire
+&gt; adjacency matrix. It would be better to redesign it to walk only on
+&gt; either the upper or the lower triangular sub-matrix. Then you only
+&gt; need to deal with each distinct cell pairing once.
+
+&gt;&gt; Attachments:
+
+&gt; Sorry. There is no way that I'm going to open a Word document of
+&gt; unknown content on my computer.
+
+&gt; Regards, Morton
+">
+
+I noticed that too...it doesnt look to the surrounding cells on a
+distance of 1 cell...it walks through all the cells...how do i change
+the code so it will only take into account surrounding cells on distance
+1?
+
+And euhm...why do you worry about the word document? It's just a brief
+explanation of what the algorithm should do...I'm sure you have your
+reasons for not opening it (but I don't see them :D)...anyways thanks
+for your help so far...
+
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> Morton Goldberg &lt;m_goldb...@ameritech.net&gt; </POSTER>
+<POSTDATE> 2007-09-11T14:03:00 </POSTDATE>
+On Sep 11, 2007, at 7:57 AM, Joop Van den tillaart wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Morton Goldberg wrote:
+&gt;&gt; On Sep 11, 2007, at 4:57 AM, Joop Van den tillaart wrote:
+
+&gt;&gt;&gt; Each type has a table where preference scores are stored
+&gt;&gt;&gt; regarding the
+&gt;&gt;&gt; def scoreA(cell)
+&gt;&gt;&gt; #    # compare cell1 with cell2
+&gt;&gt;&gt;     # calculate score for two cells together
+&gt;&gt;&gt; end
+&gt;&gt;&gt; ----------------------------
+
+&gt;&gt; I see one problem with the above code -- it walks the entire
+&gt;&gt; adjacency matrix. It would be better to redesign it to walk only on
+&gt;&gt; either the upper or the lower triangular sub-matrix. Then you only
+&gt;&gt; need to deal with each distinct cell pairing once.
+
+&gt;&gt;&gt; Attachments:
+
+&gt;&gt; Sorry. There is no way that I'm going to open a Word document of
+&gt;&gt; unknown content on my computer.
+
+&gt;&gt; Regards, Morton
+
+&gt; I noticed that too...it doesnt look to the surrounding cells on a
+&gt; distance of 1 cell...it walks through all the cells...how do i change
+&gt; the code so it will only take into account surrounding cells on
+&gt; distance
+&gt; 1?
+">
+
+&lt;code&gt;
+require 'ostruct'
+
+class Grid
+include Enumerable
+
+def initialize(width, height)
+@grid = Array.new(height) do |row|
+Array.new(width) do |col|
+OpenStruct.new(:x =&gt; col, :y =&gt; row, :grid =&gt; self)
+end
+end
+end
+
+def width
+@grid.first.size
+end
+
+def height
+@grid.size
+end
+
+def each
+@grid.each do |row|
+row.each do |cell|
+yield cell
+end
+end
+end
+
+def [](x, y)
+@grid[y][x] if @grid[y]
+end
+
+def print_field_values(field_name = :cell_type)
+each_with_index do |cell, i|
+print &quot;%02d &quot; % cell.send(field_name)
+puts if i % width == width - 1
+end
+end
+
+def each_with_neighbor
+each { |cell| cell.visited = false }
+each do |cell|
+next if cell.locked
+neighbors(cell).each { |other| yield cell, other }
+cell.visited = true
+end
+end
+
+def neighbors(cell)
+result = []
+x, y = cell.x, cell.y
+(-1..1).each do |dx|
+(-1..1).each do |dy|
+begin
+next if dx == 0 &amp;&amp; dy == 0
+_cell = cell.grid[x+dx, y+dy]
+result &lt;&lt; _cell unless _cell.locked || _cell.visited
+rescue IndexError
+next
+end
+end
+end
+result
+end
+
+end
+
+# I'm setting up a small grid here to reduce the amount of output.
+grid = Grid.new(5, 4)
+grid.each { |cell| cell.cell_type = 0 }
+grid.height.times { |y| grid[4, y].cell_type = 1 }
+grid.height.times { |y| grid[2, y].cell_type = 1 }
+grid.width.times { |x| grid[x, 3].cell_type = 1 }
+grid.each do |cell|
+if cell.cell_type == 1
+cell.distance_road = 0
+cell.locked = true
+end
+end
+
+zero_cells = grid.select { |cell| cell.cell_type == 0 }
+n = zero_cells.size
+k = (0.6 * n).round
+(0...k).each { |i| zero_cells[i].cell_type = 2 }
+(k...n).each { |i| zero_cells[i].cell_type = 3 }
+grid.print_field_values
+
+puts
+
+# Example showing how to use each_with_neighbor. Shows where your code
+# would go. Also prints outs what cell pairs get processed.
+grid.each_with_neighbor do |cell, other|
+# # calculate score for two cells together
+# a_before = scoreA(cell) + scoreA(other)
+# # swap cells
+# cell.cell_type, other.cell_type = other.cell_type, cell.cell_type
+# # calculate score for two cells together
+# a_after = scoreA(cell) + scoreA(other)
+# # if last score is lower or even as the score before swap,
+# # then swap  cells back to first situation
+# if a_after &lt;= a_before
+#    cell.cell_type, other.cell_type = other.cell_type,
+cell.cell_type
+# end
+p [[cell.x, cell.y, cell.cell_type],
+[other.x, other.y, other.cell_type]]
+end
+&lt;/code&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; And euhm...why do you worry about the word document? It's just a brief
+&gt; explanation of what the algorithm should do...I'm sure you have your
+&gt; reasons for not opening it (but I don't see them :D)...anyways thanks
+&gt; for your help so far...
+">
+
+There are viruses that attach themselves to Word documents and which
+spread when someone downloads the document and opens it on uninfected
+computer.
+
+If your explanation is brief, why not post it as part of a message
+(not an attachment)? If you do, I'm not sure I'll implement it for
+you. I'm beginning to think that I've been doing too much of your
+school work for you, and it would be better you did more of it
+yourself. But then again I might or at least give some pointers or
+someone else may be willing to help you.
+
+Regards, Morton
+</POST>
+<POST>
+<POSTER> Morton Goldberg &lt;m_goldb...@ameritech.net&gt; </POSTER>
+<POSTDATE> 2007-09-11T16:34:00 </POSTDATE>
+On Sep 11, 2007, at 2:03 PM, Morton Goldberg wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &lt;code&gt;
+&gt;    def each_with_neighbor
+&gt;       each { |cell| cell.visited = false }
+&gt;       each do |cell|
+&gt;          next if cell.locked
+&gt;          neighbors(cell).each { |other| yield cell, other }
+&gt;          cell.visited = true
+&gt;       end
+&gt;    end
+
+&gt;    def neighbors(cell)
+&gt;       result = []
+&gt;       x, y = cell.x, cell.y
+&gt;       (-1..1).each do |dx|
+&gt;          (-1..1).each do |dy|
+&gt;             begin
+&gt;                next if dx == 0 &amp;&amp; dy == 0
+&gt;                _cell = cell.grid[x+dx, y+dy]
+&gt;                result &lt;&lt; _cell unless _cell.locked || _cell.visited
+&gt;             rescue IndexError
+&gt;                next
+&gt;             end
+&gt;          end
+&gt;       end
+&gt;       result
+&gt;    end
+&gt; &lt;/code&gt;
+">
+
+As is not unusual for me, I've had second thoughts. Here is a better
+version.
+
+&lt;code&gt;
+def each_with_neighbor
+each do |cell|
+next if cell.locked
+neighbors(cell).each { |other| yield cell, other }
+end
+end
+
+DELTAS = [[1, 0], [-1, 1], [0, 1], [1, 1]]
+def neighbors(cell)
+result = []
+x, y = cell.x, cell.y
+DELTAS.each do |dx, dy|
+begin
+_cell = cell.grid[x+dx, y+dy]
+result &lt;&lt; _cell unless _cell.locked
+rescue IndexError
+next
+end
+end
+result
+end
+&lt;/code&gt;
+
+Regards, Morton
+</POST>
+<POST>
+<POSTER> Morton Goldberg &lt;m_goldb...@ameritech.net&gt; </POSTER>
+<POSTDATE> 2007-09-11T18:15:00 </POSTDATE>
+On Sep 11, 2007, at 4:34 PM, Morton Goldberg wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; As is not unusual for me, I've had second thoughts. Here is a
+&gt; better version.
+
+&gt; &lt;code&gt;
+&gt;    def each_with_neighbor
+&gt;       each do |cell|
+&gt;          next if cell.locked
+&gt;          neighbors(cell).each { |other| yield cell, other }
+&gt;       end
+&gt;    end
+
+&gt;    DELTAS = [[1, 0], [-1, 1], [0, 1], [1, 1]]
+&gt;    def neighbors(cell)
+&gt;       result = []
+&gt;       x, y = cell.x, cell.y
+&gt;       DELTAS.each do |dx, dy|
+&gt;          begin
+&gt;             _cell = cell.grid[x+dx, y+dy]
+&gt;             result &lt;&lt; _cell unless _cell.locked
+&gt;          rescue IndexError
+&gt;             next
+&gt;          end
+&gt;       end
+&gt;       result
+&gt;    end
+&gt; &lt;/code&gt;
+">
+
+Third thoughts. I solved the wrong problem. On further consideration,
+I think this is want you are looking for:
+
+&lt;code&gt;
+require 'ostruct'
+
+class Grid
+include Enumerable
+
+def initialize(width, height)
+@grid = Array.new(height) do |row|
+Array.new(width) do |col|
+OpenStruct.new(:x =&gt; col, :y =&gt; row, :grid =&gt; self)
+end
+end
+end
+
+def width
+@grid.first.size
+end
+
+def height
+@grid.size
+end
+
+def each
+@grid.each do |row|
+row.each do |cell|
+yield cell
+end
+end
+end
+
+def [](x, y)
+@grid[y][x] if @grid[y]
+end
+
+def print_field_values(field_name = :cell_type)
+each_with_index do |cell, i|
+print &quot;%02d &quot; % cell.send(field_name)
+puts if i % width == width - 1
+end
+end
+
+def each_with_remaining
+each do |cell|
+next if cell.locked
+x, y = cell.x, cell.y
+(x+1...width).each do |col|
+_cell = cell.grid[col, y]
+yield cell, _cell unless _cell.locked
+end
+(y+1...height).each do |row|
+(0...width).each do |col|
+_cell = cell.grid[col, row]
+yield cell, _cell unless _cell.locked
+end
+end
+end
+end
+
+end
+
+end
+
+# I'm setting up a small grid here to reduce the amount of output.
+grid = Grid.new(5, 4)
+grid.each { |cell| cell.cell_type = 0 }
+grid.height.times { |y| grid[4, y].cell_type = 1 }
+grid.height.times { |y| grid[2, y].cell_type = 1 }
+grid.width.times { |x| grid[x, 3].cell_type = 1 }
+grid.each do |cell|
+if cell.cell_type == 1
+cell.distance_road = 0
+cell.locked = true
+end
+end
+
+zero_cells = grid.select { |cell| cell.cell_type == 0 }
+n = zero_cells.size
+k = (0.6 * n).round
+(0...k).each { |i| zero_cells[i].cell_type = 2 }
+(k...n).each { |i| zero_cells[i].cell_type = 3 }
+grid.print_field_values
+
+puts
+
+# Example showing how to use each_with_remaining. Shows where your code
+# would go. Also prints outs what cell pairs get processed.
+grid.each_with_remaining do |cell, other|
+# # calculate score for two cells together
+# a_before = scoreA(cell) + scoreA(other)
+# # swap cells
+# cell.cell_type, other.cell_type = other.cell_type, cell.cell_type
+# # calculate score for two cells together
+# a_after = scoreA(cell) + scoreA(other)
+# # if last score is lower or even as the score before swap,
+# # then swap  cells back to first situation
+# if a_after &lt;= a_before
+#    cell.cell_type, other.cell_type = other.cell_type,
+cell.cell_type
+# end
+p [[cell.x, cell.y, cell.cell_type],
+[other.x, other.y, other.cell_type]]
+end
+&lt;/code&gt;
+
+Regards, Morton
+</POST>
+<POST>
+<POSTER> Joop Van den tillaart &lt;tillaar...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-12T03:29:00 </POSTDATE>
+Thanks Morton,
+
+you're really a big help for me...and I know you are right about the
+stuff I need to do by myself but for me, not having any real experience
+in coding/programming and being also new to ruby it's hard to see how
+problems should be solved by code...
+
+It's hard to explain but I don't always 'see' what code should be used
+to make it do what I want...It's really slow in progress sometimes when
+you don't have that experience :(
+
+For the word file, I understand what you're saying, the only reason for
+me to make it in a word file was because I had some figures of my grid
+and the steps that should be followed throughout the algorithm...not
+sure if my story will be clear when I try to type it in here in a reply
+but I may have a go later today.
+
+FOR NOW: thank you very much again, I'm going to plough through your new
+solution and see if I can follow/understand...
+
+Thanks!
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> Joop Van den tillaart &lt;tillaar...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-12T04:40:00 </POSTDATE>
+So the code can find al the available cell pairs...that can be useful
+for me in a next step I have to take but I still have a question...
+
+On the second thought you had you did something with delta and
+neigbours..that is what I need for now but I can't seem to get it to
+work...
+
+How can I find for example:
+
+All cells that are in a distance of 1 cell from [1, 1] (or directly
+'touch' this cell) ?
+
+The result then has to be something like:
+
+[0,0], [1,0], [2,0], [0,1], [2,1], [0,2], [1,2], [2,2]
+
+I now your code should be able to do this but I'm not sure how...(jeezz
+i feel so noobish)
+
+If anyone else can point this out please do so...
+
+Thanks
+
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> Morton Goldberg &lt;m_goldb...@ameritech.net&gt; </POSTER>
+<POSTDATE> 2007-09-12T10:50:00 </POSTDATE>
+On Sep 12, 2007, at 3:29 AM, Joop Van den tillaart wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Thanks Morton,
+
+&gt; you're really a big help for me...and I know you are right about the
+&gt; stuff I need to do by myself but for me, not having any real
+&gt; experience
+&gt; in coding/programming and being also new to ruby it's hard to see how
+&gt; problems should be solved by code...
+">
+
+The problem you are trying to code is rather advanced for someone who
+is new to both programming and Ruby. I don't want to discourage you
+because my first &quot;real&quot; program was on similar level of difficulty.
+It took me six months to get it to work! This was a long time ago
+when programmers were mainly self-taught and there was no internet to
+ask questions on. It didn't help that I was writing the program in
+assembly language.
+
+I admire both your ambition and tenacity.
+
+<QUOTE PREVIOUSPOST="
+&gt; It's hard to explain but I don't always 'see' what code should be used
+&gt; to make it do what I want...It's really slow in progress sometimes
+&gt; when
+&gt; you don't have that experience :(
+">
+
+Your right about this, but it's important to do as much as possible
+for yourself. You learn more from correcting your own mistakes than
+you do from other people. At least that's my belief.
+
+Good judgment comes from bad experience, and a lot of that comes
+from bad judgment.
+
+Experience is something you often don't get until just after you
+need it.
+
+<QUOTE PREVIOUSPOST="
+&gt; For the word file, I understand what you're saying, the only reason
+&gt; for
+&gt; me to make it in a word file was because I had some figures of my grid
+&gt; and the steps that should be followed throughout the algorithm...not
+&gt; sure if my story will be clear when I try to type it in here in a
+&gt; reply
+&gt; but I may have a go later today.
+">
+
+I think it will be a good exercise. If you can write a good plain
+text description, you will be more than half-way toward knowing how
+to code it.
+
+<QUOTE PREVIOUSPOST="
+&gt; FOR NOW: thank you very much again, I'm going to plough through
+&gt; your new
+&gt; solution and see if I can follow/understand...
+
+&gt; Thanks!
+">
+
+You're welcome.
+
+Regards, Morton
+</POST>
+<POST>
+<POSTER> Morton Goldberg &lt;m_goldb...@ameritech.net&gt; </POSTER>
+<POSTDATE> 2007-09-12T11:05:00 </POSTDATE>
+On Sep 12, 2007, at 4:40 AM, Joop Van den tillaart wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; So the code can find al the available cell pairs...that can be useful
+&gt; for me in a next step I have to take but I still have a question...
+
+&gt; On the second thought you had you did something with delta and
+&gt; neigbours..that is what I need for now but I can't seem to get it to
+&gt; work...
+
+&gt; How can I find for example:
+
+&gt; All cells that are in a distance of 1 cell from [1, 1] (or directly
+&gt; 'touch' this cell) ?
+
+&gt; The result then has to be something like:
+
+&gt; [0,0], [1,0], [2,0], [0,1], [2,1], [0,2], [1,2], [2,2]
+
+&gt; I now your code should be able to do this but I'm not sure how...
+&gt; (jeezz
+&gt; i feel so noobish)
+">
+
+I am not sure I understand what you are asking. If you want to look
+in a neighborhood around a cell that is two cells deep, shouldn't the
+deltas be given by
+
+&lt;code&gt;
+tmp =[]
+(-2..2).each { |dx| (-2..2).each { |dy| tmp &lt;&lt; [dx, dy]} }
+DELTAS = tmp - [[0, 0]]
+DELTAS # =&gt; [[-2, -2], [-2, -1], [-2, 0], [-2, 1], [-2, 2], [-1, -2],
+[-1, -1], [-1, 0], [-1, 1], [-1, 2], [0, -2], [0, -1], [0, 1], [0,
+2], [1, -2], [1, -1], [1, 0], [1, 1], [1, 2], [2, -2], [2, -1], [2,
+0], [2, 1], [2, 2]]
+&lt;/code&gt;
+
+I mean, don't want to look left, right, over, and under?
+
+Regards, Morton
+</POST>
+<POST>
+<POSTER> Joop Van den tillaart &lt;tillaar...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-12T15:51:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Morton Goldberg wrote:
+&gt; I am not sure I understand what you are asking. If you want to look
+&gt; in a neighborhood around a cell that is two cells deep, shouldn't the
+&gt; deltas be given by
+">
+
+Well i'll try to explain very very short what i need...
+
+See my representation of a grid (now don't laugh ;) )
+
+All the 1's stand for cell with celltype road...
+
+x  x  x  1  o  o  o  1
+
+x  2  x  1  o  o  o  1
+
+x  x  x  1  o  o  o  1
+
+1  1  1  1  1  1  1  1
+
+o  o  o  1  o  o  o  1
+
+o  o  o  1  o  o  o  1
+
+o  o  o  1  o  o  o  1
+
+Let's concentrate on the number 2 in the top left 'segment' of the grid
+and it's surrounding x's. Let the 2 stand for a cell with celltype
+housing...the x's are also given a celltype of 2 ór 3, but i haven't
+displayed them here...in the code this is done by the 60 and 40 percent
+thingy...
+
+For the celltypes 2 and 3 I have preference scores like this:
+
+Table for celltype 2: housing
+---------------------------------------
+regarding type:  preference score:
+celltype 1       12
+celltype 2       12
+celltype 3       8
+
+Table for celltype 3: green environment
+---------------------------------------
+regarding type:  preference score:
+celltype 1       3
+celltype 2       8
+celltype 3       12
+
+Now i need something that reads the celltypes of the x's, or so to say
+of the cells which touch the '2 cell'. Then when it has read all the
+celltypes it needs to add all the preference scores of those celltypes
+(gathered out of the table of the central cell, in this case Table for
+celltype 2: housing.
+
+Example: there are 8 x'es or 8 cells surrounding that 2 cell. Let five
+of them be of celltype 2 and the remaining three of them are celltype 3.
+Then I, or better the program ;), need(s) to calculate a score of:
+
+5 x (score of celltype 2 in table 2) = 5 x 12 = 60
+3 x (score of celltype 3 in table 2) = 5 x 8  = 40
+---------------------------------------------------
+Total adjacency score of this cell            = 100
+
+So I need to really only have the cells which are in a distance range of
+1 of some cell.
+
+The above is an explanation of the step I need to find out, below
+follows a small explanation of how the total system should work. So ONLY
+read the below if you're interested, its just a further explanation of
+what my end goal is.
+--------------------------------------------------------------------------- ---
+
+The above should be processed as follows.
+
+For the first and second cell ([0,0] and [1,0] OR [0,0] and [0,1], my
+teacher and I dont think it should matter in the end, because all cells
+are going to be switched, troughout the algorithm) the above scores
+should be calculated.
+
+surrounding cells for cell 1 and cell 2:
+-----------------------------------------
+2  x            x  x
+
+x  x            3  x
+
+x  x
+
+STEP 1:
+It needs to calculate a total adjacency score for cell 1 (3 x's), from
+table for celltype 2, and a total adjacency score of cell 2 (5 x's),
+from table for celltype 3. Then the total of these two subtotals is
+calculated (this first random filled situation represents just a random
+filling of space with housing and green).
+
+STEP 2: Now the celltypes of cell 1 and cell 2 are switched and the new
+subtotals are calculated (this switch represents a new situation):
+
+3  x            x  x
+
+x  x            2  x
+
+x  x
+
+If the total of the two subtotals in this switched situation is higher
+than the total of step 1, then the cells stay switched, if it's lower
+then we have to switch back.
+So to say we look if the suitability of the switched situation is higher
+as the old situation, if so let the cells keep the higher suitability,
+if not switch back to the old situation with higher suitability.
+
+After this decision (wether the cells are switched or not, that doesnt
+matter) cell 1 and cell 3 are looked at and the two steps are taken
+again. Again look if switching has a higher suitability, if so keep the
+switch between cell 1 and 3, otherwise switch back.
+
+Then cell 1 and 4
+Then cell 1 and 5
+etc. until the last cell is looked at.
+
+--------------------------------------------------------------------------- ----
+** When going through the cells all cells with celltype = 1 have to be
+skipped (hence the locked status) because these stand for roads which
+are predefined in the planning area and should not be switched. They are
+in fact regarded when they act as surrounding cells because we want for
+example to get the housing cells located near the road cells (houses in
+Holland are usually located at a street ;-)  )
+--------------------------------------------------------------------------- ----
+
+After that, we start with cell 2 and cell 3, cell 2 and cell 4, cell 2
+and cell 5 etc. After that cell 3 and cell 4, cell 3 and cell 4, cell 3
+and cell 5 etc.
+
+The main idea is that this algorithm should calculate the ultimate
+suitability of a plan area which has to be developed with housing and
+green at the hand of preference scores. As you see in the text, it is a
+real pain if you would have to do this by hand so that's why we try to
+develop some system...Furthermore if I get this to work, then we can
+expand the different celltypes, tables, preference scores etc to a more
+sophisticated system.
+
+Anyways I hope this all makes a bit sense...I had it in a word file
+explained earlier but now with the help of this text maybe you guys get
+a better view at the problem...
+
+Sorry for the size of my reply, but when I start typing I have the
+tendacy to get a bit abundant :D:D...
+
+Greets, Joop
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> Morton Goldberg &lt;m_goldb...@ameritech.net&gt; </POSTER>
+<POSTDATE> 2007-09-12T17:36:00 </POSTDATE>
+On Sep 12, 2007, at 3:51 PM, Joop Van den tillaart wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Well i'll try to explain very very short what i need...
+">
+
+&lt;snip&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; Sorry for the size of my reply, but when I start typing I have the
+&gt; tendacy to get a bit abundant :D:D...
+">
+
+Your reply is really quite concise and very clear. Now I think I
+fully understand what you are trying to accomplish. And as you will
+see, you were already very close to a solution.
+
+With the information you supplied above, I took a shot at completing
+your code. There was really very little I had to add. Here is what I
+coded:
+
+&lt;code&gt;
+require 'ostruct'
+
+class Grid
+include Enumerable
+
+def initialize(width, height)
+@grid = Array.new(height) do |row|
+Array.new(width) do |col|
+OpenStruct.new(:x =&gt; col, :y =&gt; row, :grid =&gt; self)
+end
+end
+end
+
+def width
+@grid.first.size
+end
+
+def height
+@grid.size
+end
+
+def each
+@grid.each do |row|
+row.each do |cell|
+yield cell
+end
+end
+end
+
+def [](x, y)
+begin
+@grid[y][x]
+rescue
+raise IndexError
+end
+end
+
+def print_field_values(field_name = :cell_type)
+each_with_index do |cell, i|
+print &quot;%02d &quot; % cell.send(field_name)
+puts if i % width == width - 1
+end
+end
+
+def each_with_remaining
+each do |cell|
+next if cell.locked
+x, y = cell.x, cell.y
+(x+1...width).each do |col|
+_cell = cell.grid[col, y]
+yield cell, _cell unless _cell.locked
+end
+(y+1...height).each do |row|
+(0...width).each do |col|
+_cell = cell.grid[col, row]
+yield cell, _cell unless _cell.locked
+end
+end
+end
+end
+
+end
+
+DELTAS = [
+[-1, -1], [0, -1], [1, -1],
+[-1, 0],           [1, 0],
+[-1, 1],  [0, 1],  [1, 1]
+]
+def neighbors(cell)
+result = []
+x, y = cell.x, cell.y
+DELTAS.each do |dx, dy|
+begin
+_cell = cell.grid[x+dx, y+dy]
+p [x+dx, y+dy] if _cell.nil?
+result &lt;&lt; _cell unless _cell.locked
+rescue IndexError
+next
+end
+end
+result
+end
+
+HOUSING_TABLE = {1=&gt;12, 2=&gt;12, 3=&gt;8}
+GREEN_TABLE = {1=&gt;3, 2=&gt;8, 3=&gt;12}
+def score(type, neighbors)
+score = 0
+case type
+when 2
+neighbors.each { |cell| score += HOUSING_TABLE[cell.cell_type] }
+when 3
+neighbors.each { |cell| score += GREEN_TABLE[cell.cell_type] }
+end
+score
+end
+
+grid = Grid.new(20, 15)
+grid.each { |cell| cell.cell_type = 0 }
+grid.height.times { |y| grid[19, y].cell_type = 1 }
+grid.height.times { |y| grid[9, y].cell_type = 1 }
+grid.width.times { |x| grid[x, 9].cell_type = 1 }
+grid.each do |cell|
+if cell.cell_type == 1
+cell.distance_road = 0
+cell.locked = true
+end
+end
+
+zero_cells = grid.select { |cell| cell.cell_type == 0 }
+n = zero_cells.size
+k = (0.6 * n).round
+(0...k).each { |i| zero_cells[i].cell_type = 2 }
+(k...n).each { |i| zero_cells[i].cell_type = 3 }
+grid.print_field_values
+
+puts
+
+n = 3
+n.times do
+grid.each_with_remaining do |cell, other|
+cn, on = neighbors(cell), neighbors(other)
+before_score = score(cell.cell_type, cn) +
+score(other.cell_type, on)
+after_score = score(other.cell_type, cn) +
+score(cell.cell_type, on)
+if after_score &lt;= before_score
+cell.cell_type, other.cell_type = other.cell_type,
+cell.cell_type
+end
+end
+grid.print_field_values
+puts
+end
+&lt;/code&gt;
+
+I ran the script for three iterations. I'm not sure how to interpret
+the results. I'm not even sure it the loop is converging. I leave it
+to you to work that out. It may be working as you expect it to, it
+may be that your scoring function needs adjustment, or may be that
+there's a bug in my code. One thought that occurs to me: would it be
+better to start out with a random distribution of housing and green
+space?
+
+&lt;results&gt;
+# 1st iteration
+03 03 03 03 03 03 03 03 03 01 03 03 03 03 03 03 03 03 03 01
+03 03 03 03 03 03 03 03 03 01 03 03 03 03 03 03 03 03 03 01
+03 03 03 03 03 03 03 03 03 01 03 03 03 03 03 03 03 03 03 01
+03 03 03 03 03 03 03 03 03 01 03 03 03 03 03 03 03 03 03 01
+03 02 03 02 03 02 03 02 03 01 03 02 03 02 03 02 03 02 02 01
+03 02 03 02 03 02 03 02 02 01 02 02 03 02 03 02 03 02 02 01
+02 02 03 02 03 02 02 02 02 01 02 02 02 02 02 02 02 02 02 01
+02 02 02 02 02 03 03 02 02 01 02 03 02 03 02 03 02 03 02 01
+02 02 02 02 02 02 02 02 02 01 02 02 02 02 02 02 02 02 02 01
+01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01
+02 02 02 02 02 02 02 02 02 01 02 02 02 02 02 02 02 02 02 01
+02 03 02 03 02 03 02 03 02 01 02 03 02 02 02 02 02 02 02 01
+02 02 02 02 02 02 02 02 02 01 02 02 02 02 02 02 02 02 02 01
+02 02 02 02 02 02 02 02 02 01 02 02 02 02 02 02 02 02 02 01
+02 02 02 02 02 02 02 02 02 01 02 02 02 02 02 02 02 02 02 01
+
+# 2nd iteration
+02 02 02 02 02 02 02 02 02 01 02 02 02 02 02 02 02 02 02 01
+02 02 02 02 02 02 02 02 02 01 02 02 02 02 02 02 02 02 02 01
+02 02 02 02 02 02 02 02 02 01 02 02 02 02 02 02 02 02 02 01
+02 02 02 02 02 02 02 02 02 01 02 02 02 02 02 02 02 02 02 01
+02 02 02 02 02 02 03 03 02 01 02 03 02 03 02 03 03 03 02 01
+02 03 03 02 03 02 03 02 03 01 02 03 02 03 02 03 02 03 02 01
+02 03 03 02 03 03 03 03 03 01 03 03 02 03 02 03 02 03 03 01
+03 02 03 02 03 02 03 02 03 01 02 03 02 03 02 03 02 03 02 01
+03 02 03 02 03 02 03 02 03 01 03 03 02 03 02 03 02 03 02 01
+01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01
+03 03 02 03 02 03 02 02 03 01 03 03 02 02 03 02 03 02 03 01
+02 03 03 03 03 03 03 03 03 01 02 02 03 03 03 02 03 02 03 01
+03 02 02 02 02 02 02 02 02 01 03 03 03 02 02 02 03 02 03 01
+03 02 03 03 03 03 03 03 03 01 02 02 02 03 03 03 03 02 03 01
+03 02 03 02 03 02 03 02 03 01 03 03 03 03 02 02 03 02 03 01
+
+# 3rd iteration
+03 03 03 03 03 03 03 03 03 01 03 03 03 03 03 03 03 03 03 01
+03 03 03 03 03 03 03 03 03 01 03 03 02 03 03 02 03 02 03 01
+03 02 03 02 03 02 02 02 02 01 02 03 02 03 02 03 03 02 03 01
+03 02 03 02 03 02 03 03 03 01 02 03 02 02 02 02 02 02 02 01
+03 02 03 02 03 02 03 02 02 01 03 02 02 03 03 03 02 03 02 01
+03 02 03 02 03 02 02 02 03 01 03 02 03 02 02 02 02 03 02 01
+02 02 03 02 03 02 03 03 02 01 02 02 02 02 03 03 02 03 02 01
+03 02 03 02 03 02 02 03 02 01 03 02 03 02 02 02 02 03 02 01
+02 02 02 02 02 02 02 02 02 01 02 02 02 02 02 03 02 02 02 01
+01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01
+02 02 02 02 02 02 02 02 02 01 02 02 03 02 02 02 02 02 02 01
+02 03 02 03 02 03 02 03 02 01 02 02 02 02 03 03 03 03 02 01
+02 03 02 02 02 02 02 02 02 01 02 03 03 02 02 02 02 02 02 01
+02 03 02 03 02 03 03 03 02 01 02 02 02 02 03 03 03 03 02 01
+02 02 02 02 02 02 02 02 02 01 02 02 03 02 02 02 02 02 02 01
+&lt;/results&gt;
+
+Regards, Morton
+</POST>
+<POST>
+<POSTER> Morton Goldberg &lt;m_goldb...@ameritech.net&gt; </POSTER>
+<POSTDATE> 2007-09-12T17:59:00 </POSTDATE>
+On Sep 12, 2007, at 5:36 PM, Morton Goldberg wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &lt;code&gt;
+&gt; n = 3
+&gt; n.times do
+&gt;    grid.each_with_remaining do |cell, other|
+&gt;       cn, on = neighbors(cell), neighbors(other)
+&gt;       before_score = score(cell.cell_type, cn) +
+&gt;                      score(other.cell_type, on)
+&gt;       after_score = score(other.cell_type, cn) +
+&gt;                     score(cell.cell_type, on)
+&gt;       if after_score &lt;= before_score
+&gt;          cell.cell_type, other.cell_type = other.cell_type,
+&gt; cell.cell_type
+&gt;       end
+&gt;    end
+&gt;    grid.print_field_values
+&gt;    puts
+&gt; end
+&gt; &lt;/code&gt;
+">
+
+I realized I was doing something silly in the above code -- I was
+scoring two cells even if they were of the same type. It runs
+noticeably faster if I don't do that.
+
+&lt;code&gt;
+n = 3
+n.times do
+grid.each_with_remaining do |cell, other|
+next if cell.cell_type == other.cell_type # &lt;-- added this line
+cn, on = neighbors(cell), neighbors(other)
+before_score = score(cell.cell_type, cn) + score
+(other.cell_type, on)
+after_score = score(other.cell_type, cn) + score
+(cell.cell_type, on)
+if after_score &lt;= before_score
+cell.cell_type, other.cell_type = other.cell_type,
+cell.cell_type
+end
+end
+grid.print_field_values
+puts
+end
+&lt;/code&gt;
+
+Regards, Morton
+</POST>
+<POST>
+<POSTER> Morton Goldberg &lt;m_goldb...@ameritech.net&gt; </POSTER>
+<POSTDATE> 2007-09-13T01:34:00 </POSTDATE>
+On Sep 12, 2007, at 5:36 PM, Morton Goldberg wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I ran the script for three iterations. I'm not sure how to
+&gt; interpret the results. I'm not even sure it the loop is converging.
+&gt; I leave it to you to work that out. It may be working as you expect
+&gt; it to, it may be that your scoring function needs adjustment, or
+&gt; may be that there's a bug in my code. One thought that occurs to
+&gt; me: would it be better to start out with a random distribution of
+&gt; housing and green space?
+">
+
+Well, I made some minor changes so I test for convergence, and I
+found that it does converge and fairly quickly at that. I reach a
+fixed point in on the 7th iteration. Here is the modified code and
+the results. Hope it's what you expected.
+
+&lt;code&gt;
+limit = 10
+limit.times do |n|
+swaps = 0
+grid.each_with_remaining do |cell, other|
+next if cell.cell_type == other.cell_type
+cn, on = neighbors(cell), neighbors(other)
+before_score = score(cell.cell_type, cn) +
+score(other.cell_type, on)
+after_score = score(other.cell_type, cn) +
+score(cell.cell_type, on)
+if after_score &lt; before_score # &lt;-- note change from &lt;= to &lt;
+cell.cell_type, other.cell_type =
+other.cell_type, cell.cell_type
+swaps += 1
+end
+end
+puts &quot;Iteration no. #{n+1}&quot;
+grid.print_field_values
+puts
+break if swaps == 0
+end
+&lt;/code&gt;
+
+&lt;results&gt;
+Iteration no. 7
+02 02 02 02 02 02 02 03 02 01 02 03 02 03 02 03 02 03 02 01
+02 03 03 03 03 03 02 03 02 01 02 02 02 02 02 02 02 02 02 01
+02 02 02 02 02 02 02 03 02 01 03 03 03 03 03 03 03 03 03 01
+03 03 03 03 03 03 02 03 02 01 02 02 02 02 02 02 02 02 02 01
+02 02 02 02 02 02 02 03 02 01 03 02 03 02 03 02 03 03 03 01
+03 03 03 03 03 03 02 03 02 01 03 02 03 02 03 02 02 02 02 01
+02 02 02 02 02 02 02 03 02 01 02 02 03 02 03 02 03 02 03 01
+03 03 03 03 03 03 02 03 02 01 03 02 03 02 03 02 03 02 02 01
+02 02 02 02 02 02 02 03 02 01 02 02 03 02 03 02 02 02 02 01
+01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01 01
+02 02 02 02 02 02 03 02 02 01 02 03 02 03 02 03 02 03 02 01
+03 02 03 02 03 02 03 02 03 01 02 03 02 03 02 03 02 03 02 01
+02 02 03 02 03 02 03 02 02 01 02 03 02 03 02 03 02 03 02 01
+03 02 03 02 03 02 03 02 03 01 02 03 02 03 02 03 02 03 02 01
+02 02 03 02 03 02 03 02 02 01 02 03 02 03 02 03 02 03 02 01
+&lt;results&gt;
+
+Regards, Morton
+</POST>
+<POST>
+<POSTER> Joop Van den tillaart &lt;tillaar...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-13T04:25:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Morton Goldberg wrote:
+&gt; On Sep 12, 2007, at 5:36 PM, Morton Goldberg wrote:
+&gt; Well, I made some minor changes so I test for convergence, and I
+&gt; found that it does converge and fairly quickly at that. I reach a
+&gt; fixed point in on the 7th iteration. Here is the modified code and
+&gt; the results. Hope it's what you expected.
+">
+
+First of all, many thanks for your help to this point...
+
+It's a bit hard to explain but when I have to invent the code all by
+myself I sometimes cannot come up with the working code. In my head I
+know what needs to be done but to actually get the code for it...is just
+hard. I'm not too familiar with all the right ways to write code because
+of my fair lack of programming experience...as I said it's hard to
+explain but as you said yourself it took a while for you to get where
+you are now so maybe you have a bit of an idea of what I'm talking
+about.
+
+Then for helping me out all this time, I just hope you have, maybe only
+a little bit, a feeling of reward when you are able to help someone out,
+by making use of knowledge you have over the knowledge of others (in
+this case me ^_^ )...
+
+I have been pretty active in the 3d modelling scene and on that field
+there are also many forums where I've been walking around (and still do
+actually) and I have made some contribution in these forums to help
+others out, and in my beginning stages being helped. For me helping out
+others always gave a good feeling, and in many cases I learned something
+for myself too.
+
+The internet is great for offering and receiving these kinds of help in
+times when one is stuck.
+
+Long story short: many thanks untill this point and you won't be
+forgotten ;)
+
+Greets, Joop
+
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> Morton Goldberg &lt;m_goldb...@ameritech.net&gt; </POSTER>
+<POSTDATE> 2007-09-13T07:10:00 </POSTDATE>
+On Sep 13, 2007, at 4:25 AM, Joop Van den tillaart wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Morton Goldberg wrote:
+&gt;&gt; On Sep 12, 2007, at 5:36 PM, Morton Goldberg wrote:
+
+&gt;&gt; Well, I made some minor changes so I test for convergence, and I
+&gt;&gt; found that it does converge and fairly quickly at that. I reach a
+&gt;&gt; fixed point in on the 7th iteration. Here is the modified code and
+&gt;&gt; the results. Hope it's what you expected.
+
+&gt; First of all, many thanks for your help to this point...
+">
+
+Once again, you're welcome.
+
+<QUOTE PREVIOUSPOST="
+&gt; It's a bit hard to explain but when I have to invent the code all by
+&gt; myself I sometimes cannot come up with the working code. In my head I
+&gt; know what needs to be done but to actually get the code for it...is
+&gt; just
+&gt; hard. I'm not too familiar with all the right ways to write code
+&gt; because
+&gt; of my fair lack of programming experience...as I said it's hard to
+&gt; explain but as you said yourself it took a while for you to get where
+&gt; you are now so maybe you have a bit of an idea of what I'm talking
+&gt; about.
+">
+
+Learning a programming language has much in common with learning a
+spoken language. You must have extensive practice with it before you
+learn to think in it. In your case, I infer programming is a side
+issue -- your main professional interests lie elsewhere. That may
+mean you will never get the time to master Ruby to the point where
+think about a problem and some code for expressing it immediately
+pops into your conscious mind. Don't let that stop you, you can still
+write useful programs although more slowly than someone who thinks in
+the language. But you must keep practicing Ruby or you will loose it,
+just as one loses a spoken language if one stops using it.
+
+<QUOTE PREVIOUSPOST="
+&gt; Then for helping me out all this time, I just hope you have, maybe
+&gt; only
+&gt; a little bit, a feeling of reward when you are able to help someone
+&gt; out,
+&gt; by making use of knowledge you have over the knowledge of others (in
+&gt; this case me ^_^ )...
+
+&gt; I have been pretty active in the 3d modelling scene and on that field
+&gt; there are also many forums where I've been walking around (and
+&gt; still do
+&gt; actually) and I have made some contribution in these forums to help
+&gt; others out, and in my beginning stages being helped. For me helping
+&gt; out
+&gt; others always gave a good feeling, and in many cases I learned
+&gt; something
+&gt; for myself too.
+">
+
+The person who helps another with a technical problem always learns.
+That is one of the main rewards of helping.
+
+<QUOTE PREVIOUSPOST="
+&gt; The internet is great for offering and receiving these kinds of
+&gt; help in
+&gt; times when one is stuck.
+
+&gt; Long story short: many thanks untill this point and you won't be
+&gt; forgotten ;)
+">
+
+It sounds to me that you think my most recent code actually solves
+your layout problem. But I don't. By now you know I always have
+second thoughts. My second thought on the latest code is that it
+gives an artificially low score to cells on the edge of the grid,
+which probably biases the result in some undesirable way. I couldn't
+deal with that without knowing how such low scores should be
+adjusted, and that's a not a coding issue -- it's a problem
+specification issue. So you will have deal with it. You may decide
+that my concern about edge cells is unwarranted. But if you decide to
+adjust the edge scores, I will be happy to help you integrate your
+adjusted scoring system into the Ruby code should you feel you need
+such help.
+
+Regards, Morton
+</POST>
+</TEXT>
+</BODY>
+</DOC>

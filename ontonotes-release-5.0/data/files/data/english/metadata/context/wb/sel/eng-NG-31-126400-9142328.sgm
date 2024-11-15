@@ -1,0 +1,285 @@
+<DOC>
+<DOCID> eng-NG-31-126400-9142328 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-03T14:14:00 </DATETIME>
+<BODY>
+<HEADLINE>
+fssnap of / fails because of ntp
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Alexander Skwar &lt;use...@alexander.skwar.name&gt; </POSTER>
+<POSTDATE> 2007-09-03T14:14:00 </POSTDATE>
+Hello.
+
+I tried to crate a UFS snapshot of / by running:
+
+--($:/tmp)-- sudo fssnap -F ufs -o backing-store=/pool/backing-stores/winds06._.20070903195831.ufs,unlink /
+fssnap: ioctl: error 22: Invalid argument
+
+As you can see, this failed. I found, that this failed because of
+xntpd, which was running. When I shut down xntpd, I can fssnap just
+fine.
+
+fssnap_ufs says:
+
+o  The file system is used as backing store by an applica-
+tion  that uses mlock(3C) to lock its pages. Typically,
+these are real time applications, such as xntpd(1M).
+
+Is there some special file, which xntpd mlocks? Which file would that be?
+
+Thanks a lot,
+
+Alexander Skwar
+--
+The human race never solves any of its problems.  It merely outlives them.
+-- David Gerrold
+</POST>
+<POST>
+<POSTER> &quot;Richard B. Gilbert&quot; &lt;rgilber...@comcast.net&gt; </POSTER>
+<POSTDATE> 2007-09-03T14:58:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Alexander Skwar wrote:
+&gt; Hello.
+
+&gt; I tried to crate a UFS snapshot of / by running:
+
+&gt; --($:/tmp)-- sudo fssnap -F ufs -o backing-store=/pool/backing-stores/winds06._.20070903195831.ufs,unlink /
+&gt; fssnap: ioctl: error 22: Invalid argument
+
+&gt; As you can see, this failed. I found, that this failed because of
+&gt; xntpd, which was running. When I shut down xntpd, I can fssnap just
+&gt; fine.
+
+&gt; fssnap_ufs says:
+
+&gt;        o  The file system is used as backing store by an applica-
+&gt;           tion  that uses mlock(3C) to lock its pages. Typically,
+&gt;           these are real time applications, such as xntpd(1M).
+
+&gt; Is there some special file, which xntpd mlocks? Which file would that be?
+
+&gt; Thanks a lot,
+
+&gt; Alexander Skwar
+">
+
+I don't know of any files that xntpd mlocks but the source is, I
+believe, available.  You could grep for mlock and see what you find.
+</POST>
+<POST>
+<POSTER> &quot;Daniel Rock&quot; &lt;v200...@deadcafe.de&gt; </POSTER>
+<POSTDATE> 2007-09-03T16:55:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Alexander Skwar &lt;use ... @alexander.skwar.name&gt; wrote:
+&gt; Is there some special file, which xntpd mlocks? Which file would that be?
+">
+
+Two things:
+
+1. xntpd locks all its process memomry, including possible future mappings
+which might come from /lib/libc.so.1, etc.
+2. xntpd puts itself in the realtime scheduling class.
+
+If you don't want to build your own xntpd, you can do the following:
+- don't let xntpd use mlockall()
+You can do this by LD_PRELOAD'ing a shared library with a dummy
+mlockall() function
+- put xntpd back to the TS scheduling class after it has been started
+priocntl -s -c TS `pgrep xntpd`
+
+You can do this by either cloning the svc:/network/ntp:default service
+or by directly editing the /lib/svc/method/xntpd script directly.
+
+The second one is easier but more a Q&amp;D approach. You have to check the
+service script after applying patches.
+
+A dummy mlockall() library can be created very easily:
+
+% cat mlockall.c
+int mlockall(int dummy) { return 0; }
+% cc -KPIC -c mlockall.c
+% ld -G -o mlockall.so mlockall.o
+
+Then modify the service script by changing the last line to:
+
+LD_PRELOAD=/path/to/mlockall.so /usr/lib/inet/xntpd
+priocntl -s -c TS `pgrep xntpd`
+
+Now you can create a snapshot of your root filesystem while xntpd is still
+running.
+
+But you should ask yourself: Is this really necessary? I did instead change my
+backup scripts by just adding:
+
+[ &quot;$filesys&quot; = &quot;/&quot; ] &amp;&amp; svcadm mark -t maintenance ntp
+fssnap .. &quot;$filesys&quot;
+[ &quot;$filesys&quot; = &quot;/&quot; ] &amp;&amp; svcadm clear ntp
+
+This approach should work regardless if the ntp service is disabled or
+enabled.
+
+--
+Daniel
+</POST>
+<POST>
+<POSTER> Wolfgang &lt;wtra...@AT.web.de&gt; </POSTER>
+<POSTDATE> 2007-09-07T07:27:00 </POSTDATE>
+Alexander Skwar schrieb:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hello.
+
+&gt; I tried to crate a UFS snapshot of / by running:
+
+&gt; --($:/tmp)-- sudo fssnap -F ufs -o backing-store=/pool/backing-stores/winds06._.20070903195831.ufs,unlink /
+&gt; fssnap: ioctl: error 22: Invalid argument
+
+&gt; As you can see, this failed. I found, that this failed because of
+&gt; xntpd, which was running. When I shut down xntpd, I can fssnap just
+&gt; fine.
+
+&gt; fssnap_ufs says:
+
+&gt;        o  The file system is used as backing store by an applica-
+&gt;           tion  that uses mlock(3C) to lock its pages. Typically,
+&gt;           these are real time applications, such as xntpd(1M).
+
+&gt; Is there some special file, which xntpd mlocks? Which file would that be?
+">
+
+as i understood the &quot;solaris internals&quot; explanations, it is the xntpd
+binary themself which is locked, as backing store means the file.
+
+Wolfgang
+</POST>
+<POST>
+<POSTER> Alexander Skwar &lt;use...@alexander.skwar.name&gt; </POSTER>
+<POSTDATE> 2007-09-08T16:03:00 </POSTDATE>
+· Daniel Rock &lt;v200 ... @deadcafe.de&gt;:
+
+<QUOTE PREVIOUSPOST="
+&gt; Alexander Skwar &lt;use ... @alexander.skwar.name&gt; wrote:
+&gt;&gt; Is there some special file, which xntpd mlocks? Which file would that be?
+
+&gt; Two things:
+
+&gt; 1. xntpd locks all its process memomry, including possible future mappings
+&gt;    which might come from /lib/libc.so.1, etc.
+&gt; 2. xntpd puts itself in the realtime scheduling class.
+">
+
+Which of these two things make it impossible to snapshot the filesystem?
+From pure guessing, it doesn't sound as if any of these would prohibit
+a snapshot.
+
+<QUOTE PREVIOUSPOST="
+&gt; [ lots of very helpful stuff ]
+">
+
+Thanks a lot for all you've written! It makes perfect sense and is
+easy enough to follow :)
+
+<QUOTE PREVIOUSPOST="
+&gt; But you should ask yourself: Is this really necessary? I did instead change my
+&gt; backup scripts by just adding:
+
+&gt; [ &quot;$filesys&quot; = &quot;/&quot; ] &amp;&amp; svcadm mark -t maintenance ntp
+&gt; fssnap .. &quot;$filesys&quot;
+&gt; [ &quot;$filesys&quot; = &quot;/&quot; ] &amp;&amp; svcadm clear ntp
+">
+
+Actually, I was thinking about such an approach myself. The only problem
+would be, that the timeserver would need to be stopped.
+
+But, for what I'd use it, that wouldn't be a problem. And this is most
+probably the way I'll tackle that problem.
+
+Thanks again,
+
+Alexander Skwar
+--
+One big pile is better than two little piles.
+-- Arlo Guthrie
+</POST>
+<POST>
+<POSTER> Alexander Skwar &lt;use...@alexander.skwar.name&gt; </POSTER>
+<POSTDATE> 2007-09-08T16:07:00 </POSTDATE>
+· Wolfgang &lt;wtra ... @AT.web.de&gt;:
+
+<QUOTE PREVIOUSPOST="
+&gt; Alexander Skwar schrieb:&gt;&gt; Hello.
+&gt;&gt; Is there some special file, which xntpd mlocks? Which file would that be?
+
+&gt; as i understood the &quot;solaris internals&quot; explanations, it is the xntpd
+&gt; binary themself which is locked, as backing store means the file.
+">
+
+Uhm, no, &quot;backing store&quot; is the file which is used by &quot;fssnap -F ufs&quot;,
+which holds all the changes done to the UFS filesystem.
+
+In my example, the backing store is &quot;/pool/backing-stores/winds06._.20070903195831.ufs&quot;.
+
+Anyway, why is xntpd locking the file so hard? On my systems, xntpd
+is the ONLY thing which seems to do that. What's so special about
+xntpd?
+
+Cheers,
+
+Alexander Skwar
+--
+Biggest security gap -- an open mouth.
+</POST>
+<POST>
+<POSTER> &quot;Daniel Rock&quot; &lt;v200...@deadcafe.de&gt; </POSTER>
+<POSTDATE> 2007-09-08T17:02:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Alexander Skwar &lt;use ... @alexander.skwar.name&gt; wrote:
+&gt; Anyway, why is xntpd locking the file so hard? On my systems, xntpd
+&gt; is the ONLY thing which seems to do that. What's so special about
+&gt; xntpd?
+">
+
+To get the highest precision possible. No unexpected scheduling or paging
+delays.
+
+--
+Daniel
+</POST>
+<POST>
+<POSTER> Wolfgang &lt;wtra...@AT.web.de&gt; </POSTER>
+<POSTDATE> 2007-09-11T18:47:00 </POSTDATE>
+Alexander Skwar schrieb:
+
+<QUOTE PREVIOUSPOST="
+&gt; · Wolfgang &lt;wtra ... @AT.web.de&gt;:
+
+&gt;&gt; Alexander Skwar schrieb:&gt;&gt; Hello.
+
+&gt;&gt;&gt; Is there some special file, which xntpd mlocks? Which file would that be?
+&gt;&gt; as i understood the &quot;solaris internals&quot; explanations, it is the xntpd
+&gt;&gt; binary themself which is locked, as backing store means the file.
+
+&gt; Uhm, no, &quot;backing store&quot; is the file which is used by &quot;fssnap -F ufs&quot;,
+&gt; which holds all the changes done to the UFS filesystem.
+
+&gt; In my example, the backing store is &quot;/pool/backing-stores/winds06._.20070903195831.ufs&quot;.
+
+&gt; Anyway, why is xntpd locking the file so hard? On my systems, xntpd
+&gt; is the ONLY thing which seems to do that. What's so special about
+&gt; xntpd?
+">
+
+thats your &quot;backing store&quot;, but in terms of solaris memory handling,
+there is another thing called backing store, which is as i understand
+the reserved paging space for the process, which is in case of a
+executable the file.
+
+in this case, i think xntp set the lock to pin the memory and dont let
+it paged out. But why it locks the file  on disk, despite it can not
+paged, i dont understand  ....
+</POST>
+</TEXT>
+</BODY>
+</DOC>

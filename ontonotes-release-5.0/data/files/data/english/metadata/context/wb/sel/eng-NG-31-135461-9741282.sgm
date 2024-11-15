@@ -1,0 +1,442 @@
+<DOC>
+<DOCID> eng-NG-31-135461-9741282 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-12-20T04:37:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Abaco: url parsing problem
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> pavlovet...@gmail.com </POSTER>
+<POSTDATE> 2007-12-20T04:37:00 </POSTDATE>
+Abaco complains about malformed URL if it contains &quot;pipe&quot; symbol: &quot;|&quot;.
+Any suggestions about fix?
+</POST>
+<POST>
+<POSTER> benave...@gmail.com (Federico G. Benavento) </POSTER>
+<POSTDATE> 2007-12-20T04:57:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Abaco complains about malformed URL if it contains &quot;pipe&quot; symbol: &quot;|&quot;.
+">
+
+ok, I just tested it, webfs doesn't like '|' in urls
+
+http://www.google.com/hola| chau: parseurl: malformed absolute path: /hola|chau
+
+<QUOTE PREVIOUSPOST="
+&gt; Any suggestions about fix?
+">
+
+yes, see /sys/src/cmd/webfs/url.c , there must be some wrong #define in Retab
+
+Federico G. Benavento
+
+---
+/bin/fortune:
+/dev/rra13: !!counts may be wrong, RERUN chuck!
+</POST>
+<POST>
+<POSTER> vej...@gmail.com (Juan M. Mendez) </POSTER>
+<POSTDATE> 2007-12-20T06:23:00 </POSTDATE>
+A possible workaround is to use the encoded chars for the &quot;pipe&quot; symbol.
+
+For example:
+
+http://www.google.com/hola%7Cchau
+
+--
+Fidonet: 2:345/432.2
+</POST>
+<POST>
+<POSTER> lyn...@orthanc.ca (Lyndon Nerenberg) </POSTER>
+<POSTDATE> 2007-12-20T13:14:00 </POSTDATE>
+On 2007-Dec-20, at 02:56 , Federico G. Benavento wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; ok, I just tested it, webfs doesn't like '|' in urls
+">
+
+That's because a naked '|' isn't a valid character in a URL.  You have
+to percent-encode it (%7c).
+</POST>
+<POST>
+<POSTER> vej...@gmail.com (Juan M. Mendez) </POSTER>
+<POSTDATE> 2007-12-20T16:24:00 </POSTDATE>
+On 20/12/2007, Lyndon Nerenberg &lt;lyn ... @orthanc.ca&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2007-Dec-20, at 02:56 , Federico G. Benavento wrote:
+
+&gt; &gt; ok, I just tested it, webfs doesn't like '|' in urls
+
+&gt; That's because a naked '|' isn't a valid character in a URL.  You have
+&gt; to percent-encode it (%7c).
+">
+
+Does webfs do the url parsing? or abaco before sending it to webfs, if so, maybe
+the function can be fixed easily.
+
+--
+Fidonet: 2:345/432.2
+</POST>
+<POST>
+<POSTER> benave...@gmail.com (Federico G. Benavento) </POSTER>
+<POSTDATE> 2007-12-20T16:29:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Does webfs do the url parsing? or abaco before sending it to webfs, if so, maybe
+&gt; the function can be fixed easily.
+">
+
+I guess, my urlencode is broken, I'll fix it later
+
+thanks
+
+Federico G. Benavento
+
+---
+/bin/fortune:
+Even the simplest solution is bound to have something wrong with it.
+</POST>
+<POST>
+<POSTER> pavlovet...@gmail.com </POSTER>
+<POSTDATE> 2007-12-21T04:39:00 </POSTDATE>
+Yes, if I substitute manually pipe symbol with ¨%7C¨ in URL, Abaco
+takes this input as legitimate and it loads the corresponding page.
+Maybe it makes sense to put small runtime substitution routine in the
+Abaco code, so it will handle similar special characters as well.
+Followup-To:
+Distribution:
+Organization: University of Bath Computing Services, UK
+Keywords:
+Cc:
+
+--
+Dennis Davis, BUCS, University of Bath, Bath, BA2 7AY, UK
+D.H.Da ... @bath.ac.uk
+</POST>
+<POST>
+<POSTER> urie...@gmail.com (Uriel) </POSTER>
+<POSTDATE> 2007-12-21T10:41:00 </POSTDATE>
+That is why somebody (cough) riped out the url parsing code from webfs
+and put it into a library, and then updated abaco to use that
+library... but we all know here code and effort duplication is good,
+so never mind.
+
+uriel
+
+On Dec 20, 2007 4:27 PM, Federico G. Benavento &lt;benave ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Does webfs do the url parsing? or abaco before sending it to webfs, if so, maybe
+&gt; &gt; the function can be fixed easily.
+
+&gt; I guess, my urlencode is broken, I'll fix it later
+
+&gt; thanks
+
+&gt; Federico G. Benavento
+
+&gt; ---
+&gt; /bin/fortune:
+&gt; Even the simplest solution is bound to have something wrong with it.
+">
+</POST>
+<POST>
+<POSTER> cinap_len...@gmx.de (Kernel Panic) </POSTER>
+<POSTDATE> 2007-12-21T11:14:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Uriel wrote:
+&gt;That is why somebody (cough) riped out the url parsing code from webfs
+&gt;and put it into a library, and then updated abaco to use that
+&gt;library... but we all know here code and effort duplication is good,
+&gt;so never mind.
+">
+
+the browser needs to understand url-encoding anyway beacause he
+he needs to touch the url (build absolute urls from relatives in context
+of the fetched
+page). so having the lib in abaco is ok i think.
+
+but maybe other stuff could gain from webfs *fixing* urls. maybe some
+rc-scripts where you
+dont want to urlencode stuff first? for example you want to fetch a
+search-result page
+and dont want to urlencode your concatenated search query before passing
+it to webfs?
+
+makes that sense? ;-)
+
+<QUOTE PREVIOUSPOST="
+&gt;uriel
+
+&gt;On Dec 20, 2007 4:27 PM, Federico G. Benavento &lt;benave ... @gmail.com&gt; wrote:
+
+&gt;&gt;&gt;Does webfs do the url parsing? or abaco before sending it to webfs, if so, maybe
+&gt;&gt;&gt;the function can be fixed easily.
+
+&gt;&gt;I guess, my urlencode is broken, I'll fix it later
+
+&gt;&gt;thanks
+
+&gt;&gt;Federico G. Benavento
+
+&gt;&gt;---
+&gt;&gt;/bin/fortune:
+
+&gt;&gt;Even the simplest solution is bound to have something wrong with it.
+">
+
+--
+cinap
+</POST>
+<POST>
+<POSTER> leim...@gmail.com (David Leimbach) </POSTER>
+<POSTDATE> 2007-12-21T11:38:00 </POSTDATE>
+On Dec 21, 2007 7:39 AM, Uriel &lt;urie ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; That is why somebody (cough) riped out the url parsing code from webfs
+&gt; and put it into a library, and then updated abaco to use that
+&gt; library... but we all know here code and effort duplication is good,
+&gt; so never mind.
+
+&gt; uriel
+">
+
+One could argue that to the extreme.  I've already got windows?  Why do I
+need another operating system?  I should be happy with my windows, and just
+contribute to that community, that way, all my changes can be viewed and
+used by my fellow windows users.
+
+I mean, if you're going to be pedantic and silly about a concept, why not go
+all the way?
+
+Fragmentation of effort is bad in all cases, or it isn't bad in all cases.
+You can't have both categorically at the same time.
+
+Dave
+</POST>
+<POST>
+<POSTER> urie...@gmail.com (Uriel) </POSTER>
+<POSTDATE> 2007-12-21T11:43:00 </POSTDATE>
+On Dec 21, 2007 11:13 AM, Kernel Panic &lt;cinap_len ... @gmx.de&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Uriel wrote:
+
+&gt; &gt;That is why somebody (cough) riped out the url parsing code from webfs
+&gt; &gt;and put it into a library, and then updated abaco to use that
+&gt; &gt;library... but we all know here code and effort duplication is good,
+&gt; &gt;so never mind.
+
+&gt; the browser needs to understand url-encoding anyway beacause he
+&gt; he needs to touch the url (build absolute urls from relatives in context
+&gt; of the fetched
+&gt; page). so having the lib in abaco is ok i think.
+">
+
+Lets not forget javascript and other such abominations.
+
+And that is *precisely* why having two half broken sets of URL
+parsing/manipulation code, one in webfs and one in abaco is so silly.
+And why I factored out the url code in webfs and put it into a liburl,
+and then modified abaco link against that instead of its own
+simplistic and broken URL code.
+
+The result has been on my sources/contrib dir for ages, why fgb has
+not used it is beyond me.
+
+uriel
+
+<QUOTE PREVIOUSPOST="
+&gt; but maybe other stuff could gain from webfs *fixing* urls. maybe some
+&gt; rc-scripts where you
+&gt; dont want to urlencode stuff first? for example you want to fetch a
+&gt; search-result page
+&gt; and dont want to urlencode your concatenated search query before passing
+&gt; it to webfs?
+
+&gt; makes that sense? ;-)
+
+&gt; &gt;uriel
+
+&gt; &gt;On Dec 20, 2007 4:27 PM, Federico G. Benavento &lt;benave ... @gmail.com&gt; wrote:
+
+&gt; &gt;&gt;&gt;Does webfs do the url parsing? or abaco before sending it to webfs, if so, maybe
+&gt; &gt;&gt;&gt;the function can be fixed easily.
+
+&gt; &gt;&gt;I guess, my urlencode is broken, I'll fix it later
+
+&gt; &gt;&gt;thanks
+
+&gt; &gt;&gt;Federico G. Benavento
+
+&gt; &gt;&gt;---
+&gt; &gt;&gt;/bin/fortune:
+
+&gt; &gt;&gt;Even the simplest solution is bound to have something wrong with it.
+
+&gt; --
+&gt; cinap
+">
+</POST>
+<POST>
+<POSTER> urie...@gmail.com (Uriel) </POSTER>
+<POSTDATE> 2007-12-21T11:46:00 </POSTDATE>
+If you are looking for obnoxiousness and silliness devoid of any
+content I recommend you re-read what you just wrote.
+
+Or you could go and write yet another broken and useless url parsing
+implementation.
+
+uriel
+
+On Dec 21, 2007 11:35 AM, David Leimbach &lt;leim ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 21, 2007 7:39 AM, Uriel &lt;urie ... @gmail.com&gt; wrote:
+&gt; &gt; That is why somebody (cough) riped out the url parsing code from webfs
+&gt; &gt; and put it into a library, and then updated abaco to use that
+&gt; &gt; library... but we all know here code and effort duplication is good,
+&gt; &gt; so never mind.
+
+&gt; &gt; uriel
+
+&gt; One could argue that to the extreme.  I've already got windows?  Why do I
+&gt; need another operating system?  I should be happy with my windows, and just
+&gt; contribute to that community, that way, all my changes can be viewed and
+&gt; used by my fellow windows users.
+
+&gt; I mean, if you're going to be pedantic and silly about a concept, why not go
+&gt; all the way?
+
+&gt; Fragmentation of effort is bad in all cases, or it isn't bad in all cases.
+&gt; You can't have both categorically at the same time.
+
+&gt; Dave
+">
+</POST>
+<POST>
+<POSTER> rogpe...@gmail.com (roger peppe) </POSTER>
+<POSTDATE> 2007-12-21T11:56:00 </POSTDATE>
+On Dec 21, 2007 4:43 PM, Uriel &lt;urie ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; If you are looking for obnoxiousness and silliness devoid of any
+&gt; content I recommend you re-read what you just wrote.
+">
+
+what a joy to hear such genuine expression of the Christmas spirit!
+</POST>
+<POST>
+<POSTER> leim...@gmail.com (David Leimbach) </POSTER>
+<POSTDATE> 2007-12-21T12:10:00 </POSTDATE>
+On Dec 21, 2007 8:55 AM, roger peppe &lt;rogpe ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Dec 21, 2007 4:43 PM, Uriel &lt;urie ... @gmail.com&gt; wrote:
+&gt; &gt; If you are looking for obnoxiousness and silliness devoid of any
+&gt; &gt; content I recommend you re-read what you just wrote.
+
+&gt; what a joy to hear such genuine expression of the Christmas spirit!
+">
+
+Since this thread is now sarcastic... let me give it a go:
+
+Uriel, THANK YOU!  Oh you're so right!  I, and everyone else on this list,
+should totally always do exactly what you want.  It is wrong of us to ignore
+your awesome contributions such as an URL parsing library.
+
+I can't believe how dumb people are to not see how valuable you truly are to
+us!
+
+MERRY CHRISTMAS!
+</POST>
+<POST>
+<POSTER> w...@authentrus.com (Wes Kussmaul) </POSTER>
+<POSTDATE> 2007-12-21T13:03:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+David Leimbach wrote:
+&gt; Fragmentation of effort is bad in all cases, or it isn't bad in all
+&gt; cases.  You can't have both categorically at the same time.
+">
+
+Ken Olsen at DEC would often give the same assignment to two teams, then have a bakeoff. Typically one of the two
+resulting things would be a clear winner but would be further improved by ideas and pieces from the other.
+
+Wes Kussmaul
+
+--
+
+The information contained in this electronic message and any attachments to this message are intended for the exclusive
+use of the addressee(s) and may contain confidential or privileged information. If you are not the intended recipient,
+please notify attorney Mort Hapless at Vulner, Exposed &amp; Wideopen LLP immediately at either (781) 647-7178, or at
+o ... @vulex.com, and destroy all copies of this message and any attachments. No, really. Really. Listen, we mean it! Hey,
+if you don’t stop reading that confidential stuff about our client you’re in big trouble. OK, we’re the ones in trouble
+but we’ll find a way to go after you, or at least we think we may be able to. Look, we’re begging you. Just click the
+delete button and move on to a message that concerns you, OK? Please?? We'll buy you lunch...
+
+Identity is the Foundation of Security™. Let Authentrus (authentrus.com) ensure that only intended recipients receive
+your confidential messages.
+</POST>
+<POST>
+<POSTER> rminn...@gmail.com (ron minnich) </POSTER>
+<POSTDATE> 2007-12-21T13:18:00 </POSTDATE>
+On Dec 21, 2007 7:39 AM, Uriel &lt;urie ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; That is why somebody (cough) riped out the url parsing code from webfs
+&gt; and put it into a library, and then updated abaco to use that
+&gt; library... but we all know here code and effort duplication is good,
+&gt; so never mind.
+">
+
+I'm too slow. What on earth are you talking about? You mean, fix webfs
+to use some fixed parsing library? who fixed it in the first place?
+Works for me. So you're submitting a patch?
+
+ron
+</POST>
+<POST>
+<POSTER> sqw...@gmail.com (sqweek) </POSTER>
+<POSTDATE> 2007-12-21T13:16:00 </POSTDATE>
+On Dec 22, 2007 2:08 AM, David Leimbach &lt;leim ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Uriel, THANK YOU!  Oh you're so right!  I, and everyone else on this list,
+&gt; should totally always do exactly what you want.  It is wrong of us to ignore
+&gt; your awesome contributions such as an URL parsing library.
+">
+
+The implication that Uriel entertains delusions of granduer is
+baseless and ridiculous enough to shock me out of any intentions I
+might have had to continue the sarcasm chain.
+I hope your next comment on the issue comes after identifying
+something which is likely to be a problem in the future, spending some
+time and effort on fixing it (since no one else has yet), witnessing
+it bloom into a problem, finding that your work was entirely ignored,
+and not feeling the least bit frustrated.
+-sqweek
+</POST>
+<POST>
+<POSTER> vej...@gmail.com (Juan M. Mendez) </POSTER>
+<POSTDATE> 2007-12-21T13:43:00 </POSTDATE>
+On 21/12/2007, Uriel &lt;urie ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; The result has been on my sources/contrib dir for ages, why fgb has
+&gt; not used it is beyond me.
+">
+
+I will have a look at the library, I had to &quot;partially&quot; implement one
+for a web app
+that needed to save some data into a database from a cgi. It can be useful
+for me to see another implementation.
+
+--
+Fidonet: 2:345/432.2
+</POST>
+</TEXT>
+</BODY>
+</DOC>

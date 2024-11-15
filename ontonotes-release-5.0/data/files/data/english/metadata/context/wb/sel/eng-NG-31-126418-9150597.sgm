@@ -1,0 +1,762 @@
+<DOC>
+<DOCID> eng-NG-31-126418-9150597 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-31T09:11:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Cake CPU hungry
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> thequietlab &lt;arumpf...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-31T09:11:00 </POSTDATE>
+Hi,
+
+I was making some performance tests for my application and I'm pretty
+scared to see how much CPU is Cake (1.2) using while put in a moderate
+traffic.
+I was doing :
+ab -n 1000 -c 20
+(I'm still not sure how does it translates to &quot;real traffic&quot; but used
+it as a method to stress the server)
+
+Test was run from a different machine and I was checking top command
+on the tested server.
+
+I've got pretty good results in terms of requests per second :
+Requests per second:    36.16 [#/sec] (mean)
+
+but &quot;top&quot; showed heavy server load with CPU getting up to 90%. I was
+stressing a pretty loaded controller with bunch of models included but
+I also made tests for a static page which was put inside &quot;pages&quot; -
+that gave me CPU around 70/80%.. still quite high.
+
+I'm running a dedicated server with :
+2.8GHz Pentium D, 800MHz, 2x2MB Cache
+4GB DDR2, 533MHZ
+Lighttpd 1.4.15
+Eaccelerator
+
+Can you tell if this kind of behaviour is &quot;normal&quot; ? What makes such a
+heavy load ? Lot of files included ?
+
+I would be greatfull for all the tips on how to reduce this as I'm
+expecting growing traffic in the next weeks/months and I don't want to
+run into problems.
+
+Thanks,
+Andrzej
+</POST>
+<POST>
+<POSTER> &quot;simonellistonb...@googlemail.com&quot; &lt;simonellistonb...@googlemail.com&gt; </POSTER>
+<POSTDATE> 2007-08-31T09:46:00 </POSTDATE>
+ab -n 1000 -c 20
+means that you have 20 concurrent users making 1000 requests. The
+important part here is the concurrent bit.
+
+There's a wide variety of things you can do to optimise your
+controller, which are way beyond the scope of a single post,
+especially since you don't really say anything about what your
+controller is doing.
+
+Turning on caching might help.
+
+The key to this is most likely memory based. Is your 70% usage just
+cpu, or is there wait time? Is memory swapping? You can do all sorts
+of things to cap rates, reduce linux's aggressive swapiness, or
+improve the use of disk. If memory's not the problem, maybe you could
+move cake's cache into ram.
+
+Cake can be very memory greedy if you use reconnect on datasources, or
+load a lot of models, or have a lot of relations. Lookup the expects()
+function on the bakery or look at bind(), unbind() if you want to deal
+with that the hard way.
+
+Other than that, it's probably a close investigation of you controller
+code and some optimisation there.
+
+Note also that ab will not provide a good test, since it does not
+download embedded resources (images / scripts / css etc) since it does
+not have any html parsing. You might do well to look at something like
+jakarta Jmeter, which is very good, if a little daunting for the
+beginner, or some of the dodgy cheap windows stuff like Website
+Optimizer (I think).
+
+Of course it may be that you just need a better server (the spec you
+stated is not exactly top of the range), or a separate database
+server / server cluster. You'd probably benefit hugely from a reverse
+proxy accelerator on a Cake site as well to take away all the js, css
+and image routes / rewrites / requests.
+
+Just some ideas. Hope they help. It's all a bit open-ended but I may
+be able to help more with a better description of the controller.
+
+Simon
+</POST>
+<POST>
+<POSTER> majna &lt;majna...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-31T10:13:00 </POSTDATE>
+try profiling with xdebug,
+use var $persistModel = true; in controller
+set debug to 0,
+cache views if u can, or just query results,
+persistent mysql connection ,
+avoid var $uses()
+ClassRegistry may help sometimes
+do not use mod_rewrite
+
+On Aug 31, 3:46 pm, &quot;simonellistonb ... @googlemail.com&quot;
+
+<QUOTE PREVIOUSPOST="
+&lt;simonellistonb ... @googlemail.com&gt; wrote:
+&gt; ab -n 1000 -c 20
+&gt; means that you have 20 concurrent users making 1000 requests. The
+&gt; important part here is the concurrent bit.
+
+&gt; There's a wide variety of things you can do to optimise your
+&gt; controller, which are way beyond the scope of a single post,
+&gt; especially since you don't really say anything about what your
+&gt; controller is doing.
+
+&gt; Turning on caching might help.
+
+&gt; The key to this is most likely memory based. Is your 70% usage just
+&gt; cpu, or is there wait time? Is memory swapping? You can do all sorts
+&gt; of things to cap rates, reduce linux's aggressive swapiness, or
+&gt; improve the use of disk. If memory's not the problem, maybe you could
+&gt; move cake's cache into ram.
+
+&gt; Cake can be very memory greedy if you use reconnect on datasources, or
+&gt; load a lot of models, or have a lot of relations. Lookup the expects()
+&gt; function on the bakery or look at bind(), unbind() if you want to deal
+&gt; with that the hard way.
+
+&gt; Other than that, it's probably a close investigation of you controller
+&gt; code and some optimisation there.
+
+&gt; Note also that ab will not provide a good test, since it does not
+&gt; download embedded resources (images / scripts / css etc) since it does
+&gt; not have any html parsing. You might do well to look at something like
+&gt; jakarta Jmeter, which is very good, if a little daunting for the
+&gt; beginner, or some of the dodgy cheap windows stuff like Website
+&gt; Optimizer (I think).
+
+&gt; Of course it may be that you just need a better server (the spec you
+&gt; stated is not exactly top of the range), or a separate database
+&gt; server / server cluster. You'd probably benefit hugely from a reverse
+&gt; proxy accelerator on a Cake site as well to take away all the js, css
+&gt; and image routes / rewrites / requests.
+
+&gt; Just some ideas. Hope they help. It's all a bit open-ended but I may
+&gt; be able to help more with a better description of the controller.
+
+&gt; Simon
+">
+</POST>
+<POST>
+<POSTER> thequietlab &lt;arumpf...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-31T12:33:00 </POSTDATE>
+thanks for your answers,
+
+@Simon
+
+<QUOTE PREVIOUSPOST="
+&gt; ab -n 1000 -c 20
+&gt; means that you have 20 concurrent users making 1000 requests. The
+&gt; important part here is the concurrent bit.
+">
+
+ok, sorry I said it wrong - I know what does it mean but I'm not sure
+what should be the values to simulate traffic at a range like 100,000
+users per day. I know it depends on the peak hours etc. but is there a
+way to estimate some values to know what to expect ?
+
+<QUOTE PREVIOUSPOST="
+&gt; There's a wide variety of things you can do to optimise your
+&gt; controller, which are way beyond the scope of a single post,
+&gt; especially since you don't really say anything about what your
+&gt; controller is doing.
+
+&gt; Turning on caching might help.
+">
+
+These are mostly pages you view after authorization so traditional
+cake views caching is not of any use. I use memcache to save on
+database queries and it seems like mysql is not a bottleneck here. I
+can imagine my controller can be optimized - it's just a first phase
+of the deployment - but the same (or almost the same) happens with
+&quot;static&quot; pages which don't use any models.
+
+<QUOTE PREVIOUSPOST="
+&gt; The key to this is most likely memory based. Is your 70% usage just
+&gt; cpu, or is there wait time? Is memory swapping? You can do all sorts
+&gt; of things to cap rates, reduce linux's aggressive swapiness, or
+&gt; improve the use of disk. If memory's not the problem, maybe you could
+&gt; move cake's cache into ram.
+">
+
+ok, I'll take a look on the memory but it doesn't seem to be a
+problem, at least memory is not swapping.
+
+<QUOTE PREVIOUSPOST="
+&gt; Cake can be very memory greedy if you use reconnect on datasources, or
+&gt; load a lot of models, or have a lot of relations. Lookup the expects()
+&gt; function on the bakery or look at bind(), unbind() if you want to deal
+&gt; with that the hard way.
+">
+
+I'm using expects(), it's pretty handy. My problem might be loading
+lot of models but still 'pages' doesn't load any models.
+
+<QUOTE PREVIOUSPOST="
+&gt; Other than that, it's probably a close investigation of you controller
+&gt; code and some optimisation there.
+">
+
+What controller does is nothing complicated - just takes data from db
+- 2 queries cached with memcached so they don't even get called (cache
+is dynamically changing on updates)
+
+<QUOTE PREVIOUSPOST="
+&gt; Note also that ab will not provide a good test, since it does not
+&gt; download embedded resources (images / scripts / css etc) since it does
+&gt; not have any html parsing. You might do well to look at something like
+&gt; jakarta Jmeter, which is very good, if a little daunting for the
+&gt; beginner, or some of the dodgy cheap windows stuff like Website
+&gt; Optimizer (I think).
+">
+
+Sure but I just wanted to stress the application itself.
+
+<QUOTE PREVIOUSPOST="
+&gt; Just some ideas. Hope they help. It's all a bit open-ended but I may
+&gt; be able to help more with a better description of the controller.
+">
+
+THANKS for it Simon! I know it's a pretty big area and lots of things
+matters. I will be checking things one after another and will try to
+optimize it.
+
+One thing I noticed.. when I'm doing debug($this); and it dumps
+everything there's a lot of *RECURSION* at many points.. objects just
+holding themselves at many points.. I'm not sure but it might be quite
+a bottleneck.
+
+@majna
+yeah.. I was planning to use xdebug, could you maybe provide any links
+on how to set it up properly ?
+
+I'll take a look at var $persistModel, debug is 0.
+
+As I already noticed var $uses is a point to optimize.
+
+What do you mean by : &quot;do not use mod_rewrite&quot; ? Cake url's are based
+on mod_rewrite.
+
+Thanks,
+Andrzej
+</POST>
+<POST>
+<POSTER> Felix Geisendörfer &lt;haimu...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-31T12:44:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; I'm using expects(), it's pretty handy. My problem might be loading
+&gt; lot of models but still 'pages' doesn't load any models.
+">
+
+Do you know that for sure? If you lets say load the Users model in
+AppController, then it is more then likely that *all* of your other
+models are loaded b/c they are somehow associated with User.
+
+My suggestion is to not work / rely on benchmark solutions that just
+hammer at your server too much - its very complex to create a realistic
+scenario that way (i.e. 20 users holding down on your front page or some
+other action is very different from each of them doing different
+things). The best way to make your app faster should be to get some
+profiler going and see what functions / parts of your app take the
+longest to load and then optimize them. From there I'd keep an eye
+closely on the server load during traffic peaks which you can use to
+generate yourself some statistics to estimate when your current horse
+power will not be enough anymore. Then it is time to cluster and scale
+your architecture. Anyway, I'm not an expert on the matter and you may
+be able diagnose things with your current benchmark setup as well -
+however I think its not the easiest path.
+
+Good luck and success with your app!
+-- Felix
+--------------------------
+My Blog: http://www.thinkingphp.org
+My Business: http://www.fg-webdesign.de
+
+<QUOTE PREVIOUSPOST="
+thequietlab wrote:
+&gt; thanks for your answers,
+
+&gt; @Simon
+
+&gt;&gt; ab -n 1000 -c 20
+&gt;&gt; means that you have 20 concurrent users making 1000 requests. The
+&gt;&gt; important part here is the concurrent bit.
+
+&gt; ok, sorry I said it wrong - I know what does it mean but I'm not sure
+&gt; what should be the values to simulate traffic at a range like 100,000
+&gt; users per day. I know it depends on the peak hours etc. but is there a
+&gt; way to estimate some values to know what to expect ?
+
+&gt;&gt; There's a wide variety of things you can do to optimise your
+&gt;&gt; controller, which are way beyond the scope of a single post,
+&gt;&gt; especially since you don't really say anything about what your
+&gt;&gt; controller is doing.
+
+&gt;&gt; Turning on caching might help.
+
+&gt; These are mostly pages you view after authorization so traditional
+&gt; cake views caching is not of any use. I use memcache to save on
+&gt; database queries and it seems like mysql is not a bottleneck here. I
+&gt; can imagine my controller can be optimized - it's just a first phase
+&gt; of the deployment - but the same (or almost the same) happens with
+&gt; &quot;static&quot; pages which don't use any models.
+
+&gt;&gt; The key to this is most likely memory based. Is your 70% usage just
+&gt;&gt; cpu, or is there wait time? Is memory swapping? You can do all sorts
+&gt;&gt; of things to cap rates, reduce linux's aggressive swapiness, or
+&gt;&gt; improve the use of disk. If memory's not the problem, maybe you could
+&gt;&gt; move cake's cache into ram.
+
+&gt; ok, I'll take a look on the memory but it doesn't seem to be a
+&gt; problem, at least memory is not swapping.
+
+&gt;&gt; Cake can be very memory greedy if you use reconnect on datasources, or
+&gt;&gt; load a lot of models, or have a lot of relations. Lookup the expects()
+&gt;&gt; function on the bakery or look at bind(), unbind() if you want to deal
+&gt;&gt; with that the hard way.
+
+&gt; I'm using expects(), it's pretty handy. My problem might be loading
+&gt; lot of models but still 'pages' doesn't load any models.
+
+&gt;&gt; Other than that, it's probably a close investigation of you controller
+&gt;&gt; code and some optimisation there.
+
+&gt; What controller does is nothing complicated - just takes data from db
+&gt; - 2 queries cached with memcached so they don't even get called (cache
+&gt; is dynamically changing on updates)
+
+&gt;&gt; Note also that ab will not provide a good test, since it does not
+&gt;&gt; download embedded resources (images / scripts / css etc) since it does
+&gt;&gt; not have any html parsing. You might do well to look at something like
+&gt;&gt; jakarta Jmeter, which is very good, if a little daunting for the
+&gt;&gt; beginner, or some of the dodgy cheap windows stuff like Website
+&gt;&gt; Optimizer (I think).
+
+&gt; Sure but I just wanted to stress the application itself.
+
+&gt;&gt; Just some ideas. Hope they help. It's all a bit open-ended but I may
+&gt;&gt; be able to help more with a better description of the controller.
+
+&gt; THANKS for it Simon! I know it's a pretty big area and lots of things
+&gt; matters. I will be checking things one after another and will try to
+&gt; optimize it.
+
+&gt; One thing I noticed.. when I'm doing debug($this); and it dumps
+&gt; everything there's a lot of *RECURSION* at many points.. objects just
+&gt; holding themselves at many points.. I'm not sure but it might be quite
+&gt; a bottleneck.
+
+&gt; @majna
+&gt; yeah.. I was planning to use xdebug, could you maybe provide any links
+&gt; on how to set it up properly ?
+
+&gt; I'll take a look at var $persistModel, debug is 0.
+
+&gt; As I already noticed var $uses is a point to optimize.
+
+&gt; What do you mean by : &quot;do not use mod_rewrite&quot; ? Cake url's are based
+&gt; on mod_rewrite.
+
+&gt; Thanks,
+&gt; Andrzej
+">
+</POST>
+<POST>
+<POSTER> thequietlab &lt;arumpf...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-01T09:58:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Do you know that for sure? If you lets say load the Users model in
+&gt; AppController, then it is more then likely that *all* of your other
+&gt; models are loaded b/c they are somehow associated with User.
+">
+
+In AppController I only turn on othAuth and afaik it doesn't load any
+models if authorization is not required in a Controller.
+
+Here's part of debug($this) run in my pages_controller :
+
+[name] =&gt; Pages
+[helpers] =&gt; Array
+(
+[0] =&gt; Html
+[1] =&gt; Text
+[2] =&gt; Form
+[3] =&gt; OthAuth
+[4] =&gt; tqlTools
+)
+
+[uses] =&gt;
+[components] =&gt; Array
+(
+[0] =&gt; othAuth
+[1] =&gt; Session
+)
+.....
+.....
+[othAuth] =&gt; othAuthComponent Object
+(
+.......
+[controller] =&gt; PagesController Object
+*RECURSION*
+....
+)
+
+No model loaded, I only don't like this *RECURSION* .. in a controller
+with like 6 models loaded there's a LOT of RECURSION.. do you have it
+as well ?
+
+<QUOTE PREVIOUSPOST="
+&gt; My suggestion is to not work / rely on benchmark solutions that just
+&gt; hammer at your server too much - its very complex to create a realistic
+&gt; scenario that way (i.e. 20 users holding down on your front page or some
+&gt; other action is very different from each of them doing different
+&gt; things). The best way to make your app faster should be to get some
+&gt; profiler going and see what functions / parts of your app take the
+&gt; longest to load and then optimize them.
+">
+
+Yeah, I'm taking a closer look on xdebug, I will post some results if
+I manage to run it.
+
+<QUOTE PREVIOUSPOST="
+&gt; From there I'd keep an eye
+&gt; closely on the server load during traffic peaks which you can use to
+&gt; generate yourself some statistics to estimate when your current horse
+&gt; power will not be enough anymore. Then it is time to cluster and scale
+&gt; your architecture.
+">
+
+So from some point there's a question where to put your resources :
+trying to optimize the code or buying and adding hardware to cope with
+a higher load.
+
+<QUOTE PREVIOUSPOST="
+&gt; Anyway, I'm not an expert on the matter and you may
+&gt; be able diagnose things with your current benchmark setup as well -
+&gt; however I think its not the easiest path.
+
+&gt; Good luck and success with your app!
+">
+
+Thanks! We've got more then 5000 facebook users in a first week and
+1000 daily active users (new facebook metric), up to 13000 pageviews/
+day so it's coming along nicely :)
+
+Best,
+Andrzej
+</POST>
+<POST>
+<POSTER> Felix Geisendörfer &lt;haimu...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-01T10:32:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt;&gt; (i.e. 20 users holding down on your front page or some
+&gt;&gt; other action is very different from each of them doing different
+&gt;&gt; things)
+
+&gt; Yeah, I'm taking a closer look on xdebug, I will post some results if
+&gt; I manage to run it.
+">
+
+Ups, I meant to write 'Holding down F5 on your front page&quot; here, but I
+think you got that. Yeah I'm currently looking into getting xdebug to
+run myself - you don't happen to use OS X for development so you could
+share your findings ^^?
+
+<QUOTE PREVIOUSPOST="
+&gt; In AppController I only turn on othAuth and afaik it doesn't load any
+&gt; models if authorization is not required in a Controller.
+
+&gt; Here's part of debug($this) run in my pages_controller :
+">
+
+You may get better results using get_included_files
+&lt; http://de.php.net/manual/en/function.get-included-files.php &gt; /
+get_declared_classes
+&lt; http://de.php.net/manual/en/function.get-declared-classes.php &gt; or using
+a profiler, but yeah your results seem to indicate no models being
+loaded I think.
+
+<QUOTE PREVIOUSPOST="
+&gt; No model loaded, I only don't like this *RECURSION* .. in a controller
+&gt; with like 6 models loaded there's a LOT of RECURSION.. do you have it
+&gt; as well ?
+">
+
+There is not much you can do against that recursion and its not really a
+problem for performance (I think). What you could try is to write your
+own debug() function that keeps a hash of items already iterated through
+and makes sure inifinite recursions will not be followed (my experience
+has shown that the print_r behavior here is inconsistent).
+
+<QUOTE PREVIOUSPOST="
+&gt; So from some point there's a question where to put your resources :
+&gt; trying to optimize the code or buying and adding hardware to cope with
+&gt; a higher load.
+">
+
+I'm usually for throwing more CPU cycles at things instead of
+development time as the latter is more expensive and better spend on
+improving the user experience / maintainability rather then the speed.
+That being said, this is not meant as an excuse for not looking into
+obvious bottle necks / scalability issues and resolving them. But after
+that, you reach a point where optimizing things becomes more and more
+difficult and may even make your application harder to maintain, thats
+the point where I'd say throw more servers at it instead of developers.
+
+<QUOTE PREVIOUSPOST="
+&gt; Thanks! We've got more then 5000 facebook users in a first week and
+&gt; 1000 daily active users (new facebook metric), up to 13000 pageviews/
+&gt; day so it's coming along nicely :)
+">
+
+Oh its a Facebook app - cool : ). Add me to your friends and tell me
+what app it is so I can give it a try (my profile is:
+http://hs.facebook.com/profile.php?id=1114020732 ). Oh and
+congratulations to your success so far, thats pretty cool. Hope you'll
+find some time into sharing your experiences in using and scaling
+CakePHP for this at some point with the community : ).
+
+-- Felix
+--------------------------
+My Blog: http://www.thinkingphp.org
+My Business: http://www.fg-webdesign.de
+
+<QUOTE PREVIOUSPOST="
+thequietlab wrote:
+
+&gt;&gt; Do you know that for sure? If you lets say load the Users model in
+&gt;&gt; AppController, then it is more then likely that *all* of your other
+&gt;&gt; models are loaded b/c they are somehow associated with User.
+
+&gt; In AppController I only turn on othAuth and afaik it doesn't load any
+&gt; models if authorization is not required in a Controller.
+
+&gt; Here's part of debug($this) run in my pages_controller :
+
+&gt; [name] =&gt; Pages
+&gt;     [helpers] =&gt; Array
+&gt;         (
+&gt;             [0] =&gt; Html
+&gt;             [1] =&gt; Text
+&gt;             [2] =&gt; Form
+&gt;             [3] =&gt; OthAuth
+&gt;             [4] =&gt; tqlTools
+&gt;         )
+
+&gt;     [uses] =&gt;
+&gt;     [components] =&gt; Array
+&gt;         (
+&gt;             [0] =&gt; othAuth
+&gt;             [1] =&gt; Session
+&gt;         )
+&gt; .....
+&gt; .....
+&gt; [othAuth] =&gt; othAuthComponent Object
+&gt; (
+&gt; .......
+&gt; [controller] =&gt; PagesController Object
+&gt;  *RECURSION*
+&gt; ....
+&gt; )
+
+&gt; No model loaded, I only don't like this *RECURSION* .. in a controller
+&gt; with like 6 models loaded there's a LOT of RECURSION.. do you have it
+&gt; as well ?
+
+&gt;&gt; My suggestion is to not work / rely on benchmark solutions that just
+&gt;&gt; hammer at your server too much - its very complex to create a realistic
+&gt;&gt; scenario that way (i.e. 20 users holding down on your front page or some
+&gt;&gt; other action is very different from each of them doing different
+&gt;&gt; things). The best way to make your app faster should be to get some
+&gt;&gt; profiler going and see what functions / parts of your app take the
+&gt;&gt; longest to load and then optimize them.
+
+&gt; Yeah, I'm taking a closer look on xdebug, I will post some results if
+&gt; I manage to run it.
+
+&gt;&gt; From there I'd keep an eye
+&gt;&gt; closely on the server load during traffic peaks which you can use to
+&gt;&gt; generate yourself some statistics to estimate when your current horse
+&gt;&gt; power will not be enough anymore. Then it is time to cluster and scale
+&gt;&gt; your architecture.
+
+&gt; So from some point there's a question where to put your resources :
+&gt; trying to optimize the code or buying and adding hardware to cope with
+&gt; a higher load.
+
+&gt;&gt; Anyway, I'm not an expert on the matter and you may
+&gt;&gt; be able diagnose things with your current benchmark setup as well -
+&gt;&gt; however I think its not the easiest path.
+
+&gt;&gt; Good luck and success with your app!
+
+&gt; Thanks! We've got more then 5000 facebook users in a first week and
+&gt; 1000 daily active users (new facebook metric), up to 13000 pageviews/
+&gt; day so it's coming along nicely :)
+
+&gt; Best,
+&gt; Andrzej
+">
+</POST>
+<POST>
+<POSTER> majna &lt;majna...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-01T14:27:00 </POSTDATE>
+For xdebug please read this pdf
+http://derickrethans.nl/files/phparch-xdebug-qa.pdf
+link from http://www.sitepoint.com/blogs/2006/04/20/php-frontend-for-xdebug-pro...
+
+Use linux  and KCacheGrind.
+For windows:dwnload xdebug dll, and put in php/ext folder
+php.ini add:
+
+zend_extension_ts=&quot;C:\AppServ\php5\ext\php_xdebug.dll&quot;
+xdebug.auto_trace=1
+xdebug.auto_profile=1
+xdebug.auto_profile_mode=0
+
+;config
+;xdebug.remote_enable=on
+;xdebug.profiler_enable_trigger=on
+;xdebug.profiler_output_dir=&quot;C:\AppServ\www&quot;
+;xdebug.profiler_output_name=&quot;timestamp&quot;
+;xdebug.profiler_enable=on
+
+There is KCacheGrind-wannabe for Windows - WinCacheGrind, for
+processing output. It's old (2005) software...
+
+$persistModel will cache constructed models and it's recursive
+associations
+
+Your app can work without mod_rewrite. Using mod_rewrite, apache
+seek .htaccess file in each directory in path ( from root ).
+
+<QUOTE PREVIOUSPOST="
+&gt; @majna
+&gt; yeah.. I was planning to use xdebug, could you maybe provide any links
+&gt; on how to set it up properly ?
+
+&gt; I'll take a look at var $persistModel, debug is 0.
+
+&gt; As I already noticed var $uses is a point to optimize.
+
+&gt; What do you mean by : &quot;do not use mod_rewrite&quot; ? Cake url's are based
+&gt; on mod_rewrite.
+
+&gt; Thanks,
+&gt; Andrzej
+">
+</POST>
+<POST>
+<POSTER> thequietlab &lt;arumpf...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-01T15:37:00 </POSTDATE>
+@majna
+
+thanks for the links. I just tried $persistModel and, at first page
+render I was extremely happy to see all the models cached but then
+when I refreshed I got this :
+
+Warning (2): Invalid argument supplied for foreach() [CORE\cake\libs
+\object.php, line 239]
+Object::__openPersistent() - CORE\cake\libs\object.php, line 239
+Object::_persist() - CORE\cake\libs\object.php, line 203
+Controller::constructClasses() - CORE\cake\libs\controller
+\controller.php, line 409
+Dispatcher::dispatch() - CORE\cake\dispatcher.php, line 295
+[main] - APP\webroot\index.php, line 81
+
+and I could probably live with it .. but that was not enough.. I also
+saw :
+
+Fatal error: Model::findAll() [&lt;a href=' http://php.net/function.Model-
+findAll'&gt;function.Model-findAll&lt;/a&gt;]: The script tried to execute a
+method or access a property of an incomplete object. Please ensure
+that the class definition &amp;quot;SlugBehavior&amp;quot; of the object you
+are trying to operate on was loaded _before_ unserialize() gets called
+or provide a __autoload() function to load the class definition in G:
+\wamp\libs\cake\cake\libs\model\model.php on line 1432
+
+that was it for $persistModel.. it happens to all &quot;behaviors&quot;.. I
+still didn't get deeper into this one, any thoughts ?
+
+<QUOTE PREVIOUSPOST="
+&gt; Your app can work without mod_rewrite. Using mod_rewrite, apache
+&gt; seek .htaccess file in each directory in path ( from root ).
+">
+
+I'm using lighttpd which is having all the rewrites in .conf file,
+more like httpd.conf then .htaccess... and I like friendly urls too
+much to not use rewrites ;)
+
+Best,
+Andrzej
+</POST>
+<POST>
+<POSTER> majna &lt;majna...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-01T16:17:00 </POSTDATE>
+This persistModel tip was for cake 1.1.x and it works well.
+1.2 has problem with behaviours and persistModel. Report ticket?
+
+mod_rewrite is a must have, I know :)
+
+On Sep 1, 9:37 pm, thequietlab &lt;arumpf ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; @majna
+
+&gt; thanks for the links. I just tried $persistModel and, at first page
+&gt; render I was extremely happy to see all the models cached but then
+&gt; when I refreshed I got this :
+
+&gt; Warning (2): Invalid argument supplied for foreach() [CORE\cake\libs
+&gt; \object.php, line 239]
+&gt; Object::__openPersistent() - CORE\cake\libs\object.php, line 239
+&gt; Object::_persist() - CORE\cake\libs\object.php, line 203
+&gt; Controller::constructClasses() - CORE\cake\libs\controller
+&gt; \controller.php, line 409
+&gt; Dispatcher::dispatch() - CORE\cake\dispatcher.php, line 295
+&gt; [main] - APP\webroot\index.php, line 81
+
+&gt; and I could probably live with it .. but that was not enough.. I also
+&gt; saw :
+
+&gt; Fatal error: Model::findAll() [&lt;a href=' http://php.net/function.Model-
+&gt; findAll'&gt;function.Model-findAll&lt;/a&gt;]: The script tried to execute a
+&gt; method or access a property of an incomplete object. Please ensure
+&gt; that the class definition &amp;quot;SlugBehavior&amp;quot; of the object you
+&gt; are trying to operate on was loaded _before_ unserialize() gets called
+&gt; or provide a __autoload() function to load the class definition in G:
+&gt; \wamp\libs\cake\cake\libs\model\model.php on line 1432
+
+&gt; that was it for $persistModel.. it happens to all &quot;behaviors&quot;.. I
+&gt; still didn't get deeper into this one, any thoughts ?
+
+&gt; &gt; Your app can work without mod_rewrite. Using mod_rewrite, apache
+&gt; &gt; seek .htaccess file in each directory in path ( from root ).
+
+&gt; I'm using lighttpd which is having all the rewrites in .conf file,
+&gt; more like httpd.conf then .htaccess... and I like friendly urls too
+&gt; much to not use rewrites ;)
+
+&gt; Best,
+&gt; Andrzej
+">
+</POST>
+</TEXT>
+</BODY>
+</DOC>

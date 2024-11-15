@@ -1,0 +1,217 @@
+<DOC>
+<DOCID> groups.google.com_GoogleMapsAPI_2d6d9fe32e50ad11_ENG_20051126_144500 </DOCID>
+<DOCTYPE SOURCE="usenet">USENET TEXT</DOCTYPE>
+<DATETIME>2005-11-26T14:45:00</DATETIME>
+<BODY>
+<HEADLINE>
+how to put document.getElementById(&quot;sidebar&quot;).innerHTML ETC into an ECHO
+</HEADLINE>
+<TEXT>
+
+<POST>
+<POSTER> homepricemaps@gmail.com </POSTER>
+<POSTDATE> 2005-11-26T14:45:00 </POSTDATE>
+
+hey folks i'm trying to add a sidebar to my page and am havnig
+problems.
+
+here is how i load my markers
+
+while($row = mysql_fetch_array($result))
+{
+echo &quot;var point = new GPoint(&quot; . $row['lon'] . &quot;,&quot; . $row['lat'] .
+&quot;);\n&quot;;
+echo &quot;var marker = createMarker(point, 'Address: &quot;. $row['address'] .&quot;
+&quot;.$row['city'].&quot;&quot;.$row['state'].&quot;&lt;br&gt;Sale Price: $&quot; .
+$row['salesprice'] . &quot;&lt;br&gt;Zipcode&quot; .
+$input1 . &quot;&lt;br&gt;Sqft:&quot; . $row['squarefeet'] . &quot;&lt;br&gt;Sales Date: &quot; .
+$row['salesdate'] . &quot;&lt;br&gt;Year Built: &quot; . $row['yearbuilt'] .
+&quot;&lt;br&gt;Bedrooms: &quot; . $row['bedrooms'] .&quot;&lt;br&gt;&quot; . $homelisturl . &quot;&lt;br&gt;&quot; .
+$mortgagequotes . &quot;&lt;br&gt;&quot; . $realtorlist . &quot;');\n&quot;;
+echo &quot;map.addOverlay(marker);\n&quot;;
+echo &quot;\n&quot;;
+}
+
+now i want to add a sidebar to the page so figured i'd add the
+following after the last echo &quot;\n&quot;
+
+echo &quot;var document.getElementById(&quot;sidebar&quot;).innerHTML =
+(&quot;sidebar_html&quot;);\n&quot;;
+
+BUT but i keep on getting errors saying unexpected T_STRING, expecting
+',' or ';' no matter what i do. any ideas?
+
+</POST>
+
+
+
+<POST>
+<POSTER> geocodezip@gmail.com </POSTER>
+<POSTDATE> 2005-11-26T14:58:00 </POSTDATE>
+
+I would look at the quotes (especially given the error message you
+report). I would expect that PHP would be as unhappy about nested
+quotes as every other programming language.
+You probably need to do something like:
+echo &quot;var document.getElementById('sidebar').innerHTML =
+('sidebar_html');\n&quot;;
+(notice the change to single quotes inside the string).
+
+-- Larry
+(disclaimer, I don't know much about PHP, which is what the code looks
+like it is written in)
+
+</POST>
+
+
+
+<POST>
+<POSTER> Aron </POSTER>
+<POSTDATE> 2005-11-26T15:22:00 </POSTDATE>
+
+Larry is right - the problem has to do with the quotes, and his
+technique will fix it, but another workaround is to say
+
+echo &quot;var document.getElementById(\&quot;sidebar\&quot;).innerHTML =
+(\&quot;sidebar_html\&quot;);\n&quot;;
+
+and if you notice, I replaced all the &quot; that i want to print with \&quot;
+because that way it will print a quote, not interfere with the PHP
+parsing.
+Hope that helps
+
+-Aron
+
+</POST>
+
+
+
+<POST>
+<POSTER> homepricemaps@gmail.com </POSTER>
+<POSTDATE> 2005-11-26T15:50:00 </POSTDATE>
+
+ok guys i tried your fixes and am getting closer in that i load an
+empty google maps page now (instead of that old error) but am now
+getting an error saying &quot;expected ;&quot;
+
+note i tried both of your methods using single and double quotes with
+the slashes yet get the same error in both cases.
+
+also i looked back at my original code and actually the original code
+is :
+
+document.getElementById(&quot;sidebar&quot;).innerHTML = sidebar_html;
+
+note no parathenses around the sidebar_html although when i removed the
+parantheses it still didn't matter.
+
+so to recap, i now am using this line of code:
+
+echo &quot;var document.getElementById(\&quot;sidebar\&quot;).innerHTML =
+\&quot;sidebar_html\&quot;;\n&quot;;
+
+and still get &quot;expected ;&quot;
+
+any ideas?
+
+</POST>
+
+
+
+<POST>
+<POSTER> homepricemaps@gmail.com </POSTER>
+<POSTDATE> 2005-11-26T16:10:00 </POSTDATE>
+
+actually i looked at the error message more carefully and realized that
+it is telling me EXPECTED ; on this line:
+
+var document.getElementById(&quot;sidebar&quot;).innerHTML = &quot;sidebar_html&quot;;
+
+<QUOTE PREVIOUSPOST="
+homepricem ... @gmail.com wrote:
+&gt; ok guys i tried your fixes and am getting closer in that i load an
+&gt; empty google maps page now (instead of that old error) but am now
+&gt; getting an error saying &quot;expected ;&quot;
+
+&gt; note i tried both of your methods using single and double quotes with
+&gt; the slashes yet get the same error in both cases.
+
+&gt; also i looked back at my original code and actually the original code
+&gt; is :
+
+&gt; document.getElementById(&quot;sidebar&quot;).innerHTML = sidebar_html;
+
+&gt; note no parathenses around the sidebar_html although when i removed the
+&gt; parantheses it still didn't matter.
+
+&gt; so to recap, i now am using this line of code:
+
+&gt; echo &quot;var document.getElementById(\&quot;sidebar\&quot;).innerHTML =
+&gt; \&quot;sidebar_html\&quot;;\n&quot;;
+
+&gt; and still get &quot;expected ;&quot;
+
+&gt; any ideas?
+
+"/>
+
+
+</POST>
+
+
+
+<POST>
+<POSTER> homepricemaps@gmail.com </POSTER>
+<POSTDATE> 2005-11-26T16:34:00 </POSTDATE>
+
+ok guys i got it, here is what works
+
+echo &quot;document.getElementById(\&quot;sidebar\&quot;).innerHTML =
+sidebar_html;\n&quot;;
+
+thanks folks, you are amazing. without the feedback i would be banging
+my head THROUGH a wall.
+
+</POST>
+
+
+
+<POST>
+<POSTER> geocodezip@gmail.com </POSTER>
+<POSTDATE> 2005-11-26T16:36:00 </POSTDATE>
+
+That is because you need to remove the var...
+
+it should be:
+document.getElementById(&quot;sidebar&quot;).innerHTML = &quot;sidebar_html&quot;;
+
+Although, what you probably want is (assuming that you want the html
+that is assigned to the variable sidebar_html to be displayed and not
+the text &quot;sidebar_html&quot;):
+document.getElementById(&quot;sidebar&quot;).innerHTML = sidebar_html;
+
+which means your PHP should be:
+echo &quot;document.getElementById(\&quot;sidebar\&quot;).innerHTML = sidebar_html\n&quot;;
+
+Have you posted a link to the problem page somewhere?
+
+-- Larry
+
+</POST>
+
+
+
+<POST>
+<POSTER> homepricemaps@gmail.com </POSTER>
+<POSTDATE> 2005-11-26T18:32:00 </POSTDATE>
+
+hehehe you wrote the answer 30 minutes after i posted the same
+conclusion myself. thanks for your help guys its working well now.
+
+</POST>
+
+
+
+</TEXT>
+</BODY>
+</DOC>

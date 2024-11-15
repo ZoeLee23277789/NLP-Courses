@@ -1,0 +1,878 @@
+<DOC>
+<DOCID> eng-NG-31-126399-9141362 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-11-09T22:12:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Portrait of a &quot;real life&quot; __metaclass__
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Mark Shroyer &lt;usenet-m...@markshroyer.com&gt; </POSTER>
+<POSTDATE> 2007-11-09T22:12:00 </POSTDATE>
+I guess this sort of falls under the &quot;shameless plug&quot; category, but
+here it is: Recently I used a custom metaclass in a Python program
+I've been working on, and I ended up doing a sort of write-up on it,
+as an example of what a &quot;real life&quot; __metaclass__ might do for those
+who may never have seen such a thing themselves.
+
+http://markshroyer.com/blog/2007/11/09/tilting-at-metaclass-windmills/
+
+So what's the verdict?  Incorrect?  Missed the point completely?
+Needs to get his head checked?  I'd love to hear what
+comp.lang.python has to (anthropomorphically) say about it.
+
+--
+Mark Shroyer
+http://markshroyer.com/
+</POST>
+<POST>
+<POSTER> Jonathan Gardner &lt;jgardner.jonathangardner....@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-10T02:41:00 </POSTDATE>
+On Nov 9, 7:12 pm, Mark Shroyer &lt;usenet-m ... @markshroyer.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I guess this sort of falls under the &quot;shameless plug&quot; category, but
+&gt; here it is: Recently I used a custom metaclass in a Python program
+&gt; I've been working on, and I ended up doing a sort of write-up on it,
+&gt; as an example of what a &quot;real life&quot; __metaclass__ might do for those
+&gt; who may never have seen such a thing themselves.
+
+&gt; http://markshroyer.com/blog/2007/11/09/tilting-at-metaclass-windmills/
+
+&gt; So what's the verdict?  Incorrect?  Missed the point completely?
+&gt; Needs to get his head checked?  I'd love to hear what
+&gt; comp.lang.python has to (anthropomorphically) say about it.
+">
+
+Kinda wordy. Let me see if I got the point:
+
+- You already had a bunch of classes that did age matching on date
+time objects.
+
+- You were building a class that matched emails.
+
+- You wanted to reuse the code for age matching to do email matching
+(based on the message's age)
+
+- So you wrote a metaclass that replaced the match() method with a
+proxy that would either dispatch to the old match() method (if it was
+a datetime object) or dispatch to the new match() method (which
+matched based on the message's date.)
+
+Sounds Java-y, if that's even a word. Too many classes, not enough
+functions. You can tell you are doing Java in Python when you feel the
+urge to give everything a name that is a noun, even if it is
+completely based of a verb, such as &quot;matcher&quot;. My opinion is that if
+you want to talk about doing something in Python such as matching,
+starting writing functions that match and forget the classes. Classes
+are for real nouns, nouns that can do several distinct things.
+
+What would I have done? I wouldn't have had an age matching class. I
+would have had a function that, given the datetime and a range
+specification, would return true or false. Then I would've written
+another function for matching emails. Again, it takes a specification
+and the email and returns true or false.
+
+If I really wanted to pass around the specifications as objects, I
+would do what the re module does: have one generic object for all the
+different kinds of age matching possible, and one generic object for
+all the email objects possible. These would be called,
+&quot;AgeMatchSpecification&quot;, etc... These are noun-y things. Here,
+however, they are really a way of keeping your data organized so you
+can tell that that particular dict over there is an
+AgeMatchSpecification and that one is an EmailMatchSpecification. And
+remember, the specifications don't do the matching--they merely tell
+the match function what it is you wanted matched.
+
+Now, part of the email match specification would probably include bits
+of the date match specification, because you'd want to match the
+various dates attached to an email. That's really not rocket science
+though.
+
+There wouldn't be any need to integrate the classes anymore if I did
+it that way. Plus, I wouldn't have to remember a bunch of class names.
+I'd just have to remember the various parameters to the match
+specification for age matching and a different set of parameters for
+the email matching.
+</POST>
+<POST>
+<POSTER> Mark Shroyer &lt;usenet-m...@markshroyer.com&gt; </POSTER>
+<POSTDATE> 2007-11-10T06:34:00 </POSTDATE>
+On 2007-11-10, Jonathan Gardner &lt;jgardner.jonathangardner. ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Nov 9, 7:12 pm, Mark Shroyer &lt;usenet-m ... @markshroyer.com&gt; wrote:
+&gt;&gt; I guess this sort of falls under the &quot;shameless plug&quot; category, but
+&gt;&gt; here it is: Recently I used a custom metaclass in a Python program
+&gt;&gt; I've been working on, and I ended up doing a sort of write-up on it,
+&gt;&gt; as an example of what a &quot;real life&quot; __metaclass__ might do for those
+&gt;&gt; who may never have seen such a thing themselves.
+
+&gt;&gt; http://markshroyer.com/blog/2007/11/09/tilting-at-metaclass-windmills/
+
+&gt;&gt; So what's the verdict?  Incorrect?  Missed the point completely?
+&gt;&gt; Needs to get his head checked?  I'd love to hear what
+&gt;&gt; comp.lang.python has to (anthropomorphically) say about it.
+
+&gt; Kinda wordy.
+">
+
+Yeah, my fingers sort of latch onto the keyboard sometimes and just
+won't let go.  Sorry about that ;)
+
+<QUOTE PREVIOUSPOST="
+&gt; Let me see if I got the point:
+
+&gt; - You already had a bunch of classes that did age matching on date
+&gt; time objects.
+
+&gt; - You were building a class that matched emails.
+
+&gt; - You wanted to reuse the code for age matching to do email matching
+&gt; (based on the message's age)
+
+&gt; - So you wrote a metaclass that replaced the match() method with a
+&gt; proxy that would either dispatch to the old match() method (if it was
+&gt; a datetime object) or dispatch to the new match() method (which
+&gt; matched based on the message's date.)
+">
+
+Close, but not quite.  The proxy *always* dispatches to
+AgeSpec.match(), but if the result of that method is an AgeSpec
+itself, then the proxy wraps the result back up in a Matcher, which
+works out rather conveniently for the rest of the application.
+
+<QUOTE PREVIOUSPOST="
+&gt; Sounds Java-y, if that's even a word.
+">
+
+Yeah, you pretty much nailed my original background right there.  On
+the other hand, I've also done a lot of work in Perl and C, and
+pride myself on striving not to resort to OO patterns where they
+aren't really useful.  So let me try to defend my reasoning, if it
+is in fact defensible...
+
+<QUOTE PREVIOUSPOST="
+&gt; Too many classes, not enough functions. You can tell you are doing
+&gt; Java in Python when you feel the urge to give everything a name
+&gt; that is a noun, even if it is completely based of a verb, such as
+&gt; &quot;matcher&quot;. My opinion is that if you want to talk about doing
+&gt; something in Python such as matching, starting writing functions
+&gt; that match and forget the classes. Classes are for real nouns,
+&gt; nouns that can do several distinct things.
+
+&gt; What would I have done? I wouldn't have had an age matching class. I
+&gt; would have had a function that, given the datetime and a range
+&gt; specification, would return true or false. Then I would've written
+&gt; another function for matching emails. Again, it takes a specification
+&gt; and the email and returns true or false.
+">
+
+There isn't much difference between
+
+match_calendar_month(2007, 11, message)
+
+and
+
+m = CalendarMonthMatcher(2007, 11)
+m.match(message)
+
+so of course you're right that, were that all I'm doing with these
+matchers, it would be a waste to implement them as classes.  But
+take for example two of my app's mailbox actions -- these aren't
+their real names, but for clarity let's call them ArchiveByMonth and
+SaveAttachmentsByMonth.  The former moves messages from previous
+months into an archival mbox file ./archives/YYYY/MM.mbox
+corresponding to each message's month, and the latter saves message
+attachments into a directory ./attachments/YYYY/MM/.  Each of these
+actions would work by using either match_calendar_month() or
+CalendarMonthMatcher().match() to perform its action on all messages
+within a given month; then it iterates through previous months and
+repeats until there are no more messages left to be processed.
+
+In my object-oriented implementation, this iteration is performed by
+calling m.previous() on the current matcher, much like the
+simplified example in my write-up.  Without taking the OO approach,
+on the other hand, both types of actions would need to compute the
+previous month themselves; sure that's not an entirely burdensome
+task, but it really seems like the wrong place for that code to
+reside.  (And if you tackle this by writing another method to return
+the requisite (year, month) tuple, and apply that method alongside
+wherever match_calendar_month() is used...  well, at that point
+you're really just doing object-oriented code without the &quot;class&quot;
+keyword.)
+
+Furthermore, suppose I want to save attachments by week instead of
+month: I could then hand the SaveAttachmentsByPeriod action a
+WeekMatcher instead of a MonthMatcher, and the action, using the
+matcher's common interface, does the job just as expected.  (This is
+an actual configuration file option in the application; the nice
+thing about taking an OO approach to this app is that there's a very
+straightforward mapping between the configuration file syntax and
+the actual implementation.)
+
+It could be that I'm still &quot;thinking in Java,&quot; as you rather
+accurately put it, but here the object-oriented approach seems
+genuinely superior -- cleaner and, well, with better encapsulated
+functionality, to use the buzzword.
+
+<QUOTE PREVIOUSPOST="
+&gt; If I really wanted to pass around the specifications as objects, I
+&gt; would do what the re module does: have one generic object for all the
+&gt; different kinds of age matching possible, and one generic object for
+&gt; all the email objects possible. These would be called,
+&gt; &quot;AgeMatchSpecification&quot;, etc... These are noun-y things. Here,
+&gt; however, they are really a way of keeping your data organized so you
+&gt; can tell that that particular dict over there is an
+&gt; AgeMatchSpecification and that one is an EmailMatchSpecification. And
+&gt; remember, the specifications don't do the matching--they merely tell
+&gt; the match function what it is you wanted matched.
+">
+
+Oddly enough, the re module was sort of my inspiration here:
+
+my_regex = re.compile(&quot;abc&quot;)
+my_regex.match(&quot;some string&quot;)
+
+(Sure, re.compile() is a factory function that produces SRE_Pattern
+instances rather than the name of an actual class, but it's still
+used in much the same way.)
+
+<QUOTE PREVIOUSPOST="
+&gt; Now, part of the email match specification would probably include bits
+&gt; of the date match specification, because you'd want to match the
+&gt; various dates attached to an email. That's really not rocket science
+&gt; though.
+
+&gt; There wouldn't be any need to integrate the classes anymore if I did
+&gt; it that way. Plus, I wouldn't have to remember a bunch of class names.
+&gt; I'd just have to remember the various parameters to the match
+&gt; specification for age matching and a different set of parameters for
+&gt; the email matching.
+">
+
+You're sort of missing the bigger picture of this application,
+although that's entirely not your fault as I never fully described
+it to begin with.  The essence of this project is that I have a
+family of mailbox actions (delete, copy, archive to mailbox, archive
+by time period, ...) and a family of email matching rules (match
+read messages, match messages with attachments, match messages of a
+certain size, match messages by date, ...) of which matching by date
+is only one subtype -- but there are even many different ways to
+match by date (match by number of days old, match by specific
+calendar month, match by specific calendar month *or older*, match
+by day of the week, ...); not to mention arbitrary Boolean
+combinations of other matching rules (and, or, not).
+
+My goal is to create a highly configurable and extensible app, in
+which the user can mix and match different &quot;action&quot; and &quot;matcher&quot;
+instances to the highest degree possible.  And using class
+definitions really facilitates that, to my Java-poisoned mind.  For
+example, if the user writes in the config file
+
+actions = (
+(
+# Save attachments from read messages at least 10 days old
+mailbox =&gt; (
+path =&gt; '/path/to/maildir',
+type =&gt; 'maildir',
+),
+match =&gt; (
+type =&gt; And,
+p =&gt; (
+type =&gt; MarkedRead,
+state =&gt; True,
+),
+q =&gt; (
+type =&gt; DaysOld,
+days =&gt; 10,
+),
+),
+action =&gt; (
+type =&gt; SaveAttachments,
+destination =&gt; '/some/directory/',
+),
+),
+)
+
+(can you tell I've been working with Lighttpd lately?)
+
+then my app can easily read in this dictionary and map the
+user-specified actions directly into Matcher and Action instances;
+and this without me having to write a bunch of code to process
+boolean logic, matching types, action parameters, and so on into a
+program flow that has a structure needlessly divergent from the
+configuration file syntax.  It also means that, should a user
+augment the program with his own Matcher or Action implementation,
+as I intend to make it easy to do, then those implementations can be
+used straightaway without even touching the code for the
+configuration file reader.
+
+As for the decision to use a metaclass proxy to my AgeSpec classes,
+I'm fully prepared to admit wrongdoing there.  But I still believe
+that an object-oriented design is the best approach to this problem,
+at least considering my design goals.  Or am I *still* missing the
+point?
+
+Thanks for your input!
+Mark
+
+--
+Mark Shroyer
+http://markshroyer.com/
+</POST>
+<POST>
+<POSTER> Carl Banks &lt;pavlovevide...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-10T09:34:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sat, 10 Nov 2007 03:12:25 +0000, Mark Shroyer wrote:
+&gt; I guess this sort of falls under the &quot;shameless plug&quot; category, but here
+&gt; it is: Recently I used a custom metaclass in a Python program I've been
+&gt; working on, and I ended up doing a sort of write-up on it, as an example
+&gt; of what a &quot;real life&quot; __metaclass__ might do for those who may never
+&gt; have seen such a thing themselves.
+
+&gt; http://markshroyer.com/blog/2007/11/09/tilting-at-metaclass-windmills/
+
+&gt; So what's the verdict?  Incorrect?  Missed the point completely? Needs
+&gt; to get his head checked?  I'd love to hear what comp.lang.python has to
+&gt; (anthropomorphically) say about it.
+">
+
+Without having read the whole thing (I just looked at the metaclass
+itself): it looks like for every subclass of AgeSpec you want to create
+an associated (wrapper of some sort) class as well.  Perfectly reasonable
+usage as far as I'm concerned.
+
+The only suggestion I have is to avoid &quot;helpfully&quot; binding values in the
+user's namespace.  It might seem helpful for your intended use, but
+automatically binding names on the user's behalf is one of those things
+that can suddenly become decidedly unhelpful when a user wants to use the
+code in a way other than originally intended.
+
+Instead, make the wrapper class an attribute of the main class.  For
+example:
+
+def __init__(cls, name, bases, dict):
+&quot;Initialize new AgeSpecMatcher subclass.&quot;
+# Let type.__init__() do the heavy lifting...
+super(MetaAgeSpec, cls).__init__(cls, name, bases, dict)
+print &quot;MetaAgeSpec.__init__(%s, ...)&quot; % cls.__name__
+try:
+# We want to build wrapper classes for all AgeSpec
+# subclasses, but not for AgeSpec itself
+if issubclass(cls, AgeSpec):
+cls.Matcher = cls.wrapper_class()
+except NameError:
+pass
+
+Then, whereever you would have used:
+
+MonthAgeSpecMatcher()
+
+you'd use
+
+MonthAgeSpec.Matcher()
+
+instead.  Namespaces are one honking great idea--use them.  At the very
+least, give the user an option not to bind the additional name.
+
+Carl Banks
+</POST>
+<POST>
+<POSTER> Jonathan Gardner &lt;jgardner.jonathangardner....@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-11T02:48:00 </POSTDATE>
+On Nov 10, 3:34 am, Mark Shroyer &lt;usenet-m ... @markshroyer.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2007-11-10, Jonathan Gardner &lt;jgardner.jonathangardner. ... @gmail.com&gt; wrote:
+&gt; &gt; What would I have done? I wouldn't have had an age matching class. I
+&gt; &gt; would have had a function that, given the datetime and a range
+&gt; &gt; specification, would return true or false. Then I would've written
+&gt; &gt; another function for matching emails. Again, it takes a specification
+&gt; &gt; and the email and returns true or false.
+
+&gt; There isn't much difference between
+
+&gt;   match_calendar_month(2007, 11, message)
+
+&gt; and
+
+&gt;   m = CalendarMonthMatcher(2007, 11)
+&gt;   m.match(message)
+">
+
+Yes, there isn't a world of difference between the two. But there is a
+world of difference between those and:
+
+match(message, before=date(2007, 12, 1), after=date(2007, 11, 1))
+
+And you can add parameters as needed. In the end, you may have a lot
+of parameters, but only one match function and only one interface.
+
+<QUOTE PREVIOUSPOST="
+&gt; &lt;snip&gt; But take for example two of my app's mailbox actions -- these aren't
+&gt; their real names, but for clarity let's call them ArchiveByMonth and
+&gt; SaveAttachmentsByMonth.  The former moves messages from previous
+&gt; months into an archival mbox file ./archives/YYYY/MM.mbox
+&gt; corresponding to each message's month, and the latter saves message
+&gt; attachments into a directory ./attachments/YYYY/MM/.  Each of these
+&gt; actions would work by using either match_calendar_month() or
+&gt; CalendarMonthMatcher().match() to perform its action on all messages
+&gt; within a given month; then it iterates through previous months and
+&gt; repeats until there are no more messages left to be processed.
+
+&gt; In my object-oriented implementation, this iteration is performed by
+&gt; calling m.previous() on the current matcher, much like the
+&gt; simplified example in my write-up.  Without taking the OO approach,
+&gt; on the other hand, both types of actions would need to compute the
+&gt; previous month themselves; sure that's not an entirely burdensome
+&gt; task, but it really seems like the wrong place for that code to
+&gt; reside.  (And if you tackle this by writing another method to return
+&gt; the requisite (year, month) tuple, and apply that method alongside
+&gt; wherever match_calendar_month() is used...  well, at that point
+&gt; you're really just doing object-oriented code without the &quot;class&quot;
+&gt; keyword.)
+
+&gt; Furthermore, suppose I want to save attachments by week instead of
+&gt; month: I could then hand the SaveAttachmentsByPeriod action a
+&gt; WeekMatcher instead of a MonthMatcher, and the action, using the
+&gt; matcher's common interface, does the job just as expected.  (This is
+&gt; an actual configuration file option in the application; the nice
+&gt; thing about taking an OO approach to this app is that there's a very
+&gt; straightforward mapping between the configuration file syntax and
+&gt; the actual implementation.)
+
+&gt; It could be that I'm still &quot;thinking in Java,&quot; as you rather
+&gt; accurately put it, but here the object-oriented approach seems
+&gt; genuinely superior -- cleaner and, well, with better encapsulated
+&gt; functionality, to use the buzzword.
+">
+
+Or it could be that you are confusing two things with each other.
+
+Let me try to explain it another way. Think of all the points on a
+grid that is 100x100. There are 10,000 points, right? If you wanted to
+describe the position of a point, you could name each point. You'd
+have 10,000 names. This isn't very good because people would have to
+know all 10,000 names to describe a point in your system. But it is
+simple, and it is really easy to implement. But hey, we can just
+number the points 0 to 9999 and it gets even simpler, right?
+
+OR you could describe the points as an (x,y) pair. Now people only
+have to remember 200 different names--100 for the columns, 100 for the
+rows. Then if you used traditional numbers, they'd only have to be
+able to count to 100.
+
+Computer science is full of things like this. When you end up with
+complexity, it is probably because you are doing something wrong. My
+rule of thumb is if I can't explain it all in about 30 seconds, then
+it is going to be a mystery to everyone but myself no matter how much
+documentation I write.
+
+How do you avoid complexity? You take a step back, identify patterns,
+or pull different things apart from each other (like rows and
+columns), and try to find the most basic principles to guide the
+entire system.
+
+The very fact that you are talking about months (and thus days and
+weeks and years and centuries, etc...) and not generic dates means you
+have some more simplifying to do in your design elsewhere as well.
+
+Rewrite the SaveAttachmentsByMonth so that it calls a more generic
+SaveAttachmentsByDateRange function. Or better yet, have it
+FilterEmailsByDateRange and ExtractAttachment and SaveAttachment. Or
+even better, have it FilterEmailsBySpecification(date_from=X,
+date_to=Y) and SaveAttachmentl.
+
+Do you see the point? Your big function SaveAttachmentsByMonth is kind
+of like point number 735. It's easier to describe it as the point at
+(7,35) than as a single number. It's better to talk about the most
+basic functionality --- saving emails and filter emails -- rather than
+talking about big concepts.
+
+I call this concept &quot;orthogonality&quot; after the same concept in linear
+algebra. It's just easier when you are dealing in an orthogonal basis--
+or a set of functions that do simple things and don't replicate each
+other's functionality.
+
+Your users will appreciate it as well. While it may be nice to have a
+shiny button that saves attachments by months, they'd rather they
+could specify the date ranges theyd like to use (hours? Days? Weeks?
+Quarters?) and what they'd like to save (the attachments, the entire
+email, etc...) (Better yet, what they'd like to *do*.)
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; If I really wanted to pass around the specifications as objects, I
+&gt; &gt; would do what the re module does: have one generic object for all the
+&gt; &gt; different kinds of age matching possible, and one generic object for
+&gt; &gt; all the email objects possible. These would be called,
+&gt; &gt; &quot;AgeMatchSpecification&quot;, etc... These are noun-y things. Here,
+&gt; &gt; however, they are really a way of keeping your data organized so you
+&gt; &gt; can tell that that particular dict over there is an
+&gt; &gt; AgeMatchSpecification and that one is an EmailMatchSpecification. And
+&gt; &gt; remember, the specifications don't do the matching--they merely tell
+&gt; &gt; the match function what it is you wanted matched.
+
+&gt; Oddly enough, the re module was sort of my inspiration here:
+
+&gt;   my_regex = re.compile(&quot;abc&quot;)
+&gt;   my_regex.match(&quot;some string&quot;)
+
+&gt; (Sure, re.compile() is a factory function that produces SRE_Pattern
+&gt; instances rather than the name of an actual class, but it's still
+&gt; used in much the same way.)
+">
+
+Except we don't have different kinds of re expressions for different
+kinds of matching. One spec to handle everything is good enough, and
+it's much simpler. If you have the time, try to see what people did
+before regex took over the world. In fact, try writing a text parser
+that doesn't use one general regex function. You'll quickly discover
+why one method with one very general interface is the best way to
+handle things.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Now, part of the email match specification would probably include bits
+&gt; &gt; of the date match specification, because you'd want to match the
+&gt; &gt; various dates attached to an email. That's really not rocket science
+&gt; &gt; though.
+
+&gt; &gt; There wouldn't be any need to integrate the classes anymore if I did
+&gt; &gt; it that way. Plus, I wouldn't have to remember a bunch of class names.
+&gt; &gt; I'd just have to remember the various parameters to the match
+&gt; &gt; specification for age matching and a different set of parameters for
+&gt; &gt; the email matching.
+
+&gt; You're sort of missing the bigger picture of this application,
+&gt; although that's entirely not your fault as I never fully described
+&gt; it to begin with.  The essence of this project is that I have a
+&gt; family of mailbox actions (delete, copy, archive to mailbox, archive
+&gt; by time period, ...) and a family of email matching rules (match
+&gt; read messages, match messages with attachments, match messages of a
+&gt; certain size, match messages by date, ...) of which matching by date
+&gt; is only one subtype -- but there are even many different ways to
+&gt; match by date (match by number of days old, match by specific
+&gt; calendar month, match by specific calendar month *or older*, match
+&gt; by day of the week, ...); not to mention arbitrary Boolean
+&gt; combinations of other matching rules (and, or, not).
+
+&gt; My goal is to create a highly configurable and extensible app, in
+&gt; which the user can mix and match different &quot;action&quot; and &quot;matcher&quot;
+&gt; instances to the highest degree possible.  And using class
+&gt; definitions really facilitates that, to my Java-poisoned mind.  For
+&gt; example, if the user writes in the config file
+
+&gt;   actions = (
+&gt;     (
+&gt;       # Save attachments from read messages at least 10 days old
+&gt;       mailbox =&gt; (
+&gt;         path =&gt; '/path/to/maildir',
+&gt;         type =&gt; 'maildir',
+&gt;       ),
+&gt;       match =&gt; (
+&gt;         type =&gt; And,
+&gt;         p =&gt; (
+&gt;           type =&gt; MarkedRead,
+&gt;           state =&gt; True,
+&gt;         ),
+&gt;         q =&gt; (
+&gt;           type =&gt; DaysOld,
+&gt;           days =&gt; 10,
+&gt;         ),
+&gt;       ),
+&gt;       action =&gt; (
+&gt;         type =&gt; SaveAttachments,
+&gt;         destination =&gt; '/some/directory/',
+&gt;       ),
+&gt;     ),
+&gt;   )
+
+&gt; (can you tell I've been working with Lighttpd lately?)
+
+&gt; then my app can easily read in this dictionary and map the
+&gt; user-specified actions directly into Matcher and Action instances;
+&gt; and this without me having to write a bunch of code to process
+&gt; boolean logic, matching types, action parameters, and so on into a
+&gt; program flow that has a structure needlessly divergent from the
+&gt; configuration file syntax.  It also means that, should a user
+&gt; augment the program with his own Matcher or Action implementation,
+&gt; as I intend to make it easy to do, then those implementations can be
+&gt; used straightaway without even touching the code for the
+">
+
+...
+read more »
+</POST>
+<POST>
+<POSTER> Mark Shroyer &lt;usenet-m...@markshroyer.com&gt; </POSTER>
+<POSTDATE> 2007-11-11T08:21:00 </POSTDATE>
+On 2007-11-11, Jonathan Gardner &lt;jgardner.jonathangardner. ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; There isn't much difference between
+
+&gt;&gt;   match_calendar_month(2007, 11, message)
+
+&gt;&gt; and
+
+&gt;&gt;   m = CalendarMonthMatcher(2007, 11)
+&gt;&gt;   m.match(message)
+
+&gt; Yes, there isn't a world of difference between the two. But there
+&gt; is a world of difference between those and:
+
+&gt;    match(message, before=date(2007, 12, 1), after=date(2007, 11, 1))
+
+&gt; And you can add parameters as needed. In the end, you may have a
+&gt; lot of parameters, but only one match function and only one
+&gt; interface.
+">
+
+No, that would be an absolutely, positively bad decision.  Heck,
+suppose I wanted to match messages from &quot;@ufl.edu&quot; that are at least
+seven days old, OR all other messages from the previous month or
+earlier -- but only if we're at least four days into the current
+month.  (This isn't a fanciful invention for the sake of argument,
+it's an actual rule I'm using right now.)  Then, at best, we'd have
+something like:
+
+(match(message, domain=&quot;ufl.edu&quot;)
+and
+match(message, before=date(2007, 11, 4))
+or (match(message, before=date(2007, 11, 1)), \
+butMatchThePreviousMonthInsteadIfDaysIntoCurrentMonthIsLessThan=4))
+
+Or you could go the other way and try to solve it by adding even
+more arguments to the function, but then you're even worse off for
+complexity.  Either way, you're left without an abstract way to say
+&quot;this month&quot; or &quot;previous week&quot; without implementing the logic to do
+so separately from the data.  In my experience, that kind of design
+ends up making things a lot more complicated than they need to be,
+once the application is put to use and once you (or worse, somebody
+else) starts wanting to extend it.
+
+Compare that to the actual implementation of this rule in my
+program:
+
+rule= Or(
+And(
+SenderPattern(re.compile(&quot;@ufl\.edu&quot;)),
+DaysOld(7)
+),
+CalendarMonthOld(match_delay_days=4)
+)
+rule.match(message)
+
+(The current implementation of CalendarMonthOld takes the current
+month if not otherwise specified.)
+
+<QUOTE PREVIOUSPOST="
+&gt; Or it could be that you are confusing two things with each other.
+
+&gt; [...]
+
+&gt; How do you avoid complexity? You take a step back, identify patterns,
+&gt; or pull different things apart from each other (like rows and
+&gt; columns), and try to find the most basic principles to guide the
+&gt; entire system.
+">
+
+If I could just break everything down into date ranges, I would.
+But that doesn't give me the kind of behavior I want.
+
+<QUOTE PREVIOUSPOST="
+&gt; The very fact that you are talking about months (and thus days and
+&gt; weeks and years and centuries, etc...) and not generic dates means you
+&gt; have some more simplifying to do in your design elsewhere as well.
+">
+
+No, it truly does not.  Sometimes I want to match a message that is
+N days old; sometimes I want to match a message from the previous
+*calendar month* or earlier, which can not be readily specified as a
+number of days; the same goes for calendar year, calendar week, etc.
+Some small amount of calculation has to be performed to convert a
+given number of calendar weeks into a datetime range.  And in order
+for the user -- that is, primarily, me, but hopefully others too
+once I get around to polishing up this thing -- to be able to
+generically say, &quot;match all the messages from the last quarter&quot;,
+bundling such behavior with the data it operates on makes the system
+easier to implement and *much* easier to extend.
+
+If I used a monolithic match() function, as you suggest, then any
+user who wanted to implement a new message handling action or a new
+matching rule would need to alter the core application.  With my
+approach, all that user needs to do is toss a module containing his
+or her custom Matcher and Action implementations into a certain
+directory, and he's good to go.
+
+<QUOTE PREVIOUSPOST="
+&gt; Rewrite the SaveAttachmentsByMonth so that it calls a more generic
+&gt; SaveAttachmentsByDateRange function. Or better yet, have it
+&gt; FilterEmailsByDateRange and ExtractAttachment and SaveAttachment. Or
+&gt; even better, have it FilterEmailsBySpecification(date_from=X,
+&gt; date_to=Y) and SaveAttachmentl.
+">
+
+Yeah, actually the class I have defined for this action *is* a more
+generic &quot;save attachments by date range&quot; action type, as I used for
+an example later in that post when I described passing it a
+CalendarWeek date range instead of a CalendarMonth.  The confusion
+on this point is my fault, though, as I also referred to this action
+as SaveAttachmentsByMonth in a misguided attempt at clarifying my
+point.
+
+<QUOTE PREVIOUSPOST="
+&gt; Do you see the point? Your big function SaveAttachmentsByMonth is kind
+&gt; of like point number 735. It's easier to describe it as the point at
+&gt; (7,35) than as a single number. It's better to talk about the most
+&gt; basic functionality --- saving emails and filter emails -- rather than
+&gt; talking about big concepts.
+
+&gt; [...]
+
+&gt; Your users will appreciate it as well. While it may be nice to have a
+&gt; shiny button that saves attachments by months, they'd rather they
+&gt; could specify the date ranges theyd like to use (hours? Days? Weeks?
+&gt; Quarters?) and what they'd like to save (the attachments, the entire
+&gt; email, etc...) (Better yet, what they'd like to *do*.)
+">
+
+That's the point precisely!  How does one specify &quot;last quarter,&quot; in
+a configuration file, in terms of a raw range of dates, such that it
+retains the meaning of &quot;last quarter&quot; as we progress from one month
+to the next?  He doesn't.  He needs the application to understand
+the concept of a &quot;quarter&quot; first.  With my approach, all he'd need
+to do to get the app thinking in terms of quarters for him, is to
+add to the app's extensions/ subdirectory a module containing the
+following:
+
+class QuarterAgeSpec(AgeSpec):
+def __init__(self, relative_quarter=0):
+now = datetime.utcnow()
+year, quarter = now.year, (now.month-1)/3
+(self.year, self.quarter) \
+= self._relative(year, quarter, relative_quarter)
+
+def _relative(self, year, quarter, delta):
+quarter += delta
+if quarter/4 != 0:
+year += quarter/4
+quarter %= 4
+return (year, quarter)
+
+def match(self, timestamp):
+(n_year, n_quarter) = self._relative(self.year, self.quarter, 1)
+return timestamp &gt;= datetime(self.year, self.quarter*3+1, 1) \
+and timestamp &lt; datetime(n_year, n_quarter*3+1, 1)
+
+Then my program calls Matcher.__subclasses__() and finds the new
+implementation, so he can immediately use this new Matcher from his
+configuration file as:
+
+actions = (
+(
+mailbox =&gt; (
+...
+),
+match =&gt; (
+type =&gt; Quarter,
+relative_quarter =&gt; -1,
+),
+action =&gt; (
+...
+),
+),
+)
+
+That's all there is to it.  He doesn't have to go about mucking with
+the program's internals, he just needs to extend one specific class
+with a well-defined interface.  How would you propose to accomplish
+this following your monolithic match-function approach, on the other
+hand?
+
+<QUOTE PREVIOUSPOST="
+&gt; Except we don't have different kinds of re expressions for different
+&gt; kinds of matching. One spec to handle everything is good enough, and
+&gt; it's much simpler. If you have the time, try to see what people did
+&gt; before regex took over the world. In fact, try writing a text parser
+&gt; that doesn't use one general regex function. You'll quickly discover
+&gt; why one method with one very general interface is the best way to
+&gt; handle things.
+">
+
+Sure, if you're dealing with a known, fixed set of types of inputs.
+But semantically -- in terms of how they're entered into the
+configuration file, in terms of the logic needed to match them -- a
+CalendarMonth and a DaysOld are *not* the same thing.  Slightly
+different code is required to initialize / define either one; and in
+my experience, when you have many differing behaviors and inputs
+floating around together as such, it's often more productive to
+group them together behind a class hierarchy.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; See, you are thinking in general terms, but you are writing a specific
+&gt; implementation. In other words, you're talking about the problem the
+&gt; right way, but you're trying to write the code in a different way.
+&gt; Coming from a C, perl, or Java background, this is to be expected.
+&gt; Those languages are a strait-jacket that impose themselves on your
+&gt; very thoughts. But in Python, the code should read like pseudo-code.
+&gt; Python *is* pseudo-code that compiles, after all.
+
+&gt; You don't need many classes because the branching logic--the bits or
+&gt; the program that say, &quot;I'm filtering by days and not months&quot;--can be
+&gt; contained in one bigger function that calls a very general sub-
+&gt; function. There's no need to abstract that bit out into a class. No
+&gt; one is going to use it but the match routine. Just write the code that
+&gt; does it and be done with it.
+
+&gt; In fact, by writing classes for all these branches in the program
+&gt; logic, you are doing yourself a disservice. When you return to this
+&gt; code 3 weeks from now, you'll find all the class declarations and
+&gt; metaclass and syntactic sugar is getting in your way of seeing what is
+&gt; really happening. That is always bad and should be avoided, just like
+&gt; flowery language and useless decorum should be avoided.
+">
+
+As for the metaclass -- yeah, quite possibly; that was more of a
+&quot;just for fun&quot; experiment than anything else.  Hence the Don Quixote
+reference; attacking imaginary enemies and all that ;).  But as for
+the rest of this statement, I thoroughly disagree.  This
+object-oriented &quot;syntactic sugar&quot; is, in this case, a means of
+organizing my application's behavior into meaningful, simply
+understood, and easily adapted units.  A monolithic &quot;match&quot; function
+with an ever-increasing number of arguments as I cram in more and
+more classes of matching logic?  *That* is what's bound to become
+incomprehensible.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; No, you're arguing about the thing I wanted to argue about, so you see
+&gt; the point I am trying to make.
+
+&gt; It's painful to realize that all those years learning OO design and
+&gt; design patterns just to make Java usable are
+">
+
+...
+read more »
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,572 @@
+<DOC>
+<DOCID> eng-NG-31-146988-7899864 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-07-24T15:02:00 </DATETIME>
+<BODY>
+<HEADLINE>
+RESEND: OMNeT++ 4.0: Ini file handling
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Andras Varga&quot; &lt;and...@omnetpp.org&gt; </POSTER>
+<POSTDATE> 2007-07-24T15:02:00 </POSTDATE>
+Anyone else managed to read the doc about OMNeT++ 4.0 ini files since it was
+posted? I'm copying it below, because the fact that the original was in PDF
+format behind an HTML link apparently reduced the number of readers to a
+one-digit number... Please comment before everything gets carved into stone!
+
+Regards,
+
+Andras
+
+Configuring Simulations in OMNeT++ 4.0
+
+Changes in Ini File Syntax and Features
+
+1    IIntroduction
+
+In OMNeT++ 4.0, we re-thought and improved the concept of ini files and
+configuring simulations. Major enhancements include the introduction of
+named configurations which can build on one another, and the ability to
+define various scenarios by iterating over a parameter space, for batch
+execution. As you will see, the introduction of scenarios has created a
+clean way to do multiple runs with the same parameters but different random
+number seeds, and with scenario meta-information saved into the result files
+one will get a much more organized view in the result analysis phase about
+the simulations performed and their results.
+
+With the above goals in mind, configuration reading and handling was
+re-implemented from scratch. Additional benefits from this re-implementation
+are greatly improved performance (we use maps instead of linear searches),
+the ability to catch and report mistyped configuration keys in the ini
+files, and to be able to print a list of all supported configuration keys,
+complete with descriptions.
+
+OMNeT++ 4.0 ini files have roughly the same syntax as 3.x ini files, but the
+design goals could not be achieved without rationalizing some aspects of the
+ini files, like changing the names of some sections and config keys. This
+breaks backward compatibility, and thus OMNeT++ 3.x ini files need to be
+converted to be used with OMNeT++ 4.0. There is a command-line tool to do
+this conversion, or you can leave it to the IDE's Inifile Editor, or even
+doing it manually is quite painless and straightforward.
+
+The remaining sections describe the changes and enhancements of ini file
+handling in OMNeT++ 4.0.
+
+2    SSections
+
+2.1             Overview
+
+To begin with, the [Cmdenv], [Tkenv], [Parameters], [OutVectors] and
+[Partitioning] sections are no more -- only [General] is left. The
+organizing principle of sections is no longer the duality of topics (Cmdenv,
+Tkenv, output vectors, etc.) and runs (run 1, run 2, etc.), but named
+configurations -- only, and always.
+
+Named configurations are sections of the form [Config &lt;configname&gt;], where
+&lt;configname&gt; is by convention a camel-case string that starts with a capital
+letter: &quot;Config1&quot;, &quot;WirelessPing&quot;, &quot;OverloadedFifo&quot;, etc. For example,
+omnetpp.ini for an Aloha simulation might have the following skeleton:
+
+[General]
+
+...
+
+[Config PureAloha]
+
+...
+
+[Config SlottedAloha1]
+
+...
+
+[Config SlottedAloha2]
+
+...
+
+Keys formerly in the [Cmdenv] section simply got a &quot;cmdenv-&quot; prefix, and
+were moved to the [General] section. Similarly, [Tkenv] keys got a &quot;tkenv-&quot;
+prefix, and were moved to [General]. The contents of the rest of the
+disappearing sections ([Parameters], [OutVectors] and [Partitioning]) just
+got merged into [General]. This way, ini files actually became simpler and
+less error-prone: it cannot a happen any more that a configuration key gets
+ignored just because it was mistakenly added to the wrong section.
+
+NOTE: A few, less common configuration keys have changed too, like
+**.interval= for specifying the output vector data collection interval has
+been renamed to **.recording-interval=, so please check the section on
+migrating ini files before setting out to manually convert files, and/or
+print the list of supported configuration keys by invoking any simulation
+executable with the &quot;-q configdetails&quot; command-line option.
+
+There are also no [Run X] sections any more: when converting a 3.x ini file,
+change them to named configurations. Automatic conversion tools will just
+generate names like [Config One], [Config Two], etc, and it is up to you to
+change them to better names afterwards.
+
+Some configuration keys (such as user interface selection) are only accepted
+in the [General] section, but most of them can go into Config sections as
+well.
+
+The description= configuration key still exists (you can provide a string
+there, with an explanation about the purpose or content of the section), but
+it has less significance now that configurations can be given descriptive
+names instead of just being called [Run 1], [Run 2], etc.
+
+When you run a simulation, you need to select one of the configurations to
+be activated. In Cmdenv, this is done with the '-c' command-line option:
+
+% aloha -c PureAloha
+
+The simulation will then use the contents of the [Config PureAloha] section
+to set up the simulation. (Tkenv, of course, lets you select the
+configuration from a dialog.)
+
+2.2             Fallbacks
+
+Actually, when you activate the PureAloha configuration, the contents of the
+[General] section will also be taken into account: if some configuration key
+or parameter value is not found in [Config PureAloha], then the search will
+continue in the [General] section. In other words, lookups in [Config
+PureAloha] will fall back to [General]. The [General] section itself is
+optional; when it is absent, it is treated like an empty [General] section.
+
+All named configurations fall back to [General] by default. However, for
+each configuration it is possible to specify a fall-back section explicitly,
+using the extends= key. Consider the following ini file skeleton:
+
+[General]
+
+...
+
+[Config SlottedAlohaBase]
+
+...
+
+[Config SlottedAloha1]
+
+extends = SlottedAlohaBase
+
+...
+
+[Config SlottedAloha2]
+
+extends = SlottedAlohaBase
+
+...
+
+[Config SlottedAloha2a]
+
+extends = SlottedAloha2
+
+...
+
+[Config SlottedAloha2b]
+
+extends = SlottedAloha2
+
+...
+
+If you activate the SlottedAloha2b configuration, lookups will consider
+sections in the following order (this is also called the &quot;section fallback
+chain&quot;): SlottedAloha2b, SlottedAloha2, SlottedAlohaBase, General.
+
+The effect is the same as if the contents of the sections SlottedAloha2b,
+SlottedAloha2, SlottedAlohaBase and General were copied together into one
+section, one after another, [Config SlottedAloha2b] being at the top, and
+[General] at the bottom. Lookups always start at the top, and stop at the
+first matching entry.
+
+The concept is similar to inheritance in object-oriented languages, and
+benefits are similar too: you can to factor out the common parts of several
+configurations into a &quot;base&quot; configuration, and the other way round, you can
+reuse existing configurations (as opposed to copying them) by using them as
+a base. In practice you will often have &quot;abstract&quot; configurations too (in
+the C++/Java sense), which assign only a subset of parameters and leave the
+others open, to be assigned in derived configurations.
+
+If you are experimenting a lot with different parameter settings of a
+simulation model, these techniques will make it a lot easier to manage ini
+files.
+
+3    SScenarios
+
+3.1             Basic use
+
+It is quite common in simulation studies that the simulation model is run
+several times with different parameter settings, and the results are
+analyzed in relation to the input parameters. OMNeT++ 3.x had no direct
+support for batch runs, and users had to resort to writing shell (or Python,
+Ruby, etc.) scripts that iterated over the required parameter space, and
+generated a (partial) ini file and run the simulation program in each
+iteration.
+
+OMNeT++ 4.0 largely automates this process, and eliminates the need for
+writing batch execution scripts. It is the ini file where the user can
+specify iterations over various parameter settings. Here's an example:
+
+[Scenario AlohaScenario]
+
+*.numHosts = ${1, 2, 5, 10..50 step 10}
+
+**.host[*].generationInterval = exponential( ${0.2, 0.4, 0.6} )
+
+[Scenario] sections are special [Config] sections; everything is allowed in
+them that is allowed within [Config] sections, plus ${...} iterations. This
+scenario expands to 8*3 = 24 simulation runs, where the number of hosts
+iterates over the numbers 1, 2, 5, 10, 20, 30, 40, 50, and for each host
+count three simulation runs will be done, with the generation interval being
+exponential(0.2), exponential(0.4), and exponential(0.6).
+
+How does it get run? First of all, Cmdenv with the '-n' option will tell you
+how many simulation runs a given Scenario section expands to. (You'll of
+course use Cmdenv for batch runs, not Tkenv.)
+
+% aloha -u Cmdenv -c AlohaScenario -n
+
+OMNeT++/OMNEST Discrete Event Simulation
+
+...
+
+Scenario: AlohaScenario
+
+Number of runs: 24
+
+If you add the '-g' option, the program will also print out the values of
+the iteration variables for each run. Note that the scenario description
+actually maps to nested loops, with the last &quot;${..}&quot; becoming the innermost
+loop. The iteration variables are just named $0 and $1 -- we'll see that it
+is possible to give meaningful names to them. Please ignore the
+'$repetition=0' part in the printout for now.
+
+% aloha -u Cmdenv -c AlohaScenario -n -g
+
+OMNeT++/OMNEST Discrete Event Simulation
+
+...
+
+Number of runs: 24
+
+Run 0: $0=1, $1=0.2, $repetition=0
+
+Run 1: $0=1, $1=0.4, $repetition=0
+
+Run 2: $0=1, $1=0.6, $repetition=0
+
+Run 3: $0=2, $1=0.2, $repetition=0
+
+Run 4: $0=2, $1=0.4, $repetition=0
+
+Run 5: $0=2, $1=0.6, $repetition=0
+
+Run 6: $0=5, $1=0.2, $repetition=0
+
+Run 7: $0=5, $1=0.4, $repetition=0
+
+...
+
+Run 19: $0=40, $1=0.4, $repetition=0
+
+Run 20: $0=40, $1=0.6, $repetition=0
+
+Run 21: $0=50, $1=0.2, $repetition=0
+
+Run 22: $0=50, $1=0.4, $repetition=0
+
+Run 23: $0=50, $1=0.6, $repetition=0
+
+Any of these runs can be executed by passing the '-r &lt;runnumber&gt;' option to
+Cmdenv. So, the task is now to run the simulation program 24 times, with
+'-r' running from 0 through 23:
+
+% aloha -u Cmdenv -c AlohaScenario -r 0
+
+% aloha -u Cmdenv -c AlohaScenario -r 1
+
+% aloha -u Cmdenv -c
+...
+read more »
+</POST>
+<POST>
+<POSTER> Bradley W Settlemyer &lt;brad...@parl.clemson.edu&gt; </POSTER>
+<POSTDATE> 2007-07-24T15:58:00 </POSTDATE>
+I didn't see anything that appeared controversial, but we are still
+fairly new to using OmNet and the document is long.  One thing I would
+like is a config option to stop the simulation if it has no more events
+pending, rather than when a time limit is crossed.  Is there some
+difficulty to this I'm missing?  My simulation has a finite number of
+events rather than a finite time to run under (note, the finite number
+varies widely depending on config options).
+
+I need to sit down and look at the parallel sim stuff in detail later,
+as we will likely be running our sims on a cluster at some point.
+Earlier documentation seemed to indicate that you already understood the
+problems with generating random number streams on multiple cluster nodes
+(i.e. you used the Akaroa package to get around that problem I think).
+I will need that, and will need to read that section more carefully
+later to understand how you've built all of that -- though we are some
+distance from having that portion of our simulator ready.
+
+Cheers,
+Brad
+
+<QUOTE PREVIOUSPOST="
+Andras Varga wrote:
+&gt; Anyone else managed to read the doc about OMNeT++ 4.0 ini files since it was
+&gt; posted? I'm copying it below, because the fact that the original was in PDF
+&gt; format behind an HTML link apparently reduced the number of readers to a
+&gt; one-digit number... Please comment before everything gets carved into stone!
+
+&gt; Regards,
+
+&gt; Andras
+
+&gt; Configuring Simulations in OMNeT++ 4.0
+
+&gt; Changes in Ini File Syntax and Features
+
+&gt; 1    IIntroduction
+
+&gt; In OMNeT++ 4.0, we re-thought and improved the concept of ini files and
+&gt; configuring simulations. Major enhancements include the introduction of
+&gt; named configurations which can build on one another, and the ability to
+&gt; define various scenarios by iterating over a parameter space, for batch
+&gt; execution. As you will see, the introduction of scenarios has created a
+&gt; clean way to do multiple runs with the same parameters but different random
+&gt; number seeds, and with scenario meta-information saved into the result files
+&gt; one will get a much more organized view in the result analysis phase about
+&gt; the simulations performed and their results.
+
+&gt; With the above goals in mind, configuration reading and handling was
+&gt; re-implemented from scratch. Additional benefits from this re-implementation
+&gt; are greatly improved performance (we use maps instead of linear searches),
+&gt; the ability to catch and report mistyped configuration keys in the ini
+&gt; files, and to be able to print a list of all supported configuration keys,
+&gt; complete with descriptions.
+
+&gt; OMNeT++ 4.0 ini files have roughly the same syntax as 3.x ini files, but the
+&gt; design goals could not be achieved without rationalizing some aspects of the
+&gt; ini files, like changing the names of some sections and config keys. This
+&gt; breaks backward compatibility, and thus OMNeT++ 3.x ini files need to be
+&gt; converted to be used with OMNeT++ 4.0. There is a command-line tool to do
+&gt; this conversion, or you can leave it to the IDE's Inifile Editor, or even
+&gt; doing it manually is quite painless and straightforward.
+
+&gt; The remaining sections describe the changes and enhancements of ini file
+&gt; handling in OMNeT++ 4.0.
+
+&gt; 2    SSections
+
+&gt; 2.1             Overview
+
+&gt; To begin with, the [Cmdenv], [Tkenv], [Parameters], [OutVectors] and
+&gt; [Partitioning] sections are no more -- only [General] is left. The
+&gt; organizing principle of sections is no longer the duality of topics (Cmdenv,
+&gt; Tkenv, output vectors, etc.) and runs (run 1, run 2, etc.), but named
+&gt; configurations -- only, and always.
+
+&gt; Named configurations are sections of the form [Config &lt;configname&gt;], where
+&gt; &lt;configname&gt; is by convention a camel-case string that starts with a capital
+&gt; letter: &quot;Config1&quot;, &quot;WirelessPing&quot;, &quot;OverloadedFifo&quot;, etc. For example,
+&gt; omnetpp.ini for an Aloha simulation might have the following skeleton:
+
+&gt;   [General]
+
+&gt;   ...
+
+&gt;   [Config PureAloha]
+
+&gt;   ...
+
+&gt;   [Config SlottedAloha1]
+
+&gt;   ...
+
+&gt;   [Config SlottedAloha2]
+
+&gt;   ...
+
+&gt; Keys formerly in the [Cmdenv] section simply got a &quot;cmdenv-&quot; prefix, and
+&gt; were moved to the [General] section. Similarly, [Tkenv] keys got a &quot;tkenv-&quot;
+&gt; prefix, and were moved to [General]. The contents of the rest of the
+&gt; disappearing sections ([Parameters], [OutVectors] and [Partitioning]) just
+&gt; got merged into [General]. This way, ini files actually became simpler and
+&gt; less error-prone: it cannot a happen any more that a configuration key gets
+&gt; ignored just because it was mistakenly added to the wrong section.
+
+&gt; NOTE: A few, less common configuration keys have changed too, like
+&gt; **.interval= for specifying the output vector data collection interval has
+&gt; been renamed to **.recording-interval=, so please check the section on
+&gt; migrating ini files before setting out to manually convert files, and/or
+&gt; print the list of supported configuration keys by invoking any simulation
+&gt; executable with the &quot;-q configdetails&quot; command-line option.
+
+&gt; There are also no [Run X] sections any more: when converting a 3.x ini file,
+&gt; change them to named configurations. Automatic conversion tools will just
+&gt; generate names like [Config One], [Config Two], etc, and it is up to you to
+&gt; change them to better names afterwards.
+
+&gt; Some configuration keys (such as user interface selection) are only accepted
+&gt; in the [General] section, but most of them can go into Config sections as
+&gt; well.
+
+&gt; The description= configuration key still exists (you can provide a string
+&gt; there, with an explanation about the purpose or content of the section), but
+&gt; it has less significance now that configurations can be given descriptive
+&gt; names instead of just being called [Run 1], [Run 2], etc.
+
+&gt; When you run a simulation, you need to select one of the configurations to
+&gt; be activated. In Cmdenv, this is done with the '-c' command-line option:
+
+&gt;   % aloha -c PureAloha
+
+&gt; The simulation will then use the contents of the [Config PureAloha] section
+&gt; to set up the simulation. (Tkenv, of course, lets you select the
+&gt; configuration from a dialog.)
+
+&gt; 2.2             Fallbacks
+
+&gt; Actually, when you activate the PureAloha configuration, the contents of the
+&gt; [General] section will also be taken into account: if some configuration key
+&gt; or parameter value is not found in [Config PureAloha], then the search will
+&gt; continue in the [General] section. In other words, lookups in [Config
+&gt; PureAloha] will fall back to [General]. The [General] section itself is
+&gt; optional; when it is absent, it is treated like an empty [General] section.
+
+&gt; All named configurations fall back to [General] by default. However, for
+&gt; each configuration it is possible to specify a fall-back section explicitly,
+&gt; using the extends= key. Consider the following ini file skeleton:
+
+&gt;   [General]
+
+&gt;   ...
+
+&gt;   [Config SlottedAlohaBase]
+
+&gt;   ...
+
+&gt;   [Config SlottedAloha1]
+
+&gt;   extends = SlottedAlohaBase
+
+&gt;   ...
+
+&gt;   [Config SlottedAloha2]
+
+&gt;   extends = SlottedAlohaBase
+
+&gt;   ...
+
+&gt;   [Config SlottedAloha2a]
+
+&gt;   extends = SlottedAloha2
+
+&gt;   ...
+
+&gt;   [Config SlottedAloha2b]
+
+&gt;   extends = SlottedAloha2
+
+&gt;   ...
+
+&gt; If you activate the SlottedAloha2b configuration, lookups will consider
+&gt; sections in the following order (this is also called the &quot;section fallback
+&gt; chain&quot;): SlottedAloha2b, SlottedAloha2, SlottedAlohaBase, General.
+
+&gt; The effect is the same as if the contents of the sections SlottedAloha2b,
+&gt; SlottedAloha2, SlottedAlohaBase and General were copied together into one
+&gt; section, one after another, [Config SlottedAloha2b] being at the top, and
+&gt; [General] at the bottom. Lookups always start at the top, and stop at the
+&gt; first matching entry.
+
+&gt; The concept is similar to inheritance in object-oriented languages, and
+&gt; benefits are similar too: you can to factor out the common parts of several
+&gt; configurations into a &quot;base&quot; configuration, and the other way round, you can
+&gt; reuse existing configurations (as opposed to copying them) by using them as
+&gt; a base. In practice you will often have &quot;abstract&quot; configurations too (in
+&gt; the C++/Java sense), which assign only a subset of parameters and leave the
+&gt; others open, to be assigned in derived configurations.
+
+&gt; If you are experimenting a lot with different parameter settings of a
+&gt; simulation model, these techniques will make it a lot easier to manage ini
+&gt; files.
+
+&gt; 3    SScenarios
+
+&gt; 3.1             Basic use
+
+&gt; It is quite common in simulation studies that the simulation model is run
+&gt; several times with different parameter settings, and the results are
+&gt; analyzed in relation to the input parameters. OMNeT++ 3.x had no direct
+&gt; support for batch runs, and users had to resort to writing shell (or Python,
+&gt; Ruby, etc.) scripts that iterated over the required parameter space, and
+&gt; generated a (partial) ini file and run the simulation program in each
+&gt; iteration.
+
+&gt; OMNeT++ 4.0 largely automates this process, and eliminates the need for
+&gt; writing batch execution scripts. It is the ini file where the user can
+&gt; specify iterations over various parameter settings. Here's an example:
+
+&gt;   [Scenario AlohaScenario]
+
+&gt;   *.numHosts = ${1, 2, 5, 10..50 step 10}
+
+&gt;   **.host[*].generationInterval = exponential( ${0.2, 0.4, 0.6} )
+
+&gt; [Scenario] sections are special [Config] sections; everything is allowed in
+&gt; them that is allowed within [Config] sections, plus ${...} iterations. This
+&gt; scenario expands to 8*3 = 24 simulation runs, where the number of hosts
+&gt; iterates over the numbers 1, 2, 5, 10, 20, 30, 40, 50, and for each host
+&gt; count three simulation runs will be done, with the generation interval being
+&gt; exponential(0.2), exponential(0.4), and exponential(0.6).
+
+&gt; How does it get run? First of all, Cmdenv with the '-n' option will tell you
+&gt; how many simulation runs a given Scenario section expands to. (You'll of
+&gt; course
+">
+
+...
+read more »
+</POST>
+<POST>
+<POSTER> Patrick Haeflinger &lt;patrick.haeflin...@alcatel-lucent.fr&gt; </POSTER>
+<POSTDATE> 2007-07-25T01:59:00 </POSTDATE>
+Hi Brad,
+
+If your simulation has no more event to process it will stop anyway
+without any option setting...
+
+Patrick
+
+Bradley W Settlemyer a écrit :
+
+<QUOTE PREVIOUSPOST="
+&gt; I didn't see anything that appeared controversial, but we are still
+&gt; fairly new to using OmNet and the document is long.  One thing I would
+&gt; like is a config option to stop the simulation if it has no more events
+&gt; pending, rather than when a time limit is crossed.  Is there some
+&gt; difficulty to this I'm missing?  My simulation has a finite number of
+&gt; events rather than a finite time to run under (note, the finite number
+&gt; varies widely depending on config options).
+
+&gt; I need to sit down and look at the parallel sim stuff in detail later,
+&gt; as we will likely be running our sims on a cluster at some point.
+&gt; Earlier documentation seemed to indicate that you already understood the
+&gt; problems with generating random number streams on multiple cluster nodes
+&gt; (i.e. you used the Akaroa package to get around that problem I think).
+&gt; I will need that, and will need to read that section more carefully
+&gt; later to understand how you've built all of that -- though we are some
+&gt; distance from having that portion of our simulator ready.
+
+&gt; Cheers,
+&gt; Brad
+">
+
+_______________________________________________
+OMNeT++ Mailing List
+options: http://lists.omnetpp.org/mailman/listinfo/omnetpp-l
+archive: http://www.omnetpp.org/listarchive/index.php
+</POST>
+</TEXT>
+</BODY>
+</DOC>

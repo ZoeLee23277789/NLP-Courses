@@ -1,0 +1,804 @@
+<DOC>
+<DOCID> eng-NG-31-135593-9758585 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2008-01-18T18:00:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Unit testing framework for C++
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Dilip &lt;rdil...@lycos.com&gt; </POSTER>
+<POSTDATE> 2008-01-18T18:00:00 </POSTDATE>
+CppUnit now seems to have a competitor.  I am probably the last person
+to see this but it looks like Microsoft has released an unit testing
+framework for C++ called WinUnit.  The MSDN link below somewhat
+irritatingly keeps mentioning C++ as &quot;Native code&quot; which is bound to
+rile up the experts around here :-).  I also don't know if there are
+some Microsoft-Compiler-isms that have crept into the library but it
+looks good at first glance.
+
+The code has been browsed online here:
+http://msdn.microsoft.com/msdnmag/code/?url=http://msdn.microsoft.com...
+The self-extracting archive can be downloaded here:
+http://download.microsoft.com/download/f/2/7/f279e71e-efb0-4155-873d-...
+An article in MSDN about it can be found here:
+http://msdn.microsoft.com/msdnmag/issues/08/02/NativeUnitTesting/defa...
+
+To the mods: if this post gets rejected for some reason is it possible
+to send the reject reason to rdil ... @NOSPAM.gmail.com (pls remove
+NOSPAM)?  The email I use to post in this NG is defunct and doesn't
+really exist.
+
+{ To all with concerns about posting their e-mail address on Usenet: the
+page referenced in the banner below explains how to post with a valid
+e-mail address to the moderators, and have a made-up address appear in
+the accepted article.  This mechanism was implemented precisely to
+handle such concerns.  Regarding trust, any other way that includes the
+possibility of a moderator reply necessarily also entails having that
+valid e-mail address used on a moderator's computer.  Hth., -mod/aps }
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Ric Parkin &lt;ric.par...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-19T23:23:00 </POSTDATE>
+On Jan 18, 11:00 pm, Dilip &lt;rdil ... @lycos.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; CppUnit now seems to have a competitor.  I am probably the last person
+&gt; to see this
+">
+
+If it's any consolation, it's he first I've heard of it and I'm an
+interested party (see below)...
+
+<QUOTE PREVIOUSPOST="
+&gt; but it looks like Microsoft has released an unit testing
+&gt; framework for C++ called WinUnit.
+">
+
+Actually that url is a magazine article. Is that &quot;released&quot; my MS
+officially? I doubt it
+
+<QUOTE PREVIOUSPOST="
+&gt; The MSDN link below somewhat
+&gt; irritatingly keeps mentioning C++ as &quot;Native code&quot; which is bound to
+&gt; rile up the experts around here :-).
+">
+
+Not claiming to be an expert, but at least makes it clear it's not C++/
+CLI.
+
+<QUOTE PREVIOUSPOST="
+&gt; I also don't know if there are
+&gt; some Microsoft-Compiler-isms that have crept into the library but it
+&gt; looks good at first glance.
+">
+
+Hmmm, not to put you down, but at first glance, it's anything BUT
+standard c++
+
+Lets see:
+
+&quot;#pragma once&quot;, but no include guards. Thats going to cause multiple
+symbol definitions sraightaway.
+
+#include &lt;windows.h&gt;
+This isn't their fault but this header didn't use to compile under
+MSVC with MS extensions turned off. I'd be very very pleased if the
+API group had sorted themselves out and prove me wrong.
+
+#define MAX_ASSERT_MESSAGE_LENGTH 1024
+and etc. Style nit - I thought this was meant to be C++. Why the
+macros for constants?
+
+#define BEGIN_TEST_FUNC(x) extern &quot;C&quot; __declspec(dllexport) bool
+__cdecl TEST_##x(wchar_t* __winUnit_buffer, size_t
+__winUnit_cchBuffer) {
+
+What is this __declspec, __cdeclc etc of which you speak? And double-
+undersored identifiers? Someone does not understand the language
+standard...
+
+#define EMIT_ERROR(...)
+Oooh, variable macro argments. C++0x perhaps, but not now.
+
+&quot; catch(WinUnit::AssertException&amp; e)&quot;
+Looks like const is optional. Not an error, but...huh Why?
+
+&quot;::_snwprintf_s&quot; whats that?
+
+template&lt;class T&gt;
+inline const TCHAR* ToString(
+
+.. why &quot;inline&quot;? Look at the code. Or more to the point, lack of it.
+It's a declaration.
+
+Lots of thing like
+#ifndef __WFILE__
+#define __WFILE__  ........
+(Hint - library writers are NOT part of the platform so should not use
+forbidden names. At least they give a point of customisation though..)
+
+I got about 10-20% though the *one* header file and I've now given up.
+
+This is not to disparage the code - it's not bad at all. But we're not
+talking anything like a cross-platform C++ library
+
+One thing I'm not sure of is was whether they'd fallen into the auto-
+registration trap. By the look of it, they've insisted that every test
+function is DLL exported which should do it. Different variations
+might work on other OSs, but it's a minefield.
+
+Ric
+(Disclaimer: around 2000 I wrote my own unit test framework because at
+the time CppUnit was a second rate JUnit port. it is still in use
+wherever it's been tried, including many multi-OS situations - and the
+users love it - three successful companies so far. I also know the
+people who wrote the Aeryn and CUTE unit testing libraries, which are
+much more portable and worth checking out - guys, you owe me a beer)
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> ap...@student.open.ac.uk </POSTER>
+<POSTDATE> 2008-01-21T03:45:00 </POSTDATE>
+On 20 Jan, 04:23, Ric Parkin &lt;ric.par ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 18, 11:00 pm, Dilip &lt;rdil ... @lycos.com&gt; wrote:
+&gt; &gt; but it looks like Microsoft has released an unit testing
+&gt; &gt; framework for C++ called WinUnit.
+">
+
+Why am I not suprised that this is Micro$oft only.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; I also don't know if there are
+&gt; &gt; some Microsoft-Compiler-isms that have crept into the library but it
+&gt; &gt; looks good at first glance.
+">
+
+Without even looking I can say that there WILL be because this is Micro
+$oft, where vendor-lock-in is the name of the game.
+
+<QUOTE PREVIOUSPOST="
+&gt; Hmmm, not to put you down, but at first glance, it's anything BUT
+&gt; standard c++
+">
+
+Indeed.
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;#pragma once&quot;, but no include guards. Thats going to cause multiple
+&gt; symbol definitions sraightaway.
+
+&gt; #include &lt;windows.h&gt;
+&gt; This isn't their fault
+">
+
+&lt;ahem&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; What is this __declspec, __cdeclc etc of which you speak?
+">
+
+IMO these are sometimes advisable when the framework is to be used in
+a Micro$oft environment, but need to be surrounded by ifdefs so that
+the code will also compile elsewhere. The other frameworks mentioned
+do this.
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;::_snwprintf_s&quot; whats that?
+">
+
+Another vendor-lock-in routine.
+
+<QUOTE PREVIOUSPOST="
+&gt; This is not to disparage the code - it's not bad at all. But we're not
+&gt; talking anything like a cross-platform C++ library
+&gt; Ric
+&gt; (Disclaimer: around 2000 I wrote my own unit test framework because at
+&gt; the time CppUnit was a second rate JUnit port. it is still in use
+&gt; wherever it's been tried, including many multi-OS situations - and the
+&gt; users love it - three successful companies so far.
+">
+
+Reference please (URL)? I do like to know about new test frameworks
+even though the choice seems a bit bewildering these days...
+
+<QUOTE PREVIOUSPOST="
+&gt; I also know the
+&gt; people who wrote the Aeryn and CUTE unit testing libraries, which are
+&gt; much more portable and worth checking out - guys, you owe me a beer)
+">
+
+These are good unit test frameworks but they are not the only ones.
+There seem to be loads these days. I even wrote one myself called
+FRUCTOSE which can be found on sourceforge. I wrote a related article
+about it in CVu. Chris Main followed this up by a review of the most
+common unit testing frameworks. He covers FRUCTOSE, Aeryn, CUTE and
+others. Read all about it at http://accu.org/index.php/journals/1326 .
+
+Regards,
+
+Andrew Marlow
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Ric Parkin &lt;ric.par...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-21T16:56:00 </POSTDATE>
+On Jan 21, 8:45 am, ap ... @student.open.ac.uk wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 20 Jan, 04:23, Ric Parkin &lt;ric.par ... @gmail.com&gt; wrote:
+
+&gt; &gt; On Jan 18, 11:00 pm, Dilip &lt;rdil ... @lycos.com&gt; wrote:
+&gt; &gt; &gt; but it looks like Microsoft has released an unit testing
+&gt; &gt; &gt; framework for C++ called WinUnit.
+
+&gt; Why am I not suprised that this is Micro$oft only.
+
+&gt; &gt; &gt; I also don't know if there are
+&gt; &gt; &gt; some Microsoft-Compiler-isms that have crept into the library but it
+&gt; &gt; &gt; looks good at first glance.
+
+&gt; Without even looking I can say that there WILL be because this is Micro
+&gt; $oft, where vendor-lock-in is the name of the game.
+">
+
+Well, even if such vendor lock-in was &quot;company policy&quot;, I would hope a
+magazine article I would strive for some reasonable portability and
+not gratuitously lock in for no reason.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; #include &lt;windows.h&gt;
+&gt; &gt; This isn't their fault
+&gt; &lt;ahem&gt;
+">
+
+No, I stand by my comment, which the snipped bit refers to windows.h
+not compiling as standard c++ - it used some small compiler extensions
+IIRC.  I meant that I don't blame the author of the test framework for
+that. (If they really strove for cross-platform they'd have to remove
+any need for it if they could, and as a last resport moving it to a
+compiler-specific pimpl would help)
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; What is this __declspec, __cdeclc etc of which you speak?
+
+&gt; IMO these are sometimes advisable when the framework is to be used in
+&gt; a Micro$oft environment, but need to be surrounded by ifdefs so that
+&gt; the code will also compile elsewhere. The other frameworks mentioned
+&gt; do this.
+">
+
+Right, and as you say should be macro-ized so there's a point of
+variation for others to hook into.
+
+Mind you, I don't think you really *need* that sort of test
+registration code (except possibly at a top-level test DLL entry
+point).
+
+Certainly I've found that manual registration (where you have a
+library Tests.cpp that names each file, a program Tests.cpp that names
+all the libraries etc) works simply and reliably, and if you are in
+the habit of always writing a failing test first, you don't forget to
+register. I have tried various self-registration schemes, but is
+really hard to get to work reliably - linker optimisations, different
+dynamic library loading schemes etc really make it tricky.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; &quot;::_snwprintf_s&quot; whats that?
+
+&gt; Another vendor-lock-in routine.
+">
+
+Yes, and needlessly used, which is my gripe. I've decided I'm not a
+fan of the &quot;safe&quot; library as currently pushed by the compiler.
+
+&lt;snip me mentioning my own-rolled framework&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; Reference please (URL)? I do like to know about new test frameworks
+&gt; even though the choice seems a bit bewildering these days...
+">
+
+Hasn't been published anywhere I'm afraid. Is a bit rough and ready in
+places too - has plenty of code fossils accumlated  - sometimes those
+odd compiler/linking/dynamic library work rounds bite, so I'd prefer
+to clean it up a little.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; I also know the
+&gt; &gt; people who wrote the Aeryn and CUTE unit testing libraries, which are
+&gt; &gt; much more portable and worth checking out - guys, you owe me a beer)
+
+&gt; These are good unit test frameworks but they are not the only ones.
+">
+
+No indeed
+
+<QUOTE PREVIOUSPOST="
+&gt; There seem to be loads these days. I even wrote one myself called
+&gt; FRUCTOSE which can be found on sourceforge. I wrote a related article
+&gt; about it in CVu.
+">
+
+Ah yes, I remember the article - I'm part of the review team ;-)
+
+<QUOTE PREVIOUSPOST="
+&gt; Chris Main followed this up by a review of the most
+&gt; common unit testing frameworks. He covers FRUCTOSE, Aeryn, CUTE and
+&gt; others. Read all about it at http://accu.org/index.php/journals/1326 .
+">
+
+Oddly enough there doesn't seem to many sessions on Unit Testing at
+the ACCU conference this year. Still work going though IMO
+&lt;/plug&gt;
+
+Ric
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Roy Smith &lt;r...@panix.com&gt; </POSTER>
+<POSTDATE> 2008-01-21T23:59:00 </POSTDATE>
+In article
+&lt;7229ada6-fa0b-4524-b715-ca5fddc9f ... @v67g2000hse.googlegroups.com&gt;,
+Ric Parkin &lt;ric.par ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Certainly I've found that manual registration (where you have a
+&gt; library Tests.cpp that names each file, a program Tests.cpp that names
+&gt; all the libraries etc) works simply and reliably, and if you are in
+&gt; the habit of always writing a failing test first, you don't forget to
+&gt; register. I have tried various self-registration schemes, but is
+&gt; really hard to get to work reliably - linker optimisations, different
+&gt; dynamic library loading schemes etc really make it tricky.
+">
+
+I've been looking at CxxTest ( http://cxxtest.sourceforge.net/ ) for a
+while.
+It takes an interesting approach to registation -- it uses a pre-processor
+which scans your C++ test source file and finds the test methods.
+
+I'll admit I've only played with it a bit, but it sounds like a good
+solution.  I'd be interested to hear from people who have used it in
+production.
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> James Dennett &lt;jdenn...@acm.org&gt; </POSTER>
+<POSTDATE> 2008-01-22T06:16:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Roy Smith wrote:
+&gt; In article
+&gt; &lt;7229ada6-fa0b-4524-b715-ca5fddc9f ... @v67g2000hse.googlegroups.com&gt;,
+&gt;   Ric Parkin &lt;ric.par ... @gmail.com&gt; wrote:
+
+&gt;&gt; Certainly I've found that manual registration (where you have a
+&gt;&gt; library Tests.cpp that names each file, a program Tests.cpp that names
+&gt;&gt; all the libraries etc) works simply and reliably, and if you are in
+&gt;&gt; the habit of always writing a failing test first, you don't forget to
+&gt;&gt; register. I have tried various self-registration schemes, but is
+&gt;&gt; really hard to get to work reliably - linker optimisations, different
+&gt;&gt; dynamic library loading schemes etc really make it tricky.
+
+&gt; I've been looking at CxxTest ( http://cxxtest.sourceforge.net/ ) for a
+&gt; while.
+&gt; It takes an interesting approach to registation -- it uses a pre-processor
+&gt; which scans your C++ test source file and finds the test methods.
+
+&gt; I'll admit I've only played with it a bit, but it sounds like a good
+&gt; solution.  I'd be interested to hear from people who have used it in
+&gt; production.
+">
+
+It works once you've integrated it into your build system.
+I use a slightly modified version of CxxTest.  I wouldn't
+use it again, but it does the job well enough that in its
+context it's not worth replacing.
+
+-- James
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> ap...@student.open.ac.uk </POSTER>
+<POSTDATE> 2008-01-22T06:21:00 </POSTDATE>
+On 21 Jan, 21:56, Ric Parkin &lt;ric.par ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Chris Main followed this up by a review of the most
+&gt; &gt; common unit testing frameworks. He covers FRUCTOSE, Aeryn, CUTE and
+&gt; &gt; others. Read all about it at http://accu.org/index.php/journals/1326 .
+
+&gt; Oddly enough there doesn't seem to many sessions on Unit Testing at
+&gt; the ACCU conference this year. Still work going though IMO
+&gt; &lt;/plug&gt;
+
+&gt; Ric
+">
+
+Actually, there is a session on testing by John Lakos this year. I
+have spent many hours talking with John about testing so I am
+reasonably familiar with his approach. I do not speak for him so what
+follows is my opinion on what his methods are about. I think he
+favours layered architectures and advocates that testing proceeds in
+layers. Thus you test from the bottom-up. At each layer you employ a
+unit test program for the class being tested. The test harness is
+allowed to call upon any services that might be needed from layers
+below since it is presumed that these have been tested and found to be
+ok. This approach does not use any particular unit test framework but
+IMO it is unit testing. And it benefits from using a unit test
+framework. So I think there will be something on this at the
+conference.
+
+Regards,
+
+Andrew Marlow
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Roy Smith &lt;r...@panix.com&gt; </POSTER>
+<POSTDATE> 2008-01-22T14:45:00 </POSTDATE>
+In article &lt;D3flj.1079$ov ... @newsfe15.phx&gt;,
+James Dennett &lt;jdenn ... @acm.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I use a slightly modified version of CxxTest.  I wouldn't
+&gt; use it again, but it does the job well enough that in its
+&gt; context it's not worth replacing.
+">
+
+What did you not like about it?  Based on what you've learned, if you were
+to start a new project, what would you use instead?
+
+And, I guess it's worth asking, &quot;What does 'slightly modified' mean?&quot;
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Ric Parkin &lt;ric.par...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-22T15:25:00 </POSTDATE>
+On Jan 22, 4:59 am, Roy Smith &lt;r ... @panix.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In article
+&gt; &lt;7229ada6-fa0b-4524-b715-ca5fddc9f ... @v67g2000hse.googlegroups.com&gt;,
+&gt;   Ric Parkin &lt;ric.par ... @gmail.com&gt; wrote:
+
+&gt; &gt; Certainly I've found that manual registration (where you have a
+&gt; &gt; library Tests.cpp that names each file, a program Tests.cpp that names
+&gt; &gt; all the libraries etc) works simply and reliably, and if you are in
+&gt; &gt; the habit of always writing a failing test first, you don't forget to
+&gt; &gt; register. I have tried various self-registration schemes, but is
+&gt; &gt; really hard to get to work reliably - linker optimisations, different
+&gt; &gt; dynamic library loading schemes etc really make it tricky.
+
+&gt; I've been looking at CxxTest ( http://cxxtest.sourceforge.net/ ) for a
+&gt; while.
+&gt; It takes an interesting approach to registation -- it uses a pre-processor
+&gt; which scans your C++ test source file and finds the test methods.
+">
+
+Ah yes, I'd forgotten about that approach - I'd realised that the way
+my test registration code is organised lends itself to automatic
+generation.
+
+Downside is you have to get the generation step into the build system
+without triggering unnessary rebuilds, which hasn't been tried at my
+current workplace so we're manually adding them. Much to most people's
+surprise this has not been a problem. (The trick was to always add a
+failing test first, which happens naturally in TDD, and alos in buggy
+code ;-)
+
+Ric
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> James Dennett &lt;jdenn...@acm.org&gt; </POSTER>
+<POSTDATE> 2008-01-23T07:16:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Roy Smith wrote:
+&gt; In article &lt;D3flj.1079$ov ... @newsfe15.phx&gt;,
+&gt;   James Dennett &lt;jdenn ... @acm.org&gt; wrote:
+
+&gt;&gt; I use a slightly modified version of CxxTest.  I wouldn't
+&gt;&gt; use it again, but it does the job well enough that in its
+&gt;&gt; context it's not worth replacing.
+
+&gt; What did you not like about it?
+">
+
+It uses code generation, but you still have to maintain
+separate source and header files for a test class -- the
+worst combination going.  (The code generation is also
+pretty dumb.)
+
+It has its own ways of converting objects to textual
+representations rather than using IOStreams.
+
+<QUOTE PREVIOUSPOST="
+&gt; Based on what you've learned, if you were
+&gt; to start a new project, what would you use instead?
+
+&gt; And, I guess it's worth asking, &quot;What does 'slightly modified' mean?&quot;
+">
+
+I wanted the framework to (at least optionally) report the
+names of tests as it runs them; so far as I could see, the
+off-the-shelf code for the textual UI did not do so.  That
+took only a simple tweak to the code generator.
+
+-- James
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> ap...@student.open.ac.uk </POSTER>
+<POSTDATE> 2008-01-23T21:30:00 </POSTDATE>
+On 23 Jan, 12:16, James Dennett &lt;jdenn ... @acm.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Roy Smith wrote:
+&gt; &gt;&gt; I use a slightly modified version of CxxTest.
+&gt; &gt; What did you not like about it?
+
+&gt; It uses code generation, but you still have to maintain
+&gt; separate source and header files for a test class
+">
+
+FRUCTOSE does have an optional code generator now, thanks to an
+enhancement by Chris Main. With this you only have one file to
+maintain. Here's how it works: you write your test class in a header
+file and employ some special macros to define the test classes. Then
+you run the generator on the header which creates a cpp source file.
+Example 6 in the FRUCTOSE tarball shows how this is done. There are
+basically two macros to use, FRUCTOSE_CLASS to define the class and
+FRUCTOSE_TEST to define/declare each test method.
+
+<QUOTE PREVIOUSPOST="
+&gt; I wanted the framework to (at least optionally) report the
+&gt; names of tests as it runs them; so far as I could see, the
+&gt; off-the-shelf code for the textual UI did not do so.
+">
+
+But FRUCTOSE does when you use the -v(erbose) option. So it seems to
+me that FRUCTOSE meets your needs!
+
+<QUOTE PREVIOUSPOST="
+&gt; That
+&gt; took only a simple tweak to the code generator.
+
+&gt; -- James
+">
+
+Regards,
+
+Andrew Marlow
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> anon &lt;a...@no.no&gt; </POSTER>
+<POSTDATE> 2008-01-25T10:45:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+James Dennett wrote:
+&gt; Roy Smith wrote:
+&gt;&gt; In article &lt;D3flj.1079$ov ... @newsfe15.phx&gt;,
+&gt;&gt;   James Dennett &lt;jdenn ... @acm.org&gt; wrote:
+
+&gt;&gt;&gt; I use a slightly modified version of CxxTest.  I wouldn't
+&gt;&gt;&gt; use it again, but it does the job well enough that in its
+&gt;&gt;&gt; context it's not worth replacing.
+
+&gt;&gt; What did you not like about it?
+
+&gt; It uses code generation, but you still have to maintain
+&gt; separate source and header files for a test class -- the
+&gt; worst combination going.  (The code generation is also
+&gt; pretty dumb.)
+">
+
+I am using cxxunit, and it works fine. But I implement tests in the
+header files.
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Rune Allnor &lt;all...@tele.ntnu.no&gt; </POSTER>
+<POSTDATE> 2008-01-25T12:54:00 </POSTDATE>
+On 19 Jan, 00:00, Dilip &lt;rdil ... @lycos.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; CppUnit now seems to have a competitor.
+">
+
+I visited the local university bookstore yesterday and found
+a couple of books on &quot;Pragmatic Unit Testing&quot; in C# and Java:
+
+http://www.amazon.com/Pragmatic-Unit-Testing-NUnit-2nd/dp/0977616673/...
+http://www.amazon.com/Pragmatic-Unit-Testing-Java-JUnit/dp/0974514012...
+
+Any known plans for something similar for C++?
+
+Rune
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Jorgen Grahn &lt;grahn+n...@snipabacken.se&gt; </POSTER>
+<POSTDATE> 2008-01-26T09:01:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Mon, 21 Jan 2008 22:59:55 CST, Roy Smith &lt;r ... @panix.com&gt; wrote:
+&gt; In article
+&gt; &lt;7229ada6-fa0b-4524-b715-ca5fddc9f ... @v67g2000hse.googlegroups.com&gt;,
+&gt;   Ric Parkin &lt;ric.par ... @gmail.com&gt; wrote:
+
+&gt;&gt; Certainly I've found that manual registration (where you have a
+&gt;&gt; library Tests.cpp that names each file, a program Tests.cpp that names
+&gt;&gt; all the libraries etc) works simply and reliably, and if you are in
+&gt;&gt; the habit of always writing a failing test first, you don't forget to
+&gt;&gt; register. I have tried various self-registration schemes, but is
+&gt;&gt; really hard to get to work reliably - linker optimisations, different
+&gt;&gt; dynamic library loading schemes etc really make it tricky.
+
+&gt; I've been looking at CxxTest ( http://cxxtest.sourceforge.net/ ) for a
+&gt; while.
+&gt; It takes an interesting approach to registation -- it uses a pre-processor
+&gt; which scans your C++ test source file and finds the test methods.
+
+&gt; I'll admit I've only played with it a bit, but it sounds like a good
+&gt; solution.  I'd be interested to hear from people who have used it in
+&gt; production.
+">
+
+I never tried CxxTest I think, but that's the solution I chose for my
+private little unit testing project, &quot;testicle&quot;: feed the object files
+through nm(1) and write source code which calls all functions named
+&quot;void testSomething()&quot;.
+
+http://snipabacken.se/~grahn/comp/index.html#testicle
+
+I am very happy with that approach: I actually write tests nowadays.
+
+/Jorgen
+
+--
+// Jorgen Grahn &lt;grahn@        Ph'nglui mglw'nafh Cthulhu
+\X/     snipabacken.se&gt;          R'lyeh wgah'nagl fhtagn!
+
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Jeff Koftinoff &lt;jeff.koftin...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-26T14:25:00 </POSTDATE>
+On Jan 26, 6:01 am, Jorgen Grahn &lt;grahn+n ... @snipabacken.se&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I never tried CxxTest I think, but that's the solution I chose for my
+&gt; private little unit testing project, &quot;testicle&quot;: feed the object files
+&gt; through nm(1) and write source code which calls all functions named
+&gt; &quot;void testSomething()&quot;.
+
+&gt; http://snipabacken.se/~grahn/comp/index.html#testicle
+
+&gt; I am very happy with that approach: I actually write tests nowadays.
+
+&gt; /Jorgen
+">
+
+I personally like that approach and have used it for my own projects,
+however it does bind your makefile to a platform - for instance on
+windows there is no nm, and on mac osx for universal binaries, the
+presence of multiple target cpu architecture code in a single .o file
+complicate things further...
+
+--jeffk++
+www.jdkoftinoff.com
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Luc Hermitte &lt;luc.hermi...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-28T14:55:00 </POSTDATE>
+On 23 jan, 13:16, James Dennett &lt;jdenn ... @acm.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Roy Smith wrote:
+&gt; &gt; In article &lt;D3flj.1079$ov ... @newsfe15.phx&gt;,
+&gt; &gt;   James Dennett &lt;jdenn ... @acm.org&gt; wrote:
+
+&gt; &gt;&gt; I use a slightly modified version of CxxTest.  I wouldn't
+&gt; &gt;&gt; use it again, but it does the job well enough that in its
+&gt; &gt;&gt; context it's not worth replacing.
+
+&gt; &gt; What did you not like about it?
+
+&gt; It uses code generation, but you still have to maintain
+&gt; separate source and header files for a test class -- the
+&gt; worst combination going.  (The code generation is also
+&gt; pretty dumb.)
+">
+
+This is not an obligation. I only define header files that contain all
+the testing code. And it works quite well this way.
+No need to list the test functions twice or even three times. We just
+need to define member functions named testxxxx(), and that's almost
+all.
+
+<QUOTE PREVIOUSPOST="
+&gt; It has its own ways of converting objects to textual
+&gt; representations rather than using IOStreams.
+">
+
+This is the main problem I had with CxxTest. This attempt to avoid
+IOStreams by all means annoyed me more than once.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Based on what you've learned, if you were
+&gt; &gt; to start a new project, what would you use instead?
+">
+
+I'll likely use CxxTest again. However, I'd also have a closer look at
+FRUCTOSE before.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; And, I guess it's worth asking, &quot;What does 'slightly modified' mean?&quot;
+
+&gt; I wanted the framework to (at least optionally) report the
+&gt; names of tests as it runs them; so far as I could see, the
+&gt; off-the-shelf code for the textual UI did not do so.  That
+&gt; took only a simple tweak to the code generator.
+">
+
+We did also tweak the code generator to run either all tests, or just
+one test (which was the only issue with CxxTest that I've read in ACCU/
+Overload article).
+
+--
+Luc Hermitte
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+</TEXT>
+</BODY>
+</DOC>

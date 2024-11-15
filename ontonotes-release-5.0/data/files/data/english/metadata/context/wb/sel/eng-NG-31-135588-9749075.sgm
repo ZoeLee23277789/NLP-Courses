@@ -1,0 +1,3140 @@
+<DOC>
+<DOCID> eng-NG-31-135588-9749075 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-05T12:51:00 </DATETIME>
+<BODY>
+<HEADLINE>
+defvar affecting captured closure variables ?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Eli Bendersky &lt;eli...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-05T12:51:00 </POSTDATE>
+Hello,
+
+Consider this code:
+
+(defun printer (val)
+(lambda () (format t &quot;~a~%&quot; val)))
+
+(setq printer-of-10 (printer 10))
+(funcall printer-of-10)
+
+It prints &quot;10&quot; as expected. However, consider this code:
+
+(defun printer (val)
+(lambda () (format t &quot;~a~%&quot; val)))
+
+(setq printer-of-10 (printer 10))
+(defvar val 12)
+(funcall printer-of-10)
+
+It prints 12 ! This defies my understanding of how the dynamic &amp;
+lexical scoping rules of CL interact.
+
+How does this work ? defvar seems to be very dangerous (I found it out
+the hard way - this small example is a summary of code I was pouring
+over for the past 2 hours - such a bug is horribly difficult to
+find!).
+
+Thanks in advance,
+Eli
+</POST>
+<POST>
+<POSTER> Ari Johnson &lt;iamthe...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-05T12:56:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Eli Bendersky &lt;eli ... @gmail.com&gt; writes:
+&gt; Hello,
+
+&gt; Consider this code:
+
+&gt; (defun printer (val)
+&gt;   (lambda () (format t &quot;~a~%&quot; val)))
+
+&gt; (setq printer-of-10 (printer 10))
+&gt; (funcall printer-of-10)
+
+&gt; It prints &quot;10&quot; as expected. However, consider this code:
+
+&gt; (defun printer (val)
+&gt;   (lambda () (format t &quot;~a~%&quot; val)))
+
+&gt; (setq printer-of-10 (printer 10))
+&gt; (defvar val 12)
+&gt; (funcall printer-of-10)
+
+&gt; It prints 12 ! This defies my understanding of how the dynamic &amp;
+&gt; lexical scoping rules of CL interact.
+
+&gt; How does this work ? defvar seems to be very dangerous (I found it out
+&gt; the hard way - this small example is a summary of code I was pouring
+&gt; over for the past 2 hours - such a bug is horribly difficult to
+&gt; find!).
+
+&gt; Thanks in advance,
+&gt; Eli
+">
+
+OpenMCL and SBCL both give me 10.  Which implementation are you using?
+</POST>
+<POST>
+<POSTER> Eli Bendersky &lt;eli...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-05T13:00:00 </POSTDATE>
+On Oct 5, 6:56 pm, Ari Johnson &lt;iamthe ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Eli Bendersky &lt;eli ... @gmail.com&gt; writes:
+&gt; &gt; Hello,
+
+&gt; &gt; Consider this code:
+
+&gt; &gt; (defun printer (val)
+&gt; &gt;   (lambda () (format t &quot;~a~%&quot; val)))
+
+&gt; &gt; (setq printer-of-10 (printer 10))
+&gt; &gt; (funcall printer-of-10)
+
+&gt; &gt; It prints &quot;10&quot; as expected. However, consider this code:
+
+&gt; &gt; (defun printer (val)
+&gt; &gt;   (lambda () (format t &quot;~a~%&quot; val)))
+
+&gt; &gt; (setq printer-of-10 (printer 10))
+&gt; &gt; (defvar val 12)
+&gt; &gt; (funcall printer-of-10)
+
+&gt; &gt; It prints 12 ! This defies my understanding of how the dynamic &amp;
+&gt; &gt; lexical scoping rules of CL interact.
+
+&gt; &gt; How does this work ? defvar seems to be very dangerous (I found it out
+&gt; &gt; the hard way - this small example is a summary of code I was pouring
+&gt; &gt; over for the past 2 hours - such a bug is horribly difficult to
+&gt; &gt; find!).
+
+&gt; &gt; Thanks in advance,
+&gt; &gt; Eli
+
+&gt; OpenMCL and SBCL both give me 10.  Which implementation are you using?
+">
+
+CLISP v2.41 (on Windows)
+</POST>
+<POST>
+<POSTER> Raffael Cavallaro &lt;raffaelcavallaro@pas-d&#39;espam-s&#39;il-vous-plait-mac.com&gt; </POSTER>
+<POSTDATE> 2007-10-05T13:07:00 </POSTDATE>
+On 2007-10-05 13:00:43 -0400, Eli Bendersky &lt;eli ... @gmail.com&gt; said:
+
+<QUOTE PREVIOUSPOST="
+&gt; CLISP v2.41 (on Windows)
+">
+
+Interpreted or compiled?
+</POST>
+<POST>
+<POSTER> Eli Bendersky &lt;eli...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-05T13:09:00 </POSTDATE>
+On Oct 5, 7:07 pm, Raffael Cavallaro &lt;raffaelcavallaro@pas-d'espam-
+
+<QUOTE PREVIOUSPOST="
+s'il-vous-plait-mac.com&gt; wrote:
+&gt; On 2007-10-05 13:00:43 -0400, Eli Bendersky &lt;eli ... @gmail.com&gt; said:
+
+&gt; &gt; CLISP v2.41 (on Windows)
+
+&gt; Interpreted or compiled?
+">
+
+Interpreted
+</POST>
+<POST>
+<POSTER> Rainer Joswig &lt;jos...@lisp.de&gt; </POSTER>
+<POSTDATE> 2007-10-05T13:13:00 </POSTDATE>
+In article &lt;1191603643.801567.316 ... @w3g2000hsg.googlegroups.com&gt;,
+Eli Bendersky &lt;eli ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Oct 5, 6:56 pm, Ari Johnson &lt;iamthe ... @gmail.com&gt; wrote:
+&gt; &gt; Eli Bendersky &lt;eli ... @gmail.com&gt; writes:
+&gt; &gt; &gt; Hello,
+
+&gt; &gt; &gt; Consider this code:
+
+&gt; &gt; &gt; (defun printer (val)
+&gt; &gt; &gt;   (lambda () (format t &quot;~a~%&quot; val)))
+
+&gt; &gt; &gt; (setq printer-of-10 (printer 10))
+&gt; &gt; &gt; (funcall printer-of-10)
+
+&gt; &gt; &gt; It prints &quot;10&quot; as expected. However, consider this code:
+
+&gt; &gt; &gt; (defun printer (val)
+&gt; &gt; &gt;   (lambda () (format t &quot;~a~%&quot; val)))
+
+&gt; &gt; &gt; (setq printer-of-10 (printer 10))
+&gt; &gt; &gt; (defvar val 12)
+&gt; &gt; &gt; (funcall printer-of-10)
+
+&gt; &gt; &gt; It prints 12 ! This defies my understanding of how the dynamic &amp;
+&gt; &gt; &gt; lexical scoping rules of CL interact.
+
+&gt; &gt; &gt; How does this work ? defvar seems to be very dangerous (I found it out
+&gt; &gt; &gt; the hard way - this small example is a summary of code I was pouring
+&gt; &gt; &gt; over for the past 2 hours - such a bug is horribly difficult to
+&gt; &gt; &gt; find!).
+
+&gt; &gt; &gt; Thanks in advance,
+&gt; &gt; &gt; Eli
+
+&gt; &gt; OpenMCL and SBCL both give me 10.  Which implementation are you using?
+
+&gt; CLISP v2.41 (on Windows)
+">
+
+That's an undesirable behavior of CLISP.
+It shows a difference in compiled and interpreted code.
+
+Try (compile 'printer) after you have defined printer.
+Then you get 10, as expected.
+
+Maybe you want to complain about it on the CLISP mailing list...
+
+Btw., always use the *foo* naming convention on toplevel variables.
+Especially those defined by DEFVAR and DEFPARAMETER.
+
+--
+http://lispm.dyndns.org
+</POST>
+<POST>
+<POSTER> Eli Bendersky &lt;eli...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-05T13:45:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; That's an undesirable behavior of CLISP.
+&gt; It shows a difference in compiled and interpreted code.
+
+&gt; Try (compile 'printer) after you have defined printer.
+&gt; Then you get 10, as expected.
+
+&gt; Maybe you want to complain about it on the CLISP mailing list...
+">
+
+It's not the only issue in which CLISP's compiled and interpreted code
+behaves differently. One notable example is tail-call optimization.
+They're enabled in compiled but not interpreted mode in CLISP.
+However, this is different - while optimizing tail-calls is left by
+the standard to the consideration of implementations, it appears that
+the behavior in the snippet I presented is plain wrong and goes
+against the Common Lisp standard. So it's a bug in CLISP ?
+
+Eli
+</POST>
+<POST>
+<POSTER> Eli Bendersky &lt;eli...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-05T13:49:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Btw., always use the *foo* naming convention on toplevel variables.
+&gt; Especially those defined by DEFVAR and DEFPARAMETER.
+">
+
+It appears that defvar has some gotchas because it gives the variable
+dynamic scope. Isn't it a better idea to avoid it completely if I have
+no intentions to use dynamic scope[*] ?
+
+As I replacement I can use a &quot;setf&quot;. I.e. on the top level:
+
+(setf some-var 5)
+
+Declares a variable some-var and assigns 5 to it, but the scope of
+some-var is not dymic. Right ?
+
+[*] Which seems to be 99.99% of the time.
+
+Eli
+</POST>
+<POST>
+<POSTER> Rainer Joswig &lt;jos...@lisp.de&gt; </POSTER>
+<POSTDATE> 2007-10-05T14:08:00 </POSTDATE>
+In article &lt;1191606541.321598.318 ... @19g2000hsx.googlegroups.com&gt;,
+Eli Bendersky &lt;eli ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Btw., always use the *foo* naming convention on toplevel variables.
+&gt; &gt; Especially those defined by DEFVAR and DEFPARAMETER.
+
+&gt; It appears that defvar has some gotchas because it gives the variable
+&gt; dynamic scope. Isn't it a better idea to avoid it completely if I have
+&gt; no intentions to use dynamic scope[*] ?
+
+&gt; As I replacement I can use a &quot;setf&quot;. I.e. on the top level:
+
+&gt; (setf some-var 5)
+
+&gt; Declares a variable some-var and assigns 5 to it, but the scope of
+&gt; some-var is not dymic. Right ?
+">
+
+The effect of   (setf some-var 5)  is undefined in ANSI CL.
+At least one implementation (CMUCL) used to make those
+special, too (which I find ugly).
+
+The typical Lisp style is:
+
+* define top-level variables with DEFVAR or DEFPARAMETER .
+Name them *foo* . Be aware that they are special
+variables.
+
+* Otherwise avoid top-level variables.
+
+<QUOTE PREVIOUSPOST="
+&gt; [*] Which seems to be 99.99% of the time.
+
+&gt; Eli
+">
+
+--
+http://lispm.dyndns.org
+</POST>
+<POST>
+<POSTER> Rainer Joswig &lt;jos...@lisp.de&gt; </POSTER>
+<POSTDATE> 2007-10-05T14:15:00 </POSTDATE>
+In article &lt;1191606327.371756.301 ... @r29g2000hsg.googlegroups.com&gt;,
+Eli Bendersky &lt;eli ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; That's an undesirable behavior of CLISP.
+&gt; &gt; It shows a difference in compiled and interpreted code.
+
+&gt; &gt; Try (compile 'printer) after you have defined printer.
+&gt; &gt; Then you get 10, as expected.
+
+&gt; &gt; Maybe you want to complain about it on the CLISP mailing list...
+
+&gt; It's not the only issue in which CLISP's compiled and interpreted code
+&gt; behaves differently. One notable example is tail-call optimization.
+&gt; They're enabled in compiled but not interpreted mode in CLISP.
+&gt; However, this is different - while optimizing tail-calls is left by
+&gt; the standard to the consideration of implementations,
+">
+
+Not really. In ANSI CL are many things mentioned where
+the implementation has freedom to use different implementation
+strategies.
+
+But ANSI CL says nothing about optimizing tail-calls. Nada. Nichts.
+It doesn't even say that it doesn't say anything. ;-)
+
+<QUOTE PREVIOUSPOST="
+&gt; it appears that
+&gt; the behavior in the snippet I presented is plain wrong and goes
+&gt; against the Common Lisp standard. So it's a bug in CLISP ?
+">
+
+Don't know. Maybe Kent has an opinion?
+
+Even if it is not a bug, it is undesirable, IMHO. It is desirable
+that there are as little differences between interpreted
+and compiled code.
+
+<QUOTE PREVIOUSPOST="
+&gt; Eli
+">
+
+--
+http://lispm.dyndns.org
+</POST>
+<POST>
+<POSTER> Michael Livshin &lt;use...@cmm.kakpryg.net&gt; </POSTER>
+<POSTDATE> 2007-10-05T14:24:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Eli Bendersky &lt;eli ... @gmail.com&gt; writes:
+&gt; it appears that the behavior in the snippet I presented is plain
+&gt; wrong and goes against the Common Lisp standard. So it's a bug in
+&gt; CLISP ?
+">
+
+no, it does not go against the standard.  the valid ways of
+implementing an interpreter are many; including, for instance,
+recompiling every function before calling it.
+
+there also are other ways to thwart an interpreter.  like, for
+instance, interestingly redefining macros which are used by
+interpreted functions.
+
+interpreters are thwartable.  it's a feature.
+
+there is a reason why the more well-behaved sub-species of special
+variables evolved those cute *earmuffs* on their names, and some
+implementations warn you about the less well-behaved sub-species.
+feel free to do business with the *earmuffed* specials, citizen, and
+report any violations to the authorities.
+
+cheers,
+--m
+</POST>
+<POST>
+<POSTER> Pascal Costanza &lt;p...@p-cos.net&gt; </POSTER>
+<POSTDATE> 2007-10-05T16:02:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Eli Bendersky wrote:
+&gt; Hello,
+
+&gt; Consider this code:
+
+&gt; (defun printer (val)
+&gt;   (lambda () (format t &quot;~a~%&quot; val)))
+
+&gt; (setq printer-of-10 (printer 10))
+&gt; (funcall printer-of-10)
+
+&gt; It prints &quot;10&quot; as expected. However, consider this code:
+
+&gt; (defun printer (val)
+&gt;   (lambda () (format t &quot;~a~%&quot; val)))
+
+&gt; (setq printer-of-10 (printer 10))
+&gt; (defvar val 12)
+&gt; (funcall printer-of-10)
+
+&gt; It prints 12 ! This defies my understanding of how the dynamic &amp;
+&gt; lexical scoping rules of CL interact.
+
+&gt; How does this work ? defvar seems to be very dangerous
+">
+
+defvar and defparameter introduce global variables, and such global
+variables are always special variables (i.e., dynamically scoped).
+Common Lisp doesn't have lexical global variables (although there is a
+common idiom to fake them via symbol macros - google for deflex or
+defglobal).
+
+Follow the naming conventions: global special variables are always like
+*val*, never like val - so they, by convention, always start with, and
+end in, an asterisk. Local lexical variables typically don't have a
+special naming convention.
+
+BTW, your (setq printer-of-10 (printer 10)) seems to work on an
+undefined variable. That's undefined behavior in Common Lisp. Better
+introduce such variables properly, with defvar or defparameter.
+
+Pascal
+
+--
+My website: http://p-cos.net
+Common Lisp Document Repository: http://cdr.eurolisp.org
+Closer to MOP &amp; ContextL: http://common-lisp.net/project/closer/
+</POST>
+<POST>
+<POSTER> Duane Rettig &lt;du...@franz.com&gt; </POSTER>
+<POSTDATE> 2007-10-05T19:03:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Michael Livshin &lt;use ... @cmm.kakpryg.net&gt; writes:
+&gt; Eli Bendersky &lt;eli ... @gmail.com&gt; writes:
+
+&gt;&gt; it appears that the behavior in the snippet I presented is plain
+&gt;&gt; wrong and goes against the Common Lisp standard. So it's a bug in
+&gt;&gt; CLISP ?
+
+&gt; no, it does not go against the standard.  the valid ways of
+&gt; implementing an interpreter are many; including, for instance,
+&gt; recompiling every function before calling it.
+">
+
+This isn't a question of compiled vs interpreted; it is a question of
+when a variable is closed over.  Section 3.1.4 of the spec gives the
+clear example: the variable is closed over (that is, its binding is
+captured) when the example function two-funs is entered (and not when
+the resultant closure is funcalled). Note that in the OP's example the
+equivalent of two-funs is printer, and when it is entered, val not
+declared special (it is only declared (globally) special via the
+defvar after the call to printer).  Any attempt to interpret var as
+special after this point is changing the binding, which is supposed to
+have been captured.
+
+So the demonstrated behavior is a bug. Here's an example of a lisp
+with an interpreter that does the correct thing (Allegro CL, of
+course):
+
+CL-USER(1): (defun printer (val)
+(lambda () (format t &quot;~a~%&quot; val)))
+PRINTER
+CL-USER(2): (setq printer-of-10 (printer 10))
+#&lt;Interpreted Closure (:INTERNAL PRINTER) @ #x30730692&gt;
+CL-USER(3): (defvar val 12)
+VAL
+CL-USER(4): (funcall printer-of-10)
+10
+NIL
+CL-USER(5): (setq fresh-printer-of-10 (printer 10))
+#&lt;Interpreted Closure (:INTERNAL PRINTER) @ #x3073146a&gt;
+CL-USER(6): (funcall fresh-printer-of-10)
+12
+NIL
+CL-USER(7):
+
+Note that the second closure from the call to printer-of-10 is
+created _after_ the defvar, and so here it demonstrates the difference
+between the interpreter and the compiler, which gives this result:
+
+CL-USER(1): (defun printer (val)
+(lambda () (format t &quot;~a~%&quot; val)))
+PRINTER
+CL-USER(2): (compile *)
+PRINTER
+NIL
+NIL
+CL-USER(3): (setq printer-of-10 (printer 10))
+#&lt;Closure (:INTERNAL PRINTER 0) @ #x307357da&gt;
+CL-USER(4): (defvar val 12)
+VAL
+CL-USER(5): (funcall printer-of-10)
+10
+NIL
+CL-USER(6): (setq fresh-printer-of-10 (printer 10))
+#&lt;Closure (:INTERNAL PRINTER 0) @ #x30735b7a&gt;
+CL-USER(7): (funcall fresh-printer-of-10)
+10
+NIL
+CL-USER(8):
+
+--
+Duane Rettig    du ... @franz.com    Franz Inc. http://www.franz.com/
+555 12th St., Suite 1450 http://www.555citycenter.com/
+Oakland, Ca. 94607        Phone: (510) 452-2000; Fax: (510) 452-0182
+</POST>
+<POST>
+<POSTER> Barry Margolin &lt;bar...@alum.mit.edu&gt; </POSTER>
+<POSTDATE> 2007-10-05T21:42:00 </POSTDATE>
+In article &lt;1191603060.718152.144 ... @d55g2000hsg.googlegroups.com&gt;,
+Eli Bendersky &lt;eli ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hello,
+
+&gt; Consider this code:
+
+&gt; (defun printer (val)
+&gt;   (lambda () (format t &quot;~a~%&quot; val)))
+
+&gt; (setq printer-of-10 (printer 10))
+&gt; (funcall printer-of-10)
+
+&gt; It prints &quot;10&quot; as expected. However, consider this code:
+
+&gt; (defun printer (val)
+&gt;   (lambda () (format t &quot;~a~%&quot; val)))
+
+&gt; (setq printer-of-10 (printer 10))
+&gt; (defvar val 12)
+&gt; (funcall printer-of-10)
+
+&gt; It prints 12 ! This defies my understanding of how the dynamic &amp;
+&gt; lexical scoping rules of CL interact.
+
+&gt; How does this work ? defvar seems to be very dangerous (I found it out
+&gt; the hard way - this small example is a summary of code I was pouring
+&gt; over for the past 2 hours - such a bug is horribly difficult to
+&gt; find!).
+">
+
+Are you sure you didn't execute the DEFVAR *before* you defined PRINTER?
+That would proclaim VAL special, and this would affect all functions
+defined thereafter.
+
+--
+Barry Margolin, bar ... @alum.mit.edu
+Arlington, MA
+*** PLEASE post questions in newsgroups, not directly to me ***
+*** PLEASE don't copy me on replies, I'll read them in the group ***
+</POST>
+<POST>
+<POSTER> Eli Bendersky &lt;eli...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-06T01:29:00 </POSTDATE>
+On Oct 5, 10:02 pm, Pascal Costanza &lt;p ... @p-cos.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Eli Bendersky wrote:
+&gt; &gt; Hello,
+
+&gt; &gt; Consider this code:
+
+&gt; &gt; (defun printer (val)
+&gt; &gt;   (lambda () (format t &quot;~a~%&quot; val)))
+
+&gt; &gt; (setq printer-of-10 (printer 10))
+&gt; &gt; (funcall printer-of-10)
+
+&gt; &gt; It prints &quot;10&quot; as expected. However, consider this code:
+
+&gt; &gt; (defun printer (val)
+&gt; &gt;   (lambda () (format t &quot;~a~%&quot; val)))
+
+&gt; &gt; (setq printer-of-10 (printer 10))
+&gt; &gt; (defvar val 12)
+&gt; &gt; (funcall printer-of-10)
+
+&gt; &gt; It prints 12 ! This defies my understanding of how the dynamic &amp;
+&gt; &gt; lexical scoping rules of CL interact.
+
+&gt; &gt; How does this work ? defvar seems to be very dangerous
+
+&gt; defvar and defparameter introduce global variables, and such global
+&gt; variables are always special variables (i.e., dynamically scoped).
+&gt; Common Lisp doesn't have lexical global variables (although there is a
+&gt; common idiom to fake them via symbol macros - google for deflex or
+&gt; defglobal).
+
+&gt; Follow the naming conventions: global special variables are always like
+&gt; *val*, never like val - so they, by convention, always start with, and
+&gt; end in, an asterisk. Local lexical variables typically don't have a
+&gt; special naming convention.
+
+&gt; BTW, your (setq printer-of-10 (printer 10)) seems to work on an
+&gt; undefined variable. That's undefined behavior in Common Lisp. Better
+&gt; introduce such variables properly, with defvar or defparameter.
+">
+
+I realize this can be solved by following the naming convention.
+However, I think you'll have to agree that this is not a clean
+solution. Using a naming convention to avoid wrong behavior of the
+environment shouldn't be the panacea.
+
+Sometimes then playing with complex code I find it useful to define
+many global vars on the top environment. Adding earmuffs to each is
+tiresome because these vars are not true globals of my code which I
+want to mark, but just temporary places to hold stuff while I'm
+testing how the code works.
+
+Eli
+</POST>
+<POST>
+<POSTER> Geoff Wozniak &lt;geoff.wozn...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-06T02:46:00 </POSTDATE>
+On Oct 6, 1:29 am, Eli Bendersky &lt;eli ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I realize this can be solved by following the naming convention.
+&gt; However, I think you'll have to agree that this is not a clean
+&gt; solution. Using a naming convention to avoid wrong behavior of the
+&gt; environment shouldn't be the panacea.
+">
+
+I'd wager that fixing this problem without a naming convention would
+be (or have been, at the time it was decided on) a lot uglier.
+
+<QUOTE PREVIOUSPOST="
+&gt; Sometimes then playing with complex code I find it useful to define
+&gt; many global vars on the top environment. Adding earmuffs to each is
+&gt; tiresome because these vars are not true globals of my code which I
+&gt; want to mark, but just temporary places to hold stuff while I'm
+&gt; testing how the code works.
+">
+
+Perhaps &quot;global lexicals&quot; are something that you could integrate into
+your workflow.
+
+http://www.tfeb.org/lisp/toys.html#GLEX
+</POST>
+<POST>
+<POSTER> Rainer Joswig &lt;jos...@lisp.de&gt; </POSTER>
+<POSTDATE> 2007-10-06T03:33:00 </POSTDATE>
+In article &lt;barmar-E457F6.21422005102 ... @comcast.dca.giganews.com&gt;,
+Barry Margolin &lt;bar ... @alum.mit.edu&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In article &lt;1191603060.718152.144 ... @d55g2000hsg.googlegroups.com&gt;,
+&gt;  Eli Bendersky &lt;eli ... @gmail.com&gt; wrote:
+
+&gt; &gt; Hello,
+
+&gt; &gt; Consider this code:
+
+&gt; &gt; (defun printer (val)
+&gt; &gt;   (lambda () (format t &quot;~a~%&quot; val)))
+
+&gt; &gt; (setq printer-of-10 (printer 10))
+&gt; &gt; (funcall printer-of-10)
+
+&gt; &gt; It prints &quot;10&quot; as expected. However, consider this code:
+
+&gt; &gt; (defun printer (val)
+&gt; &gt;   (lambda () (format t &quot;~a~%&quot; val)))
+
+&gt; &gt; (setq printer-of-10 (printer 10))
+&gt; &gt; (defvar val 12)
+&gt; &gt; (funcall printer-of-10)
+
+&gt; &gt; It prints 12 ! This defies my understanding of how the dynamic &amp;
+&gt; &gt; lexical scoping rules of CL interact.
+
+&gt; &gt; How does this work ? defvar seems to be very dangerous (I found it out
+&gt; &gt; the hard way - this small example is a summary of code I was pouring
+&gt; &gt; over for the past 2 hours - such a bug is horribly difficult to
+&gt; &gt; find!).
+
+&gt; Are you sure you didn't execute the DEFVAR *before* you defined PRINTER?
+&gt; That would proclaim VAL special, and this would affect all functions
+&gt; defined thereafter.
+">
+
+Fresh CLISP started on my Mac:
+
+RJMBP:~ joswig$ clisp
+i i i i i i i       ooooo    o        ooooooo   ooooo   ooooo
+I I I I I I I      8     8   8           8     8     o  8    8
+I  \ `+' /  I      8         8           8     8        8    8
+\  `-+-'  /       8         8           8      ooooo   8oooo
+`-__|__-'        8         8           8           8  8
+|            8     o   8           8     o     8  8
+------+------       ooooo    8oooooo  ooo8ooo   ooooo   8
+
+Welcome to GNU CLISP 2.41 (2006-10-13) &lt; http://clisp.cons.org/ &gt;
+
+Copyright (c) Bruno Haible, Michael Stoll 1992, 1993
+Copyright (c) Bruno Haible, Marcus Daniels 1994-1997
+Copyright (c) Bruno Haible, Pierpaolo Bernardi, Sam Steingold 1998
+Copyright (c) Bruno Haible, Sam Steingold 1999-2000
+Copyright (c) Sam Steingold, Bruno Haible 2001-2006
+
+Type :h and hit Enter for context help.
+
+[1]&gt; (defun printer (val)
+(lambda () (format t &quot;~a~%&quot; val)))
+PRINTER
+[2]&gt; (setq printer-of-10 (printer 10))
+#&lt;FUNCTION :LAMBDA NIL (FORMAT T &quot;~a~%&quot; VAL)&gt;
+[3]&gt; (defvar val 12)
+VAL
+[4]&gt; (funcall printer-of-10)
+12
+NIL
+[5]&gt;
+
+--
+http://lispm.dyndns.org
+</POST>
+<POST>
+<POSTER> Pascal Costanza &lt;p...@p-cos.net&gt; </POSTER>
+<POSTDATE> 2007-10-06T06:44:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Eli Bendersky wrote:
+&gt; On Oct 5, 10:02 pm, Pascal Costanza &lt;p ... @p-cos.net&gt; wrote:
+&gt;&gt; Follow the naming conventions: global special variables are always like
+&gt;&gt; *val*, never like val - so they, by convention, always start with, and
+&gt;&gt; end in, an asterisk. Local lexical variables typically don't have a
+&gt;&gt; special naming convention.
+
+&gt; I realize this can be solved by following the naming convention.
+&gt; However, I think you'll have to agree that this is not a clean
+&gt; solution. Using a naming convention to avoid wrong behavior of the
+&gt; environment shouldn't be the panacea.
+">
+
+I agree that this is not the best solution. ISLISP does this better by
+having a clear separation between the dynamic environment and the
+lexical environments. [1] The parameters that you find in some Scheme
+implementations also do this better.
+
+Nevertheless, the naming convention works surprisingly well, such that
+for all practical purposes, this isn't an issue. Except for Common Lisp
+beginners, nobody seems to have any problems with this.
+
+<QUOTE PREVIOUSPOST="
+&gt; Sometimes then playing with complex code I find it useful to define
+&gt; many global vars on the top environment. Adding earmuffs to each is
+&gt; tiresome because these vars are not true globals of my code which I
+&gt; want to mark, but just temporary places to hold stuff while I'm
+&gt; testing how the code works.
+">
+
+Well, for those you don't need any naming convention, of course, because
+that is throwaway code anyway. You just have to keep in mind that such
+globals are always special. Or, again, use any of those deflex or
+defglobal macros, which give you global lexicals.
+
+Here is a rough sketch:
+
+(defmacro defglobal (name value)
+(let ((var (copy-symbol name)))
+`(progn
+(defvar ,var ,value)
+(define-symbol-macro ,name ,var)
+',var)))
+
+Untested, but should work.
+
+Pascal
+
+[1] ISLISP is, more or less, a subset of Common Lisp with a few minor
+improvements.
+
+--
+My website: http://p-cos.net
+Common Lisp Document Repository: http://cdr.eurolisp.org
+Closer to MOP &amp; ContextL: http://common-lisp.net/project/closer/
+</POST>
+<POST>
+<POSTER> Chris Russell &lt;christopher.m.russ...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-06T08:06:00 </POSTDATE>
+On 5 Oct, 18:13, Rainer Joswig &lt;jos ... @lisp.de&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In article &lt;1191603643.801567.316 ... @w3g2000hsg.googlegroups.com&gt;,
+&gt;  Eli Bendersky &lt;eli ... @gmail.com&gt; wrote:
+
+&gt; &gt; On Oct 5, 6:56 pm, Ari Johnson &lt;iamthe ... @gmail.com&gt; wrote:
+&gt; &gt; &gt; Eli Bendersky &lt;eli ... @gmail.com&gt; writes:
+&gt; &gt; &gt; &gt; Hello,
+
+&gt; &gt; &gt; &gt; Consider this code:
+
+&gt; &gt; &gt; &gt; (defun printer (val)
+&gt; &gt; &gt; &gt;   (lambda () (format t &quot;~a~%&quot; val)))
+
+&gt; &gt; &gt; &gt; (setq printer-of-10 (printer 10))
+&gt; &gt; &gt; &gt; (funcall printer-of-10)
+
+&gt; &gt; &gt; &gt; It prints &quot;10&quot; as expected. However, consider this code:
+
+&gt; &gt; &gt; &gt; (defun printer (val)
+&gt; &gt; &gt; &gt;   (lambda () (format t &quot;~a~%&quot; val)))
+
+&gt; &gt; &gt; &gt; (setq printer-of-10 (printer 10))
+&gt; &gt; &gt; &gt; (defvar val 12)
+&gt; &gt; &gt; &gt; (funcall printer-of-10)
+
+&gt; &gt; &gt; &gt; It prints 12 ! This defies my understanding of how the dynamic &amp;
+&gt; &gt; &gt; &gt; lexical scoping rules of CL interact.
+
+&gt; &gt; &gt; &gt; How does this work ? defvar seems to be very dangerous (I found it out
+&gt; &gt; &gt; &gt; the hard way - this small example is a summary of code I was pouring
+&gt; &gt; &gt; &gt; over for the past 2 hours - such a bug is horribly difficult to
+&gt; &gt; &gt; &gt; find!).
+
+&gt; &gt; &gt; &gt; Thanks in advance,
+&gt; &gt; &gt; &gt; Eli
+
+&gt; &gt; &gt; OpenMCL and SBCL both give me 10.  Which implementation are you using?
+
+&gt; &gt; CLISP v2.41 (on Windows)
+
+&gt; That's an undesirable behavior of CLISP.
+&gt; It shows a difference in compiled and interpreted code.
+
+&gt; Try (compile 'printer) after you have defined printer.
+&gt; Then you get 10, as expected.
+">
+
+However, if you do this you should get different results when you
+redefine and compile it a second time after the defvar has been made,
+which can lead to endless fun in the debugger.
+</POST>
+<POST>
+<POSTER> Kent M Pitman &lt;pit...@nhplace.com&gt; </POSTER>
+<POSTDATE> 2007-10-06T13:02:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Eli Bendersky &lt;eli ... @gmail.com&gt; writes:
+&gt; I realize this can be solved by following the naming convention.
+&gt; However, I think you'll have to agree that this is not a clean
+&gt; solution. Using a naming convention to avoid wrong behavior of the
+&gt; environment shouldn't be the panacea.
+">
+
+It's probably hard to see, but global specials used to be the DEFAULT
+in Lisp and lexical variables were on a VERY short list of one of the
+most controversial choices that Common Lisp designers did, risking
+alienating the entire community.  It was one of the few cases where
+those of us on the CLTL design team basically said something very close
+to &quot;look, we don't care that many users are afraid of lexicals, they
+are still the right thing and we're going to do this transition because
+it will make programs more correct&quot;.  Globally pervasive specials were
+an accommodation to the fact that this is exactly how SPECIAL used to
+work in older lisps, and we needed to preserve a body of legacy programs.
+
+At the time, the *foo* naming convention was not widely used in most
+legacy applications, so we couldn't depend on it.
+
+I think the reason we didn't ultimately repair it to work differently
+is that, in fact, true reasons for new specials (as opposed to the
+many accidental reasons for legacy specials) are scarce, and making an
+elaborate new facility didn't seem worth it.
+
+<QUOTE PREVIOUSPOST="
+&gt; Sometimes then playing with complex code I find it useful to define
+&gt; many global vars on the top environment. Adding earmuffs to each is
+&gt; tiresome because these vars are not true globals of my code which I
+&gt; want to mark, but just temporary places to hold stuff while I'm
+&gt; testing how the code works.
+">
+
+But it makes your code more readable to others, and many compilers are
+willing to warn you about mismatches between notation and
+binding/setting/reference.
+
+In practice, I agree it's baroque in notational style, and it's not
+presented very clearly in many teaching texts. (I don't count ANSI CL,
+nor CLHS, as a teaching text.)
+
+I don't agree it's broken, in the sense that it has a clear design and
+the design serves a specific purpose that was not subject to debate.
+
+If it were new design without such constraints, I'd certainly do it
+differently.
+
+But among the things worth worrying about in the language, it's hardly
+worth mentioning.  Once one learns how to do it, it's pretty easy to
+reliably use correctly.
+
+Incidentally, ignore the advice about global lexicals.  For better or
+worse, I'm pretty sure all you want is this:
+
+(define-symbol-macro foo (symbol-value 'foo))
+
+Don't forget to use explicit special bindings when you really mean to
+bind these globals, since otherwise you'll get a lexical foo when you
+bind foo.
+</POST>
+<POST>
+<POSTER> Pascal Costanza &lt;p...@p-cos.net&gt; </POSTER>
+<POSTDATE> 2007-10-06T13:10:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Kent M Pitman wrote:
+&gt;  (define-symbol-macro foo (symbol-value 'foo))
+">
+
+That's sweet!
+
+Pascal
+
+--
+My website: http://p-cos.net
+Common Lisp Document Repository: http://cdr.eurolisp.org
+Closer to MOP &amp; ContextL: http://common-lisp.net/project/closer/
+</POST>
+<POST>
+<POSTER> Kent M Pitman &lt;pit...@nhplace.com&gt; </POSTER>
+<POSTDATE> 2007-10-06T13:34:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Pascal Costanza &lt;p ... @p-cos.net&gt; writes:
+&gt; Here is a rough sketch:
+
+&gt; (defmacro defglobal (name value)
+&gt;    (let ((var (copy-symbol name)))
+&gt;      `(progn
+&gt;         (defvar ,var ,value)
+&gt;         (define-symbol-macro ,name ,var)
+&gt;         ',var)))
+">
+
+Cosmetic, but I think this should return:   ',name
+
+<QUOTE PREVIOUSPOST="
+&gt; Untested, but should work.
+">
+
+Yeah, I didn't test it either, but it looks like one possible way to
+do it.  (I might have added a property on name which pointed to the
+copied symbol so it was available for debugging, but that's a detail.)
+In short, though, it looks to me, too, like it will do what you intend.
+
+BUT I thought I had heard him suggest he wanted to have things be
+special, but not pervasively special.  My response (in another post)
+went to that question.
+
+Both are things people commonly ask for.  Both are trivial to achieve.
+So if the global non-pervasive special is what he wants, he should see
+my other message nearby in this conversation tree.
+</POST>
+<POST>
+<POSTER> Kent M Pitman &lt;pit...@nhplace.com&gt; </POSTER>
+<POSTDATE> 2007-10-06T13:36:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Chris Russell &lt;christopher.m.russ ... @gmail.com&gt; writes:
+&gt; &gt; Try (compile 'printer) after you have defined printer.
+&gt; &gt; Then you get 10, as expected.
+
+&gt; However, if you do this you should get different results when you
+&gt; redefine and compile it a second time after the defvar has been made,
+&gt; which can lead to endless fun in the debugger.
+">
+
+Right.  I'm glad someone mentioned this, since I was going to point this
+out and my posts always run irritatingly longer than nice little summaries
+like this.
+
+This is the reason we usually use *'s around the variable.  It signals
+your intent to always be special, not just after a certain point.  And
+always not using *'s for lexical is equally important.
+</POST>
+<POST>
+<POSTER> &quot;Alex Mizrahi&quot; &lt;udode...@users.sourceforge.net&gt; </POSTER>
+<POSTDATE> 2007-10-06T14:17:00 </POSTDATE>
+(message (Hello 'Kent)
+(you :wrote  :on '(06 Oct 2007 13:02:09 -0400))
+(
+
+KMP&gt; Incidentally, ignore the advice about global lexicals.  For better or
+KMP&gt; worse, I'm pretty sure all you want is this:
+
+KMP&gt;  (define-symbol-macro foo (symbol-value 'foo))
+
+by the way, why global lexicals by standard should be defined in such
+non-trivial way (i find it quite interesting that symbol-macro can be
+shadowed by LET, but works fine with SETQ), while all implementation (i
+know/tested) actually support more straightforward and easy way?
+
+i mean:
+CG-USER(1): (setf (symbol-value 'foo) 5)
+5
+CG-USER(2): foo
+5
+CG-USER(4): (funcall (let ((foo 6)) (lambda () foo)))
+6
+CG-USER(5): foo
+5
+
+clearly that's a global lexical, right?
+or another way: (locally (declare (special foo)) (setq foo 5))
+
+this also arises quite interesting question about unbound variables.
+is that a well-define thing according to standard? if i write some symbol
+that is not declared as variable (lexical or special one), conforming
+implementation should complain, right?
+
+seems pretty clear, but.. after you do perfectly legal (setf (symbol-value
+'foo) 5), all implementations i know define FOO as some magical variable --
+it's not lexical or special, nevertheless it's definitely a variable, since
+it's bound, and indeed there are no complains from implementations when such
+variables are used.
+
+so, all implementations implement some &quot;magical&quot; kind of variables that are
+not described by standard, and those variables are not defined by some
+magical construct, but by a perfectly legal code according to standard.
+
+i believe that this means that all Common Lisp implementations are not
+conformant to the Common Lisp standard.
+possibly some language lawyers can find a way how they are conformant (i.e.
+find a paragraph which allows implementations to introduce some magical
+variables at their wish?), but still clearly it's very unpleasant situation,
+even language basics are ill-defined.
+
+there are some other arising controversies:
+Function BOUNDP
+Returns true if symbol is bound; otherwise, returns false.
+bound adj., v.t. 1. adj. having an associated denotation in a binding. ``The
+variables named by a let are bound within its body.'' See unbound. 2. adj.
+having a local binding which shadows[2] another.
+
+so clearly symbol is bound when it is a (special, or lexical?) variable.
+but, with aforementioned experiments:
+
+* (boundp 'foo)
+T
+
+so, (setf (symbol-value 'foo) 5) creates a binding, but it's not specified
+in standard?
+
+and certainly there is a well-known issues with SETQ -- behaviour is
+undefined if it's given a non-variable. maybe most implementations behave
+like if is set-quote (they set symbol-function), but other do not..
+
+so, i wonder is there some rationale for introducing non-trivial
+symbol-macro rules instead of legalizing behaviour that is already present
+in all (most) implementations, and resolving many controversies at same
+time?
+
+)
+(With-best-regards '(Alex Mizrahi) :aka 'killer_storm)
+&quot;Hanging In The Balance Of Deceit And Blasphemy&quot;)
+</POST>
+<POST>
+<POSTER> Rainer Joswig &lt;jos...@lisp.de&gt; </POSTER>
+<POSTDATE> 2007-10-06T14:31:00 </POSTDATE>
+In article &lt;4707d152$0$90268$14726 ... @news.sunsite.dk&gt;,
+&quot;Alex Mizrahi&quot; &lt;udode ... @users.sourceforge.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; (message (Hello 'Kent)
+&gt; (you :wrote  :on '(06 Oct 2007 13:02:09 -0400))
+&gt; (
+">
+
+...
+
+<QUOTE PREVIOUSPOST="
+&gt; so, i wonder is there some rationale for introducing non-trivial
+&gt; symbol-macro rules instead of legalizing behaviour that is already present
+&gt; in all (most) implementations, and resolving many controversies at same
+&gt; time?
+">
+
+Good point.
+
+<QUOTE PREVIOUSPOST="
+&gt; )
+&gt; (With-best-regards '(Alex Mizrahi) :aka 'killer_storm)
+&gt; &quot;Hanging In The Balance Of Deceit And Blasphemy&quot;)
+">
+
+--
+http://lispm.dyndns.org
+</POST>
+<POST>
+<POSTER> Juho Snellman &lt;jsn...@iki.fi&gt; </POSTER>
+<POSTDATE> 2007-10-06T14:50:00 </POSTDATE>
+On 2007-10-06, Alex Mizrahi &lt;udode ... @users.sourceforge.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; i mean:
+&gt; CG-USER(1): (setf (symbol-value 'foo) 5)
+&gt; 5
+&gt; CG-USER(2): foo
+&gt; 5
+&gt; CG-USER(4): (funcall (let ((foo 6)) (lambda () foo)))
+&gt; 6
+&gt; CG-USER(5): foo
+&gt; 5
+
+&gt; clearly that's a global lexical, right?
+">
+
+No, it clearly isn't:
+
+(setf (symbol-value 'foo) 1)
+
+(defun bar ()
+foo)
+
+(let ((foo 2))
+(declare (special foo))
+;; Oops, returns 2.
+(bar))
+
+This also shows why the simple symbol-macro from FOO =&gt; (SYMBOL-VALUE 'FOO)
+isn't a good way of defining &quot;global lexicals&quot;. Better to do expand store
+the value in a different symbol than the one naming the global lexical.
+Something along the lines of:
+
+(progn
+(defvar #1=#:gensym1234)
+(define-symbol-macro foo (symbol-value '#1#)))
+
+--
+Juho Snellman
+</POST>
+<POST>
+<POSTER> Pascal Costanza &lt;p...@p-cos.net&gt; </POSTER>
+<POSTDATE> 2007-10-06T17:24:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Kent M Pitman wrote:
+&gt; Pascal Costanza &lt;p ... @p-cos.net&gt; writes:
+
+&gt;&gt; Here is a rough sketch:
+
+&gt;&gt; (defmacro defglobal (name value)
+&gt;&gt;    (let ((var (copy-symbol name)))
+&gt;&gt;      `(progn
+&gt;&gt;         (defvar ,var ,value)
+&gt;&gt;         (define-symbol-macro ,name ,var)
+&gt;&gt;         ',var)))
+
+&gt; Cosmetic, but I think this should return:   ',name
+">
+
+Thanks, you're right.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Untested, but should work.
+
+&gt; Yeah, I didn't test it either, but it looks like one possible way to
+&gt; do it.  (I might have added a property on name which pointed to the
+&gt; copied symbol so it was available for debugging, but that's a detail.)
+">
+
+That's not necessary, AFAICT, because you can always do a macroexpand on
+the name.
+
+<QUOTE PREVIOUSPOST="
+&gt; In short, though, it looks to me, too, like it will do what you intend.
+
+&gt; BUT I thought I had heard him suggest he wanted to have things be
+&gt; special, but not pervasively special.  My response (in another post)
+&gt; went to that question.
+">
+
+Right.
+
+Pascal
+
+--
+My website: http://p-cos.net
+Common Lisp Document Repository: http://cdr.eurolisp.org
+Closer to MOP &amp; ContextL: http://common-lisp.net/project/closer/
+</POST>
+<POST>
+<POSTER> Kent M Pitman &lt;pit...@nhplace.com&gt; </POSTER>
+<POSTDATE> 2007-10-06T21:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Alex Mizrahi&quot; &lt;udode ... @users.sourceforge.net&gt; writes:
+&gt; i mean:
+&gt; CG-USER(1): (setf (symbol-value 'foo) 5)
+&gt; 5
+&gt; CG-USER(2): foo
+&gt; 5
+&gt; CG-USER(4): (funcall (let ((foo 6)) (lambda () foo)))
+&gt; 6
+&gt; CG-USER(5): foo
+&gt; 5
+
+&gt; clearly that's a global lexical, right?
+">
+
+Of course not.  A global lexical is where you get this behavior:
+
+(define-lexical x 3)
+(defun foo () x)
+(let ((x 4)) (declare (special x)) (foo))
+=&gt; 3
+
+CL doesn't have those by default, but they are trivial to implement and
+there was code offered in the last day showing it.
+
+You're confusing yourself because you have previously in this implementation
+done either (proclaim '(special foo))
+... or else (defvar foo) or (defparameter foo), which do that implicitly.
+
+Ordinarily, if you do
+
+(setf (symbol-value 'foo) 5)
+
+you should expect to see 5 and here
+
+(funcall (let ((foo 6)) (lambda () foo)))
+
+you should expect 6.  The 5 result here will come only if you have
+proclaimed FOO special.
+
+<QUOTE PREVIOUSPOST="
+&gt; this also arises quite interesting question about unbound variables.
+&gt; is that a well-define thing according to standard? if i write some symbol
+&gt; that is not declared as variable (lexical or special one), conforming
+&gt; implementation should complain, right?
+">
+
+No, a conforming implementation may do something implementation-defined.
+
+You shouldn't do it without reading what the implementation says will
+happen.  The standard is silent to allow implementations to experiment
+with possible things here, like global lexicals by default, or by warnings
+about having defined nothing, or by making globals default to specials
+for debugging.
+
+<QUOTE PREVIOUSPOST="
+&gt; seems pretty clear, but.. after you do perfectly legal (setf (symbol-value
+&gt; 'foo) 5), all implementations i know define FOO as some magical variable --
+">
+
+No implementation I'm familiar with defines foo in any way when you do this.
+
+<QUOTE PREVIOUSPOST="
+&gt; it's not lexical or special, nevertheless it's definitely a variable, since
+&gt; it's bound, and indeed there are no complains from implementations when such
+&gt; variables are used.
+">
+
+No, the special variable has been set in all implementations. What you don't
+know is whether writing the variable FOO by itself, undeclared, is lexical
+or special.  But you definitely know that at toplevel,
+(locally (declare (special foo)) foo)
+is going to give you 5 after you've done
+(setf (symbol-value 'foo) 5)
+in all implementations.
+
+<QUOTE PREVIOUSPOST="
+&gt; so, all implementations implement some &quot;magical&quot; kind of variables that are
+&gt; not described by standard, and those variables are not defined by some
+&gt; magical construct, but by a perfectly legal code according to standard.
+">
+
+No, all that's happened is that implementations decide which of several
+states you're in, and you just don't know which, partly because they are
+not required to agree.
+
+<QUOTE PREVIOUSPOST="
+&gt; i believe that this means that all Common Lisp implementations are not
+&gt; conformant to the Common Lisp standard.
+">
+
+I try to avoid telling people they are wrong, but I certainly don't
+know of any passage that would make you right.  You'll need to cite
+chapter and verse to make me think you're right.  The default state of
+the language is not &quot;something is illegal for implementations unless
+the spec says otherwise&quot; but in fact just the opposite, that
+&quot;implementations are free to do what they want as long as the spec
+doesn't tell them otherwise&quot;.  The spec is not a thing that constrains
+things to only work one way, it is a common area that says that if you
+program a certain way, the implementations will try to conform to a
+certain meaning.  For things you do outside of what the spec allows
+YOU to do, the implementation generally gets freedom to decide how to
+treat that.  It's such freedom that allows things like multiprocessing,
+and other important features that are not nailed down by the spec.
+
+<QUOTE PREVIOUSPOST="
+&gt; possibly some language lawyers can find a way how they are conformant (i.e.
+&gt; find a paragraph which allows implementations to introduce some magical
+&gt; variables at their wish?), but still clearly it's very unpleasant situation,
+&gt; even language basics are ill-defined.
+">
+
+It isn't a language basic.  You aren't supposed to do that.  I don't see
+quite what the problem is.  Language basics do not include &quot;doing things
+no one has ever told you should work&quot;.  They include &quot;doing things you're
+told to do&quot;.  If there is a text telling you to do this and to expect the
+effect of getting a &quot;magic variable&quot;, I might think that text needed some
+work to keep from misleading anyone.
+
+<QUOTE PREVIOUSPOST="
+&gt; there are some other arising controversies:
+&gt; Function BOUNDP
+&gt; Returns true if symbol is bound; otherwise, returns false.
+&gt; bound adj., v.t. 1. adj. having an associated denotation in a binding. ``The
+&gt; variables named by a let are bound within its body.'' See unbound. 2. adj.
+&gt; having a local binding which shadows[2] another.
+
+&gt; so clearly symbol is bound when it is a (special, or lexical?) variable.
+">
+
+The symbol FOO is bound (as a special) when it has a value.  But that doesn't
+mean it's always accessible by the mere use of its name.  In:
+
+(let ((x 3))
+(let ((x 4))
+x))
+
+the outer x is bound but not accessible at the point of the x in the
+last line, since that variable refers to the inner x.  And in
+
+(let ((blah 3))
+(declare (special blah))
+(let ((blah 4))
+blah))
+
+the blah on the last line is bound as a special but not directly accessible
+in the last line, although it could be if you did
+
+(let ((blah 3))
+(declare (special blah))
+(let ((blah 4))
+(list blah
+(locally (declare (special blah)) blah)
+(symbol-value 'blah))))
+
+which should return (4 3 3).
+
+<QUOTE PREVIOUSPOST="
+&gt; but, with aforementioned experiments:
+
+&gt; * (boundp 'foo)
+&gt; T
+
+&gt; so, (setf (symbol-value 'foo) 5) creates a binding, but it's not specified
+&gt; in standard?
+">
+
+No, it creates a binding that is specified in the standard.  A special
+binding for FOO. But that doesn't mean it makes the variable FOO available
+for use at that particular instant.
+
+<QUOTE PREVIOUSPOST="
+&gt; and certainly there is a well-known issues with SETQ -- behaviour is
+&gt; undefined if it's given a non-variable.
+">
+
+The controversial issue is that some implementations auto-define variables
+assigned with toplevel SETQ [the undefined case in the standard]
+by proclaiming them special.  This confuses a lot of newbies and I recommend
+disabling it.
+
+<QUOTE PREVIOUSPOST="
+&gt; maybe most implementations behave
+&gt; like if is set-quote (they set symbol-function), but other do not..
+">
+
+They can choose.  To claim something is violating the spec, you have to point
+in the spec to the part that says it cannot happen.
+
+<QUOTE PREVIOUSPOST="
+&gt; so, i wonder is there some rationale for introducing non-trivial
+&gt; symbol-macro rules instead of legalizing behaviour that is already present
+&gt; in all (most) implementations, and resolving many controversies at same
+&gt; time?
+">
+
+Because there was an interest in the community in experimenting, as I
+mentioned, with
+
+(a) global lexicals
+(b) giving an error if people used toplevel variables free without reference
+(c) having toplevel free references behave defaultly as specials
+</POST>
+<POST>
+<POSTER> squash...@math.ufl.edu </POSTER>
+<POSTDATE> 2007-10-06T21:53:00 </POSTDATE>
+It has already been remarked that this can be confusing to
+beginners.  (I count myself in their number.)  Here is one
+additional data-point of confusion, for me.
+
+In a fresh CLISP, with interpreted code, I have inserted a
+`(setq val ... )' before the `defvar':
+
+/--------------------------------------------------------\
+
+MacOS$   clisp -norc
+...
+
+[1]&gt; (defun printer (val)   (lambda () (format t &quot;~a~%&quot; val)))
+PRINTER
+
+[2]&gt; (setq printer-of-10 (printer 10))
+#&lt;FUNCTION :LAMBDA NIL (FORMAT T &quot;~a~%&quot; VAL)&gt;
+
+[3]&gt; (funcall printer-of-10)
+10
+NIL
+
+[4]&gt; (setq val
+314159265358979323846264338327950288419716939937510)
+314159265358979323846264338327950288419716939937510
+
+[5]&gt; (funcall printer-of-10)
+10
+NIL
+
+[6]&gt; (defvar val 12)
+VAL
+
+[7]&gt; (funcall printer-of-10)
+314159265358979323846264338327950288419716939937510
+NIL
+
+[8]&gt;
+
+\________________________________________________________/
+
+If the (setq val 31415...)   has been a coupla-hundred
+lines of code back, and the `(funcall printer-of-10)' had
+been returning 10, and I then executed `(defvar val 12)'
+and now saw `(funcall printer-of-10)'  returning
+
+314159265358979323846264338327950288419716939937510
+
+I would have been bewildered.  Is it
+reasonable/possible/politically-possible to have a second ANSI
+standard on top of the first?  It would not contradict the first.
+However, places where the first standard left behavior undefined
+could be emended by the second standard to: &quot;A conforming
+installation MUST signal an error/warning when ... &quot;
+
+--
+Prof. Jonathan LF King   Mathematics dept, Univ. of Florida
+&lt; http://www.math.ufl.edu/~squash/teaching.html &gt;
+</POST>
+<POST>
+<POSTER> squash...@math.ufl.edu </POSTER>
+<POSTDATE> 2007-10-06T21:53:00 </POSTDATE>
+It has already been remarked that this can be confusing to
+beginners.  (I count myself in their number.)  Here is one
+additional data-point of confusion, for me.
+
+In a fresh CLISP, with interpreted code, I have inserted a
+`(setq val ... )' before the `defvar':
+
+/--------------------------------------------------------\
+
+MacOS$   clisp -norc
+...
+
+[1]&gt; (defun printer (val)   (lambda () (format t &quot;~a~%&quot; val)))
+PRINTER
+
+[2]&gt; (setq printer-of-10 (printer 10))
+#&lt;FUNCTION :LAMBDA NIL (FORMAT T &quot;~a~%&quot; VAL)&gt;
+
+[3]&gt; (funcall printer-of-10)
+10
+NIL
+
+[4]&gt; (setq val
+314159265358979323846264338327950288419716939937510)
+314159265358979323846264338327950288419716939937510
+
+[5]&gt; (funcall printer-of-10)
+10
+NIL
+
+[6]&gt; (defvar val 12)
+VAL
+
+[7]&gt; (funcall printer-of-10)
+314159265358979323846264338327950288419716939937510
+NIL
+
+[8]&gt;
+
+\________________________________________________________/
+
+If the (setq val 31415...)   has been a coupla-hundred
+lines of code back, and the `(funcall printer-of-10)' had
+been returning 10, and I then executed `(defvar val 12)'
+and now saw `(funcall printer-of-10)'  returning
+
+314159265358979323846264338327950288419716939937510
+
+I would have been bewildered.  Is it
+reasonable/possible/politically-possible to have a second ANSI
+standard on top of the first?  It would not contradict the first.
+However, places where the first standard left behavior undefined
+could be emended by the second standard to: &quot;A conforming
+installation MUST signal an error/warning when ... &quot;
+
+--
+Prof. Jonathan LF King   Mathematics dept, Univ. of Florida
+&lt; http://www.math.ufl.edu/~squash/teaching.html &gt;
+</POST>
+<POST>
+<POSTER> Thomas Bakketun &lt;thomas-n...@bakketun.net&gt; </POSTER>
+<POSTDATE> 2007-10-06T22:38:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Alex Mizrahi wrote:
+&gt; seems pretty clear, but.. after you do perfectly legal (setf (symbol-value
+&gt; 'foo) 5), all implementations i know define FOO as some magical variable
+&gt; -- it's not lexical or special, nevertheless it's definitely a variable,
+&gt; since it's bound,
+">
+
+It's a dynamic variable, but it's neither special nor magical. According to
+the CLHS[1] setting the symbol-value of a symbol will never signal an
+error. So this should behave the same in any Common Lisp:
+
+<QUOTE PREVIOUSPOST="
+&gt; (setf (symbol-value 'foo) 42)
+42
+&gt; (boundp 'foo)
+T
+&gt; (symbol-value 'foo)
+">
+
+42
+
+However, using the symbol as form is not well defined, but it still works:
+
+<QUOTE PREVIOUSPOST="
+&gt; (+ foo 32)
+">
+
+74
+
+The relevant part of CLHS here is 3.1.2.1.1 Symbols as Forms[2]. The symbol
+is clearly not a symbol-macro, lexical variable or a constant. But is not a
+dynamic variable either, since it's not declared special. Anyway it is
+still threated as dynamic variable in most (or all?) implementations.
+
+<QUOTE PREVIOUSPOST="
+&gt; and indeed there are no complains from implementations
+&gt; when such variables are used.
+">
+
+All the implementations I tested (CMUCL, SBCL, CLISP and ECL) will complain
+if such code is compiled. Here is an example in ECL:
+
+<QUOTE PREVIOUSPOST="
+&gt; (defun bar () foo)
+BAR
+&gt; (bar)
+42
+&gt; (compile 'bar)
+">
+
+;;; End of Pass 1.
+;;; Compiling (LET* (# #) ...).
+;;; The variable FOO is undefined.
+;;; The compiler will assume this variable is a global.
+...
+
+Note that it does not matter if foo is bound or not when the function is
+compiled. What matters is if it's declared special:
+
+<QUOTE PREVIOUSPOST="
+&gt; (defun bar () (declare (special foo)) foo)
+BAR
+&gt; (compile 'bar)
+">
+
+;;; End of Pass 1.
+
+<QUOTE PREVIOUSPOST="
+&gt; so, all implementations implement some &quot;magical&quot; kind of variables that
+&gt; are not described by standard,
+">
+
+No, the variables are just completly normal dynamic variables. The &quot;magic&quot;
+does not happen during (setf symbol-value), but when a symbol not declared
+as special or a lexical variable is used as variable.
+
+<QUOTE PREVIOUSPOST="
+&gt; i believe that this means that all Common Lisp implementations are not
+&gt; conformant to the Common Lisp standard.
+">
+
+I doubt it's a direct violation of the standard. At least I could not find a
+requirement to signal an error if an undefined variable is used. Chapter
+3.1.2.1.1 does not mention the possibilty of undefined variables at all.
+
+<QUOTE PREVIOUSPOST="
+&gt; so, i wonder is there some rationale for introducing non-trivial
+&gt; symbol-macro rules instead of legalizing behaviour that is already present
+&gt; in all (most) implementations, and resolving many controversies at same
+&gt; time?
+">
+
+Because that behaviour is not what you really want. Silently threating
+undefined variables as dynamic variables, will easly lead to hard to find
+bugs. And as mentions above, compilers will warn you about this.
+
+[1] http://www.lispworks.com/documentation/HyperSpec/Body/f_symb_5.htm
+[2] http://www.lispworks.com/documentation/HyperSpec/Body/03_abaa.htm
+</POST>
+<POST>
+<POSTER> r...@rpw3.org (Rob Warnock) </POSTER>
+<POSTDATE> 2007-10-06T22:55:00 </POSTDATE>
+Pascal Costanza  &lt;p ... @p-cos.net&gt; wrote:
++---------------
+| Or, again, use any of those deflex or defglobal macros,
+| which give you global lexicals. Here is a rough sketch:
+|   (defmacro defglobal (name value)
+|      (let ((var (copy-symbol name)))
+|        `(progn
+|           (defvar ,var ,value)
+|           (define-symbol-macro ,name ,var)
+|           ',var)))
+| Untested, but should work.
++---------------
+
+It does, but I (slightly) prefer my version[1] of DEFLEX
+because it doesn't leave uninterned symbols dangling about,
+the backing symbol is in the same package as the symbol macro,
+and like other DEFxxx forms it returns the symbol being defined:
+
+&gt; (defglobal foo 13)
+
+#:FOO
+&gt; (deflex bar 47)
+
+BAR
+&gt; (describe 'foo)
+
+FOO is an internal symbol in the COMMON-LISP-USER package.
+It is a symbol macro with expansion: #:FOO.
+&gt; (describe 'bar)
+
+BAR is an internal symbol in the COMMON-LISP-USER package.
+It is a symbol macro with expansion: *STORAGE-FOR-DEFLEX-VAR-BAR*.
+&gt;
+
+But as a tutorial proof of concept, your DEFGLOBAL seems fine.
+
+-Rob
+
+[1] My current version:
+
+(defmacro deflex (var val &amp;optional (doc nil docp))
+&quot;Define a top level (global) lexical VAR with initial value VAL,
+which is assigned unconditionally as with DEFPARAMETER. If a DOC
+string is provided, it is attached to both the name |VAR| and the
+name *STORAGE-FOR-DEFLEX-VAR-|VAR|* as a documentation string of
+kind 'VARIABLE. The new VAR will have lexical scope and thus may be
+shadowed by LET bindings without affecting its dynamic (global) value.&quot;
+(let* ((s0 (symbol-name '#:*storage-for-deflex-var-))
+(s1 (symbol-name var))
+(s2 (symbol-name '#:*))
+(s3 (symbol-package var))
+(backing-var (intern (concatenate 'string s0 s1 s2) s3)))
+;; Note: The DEFINE-SYMBOL-MACRO must be the last thing we do so
+;; that the value of the form is the symbol VAR.
+(if docp
+`(progn
+(defparameter ,backing-var ,val ,doc)
+(setf (documentation ',var 'variable) ,doc)
+(define-symbol-macro ,var ,backing-var))
+`(progn
+(defparameter ,backing-var ,val)
+(define-symbol-macro ,var ,backing-var)))))
+
+-----
+Rob Warnock                     &lt;r ... @rpw3.org&gt;
+627 26th Avenue                 &lt;URL: http://rpw3.org/ &gt;
+San Mateo, CA 94403             (650)572-2607
+</POST>
+<POST>
+<POSTER> Barry Margolin &lt;bar...@alum.mit.edu&gt; </POSTER>
+<POSTDATE> 2007-10-06T23:02:00 </POSTDATE>
+In article &lt;joswig-2DA2EA.09334506102 ... @news-europe.giganews.com&gt;,
+Rainer Joswig &lt;jos ... @lisp.de&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; [1]&gt; (defun printer (val)
+&gt;   (lambda () (format t &quot;~a~%&quot; val)))
+&gt; PRINTER
+&gt; [2]&gt; (setq printer-of-10 (printer 10))
+&gt; #&lt;FUNCTION :LAMBDA NIL (FORMAT T &quot;~a~%&quot; VAL)&gt;
+&gt; [3]&gt; (defvar val 12)
+&gt; VAL
+&gt; [4]&gt; (funcall printer-of-10)
+&gt; 12
+&gt; NIL
+&gt; [5]&gt;
+">
+
+The it's definitely a bug in CLISP.  DEFVAR proclaims a variable
+special, but it isn't supposed to perform time travel.  PRINTER was
+defined before the declaration was in effect, so VAL was a lexical
+variable at the time, and should be closed over properly.
+
+Does this happen if you put everything in a file and compile it?
+
+--
+Barry Margolin, bar ... @alum.mit.edu
+Arlington, MA
+*** PLEASE post questions in newsgroups, not directly to me ***
+*** PLEASE don't copy me on replies, I'll read them in the group ***
+</POST>
+<POST>
+<POSTER> Thomas Bakketun &lt;thomas-n...@bakketun.net&gt; </POSTER>
+<POSTDATE> 2007-10-06T23:07:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+squash ... @math.ufl.edu wrote:
+&gt;     [1]&gt; (defun printer (val)   (lambda () (format t &quot;~a~%&quot; val)))
+&gt;     PRINTER
+
+&gt;     [2]&gt; (setq printer-of-10 (printer 10))
+&gt;     #&lt;FUNCTION :LAMBDA NIL (FORMAT T &quot;~a~%&quot; VAL)&gt;
+
+&gt;     [3]&gt; (funcall printer-of-10)
+&gt;     10
+&gt;     NIL
+
+&gt;     [4]&gt; (setq val
+&gt; 314159265358979323846264338327950288419716939937510)
+&gt;     314159265358979323846264338327950288419716939937510
+">
+
+This is illegal code, but CLISP (like almost any other implementation)
+silently threats is as (setq (symbol-value 'val) ...) when not compiling.
+
+<QUOTE PREVIOUSPOST="
+&gt;     [5]&gt; (funcall printer-of-10)
+&gt;     10
+&gt;     NIL
+
+&gt;     [6]&gt; (defvar val 12)
+&gt;     VAL
+">
+
+Here defvar will not change the value of val since it already been bound by
+the previous setq, but it will proclaim val as globally special, making all
+use of val from now on threated as a dynamic variable.
+
+<QUOTE PREVIOUSPOST="
+&gt;     [7]&gt; (funcall printer-of-10)
+&gt;     314159265358979323846264338327950288419716939937510
+&gt;     NIL
+">
+
+To add confusion this is a bug in CLISP, as stated elsewere in this thread.
+
+<QUOTE PREVIOUSPOST="
+&gt; Is it
+&gt; reasonable/possible/politically-possible to have a second ANSI
+&gt; standard on top of the first?  It would not contradict the first.
+&gt; However, places where the first standard left behavior undefined
+&gt; could be emended by the second standard to: &quot;A conforming
+&gt; installation MUST signal an error/warning when ... &quot;
+">
+
+This is more a problem with the implementations than the standard. Uses of
+undefined variables can simply be refused or at least always be warned
+about. Declaring special variables without *earmuffs* can not be refused,
+but issuing a style warning should be ok.
+</POST>
+<POST>
+<POSTER> r...@rpw3.org (Rob Warnock) </POSTER>
+<POSTDATE> 2007-10-07T00:11:00 </POSTDATE>
+Kent M Pitman  &lt;pit ... @nhplace.com&gt; wrote:
++---------------
+| Incidentally, ignore the advice about global lexicals.  For better or
+| worse, I'm pretty sure all you want is this:
+|
+|  (define-symbol-macro foo (symbol-value 'foo))
+|
+| Don't forget to use explicit special bindings when you really mean to
+| bind these globals, since otherwise you'll get a lexical foo when you
+| bind foo.
++---------------
+
+For this reason, and also to avoid unbound-variable mistakes, e.g.:
+
+&gt; (define-symbol-macro foo (symbol-value 'foo))
+
+FOO
+&gt; foo
+
+Error in KERNEL::UNBOUND-SYMBOL-ERROR-HANDLER:  the variable FOO is unbound.
+[Condition of type UNBOUND-VARIABLE]
+...
+
+I would suggest providing/using some binding macro for such shadowable
+specials to make it clear what's going on, something like this [feel
+free to suggest a shorter yet still perspicuous name]:
+
+&gt; (defmacro defvar/shadowable (var &amp;optional value (doc nil docp))
+`(progn
+(setf (symbol-value ',var) ,value)
+,@(when docp
+(list `(setf (documentation ',var 'variable) ,doc)))
+(define-symbol-macro ,var (symbol-value ',var))))
+
+DEFVAR/SHADOWABLE
+&gt; (defvar/shadowable foo 13 &quot;An example shadowable special&quot;)
+
+FOO
+&gt; (defun foo ()
+&quot;A function which gives the global value of FOO.&quot;
+foo)
+
+FOO
+&gt; (let ((foo 27))
+(list foo (incf foo) foo
+(foo) (locally (declare (special foo)) (incf foo)) (foo)))
+
+(27 28 28 13 14 14)
+&gt; foo
+
+14
+&gt;
+
+The &quot;DEFVAR/...&quot; part of the name will suggest that this variable
+*is* still intended to be used as a special at least in some contexts
+while the &quot;.../SHADOWABLE&quot; [or some shorter, less-awkward phrase?]
+will reassure one that its binding is lexically shadowable.
+
+-Rob
+
+p.s. I happen to think that having documentation strings
+&quot;just work&quot; is worth a little extra effort in one's macros:
+
+&gt; (describe 'foo)
+
+FOO is an internal symbol in the COMMON-LISP-USER package.
+It is a symbol macro with expansion: (SYMBOL-VALUE 'FOO).
+Macro documentation:
+An example shadowable special
+Function: #&lt;Interpreted Function FOO {48A64D41}&gt;
+Function arguments:
+There are no arguments.
+Function documentation:
+A function which gives the global value of FOO.
+Its defined argument types are:
+NIL
+Its result type is:
+*
+Its definition is:
+(LAMBDA () (BLOCK FOO FOO))
+&gt;
+
+-----
+Rob Warnock                     &lt;r ... @rpw3.org&gt;
+627 26th Avenue                 &lt;URL: http://rpw3.org/ &gt;
+San Mateo, CA 94403             (650)572-2607
+</POST>
+<POST>
+<POSTER> Pascal Costanza &lt;p...@p-cos.net&gt; </POSTER>
+<POSTDATE> 2007-10-07T06:00:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Rob Warnock wrote:
+&gt; Pascal Costanza  &lt;p ... @p-cos.net&gt; wrote:
+&gt; +---------------
+&gt; | Or, again, use any of those deflex or defglobal macros,
+&gt; | which give you global lexicals. Here is a rough sketch:
+&gt; |   (defmacro defglobal (name value)
+&gt; |      (let ((var (copy-symbol name)))
+&gt; |        `(progn
+&gt; |           (defvar ,var ,value)
+&gt; |           (define-symbol-macro ,name ,var)
+&gt; |           ',var)))
+&gt; | Untested, but should work.
+&gt; +---------------
+
+&gt; It does, but I (slightly) prefer my version[1] of DEFLEX
+&gt; because it doesn't leave uninterned symbols dangling about,
+&gt; the backing symbol is in the same package as the symbol macro,
+&gt; and like other DEFxxx forms it returns the symbol being defined:
+">
+
+The latter was a bug in my version that Kent already noticed. Of course,
+the return value should be ',name, not ',var.
+
+Why are the first two characteristics (no uninterned symbols, same
+package as the symbol macro) important?
+
+Pascal
+
+--
+My website: http://p-cos.net
+Common Lisp Document Repository: http://cdr.eurolisp.org
+Closer to MOP &amp; ContextL: http://common-lisp.net/project/closer/
+</POST>
+<POST>
+<POSTER> &quot;Alex Mizrahi&quot; &lt;udode...@users.sourceforge.net&gt; </POSTER>
+<POSTDATE> 2007-10-07T07:02:00 </POSTDATE>
+(message (Hello 'Kent)
+(you :wrote  :on '(06 Oct 2007 21:50:57 -0400))
+(
+
+??&gt;&gt; clearly that's a global lexical, right?
+
+KMP&gt; Of course not.  A global lexical is where you get this behavior:
+
+KMP&gt;  (define-lexical x 3)
+KMP&gt;  (defun foo () x)
+KMP&gt;  (let ((x 4)) (declare (special x)) (foo))
+KMP&gt;  =&gt; 3
+
+aha, i see, but for many purposes (e.g. for problems that OP had) it would
+be OK when:
+
+1. variable has some well-defined value if it's not bound lexically. (that
+can be symbol-value, why not?)
+2. it can be bound lexically, it's not globally special.
+
+and actually all implementations implement this behaviour.
+
+is it somehow inferior to global lexical behaviour? i can't imagine in which
+cases global lexicals will be better.
+it only makes difference with (declare (special x)) as above, which i
+believe is not what people are doing frequently.
+
+KMP&gt; You're confusing yourself because you have previously in this
+KMP&gt; implementation done either (proclaim '(special foo))
+KMP&gt; ... or else (defvar foo) or (defparameter foo), which do that
+KMP&gt; implicitly.
+
+no, i'm not :)
+
+??&gt;&gt; i believe that this means that all Common Lisp implementations are not
+??&gt;&gt; conformant to the Common Lisp standard.
+
+KMP&gt; I try to avoid telling people they are wrong, but I certainly don't
+KMP&gt; know of any passage that would make you right.  You'll need to cite
+KMP&gt; chapter and verse to make me think you're right.
+
+having following definitions:
+
+If a form is a symbol that is not a symbol macro, then it is the name of a
+variable, and the value of that variable is returned.
+There are three kinds of variables: lexical variables, dynamic variables,
+and constant variables.
+An error of type unbound-variable should be signaled if an unbound variable
+is referenced.
+unbound variable n. a name that is syntactically plausible as the name of a
+variable but which is not bound in the variable namespace.
+
+i'm assuming that lexical, dynamic, constant and unbound are _only_ states
+in which variable can be.
+
+what will happen if we see a symbol foo, which is not defined as a variable?
+it's clearly not a lexical or constant variable. it doesn't satisfy
+definition of dynamic variable as given in section 3.1.2.1.1.2. so the only
+possibility is that it's an unbound variable, so according to 3.1.2.1.1
+error of type unbound-variable should be signaled.
+
+but as i've being pointed to, in such situations implementations treat
+variable as being being dynamic.
+
+so i believe they either violate section 3.1.2.1.1.2, which quite strictly
+defines what dynamic variable is
+(A variable is a dynamic variable if one of the following conditions hold:
+It is locally declared or globally proclaimed special. ;
+It occurs textually within a form that creates a dynamic binding for a
+variable of the same name, and the binding is not shadowed[2] by a form that
+creates a lexical binding of the same variable name. ).
+
+or they violate 3.1.2.1.1 -- when being given an unbound variable, they
+return symbol-value, instead of signalling an error.
+
+can we somehow interpret the standard in a way that implementations would
+still be conforming? i see few ways --
+1. assume that definition of dynamic variables is not strict and
+implementations can treat variables as dynamic is other cases too.
+2. assume that other states of variable are also possible. i.e. in this
+situation implementations think that this is &quot;undefined-but-bound variable&quot;,
+so it's not an unbound variable, and can return a value instead of
+signalling an error.
+
+it seems people prefer first form of interpretation, assuming
+implementations can extend dynamic variable definitions. there is also some
+vague quirk: &quot;It is locally declared or globally proclaimed special. &quot;. so,
+maybe, if it was once locally declared special, we can still assume it's
+dynamic even it's outside that declaration?
+
+and it's very easy to make it more clear: either explicitly allow
+implementations to extend definition of dynamic, allow other reaction on
+unbound variable, or allow other states of variables..
+
+)
+(With-best-regards '(Alex Mizrahi) :aka 'killer_storm)
+&quot;Hanging In The Balance Of Deceit And Blasphemy&quot;)
+</POST>
+<POST>
+<POSTER> Kent M Pitman &lt;pit...@nhplace.com&gt; </POSTER>
+<POSTDATE> 2007-10-07T11:52:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+r ... @rpw3.org (Rob Warnock) writes:
+&gt; Kent M Pitman  &lt;pit ... @nhplace.com&gt; wrote:
+&gt; +---------------
+&gt; | Incidentally, ignore the advice about global lexicals.  For better or
+&gt; | worse, I'm pretty sure all you want is this:
+&gt; |
+&gt; |  (define-symbol-macro foo (symbol-value 'foo))
+&gt; |
+&gt; | Don't forget to use explicit special bindings when you really mean to
+&gt; | bind these globals, since otherwise you'll get a lexical foo when you
+&gt; | bind foo.
+&gt; +---------------
+
+&gt; For this reason, and also to avoid unbound-variable mistakes, e.g.:
+
+&gt;     &gt; (define-symbol-macro foo (symbol-value 'foo))
+
+&gt;     FOO
+&gt;     &gt; foo
+
+&gt;     Error in KERNEL::UNBOUND-SYMBOL-ERROR-HANDLER:  the variable FOO is unbound.
+&gt;        [Condition of type UNBOUND-VARIABLE]
+&gt;        ...
+">
+
+Actually, I didn't include this level of detail because there were too many
+options for how to treat the value.  I thought it was self-apparent that by
+doing this, you were not assigning FOO and would have to do
+
+(SETQ FOO 3)
+
+afterward if you wanted to globally assign it to 3.
+
+Everyone should, of coruse, make it a point to know that
+DEFINE-SYMBOL-MACRO sets up the variable so that (SETQ var value)
+turns into (SETF expansion value), so (SETQ FOO 3) will become (SETF
+(SYMBOL-VALUE 'FOO) 3) in this example.
+
+I am not against having other abstractions for declaring/assigning,
+it's just that there DEFVAR vs DEFPARAMETER behavioral split (which is
+subtle and distracting while trying to teach about symbol macros) and
+documentation issue (which is useful but irrelevant to this topic and
+again distracting as ar esult).  It just all together makes it hard to
+see the simplicity of what's really being done, so I ripped all of
+that out of my example before posting and went for the simplest thing
+that would illustrate the basic behavior.
+</POST>
+<POST>
+<POSTER> Kent M Pitman &lt;pit...@nhplace.com&gt; </POSTER>
+<POSTDATE> 2007-10-07T12:08:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Pascal Costanza &lt;p ... @p-cos.net&gt; writes:
+&gt; Why are the first two characteristics (no uninterned symbols, same
+&gt; package as the symbol macro) important?
+">
+
+I never use uninterned symbols either.  They have issues with becoming
+external data in file compilation when you've macroexpanded them.  If
+all your uses are in one file, you may not see it, because I think
+implementations try to eq-ify gensyms across a target stream, but if
+you were to write them to a separate file, there is no way for those
+two files, upon reloading, to realize they need to coalesce--their
+symbol identities will, of necessity, diverge and they will no longer
+be cooperating.
+</POST>
+<POST>
+<POSTER> &quot;Thomas F. Burdick&quot; &lt;tburd...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-07T13:01:00 </POSTDATE>
+On Oct 7, 6:08 pm, Kent M Pitman &lt;pit ... @nhplace.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Pascal Costanza &lt;p ... @p-cos.net&gt; writes:
+&gt; &gt; Why are the first two characteristics (no uninterned symbols, same
+&gt; &gt; package as the symbol macro) important?
+
+&gt; I never use uninterned symbols either.  They have issues with becoming
+&gt; external data in file compilation when you've macroexpanded them.  If
+&gt; all your uses are in one file, you may not see it, because I think
+&gt; implementations try to eq-ify gensyms across a target stream, but if
+&gt; you were to write them to a separate file, there is no way for those
+&gt; two files, upon reloading, to realize they need to coalesce--their
+&gt; symbol identities will, of necessity, diverge and they will no longer
+&gt; be cooperating.
+">
+
+Also, simply re-evaluating the deflex form should probably not make
+all references from that point on be disjoint from all references
+compiled up to that point.
+</POST>
+<POST>
+<POSTER> Kent M Pitman &lt;pit...@nhplace.com&gt; </POSTER>
+<POSTDATE> 2007-10-07T13:03:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Alex Mizrahi&quot; &lt;udode ... @users.sourceforge.net&gt; writes:
+&gt; If a form is a symbol that is not a symbol macro, then it is the name of a
+&gt; variable, and the value of that variable is returned.
+&gt; There are three kinds of variables: lexical variables, dynamic variables,
+&gt; and constant variables.
+&gt; [...]
+&gt; i'm assuming that lexical, dynamic, constant and unbound are _only_ states
+&gt; in which variable can be.
+">
+
+Sort of.
+
+First, there are only three states it can be, but all implementations
+are not required to agree on the same state.  So the fuzzy part in
+this case is whether the implementation is required to conform to that
+meaning or the user is required to conform to such uses.
+
+Second, there is no way to establish a global lexical in CL, so if you
+say the state is lexical, then that means implementations have
+considerable latitude for interpreting the meaning of that term in
+that context, since it is otherwise plainly undefined what would occur
+and the meaning must be supplied by the implementation.
+
+Before you can claim you have a conforming program, you have to do
+more than just pick an isolated code fragment that is syntactically
+well-formed.  You have to show that all the variables have been given
+values, etc., using some conforming method.  I don't think you can say
+that, so you are therefore outside the realm of the spec.  At that
+point, quoting passages on what is required to occur won't help you.
+
+If you insist on saying magic pixie dust is used here, you can do that,
+but it won't get you closer to the truth.  Magic is invoked when people
+don't understand things, but the simpler interpretation is that when the
+spec says something is not defined, it's not defined.
+
+Your questions seem to me to be taking the form &quot;I can show by my own
+hand that everyone else is wrong and I am right and the world must
+suddenly and incompatibly change to suit me&quot;.  You may not mean this,
+but it's how it sounds to me.  I'm trying my best to explain why the
+world might work as it does and why the large number of people who
+have used this spec have converged on a meaning different than what
+you see and expect.  Your options at this point are either to come to
+grips with that or to mount a campaign for change.
+
+Note well that I am not discounting the possibility that you may have
+seen a bug in some implementation that causes it to behave in a way
+that is confusing you further by making you feel the world is even
+weirder than you might perceive it is under my explanation.  Bugs do
+happen and should be reported.
+
+And certainly the spec, being written in English and not formalese,
+does have the issue that not all of it is presented in a way that is
+uniformly unambiguous or concise.  It was not written from scratch
+according to some pre-articulated principles nor was its ultimate
+meaning within the choice of me nor any single person to just change
+and allege was valid.  So I take responsibility for, and apologize
+for, some suboptimal wording choices and outright typographical errors
+in various places, but at the same time I think largely (and specifically
+in this case) it has been able to withstand a considerable amount of
+careful reading with reasonably convergent results, and so I don't think
+you're likely to stand the world on its head at this point and I think
+an attempt to adopt such a posture will not serve anyone.
+
+<QUOTE PREVIOUSPOST="
+&gt; what will happen if we see a symbol foo, which is not defined as a variable?
+&gt; it's clearly not a lexical or constant variable.
+">
+
+How do you know the implementation does not define that all free toplevel
+variables are lexical?
+
+We have left this to implementations to resolve in part because
+toplevel is often used for two incompatible reasons that only the
+implementation can really resolve.  As a matter of style, I suggest
+that using unassigned free variables at all is something you should
+outright avoid in code in all cases.
+
+But the two incompatible reasons are this:
+
+* Some toplevel code is bootstrapping code, gaining a foothold for
+a program.  In this code, the code knows it is at toplevel and
+won't usually be much bothered by concerns about specials vs lexicals
+because it usually goes very carefully until it gets things set up,
+and it is (or should be) written by people who know that the least
+little global assignment will potentially clobber other global
+assignments done elsewhere (at least in that package) and that care
+in doing such pollution is warranted.  Furthermore, because of
+portability issues, one must assume a least common denominator of
+possible interpretations, and this leads again to conservative reading
+of semantics.
+
+* Some toplevel code is just random code people have stripped out of the
+middle of other code for testing.  e.g., I've written
+(defun foo (x)  #'(lambda () x))
+and I want to test that #'(lambda () x) works correctly.  If I type that
+at toplevel and the Lisp interactive system is overzealous in the
+manner you are insisting on, it will see X as a SPECIAL and so if I do
+(setq foo #'(lambda () x)) I won't be testing what foo will be doing.
+If the implementation just treats this silently and doesn't tell me
+that _I_, not the implementation, have done something weird, then I am
+likely to confuse myself debugging.  If, on the other hand, it implements
+global lexicals, no problem will result.  But the claim was made, at
+language design time by the vendors, that implementations needed the
+freedom to choose, and the language gave them that right.
+
+<QUOTE PREVIOUSPOST="
+&gt; can we somehow interpret the standard in a way that implementations would
+&gt; still be conforming? i see few ways --
+&gt; 1. assume that definition of dynamic variables is not strict and
+&gt; implementations can treat variables as dynamic is other cases too.
+&gt; 2. assume that other states of variable are also possible. i.e. in this
+&gt; situation implementations think that this is &quot;undefined-but-bound variable&quot;,
+&gt; so it's not an unbound variable, and can return a value instead of
+&gt; signalling an error.
+">
+
+Your program is in error so the standard does not apply here.
+
+You have not created a constant.
+
+You have not created a dynamic variable.
+
+You have not created a lexical variable.
+
+That doesn't entitle you to claim there is another kind of variable,
+it entitles you to understand what these implementations are telling
+you, which is that your program is in error.
+
+You're assuming you have a right to have your program interpreted as
+if you've set things up right when you haven't done the foundational
+work to do that.
+
+The spec does not require the signaling of a special variable error here
+because to do so would be to preclude implementations from having global
+lexicals.
+
+But there is no evidence that it intends or requires (nor even
+permits, though I haven't thought hard about that case) some new kind
+of variable, which is what you seem to be steadfastly suggesting is
+the only option.  What it generally intends in the case of gray areas
+like this is for implementations to do something reasonable and tell
+users what is being done, either interactively or in the documentation.
+
+<QUOTE PREVIOUSPOST="
+&gt; it seems people prefer first form of interpretation, assuming
+&gt; implementations can extend dynamic variable definitions. there is also some
+&gt; vague quirk: &quot;It is locally declared or globally proclaimed special. &quot;. so,
+&gt; maybe, if it was once locally declared special, we can still assume it's
+&gt; dynamic even it's outside that declaration?
+">
+
+One thing the spec doesn't say is that you can invent mystic new rules
+and then expect them to apply.  If an implementation defined that this is
+what happened, and if it violated no other passages in the spec, you could
+expect such a rule to apply in that implementation.  But your intented rule
+is not canonically dictated by the spec, so who's to say someone couldn't
+invent a different fanciful interpretation.
+
+The point is that you cannot rely on this not to be the rule (unless there
+is a place that says so) but you cannot rely on it to be the rule either.
+
+The spec is, in the end, a text that says little more than &quot;if you
+write your code to certain specs the implementation will try to
+interpret it according to certain specs&quot;.  In my personal individual
+opinion, in the case you've cited, you haven't done your part of the
+bargain, since you have not assured that you have used a conforming
+way to give an initial value to the variable, and so you're outside
+the realm of any agreement between you and any implementation that
+hasn't given you special dispensation to infer the meaning you're
+trying to infer.
+
+<QUOTE PREVIOUSPOST="
+&gt; and it's very easy to make it more clear: either explicitly allow
+&gt; implementations to extend definition of dynamic, allow other reaction on
+&gt; unbound variable, or allow other states of variables..
+">
+
+It's not very easy to make it more clear.  To make it more clear could
+and probably would cost:
+
+* years of work
+* hundreds of thousands of dollars of spec-writing time
+* destabilization of the entire language
+* hundreds of thousands, if not millions, of dollars in the community
+fixing code that was gratuitiously broken by change, retooling the
+various vendors, etc.
+
+This is probably the part you're failing to understand.  The standard
+is presently in a stable form that is usable as is.  There are only
+two options:
+
+* scrap it and start over
+* live with it
+
+You probably assume these options, but I claim they do not exist:
+
+* make an intermediate attempt to fix only things that are a problem
+* make only a targeted small set of fixes
+
+ANSI doesn't have a process whereby you can re-open a process on the
+condition of only fixing one bug.  You have to just re-open the process
+as a free-for-all, and then you take whatever comes, with no guarantee
+of it being better or worse, and certainly with no guarnatee.  You assume
+this is all that would be changed because it's all you personally care
+about.  But each person has a list of things they'd like changed.
+...
+read more »
+</POST>
+<POST>
+<POSTER> Eli Bendersky &lt;eli...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-07T14:39:00 </POSTDATE>
+On Oct 5, 7:13 pm, Rainer Joswig &lt;jos ... @lisp.de&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In article &lt;1191603643.801567.316 ... @w3g2000hsg.googlegroups.com&gt;,
+&gt;  Eli Bendersky &lt;eli ... @gmail.com&gt; wrote:
+
+&gt; &gt; On Oct 5, 6:56 pm, Ari Johnson &lt;iamthe ... @gmail.com&gt; wrote:
+&gt; &gt; &gt; Eli Bendersky &lt;eli ... @gmail.com&gt; writes:
+&gt; &gt; &gt; &gt; Hello,
+
+&gt; &gt; &gt; &gt; Consider this code:
+
+&gt; &gt; &gt; &gt; (defun printer (val)
+&gt; &gt; &gt; &gt;   (lambda () (format t &quot;~a~%&quot; val)))
+
+&gt; &gt; &gt; &gt; (setq printer-of-10 (printer 10))
+&gt; &gt; &gt; &gt; (funcall printer-of-10)
+
+&gt; &gt; &gt; &gt; It prints &quot;10&quot; as expected. However, consider this code:
+
+&gt; &gt; &gt; &gt; (defun printer (val)
+&gt; &gt; &gt; &gt;   (lambda () (format t &quot;~a~%&quot; val)))
+
+&gt; &gt; &gt; &gt; (setq printer-of-10 (printer 10))
+&gt; &gt; &gt; &gt; (defvar val 12)
+&gt; &gt; &gt; &gt; (funcall printer-of-10)
+
+&gt; &gt; &gt; &gt; It prints 12 ! This defies my understanding of how the dynamic &amp;
+&gt; &gt; &gt; &gt; lexical scoping rules of CL interact.
+
+&gt; &gt; &gt; &gt; How does this work ? defvar seems to be very dangerous (I found it out
+&gt; &gt; &gt; &gt; the hard way - this small example is a summary of code I was pouring
+&gt; &gt; &gt; &gt; over for the past 2 hours - such a bug is horribly difficult to
+&gt; &gt; &gt; &gt; find!).
+
+&gt; &gt; &gt; &gt; Thanks in advance,
+&gt; &gt; &gt; &gt; Eli
+
+&gt; &gt; &gt; OpenMCL and SBCL both give me 10.  Which implementation are you using?
+
+&gt; &gt; CLISP v2.41 (on Windows)
+
+&gt; That's an undesirable behavior of CLISP.
+&gt; It shows a difference in compiled and interpreted code.
+
+&gt; Try (compile 'printer) after you have defined printer.
+&gt; Then you get 10, as expected.
+
+&gt; Maybe you want to complain about it on the CLISP mailing list...
+">
+
+I tried. Re-posted exactly the same message, which:
+
+&quot;&quot;
+has been rejected by the list moderator.  The moderator gave the
+following reason for rejecting your request:
+
+&quot;Your message was rejected: it contains html.
+http://clisp.cons.org/impnotes/faq.html#faq-rejected &quot;
+
+Any questions or comments should be directed to the list administrator
+at:
+&quot;&quot;
+
+This isn't friendly. Sigh. Anyone from the clisp maillist here in the
+n.g. ?
+
+P.S. HTML ?!?!
+</POST>
+<POST>
+<POSTER> Eli Bendersky &lt;eli...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-07T15:01:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; [1] My current version:
+
+&gt; (defmacro deflex (var val &amp;optional (doc nil docp))
+&gt;   &quot;Define a top level (global) lexical VAR with initial value VAL,
+&gt;   which is assigned unconditionally as with DEFPARAMETER. If a DOC
+&gt;   string is provided, it is attached to both the name |VAR| and the
+&gt;   name *STORAGE-FOR-DEFLEX-VAR-|VAR|* as a documentation string of
+&gt;   kind 'VARIABLE. The new VAR will have lexical scope and thus may be
+&gt;   shadowed by LET bindings without affecting its dynamic (global) value.&quot;
+&gt;   (let* ((s0 (symbol-name '#:*storage-for-deflex-var-))
+&gt;          (s1 (symbol-name var))
+&gt;          (s2 (symbol-name '#:*))
+&gt;          (s3 (symbol-package var))
+&gt;          (backing-var (intern (concatenate 'string s0 s1 s2) s3)))
+&gt;     ;; Note: The DEFINE-SYMBOL-MACRO must be the last thing we do so
+&gt;     ;; that the value of the form is the symbol VAR.
+&gt;     (if docp
+&gt;       `(progn
+&gt;          (defparameter ,backing-var ,val ,doc)
+&gt;          (setf (documentation ',var 'variable) ,doc)
+&gt;          (define-symbol-macro ,var ,backing-var))
+&gt;       `(progn
+&gt;          (defparameter ,backing-var ,val)
+&gt;          (define-symbol-macro ,var ,backing-var)))))
+">
+
+Rob, this looks interesting. Can I consider it as a viable replacement
+for defparameter at the top level for defining lexical globals ? Is it
+portable across all implementation ?
+
+Eli
+</POST>
+<POST>
+<POSTER> Raffael Cavallaro &lt;raffaelcavallaro@pas-d&#39;espam-s&#39;il-vous-plait-mac.com&gt; </POSTER>
+<POSTDATE> 2007-10-07T17:49:00 </POSTDATE>
+On 2007-10-07 14:39:45 -0400, Eli Bendersky &lt;eli ... @gmail.com&gt; said:
+
+<QUOTE PREVIOUSPOST="
+&gt; This isn't friendly. Sigh. Anyone from the clisp maillist here in the
+&gt; n.g. ?
+
+&gt; P.S. HTML ?!?!
+">
+
+No, it isn't friendly to send html email to a text-only mailing list.
+Not all mailing list subscribers want to receive html email. Send a
+plain text email.
+</POST>
+<POST>
+<POSTER> Don Geddis &lt;d...@geddis.org&gt; </POSTER>
+<POSTDATE> 2007-10-07T19:49:00 </POSTDATE>
+Kent M Pitman &lt;pit ... @nhplace.com&gt; wrote on 07 Oct 2007 13:0:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Alex Mizrahi&quot; &lt;udode ... @users.sourceforge.net&gt; writes:
+&gt;&gt; and it's very easy to make it more clear
+
+&gt; It's not very easy to make it more clear.  To make it more clear could
+&gt; and probably would cost:
+&gt;  * years of work
+&gt;  * hundreds of thousands of dollars of spec-writing time
+&gt;  * destabilization of the entire language
+&gt;  * hundreds of thousands, if not millions, of dollars in the community
+&gt;    fixing code that was gratuitiously broken by change, retooling the
+&gt;    various vendors, etc.
+&gt; This is probably the part you're failing to understand.  The standard
+&gt; is presently in a stable form that is usable as is.  There are only
+&gt; two options:
+&gt;  * scrap it and start over
+&gt;  * live with it
+&gt; You probably assume these options, but I claim they do not exist:
+&gt;  * make an intermediate attempt to fix only things that are a problem
+&gt;  * make only a targeted small set of fixes
+">
+
+You know, I wonder about your pessimism.
+
+Of course I disagree not at all about your description of how ANSI works.
+But it isn't clear that Alex was talking about an ANSI revision.
+
+Many times I've dreamed of a &quot;Common Lisp 1.1&quot;, which would be defined more
+by a SRFI-like process than a revisiting of the ANSI process.  (Ironically,
+it was your own suggestions in the past that got me thinking of this.)
+
+I love the phrase in ANSI CL that an implementation &quot;purports to conform&quot;
+to the spec.  That captures the nuances of the situation beautifully.
+
+It seems to me that -- completely separate from ANSI -- someone could define
+a community-wide slightly-enhanced version of Common Lisp.  Perhaps starting
+with the hyperspec, and then making &quot;unobjectionable&quot; changes and/or
+clarifications.  And then they could publish this new thing as
+The Common Lisp 1.1 specification
+
+And then, once such a thing exists in formal form, any given implemention
+could choose to announce that they now &quot;purport to conform&quot; to CL 1.1, instead
+of to the older ANSI CL.
+
+It seems to me that such a thing would be possible, and almost any process
+could be used to generate the CL 1.1 spec -- not just a re-opening of the
+ANSI process.  Of course it matters what the process is, simply to get
+community buy-in.  If one guy does it by himself without input from anyone
+else, it seems unlikely that many CL vendors would choose to transfer their
+alligience from the ANSI spec.  But a cleverly-designed process -- yet still
+not ANSI -- might well be far cheaper and more contained that you've
+described, while at the same time resulting in long-term commitment from the
+majority of current (and future?) CL vendors.
+
+Anyway, I don't interpret a comment as &quot;this part of the spec could be more
+clear&quot; as an automatic naive call to reopen ANSI.
+
+-- Don
+___________________________________________________________________________ ____
+Don Geddis http://don.geddis.org/ d ... @geddis.org
+Vegetarian:     &quot;I object to KILLING animals for FOOD!&quot;
+Captain Ribman: &quot;And I object to eating LIVE animals!&quot;
+</POST>
+<POST>
+<POSTER> Kent M Pitman &lt;pit...@nhplace.com&gt; </POSTER>
+<POSTDATE> 2007-10-07T23:18:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Don Geddis &lt;d ... @geddis.org&gt; writes:
+&gt; Many times I've dreamed of a &quot;Common Lisp 1.1&quot;, which would be defined more
+&gt; by a SRFI-like process than a revisiting of the ANSI process.  (Ironically,
+&gt; it was your own suggestions in the past that got me thinking of this.)
+">
+
+Extensions are the things I've advocated managing in a way like that,
+but not adherence to the language per se.  I think the language itself
+needs to stay the same or change radically, but not be nitpicked by
+small changes, for reasons I've outlined in my prior message and here
+below...
+
+My understanding is that if you try to say what implementation does
+and doesn't conform to the ANSI standard, there are ways you can open
+yourself to lawsuits (I think both under defamation statutes and under
+antitrust law).  At least, the case was made to us during our
+standards work that this was the case.  We were strongly advised that
+we should not be making definitive statements that could be construed
+as us in our committee role saying that an implementation did not
+conform, since that would effectively put us in the position of
+disparaging someone who WAS purporting to conform.
+
+I'm not sure of the details, but I suspect the antitrust issue
+probably relates to the fact that it's easy for a group that seems
+superficially like a majority to say things should be a certain way,
+only to find that what seemed like one outlier was really perceived by
+the courts as a cartel of large players crowding out a small player.
+ANSI processes may seem cumbersome, but they are specifically designed
+to dodge this notion of crowding someone out, by allowing a great many
+opportunities for review of even the smallest technical issue, with
+special care given to those issues raised by small players who feel
+they would be infringed in the market.  Some of those processes are
+public review, but some are more subtle like membership/voting/notification
+requirements which help to ensure that all necessary parties have
+heard about the issues.  Any process you make to simulate this that is
+less overhead has to be sure to have those same properties, I suspect.
+
+This is part of why I have generally advocated pluralistic processes
+that allow multiple points of view as the outcome, not just as the
+input.  So having multiple &quot;substandards&quot; for stream protocols, for
+example, is better to me than one single Right Way because then people
+can voluntarily conform to one or more and there is no dictated one
+way of doing things that can be pointed at to say that people are
+forced to do it that way.  I don't know that this would dodge the
+antitrust issues either, of course, but it has always seemed to me
+that it should because it doesn't involve the nasty step that consensus
+processes have of forcing agreement and publishing a result in the name
+of parties some of whom may have even voted against the result.
+
+The ANSI standard is what it is.  You can make ANOTHER thing which is
+not ANSI, and you can get vendors to purport to conform to that, and then
+you can modify that.  But you can't make them decide to do that.
+
+And at that point, the vendors have to trust that the other thing is not
+subject to new change in a way that will upset their business.  They know
+ANSI will only change in fixed and pre-determined ways.  Since the purpose
+of another process would not be that, getting vendors to switch over might
+be harder than you suspect.  Or maybe not.
+
+<QUOTE PREVIOUSPOST="
+&gt; It seems to me that -- completely separate from ANSI -- someone
+&gt; could define a community-wide slightly-enhanced version of Common
+&gt; Lisp.  Perhaps starting with the hyperspec,
+">
+
+The HyperSpec is copyrighted and not, to my knowledge, available for such use.
+
+You probably mean starting with the TeX sources for dpANS CL, which are
+largely assumed to be unencumbered (although there's no legal process for
+certifying such matters under American law, and, as such, I'm not legally
+competent to advise you that this is a 100% safe avenue, even though I
+know of no problems that have ever resulted from people using these).
+
+<QUOTE PREVIOUSPOST="
+&gt; and then making &quot;unobjectionable&quot; changes and/or clarifications.
+">
+
+It's no sure indicator, but CL history has suggested there is no such
+concept as an unobjectionable change.  Steele came to the 1986
+Monterey meeting of CLTL designers with a list of changes he expected
+to be non-controversial and a large number were in fact seen to be
+unexpectedly controversial.  This is how we got into ANSI--we had no
+procedure for otherwise resolving the fact that the community was all
+over the map.
+
+<QUOTE PREVIOUSPOST="
+&gt; And then they could publish this new thing as The Common Lisp 1.1
+&gt; specification
+">
+
+I would personally advise you that it's FAR better to get funding to
+make a new, coherent dialect that had these changes already made and
+then sell the result, not the promise.  Then people would know what
+they were buying in transitioning.  Otherwise, you're selling
+destabilization for the promise of convergence.  I don't see the
+upside UNLESS you were going to do more than the ultra-light editing
+you're suggesting, and yet if you're going to do anything more you
+introduce risk.
+
+<QUOTE PREVIOUSPOST="
+&gt; And then, once such a thing exists in formal form, any given
+&gt; implemention could choose to announce that they now &quot;purport to
+&gt; conform&quot; to CL 1.1, instead of to the older ANSI CL.
+">
+
+At some risk of dividing the community and/or spawning many splintered
+groups.
+
+If you're not going to make something substantially new, I'm not sure
+this is worth the effort.
+
+I'm not even sure that a namable set of extensions that everyone must do
+in order to get The Good Name is worth it--I think that defies pluralism.
+I think
+(a) there is not substantial disagreement on what is needed to make
+a conforming CL now
+(b) it's easy enough to make voluntary extensions (even redundant ones
+that disagree by doing the same thing three different ways)
+(c) insisting things should be done only one way is inappropriate
+
+But all of that is just my personal opinion.
+
+<QUOTE PREVIOUSPOST="
+&gt; It seems to me that such a thing would be possible, and almost any process
+&gt; could be used to generate the CL 1.1 spec -- not just a re-opening of the
+&gt; ANSI process.
+">
+
+What would this accomplish?  You haven't described it in any way
+whatsoever other than that it has a name that seems greaterp than the
+original name.  What is going to assure that it's going in the good
+direction? What's going to assure that there is a canonical good
+direction?  What will happen to those who disagree?  Qualitatively,
+what will distinguish CL 1.1 from Arc? (In other words, something is
+either compatible or it isn't--is there some middle ground I'm missing?)
+
+Incidentally, while I have not rallied around Arc per se, my remarks
+should not be taken to disparage the notion of what Graham has done
+with that.  I think he's following the right process and I think it's
+fine for people to experiment with dialects.  I just don't think they
+should gamble the CL dialect as part of that experimentation--CL is
+where people should park who want stability. I recall the days when
+Lispers used to wake every Monday or so to email saying &quot;your programs
+no longer mean what they used to; please update them&quot;.  CL was an
+answer to that instability.  It was not meant to say there couldn't be
+dialects evolving, it was just meant to say that some people have real
+businesses that depend on stability and need not to be perturbed while
+change is in progress.
+
+There are many Lisp dialects out there now and perhaps should be more.
+But why should the one stable dialect be perturbed on the promise
+of something new--let's see the new thing, then decide if it's worthy
+of the name.
+
+<QUOTE PREVIOUSPOST="
+&gt; Of course it matters what the process is, simply to get
+&gt; community buy-in.
+">
+
+Is there just one community and how would you define/describe it such
+that you could know if you had buy-in?
+
+<QUOTE PREVIOUSPOST="
+&gt; If one guy does it by himself without input from anyone
+&gt; else, it seems unlikely that many CL vendors would choose to transfer their
+&gt; alligience from the ANSI spec.
+">
+
+Honestly, I think it depends on who that one person is and whether they're
+he or she is well enough funded to do a good job.  But I suppose it depends
+on what your goodness metric is.  Do you suppose The Community has a canonical
+sense of what is good in that regard?
+
+<QUOTE PREVIOUSPOST="
+&gt; But a cleverly-designed process -- yet still not ANSI -- might well
+&gt; be far cheaper and more contained that you've described, while at
+&gt; the same time resulting in long-term commitment from the majority of
+&gt; current (and future?) CL vendors.
+">
+
+If I were a vendor and I had money to burn on something, it wouldn't be
+perturbing the ANSI base.  It would either be finding a new dialect that
+was sufficiently better at addressing my market needs that an incompatible
+break was in order, or it would be making compatible extensions to the
+investment I'd already made.
+
+But I'd be interested to hear vendor points of view on this.
+
+<QUOTE PREVIOUSPOST="
+&gt; Anyway, I don't interpret a comment as &quot;this part of the spec could be more
+&gt; clear&quot; as an automatic naive call to reopen ANSI.
+">
+
+Perhaps we see the word &quot;could&quot; differently.  I wouldn't have blinked at
+&quot;could have&quot;.  But &quot;could&quot; is very different--it suggests future possibility
+and that begs an understanding of mechanism.  I think without mechanism
+there's no meaning to this observation.
+
+All just my personal opinion, AND I reserve the right to change my mind
+dynamically as discussion progresses. :)
+</POST>
+<POST>
+<POSTER> Don Geddis &lt;d...@geddis.org&gt; </POSTER>
+<POSTDATE> 2007-10-08T01:39:00 </POSTDATE>
+Kent M Pitman &lt;pit ... @nhplace.com&gt; wrote on 07 Oct 2007 23:1:
+
+<QUOTE PREVIOUSPOST="
+&gt; Don Geddis &lt;d ... @geddis.org&gt; writes:
+&gt;&gt; Many times I've dreamed of a &quot;Common Lisp 1.1&quot;, which would be defined more
+&gt;&gt; by a SRFI-like process than a revisiting of the ANSI process.  (Ironically,
+&gt;&gt; it was your own suggestions in the past that got me thinking of this.)
+
+&gt; Extensions are the things I've advocated managing in a way like that,
+&gt; but not adherence to the language per se.
+">
+
+I guess I agree.  I was thinking more of extensions.  Plus perhaps a few
+clarifications.  Not a radical new dialect.
+
+I don't think I mentioned some attempt to assert whether an implementation
+conformed to a label or not.
+
+<QUOTE PREVIOUSPOST="
+&gt; Some of those processes are public review, but some are more subtle like
+&gt; membership/voting/notification requirements which help to ensure that all
+&gt; necessary parties have heard about the issues.  Any process you make to
+&gt; simulate this that is less overhead has to be sure to have those same
+&gt; properties, I suspect.
+">
+
+You could be right.  I think a Sufficiently Wise Philosopher King could
+handle this with far less cost than ANSI, but perhaps I'm underestimating the
+difficulty.
+
+<QUOTE PREVIOUSPOST="
+&gt; This is part of why I have generally advocated pluralistic processes
+&gt; that allow multiple points of view as the outcome, not just as the
+&gt; input.  So having multiple &quot;substandards&quot; for stream protocols, for
+&gt; example, is better to me than one single Right Way because then people
+&gt; can voluntarily conform to one or more and there is no dictated one
+&gt; way of doing things that can be pointed at to say that people are
+&gt; forced to do it that way.
+">
+
+Ah, but that's of far less value to users.  That's basically the same as:
+&quot;all you can rely on for portable code is the ANSI spec; for anything else,
+read the documentation of your implementation.&quot;  It seems to me that we could
+at least imagine for striving for more that portable code could count on.
+
+<QUOTE PREVIOUSPOST="
+&gt; it doesn't involve the nasty step that consensus processes have of forcing
+&gt; agreement and publishing a result in the name of parties some of whom may
+&gt; have even voted against the result.
+">
+
+I didn't imagine publishing a result in anyone's name.  I imagined a process
+that would result in some document (&quot;Common Lisp 1.1&quot;), to which any vendor
+could choose to (&quot;purport to&quot;) conform, or not.
+
+<QUOTE PREVIOUSPOST="
+&gt; The ANSI standard is what it is.  You can make ANOTHER thing which is
+&gt; not ANSI, and you can get vendors to purport to conform to that, and then
+&gt; you can modify that.  But you can't make them decide to do that.
+">
+
+Agreed.  But that was exactly my thought.  Build the spec first (hopefully
+with the input of vendors), and then suggest that different implementations
+consider beginning to conform to it.
+
+Not: somehow agree ahead of time that they WILL conform to WHATEVER the
+outcome of the process is.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; It seems to me that -- completely separate from ANSI -- someone could
+&gt;&gt; define a community-wide slightly-enhanced version of Common Lisp.  Perhaps
+&gt;&gt; starting with the hyperspec,
+
+&gt; The HyperSpec is copyrighted and not, to my knowledge, available for such
+&gt; use.  You probably mean starting with the TeX sources for dpANS CL, which
+&gt; are largely assumed to be unencumbered [although this is not a legal opinion]
+">
+
+Ah.  I was confused, because the Hyperspec is so convenient, and I had
+thought I had seen it available on the web in multiple locations.  So I just
+assumed it was public domain.
+
+But yes.  You're almost certainly right that the TeX sources are what would
+need to be the starting point.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; and then making &quot;unobjectionable&quot; changes and/or clarifications.
+
+&gt; It's no sure indicator, but CL history has suggested there is no such
+&gt; concept as an unobjectionable change.  Steele came to the 1986 Monterey
+&gt; meeting of CLTL designers with a list of changes he expected to be
+&gt; non-controversial and a large number were in fact seen to be unexpectedly
+&gt; controversial.  This is how we got into ANSI--we had no procedure for
+&gt; otherwise resolving the fact that the community was all over the map.
+">
+
+Yes, I've heard you tell this story before, and I fully accept the
+problematic nature of my wording.  (I put the scare quotes there, because
+even I recalled your story as I was writing the phrase.)
+
+Here's really the sequence I'm thinking of:
+
+1. ANSI Common Lisp (aka CL 1.0)        The spec as we know it
+2. CL 1.1                               Typos, errors from ANSI CL
+3. CL 1.2                               Additional &quot;minor&quot; extensions
+
+For CL 1.1, it would be driven NOT by the wishes of the participants, but
+instead by observation of the actual behavior of the vendor community in the
+last decade or so.  For example, there are a (very few!) sentences in the
+official ANSI CL spec that are clearly just in error.  Like a similar
+paragraph copied from a different location, that wasn't properly modified in
+the new location.  Everybody knows this stuff, and all vendors just &quot;do the
+right (obvious) thing&quot;.  Even though it officially deviates from the spec.
+I'm thinking of things like Franz's list of non-compliance:
+http://franz.com/support/documentation/current/doc/implementation.htm...
+
+While some of these things are just errors, others result from the spec being
+ambiguous or even inconsistent on some rare corner case.  It would seem to be
+of at least minor value just to spell these things out.  Something like:
+
+The following 10 different CL implementations all looked at section
+3.1.x.y.z in the spec, and all concluded that the real intention is
+B, despite the words there apparently requiring A.  If you're
+building a new CL implemention, this note is merely to let you know
+that everyone to date has found section 3.1.x.y.z problematic, and
+everyone else has concluded that B is the reasonable implementation.
+
+One could also imagine, in the CL 1.1 spec, rewriting something like the
+pathname section, which even you admit was on your list for clarification.
+NOT to change semantics, but just to make more explicit how all vendors
+ALREADY interpret the words that are in existing ANSI spec.  Figuring out all
+the consequences may be non trivial, and the community has done that work.
+So why not write it down in one obvious place.
+
+As for the more ambitious CL 1.2, perhaps that's a different project.  But
+there I was thinking about optional libraries, which might be nice to package
+into a single large bag, and make it easy for a vendor to say &quot;I (purport to
+conform to CL 1.2) and/or agree to supply these libraries by default.&quot;
+
+My own short list might include SPLIT-SEQUENCE, some regular expression
+library, probably ITERATE, maybe ASDF, perhaps even Franz's IF* (although I
+doubt I'd use that).  One could even propose a requirement that any
+functionality added to CL 1.2 would need to include a reference
+implementation for the functionality, written in ANSI CL (1.0 or 1.1).
+
+What's the point?  I guess for user convenience, that a user could publish
+the code of some application, and say: &quot;this runs on any CL 1.2
+implementation&quot;.  Without needing to include the source for all the obvious
+libraries as well.  Even if you only have a CL 1.0/1.1 implementation
+yourself, the process of upgrading it to CL 1.2 would be obvious: all the
+functionality is defined in spec form (rather than only as code), and
+reference implementations are always available in a well-known place.
+
+Assuming that SOMEHOW both of these efforts (CL 1.1 and CL 1.2) went well, I
+can imagine that the success of the process might lead some bold people to
+attempt a more ambitious effort for CL 1.3, trying to include things like FFI
+or multiprocessing, that have multiple tradeoffs and for which the different
+existing implementations have currently made distinct choices.
+
+My intention was never to suggest that the process would somehow force
+everyone to submit to some standard in these topics.
+
+But I still think there might be value in formalizing existing community
+consensus, and perhaps in slightly expanding the set of built-in libraries.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; And then they could publish this new thing as The Common Lisp 1.1
+&gt;&gt; specification
+
+&gt; I would personally advise you that it's FAR better to get funding to
+&gt; make a new, coherent dialect that had these changes already made and
+&gt; then sell the result, not the promise.
+">
+
+Well, yes, I agree.  That was kind of my proposal.  Why not just start
+writing a new &quot;slightly enhanced&quot; spec?  Get comments and feedback from the
+community (including vendors), and try to formalize existing practice.
+Perhaps even bite off one or two things that are merely gratuitously
+incompatible -- but offering the identical functionality -- if any such
+examples exist.
+
+Of course this depends on someone with the time and effort and expertise to
+do it.  So, a matter of funding, I guess.  But you seemed to have a larger
+objection than that.  You seemed to be suggesting that EVEN IF such a person
+and/or money could be found, that it would likely be a bad idea.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; And then, once such a thing exists in formal form, any given implemention
+&gt;&gt; could choose to announce that they now &quot;purport to conform&quot; to CL 1.1,
+&gt;&gt; instead of to the older ANSI CL.
+
+&gt; At some risk of dividing the community and/or spawning many splintered
+&gt; groups.  If you're not going to make something substantially new, I'm not
+&gt; sure this is worth the effort.
+">
+
+You could be right.  I'd suggest that the differences from CL 1.0 to CL 1.1
+are generally in corner cases that most users never notice.  And the
+differences between CL 1.1 and CL 1.2 could be fixed by an end user, even
+without the cooperation of the vendor.
+
+So I think the risk of splintering is small.  But perhaps the value is small
+too, so not worth the cost.
+
+<QUOTE PREVIOUSPOST="
+&gt; I'm not even sure that a namable set of extensions that everyone must do
+&gt; in order to get The Good Name is worth it--I think that defies pluralism.
+&gt; I think
+&gt;  (a) there is not substantial disagreement on what is needed to make
+&gt;      a conforming CL now
+&gt;  (b) it's easy
+">
+
+...
+read more »
+</POST>
+<POST>
+<POSTER> r...@rpw3.org (Rob Warnock) </POSTER>
+<POSTDATE> 2007-10-08T02:51:00 </POSTDATE>
+Thomas F. Burdick &lt;tburd ... @gmail.com&gt; wrote:
++---------------
+| Kent M Pitman &lt;pit ... @nhplace.com&gt; wrote:
+| &gt; Pascal Costanza &lt;p ... @p-cos.net&gt; writes:
+| &gt; &gt; Why are the first two characteristics (no uninterned symbols, same
+| &gt; &gt; package as the symbol macro) important?
+| &gt;
+| &gt; I never use uninterned symbols either.  They have issues with becoming
+| &gt; external data in file compilation when you've macroexpanded them.  If
+| &gt; all your uses are in one file, you may not see it, because I think
+| &gt; implementations try to eq-ify gensyms across a target stream, but if
+| &gt; you were to write them to a separate file, there is no way for those
+| &gt; two files, upon reloading, to realize they need to coalesce--their
+| &gt; symbol identities will, of necessity, diverge and they will no longer
+| &gt; be cooperating.
+|
+| Also, simply re-evaluating the deflex form should probably not make
+| all references from that point on be disjoint from all references
+| compiled up to that point.
++---------------
+
+Yup, that's precisely the main reason I don't like uninterned
+symbols as &quot;backing variables&quot; for lexicals. In what I use DEFLEX
+for, it is *very* common for the DEFLEX form to be re-evaluated
+or even changed slightly and *then* re-evaluated [as when editing
+a source file and re-loading it into the running image]. The latter
+is also why my DEFLEX expands into a DEFPARAMETER of the backing
+variable rather than a DEFVAR. I *want* the (re)evaluation of a
+(possibly-modified) DEFLEX to be able to change the variable and
+all extant references to it.
+
+To answer Pascal's other question, having the same package as
+the symbol macro has two benefits: (1) If you're *not* using
+uninterned symbols at backing variables, having the backing
+variable match the packages of the symbol macro avoids collisions
+between &quot;DEFLEX FOO&quot; forms in different packages. [This was a bug
+in an earlier version of my DEFLEX which Adam Warner helpfully
+pointed out in mid-2005.]  And, (2) if you *do* use uninterned
+symbols at backing variables, then when debugging you sometimes
+don't know to *which* DEFLEX form a &quot;#:FOO&quot; refers (which package
+the symbol macro came from), since all you have is the debugger
+error message that's complaining about something in the expansion,
+&quot;#:FOO&quot;.
+
+-Rob
+
+-----
+Rob Warnock                     &lt;r ... @rpw3.org&gt;
+627 26th Avenue                 &lt;URL: http://rpw3.org/ &gt;
+San Mateo, CA 94403             (650)572-2607
+</POST>
+<POST>
+<POSTER> r...@rpw3.org (Rob Warnock) </POSTER>
+<POSTDATE> 2007-10-08T03:55:00 </POSTDATE>
+Eli Bendersky  &lt;eli ... @gmail.com&gt; wrote:
++---------------
+| &gt; [1] My current version:
+| &gt;
+| &gt; (defmacro deflex (var val &amp;optional (doc nil docp))
+...[trimmed]...
+|
+| Rob, this looks interesting. Can I consider it as a viable replacement
+| for defparameter at the top level for defining lexical globals ?
++---------------
+
+I certainly use it that way quite liberally in my own code,
+especially for variables that are going to be set or referenced
+at the REPL.
+
+But I also still use DEFPARAMETER (with traditional *earmuffs*
+on the variable) for variables that are ever going to be dynamically
+rebound, since DEFLEX is *NOT* compatible with the DEFVAR/SHADOWABLE
+approach[1] mentioned elsewhere in this thread. That is, if you do
+(DEFVAR/SHADOWABLE FOO 13) or (DEFINE-SYMBOL-MACRO FOO (SYMBOL-VALUE 'FOO)),
+then you can both LET-bind FOO lexically *and* reference the global
+value using (LOCALLY (DECLARE (SPECIAL FOO)) FOO), e.g.:
+
+&gt; (defvar/shadowable foo 13)
+
+FOO
+&gt; (defun foo () foo)
+
+FOO
+&gt; (let ((foo 27))
+(locally (declare (special foo)) (setf foo 53))
+(list foo (foo) (locally (declare (special foo)) foo)))
+
+(27 53 53)
+&gt; foo
+
+53
+&gt; (locally (declare (special foo)) foo)
+
+53
+&gt;
+
+But if you (DEFLEX FOO 13), then (LOCALLY (DECLARE (SPECIAL FOO)) FOO)
+is going to get the value cell for the symbol FOO itself, *not*
+the global value of the backing variable for FOO. This can lead
+to considerable confusion:
+
+&gt; (deflex foo 13)
+
+FOO
+&gt; (defun foo () foo)
+
+FOO
+&gt; (let ((foo 27))
+(locally (declare (special foo)) (setf foo 53))
+(list foo (foo) (locally (declare (special foo)) foo)))
+
+(27 13 53)
+&gt; foo
+
+13
+&gt; (locally (declare (special foo)) foo)
+
+53
+&gt;
+
++---------------
+| Is it portable across all implementation ?
++---------------
+
+As far as I know, yes, it should be. It uses only ANSI CL constructs.
+
+However, be aware that in CMUCL-19d and earlier there was a bug
+in macro expansion that in some cases [e.g., &quot;INCF FOO&quot;, but not
+just &quot;FOO&quot; or &quot;SETF FOO&quot;] caused references to symbol macros that
+had been shadowed by lexical variables to expand to the symbol macro
+expansion instead of refering to the lexical variable. [This would
+affect all symbol macros, including both DEFLEX and DEFVAR/SHADOWABLE.]
+This bug was fixed in the CVS for &quot;code/eval.lisp&quot; as of Revision
+1.43 2006-12-19, but to my knowledge there is not yet an official
+&quot;cmucl-19d-patch-NNN&quot; for this. I posted a patch here in article
+&lt;URL: news:Y_Cdnbvi_4Ir4RvYnZ2dnUVZ_tunnZ2d@speakeasy.net &gt; on 2006-12-18
+[which also works in CMUCL-19c], or you can just extract the
+routine MACROEXPAND-1 from the CVS tree version of &quot;eval.lisp&quot; at
+&lt; http://common-lisp.net/cgi-bin/viewcvs.cgi/*checkout*/src/
+code/eval.lisp?rev=1.43&amp;root=cmucl&gt;.
+
+-Rob
+
+[1] In case you missed it, I was proposing this if one wanted
+to use the &quot;shadowable global special&quot; approach:
+
+(defmacro defvar/shadowable (var &amp;optional value (doc nil docp))
+`(progn
+(setf (symbol-value ',var) ,value)
+,@(when docp
+(list `(setf (documentation ',var 'variable) ,doc)))
+(define-symbol-macro ,var (symbol-value ',var))))
+
+-----
+Rob Warnock                     &lt;r ... @rpw3.org&gt;
+627 26th Avenue                 &lt;URL: http://rpw3.org/ &gt;
+San Mateo, CA 94403             (650)572-2607
+</POST>
+<POST>
+<POSTER> Rainer Joswig &lt;jos...@lisp.de&gt; </POSTER>
+<POSTDATE> 2007-10-08T04:29:00 </POSTDATE>
+In article &lt;barmar-B68AC1.23020006102 ... @comcast.dca.giganews.com&gt;,
+Barry Margolin &lt;bar ... @alum.mit.edu&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In article &lt;joswig-2DA2EA.09334506102 ... @news-europe.giganews.com&gt;,
+&gt;  Rainer Joswig &lt;jos ... @lisp.de&gt; wrote:
+
+&gt; &gt; [1]&gt; (defun printer (val)
+&gt; &gt;   (lambda () (format t &quot;~a~%&quot; val)))
+&gt; &gt; PRINTER
+&gt; &gt; [2]&gt; (setq printer-of-10 (printer 10))
+&gt; &gt; #&lt;FUNCTION :LAMBDA NIL (FORMAT T &quot;~a~%&quot; VAL)&gt;
+&gt; &gt; [3]&gt; (defvar val 12)
+&gt; &gt; VAL
+&gt; &gt; [4]&gt; (funcall printer-of-10)
+&gt; &gt; 12
+&gt; &gt; NIL
+&gt; &gt; [5]&gt;
+
+&gt; The it's definitely a bug in CLISP.  DEFVAR proclaims a variable
+&gt; special, but it isn't supposed to perform time travel.  PRINTER was
+&gt; defined before the declaration was in effect, so VAL was a lexical
+&gt; variable at the time, and should be closed over properly.
+
+&gt; Does this happen if you put everything in a file and compile it?
+">
+
+Let's see:
+
+[1]&gt; (compile-file &quot;clisp-test.lisp&quot;)
+;; Compiling file /private/tmp/clisp-test.lisp ...
+WARNING in 5 5 (SETQ PRINTER-OF-10 (PRINTER 10))-2 in line 5 :
+PRINTER-OF-10 is neither declared nor bound,
+it will be treated as if it were declared SPECIAL.
+WARNING in 9 9 (PRINT (FUNCALL PRINTER-OF-10))-4 in line 9 :
+PRINTER-OF-10 is neither declared nor bound,
+it will be treated as if it were declared SPECIAL.
+;; Wrote file /private/tmp/clisp-test.fas
+The following special variables were not defined:
+PRINTER-OF-10
+0 errors, 2 warnings
+#P&quot;/private/tmp/clisp-test.fas&quot; ;
+2 ;
+2
+[2]&gt; (load *)
+;; Loading file /private/tmp/clisp-test.fas ...
+10
+
+NIL
+;; Loaded file /private/tmp/clisp-test.fas
+T
+
+So it gives 10 when compiled...
+
+--
+http://lispm.dyndns.org
+</POST>
+</TEXT>
+</BODY>
+</DOC>

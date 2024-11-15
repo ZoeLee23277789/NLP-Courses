@@ -1,0 +1,102 @@
+<DOC>
+<DOCID> eng-NG-31-127288-9209511 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-11-03T08:01:00 </DATETIME>
+<BODY>
+<HEADLINE>
+substitution in monoids
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Joel B. Mohler&quot; &lt;j...@kiwistrawberry.us&gt; </POSTER>
+<POSTDATE> 2007-11-03T08:01:00 </POSTDATE>
+I was trawling through old tickets and came across this
+http://sagetrac.org/sage_trac/ticket/598
+which I was responsible for getting entered (I guess).  I subsequently fixed
+some of it, but not all of it and didn't realize the ticket was there.
+
+Here is current 2.8.11 operation:
+sage: M.&lt;x,y&gt; = FreeMonoid(2)
+sage: (x*y).substitute(x=2,y=3)
+6
+sage: (x*y).substitute(x=1)
+...
+&lt;type 'exceptions.TypeError'&gt;: unsupported operand parent(s) for '*': 'Integer
+Ring' and 'Free monoid on 2 generators (x, y)'
+
+The ticket claims that substitution with '1' should work, but I disagree.
+That is, I think there might be some meaning for substituting x=1 -- i.e. I
+can view 1 as the identity, but not for x=2.  What is the 2 element in the
+monoid M?  I don't think it should work to substitute an integer if not all
+integers can be substituted -- it boils down to violating coercion rules.
+
+Oh, I very carefully wrote the substitution (__call__) to handle substituting
+other types of elements when all the variables are replaced since my
+particular use case demanded that.
+
+So, I claim that the ticket is some combination of fixed and invalid.  Anybody
+agree/disagree?
+
+--
+Joel
+</POST>
+<POST>
+<POSTER> &quot;John Cremona&quot; &lt;john.crem...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T10:23:00 </POSTDATE>
+Surely 1 is the *only* integer which can be coerced into M.  This does work:
+
+sage: (x*y).substitute(x=M(1))
+y
+
+so the issue is: should you define automatic coercion of the integer
+1, and of no other integer?  I would say no, since the explicit
+coercion does work.
+
+In the other example (substituting x and y to 2 and 3) the result is
+just an integer, and this is justified mathematically since their is
+obviously a map from your monoid into the monoid of integers.  I also
+some other double substitutions for x and y (both matricies, both
+polynomials) and the result was as expected.
+
+John
+
+On 03/11/2007, Joel B. Mohler &lt;j ... @kiwistrawberry.us&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I was trawling through old tickets and came across this
+&gt; http://sagetrac.org/sage_trac/ticket/598
+&gt; which I was responsible for getting entered (I guess).  I subsequently fixed
+&gt; some of it, but not all of it and didn't realize the ticket was there.
+
+&gt; Here is current 2.8.11 operation:
+&gt; sage: M.&lt;x,y&gt; = FreeMonoid(2)
+&gt; sage: (x*y).substitute(x=2,y=3)
+&gt; 6
+&gt; sage: (x*y).substitute(x=1)
+&gt; ...
+&gt; &lt;type 'exceptions.TypeError'&gt;: unsupported operand parent(s) for '*': 'Integer
+&gt; Ring' and 'Free monoid on 2 generators (x, y)'
+
+&gt; The ticket claims that substitution with '1' should work, but I disagree.
+&gt; That is, I think there might be some meaning for substituting x=1 -- i.e. I
+&gt; can view 1 as the identity, but not for x=2.  What is the 2 element in the
+&gt; monoid M?  I don't think it should work to substitute an integer if not all
+&gt; integers can be substituted -- it boils down to violating coercion rules.
+
+&gt; Oh, I very carefully wrote the substitution (__call__) to handle substituting
+&gt; other types of elements when all the variables are replaced since my
+&gt; particular use case demanded that.
+
+&gt; So, I claim that the ticket is some combination of fixed and invalid.  Anybody
+&gt; agree/disagree?
+
+&gt; --
+&gt; Joel
+">
+
+--
+John Cremona
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,3985 @@
+<DOC>
+<DOCID> eng-NG-31-135601-8600170 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-13T19:18:00 </DATETIME>
+<BODY>
+<HEADLINE>
+COBOL &quot;non-myth&quot; confirmed - Index and subscripts (MF on Windows)
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;William M. Klein&quot; &lt;wmkl...@nospam.netcom.com&gt; </POSTER>
+<POSTDATE> 2007-09-13T19:18:00 </POSTDATE>
+I do not have a Unix or Linux environment to test this on, but I did create a
+program to test subscripts vs indices with Micro Focus Net Express 5.0 (Warp 03)
+on Windows.  The following programs (one a  driver to run the other two)
+confirmed that the program using indices in THIS environment runs about 1/3
+slower with subscripts than with indices.  (I tried it with the STANDARD
+&quot;Binary&quot; and then changed it to &quot;Comp-5&quot;.  The latter, non-portable version runs
+a little faster and is listed below - but is still measurably slower than the
+one with indices).  I would be interested in results with other compilers and/or
+environments.  (Change COMP-5 to BINARY if required.  Otherwise, I think it is
+sully '85 Standard - with Intrinsic Functions - conforming).
+
+(Hopefully &quot;indentation&quot; etc will stay OK.  If not, let me know and I'll put the
+source  programs on the web for download.
+
+Driver Program:
+
+Identification Division.
+
+Program-Id. IndSub.
+
+Procedure Division.
+
+Mainline.
+
+Call &quot;TstSub&quot;
+
+Call &quot;TstInd&quot;
+
+Stop Run
+
+.
+
+* * * * * * * *
+
+Test Indices
+
+Identification Division.
+
+Program-ID. TstInd.
+
+Data Division.
+
+Working-Storage Section.
+
+01  Time-Flds.
+
+05  Start-Time          Pic X(08).
+
+05  End-Time            Pic X(08).
+
+05  Temp-Time.
+
+10                  Pic X.
+
+10  M-Dig2          Pic 9.
+
+10                  Pic X.
+
+10  S-Dig2          Pic 9.
+
+10  H-Dig1          Pic 9.
+
+10  H-Dig2          Pic 9.
+
+01  TabA.
+
+05  Tabl1A occurs 10 Times
+
+indexed by Ind1a.
+
+10  T1A             Pic X(03).
+
+10  Tabl2A  Occurs 10 Times
+
+Indexed by Ind2a.
+
+15  T2A         Pic X(33).
+
+15  Tabl3A Occurs 10 Times
+
+Indexed by Ind3A.
+
+20  T3a     Pic X.
+
+20  Tabl4A Occurs 10 times
+
+Indexed by Ind4a.
+
+25  T4A Pic X(11).
+
+25  ElemA   Pic X(300).
+
+15  T2AA            Pic X.
+
+10  T1AA                Pic X(5).
+
+01  Tabb.
+
+05  Tabl1b occurs 10 Times
+
+indexed by Ind1b.
+
+10  T1b             Pic X(11).
+
+10  Tabl2b  Occurs 10 Times
+
+Indexed by Ind2b.
+
+15  T2b         Pic X(22).
+
+15  Tabl3b Occurs 10 Times
+
+Indexed by Ind3b.
+
+20  T3b     Pic X(05).
+
+20  Tabl4b Occurs 10 times
+
+Indexed by Ind4b.
+
+25  T4b Pic X(11).
+
+25  Elemb   Pic X(300).
+
+15  T2bb            Pic X(11).
+
+10  T1bb                Pic X(3).
+
+Procedure Division.
+
+Mainline.
+
+Move Function Current-Date (9:8) to Start-Time
+
+Perform Loop 500000 Times
+
+Move Function Current-Date (9:8) to End-Time
+
+Display &quot;  *** Testing Indices * * *&quot;
+
+Display &quot;Start-Time:&quot;
+
+Start-Time (1:2) &quot;:&quot;
+
+Start-Time (3:2) &quot;:&quot;
+
+Start-Time (5:2) &quot;.&quot;
+
+Start-Time (7:2)
+
+Display &quot;  End-Time:&quot;
+
+End-Time (1:2) &quot;:&quot;
+
+End-Time (3:2) &quot;:&quot;
+
+End-Time (5:2) &quot;.&quot;
+
+End-Time (7:2)
+
+.
+
+If-Called.
+
+Exit Program
+
+.
+
+If-Main.
+
+Stop Run
+
+.
+
+Loop.
+
+Move Function Current-Date (11:6) to Temp-Time
+
+Set Ind1a to M-Dig2
+
+Set Ind2a to S-Dig2
+
+Set Ind3a to H-Dig1
+
+Set Ind4a to H-Dig2
+
+Set Ind1A up by 1
+
+Set Ind2a up by 1
+
+Set Ind3a up by 1
+
+Set Ind4a up by 1
+
+Move High-Values to ElemA (Ind1a Ind2a Ind3a Ind4a)
+
+Set Ind2b to M-Dig2
+
+Set Ind4b to S-Dig2
+
+Set Ind1b to H-Dig1
+
+Set Ind3b to H-Dig2
+
+Set Ind1b up by 1
+
+Set Ind2b up by 1
+
+Set Ind3b up by 1
+
+Set Ind4b up by 1
+
+Move ElemA (Ind1a Ind2a Ind3a Ind4a) to
+
+ElemB (Ind1b Ind2b Ind3b Ind4b)
+
+.
+
+* * * * * * * *
+
+Test Subscripts:
+
+Identification Division.
+
+Program-ID. TstSub.
+
+Data Division.
+
+Working-Storage Section.
+
+01  Time-Flds.
+
+05  Start-Time          Pic X(08).
+
+05  End-Time            Pic X(08).
+
+05  Temp-Time.
+
+10                  Pic X.
+
+10  M-Dig2          Pic 9.
+
+10                  Pic X.
+
+10  S-Dig2          Pic 9.
+
+10  H-Dig1          Pic 9.
+
+10  H-Dig2          Pic 9.
+
+01  TabA.
+
+05  Tabl1A occurs 10 Times
+
+indexed by Ind1a.
+
+10  T1A             Pic X(03).
+
+10  Tabl2A  Occurs 10 Times
+
+Indexed by Ind2a.
+
+15  T2A         Pic X(33).
+
+15  Tabl3A Occurs 10 Times
+
+Indexed by Ind3A.
+
+20  T3a     Pic X.
+
+20  Tabl4A Occurs 10 times
+
+Indexed by Ind4a.
+
+25  T4A Pic X(11).
+
+25  ElemA   Pic X(300).
+
+15  T2AA            Pic X.
+
+10  T1AA                Pic X(5).
+
+01  Tabb.
+
+05  Tabl1b occurs 10 Times
+
+indexed by Ind1b.
+
+10  T1b             Pic X(11).
+
+10  Tabl2b  Occurs 10 Times
+
+Indexed by Ind2b.
+
+15  T2b         Pic X(22).
+
+15  Tabl3b Occurs 10 Times
+
+Indexed by Ind3b.
+
+20  T3b     Pic X(05).
+
+20  Tabl4b Occurs 10 times
+
+Indexed by Ind4b.
+
+25  T4b Pic X(11).
+
+25  Elemb   Pic X(300).
+
+15  T2bb            Pic X(11).
+
+10  T1bb                Pic X(3).
+
+01  Subs.
+
+05  Sub1a                   Pic S9(04)  Comp-5.
+
+05  Sub2a                   Pic S9(04)  Comp-5.
+
+05  Sub3a                   Pic S9(04)  Comp-5.
+
+05  Sub4a                   Pic S9(04)  Comp-5.
+
+05  Sub1b                   Pic S9(04)  Comp-5.
+
+05  Sub2b                   Pic S9(04)  Comp-5.
+
+05  Sub3b                   Pic S9(04)  Comp-5.
+
+05  Sub4b                   Pic S9(04)  Comp-5.
+
+Procedure Division.
+
+Mainline.
+
+Move Function Current-Date (9:8) to Start-Time
+
+Perform Loop 500000 Times
+
+Move Function Current-Date (9:8) to End-Time
+
+Display &quot;  * * * Testing Subscripts * * *&quot;
+
+Display &quot;Start-Time:&quot;
+
+Start-Time (1:2) &quot;:&quot;
+
+Start-Time (3:2) &quot;:&quot;
+
+Start-Time (5:2) &quot;.&quot;
+
+Start-Time (7:2)
+
+Display &quot;  End-Time:&quot;
+
+End-Time (1:2) &quot;:&quot;
+
+End-Time (3:2) &quot;:&quot;
+
+End-Time (5:2) &quot;.&quot;
+
+End-Time (7:2)
+
+.
+
+If-Called.
+
+Exit Program
+
+.
+
+If-Main.
+
+Stop Run
+
+.
+
+Loop.
+
+Move Function Current-Date (11:6) to Temp-Time
+
+Move M-Dig2 To Sub1a
+
+Move S-Dig2 to Sub2a
+
+Move H-Dig1 to Sub3a
+
+Move H-Dig2 to Sub4a
+
+Add 1   to Sub1a
+
+Add 1   to Sub2a
+
+Add 1   to Sub3a
+
+Add 1   to Sub4a
+
+Move High-Values to ElemA (Sub1a Sub2a Sub3a Sub4a)
+
+Move M-Dig2 To Sub1b
+
+Move S-Dig2 to Sub2b
+
+Move H-Dig1 to Sub3b
+
+Move H-Dig2 to Sub4b
+
+Add 1   to Sub1b
+
+Add 1   to Sub2b
+
+Add 1   to Sub3b
+
+Add 1   to Sub4b
+
+Move ElemA (Sub1a Sub2a Sub3a Sub4a) to
+
+ElemB (Sub1b Sub2b Sub3b Sub4b)
+
+.
+
+--
+Bill Klein
+wmklein &lt;at&gt; ix.netcom.com
+</POST>
+<POST>
+<POSTER> &quot;William M. Klein&quot; &lt;wmkl...@nospam.netcom.com&gt; </POSTER>
+<POSTDATE> 2007-09-13T23:46:00 </POSTDATE>
+Just wanted to reply to my own note with an update (and possible CORRECTION).
+
+I realized that I had run my test in &quot;.INT&quot; not &quot;.EXE&quot;.  When I compiled to exe
+and reran a few times, the results were different.  The two programs ran ABOUT
+the same (I ran them several times).  In fact, the subscript ran faster more
+times than the index version.  Seems that there is either a &quot;myth&quot; involved or
+that there is some other factor that I am not testing (correctly) for.
+
+--
+Bill Klein
+wmklein &lt;at&gt; ix.netcom.com
+&quot;William M. Klein&quot; &lt;wmkl ... @nospam.netcom.com&gt; wrote in message
+news:wzjGi.64367$gR1.27555@fe03.news.easynews.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt;I do not have a Unix or Linux environment to test this on, but I did create a
+&gt;program to test subscripts vs indices with Micro Focus Net Express 5.0 (Warp
+&gt;03) on Windows.  The following programs (one a  driver to run the other two)
+&gt;confirmed that the program using indices in THIS environment runs about 1/3
+&gt;slower with subscripts than with indices.  (I tried it with the STANDARD
+&gt;&quot;Binary&quot; and then changed it to &quot;Comp-5&quot;.  The latter, non-portable version
+&gt;runs a little faster and is listed below - but is still measurably slower than
+&gt;the one with indices).  I would be interested in results with other compilers
+&gt;and/or environments.  (Change COMP-5 to BINARY if required.  Otherwise, I think
+&gt;it is sully '85 Standard - with Intrinsic Functions - conforming).
+
+&gt; (Hopefully &quot;indentation&quot; etc will stay OK.  If not, let me know and I'll put
+&gt; the source  programs on the web for download.
+
+&gt; Driver Program:
+
+&gt;       Identification Division.
+
+&gt;        Program-Id. IndSub.
+
+&gt;       Procedure Division.
+
+&gt;        Mainline.
+
+&gt;           Call &quot;TstSub&quot;
+
+&gt;           Call &quot;TstInd&quot;
+
+&gt;           Stop Run
+
+&gt;            .
+
+&gt; * * * * * * * *
+
+&gt;  Test Indices
+
+&gt;       Identification Division.
+
+&gt;        Program-ID. TstInd.
+
+&gt;       Data Division.
+
+&gt;       Working-Storage Section.
+
+&gt;       01  Time-Flds.
+
+&gt;           05  Start-Time          Pic X(08).
+
+&gt;           05  End-Time            Pic X(08).
+
+&gt;           05  Temp-Time.
+
+&gt;               10                  Pic X.
+
+&gt;               10  M-Dig2          Pic 9.
+
+&gt;               10                  Pic X.
+
+&gt;               10  S-Dig2          Pic 9.
+
+&gt;               10  H-Dig1          Pic 9.
+
+&gt;               10  H-Dig2          Pic 9.
+
+&gt;       01  TabA.
+
+&gt;           05  Tabl1A occurs 10 Times
+
+&gt;                   indexed by Ind1a.
+
+&gt;               10  T1A             Pic X(03).
+
+&gt;               10  Tabl2A  Occurs 10 Times
+
+&gt;                       Indexed by Ind2a.
+
+&gt;                   15  T2A         Pic X(33).
+
+&gt;                   15  Tabl3A Occurs 10 Times
+
+&gt;                           Indexed by Ind3A.
+
+&gt;                       20  T3a     Pic X.
+
+&gt;                       20  Tabl4A Occurs 10 times
+
+&gt;                               Indexed by Ind4a.
+
+&gt;                           25  T4A Pic X(11).
+
+&gt;                           25  ElemA   Pic X(300).
+
+&gt;                   15  T2AA            Pic X.
+
+&gt;               10  T1AA                Pic X(5).
+
+&gt;       01  Tabb.
+
+&gt;           05  Tabl1b occurs 10 Times
+
+&gt;                   indexed by Ind1b.
+
+&gt;               10  T1b             Pic X(11).
+
+&gt;               10  Tabl2b  Occurs 10 Times
+
+&gt;                       Indexed by Ind2b.
+
+&gt;                   15  T2b         Pic X(22).
+
+&gt;                   15  Tabl3b Occurs 10 Times
+
+&gt;                           Indexed by Ind3b.
+
+&gt;                       20  T3b     Pic X(05).
+
+&gt;                       20  Tabl4b Occurs 10 times
+
+&gt;                               Indexed by Ind4b.
+
+&gt;                           25  T4b Pic X(11).
+
+&gt;                           25  Elemb   Pic X(300).
+
+&gt;                   15  T2bb            Pic X(11).
+
+&gt;               10  T1bb                Pic X(3).
+
+&gt;       Procedure Division.
+
+&gt;        Mainline.
+
+&gt;           Move Function Current-Date (9:8) to Start-Time
+
+&gt;           Perform Loop 500000 Times
+
+&gt;           Move Function Current-Date (9:8) to End-Time
+
+&gt;           Display &quot;  *** Testing Indices * * *&quot;
+
+&gt;           Display &quot;Start-Time:&quot;
+
+&gt;                   Start-Time (1:2) &quot;:&quot;
+
+&gt;                   Start-Time (3:2) &quot;:&quot;
+
+&gt;                   Start-Time (5:2) &quot;.&quot;
+
+&gt;                   Start-Time (7:2)
+
+&gt;           Display &quot;  End-Time:&quot;
+
+&gt;                   End-Time (1:2) &quot;:&quot;
+
+&gt;                   End-Time (3:2) &quot;:&quot;
+
+&gt;                   End-Time (5:2) &quot;.&quot;
+
+&gt;                   End-Time (7:2)
+
+&gt;             .
+
+&gt;        If-Called.
+
+&gt;           Exit Program
+
+&gt;             .
+
+&gt;        If-Main.
+
+&gt;           Stop Run
+
+&gt;            .
+
+&gt;        Loop.
+
+&gt;           Move Function Current-Date (11:6) to Temp-Time
+
+&gt;           Set Ind1a to M-Dig2
+
+&gt;           Set Ind2a to S-Dig2
+
+&gt;           Set Ind3a to H-Dig1
+
+&gt;           Set Ind4a to H-Dig2
+
+&gt;           Set Ind1A up by 1
+
+&gt;           Set Ind2a up by 1
+
+&gt;           Set Ind3a up by 1
+
+&gt;           Set Ind4a up by 1
+
+&gt;           Move High-Values to ElemA (Ind1a Ind2a Ind3a Ind4a)
+
+&gt;           Set Ind2b to M-Dig2
+
+&gt;           Set Ind4b to S-Dig2
+
+&gt;           Set Ind1b to H-Dig1
+
+&gt;           Set Ind3b to H-Dig2
+
+&gt;           Set Ind1b up by 1
+
+&gt;           Set Ind2b up by 1
+
+&gt;           Set Ind3b up by 1
+
+&gt;           Set Ind4b up by 1
+
+&gt;           Move ElemA (Ind1a Ind2a Ind3a Ind4a) to
+
+&gt;                ElemB (Ind1b Ind2b Ind3b Ind4b)
+
+&gt;           .
+
+&gt; * * * * * * * *
+
+&gt; Test Subscripts:
+
+&gt;       Identification Division.
+
+&gt;        Program-ID. TstSub.
+
+&gt;       Data Division.
+
+&gt;       Working-Storage Section.
+
+&gt;       01  Time-Flds.
+
+&gt;           05  Start-Time          Pic X(08).
+
+&gt;           05  End-Time            Pic X(08).
+
+&gt;           05  Temp-Time.
+
+&gt;               10                  Pic X.
+
+&gt;               10  M-Dig2          Pic 9.
+
+&gt;               10                  Pic X.
+
+&gt;               10  S-Dig2          Pic 9.
+
+&gt;               10  H-Dig1          Pic 9.
+
+&gt;               10  H-Dig2          Pic 9.
+
+&gt;       01  TabA.
+
+&gt;           05  Tabl1A occurs 10 Times
+
+&gt;                   indexed by Ind1a.
+
+&gt;               10  T1A             Pic X(03).
+
+&gt;               10  Tabl2A  Occurs 10 Times
+
+&gt;                       Indexed by Ind2a.
+
+&gt;                   15  T2A         Pic X(33).
+
+&gt;                   15  Tabl3A Occurs 10 Times
+
+&gt;                           Indexed by Ind3A.
+
+&gt;                       20  T3a     Pic X.
+
+&gt;                       20  Tabl4A Occurs 10 times
+
+&gt;                               Indexed by Ind4a.
+
+&gt;                           25  T4A Pic X(11).
+
+&gt;                           25  ElemA   Pic X(300).
+
+&gt;                   15  T2AA            Pic X.
+
+&gt;               10  T1AA                Pic X(5).
+
+&gt;       01  Tabb.
+
+&gt;           05  Tabl1b occurs 10 Times
+
+&gt;                   indexed by Ind1b.
+
+&gt;               10  T1b             Pic X(11).
+
+&gt;               10  Tabl2b  Occurs 10 Times
+
+&gt;                       Indexed by Ind2b.
+
+&gt;                   15  T2b         Pic X(22).
+
+&gt;                   15  Tabl3b Occurs 10 Times
+
+&gt;                           Indexed by Ind3b.
+
+&gt;                       20  T3b     Pic X(05).
+
+&gt;                       20  Tabl4b Occurs 10 times
+
+&gt;                               Indexed by Ind4b.
+
+&gt;                           25  T4b Pic X(11).
+
+&gt;                           25  Elemb   Pic X(300).
+
+&gt;                   15  T2bb            Pic X(11).
+
+&gt;               10  T1bb                Pic X(3).
+
+&gt;       01  Subs.
+
+&gt;           05  Sub1a                   Pic S9(04)  Comp-5.
+
+&gt;           05  Sub2a                   Pic S9(04)  Comp-5.
+
+&gt;           05  Sub3a                   Pic S9(04)  Comp-5.
+
+&gt;           05  Sub4a                   Pic S9(04)  Comp-5.
+
+&gt;           05  Sub1b                   Pic S9(04)  Comp-5.
+
+&gt;           05  Sub2b                   Pic S9(04)  Comp-5.
+
+&gt;           05  Sub3b                   Pic S9(04)  Comp-5.
+
+&gt;           05  Sub4b                   Pic S9(04)  Comp-5.
+
+&gt;       Procedure Division.
+
+&gt;        Mainline.
+
+&gt;           Move Function Current-Date (9:8) to Start-Time
+
+&gt;           Perform Loop 500000 Times
+
+&gt;           Move Function Current-Date (9:8) to End-Time
+
+&gt;           Display &quot;  * * * Testing Subscripts * * *&quot;
+
+&gt;           Display &quot;Start-Time:&quot;
+
+&gt;                   Start-Time (1:2) &quot;:&quot;
+
+&gt;                   Start-Time (3:2) &quot;:&quot;
+
+&gt;                   Start-Time (5:2) &quot;.&quot;
+
+&gt;                   Start-Time (7:2)
+
+&gt;           Display &quot;  End-Time:&quot;
+
+&gt;                   End-Time (1:2) &quot;:&quot;
+
+&gt;                   End-Time (3:2) &quot;:&quot;
+
+&gt;                   End-Time (5:2) &quot;.&quot;
+
+&gt;                   End-Time (7:2)
+
+&gt;             .
+
+&gt;        If-Called.
+
+&gt;           Exit Program
+
+&gt;            .
+
+&gt;        If-Main.
+
+&gt;           Stop Run
+
+&gt;            .
+
+&gt;        Loop.
+
+&gt;           Move Function Current-Date (11:6) to Temp-Time
+
+&gt;           Move M-Dig2 To Sub1a
+
+&gt;           Move S-Dig2 to Sub2a
+
+&gt;           Move H-Dig1 to Sub3a
+
+&gt;           Move H-Dig2 to Sub4a
+
+&gt;           Add 1   to Sub1a
+
+&gt;           Add 1   to Sub2a
+
+&gt;           Add 1   to Sub3a
+
+&gt;           Add 1   to Sub4a
+
+&gt;           Move High-Values to ElemA (Sub1a Sub2a Sub3a Sub4a)
+
+&gt;           Move M-Dig2 To Sub1b
+
+&gt;           Move S-Dig2 to Sub2b
+
+&gt;           Move H-Dig1 to Sub3b
+
+&gt;           Move H-Dig2 to Sub4b
+
+&gt;           Add 1   to Sub1b
+
+&gt;           Add 1   to Sub2b
+
+&gt;           Add 1   to Sub3b
+
+&gt;           Add 1   to Sub4b
+
+&gt;           Move ElemA (Sub1a Sub2a Sub3a Sub4a) to
+
+&gt;                ElemB (Sub1b Sub2b Sub3b Sub4b)
+
+&gt;           .
+
+&gt; --
+&gt; Bill Klein
+&gt; wmklein &lt;at&gt; ix.netcom.com
+">
+</POST>
+<POST>
+<POSTER> &quot;William M. Klein&quot; &lt;wmkl...@nospam.netcom.com&gt; </POSTER>
+<POSTDATE> 2007-09-14T00:02:00 </POSTDATE>
+And one final note,  Robert never claimed that Micro Focus documented Indices as
+faster than Subscripts (for their product).  He only included this as a &quot;legacy&quot;
+belief.
+
+--
+Bill Klein
+wmklein &lt;at&gt; ix.netcom.com
+&quot;William M. Klein&quot; &lt;wmkl ... @nospam.netcom.com&gt; wrote in message
+news:munGi.147731$1J4.20682@fe06.news.easynews.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Just wanted to reply to my own note with an update (and possible CORRECTION).
+
+&gt; I realized that I had run my test in &quot;.INT&quot; not &quot;.EXE&quot;.  When I compiled to
+&gt; exe and reran a few times, the results were different.  The two programs ran
+&gt; ABOUT the same (I ran them several times).  In fact, the subscript ran faster
+&gt; more times than the index version.  Seems that there is either a &quot;myth&quot;
+&gt; involved or that there is some other factor that I am not testing (correctly)
+&gt; for.
+
+&gt; --
+&gt; Bill Klein
+&gt; wmklein &lt;at&gt; ix.netcom.com
+&gt; &quot;William M. Klein&quot; &lt;wmkl ... @nospam.netcom.com&gt; wrote in message
+&gt; news:wzjGi.64367$gR1.27555@fe03.news.easynews.com ...
+&gt;&gt;I do not have a Unix or Linux environment to test this on, but I did create a
+&gt;&gt;program to test subscripts vs indices with Micro Focus Net Express 5.0 (Warp
+&gt;&gt;03) on Windows.  The following programs (one a  driver to run the other two)
+&gt;&gt;confirmed that the program using indices in THIS environment runs about 1/3
+&gt;&gt;slower with subscripts than with indices.  (I tried it with the STANDARD
+&gt;&gt;&quot;Binary&quot; and then changed it to &quot;Comp-5&quot;.  The latter, non-portable version
+&gt;&gt;runs a little faster and is listed below - but is still measurably slower than
+&gt;&gt;the one with indices).  I would be interested in results with other compilers
+&gt;&gt;and/or environments.  (Change COMP-5 to BINARY if required.  Otherwise, I
+&gt;&gt;think it is sully '85 Standard - with Intrinsic Functions - conforming).
+
+&gt;&gt; (Hopefully &quot;indentation&quot; etc will stay OK.  If not, let me know and I'll put
+&gt;&gt; the source  programs on the web for download.
+
+&gt;&gt; Driver Program:
+
+&gt;&gt;       Identification Division.
+
+&gt;&gt;        Program-Id. IndSub.
+
+&gt;&gt;       Procedure Division.
+
+&gt;&gt;        Mainline.
+
+&gt;&gt;           Call &quot;TstSub&quot;
+
+&gt;&gt;           Call &quot;TstInd&quot;
+
+&gt;&gt;           Stop Run
+
+&gt;&gt;            .
+
+&gt;&gt; * * * * * * * *
+
+&gt;&gt;  Test Indices
+
+&gt;&gt;       Identification Division.
+
+&gt;&gt;        Program-ID. TstInd.
+
+&gt;&gt;       Data Division.
+
+&gt;&gt;       Working-Storage Section.
+
+&gt;&gt;       01  Time-Flds.
+
+&gt;&gt;           05  Start-Time          Pic X(08).
+
+&gt;&gt;           05  End-Time            Pic X(08).
+
+&gt;&gt;           05  Temp-Time.
+
+&gt;&gt;               10                  Pic X.
+
+&gt;&gt;               10  M-Dig2          Pic 9.
+
+&gt;&gt;               10                  Pic X.
+
+&gt;&gt;               10  S-Dig2          Pic 9.
+
+&gt;&gt;               10  H-Dig1          Pic 9.
+
+&gt;&gt;               10  H-Dig2          Pic 9.
+
+&gt;&gt;       01  TabA.
+
+&gt;&gt;           05  Tabl1A occurs 10 Times
+
+&gt;&gt;                   indexed by Ind1a.
+
+&gt;&gt;               10  T1A             Pic X(03).
+
+&gt;&gt;               10  Tabl2A  Occurs 10 Times
+
+&gt;&gt;                       Indexed by Ind2a.
+
+&gt;&gt;                   15  T2A         Pic X(33).
+
+&gt;&gt;                   15  Tabl3A Occurs 10 Times
+
+&gt;&gt;                           Indexed by Ind3A.
+
+&gt;&gt;                       20  T3a     Pic X.
+
+&gt;&gt;                       20  Tabl4A Occurs 10 times
+
+&gt;&gt;                               Indexed by Ind4a.
+
+&gt;&gt;                           25  T4A Pic X(11).
+
+&gt;&gt;                           25  ElemA   Pic X(300).
+
+&gt;&gt;                   15  T2AA            Pic X.
+
+&gt;&gt;               10  T1AA                Pic X(5).
+
+&gt;&gt;       01  Tabb.
+
+&gt;&gt;           05  Tabl1b occurs 10 Times
+
+&gt;&gt;                   indexed by Ind1b.
+
+&gt;&gt;               10  T1b             Pic X(11).
+
+&gt;&gt;               10  Tabl2b  Occurs 10 Times
+
+&gt;&gt;                       Indexed by Ind2b.
+
+&gt;&gt;                   15  T2b         Pic X(22).
+
+&gt;&gt;                   15  Tabl3b Occurs 10 Times
+
+&gt;&gt;                           Indexed by Ind3b.
+
+&gt;&gt;                       20  T3b     Pic X(05).
+
+&gt;&gt;                       20  Tabl4b Occurs 10 times
+
+&gt;&gt;                               Indexed by Ind4b.
+
+&gt;&gt;                           25  T4b Pic X(11).
+
+&gt;&gt;                           25  Elemb   Pic X(300).
+
+&gt;&gt;                   15  T2bb            Pic X(11).
+
+&gt;&gt;               10  T1bb                Pic X(3).
+
+&gt;&gt;       Procedure Division.
+
+&gt;&gt;        Mainline.
+
+&gt;&gt;           Move Function Current-Date (9:8) to Start-Time
+
+&gt;&gt;           Perform Loop 500000 Times
+
+&gt;&gt;           Move Function Current-Date (9:8) to End-Time
+
+&gt;&gt;           Display &quot;  *** Testing Indices * * *&quot;
+
+&gt;&gt;           Display &quot;Start-Time:&quot;
+
+&gt;&gt;                   Start-Time (1:2) &quot;:&quot;
+
+&gt;&gt;                   Start-Time (3:2) &quot;:&quot;
+
+&gt;&gt;                   Start-Time (5:2) &quot;.&quot;
+
+&gt;&gt;                   Start-Time (7:2)
+
+&gt;&gt;           Display &quot;  End-Time:&quot;
+
+&gt;&gt;                   End-Time (1:2) &quot;:&quot;
+
+&gt;&gt;                   End-Time (3:2) &quot;:&quot;
+
+&gt;&gt;                   End-Time (5:2) &quot;.&quot;
+
+&gt;&gt;                   End-Time (7:2)
+
+&gt;&gt;             .
+
+&gt;&gt;        If-Called.
+
+&gt;&gt;           Exit Program
+
+&gt;&gt;             .
+
+&gt;&gt;        If-Main.
+
+&gt;&gt;           Stop Run
+
+&gt;&gt;            .
+
+&gt;&gt;        Loop.
+
+&gt;&gt;           Move Function Current-Date (11:6) to Temp-Time
+
+&gt;&gt;           Set Ind1a to M-Dig2
+
+&gt;&gt;           Set Ind2a to S-Dig2
+
+&gt;&gt;           Set Ind3a to H-Dig1
+
+&gt;&gt;           Set Ind4a to H-Dig2
+
+&gt;&gt;           Set Ind1A up by 1
+
+&gt;&gt;           Set Ind2a up by 1
+
+&gt;&gt;           Set Ind3a up by 1
+
+&gt;&gt;           Set Ind4a up by 1
+
+&gt;&gt;           Move High-Values to ElemA (Ind1a Ind2a Ind3a Ind4a)
+
+&gt;&gt;           Set Ind2b to M-Dig2
+
+&gt;&gt;           Set Ind4b to S-Dig2
+
+&gt;&gt;           Set Ind1b to H-Dig1
+
+&gt;&gt;           Set Ind3b to H-Dig2
+
+&gt;&gt;           Set Ind1b up by 1
+
+&gt;&gt;           Set Ind2b up by 1
+
+&gt;&gt;           Set Ind3b up by 1
+
+&gt;&gt;           Set Ind4b up by 1
+
+&gt;&gt;           Move ElemA (Ind1a Ind2a Ind3a Ind4a) to
+
+&gt;&gt;                ElemB (Ind1b Ind2b Ind3b Ind4b)
+
+&gt;&gt;           .
+
+&gt;&gt; * * * * * * * *
+
+&gt;&gt; Test Subscripts:
+
+&gt;&gt;       Identification Division.
+
+&gt;&gt;        Program-ID. TstSub.
+
+&gt;&gt;       Data Division.
+
+&gt;&gt;       Working-Storage Section.
+
+&gt;&gt;       01  Time-Flds.
+
+&gt;&gt;           05  Start-Time          Pic X(08).
+
+&gt;&gt;           05  End-Time            Pic X(08).
+
+&gt;&gt;           05  Temp-Time.
+
+&gt;&gt;               10                  Pic X.
+
+&gt;&gt;               10  M-Dig2          Pic 9.
+
+&gt;&gt;               10                  Pic X.
+
+&gt;&gt;               10  S-Dig2          Pic 9.
+
+&gt;&gt;               10  H-Dig1          Pic 9.
+
+&gt;&gt;               10  H-Dig2          Pic 9.
+
+&gt;&gt;       01  TabA.
+
+&gt;&gt;           05  Tabl1A occurs 10 Times
+
+&gt;&gt;                   indexed by Ind1a.
+
+&gt;&gt;               10  T1A             Pic X(03).
+
+&gt;&gt;               10  Tabl2A  Occurs 10 Times
+
+&gt;&gt;                       Indexed by Ind2a.
+
+&gt;&gt;                   15  T2A         Pic X(33).
+
+&gt;&gt;                   15  Tabl3A Occurs 10 Times
+
+&gt;&gt;                           Indexed by Ind3A.
+
+&gt;&gt;                       20  T3a     Pic X.
+
+&gt;&gt;                       20  Tabl4A Occurs 10 times
+
+&gt;&gt;                               Indexed by Ind4a.
+
+&gt;&gt;                           25  T4A Pic X(11).
+
+&gt;&gt;                           25  ElemA   Pic X(300).
+
+&gt;&gt;                   15  T2AA            Pic X.
+
+&gt;&gt;               10  T1AA                Pic X(5).
+
+&gt;&gt;       01  Tabb.
+
+&gt;&gt;           05  Tabl1b occurs 10 Times
+
+&gt;&gt;                   indexed by Ind1b.
+
+&gt;&gt;               10  T1b             Pic X(11).
+
+&gt;&gt;               10  Tabl2b  Occurs 10 Times
+
+&gt;&gt;                       Indexed by Ind2b.
+
+&gt;&gt;                   15  T2b         Pic X(22).
+
+&gt;&gt;                   15  Tabl3b Occurs 10 Times
+
+&gt;&gt;                           Indexed by Ind3b.
+
+&gt;&gt;                       20  T3b     Pic X(05).
+
+&gt;&gt;                       20  Tabl4b Occurs 10 times
+
+&gt;&gt;                               Indexed by Ind4b.
+
+&gt;&gt;                           25  T4b Pic X(11).
+
+&gt;&gt;                           25  Elemb   Pic X(300).
+
+&gt;&gt;                   15  T2bb            Pic X(11).
+
+&gt;&gt;               10  T1bb                Pic X(3).
+
+&gt;&gt;       01  Subs.
+
+&gt;&gt;           05  Sub1a                   Pic S9(04)  Comp-5.
+
+&gt;&gt;           05  Sub2a                   Pic S9(04)  Comp-5.
+
+&gt;&gt;           05  Sub3a                   Pic S9(04)  Comp-5.
+
+&gt;&gt;           05  Sub4a                   Pic S9(04)  Comp-5.
+
+&gt;&gt;           05  Sub1b                   Pic S9(04)  Comp-5.
+
+&gt;&gt;           05  Sub2b                   Pic S9(04)  Comp-5.
+
+&gt;&gt;           05  Sub3b                   Pic S9(04)  Comp-5.
+
+&gt;&gt;           05  Sub4b                   Pic S9(04)  Comp-5.
+
+&gt;&gt;       Procedure Division.
+
+&gt;&gt;        Mainline.
+
+&gt;&gt;           Move Function Current-Date (9:8) to Start-Time
+
+&gt;&gt;           Perform Loop 500000 Times
+
+&gt;&gt;           Move Function Current-Date (9:8) to End-Time
+
+&gt;&gt;           Display &quot;  * * * Testing Subscripts * * *&quot;
+
+&gt;&gt;           Display &quot;Start-Time:&quot;
+
+&gt;&gt;                   Start-Time (1:2) &quot;:&quot;
+
+&gt;&gt;                   Start-Time (3:2) &quot;:&quot;
+
+&gt;&gt;                   Start-Time (5:2) &quot;.&quot;
+
+&gt;&gt;                   Start-Time (7:2)
+
+&gt;&gt;           Display &quot;  End-Time:&quot;
+
+&gt;&gt;                   End-Time (1:2) &quot;:&quot;
+
+&gt;&gt;                   End-Time (3:2) &quot;:&quot;
+
+&gt;&gt;                   End-Time (5:2) &quot;.&quot;
+
+&gt;&gt;                   End-Time (7:2)
+
+&gt;&gt;             .
+
+&gt;&gt;        If-Called.
+
+&gt;&gt;           Exit Program
+
+&gt;&gt;            .
+
+&gt;&gt;        If-Main.
+
+&gt;&gt;           Stop Run
+
+&gt;&gt;            .
+
+&gt;&gt;        Loop.
+
+&gt;&gt;           Move Function Current-Date (11:6) to Temp-Time
+
+&gt;&gt;           Move M-Dig2 To Sub1a
+
+&gt;&gt;           Move S-Dig2 to Sub2a
+
+&gt;&gt;           Move H-Dig1 to Sub3a
+
+&gt;&gt;           Move H-Dig2 to Sub4a
+
+&gt;&gt;           Add 1   to Sub1a
+
+&gt;&gt;           Add 1   to Sub2a
+
+&gt;&gt;           Add 1   to Sub3a
+
+&gt;&gt;           Add 1   to Sub4a
+">
+
+...
+read more »
+</POST>
+<POST>
+<POSTER> Richard &lt;rip...@Azonic.co.nz&gt; </POSTER>
+<POSTDATE> 2007-09-14T00:51:00 </POSTDATE>
+On Sep 14, 4:02 pm, &quot;William M. Klein&quot; &lt;wmkl ... @nospam.netcom.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; And one final note,  Robert never claimed that Micro Focus documented Indices as
+&gt; faster than Subscripts (for their product).  He only included this as a &quot;legacy&quot;
+&gt; belief.
+">
+
+It may well be that on particular machines with particular
+implementations the indexes _are_ faster. Users of those systems,
+whether they be 'legacy' or not are not 'believing in a myth'.
+
+For the rest, Robert never established that it is actually &quot;widely
+believed&quot; and certainly not 'wrongly believed', merely asserting it to
+be so in order to denigrate the &quot;Cobol community&quot; by implying that
+they are too stupid to test it.
+
+Of course it is possible to make subscripts slower by, for example,
+having them as display, or indeed other than comp-5. It may well be
+that in 'legacy' versions of MF, such as Level II which had index but
+not comp-5 the so-called &quot;myth&quot; was completely true.
+</POST>
+<POST>
+<POSTER> Robert &lt;n...@e.mail&gt; </POSTER>
+<POSTDATE> 2007-09-14T22:56:00 </POSTDATE>
+On Fri, 14 Sep 2007 03:46:30 GMT, &quot;William M. Klein&quot; &lt;wmkl ... @nospam.netcom.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;Just wanted to reply to my own note with an update (and possible CORRECTION).
+
+&gt;I realized that I had run my test in &quot;.INT&quot; not &quot;.EXE&quot;.  When I compiled to exe
+&gt;and reran a few times, the results were different.  The two programs ran ABOUT
+&gt;the same (I ran them several times).  In fact, the subscript ran faster more
+&gt;times than the index version.  Seems that there is either a &quot;myth&quot; involved or
+&gt;that there is some other factor that I am not testing (correctly) for.
+">
+
+You have the overhead of getting the time inside the loop. I suggest you run an third test
+with nothing but getting the time inside the loop and perform varying outside. That time
+is constant for all tests. Subtract it from the time measured to get the time of activity
+you're measuring.
+
+By setting the index on each iteration, you're negating any possible difference between
+index and subscript. The basic difference is that subscript requires multiplication
+whereas index does not. SETTING an index does a multiplication, same as USING a subscript.
+I'm not surprised times are the same.
+
+The most common use for subscripts and indexes is sequentially stepping through the
+elements of a table, not accessing them randomly.
+</POST>
+<POST>
+<POSTER> Robert &lt;n...@e.mail&gt; </POSTER>
+<POSTDATE> 2007-09-14T23:07:00 </POSTDATE>
+On Fri, 14 Sep 2007 04:02:14 GMT, &quot;William M. Klein&quot; &lt;wmkl ... @nospam.netcom.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;And one final note,  Robert never claimed that Micro Focus documented Indices as
+&gt;faster than Subscripts (for their product).  He only included this as a &quot;legacy&quot;
+&gt;belief.
+">
+
+Speed is the only reason indexes are used. If people didn't think indexes were faster,
+they'd never use indexes  (except SEARCH ALL, the one case where required).
+</POST>
+<POST>
+<POSTER> &quot;William M. Klein&quot; &lt;wmkl...@nospam.netcom.com&gt; </POSTER>
+<POSTDATE> 2007-09-14T23:11:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Robert&quot; &lt;n ... @e.mail&gt; wrote in message
+">
+
+news:3iime3d7d8fjn6abr5dic1a47cr1mnk8va@4ax.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Fri, 14 Sep 2007 04:02:14 GMT, &quot;William M. Klein&quot;
+&gt; &lt;wmkl ... @nospam.netcom.com&gt; wrote:
+
+&gt;&gt;And one final note,  Robert never claimed that Micro Focus documented Indices
+&gt;&gt;as
+&gt;&gt;faster than Subscripts (for their product).  He only included this as a
+&gt;&gt;&quot;legacy&quot;
+&gt;&gt;belief.
+
+&gt; Speed is the only reason indexes are used. If people didn't think indexes were
+&gt; faster,
+&gt; they'd never use indexes  (except SEARCH ALL, the one case where required).
+">
+
+So Robert, before I comment when you say
+
+If people didn't think indexes were faster,  they'd never use indexes  (except
+SEARCH ALL, the one case where required).
+
+do you MEAN
+
+If people (all people) didn't think indexes were faster,  they'd never (in any
+case or any program - except as excluded in the following parenthetical)  use
+indexes  (except SEARCH ALL, the one case where required).
+
+or do you mean
+
+If people (in general, but not universally) didn't think indexes were faster,
+they'd never (well RARELY) use indexes  (except SEARCH ALL, the one case where
+required).
+
+It is statements like your original that make it hard for me (and I believer
+others) to tell when you are trying to state a &quot;universal truth&quot; or when you are
+stating YOUR OPINION of the GENERAL (most common) situation.
+
+--
+Bill Klein
+wmklein &lt;at&gt; ix.netcom.com
+</POST>
+<POST>
+<POSTER> &quot;William M. Klein&quot; &lt;wmkl...@nospam.netcom.com&gt; </POSTER>
+<POSTDATE> 2007-09-14T23:18:00 </POSTDATE>
+The test case that I created (and that did NOT prove what I initially intended
+to prove) was created with setting indices and subscripts (and doing arithmetic
+on them) within in each loop because I (probably erroneously - certainly not
+verified on my computer) thought that this was exactly when the difference would
+show up.
+
+As far as &quot;getting the time&quot; within each loop - I did so in both variations so
+that can't (shouldn't?) be any difference.
+
+--
+Bill Klein
+wmklein &lt;at&gt; ix.netcom.com
+&quot;William M. Klein&quot; &lt;wmkl ... @nospam.netcom.com&gt; wrote in message
+news:B3IGi.227037$VU2.116695@fe02.news.easynews.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Robert&quot; &lt;n ... @e.mail&gt; wrote in message
+&gt; news:3iime3d7d8fjn6abr5dic1a47cr1mnk8va@4ax.com ...
+&gt;&gt; On Fri, 14 Sep 2007 04:02:14 GMT, &quot;William M. Klein&quot;
+&gt;&gt; &lt;wmkl ... @nospam.netcom.com&gt; wrote:
+
+&gt;&gt;&gt;And one final note,  Robert never claimed that Micro Focus documented Indices
+&gt;&gt;&gt;as
+&gt;&gt;&gt;faster than Subscripts (for their product).  He only included this as a
+&gt;&gt;&gt;&quot;legacy&quot;
+&gt;&gt;&gt;belief.
+
+&gt;&gt; Speed is the only reason indexes are used. If people didn't think indexes
+&gt;&gt; were faster,
+&gt;&gt; they'd never use indexes  (except SEARCH ALL, the one case where required).
+
+&gt; So Robert, before I comment when you say
+
+&gt; If people didn't think indexes were faster,  they'd never use indexes  (except
+&gt; SEARCH ALL, the one case where required).
+
+&gt;    do you MEAN
+
+&gt; If people (all people) didn't think indexes were faster,  they'd never (in any
+&gt; case or any program - except as excluded in the following parenthetical)  use
+&gt; indexes  (except SEARCH ALL, the one case where required).
+
+&gt;   or do you mean
+
+&gt; If people (in general, but not universally) didn't think indexes were faster,
+&gt; they'd never (well RARELY) use indexes  (except SEARCH ALL, the one case where
+&gt; required).
+
+&gt; It is statements like your original that make it hard for me (and I believer
+&gt; others) to tell when you are trying to state a &quot;universal truth&quot; or when you
+&gt; are stating YOUR OPINION of the GENERAL (most common) situation.
+
+&gt; --
+&gt; Bill Klein
+&gt; wmklein &lt;at&gt; ix.netcom.com
+">
+</POST>
+<POST>
+<POSTER> Robert &lt;n...@e.mail&gt; </POSTER>
+<POSTDATE> 2007-09-15T01:42:00 </POSTDATE>
+On Sat, 15 Sep 2007 03:11:29 GMT, &quot;William M. Klein&quot; &lt;wmkl ... @nospam.netcom.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&quot;Robert&quot; &lt;n ... @e.mail&gt; wrote in message
+&gt; news:3iime3d7d8fjn6abr5dic1a47cr1mnk8va@4ax.com ...
+&gt;&gt; On Fri, 14 Sep 2007 04:02:14 GMT, &quot;William M. Klein&quot;
+&gt;&gt; &lt;wmkl ... @nospam.netcom.com&gt; wrote:
+
+&gt;&gt;&gt;And one final note,  Robert never claimed that Micro Focus documented Indices
+&gt;&gt;&gt;as
+&gt;&gt;&gt;faster than Subscripts (for their product).  He only included this as a
+&gt;&gt;&gt;&quot;legacy&quot;
+&gt;&gt;&gt;belief.
+
+&gt;&gt; Speed is the only reason indexes are used. If people didn't think indexes were
+&gt;&gt; faster,
+&gt;&gt; they'd never use indexes  (except SEARCH ALL, the one case where required).
+
+&gt;So Robert, before I comment when you say
+
+&gt;If people didn't think indexes were faster,  they'd never use indexes  (except
+&gt;SEARCH ALL, the one case where required).
+
+&gt;    do you MEAN
+
+&gt;If people (all people) didn't think indexes were faster,  they'd never (in any
+&gt;case or any program - except as excluded in the following parenthetical)  use
+&gt;indexes  (except SEARCH ALL, the one case where required).
+
+&gt;   or do you mean
+
+&gt;If people (in general, but not universally) didn't think indexes were faster,
+&gt;they'd never (well RARELY) use indexes  (except SEARCH ALL, the one case where
+&gt;required).
+">
+
+I mean the second. Interpreting unqualified &quot;people&quot; to mean every person without
+exception is YOUR interpetation, not the meaning I intended.
+
+<QUOTE PREVIOUSPOST="
+&gt;It is statements like your original that make it hard for me (and I believer
+&gt;others) to tell when you are trying to state a &quot;universal truth&quot; or when you are
+&gt;stating YOUR OPINION of the GENERAL (most common) situation.
+">
+
+Everything posted here is the writer's opinion, unless it is supported by corrigible
+evidence and logic that would convince a reasonable person to believe the writer's
+conclusion is justified.
+</POST>
+<POST>
+<POSTER> Richard &lt;rip...@Azonic.co.nz&gt; </POSTER>
+<POSTDATE> 2007-09-15T01:51:00 </POSTDATE>
+On Sep 15, 2:56 pm, Robert &lt;n ... @e.mail&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; The basic difference is that subscript requires multiplication
+&gt; whereas index does not. SETTING an index does a multiplication, same as USING a subscript.
+&gt; I'm not surprised times are the same.
+">
+
+So, if for example, several array items were accessed for each SET
+then with indexes there would be one multiply and several accesses but
+with subscripts there would be several multiplys.
+
+Just why is 'index is faster than subscript' a myth, again ?
+
+Actually it is likely that a compiler could optimize the use of
+subscripts by noticing that the value hadn't changed. So _if_ the
+compiler optimizes well then they may be same speed, if not, or if
+some other code interferes with the optimizer, index will be at worst
+the same and may be faster.
+
+So not only did you not establish adequately that it was a myth you
+still haven't identified anyone who _wrongly_ believes it.
+</POST>
+<POST>
+<POSTER> Robert &lt;n...@e.mail&gt; </POSTER>
+<POSTDATE> 2007-09-15T02:37:00 </POSTDATE>
+On Sat, 15 Sep 2007 03:18:26 GMT, &quot;William M. Klein&quot; &lt;wmkl ... @nospam.netcom.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;The test case that I created (and that did NOT prove what I initially intended
+&gt;to prove) was created with setting indices and subscripts (and doing arithmetic
+&gt;on them) within in each loop because I (probably erroneously - certainly not
+&gt;verified on my computer) thought that this was exactly when the difference would
+&gt;show up.
+">
+
+SET convrts an ordinal (1, 2, 3) into an offset. The same conversion occurs when you USE a
+subscript.
+
+Indexes used to be faster because they avoided that conversion on each use.  They are no
+longer faster because a multiply is now as fast as a load.
+
+<QUOTE PREVIOUSPOST="
+&gt;As far as &quot;getting the time&quot; within each loop - I did so in both variations so
+&gt;that can't (shouldn't?) be any difference.
+">
+
+It certainly can. Suppose it takes 50 time units to get the time, 10 time units to drive
+the loop, 20 time units to execute test code A, 40 time units to execute code B.
+
+The correct answer is that A is twice as fast as B (40 / 20). The answer you will get is
+
+A time = 50 + 10 + 20 = 80
+B time = 50 + 10 + 40 = 100
+
+A is 25% faster than B.
+
+You'd be off by a factor of 4.
+</POST>
+<POST>
+<POSTER> Robert &lt;n...@e.mail&gt; </POSTER>
+<POSTDATE> 2007-09-15T02:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Fri, 14 Sep 2007 22:51:45 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+&gt;On Sep 15, 2:56 pm, Robert &lt;n ... @e.mail&gt; wrote:
+
+&gt;&gt; The basic difference is that subscript requires multiplication
+&gt;&gt; whereas index does not. SETTING an index does a multiplication, same as USING a subscript.
+&gt;&gt; I'm not surprised times are the same.
+
+&gt;So, if for example, several array items were accessed for each SET
+&gt;then with indexes there would be one multiply and several accesses but
+&gt;with subscripts there would be several multiplys.
+">
+
+There would probably be one multiply on the subscript because the optimizer would use that
+value on subsequent accesses. (I wrote that before reading your paragraph below sayig the
+same thing.)
+
+<QUOTE PREVIOUSPOST="
+&gt;Just why is 'index is faster than subscript' a myth, again ?
+">
+
+1. Because a timing test showed indexes are slower.
+2. Because multiplication is now as fast as loading an index.
+
+<QUOTE PREVIOUSPOST="
+&gt;Actually it is likely that a compiler could optimize the use of
+&gt;subscripts by noticing that the value hadn't changed. So _if_ the
+&gt;compiler optimizes well then they may be same speed, if not, or if
+&gt;some other code interferes with the optimizer, index will be at worst
+&gt;the same and may be faster.
+">
+
+Subscript was faster in my test because the subscript was optimized but the index
+apparently was not. It appears the code was reloading the index on every iteration.
+
+<QUOTE PREVIOUSPOST="
+&gt;So not only did you not establish adequately that it was a myth you
+&gt;still haven't identified anyone who _wrongly_ believes it.
+">
+
+Most people who use indexes believe it. Why else would they use indexes?
+</POST>
+<POST>
+<POSTER> Robert Jones &lt;rjon...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-15T05:53:00 </POSTDATE>
+On Sep 15, 7:50 am, Robert &lt;n ... @e.mail&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Fri, 14 Sep 2007 22:51:45 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+&gt; &gt;On Sep 15, 2:56 pm, Robert &lt;n ... @e.mail&gt; wrote:
+
+&gt; &gt;&gt; The basic difference is that subscript requires multiplication
+&gt; &gt;&gt; whereas index does not. SETTING an index does a multiplication, same as USING a subscript.
+&gt; &gt;&gt; I'm not surprised times are the same.
+
+&gt; &gt;So, if for example, several array items were accessed for each SET
+&gt; &gt;then with indexes there would be one multiply and several accesses but
+&gt; &gt;with subscripts there would be several multiplys.
+
+&gt; There would probably be one multiply on the subscript because the optimizer would use that
+&gt; value on subsequent accesses. (I wrote that before reading your paragraph below sayig the
+&gt; same thing.)
+
+&gt; &gt;Just why is 'index is faster than subscript' a myth, again ?
+
+&gt; 1. Because a timing test showed indexes are slower.
+&gt; 2. Because multiplication is now as fast as loading an index.
+
+&gt; &gt;Actually it is likely that a compiler could optimize the use of
+&gt; &gt;subscripts by noticing that the value hadn't changed. So _if_ the
+&gt; &gt;compiler optimizes well then they may be same speed, if not, or if
+&gt; &gt;some other code interferes with the optimizer, index will be at worst
+&gt; &gt;the same and may be faster.
+
+&gt; Subscript was faster in my test because the subscript was optimized but the index
+&gt; apparently was not. It appears the code was reloading the index on every iteration.
+
+&gt; &gt;So not only did you not establish adequately that it was a myth you
+&gt; &gt;still haven't identified anyone who _wrongly_ believes it.
+
+&gt; Most people who use indexes believe it. Why else would they use indexes?
+">
+
+I think many programmers read the programmer's guide for the compiler
+and not unnaturally tend to believe its recommendations without the
+need to test them unless there are obvious reasons to do so.
+</POST>
+<POST>
+<POSTER> Richard &lt;rip...@Azonic.co.nz&gt; </POSTER>
+<POSTDATE> 2007-09-15T14:43:00 </POSTDATE>
+On Sep 15, 6:50 pm, Robert &lt;n ... @e.mail&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Fri, 14 Sep 2007 22:51:45 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+&gt; &gt;On Sep 15, 2:56 pm, Robert &lt;n ... @e.mail&gt; wrote:
+
+&gt; &gt;&gt; The basic difference is that subscript requires multiplication
+&gt; &gt;&gt; whereas index does not. SETTING an index does a multiplication, same as USING a subscript.
+&gt; &gt;&gt; I'm not surprised times are the same.
+
+&gt; &gt;So, if for example, several array items were accessed for each SET
+&gt; &gt;then with indexes there would be one multiply and several accesses but
+&gt; &gt;with subscripts there would be several multiplys.
+
+&gt; There would probably be one multiply on the subscript because the optimizer would use that
+&gt; value on subsequent accesses. (I wrote that before reading your paragraph below sayig the
+&gt; same thing.)
+
+&gt; &gt;Just why is 'index is faster than subscript' a myth, again ?
+
+&gt; 1. Because a timing test showed indexes are slower.
+">
+
+And you have done a timing test on every machine in the universe.
+
+<QUOTE PREVIOUSPOST="
+&gt; 2. Because multiplication is now as fast as loading an index.
+">
+
+I didn't notice the elves coming in and doing that to my machine.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;Actually it is likely that a compiler could optimize the use of
+&gt; &gt;subscripts by noticing that the value hadn't changed. So _if_ the
+&gt; &gt;compiler optimizes well then they may be same speed, if not, or if
+&gt; &gt;some other code interferes with the optimizer, index will be at worst
+&gt; &gt;the same and may be faster.
+
+&gt; Subscript was faster in my test because the subscript was optimized but the index
+&gt; apparently was not. It appears the code was reloading the index on every iteration.
+">
+
+So you are saying that if you run in a loop accessing the _same_ item
+each time the subscript is faster (due to the optimizer).  That
+certainly proves that everyone should use subscripts if they don't
+care about making the program do useful things.
+
+Perhaps a test of actual usage (on their machines) with actual work
+shows that indexes _are_ faster, or at least the same.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;So not only did you not establish adequately that it was a myth you
+&gt; &gt;still haven't identified anyone who _wrongly_ believes it.
+
+&gt; Most people who use indexes believe it. Why else would they use indexes?
+">
+
+You said above 'multiplication is now as fast ..'. Obviously that
+wasn't always true, and it wasn't true when the program was written,
+and it isn't true for all machines.
+
+It is also probable that they aren't running your compiler and their
+optimization does not make subscripts as fast as indexes.
+
+So they may well have used indexes when they wrote the system and
+indexes _were_ faster and be using indexes still because they don't
+see the need to re-engineer a few million lines of code which will
+make zero difference at best (or make it slower) just because Robert
+wants to denigrate 'legacy coders'.
+
+Or perhaps they use standard data types for subscripts instead of the
+extension of COMP-5 that you used and the way to get 'native' is
+'index' and thus index _is_ faster.
+
+Or perhaps they use index because it provides a degree of compiler
+error checking which subscripts cannot.
+
+Or maybe they still use indexes just to piss you off.
+</POST>
+<POST>
+<POSTER> Richard &lt;rip...@Azonic.co.nz&gt; </POSTER>
+<POSTDATE> 2007-09-15T16:09:00 </POSTDATE>
+On Sep 15, 6:50 pm, Robert &lt;n ... @e.mail&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Fri, 14 Sep 2007 22:51:45 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+&gt; &gt;On Sep 15, 2:56 pm, Robert &lt;n ... @e.mail&gt; wrote:
+
+&gt; &gt;&gt; The basic difference is that subscript requires multiplication
+&gt; &gt;&gt; whereas index does not. SETTING an index does a multiplication, same as USING a subscript.
+&gt; &gt;&gt; I'm not surprised times are the same.
+
+&gt; &gt;So, if for example, several array items were accessed for each SET
+&gt; &gt;then with indexes there would be one multiply and several accesses but
+&gt; &gt;with subscripts there would be several multiplys.
+
+&gt; There would probably be one multiply on the subscript because the optimizer would use that
+&gt; value on subsequent accesses. (I wrote that before reading your paragraph below sayig the
+&gt; same thing.)
+
+&gt; &gt;Just why is 'index is faster than subscript' a myth, again ?
+
+&gt; 1. Because a timing test showed indexes are slower.
+&gt; 2. Because multiplication is now as fast as loading an index.
+
+&gt; &gt;Actually it is likely that a compiler could optimize the use of
+&gt; &gt;subscripts by noticing that the value hadn't changed. So _if_ the
+&gt; &gt;compiler optimizes well then they may be same speed, if not, or if
+&gt; &gt;some other code interferes with the optimizer, index will be at worst
+&gt; &gt;the same and may be faster.
+
+&gt; Subscript was faster in my test because the subscript was optimized but the index
+&gt; apparently was not. It appears the code was reloading the index on every iteration.
+
+&gt; &gt;So not only did you not establish adequately that it was a myth you
+&gt; &gt;still haven't identified anyone who _wrongly_ believes it.
+
+&gt; Most people who use indexes believe it. Why else would they use indexes?
+">
+
+I don't believe that you have surveyed anything but a tiny sample of
+coders so you have no idea, except for what, a few dozen, how many use
+indexes, nor what they believe, nor why they use indexes.
+
+I have actually done a test on Linux with Fujitsu 7. Within the
+perform loop it does a couple of moves totaling 4 uses of subscript/
+index:
+
+subscript comp-5  9.58
+index             9.52
+subscript comp   13.35
+
+Index _IS_ faster, at least on this system. Granted it is not much
+faster when the MF extension of Comp-5 is used.
+
+So there is no reason to stop using index at all. Your claims,
+methodology and assertions are crap.
+</POST>
+<POST>
+<POSTER> &quot;Judson McClendon&quot; &lt;ju...@sunvaley0.com&gt; </POSTER>
+<POSTDATE> 2007-09-15T18:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Richard&quot; &lt;rip ... @Azonic.co.nz&gt; wrote:
+&gt; Robert &lt;n ... @e.mail&gt; wrote:
+&gt;&gt; Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+&gt;&gt; &gt;Robert &lt;n ... @e.mail&gt; wrote:
+
+&gt;&gt; &gt;&gt; The basic difference is that subscript requires multiplication
+&gt;&gt; &gt;&gt; whereas index does not. SETTING an index does a multiplication, same as USING a subscript.
+&gt;&gt; &gt;&gt; I'm not surprised times are the same.
+
+&gt;&gt; &gt;So, if for example, several array items were accessed for each SET
+&gt;&gt; &gt;then with indexes there would be one multiply and several accesses but
+&gt;&gt; &gt;with subscripts there would be several multiplys.
+
+&gt;&gt; There would probably be one multiply on the subscript because the optimizer would use that
+&gt;&gt; value on subsequent accesses. (I wrote that before reading your paragraph below sayig the
+&gt;&gt; same thing.)
+
+&gt;&gt; &gt;Just why is 'index is faster than subscript' a myth, again ?
+
+&gt;&gt; 1. Because a timing test showed indexes are slower.
+&gt;&gt; 2. Because multiplication is now as fast as loading an index.
+
+&gt;&gt; &gt;Actually it is likely that a compiler could optimize the use of
+&gt;&gt; &gt;subscripts by noticing that the value hadn't changed. So _if_ the
+&gt;&gt; &gt;compiler optimizes well then they may be same speed, if not, or if
+&gt;&gt; &gt;some other code interferes with the optimizer, index will be at worst
+&gt;&gt; &gt;the same and may be faster.
+
+&gt;&gt; Subscript was faster in my test because the subscript was optimized but the index
+&gt;&gt; apparently was not. It appears the code was reloading the index on every iteration.
+
+&gt;&gt; &gt;So not only did you not establish adequately that it was a myth you
+&gt;&gt; &gt;still haven't identified anyone who _wrongly_ believes it.
+
+&gt;&gt; Most people who use indexes believe it. Why else would they use indexes?
+
+&gt; I don't believe that you have surveyed anything but a tiny sample of
+&gt; coders so you have no idea, except for what, a few dozen, how many use
+&gt; indexes, nor what they believe, nor why they use indexes.
+
+&gt; I have actually done a test on Linux with Fujitsu 7. Within the
+&gt; perform loop it does a couple of moves totaling 4 uses of subscript/
+&gt; index:
+
+&gt; subscript comp-5  9.58
+&gt; index             9.52
+&gt; subscript comp   13.35
+
+&gt; Index _IS_ faster, at least on this system. Granted it is not much
+&gt; faster when the MF extension of Comp-5 is used.
+
+&gt; So there is no reason to stop using index at all. Your claims,
+&gt; methodology and assertions are crap.
+">
+
+Below is a post I made back in 2001 about the relative performance of
+indexing and subscripting that may shed a bit of light on the issue, for
+those not well versed in these things.
+========
+Here are a few of points to consider.
+
+1. The relative difference is very dependant on the compiler and
+hardware platform.  For example, because the COBOL standard does
+not specify how indexes are to be constructed, some compilers
+default to simple numeric pointers, identically equivalent to
+subscripts.
+
+2. Whether to use subscripting or indexing in a particular situation
+is a complex issue, and the answer depends primarily on these
+factors:
+a. Cost of setting/incrementing/decrementing index vs. subscript
+b. Cost of reference using index vs. subscript
+c. Ratio of times index/subscript is set/inc/dec vs. reference
+d. Frequency of conversion between index and numeric field
+
+In general, a program that does many references to a table for every
+time the index/subscript is set, indexing will tend to be faster.
+But if the ratio of table references to times the index/subscript is
+lowered, particularly if an index is often converted to/from numeric
+data fields, subscripting can be faster, even much faster (e.g. set
+index to numeric variable, reference table only once.)
+
+Another thing to consider is, in the tests we have done here in the
+newsgroup, if you are using either indexing or subscripting to scan
+a field character by character, it will probably be faster if you
+use a numeric field and reference modification.  The difference can
+be significant.  But again, it very much depends on the compiler and
+platform. :-)
+--
+Judson McClendon      ju ... @sunvaley0.com (remove zero)
+Sun Valley Systems http://sunvaley.com
+&quot;For God so loved the world that He gave His only begotten Son, that
+whoever believes in Him should not perish but have everlasting life.&quot;
+</POST>
+<POST>
+<POSTER> Robert &lt;n...@e.mail&gt; </POSTER>
+<POSTDATE> 2007-09-15T18:57:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sat, 15 Sep 2007 11:43:24 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+&gt;On Sep 15, 6:50 pm, Robert &lt;n ... @e.mail&gt; wrote:
+&gt;&gt; On Fri, 14 Sep 2007 22:51:45 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+&gt;&gt; &gt;On Sep 15, 2:56 pm, Robert &lt;n ... @e.mail&gt; wrote:
+
+&gt;&gt; &gt;&gt; The basic difference is that subscript requires multiplication
+&gt;&gt; &gt;&gt; whereas index does not. SETTING an index does a multiplication, same as USING a subscript.
+&gt;&gt; &gt;&gt; I'm not surprised times are the same.
+
+&gt;&gt; &gt;So, if for example, several array items were accessed for each SET
+&gt;&gt; &gt;then with indexes there would be one multiply and several accesses but
+&gt;&gt; &gt;with subscripts there would be several multiplys.
+
+&gt;&gt; There would probably be one multiply on the subscript because the optimizer would use that
+&gt;&gt; value on subsequent accesses. (I wrote that before reading your paragraph below sayig the
+&gt;&gt; same thing.)
+
+&gt;&gt; &gt;Just why is 'index is faster than subscript' a myth, again ?
+
+&gt;&gt; 1. Because a timing test showed indexes are slower.
+
+&gt;And you have done a timing test on every machine in the universe.
+">
+
+If humans were unable to generalize, there wouldn't be any machines. We'd be living in
+shacks and tents.
+
+The Micro Focus page is generalized advice. Write and tell them generalization is BAD.
+They shouldn't give advice until they test on every machine.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; 2. Because multiplication is now as fast as loading an index.
+
+&gt;I didn't notice the elves coming in and doing that to my machine.
+">
+
+You need to upgrade that '386.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; &gt;Actually it is likely that a compiler could optimize the use of
+&gt;&gt; &gt;subscripts by noticing that the value hadn't changed. So _if_ the
+&gt;&gt; &gt;compiler optimizes well then they may be same speed, if not, or if
+&gt;&gt; &gt;some other code interferes with the optimizer, index will be at worst
+&gt;&gt; &gt;the same and may be faster.
+
+&gt;&gt; Subscript was faster in my test because the subscript was optimized but the index
+&gt;&gt; apparently was not. It appears the code was reloading the index on every iteration.
+
+&gt;So you are saying that if you run in a loop accessing the _same_ item
+&gt;each time the subscript is faster (due to the optimizer).  That
+&gt;certainly proves that everyone should use subscripts if they don't
+&gt;care about making the program do useful things.
+">
+
+Ok, I'll change the subscript inside the loop and rerun the test.
+
+<QUOTE PREVIOUSPOST="
+&gt;Perhaps a test of actual usage (on their machines) with actual work
+&gt;shows that indexes _are_ faster, or at least the same.
+">
+
+Maybe  they'll share the results of their test, probably not.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; &gt;So not only did you not establish adequately that it was a myth you
+&gt;&gt; &gt;still haven't identified anyone who _wrongly_ believes it.
+
+&gt;&gt; Most people who use indexes believe it. Why else would they use indexes?
+
+&gt;You said above 'multiplication is now as fast ..'. Obviously that
+&gt;wasn't always true, and it wasn't true when the program was written,
+&gt;and it isn't true for all machines.
+
+&gt;It is also probable that they aren't running your compiler and their
+&gt;optimization does not make subscripts as fast as indexes.
+
+&gt;So they may well have used indexes when they wrote the system and
+&gt;indexes _were_ faster and be using indexes still because they don't
+&gt;see the need to re-engineer a few million lines of code which will
+&gt;make zero difference at best (or make it slower) just because Robert
+&gt;wants to denigrate 'legacy coders'.
+
+&gt;Or perhaps they use standard data types for subscripts instead of the
+&gt;extension of COMP-5 that you used and the way to get 'native' is
+&gt;'index' and thus index _is_ faster.
+
+&gt;Or perhaps they use index because it provides a degree of compiler
+&gt;error checking which subscripts cannot.
+
+&gt;Or maybe they still use indexes just to piss you off.
+">
+
+Maybe they use indexes out of habit, because no one told them the reason had disappeared.
+</POST>
+<POST>
+<POSTER> Robert &lt;n...@e.mail&gt; </POSTER>
+<POSTDATE> 2007-09-15T19:05:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sat, 15 Sep 2007 13:09:52 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+&gt;On Sep 15, 6:50 pm, Robert &lt;n ... @e.mail&gt; wrote:
+&gt;&gt; On Fri, 14 Sep 2007 22:51:45 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+&gt;&gt; &gt;On Sep 15, 2:56 pm, Robert &lt;n ... @e.mail&gt; wrote:
+
+&gt;&gt; &gt;&gt; The basic difference is that subscript requires multiplication
+&gt;&gt; &gt;&gt; whereas index does not. SETTING an index does a multiplication, same as USING a subscript.
+&gt;&gt; &gt;&gt; I'm not surprised times are the same.
+
+&gt;&gt; &gt;So, if for example, several array items were accessed for each SET
+&gt;&gt; &gt;then with indexes there would be one multiply and several accesses but
+&gt;&gt; &gt;with subscripts there would be several multiplys.
+
+&gt;&gt; There would probably be one multiply on the subscript because the optimizer would use that
+&gt;&gt; value on subsequent accesses. (I wrote that before reading your paragraph below sayig the
+&gt;&gt; same thing.)
+
+&gt;&gt; &gt;Just why is 'index is faster than subscript' a myth, again ?
+
+&gt;&gt; 1. Because a timing test showed indexes are slower.
+&gt;&gt; 2. Because multiplication is now as fast as loading an index.
+
+&gt;&gt; &gt;Actually it is likely that a compiler could optimize the use of
+&gt;&gt; &gt;subscripts by noticing that the value hadn't changed. So _if_ the
+&gt;&gt; &gt;compiler optimizes well then they may be same speed, if not, or if
+&gt;&gt; &gt;some other code interferes with the optimizer, index will be at worst
+&gt;&gt; &gt;the same and may be faster.
+
+&gt;&gt; Subscript was faster in my test because the subscript was optimized but the index
+&gt;&gt; apparently was not. It appears the code was reloading the index on every iteration.
+
+&gt;&gt; &gt;So not only did you not establish adequately that it was a myth you
+&gt;&gt; &gt;still haven't identified anyone who _wrongly_ believes it.
+
+&gt;&gt; Most people who use indexes believe it. Why else would they use indexes?
+
+&gt;I don't believe that you have surveyed anything but a tiny sample of
+&gt;coders so you have no idea, except for what, a few dozen, how many use
+&gt;indexes, nor what they believe, nor why they use indexes.
+
+&gt;I have actually done a test on Linux with Fujitsu 7. Within the
+&gt;perform loop it does a couple of moves totaling 4 uses of subscript/
+&gt;index:
+
+&gt;subscript comp-5  9.58
+&gt;index             9.52
+&gt;subscript comp   13.35
+
+&gt;Index _IS_ faster, at least on this system. Granted it is not much
+&gt;faster when the MF extension of Comp-5 is used.
+">
+
+They're the same speed, as I said. Half of one percent is trivial.
+
+<QUOTE PREVIOUSPOST="
+&gt;So there is no reason to stop using index at all. Your claims,
+&gt;methodology and assertions are crap.
+">
+
+You're ignoring your own evidence.
+</POST>
+<POST>
+<POSTER> docdw...@panix.com () </POSTER>
+<POSTDATE> 2007-09-15T20:26:00 </POSTDATE>
+In article &lt;rqnoe3hgjei5ir0b6ht4kefrmli2mr2 ... @4ax.com&gt;,
+
+<QUOTE PREVIOUSPOST="
+Robert  &lt;n ... @e.mail&gt; wrote:
+&gt;On Sat, 15 Sep 2007 11:43:24 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+
+&gt;&gt;On Sep 15, 6:50 pm, Robert &lt;n ... @e.mail&gt; wrote:
+&gt;&gt;&gt; On Fri, 14 Sep 2007 22:51:45 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+">
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; &gt;Just why is 'index is faster than subscript' a myth, again ?
+
+&gt;&gt;&gt; 1. Because a timing test showed indexes are slower.
+
+&gt;&gt;And you have done a timing test on every machine in the universe.
+
+&gt;If humans were unable to generalize, there wouldn't be any machines.
+&gt;We'd be living in
+&gt;shacks and tents.
+">
+
+What Mr Plinston puts forward, Mr Wagner, may demonstrate why there is a
+season to things and a time to every purpose.  The above might be phrased
+otherwise and yet still retain some original flavor, eg:
+
+A: Just why is 'index is faster than subscript' a myth, again ?
+
+B: Because a timing test showed indexes are slower.
+
+A: '*A* timing test' (emphasis added) shows that under *a* set of
+conditions one might not be better than the other; it is possible that
+under other sets of conditions the other might be better than the one.
+
+<QUOTE PREVIOUSPOST="
+&gt;The Micro Focus page is generalized advice. Write and tell them
+&gt;generalization is BAD.
+">
+
+Leaving aside the Brooklyn Bridge nature of this argument - 'Micro Focus
+jumps off the Brooklyn Bridge, you will, too?' - one might believe that
+when Micro Focus (or an appropriate representative thereof) comes
+a-posting here the responses might be the same.
+
+<QUOTE PREVIOUSPOST="
+&gt;They shouldn't give advice until they test on every machine.
+">
+
+It has been advised that one should tend to their own garden first, Mr
+Wagner, before one tends to Micro Focus'... or something like that.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; 2. Because multiplication is now as fast as loading an index.
+
+&gt;&gt;I didn't notice the elves coming in and doing that to my machine.
+
+&gt;You need to upgrade that '386.
+">
+
+Only 486 and above are elf-compatible, sure!
+
+DD
+</POST>
+<POST>
+<POSTER> Richard &lt;rip...@Azonic.co.nz&gt; </POSTER>
+<POSTDATE> 2007-09-16T00:19:00 </POSTDATE>
+On Sep 16, 10:57 am, Robert &lt;n ... @e.mail&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sat, 15 Sep 2007 11:43:24 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+&gt; &gt;On Sep 15, 6:50 pm, Robert &lt;n ... @e.mail&gt; wrote:
+&gt; &gt;&gt; On Fri, 14 Sep 2007 22:51:45 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+&gt; &gt;&gt; &gt;On Sep 15, 2:56 pm, Robert &lt;n ... @e.mail&gt; wrote:
+
+&gt; &gt;&gt; &gt;&gt; The basic difference is that subscript requires multiplication
+&gt; &gt;&gt; &gt;&gt; whereas index does not. SETTING an index does a multiplication, same as USING a subscript.
+&gt; &gt;&gt; &gt;&gt; I'm not surprised times are the same.
+
+&gt; &gt;&gt; &gt;So, if for example, several array items were accessed for each SET
+&gt; &gt;&gt; &gt;then with indexes there would be one multiply and several accesses but
+&gt; &gt;&gt; &gt;with subscripts there would be several multiplys.
+
+&gt; &gt;&gt; There would probably be one multiply on the subscript because the optimizer would use that
+&gt; &gt;&gt; value on subsequent accesses. (I wrote that before reading your paragraph below sayig the
+&gt; &gt;&gt; same thing.)
+
+&gt; &gt;&gt; &gt;Just why is 'index is faster than subscript' a myth, again ?
+
+&gt; &gt;&gt; 1. Because a timing test showed indexes are slower.
+
+&gt; &gt;And you have done a timing test on every machine in the universe.
+
+&gt; If humans were unable to generalize, there wouldn't be any machines. We'd be living in
+&gt; shacks and tents.
+">
+
+Do you really think that generalizing from a _single_ case has any
+value at all. Oh, wait, it supported your prejudice so it must be
+accepted as general.
+
+<QUOTE PREVIOUSPOST="
+&gt; The Micro Focus page is generalized advice. Write and tell them generalization is BAD.
+&gt; They shouldn't give advice until they test on every machine.
+">
+
+You can't even remember your own posts. It wasn't from Microfocus. It
+was:
+
+&quot;&quot;&quot;Legacy belief: indexes are faster than subscripts&quot;&quot;&quot;
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;&gt; 2. Because multiplication is now as fast as loading an index.
+
+&gt; &gt;I didn't notice the elves coming in and doing that to my machine.
+
+&gt; You need to upgrade that '386.
+
+&gt; &gt;&gt; &gt;Actually it is likely that a compiler could optimize the use of
+&gt; &gt;&gt; &gt;subscripts by noticing that the value hadn't changed. So _if_ the
+&gt; &gt;&gt; &gt;compiler optimizes well then they may be same speed, if not, or if
+&gt; &gt;&gt; &gt;some other code interferes with the optimizer, index will be at worst
+&gt; &gt;&gt; &gt;the same and may be faster.
+
+&gt; &gt;&gt; Subscript was faster in my test because the subscript was optimized but the index
+&gt; &gt;&gt; apparently was not. It appears the code was reloading the index on every iteration.
+
+&gt; &gt;So you are saying that if you run in a loop accessing the _same_ item
+&gt; &gt;each time the subscript is faster (due to the optimizer).  That
+&gt; &gt;certainly proves that everyone should use subscripts if they don't
+&gt; &gt;care about making the program do useful things.
+
+&gt; Ok, I'll change the subscript inside the loop and rerun the test.
+">
+
+You may need to change the code several times to find another example
+that supports your claim.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;Perhaps a test of actual usage (on their machines) with actual work
+&gt; &gt;shows that indexes _are_ faster, or at least the same.
+
+&gt; Maybe  they'll share the results of their test, probably not.
+">
+
+Why bother, you will find something else to whine about, and probably
+insult them by calling them 'ignorant mainframers' again.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;&gt; &gt;So not only did you not establish adequately that it was a myth you
+&gt; &gt;&gt; &gt;still haven't identified anyone who _wrongly_ believes it.
+
+&gt; &gt;&gt; Most people who use indexes believe it. Why else would they use indexes?
+
+&gt; &gt;You said above 'multiplication is now as fast ..'. Obviously that
+&gt; &gt;wasn't always true, and it wasn't true when the program was written,
+&gt; &gt;and it isn't true for all machines.
+
+&gt; &gt;It is also probable that they aren't running your compiler and their
+&gt; &gt;optimization does not make subscripts as fast as indexes.
+
+&gt; &gt;So they may well have used indexes when they wrote the system and
+&gt; &gt;indexes _were_ faster and be using indexes still because they don't
+&gt; &gt;see the need to re-engineer a few million lines of code which will
+&gt; &gt;make zero difference at best (or make it slower) just because Robert
+&gt; &gt;wants to denigrate 'legacy coders'.
+
+&gt; &gt;Or perhaps they use standard data types for subscripts instead of the
+&gt; &gt;extension of COMP-5 that you used and the way to get 'native' is
+&gt; &gt;'index' and thus index _is_ faster.
+
+&gt; &gt;Or perhaps they use index because it provides a degree of compiler
+&gt; &gt;error checking which subscripts cannot.
+
+&gt; &gt;Or maybe they still use indexes just to piss you off.
+
+&gt; Maybe they use indexes out of habit, because no one told them the reason had disappeared.
+">
+
+You still haven't establish that, for them, the 'reason' had
+disappeared, just more assertions.
+
+But why wouldn't they keep using indexes anyway, it doesn't matter if
+at worst they are the same and you certainly haven't shown any
+advantage for subscripts.
+</POST>
+<POST>
+<POSTER> Richard &lt;rip...@Azonic.co.nz&gt; </POSTER>
+<POSTDATE> 2007-09-16T00:26:00 </POSTDATE>
+On Sep 16, 11:05 am, Robert &lt;n ... @e.mail&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sat, 15 Sep 2007 13:09:52 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+&gt; &gt;On Sep 15, 6:50 pm, Robert &lt;n ... @e.mail&gt; wrote:
+&gt; &gt;&gt; On Fri, 14 Sep 2007 22:51:45 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+&gt; &gt;&gt; &gt;On Sep 15, 2:56 pm, Robert &lt;n ... @e.mail&gt; wrote:
+
+&gt; &gt;&gt; &gt;&gt; The basic difference is that subscript requires multiplication
+&gt; &gt;&gt; &gt;&gt; whereas index does not. SETTING an index does a multiplication, same as USING a subscript.
+&gt; &gt;&gt; &gt;&gt; I'm not surprised times are the same.
+
+&gt; &gt;&gt; &gt;So, if for example, several array items were accessed for each SET
+&gt; &gt;&gt; &gt;then with indexes there would be one multiply and several accesses but
+&gt; &gt;&gt; &gt;with subscripts there would be several multiplys.
+
+&gt; &gt;&gt; There would probably be one multiply on the subscript because the optimizer would use that
+&gt; &gt;&gt; value on subsequent accesses. (I wrote that before reading your paragraph below sayig the
+&gt; &gt;&gt; same thing.)
+
+&gt; &gt;&gt; &gt;Just why is 'index is faster than subscript' a myth, again ?
+
+&gt; &gt;&gt; 1. Because a timing test showed indexes are slower.
+&gt; &gt;&gt; 2. Because multiplication is now as fast as loading an index.
+
+&gt; &gt;&gt; &gt;Actually it is likely that a compiler could optimize the use of
+&gt; &gt;&gt; &gt;subscripts by noticing that the value hadn't changed. So _if_ the
+&gt; &gt;&gt; &gt;compiler optimizes well then they may be same speed, if not, or if
+&gt; &gt;&gt; &gt;some other code interferes with the optimizer, index will be at worst
+&gt; &gt;&gt; &gt;the same and may be faster.
+
+&gt; &gt;&gt; Subscript was faster in my test because the subscript was optimized but the index
+&gt; &gt;&gt; apparently was not. It appears the code was reloading the index on every iteration.
+
+&gt; &gt;&gt; &gt;So not only did you not establish adequately that it was a myth you
+&gt; &gt;&gt; &gt;still haven't identified anyone who _wrongly_ believes it.
+
+&gt; &gt;&gt; Most people who use indexes believe it. Why else would they use indexes?
+
+&gt; &gt;I don't believe that you have surveyed anything but a tiny sample of
+&gt; &gt;coders so you have no idea, except for what, a few dozen, how many use
+&gt; &gt;indexes, nor what they believe, nor why they use indexes.
+
+&gt; &gt;I have actually done a test on Linux with Fujitsu 7. Within the
+&gt; &gt;perform loop it does a couple of moves totaling 4 uses of subscript/
+&gt; &gt;index:
+
+&gt; &gt;subscript comp-5  9.58
+&gt; &gt;index             9.52
+&gt; &gt;subscript comp   13.35
+
+&gt; &gt;Index _IS_ faster, at least on this system. Granted it is not much
+&gt; &gt;faster when the MF extension of Comp-5 is used.
+
+&gt; They're the same speed, as I said. Half of one percent is trivial.
+">
+
+Index _IS_ faster. There is no reason to not use index.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;So there is no reason to stop using index at all. Your claims,
+&gt; &gt;methodology and assertions are crap.
+
+&gt; You're ignoring your own evidence.
+">
+
+In what way ?  There is no reason to not use index, there is no reason
+to not use subscript if one uses that, as long as the compiler
+supports native integer and optimizes so as not to recompute the
+offset.
+
+Which is faster may well depend on the machine, the compiler, and what
+is done in the code.
+</POST>
+<POST>
+<POSTER> &quot;William M. Klein&quot; &lt;wmkl...@nospam.netcom.com&gt; </POSTER>
+<POSTDATE> 2007-09-16T02:01:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Robert&quot; &lt;n ... @e.mail&gt; wrote in message
+">
+
+news:rqnoe3hgjei5ir0b6ht4kefrmli2mr2cuq@4ax.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sat, 15 Sep 2007 11:43:24 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+&lt;snip&gt;
+
+&gt; The Micro Focus page is generalized advice. Write and tell them generalization
+&gt; is BAD.
+&gt; They shouldn't give advice until they test on every machine.
+">
+
+Robert,
+You didn't originally CLAIM this(use index not subscript)  was in any Micro
+Focus documentation.  Do you now claim it is in the Micro Focus documentation
+and if so where?
+
+(Some - but not all - of your original comments WERE about MF documentation -
+and I would certainly say that some customer who has the relevant documentation
+and compiler should send in a comment complaining about it.  It is worth noting
+that NONE of the &quot;efficiency&quot; recommendations from your original note were in
+the Net Express documentation.  It - as far as I can tell - never comments on
+this topic.)
+
+P.S. IBM has some interesting documentation for their z/OS COBOL compiler.  For
+example,
+
+http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/igy3pg32/8...
+
+talks about some of the table reference optimizaiton that the compiler does do
+(and therefore what types of code/structures they recommend using for optimal
+performancer).
+
+while
+
+http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/igy3pg32/8...
+
+does recommend the use of indexing over subscripts
+
+However, they also &quot;back this up&quot; with the performance statistics that support
+this, i.e.
+
+&quot;using binary data items (COMP) to address a table is 30% slower than using
+indexes&quot;
+--
+Bill Klein
+wmklein &lt;at&gt; ix.netcom.com
+</POST>
+<POST>
+<POSTER> &quot;Pete Dashwood&quot; &lt;dashw...@removethis.enternet.co.nz&gt; </POSTER>
+<POSTDATE> 2007-09-16T09:17:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Robert&quot; &lt;n ... @e.mail&gt; wrote in message
+">
+
+news:rqnoe3hgjei5ir0b6ht4kefrmli2mr2cuq@4ax.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sat, 15 Sep 2007 11:43:24 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+
+&gt;&gt;On Sep 15, 6:50 pm, Robert &lt;n ... @e.mail&gt; wrote:
+&gt;&gt;&gt; On Fri, 14 Sep 2007 22:51:45 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+&gt;&gt;&gt; &gt;On Sep 15, 2:56 pm, Robert &lt;n ... @e.mail&gt; wrote:
+
+&gt;&gt;&gt; &gt;&gt; The basic difference is that subscript requires multiplication
+&gt;&gt;&gt; &gt;&gt; whereas index does not. SETTING an index does a multiplication, same
+&gt;&gt;&gt; &gt;&gt; as USING a subscript.
+&gt;&gt;&gt; &gt;&gt; I'm not surprised times are the same.
+
+&gt;&gt;&gt; &gt;So, if for example, several array items were accessed for each SET
+&gt;&gt;&gt; &gt;then with indexes there would be one multiply and several accesses but
+&gt;&gt;&gt; &gt;with subscripts there would be several multiplys.
+
+&gt;&gt;&gt; There would probably be one multiply on the subscript because the
+&gt;&gt;&gt; optimizer would use that
+&gt;&gt;&gt; value on subsequent accesses. (I wrote that before reading your
+&gt;&gt;&gt; paragraph below sayig the
+&gt;&gt;&gt; same thing.)
+
+&gt;&gt;&gt; &gt;Just why is 'index is faster than subscript' a myth, again ?
+
+&gt;&gt;&gt; 1. Because a timing test showed indexes are slower.
+
+&gt;&gt;And you have done a timing test on every machine in the universe.
+
+&gt; If humans were unable to generalize, there wouldn't be any machines. We'd
+&gt; be living in
+&gt; shacks and tents.
+
+&gt; The Micro Focus page is generalized advice. Write and tell them
+&gt; generalization is BAD.
+&gt; They shouldn't give advice until they test on every machine.
+
+&gt;&gt;&gt; 2. Because multiplication is now as fast as loading an index.
+
+&gt;&gt;I didn't notice the elves coming in and doing that to my machine.
+
+&gt; You need to upgrade that '386.
+
+&gt;&gt;&gt; &gt;Actually it is likely that a compiler could optimize the use of
+&gt;&gt;&gt; &gt;subscripts by noticing that the value hadn't changed. So _if_ the
+&gt;&gt;&gt; &gt;compiler optimizes well then they may be same speed, if not, or if
+&gt;&gt;&gt; &gt;some other code interferes with the optimizer, index will be at worst
+&gt;&gt;&gt; &gt;the same and may be faster.
+
+&gt;&gt;&gt; Subscript was faster in my test because the subscript was optimized but
+&gt;&gt;&gt; the index
+&gt;&gt;&gt; apparently was not. It appears the code was reloading the index on every
+&gt;&gt;&gt; iteration.
+
+&gt;&gt;So you are saying that if you run in a loop accessing the _same_ item
+&gt;&gt;each time the subscript is faster (due to the optimizer).  That
+&gt;&gt;certainly proves that everyone should use subscripts if they don't
+&gt;&gt;care about making the program do useful things.
+
+&gt; Ok, I'll change the subscript inside the loop and rerun the test.
+
+&gt;&gt;Perhaps a test of actual usage (on their machines) with actual work
+&gt;&gt;shows that indexes _are_ faster, or at least the same.
+
+&gt; Maybe  they'll share the results of their test, probably not.
+
+&gt;&gt;&gt; &gt;So not only did you not establish adequately that it was a myth you
+&gt;&gt;&gt; &gt;still haven't identified anyone who _wrongly_ believes it.
+
+&gt;&gt;&gt; Most people who use indexes believe it. Why else would they use indexes?
+
+&gt;&gt;You said above 'multiplication is now as fast ..'. Obviously that
+&gt;&gt;wasn't always true, and it wasn't true when the program was written,
+&gt;&gt;and it isn't true for all machines.
+
+&gt;&gt;It is also probable that they aren't running your compiler and their
+&gt;&gt;optimization does not make subscripts as fast as indexes.
+
+&gt;&gt;So they may well have used indexes when they wrote the system and
+&gt;&gt;indexes _were_ faster and be using indexes still because they don't
+&gt;&gt;see the need to re-engineer a few million lines of code which will
+&gt;&gt;make zero difference at best (or make it slower) just because Robert
+&gt;&gt;wants to denigrate 'legacy coders'.
+
+&gt;&gt;Or perhaps they use standard data types for subscripts instead of the
+&gt;&gt;extension of COMP-5 that you used and the way to get 'native' is
+&gt;&gt;'index' and thus index _is_ faster.
+
+&gt;&gt;Or perhaps they use index because it provides a degree of compiler
+&gt;&gt;error checking which subscripts cannot.
+
+&gt;&gt;Or maybe they still use indexes just to piss you off.
+
+&gt; Maybe they use indexes out of habit, because no one told them the reason
+&gt; had disappeared.
+">
+
+Or, maybe they didn't BELIEVE the reason has disappeared.
+
+But if that were true, there'd be whole heap of posts showing flaws in the
+Gospel...
+
+Hang on a minute... :-)
+
+(BTW, the reason I use indexes is not for any of the reasons you described;
+I simply like INDEXED BY and SEARCH. Having gone to the trouble of defining
+an index for a table it seems impolite to then use a subscript... :-))
+Couldn't care less whether they're faster or slower; on modern hardware it
+makes very little difference, and even if it did, I'd still do it. Because I
+can.:-))
+
+Pete.
+--
+&quot;I used to write COBOL...now I can do anything.&quot;
+</POST>
+<POST>
+<POSTER> &quot;Pete Dashwood&quot; &lt;dashw...@removethis.enternet.co.nz&gt; </POSTER>
+<POSTDATE> 2007-09-16T09:22:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&lt;docdw ... @panix.com&gt; wrote in message news:fcht8h$cbo$1@reader1.panix.com ...
+&gt; In article &lt;rqnoe3hgjei5ir0b6ht4kefrmli2mr2 ... @4ax.com&gt;,
+&gt; Robert  &lt;n ... @e.mail&gt; wrote:
+&gt;&gt;On Sat, 15 Sep 2007 11:43:24 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+
+&gt;&gt;&gt;On Sep 15, 6:50 pm, Robert &lt;n ... @e.mail&gt; wrote:
+&gt;&gt;&gt;&gt; On Fri, 14 Sep 2007 22:51:45 -0700, Richard &lt;rip ... @Azonic.co.nz&gt;
+&gt;&gt;&gt;&gt; wrote:
+
+&gt; [snip]
+
+&gt;&gt;&gt;&gt; &gt;Just why is 'index is faster than subscript' a myth, again ?
+
+&gt;&gt;&gt;&gt; 1. Because a timing test showed indexes are slower.
+
+&gt;&gt;&gt;And you have done a timing test on every machine in the universe.
+
+&gt;&gt;If humans were unable to generalize, there wouldn't be any machines.
+&gt;&gt;We'd be living in
+&gt;&gt;shacks and tents.
+
+&gt; What Mr Plinston puts forward, Mr Wagner, may demonstrate why there is a
+&gt; season to things and a time to every purpose.  The above might be phrased
+&gt; otherwise and yet still retain some original flavor, eg:
+
+&gt; A: Just why is 'index is faster than subscript' a myth, again ?
+
+&gt; B: Because a timing test showed indexes are slower.
+
+&gt; A: '*A* timing test' (emphasis added) shows that under *a* set of
+&gt; conditions one might not be better than the other; it is possible that
+&gt; under other sets of conditions the other might be better than the one.
+
+&gt;&gt;The Micro Focus page is generalized advice. Write and tell them
+&gt;&gt;generalization is BAD.
+
+&gt; Leaving aside the Brooklyn Bridge nature of this argument - 'Micro Focus
+&gt; jumps off the Brooklyn Bridge, you will, too?' - one might believe that
+&gt; when Micro Focus (or an appropriate representative thereof) comes
+&gt; a-posting here the responses might be the same.
+
+&gt;&gt;They shouldn't give advice until they test on every machine.
+
+&gt; It has been advised that one should tend to their own garden first, Mr
+&gt; Wagner, before one tends to Micro Focus'... or something like that.
+
+&gt;&gt;&gt;&gt; 2. Because multiplication is now as fast as loading an index.
+
+&gt;&gt;&gt;I didn't notice the elves coming in and doing that to my machine.
+
+&gt;&gt;You need to upgrade that '386.
+
+&gt; Only 486 and above are elf-compatible, sure!
+">
+
+I'm fairy certain my core 2 duo is accommodating several billion pixies in
+it's HD1080 display memory.
+
+It's a gnome away from home.
+
+Pete.
+--
+&quot;I used to write COBOL...now I can do anything.&quot;
+</POST>
+<POST>
+<POSTER> &quot;Pete Dashwood&quot; &lt;dashw...@removethis.enternet.co.nz&gt; </POSTER>
+<POSTDATE> 2007-09-16T09:28:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Richard&quot; &lt;rip ... @Azonic.co.nz&gt; wrote in message
+">
+
+news:1189886992.443101.194330@g4g2000hsf.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 15, 6:50 pm, Robert &lt;n ... @e.mail&gt; wrote:
+&gt;&gt; On Fri, 14 Sep 2007 22:51:45 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+&gt;&gt; &gt;On Sep 15, 2:56 pm, Robert &lt;n ... @e.mail&gt; wrote:
+
+&gt;&gt; &gt;&gt; The basic difference is that subscript requires multiplication
+&gt;&gt; &gt;&gt; whereas index does not. SETTING an index does a multiplication, same
+&gt;&gt; &gt;&gt; as USING a subscript.
+&gt;&gt; &gt;&gt; I'm not surprised times are the same.
+
+&gt;&gt; &gt;So, if for example, several array items were accessed for each SET
+&gt;&gt; &gt;then with indexes there would be one multiply and several accesses but
+&gt;&gt; &gt;with subscripts there would be several multiplys.
+
+&gt;&gt; There would probably be one multiply on the subscript because the
+&gt;&gt; optimizer would use that
+&gt;&gt; value on subsequent accesses. (I wrote that before reading your paragraph
+&gt;&gt; below sayig the
+&gt;&gt; same thing.)
+
+&gt;&gt; &gt;Just why is 'index is faster than subscript' a myth, again ?
+
+&gt;&gt; 1. Because a timing test showed indexes are slower.
+&gt;&gt; 2. Because multiplication is now as fast as loading an index.
+
+&gt;&gt; &gt;Actually it is likely that a compiler could optimize the use of
+&gt;&gt; &gt;subscripts by noticing that the value hadn't changed. So _if_ the
+&gt;&gt; &gt;compiler optimizes well then they may be same speed, if not, or if
+&gt;&gt; &gt;some other code interferes with the optimizer, index will be at worst
+&gt;&gt; &gt;the same and may be faster.
+
+&gt;&gt; Subscript was faster in my test because the subscript was optimized but
+&gt;&gt; the index
+&gt;&gt; apparently was not. It appears the code was reloading the index on every
+&gt;&gt; iteration.
+
+&gt;&gt; &gt;So not only did you not establish adequately that it was a myth you
+&gt;&gt; &gt;still haven't identified anyone who _wrongly_ believes it.
+
+&gt;&gt; Most people who use indexes believe it. Why else would they use indexes?
+
+&gt; I don't believe that you have surveyed anything but a tiny sample of
+&gt; coders so you have no idea, except for what, a few dozen, how many use
+&gt; indexes, nor what they believe, nor why they use indexes.
+
+&gt; I have actually done a test on Linux with Fujitsu 7. Within the
+&gt; perform loop it does a couple of moves totaling 4 uses of subscript/
+&gt; index:
+
+&gt; subscript comp-5  9.58
+&gt; index             9.52
+&gt; subscript comp   13.35
+
+&gt; Index _IS_ faster, at least on this system. Granted it is not much
+&gt; faster when the MF extension of Comp-5 is used.
+
+&gt; So there is no reason to stop using index at all. Your claims,
+&gt; methodology and assertions are crap.
+">
+
+D'jou think we might qualify that last to &quot;Some of your claims...&quot; or &quot;Most
+of your claims...&quot; or specify &quot;ALL&quot; for North Americans who don't use
+deductive logic? :-)
+
+Pete.
+--
+&quot;I used to write COBOL...now I can do anything.&quot;
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+
+">
+</POST>
+<POST>
+<POSTER> &quot;Pete Dashwood&quot; &lt;dashw...@removethis.enternet.co.nz&gt; </POSTER>
+<POSTDATE> 2007-09-16T09:30:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Judson McClendon&quot; &lt;ju ... @sunvaley0.com&gt; wrote in message
+">
+
+news:plZGi.62611$U24.13876@bignews5.bellsouth.net ...
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Richard&quot; &lt;rip ... @Azonic.co.nz&gt; wrote:
+&gt;&gt; Robert &lt;n ... @e.mail&gt; wrote:
+&gt;&gt;&gt; Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+&gt;&gt;&gt; &gt;Robert &lt;n ... @e.mail&gt; wrote:
+
+&gt;&gt;&gt; &gt;&gt; The basic difference is that subscript requires multiplication
+&gt;&gt;&gt; &gt;&gt; whereas index does not. SETTING an index does a multiplication, same
+&gt;&gt;&gt; &gt;&gt; as USING a subscript.
+&gt;&gt;&gt; &gt;&gt; I'm not surprised times are the same.
+
+&gt;&gt;&gt; &gt;So, if for example, several array items were accessed for each SET
+&gt;&gt;&gt; &gt;then with indexes there would be one multiply and several accesses but
+&gt;&gt;&gt; &gt;with subscripts there would be several multiplys.
+
+&gt;&gt;&gt; There would probably be one multiply on the subscript because the
+&gt;&gt;&gt; optimizer would use that
+&gt;&gt;&gt; value on subsequent accesses. (I wrote that before reading your
+&gt;&gt;&gt; paragraph below sayig the
+&gt;&gt;&gt; same thing.)
+
+&gt;&gt;&gt; &gt;Just why is 'index is faster than subscript' a myth, again ?
+
+&gt;&gt;&gt; 1. Because a timing test showed indexes are slower.
+&gt;&gt;&gt; 2. Because multiplication is now as fast as loading an index.
+
+&gt;&gt;&gt; &gt;Actually it is likely that a compiler could optimize the use of
+&gt;&gt;&gt; &gt;subscripts by noticing that the value hadn't changed. So _if_ the
+&gt;&gt;&gt; &gt;compiler optimizes well then they may be same speed, if not, or if
+&gt;&gt;&gt; &gt;some other code interferes with the optimizer, index will be at worst
+&gt;&gt;&gt; &gt;the same and may be faster.
+
+&gt;&gt;&gt; Subscript was faster in my test because the subscript was optimized but
+&gt;&gt;&gt; the index
+&gt;&gt;&gt; apparently was not. It appears the code was reloading the index on every
+&gt;&gt;&gt; iteration.
+
+&gt;&gt;&gt; &gt;So not only did you not establish adequately that it was a myth you
+&gt;&gt;&gt; &gt;still haven't identified anyone who _wrongly_ believes it.
+
+&gt;&gt;&gt; Most people who use indexes believe it. Why else would they use indexes?
+
+&gt;&gt; I don't believe that you have surveyed anything but a tiny sample of
+&gt;&gt; coders so you have no idea, except for what, a few dozen, how many use
+&gt;&gt; indexes, nor what they believe, nor why they use indexes.
+
+&gt;&gt; I have actually done a test on Linux with Fujitsu 7. Within the
+&gt;&gt; perform loop it does a couple of moves totaling 4 uses of subscript/
+&gt;&gt; index:
+
+&gt;&gt; subscript comp-5  9.58
+&gt;&gt; index             9.52
+&gt;&gt; subscript comp   13.35
+
+&gt;&gt; Index _IS_ faster, at least on this system. Granted it is not much
+&gt;&gt; faster when the MF extension of Comp-5 is used.
+
+&gt;&gt; So there is no reason to stop using index at all. Your claims,
+&gt;&gt; methodology and assertions are crap.
+
+&gt; Below is a post I made back in 2001 about the relative performance of
+&gt; indexing and subscripting that may shed a bit of light on the issue, for
+&gt; those not well versed in these things.
+&gt; ========
+&gt; Here are a few of points to consider.
+
+&gt; 1. The relative difference is very dependant on the compiler and
+&gt;   hardware platform.  For example, because the COBOL standard does
+&gt;   not specify how indexes are to be constructed, some compilers
+&gt;   default to simple numeric pointers, identically equivalent to
+&gt;   subscripts.
+
+&gt; 2. Whether to use subscripting or indexing in a particular situation
+&gt;   is a complex issue, and the answer depends primarily on these
+&gt;   factors:
+&gt;   a. Cost of setting/incrementing/decrementing index vs. subscript
+&gt;   b. Cost of reference using index vs. subscript
+&gt;   c. Ratio of times index/subscript is set/inc/dec vs. reference
+&gt;   d. Frequency of conversion between index and numeric field
+
+&gt; In general, a program that does many references to a table for every
+&gt; time the index/subscript is set, indexing will tend to be faster.
+&gt; But if the ratio of table references to times the index/subscript is
+&gt; lowered, particularly if an index is often converted to/from numeric
+&gt; data fields, subscripting can be faster, even much faster (e.g. set
+&gt; index to numeric variable, reference table only once.)
+
+&gt; Another thing to consider is, in the tests we have done here in the
+&gt; newsgroup, if you are using either indexing or subscripting to scan
+&gt; a field character by character, it will probably be faster if you
+&gt; use a numeric field and reference modification.  The difference can
+&gt; be significant.  But again, it very much depends on the compiler and
+&gt; platform. :-)
+">
+
+...and whether you do, or should, care...:-)
+
+Pete.
+--
+&quot;I used to write COBOL...now I can do anything.&quot;
+</POST>
+<POST>
+<POSTER> Robert &lt;n...@e.mail&gt; </POSTER>
+<POSTDATE> 2007-09-16T14:07:00 </POSTDATE>
+On Mon, 17 Sep 2007 01:17:37 +1200, &quot;Pete Dashwood&quot; &lt;dashw ... @removethis.enternet.co.nz&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;(BTW, the reason I use indexes is not for any of the reasons you described;
+&gt;I simply like INDEXED BY and SEARCH. Having gone to the trouble of defining
+&gt;an index for a table it seems impolite to then use a subscript... :-))
+&gt;Couldn't care less whether they're faster or slower; on modern hardware it
+&gt;makes very little difference, and even if it did, I'd still do it. Because I
+&gt;can.:-))
+">
+
+I hope you use ODO on 'high speed' SEARCHes. If not, they're taking twice as long as they
+should for serial, 10% longer for binary.
+</POST>
+<POST>
+<POSTER> Richard Brady &lt;rrllbrr...@worrlldnet.att.net&gt; </POSTER>
+<POSTDATE> 2007-09-16T15:45:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Pete Dashwood wrote:
+">
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt; D'jou think we might qualify that last to &quot;Some of your claims...&quot; or &quot;Most
+&gt; of your claims...&quot; or specify &quot;ALL&quot; for North Americans who don't use
+&gt; deductive logic? :-)
+
+&gt; Pete.
+">
+
+This North American uses only inductive logic, if you please.
+
+Another Richard
+</POST>
+<POST>
+<POSTER> Robert &lt;n...@e.mail&gt; </POSTER>
+<POSTDATE> 2007-09-16T17:43:00 </POSTDATE>
+On Sun, 16 Sep 2007 06:01:20 GMT, &quot;William M. Klein&quot; &lt;wmkl ... @nospam.netcom.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&quot;Robert&quot; &lt;n ... @e.mail&gt; wrote in message
+&gt; news:rqnoe3hgjei5ir0b6ht4kefrmli2mr2cuq@4ax.com ...
+&gt;&gt; On Sat, 15 Sep 2007 11:43:24 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+&gt;&lt;snip&gt;
+
+&gt;&gt; The Micro Focus page is generalized advice. Write and tell them generalization
+&gt;&gt; is BAD.
+&gt;&gt; They shouldn't give advice until they test on every machine.
+
+&gt;Robert,
+&gt;  You didn't originally CLAIM this(use index not subscript)  was in any Micro
+&gt;Focus documentation.  Do you now claim it is in the Micro Focus documentation
+&gt;and if so where?
+">
+
+Micro Focus does not say indexes are faster, in the efficiency tips nor elsewhere. Many
+Cobol programmers still believe it, because it was true in the Old Days.
+
+<QUOTE PREVIOUSPOST="
+&gt;(Some - but not all - of your original comments WERE about MF documentation -
+&gt;and I would certainly say that some customer who has the relevant documentation
+&gt;and compiler should send in a comment complaining about it.  It is worth noting
+&gt;that NONE of the &quot;efficiency&quot; recommendations from your original note were in
+&gt;the Net Express documentation.  It - as far as I can tell - never comments on
+&gt;this topic.)
+">
+
+Most of the recommendations are valid, at least on most platforms. I tested the ones that
+didn't sound right to me.
+
+<QUOTE PREVIOUSPOST="
+&gt;P.S. IBM has some interesting documentation for their z/OS COBOL compiler.  For
+&gt;example,
+
+&gt; http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/igy3pg32/8...
+
+&gt;talks about some of the table reference optimizaiton that the compiler does do
+&gt;(and therefore what types of code/structures they recommend using for optimal
+&gt;performancer).
+
+&gt;     while
+
+&gt; http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/igy3pg32/8...
+
+&gt;does recommend the use of indexing over subscripts
+
+&gt;However, they also &quot;back this up&quot; with the performance statistics that support
+&gt;this, i.e.
+
+&gt;  &quot;using binary data items (COMP) to address a table is 30% slower than using
+&gt;indexes&quot;
+">
+
+Relative speeds are changing. Subscripting was about 500% slower in the Old Days. I don't
+doubt it WAS 30% slower when the above was written. My point is that subscripts are not
+slower on modern machines.
+</POST>
+<POST>
+<POSTER> Robert &lt;n...@e.mail&gt; </POSTER>
+<POSTDATE> 2007-09-16T18:33:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sun, 16 Sep 2007 00:26:57 +0000 (UTC), docdw ... @panix.com () wrote:
+&gt;In article &lt;rqnoe3hgjei5ir0b6ht4kefrmli2mr2 ... @4ax.com&gt;,
+&gt;Robert  &lt;n ... @e.mail&gt; wrote:
+&gt;&gt;On Sat, 15 Sep 2007 11:43:24 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+
+&gt;&gt;&gt;On Sep 15, 6:50 pm, Robert &lt;n ... @e.mail&gt; wrote:
+&gt;&gt;&gt;&gt; On Fri, 14 Sep 2007 22:51:45 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+
+&gt;[snip]
+
+&gt;&gt;&gt;&gt; &gt;Just why is 'index is faster than subscript' a myth, again ?
+
+&gt;&gt;&gt;&gt; 1. Because a timing test showed indexes are slower.
+
+&gt;&gt;&gt;And you have done a timing test on every machine in the universe.
+
+&gt;&gt;If humans were unable to generalize, there wouldn't be any machines.
+&gt;&gt;We'd be living in
+&gt;&gt;shacks and tents.
+
+&gt;What Mr Plinston puts forward, Mr Wagner, may demonstrate why there is a
+&gt;season to things and a time to every purpose.  The above might be phrased
+&gt;otherwise and yet still retain some original flavor, eg:
+
+&gt;A: Just why is 'index is faster than subscript' a myth, again ?
+
+&gt;B: Because a timing test showed indexes are slower.
+
+&gt;A: '*A* timing test' (emphasis added) shows that under *a* set of
+&gt;conditions one might not be better than the other; it is possible that
+&gt;under other sets of conditions the other might be better than the one.
+">
+
+I tried to make the tests represent typical usage AND I posted source code. If you think
+the test is unfair, say so or write your own test. Thanks to Richard's complaints, I saw
+the subscript test did NOT represent typical usage, so I'll fix it and rerun.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;The Micro Focus page is generalized advice. Write and tell them
+&gt;&gt;generalization is BAD.
+
+&gt;Leaving aside the Brooklyn Bridge nature of this argument - 'Micro Focus
+&gt;jumps off the Brooklyn Bridge, you will, too?' - one might believe that
+&gt;when Micro Focus (or an appropriate representative thereof) comes
+&gt;a-posting here the responses might be the same.
+">
+
+I have no problem with generalizations, nor do I fault Micro Focus for making them. I
+think a few of the SPECIFIC points are erroneous, because they're based on commonly held
+belief (myth).
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;They shouldn't give advice until they test on every machine.
+
+&gt;It has been advised that one should tend to their own garden first, Mr
+&gt;Wagner, before one tends to Micro Focus'... or something like that.
+">
+
+We all plant our crops in the soil plowed by Micro Focus .. or something like that.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt;&gt; 2. Because multiplication is now as fast as loading an index.
+
+&gt;&gt;&gt;I didn't notice the elves coming in and doing that to my machine.
+
+&gt;&gt;You need to upgrade that '386.
+
+&gt;Only 486 and above are elf-compatible, sure!
+">
+
+The elf is superscalar, which means multiple instructions per clock.
+
+Itanium (formerly IA-64) is a radical change in CPU design. Many don't know its basic
+design originated in HP, where it was named EPIC, not in Intel. It has been an
+underperformer in sales and missed deadlines, but in execution speed it is noticably
+faster than others. No chip maker has attempted to copy it. Surprisingly, Intel does not
+make the companion &quot;chipset&quot; required to use the Itanium on a motherboard. Today, most
+chipsets are made by HP. Silicon Graphics (SGI) is another big supporter.
+
+If Itanium is unsuccessful, CPUs are close to hitting the wall in terms of speed. We can't
+make them much more complex (required to avoid instruction collisions) because we can't
+make traces much smaller. We're approaching the size of atoms.
+</POST>
+<POST>
+<POSTER> &quot;William M. Klein&quot; &lt;wmkl...@nospam.netcom.com&gt; </POSTER>
+<POSTDATE> 2007-09-16T21:15:00 </POSTDATE>
+Robert,
+For what compiler? What operating systems? And your evidence is ...?
+
+Of course, we all KNOW that there is no such thing as a &quot;guaranteed&quot; BINARY
+search.  (SEARCH ALL is not guaranteed to be &quot;binary&quot;).
+
+--
+Bill Klein
+wmklein &lt;at&gt; ix.netcom.com
+
+<QUOTE PREVIOUSPOST="
+&quot;Robert&quot; &lt;n ... @e.mail&gt; wrote in message
+">
+
+news:hvrqe394mgcejqa6bgfvu4ge141tmqtima@4ax.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Mon, 17 Sep 2007 01:17:37 +1200, &quot;Pete Dashwood&quot;
+&gt; &lt;dashw ... @removethis.enternet.co.nz&gt;
+&gt; wrote:
+
+&gt;&gt;(BTW, the reason I use indexes is not for any of the reasons you described;
+&gt;&gt;I simply like INDEXED BY and SEARCH. Having gone to the trouble of defining
+&gt;&gt;an index for a table it seems impolite to then use a subscript... :-))
+&gt;&gt;Couldn't care less whether they're faster or slower; on modern hardware it
+&gt;&gt;makes very little difference, and even if it did, I'd still do it. Because I
+&gt;&gt;can.:-))
+
+&gt; I hope you use ODO on 'high speed' SEARCHes. If not, they're taking twice as
+&gt; long as they
+&gt; should for serial, 10% longer for binary.
+">
+</POST>
+<POST>
+<POSTER> &quot;William M. Klein&quot; &lt;wmkl...@nospam.netcom.com&gt; </POSTER>
+<POSTDATE> 2007-09-16T21:23:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Robert&quot; &lt;n ... @e.mail&gt; wrote in message
+">
+
+news:k27re3tjim0q8bsqadfn1ehagf4ko407pj@4ax.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sun, 16 Sep 2007 06:01:20 GMT, &quot;William M. Klein&quot;
+&gt; &lt;wmkl ... @nospam.netcom.com&gt; wrote:
+
+&gt;&gt;&quot;Robert&quot; &lt;n ... @e.mail&gt; wrote in message
+&gt;&gt; news:rqnoe3hgjei5ir0b6ht4kefrmli2mr2cuq@4ax.com ...
+&gt;&gt;&gt; On Sat, 15 Sep 2007 11:43:24 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+&gt;&gt;&lt;snip&gt;
+
+&gt;&gt;&gt; The Micro Focus page is generalized advice. Write and tell them
+&gt;&gt;&gt; generalization
+&gt;&gt;&gt; is BAD.
+&gt;&gt;&gt; They shouldn't give advice until they test on every machine.
+
+&gt;&gt;Robert,
+&gt;&gt;  You didn't originally CLAIM this(use index not subscript)  was in any Micro
+&gt;&gt;Focus documentation.  Do you now claim it is in the Micro Focus documentation
+&gt;&gt;and if so where?
+
+&gt; Micro Focus does not say indexes are faster, in the efficiency tips nor
+&gt; elsewhere. Many
+&gt; Cobol programmers still believe it, because it was true in the Old Days.
+
+&gt;&gt;(Some - but not all - of your original comments WERE about MF documentation -
+&gt;&gt;and I would certainly say that some customer who has the relevant
+&gt;&gt;documentation
+&gt;&gt;and compiler should send in a comment complaining about it.  It is worth
+&gt;&gt;noting
+&gt;&gt;that NONE of the &quot;efficiency&quot; recommendations from your original note were in
+&gt;&gt;the Net Express documentation.  It - as far as I can tell - never comments on
+&gt;&gt;this topic.)
+
+&gt; Most of the recommendations are valid, at least on most platforms. I tested
+&gt; the ones that
+&gt; didn't sound right to me.
+
+&gt;&gt;P.S. IBM has some interesting documentation for their z/OS COBOL compiler.
+&gt;&gt;For
+&gt;&gt;example,
+
+&gt;&gt; http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/igy3pg32/8...
+
+&gt;&gt;talks about some of the table reference optimizaiton that the compiler does do
+&gt;&gt;(and therefore what types of code/structures they recommend using for optimal
+&gt;&gt;performancer).
+
+&gt;&gt;     while
+
+&gt;&gt; http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/igy3pg32/8...
+
+&gt;&gt;does recommend the use of indexing over subscripts
+
+&gt;&gt;However, they also &quot;back this up&quot; with the performance statistics that support
+&gt;&gt;this, i.e.
+
+&gt;&gt;  &quot;using binary data items (COMP) to address a table is 30% slower than using
+&gt;&gt;indexes&quot;
+
+&gt; Relative speeds are changing. Subscripting was about 500% slower in the Old
+&gt; Days. I don't
+&gt; doubt it WAS 30% slower when the above was written. My point is that
+&gt; subscripts are not
+&gt; slower on modern machines.
+">
+
+You are trying to claim that the zSeries is NOT a &quot;modern machine&quot;.
+
+Your statement,
+
+&quot;Many  Cobol programmers still believe it, because it was true in the Old Days.&quot;
+
+It is still true on the environment where the recommendation is still
+documented, i.e. IBM mainframe compilers.  (If you haven't researched it,
+although the pointed to &quot;Performance Guide&quot; is for Enterprise COBOL V3.1 and the
+compiler is now on V3.4, IBM is on record as indicating that there have been few
+&quot;performance&quot; enhancements between these releases.
+
+As you have acknowledged elsewhere, your guess is that somewhere ABOUT 70% of
+all COBOL code that is running today is on IBM mainframes (and I would guess
+that it is certainly OVER 50^) then it is true that for majority of COBOL code,
+the use of indices is to be preferred (for performance purposes) than
+subscripts.
+
+And of course, even your own test showed that indices are MINIMALLY faster than
+subscripts, so the real question should be WHY would you ever use subscripts
+where you could use indices?
+</POST>
+<POST>
+<POSTER> Robert &lt;n...@e.mail&gt; </POSTER>
+<POSTDATE> 2007-09-16T21:39:00 </POSTDATE>
+On Mon, 17 Sep 2007 01:15:35 GMT, &quot;William M. Klein&quot; &lt;wmkl ... @nospam.netcom.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;Robert,
+&gt;  For what compiler? What operating systems? And your evidence is ...?
+">
+
+It's true for every compiler and operating system. Telling Cobol to search 1,000 rows when
+half of them are filled with high values will take log2 1,000 / log2 500 times as long.
+Roughly 10% longer.
+
+No timing test is necessary, although I'm tempted to write one just for fun. Deductive
+logic OR common sense should tell you that.
+
+<QUOTE PREVIOUSPOST="
+&gt;Of course, we all KNOW that there is no such thing as a &quot;guaranteed&quot; BINARY
+&gt;search.  (SEARCH ALL is not guaranteed to be &quot;binary&quot;).
+">
+
+That's true in Standard-land. In Reality-land, every compiler does a binary search.
+
+I spent years trying to prove that 2 is not the optimal division factor. Based on
+calculus, I really believed it was e - 1, which is approximately 1.7. I almost 'proved'
+it with tests. Years later I saw that 2 really IS the optimal division factor. On well, I
+tried.
+</POST>
+<POST>
+<POSTER> &quot;William M. Klein&quot; &lt;wmkl...@nospam.netcom.com&gt; </POSTER>
+<POSTDATE> 2007-09-16T21:43:00 </POSTDATE>
+An ODO is ONLY faster if the number of &quot;filled in&quot; table entries varies.  If the
+number of entries is stable AND all entries are filled in (which is the most
+common situation in the SEARCH ALL programs that I have seen).   For serial
+SEARCHes where the &quot;empty&quot; entries are at the end, I can't see how or why an ODO
+would ever be faster.
+
+P.S.  If you search the records of this group, there ARE compilers that have
+used non-Binary searches for SEARCH ALL.  However, I do agree that no one has
+been able to point out any that are still sold/distributed that do so today.
+
+--
+Bill Klein
+wmklein &lt;at&gt; ix.netcom.com
+
+<QUOTE PREVIOUSPOST="
+&quot;Robert&quot; &lt;n ... @e.mail&gt; wrote in message
+">
+
+news:7jlre31oq6blvdmk49jl2974tctunhkr43@4ax.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Mon, 17 Sep 2007 01:15:35 GMT, &quot;William M. Klein&quot;
+&gt; &lt;wmkl ... @nospam.netcom.com&gt; wrote:
+
+&gt;&gt;Robert,
+&gt;&gt;  For what compiler? What operating systems? And your evidence is ...?
+
+&gt; It's true for every compiler and operating system. Telling Cobol to search
+&gt; 1,000 rows when
+&gt; half of them are filled with high values will take log2 1,000 / log2 500 times
+&gt; as long.
+&gt; Roughly 10% longer.
+
+&gt; No timing test is necessary, although I'm tempted to write one just for fun.
+&gt; Deductive
+&gt; logic OR common sense should tell you that.
+
+&gt;&gt;Of course, we all KNOW that there is no such thing as a &quot;guaranteed&quot; BINARY
+&gt;&gt;search.  (SEARCH ALL is not guaranteed to be &quot;binary&quot;).
+
+&gt; That's true in Standard-land. In Reality-land, every compiler does a binary
+&gt; search.
+
+&gt; I spent years trying to prove that 2 is not the optimal division factor. Based
+&gt; on
+&gt; calculus, I really believed it was e - 1, which is approximately 1.7. I almost
+&gt; 'proved'
+&gt; it with tests. Years later I saw that 2 really IS the optimal division factor.
+&gt; On well, I
+&gt; tried.
+">
+</POST>
+<POST>
+<POSTER> &quot;Pete Dashwood&quot; &lt;dashw...@removethis.enternet.co.nz&gt; </POSTER>
+<POSTDATE> 2007-09-16T21:52:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Robert&quot; &lt;n ... @e.mail&gt; wrote in message
+">
+
+news:hvrqe394mgcejqa6bgfvu4ge141tmqtima@4ax.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Mon, 17 Sep 2007 01:17:37 +1200, &quot;Pete Dashwood&quot;
+&gt; &lt;dashw ... @removethis.enternet.co.nz&gt;
+&gt; wrote:
+
+&gt;&gt;(BTW, the reason I use indexes is not for any of the reasons you
+&gt;&gt;described;
+&gt;&gt;I simply like INDEXED BY and SEARCH. Having gone to the trouble of
+&gt;&gt;defining
+&gt;&gt;an index for a table it seems impolite to then use a subscript... :-))
+&gt;&gt;Couldn't care less whether they're faster or slower; on modern hardware it
+&gt;&gt;makes very little difference, and even if it did, I'd still do it. Because
+&gt;&gt;I
+&gt;&gt;can.:-))
+
+&gt; I hope you use ODO on 'high speed' SEARCHes. If not, they're taking twice
+&gt; as long as they
+&gt; should for serial, 10% longer for binary.
+">
+
+I NEVER use ODO for ANYTHING.
+
+The only time I would code ODO is when I am accessing something that
+requires it.
+
+I've seen the arguments for ODO on searches.
+
+As the tables I search are rarely more than 1K in size (I think the largest
+I can remember doing in COBOL recent was 8K),and I do use SEARCH ALL on
+non-volatile data,  I really don't care if it takes a few microseconds (or
+even milliseconds) longer. The table is in memory.
+
+To me ODO is just ugly pointless code that buys you nothing in terms of
+saved space, so it doesn't deliver what it promises.
+
+The last time I used COBOL for an application that was time critical where a
+few Milliseconds MIGHT matter (it was a process control app), was nearly 30
+years ago and GO TO was employed to get out of routines fast. I wouldn't
+code normal COBOL apps like that and I don't use ODO in them either.
+
+Pete.
+--
+&quot;I used to write COBOL...now I can do anything.&quot;
+</POST>
+<POST>
+<POSTER> Robert &lt;n...@e.mail&gt; </POSTER>
+<POSTDATE> 2007-09-16T22:03:00 </POSTDATE>
+On Mon, 17 Sep 2007 01:23:37 GMT, &quot;William M. Klein&quot; &lt;wmkl ... @nospam.netcom.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&quot;Robert&quot; &lt;n ... @e.mail&gt; wrote in message
+&gt; news:k27re3tjim0q8bsqadfn1ehagf4ko407pj@4ax.com ...
+&gt;&gt; On Sun, 16 Sep 2007 06:01:20 GMT, &quot;William M. Klein&quot;
+&gt;&gt; &lt;wmkl ... @nospam.netcom.com&gt; wrote:
+
+&gt;&gt;&gt;&quot;Robert&quot; &lt;n ... @e.mail&gt; wrote in message
+&gt;&gt;&gt; news:rqnoe3hgjei5ir0b6ht4kefrmli2mr2cuq@4ax.com ...
+&gt;&gt;&gt;&gt; On Sat, 15 Sep 2007 11:43:24 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+&gt;&gt;&gt;&lt;snip&gt;
+
+&gt;&gt;&gt;&gt; The Micro Focus page is generalized advice. Write and tell them
+&gt;&gt;&gt;&gt; generalization
+&gt;&gt;&gt;&gt; is BAD.
+&gt;&gt;&gt;&gt; They shouldn't give advice until they test on every machine.
+
+&gt;&gt;&gt;Robert,
+&gt;&gt;&gt;  You didn't originally CLAIM this(use index not subscript)  was in any Micro
+&gt;&gt;&gt;Focus documentation.  Do you now claim it is in the Micro Focus documentation
+&gt;&gt;&gt;and if so where?
+
+&gt;&gt; Micro Focus does not say indexes are faster, in the efficiency tips nor
+&gt;&gt; elsewhere. Many
+&gt;&gt; Cobol programmers still believe it, because it was true in the Old Days.
+
+&gt;&gt;&gt;(Some - but not all - of your original comments WERE about MF documentation -
+&gt;&gt;&gt;and I would certainly say that some customer who has the relevant
+&gt;&gt;&gt;documentation
+&gt;&gt;&gt;and compiler should send in a comment complaining about it.  It is worth
+&gt;&gt;&gt;noting
+&gt;&gt;&gt;that NONE of the &quot;efficiency&quot; recommendations from your original note were in
+&gt;&gt;&gt;the Net Express documentation.  It - as far as I can tell - never comments on
+&gt;&gt;&gt;this topic.)
+
+&gt;&gt; Most of the recommendations are valid, at least on most platforms. I tested
+&gt;&gt; the ones that
+&gt;&gt; didn't sound right to me.
+
+&gt;&gt;&gt;P.S. IBM has some interesting documentation for their z/OS COBOL compiler.
+&gt;&gt;&gt;For
+&gt;&gt;&gt;example,
+
+&gt;&gt;&gt; http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/igy3pg32/8...
+
+&gt;&gt;&gt;talks about some of the table reference optimizaiton that the compiler does do
+&gt;&gt;&gt;(and therefore what types of code/structures they recommend using for optimal
+&gt;&gt;&gt;performancer).
+
+&gt;&gt;&gt;     while
+
+&gt;&gt;&gt; http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/igy3pg32/8...
+
+&gt;&gt;&gt;does recommend the use of indexing over subscripts
+
+&gt;&gt;&gt;However, they also &quot;back this up&quot; with the performance statistics that support
+&gt;&gt;&gt;this, i.e.
+
+&gt;&gt;&gt;  &quot;using binary data items (COMP) to address a table is 30% slower than using
+&gt;&gt;&gt;indexes&quot;
+
+&gt;&gt; Relative speeds are changing. Subscripting was about 500% slower in the Old
+&gt;&gt; Days. I don't
+&gt;&gt; doubt it WAS 30% slower when the above was written. My point is that
+&gt;&gt; subscripts are not
+&gt;&gt; slower on modern machines.
+
+&gt;You are trying to claim that the zSeries is NOT a &quot;modern machine&quot;.
+
+&gt;Your statement,
+
+&gt;&quot;Many  Cobol programmers still believe it, because it was true in the Old Days.&quot;
+
+&gt;It is still true on the environment where the recommendation is still
+&gt;documented, i.e. IBM mainframe compilers.  (If you haven't researched it,
+&gt;although the pointed to &quot;Performance Guide&quot; is for Enterprise COBOL V3.1 and the
+&gt;compiler is now on V3.4, IBM is on record as indicating that there have been few
+&gt;&quot;performance&quot; enhancements between these releases.
+
+&gt;As you have acknowledged elsewhere, your guess is that somewhere ABOUT 70% of
+&gt;all COBOL code that is running today is on IBM mainframes (and I would guess
+&gt;that it is certainly OVER 50^) then it is true that for majority of COBOL code,
+&gt;the use of indices is to be preferred (for performance purposes) than
+&gt;subscripts.
+&gt;And of course, even your own test showed that indices are MINIMALLY faster than
+&gt;subscripts, so the real question should be WHY would you ever use subscripts
+&gt;where you could use indices?
+">
+
+Your own citation says &quot;subscripting might be easier to understand and maintain.&quot;
+</POST>
+<POST>
+<POSTER> Robert &lt;n...@e.mail&gt; </POSTER>
+<POSTDATE> 2007-09-16T22:11:00 </POSTDATE>
+On Mon, 17 Sep 2007 01:43:39 GMT, &quot;William M. Klein&quot; &lt;wmkl ... @nospam.netcom.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;An ODO is ONLY faster if the number of &quot;filled in&quot; table entries varies.
+">
+
+It usually does. It's usually loaded from a database table or file.
+
+<QUOTE PREVIOUSPOST="
+&gt; If the
+&gt;number of entries is stable AND all entries are filled in (which is the most
+&gt;common situation in the SEARCH ALL programs that I have seen).   For serial
+&gt;SEARCHes where the &quot;empty&quot; entries are at the end, I can't see how or why an ODO
+&gt;would ever be faster.
+">
+
+You seem to contradict yourself. When &quot;all entries are filled in&quot;, there are no empty
+entries at the end. The table is dimensioned with OCCURS to exactly the right size.
+
+<QUOTE PREVIOUSPOST="
+&gt;P.S.  If you search the records of this group, there ARE compilers that have
+&gt;used non-Binary searches for SEARCH ALL.  However, I do agree that no one has
+&gt;been able to point out any that are still sold/distributed that do so today.
+">
+
+There are Computer Science students who would claim that hashing is faster. They are
+simply wrong.
+</POST>
+<POST>
+<POSTER> &quot;William M. Klein&quot; &lt;wmkl...@nospam.netcom.com&gt; </POSTER>
+<POSTDATE> 2007-09-16T22:14:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Robert&quot; &lt;n ... @e.mail&gt; wrote in message
+">
+
+news:j6ore39s4saaeccj4mkfsghkb0s0blk19j@4ax.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Mon, 17 Sep 2007 01:43:39 GMT, &quot;William M. Klein&quot;
+&gt; &lt;wmkl ... @nospam.netcom.com&gt; wrote:
+
+&gt;&gt;An ODO is ONLY faster if the number of &quot;filled in&quot; table entries varies.
+
+&gt; It usually does. It's usually loaded from a database table or file.
+">
+
+Agani, your expereince is not the same as mine.  In most (certainly NOT all)
+cases, SEARCH ALL is done on tables of things like &quot;tax codes&quot; &quot;state
+abreviations&quot;, etc.  Although ti would certainly be &quot;nice&quot; if such code was
+dynamically read in, most that I have seen are &quot;hard-coded&quot; and the length of
+the table is changed when new entries are added (or entries removed).
+
+Again, commonly (not always) when a smething needs to be &quot;searched&quot; in a file, a
+keyed (VSAM on IBM mainframes) are used and access is &quot;direct&quot; via the &quot;searched
+upon&quot; information.
+
+--
+Bill Klein
+wmklein &lt;at&gt; ix.netcom.com
+</POST>
+<POST>
+<POSTER> Robert &lt;n...@e.mail&gt; </POSTER>
+<POSTDATE> 2007-09-16T22:21:00 </POSTDATE>
+On Mon, 17 Sep 2007 13:52:58 +1200, &quot;Pete Dashwood&quot; &lt;dashw ... @removethis.enternet.co.nz&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&quot;Robert&quot; &lt;n ... @e.mail&gt; wrote in message
+&gt; news:hvrqe394mgcejqa6bgfvu4ge141tmqtima@4ax.com ...
+&gt;&gt; On Mon, 17 Sep 2007 01:17:37 +1200, &quot;Pete Dashwood&quot;
+&gt;&gt; &lt;dashw ... @removethis.enternet.co.nz&gt;
+&gt;&gt; wrote:
+
+&gt;&gt;&gt;(BTW, the reason I use indexes is not for any of the reasons you
+&gt;&gt;&gt;described;
+&gt;&gt;&gt;I simply like INDEXED BY and SEARCH. Having gone to the trouble of
+&gt;&gt;&gt;defining
+&gt;&gt;&gt;an index for a table it seems impolite to then use a subscript... :-))
+&gt;&gt;&gt;Couldn't care less whether they're faster or slower; on modern hardware it
+&gt;&gt;&gt;makes very little difference, and even if it did, I'd still do it. Because
+&gt;&gt;&gt;I
+&gt;&gt;&gt;can.:-))
+
+&gt;&gt; I hope you use ODO on 'high speed' SEARCHes. If not, they're taking twice
+&gt;&gt; as long as they
+&gt;&gt; should for serial, 10% longer for binary.
+
+&gt;I NEVER use ODO for ANYTHING.
+
+&gt;The only time I would code ODO is when I am accessing something that
+&gt;requires it.
+">
+
+The only good ODO is a dead ODO.
+
+<QUOTE PREVIOUSPOST="
+&gt;I've seen the arguments for ODO on searches.
+
+&gt;As the tables I search are rarely more than 1K in size (I think the largest
+&gt;I can remember doing in COBOL recent was 8K),and I do use SEARCH ALL on
+&gt;non-volatile data,  I really don't care if it takes a few microseconds (or
+&gt;even milliseconds) longer. The table is in memory.
+">
+
+If it's in MEMORY, speed doesn't matter. I thought you were SEARCHing tables on disk.
+
+(How do you do that in Cobol?)
+
+<QUOTE PREVIOUSPOST="
+&gt;To me ODO is just ugly pointless code that buys you nothing in terms of
+&gt;saved space, so it doesn't deliver what it promises.
+
+&gt;The last time I used COBOL for an application that was time critical where a
+&gt;few Milliseconds MIGHT matter (it was a process control app), was nearly 30
+&gt;years ago and GO TO was employed to get out of routines fast. I wouldn't
+&gt;code normal COBOL apps like that and I don't use ODO in them either.
+">
+
+It is little known that ODO was invented in Russia. It's a Communist conspiracy to screw
+up Western software.
+</POST>
+<POST>
+<POSTER> Robert &lt;n...@e.mail&gt; </POSTER>
+<POSTDATE> 2007-09-16T23:12:00 </POSTDATE>
+On Mon, 17 Sep 2007 02:14:38 GMT, &quot;William M. Klein&quot; &lt;wmkl ... @nospam.netcom.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&quot;Robert&quot; &lt;n ... @e.mail&gt; wrote in message
+&gt; news:j6ore39s4saaeccj4mkfsghkb0s0blk19j@4ax.com ...
+&gt;&gt; On Mon, 17 Sep 2007 01:43:39 GMT, &quot;William M. Klein&quot;
+&gt;&gt; &lt;wmkl ... @nospam.netcom.com&gt; wrote:
+
+&gt;&gt;&gt;An ODO is ONLY faster if the number of &quot;filled in&quot; table entries varies.
+
+&gt;&gt; It usually does. It's usually loaded from a database table or file.
+
+&gt;Agan, your expereince is not the same as mine.  In most (certainly NOT all)
+&gt;cases, SEARCH ALL is done on tables of things like &quot;tax codes&quot; &quot;state
+&gt;abreviations&quot;, etc.  Although it would certainly be &quot;nice&quot; if such code was
+&gt;dynamically read in, most that I have seen are &quot;hard-coded&quot; and the length of
+&gt;the table is changed when new entries are added (or entries removed).
+">
+
+That's how we did it in the Old Days. Today, a program change, no matter how trivil, takes
+six months of approvals and testing. Hard coded tables, which were once cheap, have become
+very expensive. It's easier to change a Reference Table in the database.
+
+<QUOTE PREVIOUSPOST="
+&gt;Again, commonly (not always) when a smething needs to be &quot;searched&quot; in a file, a
+&gt;keyed (VSAM on IBM mainframes) are used and access is &quot;direct&quot; via the &quot;searched
+&gt;upon&quot; information.
+">
+
+Today, that's a index on a database table.
+
+A smart program might cache the results of the last hundred lookups in a Cobol table. It
+would look there first. The table shoudl be described with ODO so the search doesn't waste
+time looking at filler entries.
+</POST>
+<POST>
+<POSTER> &quot;Pete Dashwood&quot; &lt;dashw...@removethis.enternet.co.nz&gt; </POSTER>
+<POSTDATE> 2007-09-16T23:38:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Robert&quot; &lt;n ... @e.mail&gt; wrote in message
+">
+
+news:snore3pl4g4jglkiu4hmqn48967jiberjk@4ax.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Mon, 17 Sep 2007 13:52:58 +1200, &quot;Pete Dashwood&quot;
+&gt; &lt;dashw ... @removethis.enternet.co.nz&gt;
+&gt; wrote:
+
+&gt;&gt;&quot;Robert&quot; &lt;n ... @e.mail&gt; wrote in message
+&gt;&gt; news:hvrqe394mgcejqa6bgfvu4ge141tmqtima@4ax.com ...
+&gt;&gt;&gt; On Mon, 17 Sep 2007 01:17:37 +1200, &quot;Pete Dashwood&quot;
+&gt;&gt;&gt; &lt;dashw ... @removethis.enternet.co.nz&gt;
+&gt;&gt;&gt; wrote:
+
+&gt;&gt;&gt;&gt;(BTW, the reason I use indexes is not for any of the reasons you
+&gt;&gt;&gt;&gt;described;
+&gt;&gt;&gt;&gt;I simply like INDEXED BY and SEARCH. Having gone to the trouble of
+&gt;&gt;&gt;&gt;defining
+&gt;&gt;&gt;&gt;an index for a table it seems impolite to then use a subscript... :-))
+&gt;&gt;&gt;&gt;Couldn't care less whether they're faster or slower; on modern hardware
+&gt;&gt;&gt;&gt;it
+&gt;&gt;&gt;&gt;makes very little difference, and even if it did, I'd still do it.
+&gt;&gt;&gt;&gt;Because
+&gt;&gt;&gt;&gt;I
+&gt;&gt;&gt;&gt;can.:-))
+
+&gt;&gt;&gt; I hope you use ODO on 'high speed' SEARCHes. If not, they're taking
+&gt;&gt;&gt; twice
+&gt;&gt;&gt; as long as they
+&gt;&gt;&gt; should for serial, 10% longer for binary.
+
+&gt;&gt;I NEVER use ODO for ANYTHING.
+
+&gt;&gt;The only time I would code ODO is when I am accessing something that
+&gt;&gt;requires it.
+
+&gt; The only good ODO is a dead ODO.
+
+&gt;&gt;I've seen the arguments for ODO on searches.
+
+&gt;&gt;As the tables I search are rarely more than 1K in size (I think the
+&gt;&gt;largest
+&gt;&gt;I can remember doing in COBOL recent was 8K),and I do use SEARCH ALL on
+&gt;&gt;non-volatile data,  I really don't care if it takes a few microseconds (or
+&gt;&gt;even milliseconds) longer. The table is in memory.
+
+&gt; If it's in MEMORY, speed doesn't matter. I thought you were SEARCHing
+&gt; tables on disk.
+
+&gt; (How do you do that in Cobol?)
+
+&gt;&gt;To me ODO is just ugly pointless code that buys you nothing in terms of
+&gt;&gt;saved space, so it doesn't deliver what it promises.
+
+&gt;&gt;The last time I used COBOL for an application that was time critical where
+&gt;&gt;a
+&gt;&gt;few Milliseconds MIGHT matter (it was a process control app), was nearly
+&gt;&gt;30
+&gt;&gt;years ago and GO TO was employed to get out of routines fast. I wouldn't
+&gt;&gt;code normal COBOL apps like that and I don't use ODO in them either.
+
+&gt; It is little known that ODO was invented in Russia. It's a Communist
+&gt; conspiracy to screw
+&gt; up Western software.
+">
+
+Yeah, them Commies is sly....
+
+Just as well I never fell for it.
+
+Pete.
+--
+&quot;I used to write COBOL...now I can do anything.&quot;
+</POST>
+<POST>
+<POSTER> Richard &lt;rip...@Azonic.co.nz&gt; </POSTER>
+<POSTDATE> 2007-09-17T00:21:00 </POSTDATE>
+On Sep 17, 1:39 pm, Robert &lt;n ... @e.mail&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Mon, 17 Sep 2007 01:15:35 GMT, &quot;William M. Klein&quot; &lt;wmkl ... @nospam.netcom.com&gt; wrote:
+
+&gt; &gt;Robert,
+&gt; &gt;  For what compiler? What operating systems? And your evidence is ...?
+
+&gt; It's true for every compiler and operating system. Telling Cobol to search 1,000 rows when
+&gt; half of them are filled with high values will take log2 1,000 / log2 500 times as long.
+&gt; Roughly 10% longer.
+
+&gt; No timing test is necessary, although I'm tempted to write one just for fun. Deductive
+&gt; logic OR common sense should tell you that.
+
+&gt; &gt;Of course, we all KNOW that there is no such thing as a &quot;guaranteed&quot; BINARY
+&gt; &gt;search.  (SEARCH ALL is not guaranteed to be &quot;binary&quot;).
+
+&gt; That's true in Standard-land. In Reality-land, every compiler does a binary search.
+&gt; I spent years trying to prove that 2 is not the optimal division factor. Based on
+&gt; calculus, I really believed it was e - 1, which is approximately 1.7. I almost 'proved'
+&gt; it with tests. Years later I saw that 2 really IS the optimal division factor. On well, I
+&gt; tried.
+">
+
+And you spent countless messages trying to 'prove' that Microfocus
+advice is &quot;bad&quot;.
+
+At least you admit to that credibility gap, how many people did you
+insult in those years because they didn't agree with you ?  How many
+simply stopped replying so you thought you 'won' ?
+</POST>
+<POST>
+<POSTER> Richard &lt;rip...@Azonic.co.nz&gt; </POSTER>
+<POSTDATE> 2007-09-17T00:53:00 </POSTDATE>
+On Sep 17, 2:11 pm, Robert &lt;n ... @e.mail&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Mon, 17 Sep 2007 01:43:39 GMT, &quot;William M. Klein&quot; &lt;wmkl ... @nospam.netcom.com&gt; wrote:
+
+&gt; &gt;An ODO is ONLY faster if the number of &quot;filled in&quot; table entries varies.
+
+&gt; It usually does. It's usually loaded from a database table or file.
+
+&gt; &gt; If the
+&gt; &gt;number of entries is stable AND all entries are filled in (which is the most
+&gt; &gt;common situation in the SEARCH ALL programs that I have seen).   For serial
+&gt; &gt;SEARCHes where the &quot;empty&quot; entries are at the end, I can't see how or why an ODO
+&gt; &gt;would ever be faster.
+
+&gt; You seem to contradict yourself. When &quot;all entries are filled in&quot;, there are no empty
+&gt; entries at the end. The table is dimensioned with OCCURS to exactly the right size.
+">
+
+Not to those with a sufficiently high reading comprehension level.
+Peter talks about two distinct situations: a SEARCH ALL where the
+table is filled, and, in a different program, a serial SEARCH with
+blank entries at the end.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;P.S.  If you search the records of this group, there ARE compilers that have
+&gt; &gt;used non-Binary searches for SEARCH ALL.  However, I do agree that no one has
+&gt; &gt;been able to point out any that are still sold/distributed that do so today.
+
+&gt; There are Computer Science students who would claim that hashing is faster. They are
+&gt; simply wrong.
+">
+
+Hashing _IS_ faster when the table is a hash-table.
+
+This seems to be another of your 'I believes'.
+</POST>
+<POST>
+<POSTER> Richard &lt;rip...@Azonic.co.nz&gt; </POSTER>
+<POSTDATE> 2007-09-17T01:16:00 </POSTDATE>
+On Sep 17, 10:33 am, Robert &lt;n ... @e.mail&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sun, 16 Sep 2007 00:26:57 +0000 (UTC), docdw ... @panix.com () wrote:
+&gt; &gt;In article &lt;rqnoe3hgjei5ir0b6ht4kefrmli2mr2 ... @4ax.com&gt;,
+&gt; &gt;Robert  &lt;n ... @e.mail&gt; wrote:
+&gt; &gt;&gt;On Sat, 15 Sep 2007 11:43:24 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+
+&gt; &gt;&gt;&gt;On Sep 15, 6:50 pm, Robert &lt;n ... @e.mail&gt; wrote:
+&gt; &gt;&gt;&gt;&gt; On Fri, 14 Sep 2007 22:51:45 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+
+&gt; &gt;[snip]
+
+&gt; &gt;&gt;&gt;&gt; &gt;Just why is 'index is faster than subscript' a myth, again ?
+
+&gt; &gt;&gt;&gt;&gt; 1. Because a timing test showed indexes are slower.
+
+&gt; &gt;&gt;&gt;And you have done a timing test on every machine in the universe.
+
+&gt; &gt;&gt;If humans were unable to generalize, there wouldn't be any machines.
+&gt; &gt;&gt;We'd be living in
+&gt; &gt;&gt;shacks and tents.
+
+&gt; &gt;What Mr Plinston puts forward, Mr Wagner, may demonstrate why there is a
+&gt; &gt;season to things and a time to every purpose.  The above might be phrased
+&gt; &gt;otherwise and yet still retain some original flavor, eg:
+
+&gt; &gt;A: Just why is 'index is faster than subscript' a myth, again ?
+
+&gt; &gt;B: Because a timing test showed indexes are slower.
+
+&gt; &gt;A: '*A* timing test' (emphasis added) shows that under *a* set of
+&gt; &gt;conditions one might not be better than the other; it is possible that
+&gt; &gt;under other sets of conditions the other might be better than the one.
+
+&gt; I tried to make the tests represent typical usage AND I posted source code. If you think
+&gt; the test is unfair, say so or write your own test. Thanks to Richard's complaints, I saw
+&gt; the subscript test did NOT represent typical usage, so I'll fix it and rerun.
+">
+
+It is not just that the tests were incompetent (as in they didn't do
+anything), you conclusions were generally invalid. For example you
+counted advice as 'busted' when it was, in fact, faster.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;&gt;The Micro Focus page is generalized advice. Write and tell them
+&gt; &gt;&gt;generalization is BAD.
+
+&gt; &gt;Leaving aside the Brooklyn Bridge nature of this argument - 'Micro Focus
+&gt; &gt;jumps off the Brooklyn Bridge, you will, too?' - one might believe that
+&gt; &gt;when Micro Focus (or an appropriate representative thereof) comes
+&gt; &gt;a-posting here the responses might be the same.
+
+&gt; I have no problem with generalizations, nor do I fault Micro Focus for making them. I
+&gt; think a few of the SPECIFIC points are erroneous, because they're based on commonly held
+&gt; belief (myth).
+">
+
+You seem to forget that in your initial message there were two
+distinct groups: the MF advice and the 'legacy beliefs' with which you
+failed to show that _anyone_ falsely believes.
+
+In the above you completely mix these up in claiming that MF 'points'
+are erroneous because they are 'based on myth'.
+
+The index vs subscript is _NOT_ in the MF advice.
+
+The index vs subscript is _NOT_ a myth.
+
+The MF advice is likely to be based on the internal workings of the
+compilers and run-times, and is nothing to do with what people
+'believe'.
+
+Foe legacy coders it is likely that indexes _are_ faster than
+subscripts. It is not a myth.
+
+In fact my own tests with reasonably modern hardware and a current
+compiler shows indexes to be consistently the fastest with subscripts
+being marginally slower to much slower depending on their USAGE. ie
+COMP-5 vs COMP.
+
+<QUOTE PREVIOUSPOST="
+&gt; If Itanium is unsuccessful, CPUs are close to hitting the wall in terms of speed. We can't
+&gt; make them much more complex (required to avoid instruction collisions) because we can't
+&gt; make traces much smaller. We're approaching the size of atoms.
+">
+
+No, wrong. Itanium is 180nanom to 90nanom. Current stuff is down to
+40nanom.
+</POST>
+<POST>
+<POSTER> docdw...@panix.com () </POSTER>
+<POSTDATE> 2007-09-17T05:40:00 </POSTDATE>
+In article &lt;189re35chs8bfaq2riqhm1n0dod28c3 ... @4ax.com&gt;,
+
+<QUOTE PREVIOUSPOST="
+Robert  &lt;n ... @e.mail&gt; wrote:
+&gt;On Sun, 16 Sep 2007 00:26:57 +0000 (UTC), docdw ... @panix.com () wrote:
+
+&gt;&gt;In article &lt;rqnoe3hgjei5ir0b6ht4kefrmli2mr2 ... @4ax.com&gt;,
+&gt;&gt;Robert  &lt;n ... @e.mail&gt; wrote:
+&gt;&gt;&gt;On Sat, 15 Sep 2007 11:43:24 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+
+&gt;&gt;&gt;&gt;On Sep 15, 6:50 pm, Robert &lt;n ... @e.mail&gt; wrote:
+&gt;&gt;&gt;&gt;&gt; On Fri, 14 Sep 2007 22:51:45 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+
+&gt;&gt;[snip]
+
+&gt;&gt;&gt;&gt;&gt; &gt;Just why is 'index is faster than subscript' a myth, again ?
+
+&gt;&gt;&gt;&gt;&gt; 1. Because a timing test showed indexes are slower.
+
+&gt;&gt;&gt;&gt;And you have done a timing test on every machine in the universe.
+
+&gt;&gt;&gt;If humans were unable to generalize, there wouldn't be any machines.
+&gt;&gt;&gt;We'd be living in
+&gt;&gt;&gt;shacks and tents.
+
+&gt;&gt;What Mr Plinston puts forward, Mr Wagner, may demonstrate why there is a
+&gt;&gt;season to things and a time to every purpose.  The above might be phrased
+&gt;&gt;otherwise and yet still retain some original flavor, eg:
+
+&gt;&gt;A: Just why is 'index is faster than subscript' a myth, again ?
+
+&gt;&gt;B: Because a timing test showed indexes are slower.
+
+&gt;&gt;A: '*A* timing test' (emphasis added) shows that under *a* set of
+&gt;&gt;conditions one might not be better than the other; it is possible that
+&gt;&gt;under other sets of conditions the other might be better than the one.
+
+&gt;I tried to make the tests represent typical usage AND I posted source
+&gt;code. If you think
+&gt;the test is unfair, say so or write your own test.
+">
+
+Were I to think such, Mr Wagner, I might consider doing such.  Until I
+state that I think such there's little reason to assume that I do.
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt;They shouldn't give advice until they test on every machine.
+
+&gt;&gt;It has been advised that one should tend to their own garden first, Mr
+&gt;&gt;Wagner, before one tends to Micro Focus'... or something like that.
+
+&gt;We all plant our crops in the soil plowed by Micro Focus .. or something
+&gt;like that.
+">
+
+Or... nothing like that.  Plural majestatus est... or something like that.
+
+DD
+</POST>
+<POST>
+<POSTER> docdw...@panix.com () </POSTER>
+<POSTDATE> 2007-09-17T05:46:00 </POSTDATE>
+In article &lt;7jlre31oq6blvdmk49jl2974tctunhk ... @4ax.com&gt;,
+
+<QUOTE PREVIOUSPOST="
+Robert  &lt;n ... @e.mail&gt; wrote:
+">
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt;I spent years trying to prove that 2 is not the optimal division factor.
+&gt;Based on
+&gt;calculus, I really believed it was e - 1, which is approximately 1.7. I
+&gt;almost 'proved'
+&gt;it with tests. Years later I saw that 2 really IS the optimal division
+&gt;factor. On well, I
+&gt;tried.
+">
+
+'I try to make my words good 'n tender 'cause I might have to eat them
+tomorrow' might be seen as a variation of 'Looking back and saying 'Oh,
+that was but the folly of a decade past' might cause one to recall that
+what one does, now, may be looked at, at some point... as the folly of a
+decade past'.
+
+(the second one is a memory-mangling of Nietzsche, I cannot recall the
+original nor the source)
+
+DD
+</POST>
+<POST>
+<POSTER> &quot;Pete Dashwood&quot; &lt;dashw...@removethis.enternet.co.nz&gt; </POSTER>
+<POSTDATE> 2007-09-17T06:38:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&lt;docdw ... @panix.com&gt; wrote in message news:fcliei$57t$1@reader1.panix.com ...
+&gt; In article &lt;7jlre31oq6blvdmk49jl2974tctunhk ... @4ax.com&gt;,
+&gt; Robert  &lt;n ... @e.mail&gt; wrote:
+
+&gt; [snip]
+
+&gt;&gt;I spent years trying to prove that 2 is not the optimal division factor.
+&gt;&gt;Based on
+&gt;&gt;calculus, I really believed it was e - 1, which is approximately 1.7. I
+&gt;&gt;almost 'proved'
+&gt;&gt;it with tests. Years later I saw that 2 really IS the optimal division
+&gt;&gt;factor. On well, I
+&gt;&gt;tried.
+
+&gt; 'I try to make my words good 'n tender 'cause I might have to eat them
+&gt; tomorrow' might be seen as a variation of 'Looking back and saying 'Oh,
+&gt; that was but the folly of a decade past' might cause one to recall that
+&gt; what one does, now, may be looked at, at some point... as the folly of a
+&gt; decade past'.
+
+&gt; (the second one is a memory-mangling of Nietzsche, I cannot recall the
+&gt; original nor the source)
+">
+
+I've always thought that &quot;Keep your words soft and sweet, for you may have
+to eat them&quot; was a Chinese proverb. But I can't cite and I haven't GOOGLEd,
+so I could be wrong.
+
+Pete.
+--
+&quot;I used to write COBOL...now I can do anything.&quot;
+</POST>
+<POST>
+<POSTER> Robert &lt;n...@e.mail&gt; </POSTER>
+<POSTDATE> 2007-09-17T08:02:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sun, 16 Sep 2007 22:16:01 -0700, Richard &lt;rip ... @Azonic.co.nz&gt; wrote:
+&gt;On Sep 17, 10:33 am, Robert &lt;n ... @e.mail&gt; wrote:
+&gt;&gt; If Itanium is unsuccessful, CPUs are close to hitting the wall in terms of speed. We can't
+&gt;&gt; make them much more complex (required to avoid instruction collisions) because we can't
+&gt;&gt; make traces much smaller. We're approaching the size of atoms.
+
+&gt;No, wrong. Itanium is 180nanom to 90nanom. Current stuff is down to
+&gt;40nanom.
+">
+
+Isn't the limit about 20 nanom? I may have been thinking 20 angstroms, which is 2.0 nm.
+</POST>
+<POST>
+<POSTER> docdw...@panix.com () </POSTER>
+<POSTDATE> 2007-09-17T08:09:00 </POSTDATE>
+In article &lt;ogrre3p3d1ps6i0kipohsgjpuog6chj ... @4ax.com&gt;,
+
+<QUOTE PREVIOUSPOST="
+Robert  &lt;n ... @e.mail&gt; wrote:
+&gt;On Mon, 17 Sep 2007 02:14:38 GMT, &quot;William M. Klein&quot;
+&gt;&lt;wmkl ... @nospam.netcom.com&gt; wrote:
+
+&gt;&gt;&quot;Robert&quot; &lt;n ... @e.mail&gt; wrote in message
+&gt;&gt; news:j6ore39s4saaeccj4mkfsghkb0s0blk19j@4ax.com ...
+&gt;&gt;&gt; On Mon, 17 Sep 2007 01:43:39 GMT, &quot;William M. Klein&quot;
+&gt;&gt;&gt; &lt;wmkl ... @nospam.netcom.com&gt; wrote:
+
+&gt;&gt;&gt;&gt;An ODO is ONLY faster if the number of &quot;filled in&quot; table entries varies.
+
+&gt;&gt;&gt; It usually does. It's usually loaded from a database table or file.
+
+&gt;&gt;Agan, your expereince is not the same as mine.  In most (certainly NOT all)
+&gt;&gt;cases, SEARCH ALL is done on tables of things like &quot;tax codes&quot; &quot;state
+&gt;&gt;abreviations&quot;, etc.  Although it would certainly be &quot;nice&quot; if such code was
+&gt;&gt;dynamically read in, most that I have seen are &quot;hard-coded&quot; and the length of
+&gt;&gt;the table is changed when new entries are added (or entries removed).
+
+&gt;That's how we did it in the Old Days. Today, a program change, no matter
+&gt;how trivil, takes
+&gt;six months of approvals and testing.
+">
+
+That might be, Mr Wagner, because in the Oldene Dayse the *real* work was
+still being done by eyeshade-wearing, arm-gartered, quill-wielding
+accountants in ledgers.  Now that more data are being kept on a computer
+it is necessary to make sure that changes introduced don't cause errors
+when quarterly and annual processing are done.
+
+(some people like seeing changes *banged* into Prod at a moment's
+notice... and some people believe in 'job security via idiosyncratic
+knowledge', as well)
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt;A smart program might cache the results of the last hundred lookups in a
+&gt;Cobol table.
+">
+
+What an innovative thought... it is absoultely *nothing* like
+
+IF INFILE-CURRENT-CLIENT NOT = WS-PREVIOUS-CLIENT
+PERFORM A615872-GET-CLIENT-DATA  THRU  A615872-GCD-EX.
+
+... as used to be done in the Oldene Dayse.
+
+DD
+</POST>
+</TEXT>
+</BODY>
+</DOC>

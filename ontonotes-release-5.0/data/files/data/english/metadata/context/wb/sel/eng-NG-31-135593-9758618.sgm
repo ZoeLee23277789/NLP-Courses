@@ -1,0 +1,438 @@
+<DOC>
+<DOCID> eng-NG-31-135593-9758618 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2008-01-10T10:08:00 </DATETIME>
+<BODY>
+<HEADLINE>
+std::deque typically faster then std::list for push_back(), front(), pop_front()?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Victor V. Terber&quot; &lt;VTer...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-10T10:08:00 </POSTDATE>
+In existing sources I found a std::list using only methods
+push_back(), front() and pop_front(). I'm considering to replace the
+list by std::deque.
+
+The usual rule of thumb to use the simplest container that does the
+job seems to apply here. I'm aware that the standard doesn't say much
+about performance behavior, but due to various restrictions (client's
+site, varying compilers, STLs, OS) actual measuring is very hard in
+this case.
+
+Does such a replacement of list by deque seem reasonable? Would you
+typically expect real-world performance changes?
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Alberto Ganesh Barbati &lt;AlbertoBarb...@libero.it&gt; </POSTER>
+<POSTDATE> 2008-01-10T17:07:00 </POSTDATE>
+Victor V. Terber ha scritto:
+
+<QUOTE PREVIOUSPOST="
+&gt; In existing sources I found a std::list using only methods
+&gt; push_back(), front() and pop_front(). I'm considering to replace the
+&gt; list by std::deque.
+
+&gt; The usual rule of thumb to use the simplest container that does the
+&gt; job seems to apply here. I'm aware that the standard doesn't say much
+&gt; about performance behavior, but due to various restrictions (client's
+&gt; site, varying compilers, STLs, OS) actual measuring is very hard in
+&gt; this case.
+
+&gt; Does such a replacement of list by deque seem reasonable? Would you
+&gt; typically expect real-world performance changes?
+">
+
+Of course, the only definitive answer comes from actual profiling, but
+if all modifying operation you need are push_back() and pop_front() I
+would expect deque to be more performant. Typically, the most expensive
+operation in containers is the dynamic allocation/deallocation of memory
+from the heap, while other book-keeping overhead can be almost
+negligible. A list requires a dynamic allocation/deallocation for each
+item inserted/extracted, while deque allocates memory in chunks suitable
+to accommodate several objects. The chunk size is usually small enough
+so that allocating a chunk nearly takes the same time as allocating a
+single item, therefore having a smaller number of heap operations to
+perform is definitely a plus.
+
+HTH,
+
+Ganesh
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Matthias Buelow &lt;m...@incubus.de&gt; </POSTER>
+<POSTDATE> 2008-01-10T17:03:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Victor V. Terber wrote:
+&gt; Does such a replacement of list by deque seem reasonable? Would you
+&gt; typically expect real-world performance changes?
+">
+
+If properly implemented, ordinary lists and doubly-linked lists have the
+same performance characteristics for common operations. The only
+advantage of a doubly-linked list is that you can traverse it backwards.
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Ulrich Eckhardt &lt;dooms...@knuut.de&gt; </POSTER>
+<POSTDATE> 2008-01-10T17:05:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Victor V. Terber wrote:
+&gt; In existing sources I found a std::list using only methods
+&gt; push_back(), front() and pop_front(). I'm considering to replace the
+&gt; list by std::deque.
+">
+
+It seems to be used as a FIFO. For that, there is std::queue&lt;&gt;, which is
+itself a wrapper around a container. This doesn't change the code per se
+(except that you write push() and pop() instead of push_back() and
+pop_front()) but it documents the intention.
+
+<QUOTE PREVIOUSPOST="
+&gt; The usual rule of thumb to use the simplest container that does the
+&gt; job seems to apply here. I'm aware that the standard doesn't say much
+&gt; about performance behavior, but due to various restrictions (client's
+&gt; site, varying compilers, STLs, OS) actual measuring is very hard in
+&gt; this case.
+">
+
+With std::list&lt;&gt;, you typically have a doubly-linked list. With
+std::deque&lt;&gt;, you typically have a vector of pointers to chunks of N
+elements. So, when inserting a single element, you need to allocate a
+single node for the list while chances are good (1-1/N) that the actual
+chunk of the deque still has one element free.
+
+Now, in both cases you have two costs: A for the allocation and C for
+copying the element to the new location. Assuming the time it takes to
+allocate memory doesn't depend on the size, the cost for adding an element
+to a list is A+C while the average cost of adding it to a deque is A/N+C,
+because you only need to allocate every N times.
+
+<QUOTE PREVIOUSPOST="
+&gt; Does such a replacement of list by deque seem reasonable? Would you
+&gt; typically expect real-world performance changes?
+">
+
+Yes. Whether you can measure those changes is another question though. If
+the elements that are stored themselves require dynamic allocation (e.g.
+non-refcounted std::string) this will soon dwarf the overhead of the
+container's allocation.
+
+Uli
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Maciej Sobczak &lt;see.my.homep...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-10T17:09:00 </POSTDATE>
+On 10 Sty, 16:08, &quot;Victor V. Terber&quot; &lt;VTer ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Does such a replacement of list by deque seem reasonable? Would you
+&gt; typically expect real-world performance changes?
+">
+
+I wouldn't be surprised [*] to see a performance improvement in this
+case. One of the most expensive operations is a memory allocation from
+generic (default) allocator. Very likely std::list does this more
+often than deque for the same number of pushed elements. There is also
+a memory access pattern that is better (more cache-friendly) in the
+case of deque.
+
+[*] No strict statements are possible at this level, these are only
+common-sense meditations. Check your implementations for final
+answers.
+
+--
+Maciej Sobczak * www.msobczak.com * www.inspirel.com
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;Daniel T.&quot; &lt;danie...@earthlink.net&gt; </POSTER>
+<POSTDATE> 2008-01-10T17:14:00 </POSTDATE>
+&quot;Victor V. Terber&quot; &lt;VTer ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In existing sources I found a std::list using only methods
+&gt; push_back(), front() and pop_front(). I'm considering to replace the
+&gt; list by std::deque.
+">
+
+Those are the only methods used? Is the data never read out of the list?
+The external difference between deque and list are the methods used to
+retrieve the data. Does the system need random access to the elements?
+
+<QUOTE PREVIOUSPOST="
+&gt; The usual rule of thumb to use the simplest container that does the
+&gt; job seems to apply here.
+">
+
+I think a std::list is a &quot;simpler&quot; container than a std::deque. College
+students learn how to implement a list long before they learn how to
+implement a deque.
+
+<QUOTE PREVIOUSPOST="
+&gt; Does such a replacement of list by deque seem reasonable?
+">
+
+Only if random access to the elements is necessary, or if the elements
+are very small. As I understand it, deque has less overhead than list,
+but if the things being stored are big, that doesn't matter as much.
+
+<QUOTE PREVIOUSPOST="
+&gt; Would you typically expect real-world performance changes?
+">
+
+No.
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Lance Diduck &lt;lancedid...@nyc.rr.com&gt; </POSTER>
+<POSTDATE> 2008-01-10T17:12:00 </POSTDATE>
+On Jan 10, 10:08 am, &quot;Victor V. Terber&quot; &lt;VTer ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In existing sources I found a std::list using only methods
+&gt; push_back(), front() and pop_front(). I'm considering to replace the
+&gt; list by std::deque.
+
+&gt; The usual rule of thumb to use the simplest container that does the
+&gt; job seems to apply here. I'm aware that the standard doesn't say much
+&gt; about performance behavior, but due to various restrictions (client's
+&gt; site, varying compilers, STLs, OS) actual measuring is very hard in
+&gt; this case.
+
+&gt; Does such a replacement of list by deque seem reasonable? Would you
+&gt; typically expect real-world performance changes?
+">
+
+In this case it seems like the &quot;simplest&quot; container would be a
+std::queue.
+
+To answer your question more directly, it has a lot to do with just
+how big the &quot;T&quot; is that you are storing. Over a certain size T,
+std::deque typically morphs (internally) into a std::list +
+std::vector combination (the vector is so that std::deque can support
+random access iterators.)
+For small T, std::deque more of less &quot;pages&quot; the allocations, packing
+several T on the same page. At least for Dinkum (on Microsoft) the
+size of T has to be fairly small -- above 16 or so it does not pack at
+all.
+If you want performance (and dont care about the random access
+iterators) then combining a std::list with a pool allocator that
+allocates large pages that store mutliple T's is your best bet, no
+matter the vendor. This combination will almost always blow away
+std::deque. A few vendors already sneak in a pool allocator for this
+use. A std::list always ask for the same size blocks, making
+allocators easy to write. It is easy to get 10x-20x perforamnce
+increases, esp for small T.
+Lance
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Anand Hariharan &lt;mailto.anand.hariha...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-11T02:04:00 </POSTDATE>
+On Jan 10, 4:03 pm, Matthias Buelow &lt;m ... @incubus.de&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Victor V. Terber wrote:
+&gt; &gt; Does such a replacement of list by deque seem reasonable? Would you
+&gt; &gt; typically expect real-world performance changes?
+
+&gt; If properly implemented, ordinary lists and doubly-linked lists have the
+&gt; same performance characteristics for common operations. The only
+&gt; advantage of a doubly-linked list is that you can traverse it backwards.
+">
+
+While what you say is correct, I don't understand how or why the OP's
+question that you have quoted, elicits that statement from you.  Are
+you suggesting that std::list is an &quot;ordinary list&quot; and std::deque is
+a &quot;doubly-linked list&quot;?  If so, that is incorrect.  'deque' is C++'s /
+D/ouble /E/nded /QUE/ue.
+
+- Anand
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> James Dennett &lt;jdenn...@acm.org&gt; </POSTER>
+<POSTDATE> 2008-01-11T14:56:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Matthias Buelow wrote:
+&gt; Victor V. Terber wrote:
+
+&gt;&gt; Does such a replacement of list by deque seem reasonable? Would you
+&gt;&gt; typically expect real-world performance changes?
+
+&gt; If properly implemented, ordinary lists and doubly-linked lists have the
+&gt; same performance characteristics for common operations. The only
+&gt; advantage of a doubly-linked list is that you can traverse it backwards.
+">
+
+But that's not the question here, as std::deque is *not* a linked list,
+but rather a container supporting random access iterators.  As others
+have noted, performance is likely to be better in the user's application
+because of the reduced use of dynamic memory allocation, *but* if the
+memory allocator is good or if elements are rarely added compared to
+how often they are read then the additional complexity of std::deque
+might overwhelm the memory allocation costs.
+
+-- James
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Francis Glassborow &lt;francis.glassbo...@btinternet.com&gt; </POSTER>
+<POSTDATE> 2008-01-11T23:04:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Lance Diduck wrote:
+&gt; On Jan 10, 10:08 am, &quot;Victor V. Terber&quot; &lt;VTer ... @gmail.com&gt; wrote:
+&gt;&gt; In existing sources I found a std::list using only methods
+&gt;&gt; push_back(), front() and pop_front(). I'm considering to replace the
+&gt;&gt; list by std::deque.
+
+&gt;&gt; The usual rule of thumb to use the simplest container that does the
+&gt;&gt; job seems to apply here. I'm aware that the standard doesn't say much
+&gt;&gt; about performance behavior, but due to various restrictions (client's
+&gt;&gt; site, varying compilers, STLs, OS) actual measuring is very hard in
+&gt;&gt; this case.
+
+&gt;&gt; Does such a replacement of list by deque seem reasonable? Would you
+&gt;&gt; typically expect real-world performance changes?
+&gt; In this case it seems like the &quot;simplest&quot; container would be a
+&gt; std::queue.
+
+&gt; To answer your question more directly, it has a lot to do with just
+&gt; how big the &quot;T&quot; is that you are storing. Over a certain size T,
+&gt; std::deque typically morphs (internally) into a std::list +
+&gt; std::vector combination (the vector is so that std::deque can support
+&gt; random access iterators.)
+">
+
+I do not see how it could possibly do that because of the requirement
+for fixed location for objects in a deque whilst vector has relocation
+semantics. I am not a library expert but I believe that deques are
+implemented via an extra layer of indirection and that the blocks
+actually used for the base memory of elements is more akin to an array
+(i.e. a fixed size and a fixed location)
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> &quot;Daniel T.&quot; &lt;danie...@earthlink.net&gt; </POSTER>
+<POSTDATE> 2008-01-12T18:28:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Francis Glassborow &lt;francis.glassbo ... @btinternet.com&gt; wrote:
+&gt; Lance Diduck wrote:
+&gt; &gt; On Jan 10, 10:08 am, &quot;Victor V. Terber&quot; &lt;VTer ... @gmail.com&gt; wrote:
+&gt; &gt; To answer your question more directly, it has a lot to do with just
+&gt; &gt; how big the &quot;T&quot; is that you are storing. Over a certain size T,
+&gt; &gt; std::deque typically morphs (internally) into a std::list +
+&gt; &gt; std::vector combination (the vector is so that std::deque can support
+&gt; &gt; random access iterators.)
+
+&gt; I do not see how it could possibly do that because of the requirement
+&gt; for fixed location for objects in a deque whilst vector has relocation
+&gt; semantics. I am not a library expert but I believe that deques are
+&gt; implemented via an extra layer of indirection and that the blocks
+&gt; actually used for the base memory of elements is more akin to an array
+&gt; (i.e. a fixed size and a fixed location)
+">
+
+Right. A simple way to implement a deque is as a std::list&lt; std::vector&lt;
+T &gt; &gt;, where each vector is preset to the same capacity and not allowed
+to grow. (i.e., they are &quot;more akin to an array&quot;.)
+
+The key here is that each of these arrays is a fixed size in bytes (not
+objects contained) so if the objects are very large, then the deque will
+have to do the same number of allocations as the list per object and
+have just as much overhead per object (possibly more.)
+
+Thus if the OP doesn't require random access and T is large, then deque
+is no better than list.
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+<POST>
+<POSTER> Lance Diduck &lt;lancedid...@nyc.rr.com&gt; </POSTER>
+<POSTDATE> 2008-01-13T06:56:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; &gt; To answer your question more directly, it has a lot to do with just
+&gt; &gt; how big the &quot;T&quot; is that you are storing. Over a certain size T,
+&gt; &gt; std::deque typically morphs (internally) into a std::list +
+&gt; &gt; std::vector combination (the vector is so that std::deque can support
+&gt; &gt; random access iterators.)
+
+&gt; I do not see how it could possibly do that because of the requirement
+&gt; for fixed location for objects in a deque whilst vector has relocation
+&gt; semantics. I am not a library expert but I believe that deques are
+&gt; implemented via an extra layer of indirection and that the blocks
+&gt; actually used for the base memory of elements is more akin to an array
+&gt; (i.e. a fixed size and a fixed location)
+">
+
+This is of course implementation and vendor dependent, but this is a
+typical scenario:
+The std::vector part stores a pointer to the contained element. So in
+essence there is an internal vector that is of type std::vector&lt;T*&gt;.
+This gives the deque the property you are looking for, which is that
+iterators are never invalidated.
+The memory for this element comes from allocating &quot;pages&quot; that can
+hold one or more T's. The pages themselves (thought not required to do
+so) are often linked together with a doubly linked list, which makes
+them easier to manage.
+Depending on the T, there may be only one T per page, which is then
+exactly like a list. So there is not literally a std::list in there,
+but there is often literally a std::vector&lt;T*&gt; is most deques.
+
+However, if you dont need random access iterators, then std::list has
+one huge advantage over deque --no matter how the internal pages are
+implemented. That advantage is that every allocation is of equal size.
+std::deque cant do this, since the vector portion requires an
+allocator that can handle any size allocation. This make allocators
+far more difficult to write.
+However, allocators that can handle fixed size allocation are very
+very easy to write (actually wrapping that allocator into a form that
+a container can accept is a different story however, but there are
+proposals to fix this). So what you can do is use a list for this
+application, and tune the allocator as profiling dictates.
+
+Lance
+
+--
+[ See http://www.gotw.ca/resources/clcm.htm for info about ]
+[ comp.lang.c++.moderated.    First time posters: Do this! ]
+</POST>
+</TEXT>
+</BODY>
+</DOC>

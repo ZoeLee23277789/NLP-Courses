@@ -1,0 +1,300 @@
+<DOC>
+<DOCID> eng-NG-31-135600-9761477 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2008-02-06T08:35:00 </DATETIME>
+<BODY>
+<HEADLINE>
+ASIC gate count estimation
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;nmatri...@gmail.com&quot; &lt;nmatri...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-02-06T08:35:00 </POSTDATE>
+Hello
+I am working on an ASIC specification and I would like to estimate the
+digital part's size. The goal is to choose between hard coded logic or
+CPU core.
+I have analyzed the code and found the basic logic functions (FFs,
+AND, OR etc) but can not reduce this to &quot;simple&quot; logic gates (I think
+the traditional unit is the 2-input NAND gate)
+Anyone got a link or something with the gate equivalent of standard
+logic functions ?
+
+Thanks
+Nicolas
+</POST>
+<POST>
+<POSTER> &quot;want.a.friendlier.wo...@gmail.com&quot; &lt;want.a.friendlier.wo...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-02-07T05:52:00 </POSTDATE>
+I would say the best way is to synthesize your code and map it to a
+standard cell library.
+
+Simply trying to decompose everything to NAND gates may not be what
+you want right now unless you're considering full-custom ASICs, but I
+think we'd need more information about what you're trying to do.
+
+On Feb 7, 12:35 am, &quot;nmatri ... @gmail.com&quot; &lt;nmatri ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hello
+&gt; I am working on an ASIC specification and I would like to estimate the
+&gt; digital part's size. The goal is to choose between hard coded logic or
+&gt; CPU core.
+&gt; I have analyzed the code and found the basic logic functions (FFs,
+&gt; AND, OR etc) but can not reduce this to &quot;simple&quot; logic gates (I think
+&gt; the traditional unit is the 2-input NAND gate)
+&gt; Anyone got a link or something with the gate equivalent of standard
+&gt; logic functions ?
+
+&gt; Thanks
+&gt; Nicolas
+">
+</POST>
+<POST>
+<POSTER> Nicolas Matringe &lt;nicolas.matri...@fre.fre&gt; </POSTER>
+<POSTDATE> 2008-02-07T15:51:00 </POSTDATE>
+want.a.friendlier.wo ... @gmail.com a écrit :
+
+<QUOTE PREVIOUSPOST="
+&gt; I would say the best way is to synthesize your code and map it to a
+&gt; standard cell library.
+
+&gt; Simply trying to decompose everything to NAND gates may not be what
+&gt; you want right now unless you're considering full-custom ASICs, but I
+&gt; think we'd need more information about what you're trying to do.
+">
+
+I am trying to roughly estimate the size of the digital part of an ASIC
+we are planning.
+We don't have any synthesis tool, the ASIC will be developped by a
+subcontractor (which we haven't chosen yet)
+
+Nicolas
+</POST>
+<POST>
+<POSTER> diogratia &lt;diogra...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-02-07T18:38:00 </POSTDATE>
+On Feb 8, 9:51 am, Nicolas Matringe &lt;nicolas.matri ... @fre.fre&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; want.a.friendlier.wo ... @gmail.com a écrit :
+
+&gt; &gt; I would say the best way is to synthesize your code and map it to a
+&gt; &gt; standard cell library.
+
+&gt; &gt; Simply trying to decompose everything to NAND gates may not be what
+&gt; &gt; you want right now unless you're considering full-custom ASICs, but I
+&gt; &gt; think we'd need more information about what you're trying to do.
+
+&gt; I am trying to roughly estimate the size of the digital part of an ASIC
+&gt; we are planning.
+&gt; We don't have any synthesis tool, the ASIC will be developped by a
+&gt; subcontractor (which we haven't chosen yet)
+">
+
+Gate count estimation using NAND gate sites is typically useful to
+find an estimate of the size of the target device needed to implement
+a design.
+
+For purposes of generating a NAND gate equivalent estimate for a
+design you would need access to a cell library that provides primitive
+to NAND gate mappings.  You would also need some basic awareness of
+requirements for fanout, as a primitive would come in various drive
+strengths.   Because you are dealing with what is considered the most
+primitive element of a design, a NAND gate, almost any cell library
+will do for purposes of estimation, as long as fanout rules are
+generally compatible.
+
+For instance, the NEC CMOS-8L 0.5 um cell library manual found here:
+http://www.eu.necel.com/doclist/index.html
+http://www.eu.necel.com/_pdf/A12213XJ5V1UM00.PDF (cell library
+manual)
+
+lists on Page 6-58, a 2 input NAND gate as 1 'cell', without
+additional fan out drive or inverters, telling us that a cell is a
+NAND gate.  All the primitives are sized in cells.
+
+Because ASIC designs are typically in the hundreds of thousands of
+gates it is useful to use a silicon synthesizer to report gate
+equivalents, or have a silicon vendor make the estimate from an RTL
+netlist.  You can 'audit' your design and use a spreadsheet to
+generate the NAND gate counts.   Making rough estimates generally
+involves learning a feel for fudge factors, and leaving headroom in a
+design based on the need for fanout and trace length.  A simple
+estimate can be used to bracket two or three devices in increasing
+sizes for cost estimate purposes.
+
+A lot of vendors require a customer relationship before disclosing
+cell library manuals, or don't provide them at all.  Historically the
+manuals contained information of value to a competitor.  Vendors can
+also require a tool chain that can be used without manuals.
+
+Contacting a potential vendor help in pricing is always in order.  The
+economics of what you're trying to do become clear quite quickly.
+They would also provide leads on finding contractors.
+</POST>
+<POST>
+<POSTER> Jim Lewis &lt;j...@synthworks.com&gt; </POSTER>
+<POSTDATE> 2008-02-07T22:24:00 </POSTDATE>
+Nicolas
+
+<QUOTE PREVIOUSPOST="
+&gt; want.a.friendlier.wo ... @gmail.com a écrit :
+&gt;&gt; I would say the best way is to synthesize your code and map it to a
+&gt;&gt; standard cell library.
+
+&gt;&gt; Simply trying to decompose everything to NAND gates may not be what
+&gt;&gt; you want right now unless you're considering full-custom ASICs, but I
+&gt;&gt; think we'd need more information about what you're trying to do.
+
+&gt; I am trying to roughly estimate the size of the digital part of an ASIC
+&gt; we are planning.
+&gt; We don't have any synthesis tool, the ASIC will be developped by a
+&gt; subcontractor (which we haven't chosen yet)
+">
+
+Off topic, but notable, there are a couple of ASIC vendors
+who will translate your FPGA to ASIC for you.  So if you have
+FPGA tools, you may be able to spin it into an ASIC in an easy
+fashion.  One thing to watch in this fashion is that ASICs do not
+have built-in power-on reset and any FPGA logic that used this
+would need to be reset with the reset input.
+
+One vendor who does this is AMI.  See
+http://www.amis.com/conversion/
+
+There are probably others also.
+
+Cheers,
+Jim
+</POST>
+<POST>
+<POSTER> mk &lt;kal*@dspia.*comdelete&gt; </POSTER>
+<POSTDATE> 2008-02-08T01:51:00 </POSTDATE>
+On Wed, 6 Feb 2008 05:35:29 -0800 (PST), &quot;nmatri ... @gmail.com&quot;
+
+<QUOTE PREVIOUSPOST="
+&lt;nmatri ... @gmail.com&gt; wrote:
+&gt;Hello
+&gt;I am working on an ASIC specification and I would like to estimate the
+&gt;digital part's size. The goal is to choose between hard coded logic or
+&gt;CPU core.
+&gt;I have analyzed the code and found the basic logic functions (FFs,
+&gt;AND, OR etc) but can not reduce this to &quot;simple&quot; logic gates (I think
+&gt;the traditional unit is the 2-input NAND gate)
+&gt;Anyone got a link or something with the gate equivalent of standard
+&gt;logic functions ?
+">
+
+If you have no other avenue of getting your logic synthesized (I can
+do it for you if you're willing to send the rtl) you can use the
+following VERY rough way to estimate. For every flop count 6 gates,
+for every logic function with N inputs count N/2 gates, for every bit
+of memory count 3 gates and add all up. You should get a 1/2x-&gt;2x
+estimate of the gate count.
+Hth.
+</POST>
+<POST>
+<POSTER> &quot;nmatri...@gmail.com&quot; &lt;nmatri...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-02-08T05:04:00 </POSTDATE>
+On 8 fév, 04:24, Jim Lewis &lt;j ... @synthworks.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Off topic, but notable, there are a couple of ASIC vendors
+&gt; who will translate your FPGA to ASIC for you.  So if you have
+&gt; FPGA tools, you may be able to spin it into an ASIC in an easy
+&gt; fashion.  One thing to watch in this fashion is that ASICs do not
+&gt; have built-in power-on reset and any FPGA logic that used this
+&gt; would need to be reset with the reset input.
+
+&gt; One vendor who does this is AMI.  See http://www.amis.com/conversion/
+">
+
+Hello Jim
+I know AMIS, we met them a few weeks ago.
+The problem here is that our ASIC will be mixed-signal (and AMIS has
+nice features to offer in this area too)
+Thanks anyway
+
+Nicolas
+</POST>
+<POST>
+<POSTER> &quot;nmatri...@gmail.com&quot; &lt;nmatri...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-02-08T05:06:00 </POSTDATE>
+On 8 fév, 07:51, mk &lt;kal*@dspia.*comdelete&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Wed, 6 Feb 2008 05:35:29 -0800 (PST), &quot;nmatri ... @gmail.com&quot;
+
+&gt; &lt;nmatri ... @gmail.com&gt; wrote:
+&gt; &gt;Hello
+&gt; &gt;I am working on an ASIC specification and I would like to estimate the
+&gt; &gt;digital part's size. The goal is to choose between hard coded logic or
+&gt; &gt;CPU core.
+&gt; &gt;I have analyzed the code and found the basic logic functions (FFs,
+&gt; &gt;AND, OR etc) but can not reduce this to &quot;simple&quot; logic gates (I think
+&gt; &gt;the traditional unit is the 2-input NAND gate)
+&gt; &gt;Anyone got a link or something with the gate equivalent of standard
+&gt; &gt;logic functions ?
+
+&gt; If you have no other avenue of getting your logic synthesized (I can
+&gt; do it for you if you're willing to send the rtl) you can use the
+&gt; following VERY rough way to estimate. For every flop count 6 gates,
+&gt; for every logic function with N inputs count N/2 gates, for every bit
+&gt; of memory count 3 gates and add all up. You should get a 1/2x-&gt;2x
+&gt; estimate of the gate count.
+&gt; Hth.
+">
+
+Thanks a lot, that's exactly the kind of rule of thumb I was looking
+for.
+
+Nicolas
+</POST>
+<POST>
+<POSTER> moo...@yahoo.co.uk </POSTER>
+<POSTDATE> 2008-02-08T10:46:00 </POSTDATE>
+On 8 Feb, 07:51, mk &lt;kal*@dspia.*comdelete&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Wed, 6 Feb 2008 05:35:29 -0800 (PST), &quot;nmatri ... @gmail.com&quot;
+
+&gt; &lt;nmatri ... @gmail.com&gt; wrote:
+&gt; &gt;Hello
+&gt; &gt;I am working on an ASIC specification and I would like to estimate the
+&gt; &gt;digital part's size. The goal is to choose between hard coded logic or
+&gt; &gt;CPU core.
+&gt; &gt;I have analyzed the code and found the basic logic functions (FFs,
+&gt; &gt;AND, OR etc) but can not reduce this to &quot;simple&quot; logic gates (I think
+&gt; &gt;the traditional unit is the 2-input NAND gate)
+&gt; &gt;Anyone got a link or something with the gate equivalent of standard
+&gt; &gt;logic functions ?
+
+&gt; If you have no other avenue of getting your logic synthesized (I can
+&gt; do it for you if you're willing to send the rtl) you can use the
+&gt; following VERY rough way to estimate. For every flop count 6 gates,
+&gt; for every logic function with N inputs count N/2 gates, for every bit
+&gt; of memory count 3 gates and add all up. You should get a 1/2x-&gt;2x
+&gt; estimate of the gate count.
+&gt; Hth.
+">
+
+Hi,
+
+I use an even rougher rule of thumb.
+
+Gate Count = Number FF's * 20
+
+To get an idea of gate counts, try looking at opencores website, I
+think that they sometimes have gatecounts with the IP's which may give
+you some idea.
+
+Steven
+
+Steven
+
+This
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,240 @@
+<DOC>
+<DOCID> eng-NG-31-126406-8207205 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-19T07:08:00 </DATETIME>
+<BODY>
+<HEADLINE>
+mmap page cahe on Linux
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> softar...@gmail.com </POSTER>
+<POSTDATE> 2007-08-19T07:08:00 </POSTDATE>
+Hi All,
+
+I am writing an application that needs to access data in huge files.
+It only needs to access parts of the file. I was thinking of mmaping
+the files and letting the kernel to pull in the pages that I am
+accessing.
+
+I will need to be doing this over several invogations of the program,
+with some of the data remaining the same.
+
+Does the kernel discard the mmap pages from the page cache when the
+program that has mapped them exits or do they remain there untill it
+needs the memory for something else?
+
+Reason why I am asking is because if they are discarded then I suppose
+that I need to write some sort of server that maps the files and makes
+them available to the programs that need the data.
+
+Many Thanks,
+Softari
+</POST>
+<POST>
+<POSTER> moi &lt;r...@localhost.localdomain&gt; </POSTER>
+<POSTDATE> 2007-08-19T07:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sun, 19 Aug 2007 11:08:52 +0000, softari22 wrote:
+&gt; Hi All,
+
+&gt; I am writing an application that needs to access data in huge files.
+&gt; It only needs to access parts of the file. I was thinking of mmaping
+&gt; the files and letting the kernel to pull in the pages that I am
+&gt; accessing.
+
+&gt; I will need to be doing this over several invogations of the program,
+&gt; with some of the data remaining the same.
+">
+
+If you mmap with MAP_SHARED, all the invocations of your program will see
+the same data
+
+<QUOTE PREVIOUSPOST="
+&gt; Does the kernel discard the mmap pages from the page cache when the
+&gt; program that has mapped them exits or do they remain there untill it
+&gt; needs the memory for something else?
+">
+
+If your process exits, the pages stay in the LRU-cache. Other processes
+may benefit from that: if they want the same page, it MAY still be in the
+cache. If the system needs more memory, the pages may be reused.
+
+<QUOTE PREVIOUSPOST="
+&gt; Reason why I am asking is because if they are discarded then I suppose
+&gt; that I need to write some sort of server that maps the files and makes
+&gt; them available to the programs that need the data.
+">
+
+I'm not sure what you mean here. ( 'Prefetching' by a separate process can
+be used to minimalize the chance of your main process to be blocked by
+page-faults, but I don't think you want to do that. Yet.)
+They are not discarded, anyway. (unless you tinker with msync() or
+MAP_PRIVATE)
+
+HTH,
+AvK
+</POST>
+<POST>
+<POSTER> softar...@gmail.com </POSTER>
+<POSTDATE> 2007-08-19T11:34:00 </POSTDATE>
+On Aug 19, 12:50 pm, moi &lt;r ... @localhost.localdomain&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sun, 19 Aug 2007 11:08:52 +0000, softari22 wrote:
+&gt; &gt; Hi All,
+
+&gt; &gt; I am writing an application that needs to access data in huge files.
+&gt; &gt; It only needs to access parts of the file. I was thinking of mmaping
+&gt; &gt; the files and letting the kernel to pull in the pages that I am
+&gt; &gt; accessing.
+
+&gt; &gt; I will need to be doing this over several invogations of the program,
+&gt; &gt; with some of the data remaining the same.
+
+&gt; If you mmap with MAP_SHARED, all the invocations of your program will see
+&gt; the same data
+
+&gt; &gt; Does the kernel discard the mmap pages from the page cache when the
+&gt; &gt; program that has mapped them exits or do they remain there untill it
+&gt; &gt; needs the memory for something else?
+
+&gt; If your process exits, the pages stay in the LRU-cache. Other processes
+&gt; may benefit from that: if they want the same page, it MAY still be in the
+&gt; cache. If the system needs more memory, the pages may be reused.
+
+&gt; &gt; Reason why I am asking is because if they are discarded then I suppose
+&gt; &gt; that I need to write some sort of server that maps the files and makes
+&gt; &gt; them available to the programs that need the data.
+
+&gt; I'm not sure what you mean here. ( 'Prefetching' by a separate process can
+&gt; be used to minimalize the chance of your main process to be blocked by
+&gt; page-faults, but I don't think you want to do that. Yet.)
+&gt; They are not discarded, anyway. (unless you tinker with msync() or
+&gt; MAP_PRIVATE)
+
+&gt; HTH,
+&gt; AvK
+">
+
+Thank you very much for your helpful answer. What I meant was that I
+have two alternatives (that I can think of)
+1) Have a server process that maps the files to memory and using some
+sort of IPC serves the data to separate client processes that request
+the data.
+
+2) Have each individual invocations to map the files to memory, using
+MAP_SHARED as you suggested.
+
+The timing when the data would be accessed would be the same using
+both approaches. I would consider doing 1) if the kernel would some
+how give more priority for pages that were accessed by process that is
+still executing and that the probapility of them remaining in memory
+would be greater than going with 2).
+
+If I understood your answer correctly the likelyhood of the data still
+being in the memory should be the same for both aproaches and 2) being
+much simpler, that is the way to go?
+
+Thank  you,
+Softari
+</POST>
+<POST>
+<POSTER> moi &lt;r...@localhost.localdomain&gt; </POSTER>
+<POSTDATE> 2007-08-19T13:25:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sun, 19 Aug 2007 15:34:19 +0000, softari22 wrote:
+&gt; On Aug 19, 12:50 pm, moi &lt;r ... @localhost.localdomain&gt; wrote:
+&gt;&gt; On Sun, 19 Aug 2007 11:08:52 +0000, softari22 wrote:
+&gt;&gt; &gt; Hi All,
+
+&gt;&gt; &gt; I am writing an application that needs to access data in huge files.
+&gt;&gt; &gt; It only needs to access parts of the file. I was thinking of mmaping
+&gt;&gt; &gt; the files and letting the kernel to pull in the pages that I am
+&gt;&gt; &gt; accessing.
+
+&gt;&gt; &gt; I will need to be doing this over several invogations of the program,
+&gt;&gt; &gt; with some of the data remaining the same.
+
+&gt;&gt; If you mmap with MAP_SHARED, all the invocations of your program will see
+&gt;&gt; the same data
+
+&gt;&gt; &gt; Does the kernel discard the mmap pages from the page cache when the
+&gt;&gt; &gt; program that has mapped them exits or do they remain there untill it
+&gt;&gt; &gt; needs the memory for something else?
+
+&gt;&gt; If your process exits, the pages stay in the LRU-cache. Other processes
+&gt;&gt; may benefit from that: if they want the same page, it MAY still be in the
+&gt;&gt; cache. If the system needs more memory, the pages may be reused.
+
+&gt;&gt; &gt; Reason why I am asking is because if they are discarded then I suppose
+&gt;&gt; &gt; that I need to write some sort of server that maps the files and makes
+&gt;&gt; &gt; them available to the programs that need the data.
+
+&gt;&gt; I'm not sure what you mean here. ( 'Prefetching' by a separate process can
+&gt;&gt; be used to minimalize the chance of your main process to be blocked by
+&gt;&gt; page-faults, but I don't think you want to do that. Yet.)
+&gt;&gt; They are not discarded, anyway. (unless you tinker with msync() or
+&gt;&gt; MAP_PRIVATE)
+
+&gt;&gt; HTH,
+&gt;&gt; AvK
+
+&gt; Thank you very much for your helpful answer. What I meant was that I
+&gt; have two alternatives (that I can think of)
+&gt; 1) Have a server process that maps the files to memory and using some
+&gt; sort of IPC serves the data to separate client processes that request
+&gt; the data.
+">
+
+I can see no reason (other than messaging) to use any (other) form of IPC.
+Using IPC for the data would only cause more copies of the data to be kept
+in memory, plus the additional copying and the necessary housekeeping.
+
+<QUOTE PREVIOUSPOST="
+&gt; 2) Have each individual invocations to map the files to memory, using
+&gt; MAP_SHARED as you suggested.
+">
+
+Why do you need more than one process, anyway ?
+[ one reason could be that the total size of the files you want to map
+*at the same time* does not fit into your allowable address space,
+typically 2-4 GB ]
+
+<QUOTE PREVIOUSPOST="
+&gt; The timing when the data would be accessed would be the same using both
+&gt; approaches. I would consider doing 1) if the kernel would some how give
+&gt; more priority for pages that were accessed by process that is still
+&gt; executing and that the probapility of them remaining in memory would be
+&gt; greater than going with 2).
+">
+
+Don't. In practice it will be very hard to perform better than LRU.
+Don't try to outsmart the system; at least not until you are smart
+enough...
+
+<QUOTE PREVIOUSPOST="
+&gt; If I understood your answer correctly the likelyhood of the data still
+&gt; being in the memory should be the same for both aproaches and 2) being
+&gt; much simpler, that is the way to go?
+">
+
+(2) is much simpler, yes.
+The kernel is lazy: it does not trow away things that might be needed in
+the future. Empty memory == wasted memory. So: if the &quot;footprint&quot; of your
+process is smaller than &quot;available memory&quot;, everything will (eventually)
+be mapped into buffers. ( so your &quot;likelyhood&quot; will be close to 1. )
+
+One point to clear up: mmap()ing per se *does not cause any data to be
+transferred* to RAM. mmap only places the file into your process's
+*address space*. It will be the first *access to the memory* that will
+cause the data (a page from the file) to be faulted in. Even after that,
+the memory may be reclaimed by the kernel, and a second access will cause
+a second pagefault. etc.
+
+HTH,
+AvK
+</POST>
+</TEXT>
+</BODY>
+</DOC>

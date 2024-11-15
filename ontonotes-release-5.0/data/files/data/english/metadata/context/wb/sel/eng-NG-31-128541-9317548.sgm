@@ -1,0 +1,266 @@
+<DOC>
+<DOCID> eng-NG-31-128541-9317548 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-24T23:52:00 </DATETIME>
+<BODY>
+<HEADLINE>
+kernel panic
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> syle ishere &lt;syleish...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-24T23:52:00 </POSTDATE>
+Cvs checkout of Releng_7 tag, did usual make buildworld kernel etc,
+all was fine even kernel until I did make installworld.
+
+The issue was /boot/loader was replaced and caused a panic. I was able to get back into the system with booting /boot/loader.old with new kernel and all.....here are the messages:
+
+Can't work out which disk we are booting from.Guessed BIOS device 0xffffffff not found by probes, defaulting to disk0:
+
+panic: free: guard1 fail @ 0x6e104 from /usr/src/sys/boot/i386/loader/../../common/module.c:959--&gt; Press a key on the console to reboot &lt;--
+
+THis is on a toshiba satellite laptop.
+
+Dan.
+
+_________________________________________________________________
+Are you ready for Windows Live Messenger Beta 8.5 ? Get the latest for free today!
+http://entertainment.sympatico.msn.ca/WindowsLiveMessenger___________...
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+<POST>
+<POSTER> pluknet &lt;pluk...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-25T07:13:00 </POSTDATE>
+Hi.
+
+On 25/10/2007, syle ishere &lt;syleish ... @hotmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Cvs checkout of Releng_7 tag, did usual make buildworld kernel etc,
+&gt; all was fine even kernel until I did make installworld.
+
+&gt; The issue was /boot/loader was replaced and caused a panic. I was able to get back into the system with booting /boot/loader.old with new kernel and all.....here are the messages:
+
+&gt; Can't work out which disk we are booting from.Guessed BIOS device 0xffffffff not found by probes, defaulting to disk0:
+
+&gt; panic: free: guard1 fail @ 0x6e104 from /usr/src/sys/boot/i386/loader/../../common/module.c:959--&gt; Press a key on the console to reboot &lt;--
+
+&gt; THis is on a toshiba satellite laptop.
+
+&gt; Dan.
+">
+
+You are not alone.
+
+I observe the same behavior on a Dell Inspiron 510m laptop with
+CURRENT on it with the same messages. AFAIK it was introduced with
+this commit:
+http://lists.freebsd.org/pipermail/cvs-src/2007-May/079011.html
+(well, actually I have had a broken loader since Jul 5 only (and
+later), but I think it is related).
+
+I have an old working loader from May 11. So as workaround I need to
+substitute loader.old
+every time after installworld to update world (and to boot then) successfully.
+
+wbr,
+pluknet
+_______________________________________________
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+<POST>
+<POSTER> syle ishere &lt;syleish...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-25T13:10:00 </POSTDATE>
+I tried testing this. Added
+LOADER_FIREWIRE_SUPPORT=yes in /etc/make.conf
+(cd /sys/boot/i386 &amp;&amp; make clean &amp;&amp; make &amp;&amp; make install)shutdown -r now
+All was great it the loader worked!
+
+To test this wasn't my imagination:
+I took that line out of make.conf
+(cd /sys/boot/i386 &amp;&amp; make clean &amp;&amp; make &amp;&amp; make install)shutdown -r now
+
+And got same problem system not booting.
+
+Good catch pluknet, hopefully we can get this code compiled into the loader as a mandatory fix
+for now.
+
+Dan.
+
+<QUOTE PREVIOUSPOST="
+&gt; Date: Thu, 25 Oct 2007 15:13:22 +0400&gt; From: pluk ... @gmail.com&gt; To: syleish ... @hotmail.com&gt; Subject: Re: kernel panic&gt; CC: freebsd-curr ... @freebsd.org&gt; &gt; Hi.&gt; &gt; On 25/10/2007, syle ishere &lt;syleish ... @hotmail.com&gt; wrote:&gt; &gt;&gt; &gt; Cvs checkout of Releng_7 tag, did usual make buildworld kernel etc,&gt; &gt; all was fine even kernel until I did make installworld.&gt; &gt;&gt; &gt; The issue was /boot/loader was replaced and caused a panic. I was able to get back into the system with booting /boot/loader.old with new kernel and all.....here are the messages:&gt; &gt;&gt; &gt; Can't work out which disk we are booting from.Guessed BIOS device 0xffffffff not found by probes, defaulting to disk0:&gt; &gt;&gt; &gt; panic: free: guard1 fail @ 0x6e104 from /usr/src/sys/boot/i386/loader/../../common/module.c:959--&gt; Press a key on the console to reboot &lt;--&gt; &gt;&gt; &gt; THis is on a toshiba satellite laptop.&gt; &gt;&gt; &gt; Dan.&gt; &gt;&gt; &gt; You are not alone.&gt; &gt; I observe the same behavior on a Dell Inspiron 510m laptop with&gt; CURRENT on it with the same messages. AFAIK it was introduced with&gt; this commit:&gt; http://lists.freebsd.org/pipermail/cvs-src/2007-May/079011.html &gt; (well, actually I have had a broken loader since Jul 5 only (and&gt; later), but I think it is related).&gt; &gt; I have an old working loader from May 11. So as workaround I need to&gt; substitute loader.old&gt; every time after installworld to update world (and to boot then) successfully.&gt; &gt; wbr,&gt; pluknet
+">
+
+_________________________________________________________________
+Send a smile, make someone laugh, have some fun! Start now!
+http://www.freemessengeremoticons.ca/?icid=EMENCA122_________________...
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+<POST>
+<POSTER> John Baldwin &lt;j...@freebsd.org&gt; </POSTER>
+<POSTDATE> 2007-10-25T15:11:00 </POSTDATE>
+On Thursday 25 October 2007 01:10:33 pm syle ishere wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I tried testing this. Added
+&gt; LOADER_FIREWIRE_SUPPORT=yes in /etc/make.conf
+&gt; (cd /sys/boot/i386 &amp;&amp; make clean &amp;&amp; make &amp;&amp; make install)shutdown -r now
+&gt; All was great it the loader worked!
+
+&gt; To test this wasn't my imagination:
+&gt; I took that line out of make.conf
+&gt; (cd /sys/boot/i386 &amp;&amp; make clean &amp;&amp; make &amp;&amp; make install)shutdown -r now
+
+&gt; And got same problem system not booting.
+
+&gt; Good catch pluknet, hopefully we can get this code compiled into the loader
+as a mandatory fix
+&gt; for now.
+">
+
+That seems odd.  I would make sure you really have a clean build, and I would
+build from /sys/boot, not /sys/boot/i386.
+
+--
+John Baldwin
+_______________________________________________
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+<POST>
+<POSTER> syle ishere &lt;syleish...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-25T15:49:00 </POSTDATE>
+Did it out of /sys/boot just now with exactly same results. Trying newest source.....
+checkout......
+cvsup -g -L 2 -h cvsup5.freebsd.org /usr/share/examples/cvsup/stable-supfile
+which contains : *default release=cvs tag=RELENG_7
+Trying again a build from /sys/boot taking entry out of /etc/make.conf with any UPDATES in last day:
+
+RunningUpdating collection src-all/cvs Edit src/lib/libc/gdtoa/Symbol.map  Add delta 1.4.2.1 2007.10.24.23.53.20 deischen Edit src/sys/dev/usb/ukbd.c  Add delta 1.72.2.1 2007.10.25.16.55.00 jhb Edit src/sys/netinet/sctp_constants.h  Add delta 1.32.2.1 2007.10.25.12.27.05 rrs Edit src/sys/netinet/sctp_indata.c  Add delta 1.45.2.1 2007.10.25.12.27.05 rrs Edit src/sys/netinet/sctp_input.c  Add delta 1.65.2.1 2007.10.25.12.27.05 rrs Edit src/sys/netinet/sctp_output.c  Add delta 1.58.2.1 2007.10.25.12.27.05 rrs Edit src/sys/netinet/sctp_pcb.c  Add delta 1.62.2.1 2007.10.25.12.27.05 rrs Edit src/sys/netinet/sctp_structs.h  Add delta 1.25.2.1 2007.10.25.12.27.06 rrs Edit src/sys/netinet/sctp_timer.c  Add delta 1.32.2.1 2007.10.25.12.27.06 rrs Edit src/sys/netinet/sctp_usrreq.c  Add delta 1.48.2.1 2007.10.25.12.27.06 rrs Edit src/sys/netinet/sctp_var.h  Add delta 1.20.2.1 2007.10.25.12.27.06 rrs Edit src/sys/netinet/sctputil.c  Add delta 1.65.2.1 2007.10.25.12.27.06 rrsShutting down connection to serverFinished successfully
+
+(cd /sys/boot &amp;&amp; make clean &amp;&amp; make &amp;&amp; make install)
+
+Exactly same results loader fails without that entry added to /etc/make.conf.
+Add it back....
+/boot/loader works again.
+If you want to update that branch with any changes, I'll gladly do a cvs checkout and try the loader again.
+
+Dan.
+
+<QUOTE PREVIOUSPOST="
+&gt; From: j ... @freebsd.org&gt; To: freebsd-curr ... @freebsd.org&gt; Subject: Re: kernel panic&gt; Date: Thu, 25 Oct 2007 15:11:12 -0400&gt; CC: syleish ... @hotmail.com; pluk ... @gmail.com&gt; &gt; On Thursday 25 October 2007 01:10:33 pm syle ishere wrote:&gt; &gt; &gt; &gt; I tried testing this. Added&gt; &gt; LOADER_FIREWIRE_SUPPORT=yes in /etc/make.conf&gt; &gt; (cd /sys/boot/i386 &amp;&amp; make clean &amp;&amp; make &amp;&amp; make install)shutdown -r now&gt; &gt; All was great it the loader worked!&gt; &gt; &gt; &gt; To test this wasn't my imagination:&gt; &gt; I took that line out of make.conf &gt; &gt; (cd /sys/boot/i386 &amp;&amp; make clean &amp;&amp; make &amp;&amp; make install)shutdown -r now&gt; &gt; &gt; &gt; And got same problem system not booting.&gt; &gt; &gt; &gt; Good catch pluknet, hopefully we can get this code compiled into the loader &gt; as a mandatory fix&gt; &gt; for now.&gt; &gt; That seems odd. I would make sure you really have a clean build, and I would &gt; build from /sys/boot, not /sys/boot/i386.&gt; &gt; -- &gt; John Baldwin
+">
+
+_________________________________________________________________
+Have fun while connecting on Messenger! Click here to learn more.
+http://entertainment.sympatico.msn.ca/WindowsLiveMessenger___________...
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+<POST>
+<POSTER> pluknet &lt;pluk...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-01T08:35:00 </POSTDATE>
+On 25/10/2007, John Baldwin &lt;j ... @freebsd.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Thursday 25 October 2007 01:10:33 pm syle ishere wrote:
+
+&gt; &gt; I tried testing this. Added
+&gt; &gt; LOADER_FIREWIRE_SUPPORT=yes in /etc/make.conf
+&gt; &gt; (cd /sys/boot/i386 &amp;&amp; make clean &amp;&amp; make &amp;&amp; make install)shutdown -r now
+&gt; &gt; All was great it the loader worked!
+
+&gt; &gt; To test this wasn't my imagination:
+&gt; &gt; I took that line out of make.conf
+&gt; &gt; (cd /sys/boot/i386 &amp;&amp; make clean &amp;&amp; make &amp;&amp; make install)shutdown -r now
+
+&gt; &gt; And got same problem system not booting.
+
+&gt; &gt; Good catch pluknet, hopefully we can get this code compiled into the loader
+&gt; as a mandatory fix
+&gt; &gt; for now.
+
+&gt; That seems odd.  I would make sure you really have a clean build, and I would
+&gt; build from /sys/boot, not /sys/boot/i386.
+
+&gt; --
+&gt; John Baldwin
+">
+
+Yes. I've just checked that loader brokeness is influenced by
+-funroll-loops in make.conf
+
+wbr,
+pluknet
+_______________________________________________
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+<POST>
+<POSTER> syle ishere &lt;syleish...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-01T14:12:00 </POSTDATE>
+Yep, I commented out that as well in make.conf and machine boots just fine after taking out my
+CFLAGS and CPUTYPE lines. I had -funroll-loops in there as well.
+
+Dan.
+
+<QUOTE PREVIOUSPOST="
+&gt; Date: Thu, 1 Nov 2007 15:35:50 +0300&gt; From: pluk ... @gmail.com&gt; To: j ... @freebsd.org&gt; Subject: Re: kernel panic&gt; CC: freebsd-curr ... @freebsd.org; syleish ... @hotmail.com&gt; &gt; On 25/10/2007, John Baldwin &lt;j ... @freebsd.org&gt; wrote:&gt; &gt; On Thursday 25 October 2007 01:10:33 pm syle ishere wrote:&gt; &gt; &gt;&gt; &gt; &gt; I tried testing this. Added&gt; &gt; &gt; LOADER_FIREWIRE_SUPPORT=yes in /etc/make.conf&gt; &gt; &gt; (cd /sys/boot/i386 &amp;&amp; make clean &amp;&amp; make &amp;&amp; make install)shutdown -r now&gt; &gt; &gt; All was great it the loader worked!&gt; &gt; &gt;&gt; &gt; &gt; To test this wasn't my imagination:&gt; &gt; &gt; I took that line out of make.conf&gt; &gt; &gt; (cd /sys/boot/i386 &amp;&amp; make clean &amp;&amp; make &amp;&amp; make install)shutdown -r now&gt; &gt; &gt;&gt; &gt; &gt; And got same problem system not booting.&gt; &gt; &gt;&gt; &gt; &gt; Good catch pluknet, hopefully we can get this code compiled into the loader&gt; &gt; as a mandatory fix&gt; &gt; &gt; for now.&gt; &gt;&gt; &gt; That seems odd. I would make sure you really have a clean build, and I would&gt; &gt; build from /sys/boot, not /sys/boot/i386.&gt; &gt;&gt; &gt; --&gt; &gt; John Baldwin&gt; &gt;&gt; &gt; Yes. I've just checked that loader brokeness is influenced by&gt; -funroll-loops in make.conf&gt; &gt; wbr,&gt; pluknet
+">
+
+_________________________________________________________________
+R U Ready for Windows Live Messenger Beta 8.5? Try it today!
+http://entertainment.sympatico.msn.ca/WindowsLiveMessenger___________...
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+<POST>
+<POSTER> syle ishere &lt;syleish...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-01T11:05:00 </POSTDATE>
+I've had a few headaches lately with amd64 on my Dell 2650 server, but been slowly solving them.
+
+I've noticed a few things about options in make.conf breaking things lately to.
+For instance, setting CPUTYPE to k8 explicitly in make.conf will segfault the port
+mysql-server50 soon as you try to start it up.
+
+Installing pine4 port with Maildir patch will also crash unless you manually incorporate
+amd64 patch from this site, http://www.gluelogic.com/code/PINE-maildir/ before building.
+I've emailed the maintainer of the maildir patch, but this person has as of yet, not bothered responding.
+
+Qmail from ports will also crash unless you tune 2 things 1) softlimit setting needs to be increased
+to allow qmail-smtp more memory when running it and 2) you must patch qmail from ports with the
+following : http://lists.freebsd.org/pipermail/freebsd-ports/2007-October/044434.... or you'll never
+send a peice of mail without it segfaulting.
+
+I know these issues are offtopic with loader but it shows to demonstrate setting options in make.conf
+does cause alot of problems, and moving to amd64 isn't a quick fix for anything.
+
+I've now removed any CFLAG and CPUTYPE lines out of make.conf permanently. It was causing more problems than good.
+I'll try and test my i386 laptop later today without any make.conf options as well to see if your on to something there pluknet.
+
+Dan.
+
+<QUOTE PREVIOUSPOST="
+&gt; Date: Thu, 1 Nov 2007 15:35:50 +0300&gt; From: pluk ... @gmail.com&gt; To: j ... @freebsd.org&gt; Subject: Re: kernel panic&gt; CC: freebsd-curr ... @freebsd.org; syleish ... @hotmail.com&gt; &gt; On 25/10/2007, John Baldwin &lt;j ... @freebsd.org&gt; wrote:&gt; &gt; On Thursday 25 October 2007 01:10:33 pm syle ishere wrote:&gt; &gt; &gt;&gt; &gt; &gt; I tried testing this. Added&gt; &gt; &gt; LOADER_FIREWIRE_SUPPORT=yes in /etc/make.conf&gt; &gt; &gt; (cd /sys/boot/i386 &amp;&amp; make clean &amp;&amp; make &amp;&amp; make install)shutdown -r now&gt; &gt; &gt; All was great it the loader worked!&gt; &gt; &gt;&gt; &gt; &gt; To test this wasn't my imagination:&gt; &gt; &gt; I took that line out of make.conf&gt; &gt; &gt; (cd /sys/boot/i386 &amp;&amp; make clean &amp;&amp; make &amp;&amp; make install)shutdown -r now&gt; &gt; &gt;&gt; &gt; &gt; And got same problem system not booting.&gt; &gt; &gt;&gt; &gt; &gt; Good catch pluknet, hopefully we can get this code compiled into the loader&gt; &gt; as a mandatory fix&gt; &gt; &gt; for now.&gt; &gt;&gt; &gt; That seems odd. I would make sure you really have a clean build, and I would&gt; &gt; build from /sys/boot, not /sys/boot/i386.&gt; &gt;&gt; &gt; --&gt; &gt; John Baldwin&gt; &gt;&gt; &gt; Yes. I've just checked that loader brokeness is influenced by&gt; -funroll-loops in make.conf&gt; &gt; wbr,&gt; pluknet
+">
+
+_________________________________________________________________
+Are you ready for Windows Live Messenger Beta 8.5 ? Get the latest for free today!
+http://entertainment.sympatico.msn.ca/WindowsLiveMessenger___________...
+freebsd-curr ... @freebsd.org mailing list
+http://lists.freebsd.org/mailman/listinfo/freebsd-current
+To unsubscribe, send any mail to &quot;freebsd-current-unsubscr ... @freebsd.org&quot;
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,352 @@
+<DOC>
+<DOCID> eng-NG-31-126417-8210765 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-07-27T11:14:00 </DATETIME>
+<BODY>
+<HEADLINE>
+db mock for unit testing
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Andrey Khavryuchenko &lt;akh...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-27T11:14:00 </POSTDATE>
+I do hardcore test-driven development and hate when tests hit my mysql
+database (even local one).  Things get only worse when testcases start
+demanding radically different datasets.
+
+Then I've paused and wrote DbMock class for django that uses some black
+magic to steal django db connection and substitute it with temporary sqlite
+in-memory db.
+
+Here it is: http://www.djangosnippets.org/snippets/345/
+
+So far, it works w/o any issues on my pet project.  Will be glad to hear
+any comments and, especially, bugs found :)
+
+--
+Andrey V Khavryuchenko
+Django NewGate - http://www.kds.com.ua/djiggit/
+Development - http://www.kds.com.ua
+Call akhavr1975 on www.gizmoproject.com
+</POST>
+<POST>
+<POSTER> &quot;Russell Keith-Magee&quot; &lt;freakboy3...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-27T20:37:00 </POSTDATE>
+On 7/27/07, Andrey Khavryuchenko &lt;akh ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Then I've paused and wrote DbMock class for django that uses some black
+&gt; magic to steal django db connection and substitute it with temporary sqlite
+&gt; in-memory db.
+">
+
+How is this different to the default Django behavior if you specify
+SQLite as your database? Can't you get exactly the same behavior by
+creating a test_settings.py file that contains:
+
+from settings import *
+DATABASE_BACKEND='sqlite'
+
+and then run:
+
+./manage.py --settings=test_settings test
+
+?
+
+Yours,
+Russ Magee %-)
+</POST>
+<POST>
+<POSTER> Andrey Khavryuchenko &lt;akh...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-28T12:36:00 </POSTDATE>
+Russell,
+
+RK&gt; On 7/27/07, Andrey Khavryuchenko &lt;akh ... @gmail.com&gt; wrote:
+&gt;&gt;
+&gt;&gt; Then I've paused and wrote DbMock class for django that uses some black
+&gt;&gt; magic to steal django db connection and substitute it with temporary sqlite
+&gt;&gt; in-memory db.
+
+RK&gt; How is this different to the default Django behavior if you specify
+RK&gt; SQLite as your database? Can't you get exactly the same behavior by
+RK&gt; creating a test_settings.py file that contains:
+
+RK&gt; from settings import *
+RK&gt; DATABASE_BACKEND='sqlite'
+
+RK&gt; and then run:
+
+RK&gt; ./manage.py --settings=test_settings test
+
+RK&gt; ?
+
+Just replied on django-developers: I need database mock to speedup tests.
+Mocking them into in-memory sqlite was the simplest way to reach this w/o
+losing flexibility.
+
+--
+Andrey V Khavryuchenko
+Django NewGate - http://www.kds.com.ua/djiggit/
+Development - http://www.kds.com.ua
+Call akhavr1975 on www.gizmoproject.com
+</POST>
+<POST>
+<POSTER> Malcolm Tredinnick &lt;malc...@pointy-stick.com&gt; </POSTER>
+<POSTDATE> 2007-07-28T20:20:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sat, 2007-07-28 at 19:36 +0300, Andrey Khavryuchenko wrote:
+&gt; Russell,
+
+&gt;  RK&gt; On 7/27/07, Andrey Khavryuchenko &lt;akh ... @gmail.com&gt; wrote:
+
+&gt;  &gt;&gt; Then I've paused and wrote DbMock class for django that uses some black
+&gt;  &gt;&gt; magic to steal django db connection and substitute it with temporary sqlite
+&gt;  &gt;&gt; in-memory db.
+
+&gt;  RK&gt; How is this different to the default Django behavior if you specify
+&gt;  RK&gt; SQLite as your database? Can't you get exactly the same behavior by
+&gt;  RK&gt; creating a test_settings.py file that contains:
+
+&gt;  RK&gt; from settings import *
+&gt;  RK&gt; DATABASE_BACKEND='sqlite'
+
+&gt;  RK&gt; and then run:
+
+&gt;  RK&gt; ./manage.py --settings=test_settings test
+
+&gt;  RK&gt; ?
+
+&gt; Just replied on django-developers: I need database mock to speedup tests.
+&gt; Mocking them into in-memory sqlite was the simplest way to reach this w/o
+&gt; losing flexibility.
+">
+
+That isn't an answer to the question Russell asked, though. You can get
+exactly the same end-effect (using in-memory SQLite) if you specify
+SQLite as the database engine in the settings file you use for testing.
+Deriving your testing settings file from the main settings file is just
+a matter of importing and replacing the right variable.
+
+The advantage of specifying SQLite directly (and the drawback to trying
+to &quot;fake it&quot;) is that Django won't inadvertently use any MySQL- or
+PostgreSQL-specific SQL constructs under the covers when calling the
+database. There are places we consider the value of
+settings.DATABASE_ENGINE when constructing the SQL and we may leverage
+that more in the future.
+
+So what advantages are there to the mocking approach over just replacing
+the setting?
+
+Regards,
+Malcolm
+</POST>
+<POST>
+<POSTER> Andrey Khavryuchenko &lt;akh...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-29T05:14:00 </POSTDATE>
+Malcolm,
+
+MT&gt; That isn't an answer to the question Russell asked, though. You can get
+MT&gt; exactly the same end-effect (using in-memory SQLite) if you specify
+MT&gt; SQLite as the database engine in the settings file you use for testing.
+MT&gt; Deriving your testing settings file from the main settings file is just
+MT&gt; a matter of importing and replacing the right variable.
+
+MT&gt; The advantage of specifying SQLite directly (and the drawback to trying
+MT&gt; to &quot;fake it&quot;) is that Django won't inadvertently use any MySQL- or
+MT&gt; PostgreSQL-specific SQL constructs under the covers when calling the
+MT&gt; database. There are places we consider the value of
+MT&gt; settings.DATABASE_ENGINE when constructing the SQL and we may leverage
+MT&gt; that more in the future.
+
+MT&gt; So what advantages are there to the mocking approach over just replacing
+MT&gt; the setting?
+
+Ok, I'll be more wordy.
+
+I'm not using django's testing framework for several reasons:
+- I'm using django from 0.91 days and wasn't following django-users all
+this way
+- I use nose and twill for testing and they have no ready-to-use plugs
+into django testing (or I haven't been able to find it)
+
+Also simply overriding DATABASE_ENGINE to sqlite leads to problems.
+E.g. my code has
+profiles = models.User.objects.extra(where=[
+&quot;'%s'&quot; % identity_url + &quot;like concat(login, '%%')&quot;])
+But sqlite has no concat function and straightforward approach will lead to
+an exception.  Thus
+sqlite_conn.connection.create_function('concat', 2,
+lambda *args: ''.join(args))
+in DbMock setup.
+
+So, back to business..
+
+My intention was to speedup unit tests and make initial test data setup
+easier.  I am not proficient in django testing framework and couldn't
+utilize it with nosetests.  DbMock solves my issue.
+
+Sure, I may be wrong and the proper way is to write nose test runner
+and file patches that provide more mysql or postgresql compatability for
+testing.
+
+--
+Andrey V Khavryuchenko
+Django NewGate - http://www.kds.com.ua/djiggit/
+Development - http://www.kds.com.ua
+Call akhavr1975 on www.gizmoproject.com
+</POST>
+<POST>
+<POSTER> &quot;Russell Keith-Magee&quot; &lt;freakboy3...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-29T20:31:00 </POSTDATE>
+On 7/29/07, Andrey Khavryuchenko &lt;akh ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I'm not using django's testing framework for several reasons:
+&gt;  - I'm using django from 0.91 days and wasn't following django-users all
+&gt;    this way
+&gt;  - I use nose and twill for testing and they have no ready-to-use plugs
+&gt;    into django testing (or I haven't been able to find it)
+">
+
+There aren't any built-in mechanisms for supporting nose or twill
+tests. There are so many 'alternative' testing frameworks - we're not
+going to add support for every single one of them.
+
+However, it is very simple to add support for an external testing
+mechanism - this is one of the original design considerations. See the
+following for details:
+
+http://www.djangoproject.com/documentation/testing/#using-a-different...
+
+<QUOTE PREVIOUSPOST="
+&gt; But sqlite has no concat function and straightforward approach will lead to
+&gt; an exception.  Thus
+&gt;     sqlite_conn.connection.create_function('concat', 2,
+&gt;                                            lambda *args: ''.join(args))
+&gt; in DbMock setup.
+">
+
+This is a workaround required by your specific SQL requirements.
+Similar problems would exist if you used Postgres TSearch2 extensions
+in your queries, or any other DB-specific extension. It's not really
+Django's responsibility to normalize every possible SQL query across
+every possible backend.
+
+However, it probably is Django's responsibility to provide a generic
+hook so that you (as an end user) can add whatever normalizations your
+application may require. Any suggestions on how to approach this
+problem would be greatfully accepted.
+
+Yours,
+Russ Magee %-)
+</POST>
+<POST>
+<POSTER> &quot;Russell Keith-Magee&quot; &lt;freakboy3...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-29T20:39:00 </POSTDATE>
+On 7/29/07, Malcolm Tredinnick &lt;malc ... @pointy-stick.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; So what advantages are there to the mocking approach over just replacing
+&gt; the setting?
+">
+
+Genuine mocking (as opposed to this proposal) has one really big
+advantage - it's lightning fast. All the db-calls get faked using a
+cache-like setup, so it takes pretty much no time to run any db query.
+The cost comes in keeping the mock data source up to date.
+
+I've been mentally ruminating on adding a mock framework to speed up
+Django's tests, with some support framework to make generating the
+mock data easier. When my ideas have congealed a little bit, I might
+have some code to throw around. Watch this space.
+
+Yours,
+Russ Magee %-)
+</POST>
+<POST>
+<POSTER> Andrey Khavryuchenko &lt;akh...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-31T04:28:00 </POSTDATE>
+Russ,
+
+RK&gt; On 7/29/07, Malcolm Tredinnick &lt;malc ... @pointy-stick.com&gt; wrote:
+&gt;&gt;
+&gt;&gt; So what advantages are there to the mocking approach over just replacing
+&gt;&gt; the setting?
+
+RK&gt; Genuine mocking (as opposed to this proposal) has one really big
+RK&gt; advantage - it's lightning fast. All the db-calls get faked using a
+RK&gt; cache-like setup, so it takes pretty much no time to run any db query.
+RK&gt; The cost comes in keeping the mock data source up to date.
+
+I first thought on logging sql queries with result and feed them via mock.
+But the cost of supporting this in test-first development seems to high for
+me.  Having to think out everything down to sql level kills most
+development benefits of Django ORM for me.
+
+--
+Andrey V Khavryuchenko
+Django NewGate - http://www.kds.com.ua/djiggit/
+Development - http://www.kds.com.ua
+Call akhavr1975 on www.gizmoproject.com
+</POST>
+<POST>
+<POSTER> Andrey Khavryuchenko &lt;akh...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-31T06:44:00 </POSTDATE>
+Russ,
+
+RK&gt; On 7/29/07, Andrey Khavryuchenko &lt;akh ... @gmail.com&gt; wrote:
+&gt;&gt;
+&gt;&gt; I'm not using django's testing framework for several reasons:
+&gt;&gt; - I'm using django from 0.91 days and wasn't following django-users all
+&gt;&gt; this way
+&gt;&gt; - I use nose and twill for testing and they have no ready-to-use plugs
+&gt;&gt; into django testing (or I haven't been able to find it)
+
+RK&gt; There aren't any built-in mechanisms for supporting nose or twill
+RK&gt; tests. There are so many 'alternative' testing frameworks - we're not
+RK&gt; going to add support for every single one of them.
+
+I know and accept that.
+
+RK&gt; However, it is very simple to add support for an external testing
+RK&gt; mechanism - this is one of the original design considerations. See the
+RK&gt; following for details:
+
+RK&gt; http://www.djangoproject.com/documentation/testing/#using-a-different...
+
+I know that section exists.  When I mentioned 'ready-to-use plugs' above
+I've meant exactly these hooks.  Someday I'll write nosetests plugin.
+
+&gt;&gt; But sqlite has no concat function and straightforward approach will lead to
+&gt;&gt; an exception.  Thus
+&gt;&gt; sqlite_conn.connection.create_function('concat', 2,
+&gt;&gt;                                        lambda *args: ''.join(args))
+&gt;&gt; in DbMock setup.
+
+RK&gt; This is a workaround required by your specific SQL requirements.
+RK&gt; Similar problems would exist if you used Postgres TSearch2 extensions
+RK&gt; in your queries, or any other DB-specific extension. It's not really
+RK&gt; Django's responsibility to normalize every possible SQL query across
+RK&gt; every possible backend.
+
+I know.
+
+RK&gt; However, it probably is Django's responsibility to provide a generic
+RK&gt; hook so that you (as an end user) can add whatever normalizations your
+RK&gt; application may require. Any suggestions on how to approach this
+RK&gt; problem would be greatfully accepted.
+
+Well, if I'm using sqlite as a test db backend, I can add nearly any
+function I need in the manner described above.
+
+What other usecases might be?
+
+--
+Andrey V Khavryuchenko
+Django NewGate - http://www.kds.com.ua/djiggit/
+Development - http://www.kds.com.ua
+Call akhavr1975 on www.gizmoproject.com
+</POST>
+</TEXT>
+</BODY>
+</DOC>

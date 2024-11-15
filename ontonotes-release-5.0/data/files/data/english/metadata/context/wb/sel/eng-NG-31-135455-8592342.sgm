@@ -1,0 +1,869 @@
+<DOC>
+<DOCID> eng-NG-31-135455-8592342 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-25T20:00:00 </DATETIME>
+<BODY>
+<HEADLINE>
+what is /command directory?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Richard Lyons&quot; &lt;rich...@the-place.net&gt; </POSTER>
+<POSTDATE> 2007-08-25T20:00:00 </POSTDATE>
+I just noticed with a sinking feeling that my root partition is 96% full.
+I do wish I hadn't let the installer use LVM and choose its own sizes.
+Now I am stuck trying to work round its choices.  I also notice a number
+of directories I've never heard of before under root:
+command, package, service
+
+'service' contains a symlink to /etc/tinydns, left over from an attempt
+to install tinydns, I assume.  Is it likely the others also belong to
+tinydns, because if so I can delete them as it didn't run anyway.
+
+TIA
+--
+richard
+
+--
+To UNSUBSCRIBE, email to debian-user-REQU ... @lists.debian.org
+with a subject of &quot;unsubscribe&quot;. Trouble? Contact listmas ... @lists.debian.org
+</POST>
+<POST>
+<POSTER> Ron Johnson &lt;ron.l.john...@cox.net&gt; </POSTER>
+<POSTDATE> 2007-08-25T20:20:00 </POSTDATE>
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+On 08/25/07 18:52, Richard Lyons wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I just noticed with a sinking feeling that my root partition is 96% full.
+&gt; I do wish I hadn't let the installer use LVM and choose its own sizes.
+&gt; Now I am stuck trying to work round its choices.  I also notice a number
+&gt; of directories I've never heard of before under root:
+&gt;    command, package, service
+
+&gt; 'service' contains a symlink to /etc/tinydns, left over from an attempt
+&gt; to install tinydns, I assume.  Is it likely the others also belong to
+&gt; tinydns, because if so I can delete them as it didn't run anyway.
+">
+
+If /var is not in it's own partition, then &quot;apt-get autoclean&quot; will
+free up a lot of space.
+
+- --
+Ron Johnson, Jr.
+Jefferson LA  USA
+
+Give a man a fish, and he eats for a day.
+Hit him with a fish, and he goes away for good!
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.6 (GNU/Linux)
+
+iD8DBQFG0MXHS9HxQb37XmcRAtLmAKCKs4yJ9M1/dq3MYHjpUHETSVG57wCdG1oO
+0PTYkWFvcKH5hNG1hg0tABw=
+=+np0
+-----END PGP SIGNATURE-----
+
+--
+To UNSUBSCRIBE, email to debian-user-REQU ... @lists.debian.org
+with a subject of &quot;unsubscribe&quot;. Trouble? Contact listmas ... @lists.debian.org
+</POST>
+<POST>
+<POSTER> &quot;Douglas A. Tutty&quot; &lt;dtu...@porchlight.ca&gt; </POSTER>
+<POSTDATE> 2007-08-25T21:30:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sun, Aug 26, 2007 at 12:52:30AM +0100, Richard Lyons wrote:
+&gt; I just noticed with a sinking feeling that my root partition is 96% full.
+&gt; I do wish I hadn't let the installer use LVM and choose its own sizes.
+&gt; Now I am stuck trying to work round its choices.  I also notice a number
+&gt; of directories I've never heard of before under root:
+&gt;    command, package, service
+
+&gt; 'service' contains a symlink to /etc/tinydns, left over from an attempt
+&gt; to install tinydns, I assume.  Is it likely the others also belong to
+&gt; tinydns, because if so I can delete them as it didn't run anyway.
+">
+
+Are you saying that there are directories in /root that you didn't put
+there and you don't know what they are, or are you saying that there are
+/command, /package, /service directories (none of which are in the FHS).
+Try apt-file search (on a non-full system) to see to whom they belong.
+Otherwise, move them to somewhere safe (USB stick, floppy, another
+computer with scp or rsync, whatever)
+
+If you're using LVM, do you have any free space?
+
+Since we don't know your system,  send the output of:
+
+/bin/df -h
+(shows amount of free space on each partition)
+
+/sbin/pvdisplay
+(shows all your physical volumes used for LVM with amount of free
+extents).
+
+/usr/bin/du -c -h --max-depth=1 /*
+(shows the amount of space taken up by the top two directory levels;
+tells you where your space has gone.
+
+Also tell us what filesystem you're using.  If its ext2/3 it can be
+resized.  For example, since you're using LVM, if one LV has lots of
+free space while your / LV is full, if you have no free extents in
+/'s VG, you can reduce the oversize LV and its ext2/3 filesystem and
+extend /'s LV.
+
+Good luck,
+
+Doug.
+
+--
+To UNSUBSCRIBE, email to debian-user-REQU ... @lists.debian.org
+with a subject of &quot;unsubscribe&quot;. Trouble? Contact listmas ... @lists.debian.org
+</POST>
+<POST>
+<POSTER> &quot;Richard Lyons&quot; &lt;rich...@the-place.net&gt; </POSTER>
+<POSTDATE> 2007-08-26T06:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sun, August 26, 2007 01:13, Ron Johnson wrote:
+&gt; On 08/25/07 18:52, Richard Lyons wrote:
+&gt;&gt; I just noticed with a sinking feeling that my root partition is 96%
+&gt;&gt; full.
+[...]
+&gt; If /var is not in it's own partition, then &quot;apt-get autoclean&quot; will
+&gt; free up a lot of space.
+">
+
+Yes, thanks, I have done that, but in this case it doesn't help as
+/var is in a separate partition.
+
+--
+richard
+
+--
+To UNSUBSCRIBE, email to debian-user-REQU ... @lists.debian.org
+with a subject of &quot;unsubscribe&quot;. Trouble? Contact listmas ... @lists.debian.org
+</POST>
+<POST>
+<POSTER> &quot;Richard Lyons&quot; &lt;rich...@the-place.net&gt; </POSTER>
+<POSTDATE> 2007-08-26T07:30:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sun, August 26, 2007 02:24, Douglas A. Tutty wrote:
+&gt; On Sun, Aug 26, 2007 at 12:52:30AM +0100, Richard Lyons wrote:
+&gt;&gt; I just noticed with a sinking feeling that my root partition is 96% full.
+&gt;[...]
+&gt;&gt;  I also notice a number
+&gt;&gt; of directories I've never heard of before under root:
+&gt;&gt;    command, package, service
+
+&gt; Are you saying that there are directories in /root that you didn't put
+&gt; there and you don't know what they are, or are you saying that there are
+&gt; /command, /package, /service directories (none of which are in the FHS).
+">
+
+That was ambiguous, wasn't it!  The latter is correct -- and it was
+the fact that they don't belong there under FHS that jarred with me.
+
+Still, it was late and I was panicking rather unnecessarily.  After
+sleeping on it, I am tending to the view they must be from that tinydns
+episode.  I'm going to remove them on that assumption and see what
+happens.  I never persuaded tinydns to run, so it is no loss.
+
+<QUOTE PREVIOUSPOST="
+&gt; If you're using LVM, do you have any free space?
+">
+
+[...]
+$ df -h
+Filesystem         Dimens. Usati Disp. Uso% Montato su
+/dev/mapper/Debian-root
+259M  165M   81M  68% /
+tmpfs                 380M     0  380M   0% /lib/init/rw
+udev                   10M   84K   10M   1% /dev
+tmpfs                 380M     0  380M   0% /dev/shm
+/dev/hda1             228M   34M  182M  16% /boot
+/dev/mapper/Debian-home
+9,3G  4,6G  4,2G  53% /home
+/dev/mapper/Debian-tmp
+368M   11M  337M   4% /tmp
+/dev/mapper/Debian-usr
+4,7G  3,5G  1,1G  78% /usr
+/dev/mapper/Debian-var
+2,9G  901M  1,8G  33% /var
+
+(thanks for pointing out the -h flag, BTW.  Never noticed it before.
+But wouldn't it be great if there were an option to pad all sizes with
+initial zeros to allow piping through sort?)
+
+# pvdisplay
+--- Physical volume ---
+PV Name               /dev/hda6
+VG Name               Debian
+PV Size               17.69 GB / not usable 0
+Allocatable           yes (but full)
+PE Size (KByte)       4096
+Total PE              4529
+Free PE               0
+Allocated PE          4529
+PV UUID               w6yyO1-k5Zp-k9WF-ae0x-7s4X-5LgB-VAXmLd
+
+# du -c -h --max-depth=1 /
+12K     /lost+found
+30M     /boot
+4.5G    /home
+2.8M    /tmp
+3.4G    /usr
+836M    /var
+7.8M    /etc
+3.0K    /media
+3.3M    /bin
+183K    /dev
+136M    /lib
+620M    /mnt
+772M    /proc
+1.2M    /root
+3.1M    /sbin
+0       /sys
+1.0K    /srv
+1.0K    /initrd
+6.1G    /fot
+1.0K    /card
+2.7M    /lib64
+1.0K    /cam
+1.0K    /command
+1.0K    /service
+927K    /package
+17G     /
+17G     total
+
+I won't give you the output of '/usr/bin/du -c -h --max-depth=1 /*'
+as you requested because it runs to about 450 lines.
+
+Ignore the /fot (also non-FHS: it should of course be /media/fot, but
+I am lazy) directory listed here, as it is on a separate drive (I
+pruned it from the other output listings above), so the actual total
+for du should be about 10.9G.
+
+I kept the second disk for media -- photographs mainly --, but it looks
+as though I shall have to take a part of it in order to decant some
+other directory into it.
+
+The filesystem in every case is ext3.
+
+--
+richard
+
+--
+To UNSUBSCRIBE, email to debian-user-REQU ... @lists.debian.org
+with a subject of &quot;unsubscribe&quot;. Trouble? Contact listmas ... @lists.debian.org
+</POST>
+<POST>
+<POSTER> &quot;Douglas A. Tutty&quot; &lt;dtu...@porchlight.ca&gt; </POSTER>
+<POSTDATE> 2007-08-26T09:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sun, Aug 26, 2007 at 12:25:30PM +0100, Richard Lyons wrote:
+&gt; On Sun, August 26, 2007 02:24, Douglas A. Tutty wrote:
+&gt; &gt; On Sun, Aug 26, 2007 at 12:52:30AM +0100, Richard Lyons wrote:
+&gt; Still, it was late and I was panicking rather unnecessarily.  After
+&gt; sleeping on it, I am tending to the view they must be from that tinydns
+&gt; episode.  I'm going to remove them on that assumption and see what
+&gt; happens.  I never persuaded tinydns to run, so it is no loss.
+">
+
+Since tinydns doesn't appear to be a debian package, you got bitten by
+allowing a non-debian-package to use anything other than /home/,
+/usr/local/, /var/local/, and /etc/.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; If you're using LVM, do you have any free space?
+&gt; [...]
+&gt; $ df -h
+&gt; Filesystem         Dimens. Usati Disp. Uso% Montato su
+&gt; /dev/mapper/Debian-root
+&gt;                       259M  165M   81M  68% /
+&gt; /dev/hda1             228M   34M  182M  16% /boot
+&gt; /dev/mapper/Debian-home
+&gt;                       9,3G  4,6G  4,2G  53% /home
+&gt; /dev/mapper/Debian-tmp
+&gt;                       368M   11M  337M   4% /tmp
+&gt; /dev/mapper/Debian-usr
+&gt;                       4,7G  3,5G  1,1G  78% /usr
+&gt; /dev/mapper/Debian-var
+&gt;                       2,9G  901M  1,8G  33% /var
+">
+
+I don't see anything here to panic over.  If you want to give yourself
+some more room in /, you could put /tmp on tmpfs as long as you have
+enough swap already.  Then you could delete the LV tmp and reallocate
+its space to /.  Also, your /boot is too big but that's more difficult
+to change; not impossible.
+
+<QUOTE PREVIOUSPOST="
+&gt; # pvdisplay
+&gt;   --- Physical volume ---
+&gt;   PV Name               /dev/hda6
+&gt;   VG Name               Debian
+&gt;   Free PE               0
+&gt; I kept the second disk for media -- photographs mainly --, but it looks
+&gt; as though I shall have to take a part of it in order to decant some
+&gt; other directory into it.
+">
+
+If you don't need to access that media drive from other OSs, you can
+incorporate it into the main LVM system.  Assuming that those
+photographs are meant to be viewed by multiple users, you could put the
+directory under home.
+
+However, I don't see that your setup needs any tweaking right now.  / is
+at 68% with 81 MB free.  The only thing that should take up a lot of
+additional room there would be kernel modules for another kernel.  I'm
+guessing that you have two kernels installed; before you install
+another, remove the oldest one.
+
+Doug.
+
+--
+To UNSUBSCRIBE, email to debian-user-REQU ... @lists.debian.org
+with a subject of &quot;unsubscribe&quot;. Trouble? Contact listmas ... @lists.debian.org
+</POST>
+<POST>
+<POSTER> &quot;Richard Lyons&quot; &lt;rich...@the-place.net&gt; </POSTER>
+<POSTDATE> 2007-08-26T12:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sun, August 26, 2007 14:35, Douglas A. Tutty wrote:
+&gt; On Sun, Aug 26, 2007 at 12:25:30PM +0100, Richard Lyons wrote:
+&gt;&gt; On Sun, August 26, 2007 02:24, Douglas A. Tutty wrote:
+&gt;&gt; &gt; On Sun, Aug 26, 2007 at 12:52:30AM +0100, Richard Lyons wrote:
+[...]
+&gt;&gt; $ df -h
+&gt;&gt; Filesystem         Dimens. Usati Disp. Uso% Montato su
+&gt;&gt; /dev/mapper/Debian-root
+&gt;&gt;                       259M  165M   81M  68% /
+&gt;&gt; /dev/hda1             228M   34M  182M  16% /boot
+&gt;&gt; /dev/mapper/Debian-home
+&gt;&gt;                       9,3G  4,6G  4,2G  53% /home
+&gt;&gt; /dev/mapper/Debian-tmp
+&gt;&gt;                       368M   11M  337M   4% /tmp
+&gt;&gt; /dev/mapper/Debian-usr
+&gt;&gt;                       4,7G  3,5G  1,1G  78% /usr
+&gt;&gt; /dev/mapper/Debian-var
+&gt;&gt;                       2,9G  901M  1,8G  33% /var
+
+&gt; I don't see anything here to panic over.  If you want to give yourself
+&gt; some more room in /, you could put /tmp on tmpfs as long as you have
+&gt; enough swap already.  Then you could delete the LV tmp and reallocate
+&gt; its space to /.  Also, your /boot is too big but that's more difficult
+&gt; to change; not impossible.
+">
+
+I've just read the lvm howto and other stuff on 'Changing the Size of
+the LVM-Partitions' -- and I don't like the sound of it a bit.  Lots
+of talk of &quot;if something goes wrong&quot;, and very complicated. I think
+I'll go back to the old way as soon as I have energy to do the moving.
+There is room on my second hard drive to copy the whole system off,
+repartition the first drive, and copy it back.  With boot on a non-LVM
+partition, I assume it will all reboot quite happily afterwards. (Mental
+note: I must remember to remove everything lvm from /etc/rc*.d. before
+rebooting)
+
+[...]
+
+<QUOTE PREVIOUSPOST="
+&gt; However, I don't see that your setup needs any tweaking right now.  / is
+&gt; at 68% with 81 MB free.
+">
+
+True, that is after I moved /opt from / to /usr/local.  When I first
+stumbled on the issue, it was at 96%.
+
+Thanks for your help, Douglas.
+
+--
+richard
+
+--
+To UNSUBSCRIBE, email to debian-user-REQU ... @lists.debian.org
+with a subject of &quot;unsubscribe&quot;. Trouble? Contact listmas ... @lists.debian.org
+</POST>
+<POST>
+<POSTER> Cameron Hutchison &lt;li...@xdna.net&gt; </POSTER>
+<POSTDATE> 2007-08-26T19:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Richard Lyons&quot; &lt;rich ... @the-place.net&gt; wrote:
+&gt;&gt;&gt;  I also notice a number
+&gt;&gt;&gt; of directories I've never heard of before under root:
+&gt;&gt;&gt;    command, package, service
+&gt;Still, it was late and I was panicking rather unnecessarily.  After
+&gt;sleeping on it, I am tending to the view they must be from that tinydns
+&gt;episode.  I'm going to remove them on that assumption and see what
+&gt;happens.  I never persuaded tinydns to run, so it is no loss.
+">
+
+They will be from tinydns.
+
+The /command, /package and /service directories are what Dan Bernstein
+uses in his software (qmail, djbdns, daemontools, etc). If you dont have
+any of his software installed, you can safely remove these directories.
+
+DJB software typically has service installation software included and
+that creates those directories. The debian packages also include a -fhs
+variant that puts the files in FHS compliant places.
+
+--
+To UNSUBSCRIBE, email to debian-user-REQU ... @lists.debian.org
+with a subject of &quot;unsubscribe&quot;. Trouble? Contact listmas ... @lists.debian.org
+</POST>
+<POST>
+<POSTER> &quot;Douglas A. Tutty&quot; &lt;dtu...@porchlight.ca&gt; </POSTER>
+<POSTDATE> 2007-08-26T20:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sun, Aug 26, 2007 at 05:38:27PM +0100, Richard Lyons wrote:
+&gt; &gt; I don't see anything here to panic over.  If you want to give yourself
+&gt; &gt; some more room in /, you could put /tmp on tmpfs as long as you have
+&gt; &gt; enough swap already.  Then you could delete the LV tmp and reallocate
+&gt; &gt; its space to /.  Also, your /boot is too big but that's more difficult
+&gt; &gt; to change; not impossible.
+
+&gt; I've just read the lvm howto and other stuff on 'Changing the Size of
+&gt; the LVM-Partitions' -- and I don't like the sound of it a bit.  Lots
+&gt; of talk of &quot;if something goes wrong&quot;, and very complicated. I think
+&gt; I'll go back to the old way as soon as I have energy to do the moving.
+&gt; There is room on my second hard drive to copy the whole system off,
+&gt; repartition the first drive, and copy it back.  With boot on a non-LVM
+&gt; partition, I assume it will all reboot quite happily afterwards. (Mental
+&gt; note: I must remember to remove everything lvm from /etc/rc*.d. before
+&gt; rebooting)
+">
+
+Here there be dragons.  Remember that your initrd will be set up to
+start your LVM system so that it can find the root device for the
+kernel.  Since I've never had to tweak an initramfs it could get
+interesting.  So with / on LVM, lvm will be started before init even
+gets a chance to run anything in /etc/rc*.d.
+
+As for LVM being complicated and warnings of &quot;if something goes wrong&quot;,
+remember that you are dealing with your data on disk.  A HOWTO for any
+regular partitioner would also be full of warnings.  Be sober and well
+rested before you touch your partitions of whatever stripe (so to
+speak).  The other thing to remember is that things are layered.  You
+have files in filesystems on logical partitions in volume groups made up
+of one or more physical volumes.  The concept can be complicated but the
+design of those concepts is well tested in real-life use on many OSs.
+Linux implimentation of those concepts is somewhat newer but it does
+work.
+
+However, I do agree that from the user/admin's perspective it is
+complicated.  It offers many advantages to compensate for that.  The
+most obvious is that you do have at your fingertips the ability to tweak
+the sizes of your partitions which you would not have with normal
+partitions.
+
+Your choice.  Good luck.
+
+Doug.
+
+--
+To UNSUBSCRIBE, email to debian-user-REQU ... @lists.debian.org
+with a subject of &quot;unsubscribe&quot;. Trouble? Contact listmas ... @lists.debian.org
+</POST>
+<POST>
+<POSTER> &quot;Richard Lyons&quot; &lt;rich...@the-place.net&gt; </POSTER>
+<POSTDATE> 2007-08-27T02:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Mon, August 27, 2007 01:44, Douglas A. Tutty wrote:
+&gt; On Sun, Aug 26, 2007 at 05:38:27PM +0100, Richard Lyons wrote:
+
+[...]
+&gt;&gt; I've just read the lvm howto and other stuff on 'Changing the Size of
+&gt;&gt; the LVM-Partitions' -- and I don't like the sound of it a bit.  Lots
+&gt;&gt; of talk of &quot;if something goes wrong&quot;, and very complicated. I think
+&gt;&gt; I'll go back to the old way as soon as I have energy to do the moving.
+&gt;&gt; There is room on my second hard drive to copy the whole system off,
+&gt;&gt; repartition the first drive, and copy it back.  With boot on a non-LVM
+&gt;&gt; partition, I assume it will all reboot quite happily afterwards. (Mental
+&gt;&gt; note: I must remember to remove everything lvm from /etc/rc*.d. before
+&gt;&gt; rebooting)
+
+&gt; Here there be dragons.  Remember that your initrd will be set up to
+&gt; start your LVM system so that it can find the root device for the
+&gt; kernel.  Since I've never had to tweak an initramfs it could get
+&gt; interesting.  So with / on LVM, lvm will be started before init even
+&gt; gets a chance to run anything in /etc/rc*.d.
+">
+
+You are right of course.  I'll have to re-install from scratch in
+order to get a working initrd.  And then copy back the /home and /usr
+partitions and most of the / partition...
+
+Or just maybe there is a rescue boot on the netinstall disk which
+just maybe will allow me to create a new initrd...
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; As for LVM being complicated and warnings of &quot;if something goes wrong&quot;,
+&gt; remember that you are dealing with your data on disk.  A HOWTO for any
+&gt; regular partitioner would also be full of warnings.  Be sober and well
+&gt; rested before you touch your partitions of whatever stripe (so to
+&gt; speak).  The other thing to remember is that things are layered.  You
+&gt; have files in filesystems on logical partitions in volume groups made up
+&gt; of one or more physical volumes.  The concept can be complicated but the
+&gt; design of those concepts is well tested in real-life use on many OSs.
+&gt; Linux implimentation of those concepts is somewhat newer but it does
+&gt; work.
+
+&gt; However, I do agree that from the user/admin's perspective it is
+&gt; complicated.  It offers many advantages to compensate for that.  The
+&gt; most obvious is that you do have at your fingertips the ability to tweak
+&gt; the sizes of your partitions which you would not have with normal
+&gt; partitions.
+">
+
+I've always found it easy and quick with fdisk and parted.  But maybe
+the new way is easier than it looks in the documents.  Perhaps I should
+try first, just for the experience.
+
+Thanks.
+
+--
+richard
+
+--
+To UNSUBSCRIBE, email to debian-user-REQU ... @lists.debian.org
+with a subject of &quot;unsubscribe&quot;. Trouble? Contact listmas ... @lists.debian.org
+</POST>
+<POST>
+<POSTER> &quot;Douglas A. Tutty&quot; &lt;dtu...@porchlight.ca&gt; </POSTER>
+<POSTDATE> 2007-08-27T08:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Mon, Aug 27, 2007 at 07:34:15AM +0100, Richard Lyons wrote:
+&gt; On Mon, August 27, 2007 01:44, Douglas A. Tutty wrote:
+&gt; &gt; On Sun, Aug 26, 2007 at 05:38:27PM +0100, Richard Lyons wrote:
+&gt; &gt; Here there be dragons.  Remember that your initrd will be set up to
+&gt; &gt; start your LVM system so that it can find the root device for the
+&gt; &gt; kernel.  Since I've never had to tweak an initramfs it could get
+&gt; &gt; interesting.  So with / on LVM, lvm will be started before init even
+&gt; &gt; gets a chance to run anything in /etc/rc*.d.
+
+&gt; You are right of course.  I'll have to re-install from scratch in
+&gt; order to get a working initrd.  And then copy back the /home and /usr
+&gt; partitions and most of the / partition...
+
+&gt; Or just maybe there is a rescue boot on the netinstall disk which
+&gt; just maybe will allow me to create a new initrd...
+">
+
+The post-inst script of the kernel packages (and perhaps other packages)
+rebuilds the initrd.  Once you get things moved over to a non-lvm setup
+(on your spare drive), you could chroot to it from your working LVM
+setup, use aptitude to remove all the LVM packages, fix fstab, etc.
+Then run dpkg-reconfigure [kernel package name] and perhaps it would
+regenerate the initrd.  You could then add this non-lvm setup to the
+grub menu of the LVM setup.  This way you can test the new setup without
+killing the old one.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; As for LVM being complicated and warnings of &quot;if something goes wrong&quot;,
+&gt; &gt; remember that you are dealing with your data on disk.  A HOWTO for any
+&gt; &gt; regular partitioner would also be full of warnings.  Be sober and well
+&gt; &gt; rested before you touch your partitions of whatever stripe (so to
+&gt; &gt; speak).  The other thing to remember is that things are layered.  You
+&gt; &gt; have files in filesystems on logical partitions in volume groups made up
+&gt; &gt; of one or more physical volumes.  The concept can be complicated but the
+&gt; &gt; design of those concepts is well tested in real-life use on many OSs.
+&gt; &gt; Linux implimentation of those concepts is somewhat newer but it does
+&gt; &gt; work.
+
+&gt; &gt; However, I do agree that from the user/admin's perspective it is
+&gt; &gt; complicated.  It offers many advantages to compensate for that.  The
+&gt; &gt; most obvious is that you do have at your fingertips the ability to tweak
+&gt; &gt; the sizes of your partitions which you would not have with normal
+&gt; &gt; partitions.
+
+&gt; I've always found it easy and quick with fdisk and parted.  But maybe
+&gt; the new way is easier than it looks in the documents.  Perhaps I should
+&gt; try first, just for the experience.
+">
+
+Once you have a working non-LVM installation on the spare drive (which
+shouldn't take too long), go ahead an try the LVM resizing stuff.  Then
+decide which way you want to go and remove the one you don't want.
+
+For moving files from the old install to the new one, I've always had
+great luck with mc (midnight commander).  I used to do this a lot before
+I switched to LVM, what with hard disks dying, needing to change which
+drive was in which box, etc. (drives are cheap but I'm cheaper).
+
+Good luck.
+
+Doug.
+
+--
+To UNSUBSCRIBE, email to debian-user-REQU ... @lists.debian.org
+with a subject of &quot;unsubscribe&quot;. Trouble? Contact listmas ... @lists.debian.org
+</POST>
+<POST>
+<POSTER> David Brodbeck &lt;bro...@u.washington.edu&gt; </POSTER>
+<POSTDATE> 2007-08-27T12:10:00 </POSTDATE>
+On Aug 26, 2007, at 5:44 PM, Douglas A. Tutty wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; However, I do agree that from the user/admin's perspective it is
+&gt; complicated.  It offers many advantages to compensate for that.  The
+&gt; most obvious is that you do have at your fingertips the ability to
+&gt; tweak
+&gt; the sizes of your partitions which you would not have with normal
+&gt; partitions.
+">
+
+Although this has its pitfalls, too.
+
+Growing a logical volume is easy -- you enlarge it, then let the
+filesystem's resizing tool figure out the new device size.
+
+Shrinking a logical volume, though...that's full of pitfalls.  I've
+gotten bitten repeatedly by the fact that resize2fs and LVM's tools
+apparently don't do math the same way when calculating sizes,
+especially if you use human-readable units.  I now avoid shrinking
+logical volumes unless I have an automated tool to do it for me,
+because I have never found a safe way to do it manually.
+
+--
+To UNSUBSCRIBE, email to debian-user-REQU ... @lists.debian.org
+with a subject of &quot;unsubscribe&quot;. Trouble? Contact listmas ... @lists.debian.org
+</POST>
+<POST>
+<POSTER> &quot;Richard Lyons&quot; &lt;rich...@the-place.net&gt; </POSTER>
+<POSTDATE> 2007-08-27T12:30:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Mon, August 27, 2007 13:30, Douglas A. Tutty wrote:
+&gt; On Mon, Aug 27, 2007 at 07:34:15AM +0100, Richard Lyons wrote:
+&gt;&gt; On Mon, August 27, 2007 01:44, Douglas A. Tutty wrote:
+
+&gt;&gt; &gt; Here there be dragons.  Remember that your initrd will be set up to
+&gt;&gt; &gt; start your LVM system so that it can find the root device for the
+&gt;&gt; &gt; kernel.  Since I've never had to tweak an initramfs it could get
+&gt;&gt; &gt; interesting.  So with / on LVM, lvm will be started before init even
+&gt;&gt; &gt; gets a chance to run anything in /etc/rc*.d.
+
+&gt;&gt; You are right of course.  I'll have to re-install from scratch in
+&gt;&gt; order to get a working initrd.  And then copy back the /home and /usr
+&gt;&gt; partitions and most of the / partition...
+
+&gt;&gt; Or just maybe there is a rescue boot on the netinstall disk which
+&gt;&gt; just maybe will allow me to create a new initrd...
+
+&gt; The post-inst script of the kernel packages (and perhaps other packages)
+&gt; rebuilds the initrd.  Once you get things moved over to a non-lvm setup
+&gt; (on your spare drive), you could chroot to it from your working LVM
+&gt; setup, use aptitude to remove all the LVM packages, fix fstab, etc.
+&gt; Then run dpkg-reconfigure [kernel package name] and perhaps it would
+&gt; regenerate the initrd.  You could then add this non-lvm setup to the
+&gt; grub menu of the LVM setup.  This way you can test the new setup without
+&gt; killing the old one.
+
+[...]
+
+&gt; Once you have a working non-LVM installation on the spare drive (which
+&gt; shouldn't take too long), go ahead an try the LVM resizing stuff.  Then
+&gt; decide which way you want to go and remove the one you don't want.
+">
+
+Good plan.  Thanks for clearing my head about that.  It is so much
+easier when someone else lays it out...
+
+<QUOTE PREVIOUSPOST="
+&gt; For moving files from the old install to the new one, I've always had
+&gt; great luck with mc (midnight commander).  I used to do this a lot before
+&gt; I switched to LVM, what with hard disks dying, needing to change which
+&gt; drive was in which box, etc. (drives are cheap but I'm cheaper).
+">
+
+Yes, I like mc, but usually use good old cp -a or rsync for this kind
+of exercise.
+
+--
+richard
+
+--
+To UNSUBSCRIBE, email to debian-user-REQU ... @lists.debian.org
+with a subject of &quot;unsubscribe&quot;. Trouble? Contact listmas ... @lists.debian.org
+</POST>
+<POST>
+<POSTER> Richard Hector &lt;rich...@walnut.gen.nz&gt; </POSTER>
+<POSTDATE> 2007-08-27T21:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Mon, 2007-08-27 at 09:02 -0700, David Brodbeck wrote:
+&gt; Shrinking a logical volume, though...that's full of pitfalls.  I've
+&gt; gotten bitten repeatedly by the fact that resize2fs and LVM's tools
+&gt; apparently don't do math the same way when calculating sizes,
+&gt; especially if you use human-readable units.  I now avoid shrinking
+&gt; logical volumes unless I have an automated tool to do it for me,
+&gt; because I have never found a safe way to do it manually.
+">
+
+The way I was told to do it, and which seems to work ok:
+
+1. Shrink the fs to significantly smaller than the final desired size
+2. Shrink the LV to the desired size
+3. Grow the fs to fill the LV
+
+I guess that could be a problem if the desired size is very close to the
+amount of data already in the filesystem, but other than that it seems
+to work.
+
+Richard
+
+--
+To UNSUBSCRIBE, email to debian-user-REQU ... @lists.debian.org
+with a subject of &quot;unsubscribe&quot;. Trouble? Contact listmas ... @lists.debian.org
+</POST>
+<POST>
+<POSTER> Mark Neidorff &lt;m...@neidorff.com&gt; </POSTER>
+<POSTDATE> 2007-08-30T06:10:00 </POSTDATE>
+On Saturday 25 August 2007 07:52 pm, Richard Lyons wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I just noticed with a sinking feeling that my root partition is 96% full.
+&gt; I do wish I hadn't let the installer use LVM and choose its own sizes.
+&gt; Now I am stuck trying to work round its choices.  I also notice a number
+&gt; of directories I've never heard of before under root:
+&gt;    command, package, service
+
+&gt; 'service' contains a symlink to /etc/tinydns, left over from an attempt
+&gt; to install tinydns, I assume.  Is it likely the others also belong to
+&gt; tinydns, because if so I can delete them as it didn't run anyway.
+
+&gt; TIA
+&gt; --
+&gt; richard
+">
+
+On my system, /service and /command are each 4k since they only contain
+links.  /package is 1.8M.
+Check yours from a terminal (as root) with:
+#du -h /command
+#du -h /service
+#du -h /package
+These directories belong to the DJB series of packages, so if you are not
+using tinydns, you can remove them, but you will be saving very little space.
+
+Mark
+
+--
+To UNSUBSCRIBE, email to debian-user-REQU ... @lists.debian.org
+with a subject of &quot;unsubscribe&quot;. Trouble? Contact listmas ... @lists.debian.org
+</POST>
+<POST>
+<POSTER> Richard Lyons &lt;rich...@the-place.net&gt; </POSTER>
+<POSTDATE> 2007-08-30T06:30:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Thu, Aug 30, 2007 at 05:58:13AM -0400, Mark Neidorff wrote:
+&gt; On Saturday 25 August 2007 07:52 pm, Richard Lyons wrote:
+&gt; &gt; I just noticed with a sinking feeling that my root partition is 96% full.
+&gt; &gt; I do wish I hadn't let the installer use LVM and choose its own sizes.
+&gt; &gt; Now I am stuck trying to work round its choices.  I also notice a number
+&gt; &gt; of directories I've never heard of before under root:
+&gt; &gt;    command, package, service
+
+&gt; &gt; 'service' contains a symlink to /etc/tinydns, left over from an attempt
+&gt; &gt; to install tinydns, I assume.  Is it likely the others also belong to
+&gt; &gt; tinydns, because if so I can delete them as it didn't run anyway.
+
+&gt; &gt; TIA
+&gt; &gt; --
+&gt; &gt; richard
+
+&gt; On my system, /service and /command are each 4k since they only contain
+&gt; links.  /package is 1.8M.
+&gt; Check yours from a terminal (as root) with:
+&gt; #du -h /command
+&gt; #du -h /service
+&gt; #du -h /package
+&gt; These directories belong to the DJB series of packages, so if you are not
+&gt; using tinydns, you can remove them, but you will be saving very little space.
+">
+
+Thanks Mark.  I have now removed them -- and a stack of symlinks to them
+in /usr/bin /usr/local/bin and so on.  And then I remembered I had to
+purge package djbinstaller as well!  Pity it never worked though --
+people who use tinydns speak well of it.
+
+No, you are right, it saves little space, but it does tidy things up and
+remove some non FHS directories.
+
+--
+richard
+
+--
+To UNSUBSCRIBE, email to debian-user-REQU ... @lists.debian.org
+with a subject of &quot;unsubscribe&quot;. Trouble? Contact listmas ... @lists.debian.org
+</POST>
+<POST>
+<POSTER> Chris Bannister &lt;mockingb...@earthlight.co.nz&gt; </POSTER>
+<POSTDATE> 2007-09-09T06:40:00 </POSTDATE>
+[ Sorry this is a late posting, haven't been reading much mail lately,
+but ...
+
+I noticed I had the same /command directory, ... so
+
+dpkg -S /command
+daemontools
+(pulled in by 'djbdns-installer')
+
+a 'dpkg --purge daemontools' got rid of the '/command /service and
+/package' directories.
+
+[ nothing new below ]
+
+<QUOTE PREVIOUSPOST="
+On Thu, Aug 30, 2007 at 11:27:26AM +0100, Richard Lyons wrote:
+&gt; On Thu, Aug 30, 2007 at 05:58:13AM -0400, Mark Neidorff wrote:
+
+&gt; &gt; On Saturday 25 August 2007 07:52 pm, Richard Lyons wrote:
+&gt; &gt; &gt; I just noticed with a sinking feeling that my root partition is 96% full.
+&gt; &gt; &gt; I do wish I hadn't let the installer use LVM and choose its own sizes.
+&gt; &gt; &gt; Now I am stuck trying to work round its choices.  I also notice a number
+&gt; &gt; &gt; of directories I've never heard of before under root:
+&gt; &gt; &gt;    command, package, service
+
+&gt; &gt; &gt; 'service' contains a symlink to /etc/tinydns, left over from an attempt
+&gt; &gt; &gt; to install tinydns, I assume.  Is it likely the others also belong to
+&gt; &gt; &gt; tinydns, because if so I can delete them as it didn't run anyway.
+
+&gt; &gt; &gt; TIA
+&gt; &gt; &gt; --
+&gt; &gt; &gt; richard
+
+&gt; &gt; On my system, /service and /command are each 4k since they only contain
+&gt; &gt; links.  /package is 1.8M.
+&gt; &gt; Check yours from a terminal (as root) with:
+&gt; &gt; #du -h /command
+&gt; &gt; #du -h /service
+&gt; &gt; #du -h /package
+&gt; &gt; These directories belong to the DJB series of packages, so if you are not
+&gt; &gt; using tinydns, you can remove them, but you will be saving very little space.
+
+&gt; Thanks Mark.  I have now removed them -- and a stack of symlinks to them
+&gt; in /usr/bin /usr/local/bin and so on.  And then I remembered I had to
+&gt; purge package djbinstaller as well!  Pity it never worked though --
+&gt; people who use tinydns speak well of it.
+
+&gt; No, you are right, it saves little space, but it does tidy things up and
+&gt; remove some non FHS directories.
+">
+
+--
+To UNSUBSCRIBE, email to debian-user-REQU ... @lists.debian.org
+with a subject of &quot;unsubscribe&quot;. Trouble? Contact listmas ... @lists.debian.org
+</POST>
+</TEXT>
+</BODY>
+</DOC>

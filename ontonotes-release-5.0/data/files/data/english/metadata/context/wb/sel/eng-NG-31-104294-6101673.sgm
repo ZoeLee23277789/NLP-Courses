@@ -1,0 +1,183 @@
+<DOC>
+<DOCID> eng-NG-31-104294-6101673 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-02-24T17:08:00 </DATETIME>
+<BODY>
+<HEADLINE>
+b has no properties
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> "mikesamar" &lt;m...@reumer.net&gt; </POSTER>
+<POSTDATE> 2007-02-24T17:08:00 </POSTDATE>
+This is the link for the page with the example: http://tech.reumer.net/Route/route.html .
+On this page you can make a route on a map.
+
+I have two problems:
+* If you move a marker the cursor stays not on the marker but moves
+faster and away of the marker you drag.
+* If you move over a marker and the infowindow opens and close then
+after about 20-25 there is an error b has no properties
+http://maps.google.com/mapfiles/maps2.75.api.js line: 131.
+This problem is also in other version of the api.
+
+How can I solve both problems?
+
+Best regards Mike
+</POST>
+<POST>
+<POSTER> "Barry Hunter" &lt;barrybhun...@googlemail.com&gt; </POSTER>
+<POSTDATE> 2007-02-24T17:31:00 </POSTDATE>
+for 1) notice that the map is always moving the dragged marker to the center
+of the screen.
+I think it is because you have the
+
+route.showRoute(center);
+
+inside your drag function, that recenters the map, which almost certainly
+confuses things. I can think of no reason to recenter the map during a drag
+(and the API probably doesnt expect the map to be recentering during a drag)
+.
+
+as for 2), what browser are you using? I don't see anything in the Firefox
+console (other than complaints about you css)
+
+On 2/24/07, mikesamar &lt;m ... @reumer.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; This is the link for the page with the example:
+&gt; http://tech.reumer.net/Route/route.html .
+&gt; On this page you can make a route on a map.
+
+&gt; I have two problems:
+&gt; * If you move a marker the cursor stays not on the marker but moves
+&gt; faster and away of the marker you drag.
+&gt; * If you move over a marker and the infowindow opens and close then
+&gt; after about 20-25 there is an error b has no properties
+&gt; http://maps.google.com/mapfiles/maps2.75.api.js line: 131.
+&gt; This problem is also in other version of the api.
+
+&gt; How can I solve both problems?
+
+&gt; Best regards Mike
+">
+
+--
+Barry
+
+- www.nearby.org.uk - www.geograph.org.uk -
+</POST>
+<POST>
+<POSTER> "mikesamar" &lt;m...@reumer.net&gt; </POSTER>
+<POSTDATE> 2007-02-25T04:57:00 </POSTDATE>
+Thanks Barry
+
+<QUOTE PREVIOUSPOST="
+&gt; for 1) notice that the map is always moving the dragged marker to the center
+&gt; of the screen.
+&gt;  I think it is because you have the
+
+&gt; route.showRoute(center);
+">
+
+This was the problem. I remove the center and the cursor stays with
+the marker when dragging.
+
+<QUOTE PREVIOUSPOST="
+&gt; as for 2), what browser are you using? I don't see anything in the Firefox
+&gt; console (other than complaints about you css)
+">
+
+I'm using FF2.0.
+The problem occurs if you do a lot of moveover/mouseout of the marker
+on the edge of a marker so it goes fast open/close.
+Then the error shows in the console.
+
+Cheers Mike
+</POST>
+<POST>
+<POSTER> "mikesamar" &lt;m...@reumer.net&gt; </POSTER>
+<POSTDATE> 2007-02-25T11:50:00 </POSTDATE>
+For 2) b has no properties:
+
+I've made the chance it occurs lower by making a correct
+Gicon.imageMap and set the point for the infoWindowAnchor outside the
+clickable image. Then the infowindow won't flicker.
+
+But if I open/close on a marker the infowindow about 25-30 times the
+error "b has no properties" still occurs.
+
+Anybody an idea?
+
+Mike
+</POST>
+<POST>
+<POSTER> "warden" &lt;andrew.leac...@googlemail.com&gt; </POSTER>
+<POSTDATE> 2007-02-25T19:18:00 </POSTDATE>
+On Feb 25, 4:50 pm, "mikesamar" &lt;m ... @reumer.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; But if I open/close on a marker the infowindow about 25-30 times the
+&gt; error &quot;b has no properties&quot; still occurs.
+
+&gt; Anybody an idea?
+">
+
+I tried this. I don't think it's a function of the number of times.
+Computer code is computer code: given the same input conditions it
+will always behave the same way. So if something is causing an error
+after 25 identical operations, there must be something else occurring
+as well as the operations you're counting.
+
+On one occasion I managed to get an error first time, and then it
+occurred every time after that. In IE, I never produced an error (and
+I have the Script Debugger, so it should have been flagged if there
+was one).
+
+I have a feeling that the error happens when the mouseout event is
+triggered (closing the infoWindow) before the mouseover event (opening
+the infoWindow) has been completely dealt with. Once that error has
+occurred, "b" is never again given any properties and always produces
+the error.
+
+Just my two-penn'orth. I've no concrete evidence for that feeling as
+debugging the API is difficult at the best of times, let alone with an
+error which is difficult to reproduce.
+
+Actually, I find the idea of infoWindow-on-mouseover difficult to use.
+If opening the infoWindow scrolls the map, as it does on occasion,
+then the marker is moved out from under the cursor and the infoWindow
+is promptly closed. Not very usable!
+
+Andrew
+</POST>
+<POST>
+<POSTER> "mikesamar" &lt;m...@reumer.net&gt; </POSTER>
+<POSTDATE> 2007-02-26T14:46:00 </POSTDATE>
+Andrew, thanks for your explaination.
+
+Strange that IE doesn't have the problem and FF has this problem.
+
+Your remark on the use of the mouseover and mouseout is a good one.
+Maybe a mouseout is not a great option. I'll think about a solution to
+prevent that the close infowindow will start when the open infowindow
+is running and the otherway around. And set a time for a specific time
+before it may close.
+
+If that's not a solution I'll remove the mouseout or let it work the
+normal way witha click.
+
+Mike
+</POST>
+<POST>
+<POSTER> "mikesamar" &lt;m...@reumer.net&gt; </POSTER>
+<POSTDATE> 2007-03-04T16:40:00 </POSTDATE>
+The url isn't valid anymore.
+
+Problem not solved but no reactions anymore.
+
+Mike
+</POST>
+</TEXT>
+</BODY>
+</DOC>

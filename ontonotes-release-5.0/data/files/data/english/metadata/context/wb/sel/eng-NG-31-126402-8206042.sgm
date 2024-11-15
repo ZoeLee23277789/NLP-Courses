@@ -1,0 +1,1339 @@
+<DOC>
+<DOCID> eng-NG-31-126402-8206042 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-07-06T19:13:00 </DATETIME>
+<BODY>
+<HEADLINE>
+validating a group of variables
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Robert Valcourt&quot; &lt;webmas...@know.spam.customfitonline.com&gt; </POSTER>
+<POSTDATE> 2007-07-06T19:13:00 </POSTDATE>
+Hello,
+
+We have been suffering much lately from users abusing our Website forms with
+Spam. I have evaluated most of the spam submissions and im trying to modify
+my custom form-to-email perl processor to check for common spam submission
+and reject them. While this is not hard, im trying to streamline the scripts
+efficiency. Below is an example:
+
+#!/usr/bin/perl
+
+use lib '/usr/local/psa/home/vhosts/mybizdomain.com/cgi-bin/lib/';
+use CGI qw(:standard);
+use CGI::Carp qw(fatalsToBrowser);
+use Mail::Sendmail;
+use strict;
+
+my $fullname = param('fullname');
+my $emailaddy = param('emailaddy');
+my $phone = param('phone');
+my $company = param('company');
+my $website = param('website');
+my $completion = param('completion');
+
+spamattempt() if $fullname =~ /viagra/i;
+spamattempt() if $emailaddy =~ /viagra/i;
+spamattempt() if $phone =~ /viagra/i;
+spamattempt() if $fullname =~ /\@/;
+
+The real script is much longer but you get the idea. Its checking each
+defined variable for a spam match and then performing the spamattempt
+subroutine if matched. I would like to know if there is a way to check ALL
+variables against a single match. See example (not real perl cod):
+
+spamattempt() if $ANYVARIBALE =~ /viagra/i;
+
+I know I could assign all variables into an array and then cycle them trough
+a foreach but im not sure that would be any more efficient.
+
+I think the best way to do this would be to have the script check all
+submitted queries before they are assigned to variables. By this is mean
+before I start assigning param('fullname') to $fullname, there would be a
+way to check any and all params submitted before assignment. I have a hunch
+this can be done but I wouldn't know where to start.
+
+Or maybe i'm approaching this wrong completely, and in that case I would
+love to hear your thoughts.
+
+Many Thanx
+
+Robert
+</POST>
+<POST>
+<POSTER> it_says_BALLS_on_your_forehead &lt;simon.c...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-06T19:53:00 </POSTDATE>
+On Jul 6, 7:13 pm, &quot;Robert Valcourt&quot;
+
+<QUOTE PREVIOUSPOST="
+&lt;webmas ... @know.spam.customfitonline.com&gt; wrote:
+&gt; Hello,
+
+&gt; We have been suffering much lately from users abusing our Website forms with
+&gt; Spam. I have evaluated most of the spam submissions and im trying to modify
+&gt; my custom form-to-email perl processor to check for common spam submission
+&gt; and reject them. While this is not hard, im trying to streamline the scripts
+&gt; efficiency. Below is an example:
+
+&gt; #!/usr/bin/perl
+
+&gt; use lib '/usr/local/psa/home/vhosts/mybizdomain.com/cgi-bin/lib/';
+&gt; use CGI qw(:standard);
+&gt; use CGI::Carp qw(fatalsToBrowser);
+&gt; use Mail::Sendmail;
+&gt; use strict;
+
+&gt; my $fullname = param('fullname');
+&gt; my $emailaddy = param('emailaddy');
+&gt; my $phone = param('phone');
+&gt; my $company = param('company');
+&gt; my $website = param('website');
+&gt; my $completion = param('completion');
+
+&gt; spamattempt() if $fullname =~ /viagra/i;
+&gt; spamattempt() if $emailaddy =~ /viagra/i;
+&gt; spamattempt() if $phone =~ /viagra/i;
+&gt; spamattempt() if $fullname =~ /\@/;
+
+&gt; The real script is much longer but you get the idea. Its checking each
+&gt; defined variable for a spam match and then performing the spamattempt
+&gt; subroutine if matched. I would like to know if there is a way to check ALL
+&gt; variables against a single match. See example (not real perl cod):
+
+&gt; spamattempt() if $ANYVARIBALE =~ /viagra/i;
+
+&gt; I know I could assign all variables into an array and then cycle them trough
+&gt; a foreach but im not sure that would be any more efficient.
+
+&gt; I think the best way to do this would be to have the script check all
+&gt; submitted queries before they are assigned to variables. By this is mean
+&gt; before I start assigning param('fullname') to $fullname, there would be a
+&gt; way to check any and all params submitted before assignment. I have a hunch
+&gt; this can be done but I wouldn't know where to start.
+
+&gt; Or maybe i'm approaching this wrong completely, and in that case I would
+&gt; love to hear your thoughts.
+
+&gt; Many Thanx
+
+&gt; Robert
+">
+
+use CGI ':cgi-lib';
+$params = Vars;
+
+Many people want to fetch the entire parameter list as a hash in which
+the keys are the names of the CGI parameters, and the values are the
+parameters' values. The Vars() method does this. Called in a scalar
+context, it returns the parameter list as a tied hash reference.
+Changing a key changes the value of the parameter in the underlying
+CGI parameter list. Called in a list context, it returns the parameter
+list as an ordinary hash. This allows you to read the contents of the
+parameter list, but not to change it.
+
+When using this, the thing you must watch out for are multivalued CGI
+parameters. Because a hash cannot distinguish between scalar and list
+context, multivalued parameters will be returned as a packed string,
+separated by the &quot;\0&quot; (null) character. You must split this packed
+string in order to get at the individual values. This is the
+convention introduced long ago by Steve Brenner in his cgi-lib.pl
+module for Perl version 4.
+
+If you wish to use Vars() as a function, import the :cgi-lib set of
+function calls (also see the section on CGI-LIB compatibility).
+</POST>
+<POST>
+<POSTER> it_says_BALLS_on_your_forehead &lt;simon.c...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-06T19:55:00 </POSTDATE>
+On Jul 6, 7:53 pm, it_says_BALLS_on_your_forehead
+
+<QUOTE PREVIOUSPOST="
+&lt;simon.c ... @gmail.com&gt; wrote:
+&gt; On Jul 6, 7:13 pm, &quot;Robert Valcourt&quot;
+
+&gt; &lt;webmas ... @know.spam.customfitonline.com&gt; wrote:
+&gt; &gt; Hello,
+
+&gt; &gt; We have been suffering much lately from users abusing our Website forms with
+&gt; &gt; Spam. I have evaluated most of the spam submissions and im trying to modify
+&gt; &gt; my custom form-to-email perl processor to check for common spam submission
+&gt; &gt; and reject them. While this is not hard, im trying to streamline the scripts
+&gt; &gt; efficiency. Below is an example:
+
+&gt; &gt; #!/usr/bin/perl
+
+&gt; &gt; use lib '/usr/local/psa/home/vhosts/mybizdomain.com/cgi-bin/lib/';
+&gt; &gt; use CGI qw(:standard);
+&gt; &gt; use CGI::Carp qw(fatalsToBrowser);
+&gt; &gt; use Mail::Sendmail;
+&gt; &gt; use strict;
+
+&gt; &gt; my $fullname = param('fullname');
+&gt; &gt; my $emailaddy = param('emailaddy');
+&gt; &gt; my $phone = param('phone');
+&gt; &gt; my $company = param('company');
+&gt; &gt; my $website = param('website');
+&gt; &gt; my $completion = param('completion');
+
+&gt; &gt; spamattempt() if $fullname =~ /viagra/i;
+&gt; &gt; spamattempt() if $emailaddy =~ /viagra/i;
+&gt; &gt; spamattempt() if $phone =~ /viagra/i;
+&gt; &gt; spamattempt() if $fullname =~ /\@/;
+
+&gt; &gt; The real script is much longer but you get the idea. Its checking each
+&gt; &gt; defined variable for a spam match and then performing the spamattempt
+&gt; &gt; subroutine if matched. I would like to know if there is a way to check ALL
+&gt; &gt; variables against a single match. See example (not real perl cod):
+
+&gt; &gt; spamattempt() if $ANYVARIBALE =~ /viagra/i;
+
+&gt; &gt; I know I could assign all variables into an array and then cycle them trough
+&gt; &gt; a foreach but im not sure that would be any more efficient.
+
+&gt; &gt; I think the best way to do this would be to have the script check all
+&gt; &gt; submitted queries before they are assigned to variables. By this is mean
+&gt; &gt; before I start assigning param('fullname') to $fullname, there would be a
+&gt; &gt; way to check any and all params submitted before assignment. I have a hunch
+&gt; &gt; this can be done but I wouldn't know where to start.
+
+&gt; &gt; Or maybe i'm approaching this wrong completely, and in that case I would
+&gt; &gt; love to hear your thoughts.
+
+&gt; &gt; Many Thanx
+
+&gt; &gt; Robert
+
+&gt;  use CGI ':cgi-lib';
+&gt;     $params = Vars;
+
+&gt; Many people want to fetch the entire parameter list as a hash in which
+&gt; the keys are the names of the CGI parameters, and the values are the
+&gt; parameters' values. The Vars() method does this. Called in a scalar
+&gt; context, it returns the parameter list as a tied hash reference.
+&gt; Changing a key changes the value of the parameter in the underlying
+&gt; CGI parameter list. Called in a list context, it returns the parameter
+&gt; list as an ordinary hash. This allows you to read the contents of the
+&gt; parameter list, but not to change it.
+
+&gt; When using this, the thing you must watch out for are multivalued CGI
+&gt; parameters. Because a hash cannot distinguish between scalar and list
+&gt; context, multivalued parameters will be returned as a packed string,
+&gt; separated by the &quot;\0&quot; (null) character. You must split this packed
+&gt; string in order to get at the individual values. This is the
+&gt; convention introduced long ago by Steve Brenner in his cgi-lib.pl
+&gt; module for Perl version 4.
+
+&gt; If you wish to use Vars() as a function, import the :cgi-lib set of
+&gt; function calls (also see the section on CGI-LIB compatibility).
+">
+
+FYI, the above info can be found on CPAN at:
+http://search.cpan.org/~lds/CGI.pm-3.29/CGI.pm
+</POST>
+<POST>
+<POSTER> Tad McClellan &lt;ta...@seesig.invalid&gt; </POSTER>
+<POSTDATE> 2007-07-06T20:39:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Robert Valcourt &lt;webmas ... @know.spam.customfitonline.com&gt; wrote:
+&gt; We have been suffering much lately from users abusing our Website forms with
+&gt; Spam.
+">
+
+Right behind the spammers are...
+
+<QUOTE PREVIOUSPOST="
+&gt; #!/usr/bin/perl
+&gt; my $fullname = param('fullname');
+">
+
+... the crackers!
+
+You should never write a program that processes form input
+without turning on taint checking.
+
+perldoc perlsec
+
+<QUOTE PREVIOUSPOST="
+&gt; spamattempt() if $fullname =~ /viagra/i;
+&gt; spamattempt() if $emailaddy =~ /viagra/i;
+&gt; spamattempt() if $phone =~ /viagra/i;
+&gt; I would like to know if there is a way to check ALL
+&gt; variables against a single match. See example (not real perl cod):
+
+&gt; spamattempt() if $ANYVARIBALE =~ /viagra/i;
+">
+
+spamattempt() if &quot;$fullname $emailaddy $phone&quot; =~ /viagra/i;
+
+<QUOTE PREVIOUSPOST="
+&gt; I think the best way to do this would be to have the script check all
+&gt; submitted queries before they are assigned to variables. By this is mean
+&gt; before I start assigning param('fullname') to $fullname,
+">
+
+spamattempt() if param('fullname')
+. param('emailaddy')
+. param('phone') =~ /viagra/i;
+
+--
+Tad McClellan
+email: perl -le &quot;print scalar reverse qq/moc.noitatibaher\100cmdat/&quot;
+</POST>
+<POST>
+<POSTER> Xicheng Jia &lt;xich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-06T21:09:00 </POSTDATE>
+On Jul 6, 7:13 pm, &quot;Robert Valcourt&quot;
+
+<QUOTE PREVIOUSPOST="
+&lt;webmas ... @know.spam.customfitonline.com&gt; wrote:
+&gt; Hello,
+
+&gt; We have been suffering much lately from users abusing our Website forms with
+&gt; Spam. I have evaluated most of the spam submissions and im trying to modify
+&gt; my custom form-to-email perl processor to check for common spam submission
+&gt; and reject them. While this is not hard, im trying to streamline the scripts
+&gt; efficiency. Below is an example:
+
+&gt; #!/usr/bin/perl
+
+&gt; use lib '/usr/local/psa/home/vhosts/mybizdomain.com/cgi-bin/lib/';
+&gt; use CGI qw(:standard);
+&gt; use CGI::Carp qw(fatalsToBrowser);
+&gt; use Mail::Sendmail;
+&gt; use strict;
+
+&gt; my $fullname = param('fullname');
+&gt; my $emailaddy = param('emailaddy');
+&gt; my $phone = param('phone');
+&gt; my $company = param('company');
+&gt; my $website = param('website');
+&gt; my $completion = param('completion');
+
+&gt; spamattempt() if $fullname =~ /viagra/i;
+&gt; spamattempt() if $emailaddy =~ /viagra/i;
+&gt; spamattempt() if $phone =~ /viagra/i;
+&gt; spamattempt() if $fullname =~ /\@/;
+
+&gt; The real script is much longer but you get the idea. Its checking each
+&gt; defined variable for a spam match and then performing the spamattempt
+&gt; subroutine if matched. I would like to know if there is a way to check ALL
+&gt; variables against a single match. See example (not real perl cod):
+
+&gt; spamattempt() if $ANYVARIBALE =~ /viagra/i;
+
+&gt; I know I could assign all variables into an array and then cycle them trough
+&gt; a foreach but im not sure that would be any more efficient.
+
+&gt; I think the best way to do this would be to have the script check all
+&gt; submitted queries before they are assigned to variables. By this is mean
+&gt; before I start assigning param('fullname') to $fullname, there would be a
+&gt; way to check any and all params submitted before assignment. I have a hunch
+&gt; this can be done but I wouldn't know where to start.
+
+&gt; Or maybe i'm approaching this wrong completely, and in that case I would
+&gt; love to hear your thoughts.
+">
+
+Maybe you can just check $ENV{'QUERY_STRING'}, like
+
+spamattempt() if $ENV{'QUERY_STRING'} =~ /=viagra(?:&amp;|$)/i;
+
+(untested)
+Regards,
+Xicheng
+</POST>
+<POST>
+<POSTER> &quot;Jürgen Exner&quot; &lt;jurge...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-06T21:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Robert Valcourt wrote:
+&gt; We have been suffering much lately from users abusing our Website
+&gt; forms with Spam. I have evaluated most of the spam submissions and im
+&gt; trying to modify my custom form-to-email perl processor to check for
+&gt; common spam submission and reject them. While this is not hard, im
+&gt; trying to streamline the scripts efficiency. Below is an example:
+
+&gt; spamattempt() if $fullname =~ /viagra/i;
+&gt; spamattempt() if $emailaddy =~ /viagra/i;
+
+&gt; The real script is much longer but you get the idea. Its checking each
+&gt; defined variable for a spam match and then performing the spamattempt
+&gt; subroutine if matched. [...]
+">
+
+Of course you realize that your approach is destined for failure. There is
+just no way for you to add all the variations of common spam terms that
+those slime bags come up with. Your attempt already fails with the
+deliberate misspelling &quot;viägra&quot;. Or &quot;Wiagra&quot;. Of any of the gazillions of
+variations out there.
+
+If you want to stop spam being sent from your web site then you have to lock
+it down and allow mail submissions only from authenticated users.
+Or at least require a &quot;Please enter the text that you are seeing in this
+picture&quot; for every individual mail submission. Yes, they are annoying.
+Unfortunately in real live they are the lesser evil.
+
+jue
+</POST>
+<POST>
+<POSTER> Gunnar Hjalmarsson &lt;nore...@gunnar.cc&gt; </POSTER>
+<POSTDATE> 2007-07-06T22:21:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jürgen Exner wrote:
+&gt; Of course you realize that your approach is destined for failure. There is
+&gt; just no way for you to add all the variations of common spam terms that
+&gt; those slime bags come up with. Your attempt already fails with the
+&gt; deliberate misspelling &quot;viägra&quot;. Or &quot;Wiagra&quot;. Of any of the gazillions of
+&gt; variations out there.
+">
+
+That's true.
+
+<QUOTE PREVIOUSPOST="
+&gt; If you want to stop spam being sent from your web site then you have to lock
+&gt; it down and allow mail submissions only from authenticated users.
+&gt; Or at least require a &quot;Please enter the text that you are seeing in this
+&gt; picture&quot; for every individual mail submission.
+">
+
+On that I don't agree. I have successfully stopped the automated spam
+submissions through my CGI::ContactForm module without using CAPTCHA. A
+combination of a cookie solution and a small regex to filter messages
+with HTML has proved to be sufficient.
+
+http://search.cpan.org/perldoc?CGI%3A%3AContactForm
+
+--
+Gunnar Hjalmarsson
+Email: http://www.gunnar.cc/cgi-bin/contact.pl
+</POST>
+<POST>
+<POSTER> &quot;Petr Vileta&quot; &lt;sto...@practisoft.cz&gt; </POSTER>
+<POSTDATE> 2007-07-07T01:26:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Robert Valcourt wrote:
+&gt; Hello,
+
+&gt; We have been suffering much lately from users abusing our Website
+&gt; forms with Spam. I have evaluated most of the spam submissions and im
+">
+
+The best way is to implement CAPTCHA into your script.
+--
+
+Petr Vileta, Czech republic
+(My server rejects all messages from Yahoo and Hotmail. Send me your mail
+from another non-spammer site please.)
+</POST>
+<POST>
+<POSTER> Michele Dondi &lt;bik.m...@tiscalinet.it&gt; </POSTER>
+<POSTDATE> 2007-07-07T04:08:00 </POSTDATE>
+On Sat, 07 Jul 2007 01:40:48 GMT, &quot;Jürgen Exner&quot;
+
+<QUOTE PREVIOUSPOST="
+&lt;jurge ... @hotmail.com&gt; wrote:
+&gt;Of course you realize that your approach is destined for failure. There is
+&gt;just no way for you to add all the variations of common spam terms that
+&gt;those slime bags come up with. Your attempt already fails with the
+&gt;deliberate misspelling &quot;viägra&quot;. Or &quot;Wiagra&quot;. Of any of the gazillions of
+&gt;variations out there.
+">
+
+While it is perfectly true that you can't hope to completely block
+spam, certainly a naive approach like the OP's one is deemed to fail
+whereas sophisticated and complex antispam filters exist, and perhaps
+he should investigate one of them. IIRC spamassassin itself is written
+in Perl.
+
+Michele
+--
+{$_=pack'B8'x25,unpack'A8'x32,$a^=sub{pop^pop}-&gt;(map substr
+(($a||=join'',map--$|x$_,(unpack'w',unpack'u','G^&lt;R&lt;Y]*YB='
+.'KYU;*EVH[.FHF2W+#&quot;\Z*5TI/ER&lt;Z`S(G.DZZ9OX0Z')=~/./g)x2,$_,
+256),7,249);s/[^\w,]/ /g;$ \=/^J/?$/:&quot;\r&quot;;print,redo}#JAPH,
+</POST>
+<POST>
+<POSTER> &quot;Mumia W.&quot; &lt;paduille.4061.mumia.w+nos...@earthlink.net&gt; </POSTER>
+<POSTDATE> 2007-07-07T05:24:00 </POSTDATE>
+On 07/07/2007 12:26 AM, Petr Vileta wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Robert Valcourt wrote:
+&gt;&gt; Hello,
+
+&gt;&gt; We have been suffering much lately from users abusing our Website
+&gt;&gt; forms with Spam. I have evaluated most of the spam submissions and im
+
+&gt; The best way is to implement CAPTCHA into your script.
+">
+
+No it is not. Please read Gunnar's message on how to stop blog spammers
+without using captchas.
+
+Captchas are evil. I'm not even blind, and I can barely see the capcha
+letters most of the time.
+
+Every year since that braindamage was introduced, the captchas have
+gotten more and more unreadable. What's next? Random pixels thrown onto
+the screen that must be interpreted according to some secret, hidden
+language?
+</POST>
+<POST>
+<POSTER> &quot;Mumia W.&quot; &lt;paduille.4061.mumia.w+nos...@earthlink.net&gt; </POSTER>
+<POSTDATE> 2007-07-07T05:24:00 </POSTDATE>
+On 07/06/2007 06:13 PM, Robert Valcourt wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hello,
+">
+
+Hello Robert.
+
+<QUOTE PREVIOUSPOST="
+&gt; We have been suffering much lately from users abusing our Website forms with
+&gt; Spam. I have evaluated most of the spam submissions and im trying to modify
+&gt; my custom form-to-email perl processor to check for common spam submission
+&gt; and reject them. While this is not hard, im trying to streamline the scripts
+&gt; efficiency. Below is an example:
+
+&gt; #!/usr/bin/perl
+
+&gt; use lib '/usr/local/psa/home/vhosts/mybizdomain.com/cgi-bin/lib/';
+&gt; use CGI qw(:standard);
+&gt; use CGI::Carp qw(fatalsToBrowser);
+&gt; use Mail::Sendmail;
+&gt; use strict;
+
+&gt; my $fullname = param('fullname');
+&gt; my $emailaddy = param('emailaddy');
+&gt; my $phone = param('phone');
+&gt; my $company = param('company');
+&gt; my $website = param('website');
+&gt; my $completion = param('completion');
+
+&gt; spamattempt() if $fullname =~ /viagra/i;
+&gt; spamattempt() if $emailaddy =~ /viagra/i;
+&gt; spamattempt() if $phone =~ /viagra/i;
+&gt; spamattempt() if $fullname =~ /\@/;
+
+&gt; The real script is much longer but you get the idea. Its checking each
+&gt; defined variable for a spam match and then performing the spamattempt
+&gt; subroutine if matched. I would like to know if there is a way to check ALL
+&gt; variables against a single match. See example (not real perl cod):
+
+&gt; spamattempt() if $ANYVARIBALE =~ /viagra/i;
+
+&gt; I know I could assign all variables into an array and then cycle them trough
+&gt; a foreach but im not sure that would be any more efficient.
+&gt; [...]
+">
+
+I'm expanding upon what &quot;It_Says...&quot; says ;-)
+
+use CGI ':cgi-lib';
+my %pmhash = Vars;
+...
+spamattempt() if join('',values %pmhash) =~ /viagra/i;
+
+What this does is to join all parameter values into a single string,
+then check if that string matches the regex.
+
+<QUOTE PREVIOUSPOST="
+&gt; I think the best way to do this would be to have the script check all
+&gt; submitted queries before they are assigned to variables. [...]
+">
+
+The code I wrote above does this.
+
+Good luck.
+</POST>
+<POST>
+<POSTER> &quot;Dr.Ruud&quot; &lt;rvtol+n...@isolution.nl&gt; </POSTER>
+<POSTDATE> 2007-07-07T07:28:00 </POSTDATE>
+Mumia W. schreef:
+
+<QUOTE PREVIOUSPOST="
+&gt; spamattempt() if join('',values %pmhash) =~ /viagra/i;
+">
+
+So if one of the values ends on 'via', and the next starts with 'gra',
+it should match?
+
+--
+Affijn, Ruud
+
+&quot;Gewoon is een tijger.&quot;
+</POST>
+<POST>
+<POSTER> &quot;Mumia W.&quot; &lt;paduille.4061.mumia.w+nos...@earthlink.net&gt; </POSTER>
+<POSTDATE> 2007-07-07T09:08:00 </POSTDATE>
+On 07/07/2007 06:28 AM, Dr.Ruud wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Mumia W. schreef:
+
+&gt;&gt; spamattempt() if join('',values %pmhash) =~ /viagra/i;
+
+&gt; So if one of the values ends on 'via', and the next starts with 'gra',
+&gt; it should match?
+">
+
+Whoa! That's not so good. I need to make that more robust probably:
+
+use CGI ':cgi-lib'
+my %pmhash = Vars;
+spamattempt() if join(&quot;\0&quot;,values %pmhash) =~ /viagra/i;
+
+Thanks.
+</POST>
+<POST>
+<POSTER> Paul Lalli &lt;mri...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-07T11:26:00 </POSTDATE>
+On Jul 6, 7:13 pm, &quot;Robert Valcourt&quot;
+
+<QUOTE PREVIOUSPOST="
+&lt;webmas ... @know.spam.customfitonline.com&gt; wrote:
+&gt; Hello,
+
+&gt; We have been suffering much lately from users abusing our
+&gt; Website forms with Spam. I have evaluated most of the spam
+&gt; submissions and im trying to modify my custom form-to-email perl
+&gt; processor to check for common spam submission and reject them.
+&gt; While this is not hard, im trying to streamline the scripts
+&gt; efficiency. Below is an example:
+
+&gt; #!/usr/bin/perl
+
+&gt; use lib '/usr/local/psa/home/vhosts/mybizdomain.com/cgi-bin/lib/';
+&gt; use CGI qw(:standard);
+&gt; use CGI::Carp qw(fatalsToBrowser);
+&gt; use Mail::Sendmail;
+&gt; use strict;
+
+&gt; my $fullname = param('fullname');
+&gt; my $emailaddy = param('emailaddy');
+&gt; my $phone = param('phone');
+&gt; my $company = param('company');
+&gt; my $website = param('website');
+&gt; my $completion = param('completion');
+
+&gt; spamattempt() if $fullname =~ /viagra/i;
+&gt; spamattempt() if $emailaddy =~ /viagra/i;
+&gt; spamattempt() if $phone =~ /viagra/i;
+&gt; spamattempt() if $fullname =~ /\@/;
+
+&gt; The real script is much longer but you get the idea. Its
+&gt; checking each defined variable for a spam match and then
+&gt; performing the spamattempt subroutine if matched. I would like
+&gt; to know if there is a way to check ALL variables against a single
+&gt; match. See example (not real perl cod):
+
+&gt; spamattempt() if $ANYVARIBALE =~ /viagra/i;
+">
+
+use List::MoreUtils qw/any/;
+spamattempt() if any { /viagra/i } ($fullname, $emailaddy, $phone);
+
+(Not that I think this is the best way to solve your actual problem -
+it's just an answer to your actual question).
+
+Paul Lalli
+</POST>
+<POST>
+<POSTER> &quot;Petr Vileta&quot; &lt;sto...@practisoft.cz&gt; </POSTER>
+<POSTDATE> 2007-07-07T11:13:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Mumia W. wrote:
+&gt; On 07/07/2007 12:26 AM, Petr Vileta wrote:
+&gt;&gt; Robert Valcourt wrote:
+&gt;&gt;&gt; Hello,
+
+&gt;&gt;&gt; We have been suffering much lately from users abusing our Website
+&gt;&gt;&gt; forms with Spam. I have evaluated most of the spam submissions and
+&gt;&gt;&gt; im
+
+&gt;&gt; The best way is to implement CAPTCHA into your script.
+
+&gt; No it is not. Please read Gunnar's message on how to stop blog
+&gt; spammers without using captchas.
+
+&gt; Captchas are evil. I'm not even blind, and I can barely see the capcha
+&gt; letters most of the time.
+">
+
+Captcha is a good idea ;-) I wrote my own &quot;micro&quot; version where I used not
+distorded images on white background and I reduced spammers on my webpage
+aproximately from 100 spams per day to 3 spams per month. Generalities of
+spam is generated by robots. How many robots use Captcha recognition? The
+answer is &quot;None or few only&quot; :-)
+Other way to avoid spam is to use members registration. When somebody want
+to submit message then he/she must login with password. If some member start
+sending spam then you can simple disable his/her account.
+These ways is better then trying to find spam word. What to find?
+Viagra
+V.i.a.g.r.a
+Wiagra
+Viaqra
+Vi@gr@
+V i a g r a
+Here is too many ways how to make spam word readable for human but
+unfindable for program.
+--
+
+Petr Vileta, Czech republic
+(My server rejects all messages from Yahoo and Hotmail. Send me your mail
+from another non-spammer site please.)
+</POST>
+<POST>
+<POSTER> &quot;Dr.Ruud&quot; &lt;rvtol+n...@isolution.nl&gt; </POSTER>
+<POSTDATE> 2007-07-07T11:29:00 </POSTDATE>
+Mumia W. schreef:
+
+<QUOTE PREVIOUSPOST="
+&gt; Dr.Ruud:
+&gt;&gt; Mumia W.:
+&gt;&gt;&gt; spamattempt() if join('',values %pmhash) =~ /viagra/i;
+
+&gt;&gt; So if one of the values ends on 'via', and the next starts with
+&gt;&gt; 'gra', it should match?
+
+&gt; Whoa! That's not so good. I need to make that more robust probably:
+
+&gt; use CGI ':cgi-lib'
+&gt; my %pmhash = Vars;
+&gt; spamattempt() if join(&quot;\0&quot;,values %pmhash) =~ /viagra/i;
+
+&gt; Thanks.
+">
+
+I think the same error was in Tad's code, the concatenation of the
+params().
+
+--
+Affijn, Ruud
+
+&quot;Gewoon is een tijger.&quot;
+</POST>
+<POST>
+<POSTER> Gunnar Hjalmarsson &lt;nore...@gunnar.cc&gt; </POSTER>
+<POSTDATE> 2007-07-07T13:14:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Petr Vileta wrote:
+&gt; Mumia W. wrote:
+&gt;&gt; On 07/07/2007 12:26 AM, Petr Vileta wrote:
+&gt;&gt;&gt; Robert Valcourt wrote:
+&gt;&gt;&gt;&gt; We have been suffering much lately from users abusing our Website
+&gt;&gt;&gt;&gt; forms with Spam. I have evaluated most of the spam submissions and
+&gt;&gt;&gt;&gt; im
+
+&gt;&gt;&gt; The best way is to implement CAPTCHA into your script.
+
+&gt;&gt; No it is not. Please read Gunnar's message on how to stop blog
+&gt;&gt; spammers without using captchas.
+
+&gt;&gt; Captchas are evil. I'm not even blind, and I can barely see the capcha
+&gt;&gt; letters most of the time.
+
+&gt; Captcha is a good idea ;-) I wrote my own &quot;micro&quot; version where I used
+&gt; not distorded images on white background and I reduced spammers on my
+&gt; webpage aproximately from 100 spams per day to 3 spams per month.
+&gt; Generalities of spam is generated by robots. How many robots use Captcha
+&gt; recognition? The answer is &quot;None or few only&quot; :-)
+">
+
+So CAPTCHA works. Nobody said it doesn't. Nevertheless it's
+inconvenient, even without distortion.
+
+<QUOTE PREVIOUSPOST="
+&gt; Other way to avoid spam is to use members registration. When somebody
+&gt; want to submit message then he/she must login with password. If some
+&gt; member start sending spam then you can simple disable his/her account.
+">
+
+Some robots register themselves as members...
+
+<QUOTE PREVIOUSPOST="
+&gt; These ways is better then trying to find spam word.
+">
+
+True, but again there are other methods. Remember this thread?
+http://groups.google.com/group/comp.lang.perl.misc/browse_frm/thread/...
+
+--
+Gunnar Hjalmarsson
+Email: http://www.gunnar.cc/cgi-bin/contact.pl
+</POST>
+<POST>
+<POSTER> Sherm Pendley &lt;spamt...@dot-app.org&gt; </POSTER>
+<POSTDATE> 2007-07-07T13:30:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Mumia W.&quot; &lt;paduille.4061.mumia.w+nos ... @earthlink.net&gt; writes:
+&gt; Captchas are evil. I'm not even blind, and I can barely see the capcha
+&gt; letters most of the time.
+
+&gt; Every year since that braindamage was introduced, the captchas have
+&gt; gotten more and more unreadable.
+">
+
+Because automated OCR has been getting better and better at deciphering
+them automatically. It's an arms race, with the people on the CAPTCHA side
+apparently not very interested in what their users think.
+
+<QUOTE PREVIOUSPOST="
+&gt; What's next? Random pixels thrown
+&gt; onto the screen that must be interpreted according to some secret,
+&gt; hidden language?
+">
+
+Shhh! Don't give them any ideas... :-)
+
+sherm--
+
+--
+Web Hosting by West Virginians, for West Virginians: http://wv-www.net
+Cocoa programming in Perl: http://camelbones.sourceforge.net
+</POST>
+<POST>
+<POSTER> &quot;Dr.Ruud&quot; &lt;rvtol+n...@isolution.nl&gt; </POSTER>
+<POSTDATE> 2007-07-07T13:22:00 </POSTDATE>
+Paul Lalli schreef:
+
+<QUOTE PREVIOUSPOST="
+&gt; spamattempt() if any { /viagra/i } ($fullname, $emailaddy, $phone);
+">
+
+You could put grep where any is, but grep is not shortcutting.
+
+Example application:
+
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+use List::MoreUtils qw/any/;
+
+my $debug = 1;
+
+sub spamattempt {
+print &quot;\nspam attempt: &quot;, $_[0] || '?', &quot;\n\n&quot;;
+}
+
+my %pattern =
+( a =&gt; '[aA4]'
+, g =&gt; '[gG9]'
+, i =&gt; '[iIl1]'
+, r =&gt; '[rR]'
+, s =&gt; '[sS5]'
+, v =&gt; '(?:[vV]|\\/)'
+);
+for my $k ('a'..'z') {
+$pattern{$k} = &quot;[$k\U$k]&quot; if not exists $pattern{$k};
+}
+# double the backslashes
+$pattern{$_} =~ s/(\\)/$1$1/g for keys %pattern;
+
+for my $k (qw(viagra cialis)) {
+my @c = split //, $k;
+my $p = '';
+for my $c (@c) {
+$p .= $pattern{$c};
+}
+$pattern{$k} = $p;
+}
+
+$debug and print &quot;$_ =&gt; $pattern{$_}\n&quot; for sort keys %pattern;
+
+my ($fullname, $emailaddy, $phone) = qw(ruud needs.\\/1AGRA pronto);
+
+print &quot;$_\n&quot; for '', $fullname, $emailaddy, $phone;
+
+my $p;
+spamattempt($p) if any {/($pattern{viagra})/ and $p = $1}
+($fullname, $emailaddy, $phone);
+
+--
+Affijn, Ruud
+
+&quot;Gewoon is een tijger.&quot;
+</POST>
+<POST>
+<POSTER> &quot;John W. Kennedy&quot; &lt;jwke...@attglobal.net&gt; </POSTER>
+<POSTDATE> 2007-07-07T13:52:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jürgen Exner wrote:
+&gt; If you want to stop spam being sent from your web site then you have to lock
+&gt; it down and allow mail submissions only from authenticated users.
+&gt; Or at least require a &quot;Please enter the text that you are seeing in this
+&gt; picture&quot; for every individual mail submission. Yes, they are annoying.
+&gt; Unfortunately in real live they are the lesser evil.
+">
+
+I have had great success with not including the submit button in the
+HTML, instead creating it from JavaScript.
+
+--
+John W. Kennedy
+Read the remains of Shakespeare's lost play, now annotated!
+http://pws.prserv.net/jwkennedy/Double%20Falshood/index.html
+</POST>
+<POST>
+<POSTER> ane...@canada.com </POSTER>
+<POSTDATE> 2007-07-07T23:27:00 </POSTDATE>
+On Jul 7, 5:24 am, &quot;Mumia W.&quot; &lt;paduille.4061.mumia.w
+
+<QUOTE PREVIOUSPOST="
++nos ... @earthlink.net&gt; wrote:
+&gt; On 07/07/2007 12:26 AM, Petr Vileta wrote:
+
+&gt; &gt; Robert Valcourt wrote:
+&gt; &gt;&gt; Hello,
+
+&gt; &gt;&gt; We have been suffering much lately from users abusing our Website
+&gt; &gt;&gt; forms with Spam. I have evaluated most of the spam submissions and im
+
+&gt; &gt; The best way is to implement CAPTCHA into your script.
+
+&gt; No it is not. Please read Gunnar's message on how to stop blog spammers
+&gt; without using captchas.
+">
+
+Yes, but that only works if cookies are activated.
+
+<QUOTE PREVIOUSPOST="
+&gt; Captchas are evil. I'm not even blind, and I can barely see the capcha
+&gt; letters most of the time.
+
+&gt; Every year since that braindamage was introduced, the captchas have
+&gt; gotten more and more unreadable. What's next? Random pixels thrown onto
+&gt; the screen that must be interpreted according to some secret, hidden
+&gt; language?
+">
+
+The reason they are getting more and more unreadable is that some of
+the bots now have OCR technology built into them, so they can now
+'read' images.
+</POST>
+<POST>
+<POSTER> &quot;Petr Vileta&quot; &lt;sto...@practisoft.cz&gt; </POSTER>
+<POSTDATE> 2007-07-07T23:30:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+John W. Kennedy wrote:
+&gt; Jürgen Exner wrote:
+&gt;&gt; If you want to stop spam being sent from your web site then you have
+&gt;&gt; to lock it down and allow mail submissions only from authenticated
+&gt;&gt; users. Or at least require a &quot;Please enter the text that you are seeing
+&gt;&gt; in
+&gt;&gt; this picture&quot; for every individual mail submission. Yes, they are
+&gt;&gt; annoying. Unfortunately in real live they are the lesser evil.
+
+&gt; I have had great success with not including the submit button in the
+&gt; HTML, instead creating it from JavaScript.
+">
+
+Good idea too ;-) But should be somewhere in the page some like this
+
+&lt;noscript&gt;
+&lt;big style=&quot;color: red&quot;&gt;
+Your browser have not enabled Javascript so this page will not work! Are you
+paranoic?
+&lt;/big&gt;
+&lt;/noscript&gt;
+
+--
+
+Petr Vileta, Czech republic
+(My server rejects all messages from Yahoo and Hotmail. Send me your mail
+from another non-spammer site please.)
+</POST>
+<POST>
+<POSTER> Gunnar Hjalmarsson &lt;nore...@gunnar.cc&gt; </POSTER>
+<POSTDATE> 2007-07-08T02:35:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+ane ... @canada.com wrote:
+&gt; On Jul 7, 5:24 am, &quot;Mumia W.&quot; &lt;paduille.4061.mumia.w
+&gt; +nos ... @earthlink.net&gt; wrote:
+&gt;&gt; On 07/07/2007 12:26 AM, Petr Vileta wrote:
+&gt;&gt;&gt; The best way is to implement CAPTCHA into your script.
+
+&gt;&gt; No it is not. Please read Gunnar's message on how to stop blog spammers
+&gt;&gt; without using captchas.
+
+&gt; Yes, but that only works if cookies are activated.
+">
+
+Who surfs the www today without allowing session cookies?
+
+--
+Gunnar Hjalmarsson
+Email: http://www.gunnar.cc/cgi-bin/contact.pl
+</POST>
+<POST>
+<POSTER> &quot;Dr.Ruud&quot; &lt;rvtol+n...@isolution.nl&gt; </POSTER>
+<POSTDATE> 2007-07-08T04:50:00 </POSTDATE>
+Petr Vileta schreef:
+
+<QUOTE PREVIOUSPOST="
+&gt; John W. Kennedy:
+&gt;&gt; Jürgen Exner:
+&gt;&gt;&gt; If you want to stop spam being sent from your web site then you have
+&gt;&gt;&gt; to lock it down and allow mail submissions only from authenticated
+&gt;&gt;&gt; users. Or at least require a &quot;Please enter the text that you are
+&gt;&gt;&gt; seeing in
+&gt;&gt;&gt; this picture&quot; for every individual mail submission. Yes, they are
+&gt;&gt;&gt; annoying. Unfortunately in real live they are the lesser evil.
+
+&gt;&gt; I have had great success with not including the submit button in the
+&gt;&gt; HTML, instead creating it from JavaScript.
+
+&gt; Good idea too ;-) But should be somewhere in the page some like this
+
+&gt; &lt;noscript&gt;
+&gt; &lt;big style=&quot;color: red&quot;&gt;
+&gt; Your browser have not enabled Javascript so this page will not work!
+&gt; Are you paranoic?
+&gt; &lt;/big&gt;
+&gt; &lt;/noscript&gt;
+">
+
+This has nothing to do with Perl.
+
+--
+Affijn, Ruud
+
+&quot;Gewoon is een tijger.&quot;
+</POST>
+<POST>
+<POSTER> Michele Dondi &lt;bik.m...@tiscalinet.it&gt; </POSTER>
+<POSTDATE> 2007-07-08T06:12:00 </POSTDATE>
+On Sun, 8 Jul 2007 10:50:03 +0200, &quot;Dr.Ruud&quot; &lt;rvtol+n ... @isolution.nl&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Good idea too ;-) But should be somewhere in the page some like this
+
+&gt;&gt; &lt;noscript&gt;
+&gt;&gt; &lt;big style=&quot;color: red&quot;&gt;
+&gt;&gt; Your browser have not enabled Javascript so this page will not work!
+&gt;&gt; Are you paranoic?
+&gt;&gt; &lt;/big&gt;
+&gt;&gt; &lt;/noscript&gt;
+
+&gt;This has nothing to do with Perl.
+">
+
+Well, but it is appropriate, for once. Who's afraid of big bad JS
+anymore, nowadays?!? OTOH sometimes I like to use textual browsers
+too, and that I know none of them supports it at all. So a fallback
+mechanism, should be provided. I was about to say: perhaps by means of
+the damned captcha thing... but then I realized that that would be
+hard with the textual browser too. (Unless it were in a terminal
+emulator under a GUI, but then I would use a GUI-base browser...
+(unless it were at a different location over a ssh connection (but
+then if possible I would still use FF for the connection, whith a
+local copy providing the guy (and finally I would really better stop
+with these parentheses.))))
+
+Michele
+--
+{$_=pack'B8'x25,unpack'A8'x32,$a^=sub{pop^pop}-&gt;(map substr
+(($a||=join'',map--$|x$_,(unpack'w',unpack'u','G^&lt;R&lt;Y]*YB='
+.'KYU;*EVH[.FHF2W+#&quot;\Z*5TI/ER&lt;Z`S(G.DZZ9OX0Z')=~/./g)x2,$_,
+256),7,249);s/[^\w,]/ /g;$ \=/^J/?$/:&quot;\r&quot;;print,redo}#JAPH,
+</POST>
+<POST>
+<POSTER> Mark Shroyer &lt;usenet-m...@markshroyer.com&gt; </POSTER>
+<POSTDATE> 2007-07-08T07:24:00 </POSTDATE>
+On 2007-07-08, Michele Dondi &lt;bik.m ... @tiscalinet.it&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sun, 8 Jul 2007 10:50:03 +0200, &quot;Dr.Ruud&quot; &lt;rvtol+n ... @isolution.nl&gt;
+&gt; wrote:
+
+&gt;&gt;&gt; Good idea too ;-) But should be somewhere in the page some like this
+
+&gt;&gt;&gt; &lt;noscript&gt;
+&gt;&gt;&gt; &lt;big style=&quot;color: red&quot;&gt;
+&gt;&gt;&gt; Your browser have not enabled Javascript so this page will not work!
+&gt;&gt;&gt; Are you paranoic?
+&gt;&gt;&gt; &lt;/big&gt;
+&gt;&gt;&gt; &lt;/noscript&gt;
+
+&gt;&gt;This has nothing to do with Perl.
+
+&gt; Well, but it is appropriate, for once. Who's afraid of big bad JS
+&gt; anymore, nowadays?!? OTOH sometimes I like to use textual browsers
+&gt; too, and that I know none of them supports it at all. So a fallback
+&gt; mechanism, should be provided. I was about to say: perhaps by means of
+&gt; the damned captcha thing... but then I realized that that would be
+&gt; hard with the textual browser too. (Unless it were in a terminal
+&gt; emulator under a GUI, but then I would use a GUI-base browser...
+&gt; (unless it were at a different location over a ssh connection (but
+&gt; then if possible I would still use FF for the connection, whith a
+&gt; local copy providing the guy (and finally I would really better stop
+&gt; with these parentheses.))))
+">
+
+I'm generally of the school of thought that none of a web site's
+core functionality should completely depend on JavaScript; graceful
+degradation and all that.  This is probably because I occasionally
+use elinks, and use the NoScript extension when I'm browsing with
+Firefox.
+
+That said, I do use JavaScript to obfuscate the email addresses on
+my personal web page, without providing any alternate means of
+obtaining the address for the JavaScript impaired.  My justification
+for this (aside from the fact that it's just a silly personal web
+page and it doesn't really matter) is that almost everyone uses a
+scripting-capable browser these days, and those who don't either (1)
+are using a browser so outdated that they can't render my page
+anyway, or (2) are technologically competent folks who are browsing
+without scripting on purpose.
+
+There's not much I can do for the former group.  For the latter, I
+assume that if they really want to contact me they can temporarily
+enable scripting for my site, or do a whois on my domain, or even
+take a look at the JavaScript source and piece things together for
+themselves.  Haven't had any complaints so far (though in hindsight
+that's probably because if anyone were to have a valid complaint
+about this, they wouldn't know how to contact me).
+
+--
+Mark Shroyer
+http://markshroyer.com/
+</POST>
+<POST>
+<POSTER> Tad McClellan &lt;ta...@seesig.invalid&gt; </POSTER>
+<POSTDATE> 2007-07-08T08:10:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Michele Dondi &lt;bik.m ... @tiscalinet.it&gt; wrote:
+&gt; (and finally I would really better stop
+&gt; with these parentheses.))))
+">
+
+Else somebody may think that you are a spy:
+
+http://groups.google.com/group/rec.humor.funny.reruns/msg/65150659d28...
+
+--
+Tad McClellan
+email: perl -le &quot;print scalar reverse qq/moc.noitatibaher\100cmdat/&quot;
+</POST>
+<POST>
+<POSTER> &quot;Dr.Ruud&quot; &lt;rvtol+n...@isolution.nl&gt; </POSTER>
+<POSTDATE> 2007-07-08T10:10:00 </POSTDATE>
+Michele Dondi schreef:
+
+<QUOTE PREVIOUSPOST="
+&gt; Who's afraid of big bad JS anymore, nowadays?!?
+">
+
+New security breaches that are only possible by using your JavaScript
+enabled browser, pop-up every other week. JavaScript is involved in many
+recent attacks, and will be for years (AJAX, AIR).
+
+The latest one logs in into predictable sites, like the ones in your
+ADSL- or Cable- modem or Cisco-router, for example to set up tunnels. Or
+into the ones like Yahoo and Flickr, that keep you &quot;logged in&quot; for
+weeks, all of course mainly to facilitate sending spam.
+
+See also:
+http://www.securityfocus.com/news/11459
+
+Interesting test: (not using Perl at all, needs JavaScript of course)
+http://www.auditmypc.com/anonymous-surfing.asp
+
+Hic sunt leones:
+http://meteorserver.org/demo/
+http://alex.dojotoolkit.org/wp-content/LowLatencyData.pdf (mentions POE)
+
+--
+Affijn, Ruud
+
+&quot;Gewoon is een tijger.&quot;
+</POST>
+<POST>
+<POSTER> anno4...@radom.zrz.tu-berlin.de </POSTER>
+<POSTDATE> 2007-07-09T06:09:00 </POSTDATE>
+Xicheng Jia  &lt;xich ... @gmail.com&gt; wrote in comp.lang.perl.misc:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jul 6, 7:13 pm, &quot;Robert Valcourt&quot;
+&gt; &lt;webmas ... @know.spam.customfitonline.com&gt; wrote:
+">
+
+[...]
+
+<QUOTE PREVIOUSPOST="
+&gt; Maybe you can just check $ENV{'QUERY_STRING'}, like
+
+&gt;     spamattempt() if $ENV{'QUERY_STRING'} =~ /=viagra(?:&amp;|$)/i;
+
+&gt; (untested)
+">
+
+That only works for the GET method.  Can we exclude POST requests?
+
+Anno
+</POST>
+<POST>
+<POSTER> anno4...@radom.zrz.tu-berlin.de </POSTER>
+<POSTDATE> 2007-07-09T06:34:00 </POSTDATE>
+Dr.Ruud &lt;rvtol+n ... @isolution.nl&gt; wrote in comp.lang.perl.misc:
+
+<QUOTE PREVIOUSPOST="
+&gt; Mumia W. schreef:
+&gt; &gt; Dr.Ruud:
+&gt; &gt;&gt; Mumia W.:
+
+&gt; &gt;&gt;&gt; spamattempt() if join('',values %pmhash) =~ /viagra/i;
+
+&gt; &gt;&gt; So if one of the values ends on 'via', and the next starts with
+&gt; &gt;&gt; 'gra', it should match?
+
+&gt; &gt; Whoa! That's not so good. I need to make that more robust probably:
+
+&gt; &gt; use CGI ':cgi-lib'
+&gt; &gt; my %pmhash = Vars;
+&gt; &gt; spamattempt() if join(&quot;\0&quot;,values %pmhash) =~ /viagra/i;
+
+&gt; &gt; Thanks.
+
+&gt; I think the same error was in Tad's code, the concatenation of the
+&gt; params().
+">
+
+It was.  I thought about commenting, but then splitting the telltale
+word between two parameters (firstname = via, lastname = gra) is exactly
+what spammers do to hide it.  Anyway, what you get will be false
+positives which could be detected in further processing.
+
+Anno
+</POST>
+<POST>
+<POSTER> &quot;Clenna Lumina&quot; &lt;savagebea...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-07-10T12:41:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Tad McClellan wrote:
+&gt; Robert Valcourt &lt;webmas ... @know.spam.customfitonline.com&gt; wrote:
+
+&gt;&gt; We have been suffering much lately from users abusing our Website
+&gt;&gt; forms with Spam.
+
+&gt; Right behind the spammers are...
+
+&gt;&gt; #!/usr/bin/perl
+
+&gt;&gt; my $fullname = param('fullname');
+
+&gt; ... the crackers!
+">
+
+Actually wouldn't go something like, spammers, phishers, and then
+crackers? :) Phishers always seemed like they were in between... they
+are like crackers, they just let those who blindly click links in their
+email do their work for them.
+
+<QUOTE PREVIOUSPOST="
+&gt; You should never write a program that processes form input
+&gt; without turning on taint checking.
+">
+
+Absolutely true.
+
+--
+CL
+</POST>
+<POST>
+<POSTER> &quot;Dr.Ruud&quot; &lt;rvtol+n...@isolution.nl&gt; </POSTER>
+<POSTDATE> 2007-07-12T15:46:00 </POSTDATE>
+Dr.Ruud schreef:
+
+<QUOTE PREVIOUSPOST="
+&gt; Michele Dondi:
+&gt;&gt; Who's afraid of big bad JS anymore, nowadays?!?
+
+&gt; New security breaches that are only possible by using your JavaScript
+&gt; enabled browser, pop-up every other week.
+">
+
+This week's:
+http://www.xs-sniper.com/sniperscope/IE-Pwns-Firefox.html
+
+(NoScript protects against this already since June 22)
+
+--
+Affijn, Ruud
+
+&quot;Gewoon is een tijger.&quot;
+</POST>
+<POST>
+<POSTER> Michele Dondi &lt;bik.m...@tiscalinet.it&gt; </POSTER>
+<POSTDATE> 2007-07-12T17:33:00 </POSTDATE>
+On Sun, 8 Jul 2007 16:10:22 +0200, &quot;Dr.Ruud&quot; &lt;rvtol+n ... @isolution.nl&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Who's afraid of big bad JS anymore, nowadays?!?
+
+&gt;New security breaches that are only possible by using your JavaScript
+&gt;enabled browser, pop-up every other week. JavaScript is involved in many
+&gt;recent attacks, and will be for years (AJAX, AIR).
+">
+
+Well, you're right after all... but that won't stop me from using
+it... BTW: I also recently saw the following in PerlMonks:
+
+http://perlmonks.org/?node_id=606832
+
+Michele
+--
+{$_=pack'B8'x25,unpack'A8'x32,$a^=sub{pop^pop}-&gt;(map substr
+(($a||=join'',map--$|x$_,(unpack'w',unpack'u','G^&lt;R&lt;Y]*YB='
+.'KYU;*EVH[.FHF2W+#&quot;\Z*5TI/ER&lt;Z`S(G.DZZ9OX0Z')=~/./g)x2,$_,
+256),7,249);s/[^\w,]/ /g;$ \=/^J/?$/:&quot;\r&quot;;print,redo}#JAPH,
+</POST>
+<POST>
+<POSTER> &quot;Dr.Ruud&quot; &lt;rvtol+n...@isolution.nl&gt; </POSTER>
+<POSTDATE> 2007-07-13T18:51:00 </POSTDATE>
+Michele Dondi schreef:
+
+<QUOTE PREVIOUSPOST="
+&gt; Dr.Ruud:
+&gt;&gt; [atribution repaired] Michele:
+&gt;&gt;&gt; Who's afraid of big bad JS anymore, nowadays?!?
+
+&gt;&gt; New security breaches that are only possible by using your JavaScript
+&gt;&gt; enabled browser, pop-up every other week. JavaScript is involved in
+&gt;&gt; many recent attacks, and will be for years (AJAX, AIR).
+
+&gt; Well, you're right after all... but that won't stop me from using
+&gt; it...
+">
+
+With NoScript on, your vulnerability is much less. Adblock is a good one
+too.
+
+<QUOTE PREVIOUSPOST="
+&gt; BTW: I also recently saw the following in PerlMonks:
+&gt; http://perlmonks.org/?node_id=606832
+">
+
+Yes, CSRF, every surfer should be very aware of that.
+http://en.wikipedia.org/wiki/Cross-site_request_forgery
+http://www.darkreading.com/document.asp?doc_id=107651
+
+As I mentioned before, there is no excuse for running a webserver on
+anything involved with security and configuration, like your ADSL- or
+Cable-modem or router or firewall, etc.
+Switch those embedded webservers off before connecting to other
+websites, it is just too easy to reconfigure those boxes via-via.
+
+--
+Affijn, Ruud
+
+&quot;Gewoon is een tijger.&quot;
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,834 @@
+<DOC>
+<DOCID> eng-NG-31-135598-9760840 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2008-02-12T04:46:00 </DATETIME>
+<BODY>
+<HEADLINE>
+What's up with Scheme macros?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Ken Tilton &lt;kennytil...@optonline.net&gt; </POSTER>
+<POSTDATE> 2008-02-12T04:46:00 </POSTDATE>
+While trying to explain my irrational prejudice against Scheme macros I
+got curious as to why I hated them, so I googled up this:
+
+http://www.xs4all.nl/~hipster/lib/scheme/gauche/define-syntax-primer.txt
+
+Boys and girls, that is almost eleven thousand words long!!!!!
+
+I see the problem, they have this whole pattern-matching syntax-rules
+language moving from source input to output. I have done (and am
+supposed to be doing) enough Prolog to realize Scheme macro writers must
+be way smarter than me. But... why? No, not why are they smarter. Why do
+they have to be smarter? What was wrong with treating the source as an
+ordinary tree of data and just whinging it about with Scheme itself to
+produce the output? Please restrict yourself to one or more of these
+answers:
+
+1. The hygiene made us do it.
+
+2. We actually thought it would be way cool and super powerful.
+
+3. We were embarrassd by the small size of the standard and decided to
+make it up in the macro language
+
+4. Other _____________________
+
+Jes curious,
+
+kenny
+
+--
+http://smuglispweeny.blogspot.com/
+http://www.theoryyalgebra.com/
+
+&quot;In the morning, hear the Way;
+in the evening, die content!&quot;
+-- Confucius
+</POST>
+<POST>
+<POSTER> Shiro Kawai &lt;shiro.ka...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-02-12T05:14:00 </POSTDATE>
+I use both (CL and Scheme) at work but more inclined to Scheme.
+And I do have a mixed feeling about the Scheme macros.
+
+<QUOTE PREVIOUSPOST="
+Ken Tilton &lt;kennytil ... @optonline.net&gt; wrote:
+&gt; 1. The hygiene made us do it.
+">
+
+If I need to pick one from the first three, probably this is it.
+
+Theoretically, hygiene has nothing to do with pattern matching
+sublanguage.
+The pattern matching part is for the convenience and efficiency, if
+I understand correctly.  To realize hygiene, every identifier has to
+carry the syntactic context, which is added or removed in every macro
+expansion.
+
+It would be very inefficient to do that context handling
+eagerly if the macro's input form is huge S-expr but the macro
+expander
+only shuffles its toplevel elements, so you want to do the context
+handling lazily---that is, instead of applying the context to every
+leaf
+of the S-expr, you just feed a tuple of &lt;S-expr, Context&gt; to the macro
+expander, which &quot;peels&quot; off the context on demand (e.g. &lt;(a (b c)),
+Context&gt;
+is transfomed to (&lt;a, Context&gt; &lt;(b c), Context&gt;) if the expander needs
+to see the toplevel elements.)  Because of this tupling, you cannot
+use
+ordinary car/cdr to decompose the input.
+
+The reason I have a mixed feeling is that I do like hygiene (it is
+cool
+that an exported macro of my module foo expands into a form that
+inserts
+the reference to the foo's internal macros/procedures and it just
+works.
+I'd use package prefix in CL, but I feel it's like hack.) but carrying
+pattern language is... say, too heavy.   Lots of smart people have
+tackled
+this problem so there may not be the way to avoid that, but I hope
+otherwise.
+
+For the meantime, I use both legacy macros and hygienic marcos in my
+Scheme code at work; legacy macros are handy if you have total control
+over the source so that nobody will step on your toe or vice versa.
+</POST>
+<POST>
+<POSTER> Pascal Costanza &lt;p...@p-cos.net&gt; </POSTER>
+<POSTDATE> 2008-02-12T06:22:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Ken Tilton wrote:
+&gt; While trying to explain my irrational prejudice against Scheme macros I
+&gt; got curious as to why I hated them, so I googled up this:
+
+&gt; http://www.xs4all.nl/~hipster/lib/scheme/gauche/define-syntax-primer.txt
+
+&gt; Boys and girls, that is almost eleven thousand words long!!!!!
+
+&gt; I see the problem, they have this whole pattern-matching syntax-rules
+&gt; language moving from source input to output. I have done (and am
+&gt; supposed to be doing) enough Prolog to realize Scheme macro writers must
+&gt; be way smarter than me. But... why? No, not why are they smarter. Why do
+&gt; they have to be smarter? What was wrong with treating the source as an
+&gt; ordinary tree of data and just whinging it about with Scheme itself to
+&gt; produce the output? Please restrict yourself to one or more of these
+&gt; answers:
+
+&gt; 1. The hygiene made us do it.
+">
+
+No, there are hygienic macro systems where source is a tree of data.
+Actually, in most hygienic macro systems, source is still a tree of data.
+
+<QUOTE PREVIOUSPOST="
+&gt; 2. We actually thought it would be way cool and super powerful.
+">
+
+Lisp-style macros (as in Common Lisp) provide backquote as a convenient
+means to construct new s-expressions. One nice thing about backquote is
+that you can make backquote expressions look very close the code you
+have in your mind. (Compare `(progn ,@body) to (cons 'progn body), for
+example.)
+
+Common Lisp also provides destructuring macro lambda lists, where you
+can already preprocess the arguments a macro receives by tearing them
+apart into subparts. For example: (defmacro with ((&amp;rest bindings) &amp;body
+body) ...) instead of (defmacro with (&amp;rest code) ...).
+
+Backquote works pretty well. However, destructuring macro lambda lists
+are limited - note how to you can't see the constituents of the bindings
+list in the with example. You have to 'manually' tear them apart. (Loop
+is pretty good at such things, but you still have to do it.)
+
+If you want to make destructuring more fine-grained, you also have to
+make changes to the corresponding construct for reconstructing code
+(like backquote). That's where the complexity comes in.
+
+Syntax-rules and syntax-case work quite well in that regard (although I
+personally prefer to use LOOP).
+
+<QUOTE PREVIOUSPOST="
+&gt; 3. We were embarrassd by the small size of the standard and decided to
+&gt; make it up in the macro language
+">
+
+They could have kept the spec smaller by sticking to Lisp-style macros
+and adding a rename construct. The other macro systems can be built on
+top of that. I guess removing the weaknesses and restrictions that make
+additional features appear necessary is not so important after all. :-P
+
+To be more serious: Syntax-rules is a macro system that is very simple
+to use for very simple macros. You sometimes want to define your own
+macros to illustrate some points in academic papers. Syntax-rules macros
+are more than good enough for such purposes, and the macro definitions
+can be read by people who are not used to macro programming. That's a
+good thing, if the macro is not the main part of what you want to
+discuss. Macro definitions in such papers hardly need to be complex (and
+can always be simplified for illustration purposes).
+
+You know, there is more you can do with programming languages than
+writing applications...
+
+Pascal
+
+--
+1st European Lisp Symposium (ELS'08)
+http://prog.vub.ac.be/~pcostanza/els08/
+
+My website: http://p-cos.net
+Common Lisp Document Repository: http://cdr.eurolisp.org
+Closer to MOP &amp; ContextL: http://common-lisp.net/project/closer/
+</POST>
+<POST>
+<POSTER> Jens Axel Soegaard &lt;inva...@soegaard.net&gt; </POSTER>
+<POSTDATE> 2008-02-12T08:21:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Ken Tilton wrote:
+&gt; While trying to explain my irrational prejudice against Scheme macros I
+&gt; got curious as to why I hated them, so I googled up this:
+
+&gt; http://www.xs4all.nl/~hipster/lib/scheme/gauche/define-syntax-primer.txt
+
+&gt; Boys and girls, that is almost eleven thousand words long!!!!!
+">
+
+And &quot;On Lisp&quot; is even longer!!!!!
+
+&quot;Primer&quot; is obviously not to be taken literally.
+
+<QUOTE PREVIOUSPOST="
+&gt; I see the problem, they have this whole pattern-matching syntax-rules
+&gt; language moving from source input to output. I have done (and am
+&gt; supposed to be doing) enough Prolog to realize Scheme macro writers must
+&gt; be way smarter than me. But... why? No, not why are they smarter. Why do
+&gt; they have to be smarter? What was wrong with treating the source as an
+&gt; ordinary tree of data and just whinging it about with Scheme itself to
+&gt; produce the output?
+">
+
+The use of pattern matching is a detail.
+
+That's not why Schemers abandoned the old way. There are *two* goals of
+modern Scheme macro systems. Hygiene (i.e. automatic renaming) as
+another Paris Hilton got all the press, while the referentially
+transparent property was left behind in the dust.
+
+Referentially transparent macros?
+
+If a macro transformer inserts a free reference to an identifier,
+the reference refers to the binding that was visible where the
+transformer was specified, regardless of any local bindings that may
+surround the use of the macro.
+
+In short the meaning of the expansion of a macro doesn't depend on where
+it is used. In order to implement that you need to attach information
+to variables, and thus symbols are replaced by &quot;syntax-objects
+representing symbols&quot;.
+
+For a CL view on the matters see these posts in a very informative
+thread on Scheme macros in comp.lang.lisp in 2004.
+
+Anton van Straaten in comp.lang.lisp:
+http://groups.google.com/group/comp.lang.lisp/msg/4cfdf326287b3d01
+
+Pascal Constanza in comp.lang.lisp:
+http://groups.google.com/group/comp.lang.lisp/msg/67d80b9d8da8c085
+
+Anyhow, stop reading about syntax-rules (so last millenium) and treat
+yourself with some light reading on syntax-case. Dybvig's
+
+Writing Hygenic Macros in Scheme with Syntax-Case
+ftp://ftp.cs.indiana.edu/pub/scheme-repository/doc/pubs/iucstr356.ps.gz
+
+is a must read.
+
+So is Dybvig's contribution to the book &quot;Beautiful code&quot;:
+http://www.cs.indiana.edu/~dyb/pubs/bc-syntax-case.pdf
+
+--
+Jens Axel Søgaard
+</POST>
+<POST>
+<POSTER> &quot;Kjetil S. Matheussen&quot; &lt;k.s.matheus...@notam02.no&gt; </POSTER>
+<POSTDATE> 2008-02-12T08:32:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Tue, 12 Feb 2008, Jens Axel Soegaard wrote:
+&gt; Ken Tilton wrote:
+&gt; &gt; While trying to explain my irrational prejudice against Scheme macros I
+&gt; &gt; got curious as to why I hated them, so I googled up this:
+
+&gt; &gt; http://www.xs4all.nl/~hipster/lib/scheme/gauche/define-syntax-primer.txt
+
+&gt; &gt; Boys and girls, that is almost eleven thousand words long!!!!!
+
+&gt; And &quot;On Lisp&quot; is even longer!!!!!
+
+&gt; &quot;Primer&quot; is obviously not to be taken literally.
+
+&gt; &gt; I see the problem, they have this whole pattern-matching syntax-rules
+&gt; &gt; language moving from source input to output. I have done (and am
+&gt; &gt; supposed to be doing) enough Prolog to realize Scheme macro writers must
+&gt; &gt; be way smarter than me. But... why? No, not why are they smarter. Why do
+&gt; &gt; they have to be smarter? What was wrong with treating the source as an
+&gt; &gt; ordinary tree of data and just whinging it about with Scheme itself to
+&gt; &gt; produce the output?
+
+&gt; The use of pattern matching is a detail.
+
+&gt; That's not why Schemers abandoned the old way.
+">
+
+I wouldn't say that. My impression is that most scheme implementations,
+and all the large ones (anyone who doesn't?), support define-macro. I
+would actually also be surprised if hygenic macros is more used by
+schemeres than &quot;the old way&quot;, although I don't have any data to back
+that up with. Anyway, I would never use a scheme where you couldn't
+write macros the old way.
+</POST>
+<POST>
+<POSTER> andreuri2...@yahoo.com </POSTER>
+<POSTDATE> 2008-02-12T10:00:00 </POSTDATE>
+On Feb 12, 5:14 am, Shiro Kawai &lt;shiro.ka ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; It would be very inefficient to do that context handling
+&gt; eagerly if the macro's input form is huge S-expr but the macro
+&gt; expander
+&gt; only shuffles its toplevel elements, so you want to do the context
+&gt; handling lazily---that is, instead of applying the context to every
+&gt; leaf
+&gt; of the S-expr, you just feed a tuple of &lt;S-expr, Context&gt; to the macro
+&gt; expander, which &quot;peels&quot; off the context on demand (e.g. &lt;(a (b c)),
+&gt; Context&gt;
+&gt; is transfomed to (&lt;a, Context&gt; &lt;(b c), Context&gt;) if the expander needs
+&gt; to see the toplevel elements.)  Because of this tupling, you cannot
+&gt; use
+&gt; ordinary car/cdr to decompose the input.
+">
+
+That is not accurate, but the misconception is understandable given
+the language of R6RS.
+
+For example, the explicit renaming system can be
+implemented with linear complexity with ordinary s-expressions that
+are
+decomposable using car, cdr, etc.  The same is true for syntax-case.
+For example, my (Andre van Tonder's) syntax-case expander uses an
+eager
+algorithm based on a variant of explicit renaming and using ordinary
+s-expressions decomposable using car/cdr.  Thus, syntax-case can be
+viewed as a convenience layer on top of explicit renaming.
+Explicit renaming is really quite simple.  See
+http://groups.google.com/group/comp.lang.scheme/msg/a4817ec9ffcccf39
+
+I was disappointed that the R6RS editors decided to describe the lazy
+algorithm in the R6RS standard, when a simple declarative description
+of
+hygiene/referential transparency as in R5RS would have sufficed.
+Instead they chose to describe, as part of the standard, a specific,
+non-unique implementation strategy, in fact probably the most
+complicated implementation strategy anyone has bothered to
+come up with to date, virtually ensuring that hardly anyone will
+understand the document.  I don't follow it, and I'm an implementor!
+</POST>
+<POST>
+<POSTER> Jens Axel Soegaard &lt;inva...@soegaard.net&gt; </POSTER>
+<POSTDATE> 2008-02-12T11:11:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Kjetil S. Matheussen wrote:
+&gt;&gt; That's not why Schemers abandoned the old way.
+
+&gt; I wouldn't say that. My impression is that most scheme implementations,
+&gt; and all the large ones (anyone who doesn't?), support define-macro. I
+&gt; would actually also be surprised if hygenic macros is more used by
+&gt; schemeres than &quot;the old way&quot;, although I don't have any data to back
+&gt; that up with. Anyway, I would never use a scheme where you couldn't
+&gt; write macros the old way.
+">
+
+Nowadays there are (depending on point of view) two different
+types of define-macro forms. One type is define-macro implemented
+on top of define-syntax - this type is generally found in
+implementations that have &quot;full&quot; syntax-case integration.
+
+The other one is found in implementations where syntax-case
+is treated as an &quot;add on&quot; builds on a &quot;native&quot; define-macro.
+
+The two types are for simple macros equivalent, but for macros
+that require phase 2 [*] computations hell is likely to break
+loose.
+
+There are two things I look for, when I evaluate macro systems:
+
+1) How easy is it to give error messages in terms of the
+*original* user syntax?
+
+2) Can the module system handle the macro system?
+[I.e. how (if at all) is the phase problem solved?]
+
+Most &quot;native&quot; define-macro systems handle these points on an
+ad hoc basis.
+
+[*]
+http://pre.plt-scheme.org/docs/html/reference/Evaluation_Model.html#(... )
+</POST>
+<POST>
+<POSTER> andreuri2...@yahoo.com </POSTER>
+<POSTDATE> 2008-02-12T11:26:00 </POSTDATE>
+On Feb 12, 4:46 am, Ken Tilton &lt;kennytil ... @optonline.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I see the problem, they have this whole pattern-matching syntax-rules
+&gt; language moving from source input to output. I have done (and am
+&gt; supposed to be doing) enough Prolog to realize Scheme macro writers must
+&gt; be way smarter than me. But... why? No, not why are they smarter. Why do
+&gt; they have to be smarter? What was wrong with treating the source as an
+&gt; ordinary tree of data and just whinging it about with Scheme itself to
+&gt; produce the output?
+">
+
+Nothing is wrong with your suggestion.  Here is a simple macro
+that will work in one of the R6RS reference implementations.
+
+(define-syntax swap!
+(lambda (form)
+(let ((a (cadr  form))
+(b (caddr form)))
+#`(let ((temp #,a))
+(set! #,a #,b)
+(set! #,b temp))))))
+
+It is almost identical to the corresponding defmacro, except that
+you use #` and #, instead of ` and ,.  Also, no gensym is necessary.
+You can think, as a fisrt approximation, of #` as automatically
+inserting the necessary gensyms for you.
+
+Andre
+</POST>
+<POST>
+<POSTER> Raffael Cavallaro &lt;raffaelcavallaro@pas-d&#39;espam-s&#39;il-vous-plait-mac.com&gt; </POSTER>
+<POSTDATE> 2008-02-12T12:31:00 </POSTDATE>
+On 2008-02-12 11:26:54 -0500, andreuri2 ... @yahoo.com said:
+
+<QUOTE PREVIOUSPOST="
+&gt; Nothing is wrong with your suggestion.  Here is a simple macro
+&gt; that will work in one of the R6RS reference implementations.
+
+&gt;    (define-syntax swap!
+&gt;      (lambda (form)
+&gt;        (let ((a (cadr  form))
+&gt;              (b (caddr form)))
+&gt;          #`(let ((temp #,a))
+&gt;              (set! #,a #,b)
+&gt;              (set! #,b temp))))))
+
+&gt; It is almost identical to the corresponding defmacro, except that
+&gt; you use #` and #, instead of ` and ,.  Also, no gensym is necessary.
+&gt; You can think, as a fisrt approximation, of #` as automatically
+&gt; inserting the necessary gensyms for you.
+">
+
+Not that I doubt the power of your system Andre, but could you show us
+a simple example of intentional capture inside a #` form?
+</POST>
+<POST>
+<POSTER> Maciej Katafiasz &lt;mathr...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-02-12T12:45:00 </POSTDATE>
+Den Tue, 12 Feb 2008 04:46:15 -0500 skrev Ken Tilton:
+
+<QUOTE PREVIOUSPOST="
+&gt; While trying to explain my irrational prejudice against Scheme macros I
+&gt; got curious as to why I hated them, so I googled up this:
+
+&gt; http://www.xs4all.nl/~hipster/lib/scheme/gauche/define-syntax-
+primer.txt
+
+&gt; Boys and girls, that is almost eleven thousand words long!!!!!
+">
+
+Woah there, back in my day, a three-article technical *series* was
+absolutely, unquestionably, your editor is really good at using Delete
+thank you very much limited to 6K words (including intros, conclusions
+and recaps). So that's two complete series there.
+
+<QUOTE PREVIOUSPOST="
+&gt; Please restrict yourself to one or more of these
+&gt; answers:
+
+&gt; 4. Other _____________________
+">
+
+They had to write articles with strict wordcount limits before and decide
+that this time fuck it, *they* will decide when to stop.
+
+Cheers,
+Maciej
+</POST>
+<POST>
+<POSTER> &quot;llama&quot; &lt;l...@winamp.com&gt; </POSTER>
+<POSTDATE> 2008-02-12T13:35:00 </POSTDATE>
+&quot;Raffael Cavallaro&quot; &lt;raffaelcavallaro@pas-d'espam-s'il-vous-plait-mac.com&gt;
+wrote in message
+news:2008021212313616807-raffaelcavallaro@pasdespamsilvousplaitmaccom ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2008-02-12 11:26:54 -0500, andreuri2 ... @yahoo.com said:
+
+&gt;&gt; Nothing is wrong with your suggestion.  Here is a simple macro
+&gt;&gt; that will work in one of the R6RS reference implementations.
+
+&gt;&gt;    (define-syntax swap!
+&gt;&gt;      (lambda (form)
+&gt;&gt;        (let ((a (cadr  form))
+&gt;&gt;              (b (caddr form)))
+&gt;&gt;          #`(let ((temp #,a))
+&gt;&gt;              (set! #,a #,b)
+&gt;&gt;              (set! #,b temp))))))
+
+&gt;&gt; It is almost identical to the corresponding defmacro, except that
+&gt;&gt; you use #` and #, instead of ` and ,.  Also, no gensym is necessary.
+&gt;&gt; You can think, as a fisrt approximation, of #` as automatically
+&gt;&gt; inserting the necessary gensyms for you.
+
+&gt; Not that I doubt the power of your system Andre, but could you show us a
+&gt; simple example of intentional capture inside a #` form?
+">
+
+See:
+http://www.r6rs.org/final/html/r6rs-lib/r6rs-lib-Z-H-1.html#node_toc_...
+</POST>
+<POST>
+<POSTER> &quot;michele.simion...@gmail.com&quot; &lt;michele.simion...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-02-12T13:56:00 </POSTDATE>
+I have been skeptical about Scheme macros for a long time,
+thinking that syntax-rules is too simple and syntax-case too complex,
+and I have been using define-macro instead. However, in the last
+couple of months I have somewhat changed my mind. I figured out that
+the biggest issue I had with syntax-case was notational. If you are
+willing to dress it with a minor amount of sugar, syntax-case becomes
+pretty easy to use and quite readable too. Here is the swap! example:
+
+(define-syntax-case swap! ()
+((swap! x y) (let ((t x)) (set! x y) (set! y t))))
+
+define-syntax-case is just sugar around syntax-case:
+
+;; tested on Ikarus Scheme
+(define-syntax define-syntax-case
+(syntax-rules ()
+((_ name (literal ...)
+((_ arg ...) templ) ...)
+(define-syntax name
+(lambda (x)
+(syntax-case x (&lt;expand&gt; literal ...)
+((ctx &lt;expand&gt; arg ...) #`'templ) ...
+((ctx arg ...) #`templ) ...))))
+((_ name (literal ...)
+((_ arg ...) fender templ) ...)
+(define-syntax name
+(lambda (x)
+(syntax-case x (&lt;expand&gt; literal ...)
+((ctx &lt;expand&gt; arg ...) fender #`'templ) ...
+((ctx arg ...) fender #`templ) ...))))
+))
+
+Notice that I also added an &lt;expand&gt; feature to see the expansion
+of the macro:
+
+(swap! &lt;expand&gt; x y) ;=&gt; (let ((t x)) (set! x y) (set! y t))
+
+Michele Simionato
+</POST>
+<POST>
+<POSTER> andreuri2...@yahoo.com </POSTER>
+<POSTDATE> 2008-02-12T14:07:00 </POSTDATE>
+On Feb 12, 12:31 pm, Raffael Cavallaro &lt;raffaelcavallaro@pas-d'espam-
+
+<QUOTE PREVIOUSPOST="
+s'il-vous-plait-mac.com&gt; wrote:
+&gt; Not that I doubt the power of your system Andre, but could you show us
+&gt; a simple example of intentional capture inside a #` form?
+">
+
+(define-syntax if-it
+(lambda (form)
+(let ((it (datum-&gt;syntax (car form) 'it)))
+#`(let ((,it ,(cadr form)))
+(if #,it
+#,(caddr form)
+#,(cadddr form))))))
+
+DATUM-&gt;SYNTAX overrides hygiene by creating the identifier IT as if
+it
+appeared in the source at the position of (CAR FORM), i.e., the IF-IT
+at the usage site of the macro.  You may think of this, very roughly,
+as a standard way of making an identifier that is not affected by the
+automatic gensym that would otherwise be applied by #`.
+
+This is slightly longer than the defmacro way, but macros that
+capture
+are usually a minority.  Most defmacros can be trivially converted
+to Scheme hygienic macros (in this R6RS reference implementation)
+by omitting gensyms and putting #s in front of the `s,'s, and ,s
+and would therefore be shortened rather than lengthened.
+
+Unfortunately this is not true for all implementations of R6RS Scheme
+macros.  Some unfortunately do not represent code as s-expressions
+and rely on pattern matching to decompose their input.
+While there are reasons for their design choice, I think it very
+unfortunately obscures the fact that pattern matching is absolutely
+orthogonal to - and unnecessary for - the hygiene mechanism.  As a
+result,
+people like the OP get the impression that hygiene is more
+complicated
+than it really is, and cannot entirely be blamed for giving
+up in disgust.
+
+Andre
+</POST>
+<POST>
+<POSTER> andreuri2...@yahoo.com </POSTER>
+<POSTDATE> 2008-02-12T14:37:00 </POSTDATE>
+On Feb 12, 2:07 pm, andreuri2 ... @yahoo.com wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;   (define-syntax if-it
+&gt;     (lambda (form)
+&gt;       (let ((it (datum-&gt;syntax (car form) 'it)))
+&gt;         #`(let ((,it ,(cadr form)))
+&gt;            (if #,it
+&gt;                #,(caddr form)
+&gt;                #,(cadddr form))))))
+">
+
+Sorry.  I meant:
+
+(define-syntax if-it
+(lambda (form)
+(let ((it (datum-&gt;syntax (car form) 'it)))
+#`(let ((#,it #,(cadr form)))
+(if #,it
+#,(caddr form)
+#,(cadddr form))))))
+
+Andre
+</POST>
+<POST>
+<POSTER> Abdulaziz Ghuloum &lt;aghul...@cee.ess.indiana.edu&gt; </POSTER>
+<POSTDATE> 2008-02-12T15:24:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+michele.simion ... @gmail.com wrote:
+&gt; (define-syntax define-syntax-case
+&gt;   (syntax-rules ()
+&gt;     ((_ name (literal ...)
+&gt;         ((_ arg ...) templ) ...)
+&gt;      (define-syntax name
+&gt;        (lambda (x)
+&gt;          (syntax-case x (&lt;expand&gt; literal ...)
+&gt;            ((ctx &lt;expand&gt; arg ...) #`'templ) ...
+&gt;            ((ctx arg ...) #`templ) ...))))
+&gt;     ((_ name (literal ...)
+&gt;         ((_ arg ...) fender templ) ...)
+&gt;      (define-syntax name
+&gt;        (lambda (x)
+&gt;          (syntax-case x (&lt;expand&gt; literal ...)
+&gt;            ((ctx &lt;expand&gt; arg ...) fender #`'templ) ...
+&gt;            ((ctx arg ...) fender #`templ) ...))))
+&gt;     ))
+">
+
+I wonder how this would look using s-expression manipulation
+(cars/cdrs).  Andre, since you seem to be the expert on this,
+do you want to give it a shot?
+</POST>
+<POST>
+<POSTER> Eli Barzilay &lt;e...@barzilay.org&gt; </POSTER>
+<POSTDATE> 2008-02-12T15:45:00 </POSTDATE>
+&quot;Kjetil S. Matheussen&quot; &lt;k.s.matheus ... @notam02.no&gt; writes:
+
+<QUOTE PREVIOUSPOST="
+&gt; I wouldn't say that. My impression is that most scheme
+&gt; implementations, and all the large ones (anyone who doesn't?),
+&gt; support define-macro. I would actually also be surprised if hygenic
+&gt; macros is more used by schemeres than &quot;the old way&quot;, although I
+&gt; don't have any data to back that up with. [...]
+">
+
+Out of curiosity, I inspected the PLT collects tree.  Here's a
+summary:
+
+* about 400K lines of Scheme code
+
+* 12 occurrences of `define-macro'; 5 are in the define-macro library
+source, 3 in comments, 4 are in misc meta-code (keyword colors,
+indentation, etc), that leaves 0 uses in real code.
+
+* 1438 occurrences of `define-syntax' (and `...-syntaxes')
+
+* 1360 of `syntax-case'
+
+* 468 of `syntax-rules'
+
+It's interesting to compare this to version 103 (which is before PLT
+switched to `syntax-case' being native):
+
+* About 150K lines
+
+* 125 `define-macro'
+
+* 7 `define-syntax', 1 `syntax-rules', 1 `syntax-case' none is
+actually used
+
+And here's an interesting result: if the switch to the new system
+would mean changing all `define-macro's to `define-syntax', and
+assuming the same &quot;macro use density&quot; per line of code, then you'd
+expect to see about 300 syntax definitions.  So the new macro system is
+robust enough that it is used about 4.5 times more often than
+define-macro.
+
+--
+((lambda (x) (x x)) (lambda (x) (x x)))          Eli Barzilay:
+http://www.barzilay.org/ Maze is Life!
+</POST>
+<POST>
+<POSTER> Eli Barzilay &lt;e...@barzilay.org&gt; </POSTER>
+<POSTDATE> 2008-02-12T15:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Ken Tilton &lt;kennytil ... @optonline.net&gt; writes:
+&gt; While trying to explain my irrational prejudice against Scheme
+&gt; macros I got curious as to why I hated them, so I googled up this:
+
+&gt; http://www.xs4all.nl/~hipster/lib/scheme/gauche/define-syntax-primer.txt
+
+&gt; Boys and girls, that is almost eleven thousand words long!!!!!
+">
+
+Note the name of the document -- it describes `syntax-rules' and how
+to do with it things that seem impossible from a very restricted
+syntax rewriting system.  Using *just* that is on the same masochistic
+level as using *just* r5rs for real programming.
+
+--
+((lambda (x) (x x)) (lambda (x) (x x)))          Eli Barzilay:
+http://www.barzilay.org/ Maze is Life!
+</POST>
+<POST>
+<POSTER> Abdulaziz Ghuloum &lt;aghul...@cee.ess.indiana.edu&gt; </POSTER>
+<POSTDATE> 2008-02-12T16:55:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Eli Barzilay wrote:
+&gt; So the new macro system is robust enough that it  is
+&gt; used  about 4.5 times more often than define-macro.
+">
+
+Or, it may be that you guys are just macro noobs.  You
+can't handle the power of lisp macros, and you want
+this thing called &quot;hygiene&quot; to protect you from the so
+called &quot;unintended capture&quot; straw-man that you throw
+around at every occasion.
+
+The real programmer does not need no stinkin' hygiene.
+</POST>
+<POST>
+<POSTER> andreuri2...@yahoo.com </POSTER>
+<POSTDATE> 2008-02-12T18:03:00 </POSTDATE>
+On Feb 12, 3:24 pm, Abdulaziz Ghuloum &lt;aghul ... @cee.ess.indiana.edu&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; michele.simion ... @gmail.com wrote:
+&gt; &gt; (define-syntax define-syntax-case
+&gt; &gt;   (syntax-rules ()
+&gt; &gt;     ((_ name (literal ...)
+&gt; &gt;         ((_ arg ...) templ) ...)
+&gt; &gt;      (define-syntax name
+&gt; &gt;        (lambda (x)
+&gt; &gt;          (syntax-case x (&lt;expand&gt; literal ...)
+&gt; &gt;            ((ctx &lt;expand&gt; arg ...) #`'templ) ...
+&gt; &gt;            ((ctx arg ...) #`templ) ...))))
+&gt; &gt;     ((_ name (literal ...)
+&gt; &gt;         ((_ arg ...) fender templ) ...)
+&gt; &gt;      (define-syntax name
+&gt; &gt;        (lambda (x)
+&gt; &gt;          (syntax-case x (&lt;expand&gt; literal ...)
+&gt; &gt;            ((ctx &lt;expand&gt; arg ...) fender #`'templ) ...
+&gt; &gt;            ((ctx arg ...) fender #`templ) ...))))
+&gt; &gt;     ))
+
+&gt; I wonder how this would look using s-expression manipulation
+&gt; (cars/cdrs).  Andre, since you seem to be the expert on this,
+&gt; do you want to give it a shot?
+">
+
+I'll leave that to the Lispniks, who have more practice
+with this kind of thing.  It might even occur to some of
+them that pattern matching, despite being orthogonal to and
+unnecessary for hygiene, is a quite useful thing to have.
+</POST>
+<POST>
+<POSTER> Shiro Kawai &lt;shiro.ka...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-02-12T19:01:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+andreuri2 ... @yahoo.com wrote:
+&gt; That is not accurate, but the misconception is understandable given
+&gt; the language of R6RS.
+
+&gt; For example, the explicit renaming system can be
+&gt; implemented with linear complexity with ordinary s-expressions that
+&gt; are
+&gt; decomposable using car, cdr, etc.  The same is true for syntax-case.
+&gt; For example, my (Andre van Tonder's) syntax-case expander uses an
+&gt; eager
+&gt; algorithm based on a variant of explicit renaming and using ordinary
+&gt; s-expressions decomposable using car/cdr.  Thus, syntax-case can be
+&gt; viewed as a convenience layer on top of explicit renaming.
+&gt; Explicit renaming is really quite simple.  See http://groups.google.com/group/comp.lang.scheme/msg/a4817ec9ffcccf39
+">
+
+Aha!  I've seen the explicit renaming expander but have never looked
+at
+it closely.  Now I read the articles and found it made a lot of sense,
+and it feels more Scheme-way to me.  I'll give it a shot.  Thanks!
+</POST>
+<POST>
+<POSTER> &quot;michele.simion...@gmail.com&quot; &lt;michele.simion...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-02-12T23:41:00 </POSTDATE>
+On Feb 13, 12:03 am, andreuri2 ... @yahoo.com wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I'll leave that to the Lispniks, who have more practice
+&gt; with this kind of thing.  It might even occur to some of
+&gt; them that pattern matching, despite being orthogonal to and
+&gt; unnecessary for hygiene, is a quite useful thing to have.
+">
+
+Actually one of the reasons why I changed my mind about Scheme
+macros is that I realized the benefits of pattern matching
+when writing complex macros. BTW, I just noticed that I have posted
+the wrong version of define-syntax-case, the correct one is
+
+(define-syntax define-syntax-case
+(syntax-rules ()
+((_ name (literal ...)
+((ctx arg ...) templ) ...)
+(define-syntax name
+(lambda (x)
+(syntax-case x (&lt;expand&gt; literal ...)
+((ctx &lt;expand&gt; arg ...) #`'templ) ...
+((ctx arg ...) #`templ) ...))))
+((_ name (literal ...)
+((ctx arg ...) fender templ) ...)
+(define-syntax name
+(lambda (x)
+(syntax-case x (&lt;expand&gt; literal ...)
+((ctx &lt;expand&gt; arg ...) fender #`'templ) ...
+((ctx arg ...) fender #`templ) ...))))
+))
+</POST>
+</TEXT>
+</BODY>
+</DOC>

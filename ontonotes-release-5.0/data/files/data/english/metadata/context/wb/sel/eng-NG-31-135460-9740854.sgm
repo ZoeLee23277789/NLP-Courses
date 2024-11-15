@@ -1,0 +1,92 @@
+<DOC>
+<DOCID> eng-NG-31-135460-9740854 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-22T23:20:00 </DATETIME>
+<BODY>
+<HEADLINE>
+stat() - Interrupted system call
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> samboy &lt;sam.lia...@global360.com.au&gt; </POSTER>
+<POSTDATE> 2007-10-22T23:20:00 </POSTDATE>
+I'm using samba 3.0.25a on a Solaris 9 box with separate W2K and XP clients
+accessing a share.
+The issue I'm having is that not all files appear in folder listings via
+Explorer/DOS windows on the
+XP client.   This only happens when an app on the W2K side is simulateously
+accessing/creating
+files on the same share but not neccessarily in the same folder. I've since
+run samba in top level
+trace and examined the content after test reruns. What I found is that every
+missing file in the
+folder equates to a stat() call which was interrupted during the readdir
+phase.
+
+Here's the relevant excerpt from that trace with a bad and good dir entry
+read:
+
+...
+dos_mode returning a[sparse]
+[2007/10/23 08:48:29, 5] smbd/trans2.c:get_lanman2_dir_entry(1255)
+get_lanman2_dir_entry found archv6/arc14/0726/1RBE/1192/351-0-0-1.DS
+fname=351-0-0-1.DS
+[2007/10/23 08:48:29, 10] smbd/trans2.c:get_lanman2_dir_entry(1398)
+get_lanman2_dir_entry: SMB_FIND_FILE_BOTH_DIRECTORY_INFO
+[2007/10/23 08:48:29, 10] smbd/mangle_hash2.c:name_map(617)
+name_map: 351-0-0-1.DS -&gt; 7F100938 -&gt; 3Z96YI~G.DS (cache=1)
+[2007/10/23 08:48:29, 8] smbd/trans2.c:get_lanman2_dir_entry(1161)
+get_lanman2_dir_entry:readdir on dirptr 0x3bd238 now at offset 16784629
+[2007/10/23 08:48:29, 5] smbd/trans2.c:get_lanman2_dir_entry(1221)
+get_lanman2_dir_entry:Couldn't stat
+[archv6/arc14/0726/1RBE/1192/353-0-0-1.DV] (Interrupted system call)
+[2007/10/23 08:48:29, 8] smbd/trans2.c:get_lanman2_dir_entry(1161)
+get_lanman2_dir_entry:readdir on dirptr 0x3bd238 now at offset 16784650
+[2007/10/23 08:48:29, 8] smbd/dosmode.c:dos_mode(371)
+dos_mode: archv6/arc14/0726/1RBE/1192/353-0-0-1.DS
+[2007/10/23 08:48:29, 8] smbd/dosmode.c:dos_mode_from_sbuf(188)
+dos_mode_from_sbuf returning a
+[2007/10/23 08:48:29, 8] smbd/dosmode.c:dos_mode(409)
+dos_mode returning a[sparse]
+[2007/10/23 08:48:29, 5] smbd/trans2.c:get_lanman2_dir_entry(1255)
+get_lanman2_dir_entry found archv6/arc14/0726/1RBE/1192/353-0-0-1.DS
+fname=353-0-0-1.DS
+[2007/10/23 08:48:29, 10] smbd/trans2.c:get_lanman2_dir_entry(1398)
+get_lanman2_dir_entry: SMB_FIND_FILE_BOTH_DIRECTORY_INFO
+[2007/10/23 08:48:29, 10] smbd/mangle_hash2.c:name_map(617)
+name_map: 353-0-0-1.DS -&gt; 21F83E5E -&gt; 39FBAS~E.DS (cache=1)
+[2007/10/23 08:48:29, 8] smbd/trans2.c:get_lanman2_dir_entry(1161)
+get_lanman2_dir_entry:readdir on dirptr 0x3bd238 now at offset 16784671
+[2007/10/23 08:48:29, 8] smbd/dosmode.c:dos_mode(371)
+dos_mode: archv6/arc14/0726/1RBE/1192/355-0-0-1.DV
+[2007/10/23 08:48:29, 8] smbd/dosmode.c:dos_mode_from_sbuf(188)
+dos_mode_from_sbuf returning a
+[2007/10/23 08:48:29, 8] smbd/dosmode.c:dos_mode(409)
+...
+
+Note: This problem doesn't occur if there's mulitple W2K clients accessing
+the same share.
+
+I had a hunt through the source code and having located what I believe is
+the stat() wrapped
+function I'm wondering why it doesn't cater for EINTR errors? If anyone can
+shed light on this
+matter I'd be grateful. I'm also aware this may not be the source of the
+problem but rather
+higher up at my setup/config level or perhaps there's an interoperability
+conflict at work?
+
+Cheers,
+Sam.
+
+--
+View this message in context: http://www.nabble.com/stat%28%29---Interrupted-system-call-tf4674614....
+Sent from the Samba - General mailing list archive at Nabble.com.
+
+--
+To unsubscribe from this list go to the following URL and read the
+instructions: https://lists.samba.org/mailman/listinfo/samba
+</POST>
+</TEXT>
+</BODY>
+</DOC>

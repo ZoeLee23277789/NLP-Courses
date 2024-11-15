@@ -1,0 +1,280 @@
+<DOC>
+<DOCID> eng-NG-31-126392-8199067 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-07-25T14:26:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Random number in a range - speed problem
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Mirek &lt;pisz_na.mi...@dionizos.zind.ikem.pwr.wroc.pl&gt; </POSTER>
+<POSTDATE> 2007-07-25T14:26:00 </POSTDATE>
+Hi
+
+A modulo operation is a common advise for generating random numbers within
+limited range:
+
+random()%r
+
+I've profiled my program and found that % consumes about 30% cpu time.
+Is there an another method?
+
+I have two such expression: one has r &lt; 10^5 and the second range can be up
+to RAND_MAX. They will be calculated very often - I assume much more than
+10^9 times.
+
+Any better solutions?
+</POST>
+<POST>
+<POSTER> rober...@ibd.nrc-cnrc.gc.ca (Walter Roberson) </POSTER>
+<POSTDATE> 2007-07-25T14:58:00 </POSTDATE>
+In article &lt;f884jt$t8 ... @z-news.pwr.wroc.pl&gt;,
+
+<QUOTE PREVIOUSPOST="
+Mirek  &lt;pisz_na.mi ... @dionizos.zind.ikem.pwr.wroc.pl&gt; wrote:
+&gt;A modulo operation is a common advise for generating random numbers within
+&gt;limited range:
+&gt;   random()%r
+">
+
+I do not have an official C99 standard here, but at least as of
+draft N843, random() was not part of the C standard library.
+
+The constraints put upon the standard C library function rand()
+are very weak, and traditional implementations are such that
+using rand()%r could produce a very very weak random stream.
+For example, if r = 2 (i.e., a binary stream), then on many
+implementations you might find that rand()%2 just toggles between
+0 and 1. Similarily rand()%4 often has period 4, and generally
+the lower-order bits are very poor random numbers indeed.
+
+Thus, in order to produce useful pseudo-random numbers, you will
+pretty much have to replace rand() with some other routine with
+known characteristics. You may find that you need to drop some
+of the lower-order bits even then.
+
+After that... find some power of 2 that is &quot;just a bit&quot; above a
+multiple of r (minimize the difference between the power of 2
+and the multiple), mask off that many bits from the returned
+random number, then reject the result if it is in the upper portion
+of the range (between the last full multiple and 2**N - 1).
+
+But whether this will turn out to be faster or not is going to
+depend upon the architecture and what else you are doing in your
+code. A well-pipelined remainder operation could potentially pump
+out one remainder per clock cycle -- which could turn out to be
+faster than processing the conditional test to reject those values
+in the upper range. To pipeline the remainder operators, you could
+have a loop where you generated a batch of random numbers in a row
+and remembered them and parcelled them out, refilling the batch
+when it got empty.
+--
+Prototypes are supertypes of their clones.           -- maplesoft
+</POST>
+<POST>
+<POSTER> Martin Ambuhl &lt;mamb...@earthlink.net&gt; </POSTER>
+<POSTDATE> 2007-07-25T18:42:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Mirek wrote:
+&gt; Hi
+
+&gt; A modulo operation is a common advise for generating random numbers within
+&gt; limited range:
+
+&gt;    random()%r
+">
+
+It is bad advice (spelled thus, and non-count).  Next time, check the
+FAQ before posting.  Both the use of the non-standard function random()
+instead of the standard function rand() and the use of '%' to reduce the
+range are bad ideas.
+
+<QUOTE PREVIOUSPOST="
+&gt; I've profiled my program and found that % consumes about 30% cpu time.
+&gt; Is there an another method?
+">
+
+If that operation consumes 30% of your CPU time, then you must be doing
+almost nothing in the rest of your code.  This has the odor of a badly
+written program whose author is searching for something to blame its
+inefficiency on.  I suspect your profiling to be flawed.
+
+<QUOTE PREVIOUSPOST="
+&gt; I have two such expression: one has r &lt; 10^5 and the second range can be up
+&gt; to RAND_MAX. They will be calculated very often - I assume much more than
+&gt; 10^9 times.
+
+&gt; Any better solutions?
+">
+
+Since there is no reason from the standard to think that RAND_MAX &gt;
+100000, it may be that all of those '%' operations are a waste, anyway.
+If you are computing a billion pseudo-random numbers, or a billion of
+almost anything, that will consume some time.  Why would you think
+otherwise?
+</POST>
+<POST>
+<POSTER> Spoon &lt;root@localhost&gt; </POSTER>
+<POSTDATE> 2007-07-26T11:44:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Mirek wrote:
+&gt; A modulo operation is a common advise for generating random numbers within
+&gt; limited range:
+
+&gt;    random()%r
+
+&gt; I've profiled my program and found that % consumes about 30% cpu time.
+&gt; Is there an another method?
+
+&gt; I have two such expression: one has r &lt; 10^5 and the second range can be up
+&gt; to RAND_MAX. They will be calculated very often - I assume much more than
+&gt; 10^9 times.
+
+&gt; Any better solutions?
+">
+
+Let r = 2^k
+
+/me ducks
+</POST>
+<POST>
+<POSTER> lawrence.jo...@ugs.com </POSTER>
+<POSTDATE> 2007-07-26T12:17:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Walter Roberson &lt;rober ... @ibd.nrc-cnrc.gc.ca&gt; wrote:
+
+&gt; The constraints put upon the standard C library function rand()
+&gt; are very weak, and traditional implementations are such that
+&gt; using rand()%r could produce a very very weak random stream.
+&gt; For example, if r = 2 (i.e., a binary stream), then on many
+&gt; implementations you might find that rand()%2 just toggles between
+&gt; 0 and 1. Similarily rand()%4 often has period 4, and generally
+&gt; the lower-order bits are very poor random numbers indeed.
+">
+
+There was only one (albeit popular) implementation that I know of where
+that was true (someone took a decent random number generator that had 32
+bits of internal state but returned just the high-order 15 bits and
+extended its range to 32 bits by returning the entire internal state
+without considering the impact), and it's long gone.  Most C libraries
+these days produce decent (although certainly not cryptographically
+strong) random streams.  For examply, with my 15 year old C library,
+rand()%4 produces the stream:
+
+2, 2, 1, 3, 3, 3, 2, 3, 0, 2, 1, 3, 0, 0, 1, 3, 1, 3, 1, 2 ...
+
+Which, by an amazing coincidence, is exactly the sequence generated by
+the example rand() in the C standard.
+
+-Larry Jones
+
+Oh, now YOU'RE going to start in on me TOO, huh? -- Calvin
+</POST>
+<POST>
+<POSTER> regis &lt;re...@dil.univ-mrs.fr&gt; </POSTER>
+<POSTDATE> 2007-07-30T23:16:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Mirek wrote:
+&gt; A modulo operation is a common advise for generating random numbers within
+&gt; limited range:  random()%r
+&gt; I've profiled my program and found that % consumes about 30% cpu time.
+&gt; Is there an another method?
+
+&gt; I have two such expression: one has r &lt; 10^5 and the second range can be up
+&gt; to RAND_MAX. They will be calculated very often - I assume much more than
+&gt; 10^9 times.
+
+&gt; Any better solutions?
+">
+
+One can try a quick and dirty pseudo-random generator
+found in Numerical Recipe in C...
+
+If r is a number in the range [0..R[
+then r/(R+1) is in the range [0..1[
+and n*r/(R+1) is in the range [0..n[
+and if (R+1) is a power of 2, say R+1=2**p
+then (n*r)&gt;&gt;p is in the range [0..n[
+
+For p==32,
+one can first generate numbers r in the range [0..2**64[
+with a series of the form r_k= r_{k-1} * A + B
+(on unsigned long long integers),
+and use the 32 hi-bits of r_k for r, leading to:
+(n * (r_k &gt;&gt; 32 &amp; 0xFFFFFFFFULL)) &gt;&gt; 32 &amp; 0xFFFFFFFULL,
+a formula without any modulo operator...
+
+-----
+#define ADD_TERM 0x14A37B71ULL
+#define MUL_TERM 0x0004F273ULL
+#define MASK     0xFFFFFFFFULL
+
+typedef unsigned long long ULongLong;
+typedef unsigned long ULong;
+static ULongLong seed, term;
+
+ULong alt_srand (ULong seedi) {
+seed= ((ULongLong) seedi) &lt;&lt; 32;
+term= seed * MUL_TERM + ADD_TERM;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+ULong alt_rand (ULong range) {
+term= term * MUL_TERM  + ADD_TERM;
+return range * (term &gt;&gt; 32 &amp; MASK) &gt;&gt; 32 &amp; MASK;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+-----
+
+On my machine with, generating 10**9 numbers in the range [0..13[
+using   alt_rand(13)  vs  rand()%13
+gives for different optimisation levels:
+
+compiled with gcc -O2: 12.8 sec vs 34.8 sec -&gt; 2.8 x faster.
+compiled with gcc -O3:  4.4 sec vs 34.8 sec-&gt;  7.9 x faster.
+
+How bad the generator behaves is another story...
+
+--
+regis
+</POST>
+<POST>
+<POSTER> regis &lt;re...@dil.univ-mrs.fr&gt; </POSTER>
+<POSTDATE> 2007-07-30T23:21:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+regis wrote:
+&gt; #define ADD_TERM 0x14A37B71ULL
+&gt; #define MUL_TERM 0x0004F273ULL
+&gt; #define MASK     0xFFFFFFFFULL
+
+&gt; typedef unsigned long long ULongLong;
+&gt; typedef unsigned long ULong;
+&gt; static ULongLong seed, term;
+
+&gt; ULong alt_srand (ULong seedi) {
+&gt;   seed= ((ULongLong) seedi) &lt;&lt; 32;
+&gt;   term= seed * MUL_TERM + ADD_TERM;
+&gt; }
+">
+
+just make the function above return void...
+
+<QUOTE PREVIOUSPOST="
+&gt; ULong alt_rand (ULong range) {
+&gt;   term= term * MUL_TERM  + ADD_TERM;
+&gt;   return range * (term &gt;&gt; 32 &amp; MASK) &gt;&gt; 32 &amp; MASK;
+&gt; }
+">
+
+--
+regis
+</POST>
+</TEXT>
+</BODY>
+</DOC>

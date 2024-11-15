@@ -1,0 +1,406 @@
+<DOC>
+<DOCID> eng-NG-31-135587-9748231 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-15T20:33:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Pi Program Again
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-09-15T20:33:00 </POSTDATE>
+Hi.
+
+After having played around with my pi program some more, it seems that
+for large computations, disk activity becomes a key source of
+slowness. Based on what you've seen of the source code, is there any
+way I could reduce the amount of disk access/usage? I'd really like to
+hear some advice on this.
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-09-15T20:35:00 </POSTDATE>
+On Sep 15, 6:33 pm, mike3 &lt;mike4 ... @yahoo.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi.
+
+&gt; After having played around with my pi program some more, it seems that
+&gt; for large computations, disk activity becomes a key source of
+&gt; slowness. Based on what you've seen of the source code, is there any
+&gt; way I could reduce the amount of disk access/usage? I'd really like to
+&gt; hear some advice on this.
+">
+
+Geez, I titled this thread sooo close to the last one... crap.
+&lt;slaps face&gt;
+</POST>
+<POST>
+<POSTER> Gianni Mariani &lt;gi3nos...@mariani.ws&gt; </POSTER>
+<POSTDATE> 2007-09-16T01:22:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+mike3 wrote:
+&gt; Hi.
+
+&gt; After having played around with my pi program some more, it seems that
+&gt; for large computations, disk activity becomes a key source of
+&gt; slowness. Based on what you've seen of the source code, is there any
+&gt; way I could reduce the amount of disk access/usage? I'd really like to
+&gt; hear some advice on this.
+">
+
+Sounds like your data is getting paged out.
+
+a) get more memory
+b) rewrite your code to use less memory
+
+... a) is usually the most cost effective thing to do if it is an option
+however it's not always useful.
+
+The same techniques used to put most of the computation in cache can be
+used to put computations in main memory - in other words, most
+techniques for high performance computing to stop trashing cache will
+also work to stop paging out your data.  But then again, not all
+computations can be done like that.
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-09-16T02:55:00 </POSTDATE>
+On Sep 15, 11:22 pm, Gianni Mariani &lt;gi3nos ... @mariani.ws&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; mike3 wrote:
+&gt; &gt; Hi.
+
+&gt; &gt; After having played around with my pi program some more, it seems that
+&gt; &gt; for large computations, disk activity becomes a key source of
+&gt; &gt; slowness. Based on what you've seen of the source code, is there any
+&gt; &gt; way I could reduce the amount of disk access/usage? I'd really like to
+&gt; &gt; hear some advice on this.
+
+&gt; Sounds like your data is getting paged out.
+
+&gt; a) get more memory
+&gt; b) rewrite your code to use less memory
+
+&gt; ... a) is usually the most cost effective thing to do if it is an option
+&gt; however it's not always useful.
+">
+
+2-3 gigs of ram costs something like $300-$400 if I remember
+correctly.
+That's not exactly cost-effective. Heck if I'm gonna pay that much,
+might as well get one of those new dual/quad core processors they've
+got out there and go parallel, baby! I don't have a whole lot of free
+money
+available.
+
+I _know_ though that one can compute a _lot_ faster than what my
+program does with the hardware I have available as there are other
+programs out there that do it. It's too bad really fast programs like
+QuickPi, PiFast, and even half-decent ones like SuperPI, do not have
+their source code available, as I bet I might be able to learn a thing
+or
+two from studying them.
+
+<QUOTE PREVIOUSPOST="
+&gt; The same techniques used to put most of the computation in cache can be
+&gt; used to put computations in main memory - in other words, most
+&gt; techniques for high performance computing to stop trashing cache will
+&gt; also work to stop paging out your data.  But then again, not all
+&gt; computations can be done like that.
+">
+
+If you look at the way the program is structured, I store all the
+numbers
+used in calculations on the hard drive, since they take up like 3 GB
+or
+so. What sort of techniques could be used to reduce data paging,
+anyway,
+based on what you can see from the source code? (see the earlier
+threads
+on this subject for a link.) Addition/subtraction/copying/mul and div
+by
+integer types is done by reading in chunks of a size approximately
+that of
+the CPU's cache, performing addition in that on-memory buffer, then
+writing
+the result back out to disk. Long multiplication is done using Fast
+Fourier
+Transform (FFT) algorithm done as Number Theoretic Transform (NTT) to
+allow for longer maximum transform lengths without overflowing
+available
+numeric types (&quot;doubles&quot; overflow pretty fast, you know, with only 53
+bits
+of mantissa!). When a large enough transform cannot be accommodated by
+available memory, the program uses a Karatsuba technique to break
+the long multiply into smaller ones that *can* be accommodated.
+Currently
+though that thingy seems to have a problem that I have to root out, so
+I'm
+not going to include it in this discussion, although it does seem very
+disk-intensive. The pi program works perfectly OK without it, though.
+
+Also, I'm still wondering if the FFTs/NTTs could be optimized some
+more.
+I've swapped out my regular modular multiplication with a Montgomery
+one, which is somewhat faster. Now, the FFTs/NTTs use a purely
+iterative approach -- no recursion. Would a Bailey 4-step algorithm
+provide some improved performance, even for smaller computations
+(around 1M digits)?
+
+FYI,
+On my computer, which has a Pentium 4 processor at 2.8GHz, 768
+MB of RAM, and 80 GB total hard drive space, and the latest version
+of the program compiled with the Intel C/C++ compiler on Linux, I get
+the following timings:
+
+128 Ki digits, 14 sec.
+256 Ki digits, 30 sec.
+512 Ki digits, 1 min. 16 sec.
+1 Mi digits, 2 min. 53 sec.
+
+Here, &quot;Ki&quot; = 2^10 = 1,024 and &quot;Mi&quot; = 2^20 = 1,048,576.
+
+(all base 26 digits, by the way, as that's what the program computes
+in: base 26. That means if you want a &quot;fair&quot; comparison with the vast
+majority of programs out there which compute in decimal, you'll need
+to compute somewhat _more_ decimals than the amount of base-26
+digits that have been computed for the test runs above.)
+</POST>
+<POST>
+<POSTER> CBFalconer &lt;cbfalco...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-09-16T11:04:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+mike3 wrote:
+&gt; Gianni Mariani &lt;gi3nos ... @mariani.ws&gt; wrote:
+
+... snip ...
+
+&gt;&gt; The same techniques used to put most of the computation in cache
+&gt;&gt; can be used to put computations in main memory - in other words,
+&gt;&gt; most techniques for high performance computing to stop trashing
+&gt;&gt; cache will also work to stop paging out your data.  But then
+&gt;&gt; again, not all computations can be done like that.
+
+&gt; If you look at the way the program is structured, I store all the
+&gt; numbers used in calculations on the hard drive, since they take up
+&gt; like 3 GB or so.
+">
+
+And how can you expect anyone to criticize invisible code?  Put it
+in a compilable program of under 200 lines and publish it here.
+The important thing is the algorithm.
+
+--
+Chuck F (cbfalconer at maineline dot net)
+Available for consulting/temporary embedded and systems.
+&lt; http://cbfalconer.home.att.net &gt;
+
+--
+Posted via a free Usenet account from http://www.teranews.com
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-09-16T15:03:00 </POSTDATE>
+On Sep 16, 9:04 am, CBFalconer &lt;cbfalco ... @yahoo.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; mike3 wrote:
+&gt; &gt; Gianni Mariani &lt;gi3nos ... @mariani.ws&gt; wrote:
+
+&gt; ... snip ...
+
+&gt; &gt;&gt; The same techniques used to put most of the computation in cache
+&gt; &gt;&gt; can be used to put computations in main memory - in other words,
+&gt; &gt;&gt; most techniques for high performance computing to stop trashing
+&gt; &gt;&gt; cache will also work to stop paging out your data.  But then
+&gt; &gt;&gt; again, not all computations can be done like that.
+
+&gt; &gt; If you look at the way the program is structured, I store all the
+&gt; &gt; numbers used in calculations on the hard drive, since they take up
+&gt; &gt; like 3 GB or so.
+
+&gt; And how can you expect anyone to criticize invisible code?  Put it
+&gt; in a compilable program of under 200 lines and publish it here.
+&gt; The important thing is the algorithm.
+
+&gt; --
+&gt;  Chuck F (cbfalconer at maineline dot net)
+&gt;    Available for consulting/temporary embedded and systems.
+&gt;    &lt; http://cbfalconer.home.att.net &gt;
+
+&gt; --
+&gt; Posted via a free Usenet account from http://www.teranews.com
+">
+
+200 lines? You kidding? There are several parts to the program.
+FFTs, disk math routines, Pi algorithm implementation, and so
+on.
+
+You can see the source code for the program here -- it's not all
+&quot;invisible&quot;:
+
+http://www.mediafire.com/download.php?9mzltzjyizn
+
+It's not the most recent version of the code, but it is close enough
+--
+many of the algorithms are the same, especially the disk math
+routines.
+</POST>
+<POST>
+<POSTER> Logan Shaw &lt;lshaw-use...@austin.rr.com&gt; </POSTER>
+<POSTDATE> 2007-09-16T15:48:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+mike3 wrote:
+&gt; On Sep 16, 9:04 am, CBFalconer &lt;cbfalco ... @yahoo.com&gt; wrote:
+&gt;&gt; mike3 wrote:
+&gt;&gt;&gt; If you look at the way the program is structured, I store all the
+&gt;&gt;&gt; numbers used in calculations on the hard drive, since they take up
+&gt;&gt;&gt; like 3 GB or so.
+&gt;&gt; And how can you expect anyone to criticize invisible code?  Put it
+&gt;&gt; in a compilable program of under 200 lines and publish it here.
+&gt;&gt; The important thing is the algorithm.
+&gt; 200 lines? You kidding? There are several parts to the program.
+&gt; FFTs, disk math routines, Pi algorithm implementation, and so
+&gt; on.
+">
+
+You're asking people to volunteer to help you.  You should make it
+easy for them to do so, or they won't bother.
+
+Maybe you could isolate out the parts that deal with disk access and
+post a link to just those parts so that people who want to help don't
+have to dig through a bunch of other code to see what part is relevant.
+
+Also, uploading it as a zip file makes it more work to view it.  My
+level of interest drops off when I see that I'm going to have to
+download a zip file, pick some place to extract it, and so on.  That
+isn't some kind of insurmountable burden, but it makes it a hassle
+instead of fun and interesting.
+
+- Logan
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-09-16T16:05:00 </POSTDATE>
+On Sep 16, 1:48 pm, Logan Shaw &lt;lshaw-use ... @austin.rr.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; mike3 wrote:
+&gt; &gt; On Sep 16, 9:04 am, CBFalconer &lt;cbfalco ... @yahoo.com&gt; wrote:
+&gt; &gt;&gt; mike3 wrote:
+&gt; &gt;&gt;&gt; If you look at the way the program is structured, I store all the
+&gt; &gt;&gt;&gt; numbers used in calculations on the hard drive, since they take up
+&gt; &gt;&gt;&gt; like 3 GB or so.
+&gt; &gt;&gt; And how can you expect anyone to criticize invisible code?  Put it
+&gt; &gt;&gt; in a compilable program of under 200 lines and publish it here.
+&gt; &gt;&gt; The important thing is the algorithm.
+&gt; &gt; 200 lines? You kidding? There are several parts to the program.
+&gt; &gt; FFTs, disk math routines, Pi algorithm implementation, and so
+&gt; &gt; on.
+
+&gt; You're asking people to volunteer to help you.  You should make it
+&gt; easy for them to do so, or they won't bother.
+
+&gt; Maybe you could isolate out the parts that deal with disk access and
+&gt; post a link to just those parts so that people who want to help don't
+&gt; have to dig through a bunch of other code to see what part is relevant.
+
+&gt; Also, uploading it as a zip file makes it more work to view it.  My
+&gt; level of interest drops off when I see that I'm going to have to
+&gt; download a zip file, pick some place to extract it, and so on.  That
+&gt; isn't some kind of insurmountable burden, but it makes it a hassle
+&gt; instead of fun and interesting.
+
+&gt;    - Logan
+">
+
+So I should upload it as decompressed code, one file at a time?
+
+The disk routines are all in the file &quot;diskint.c&quot;. That contains
+all the code for the disk-based arithmetic operations.
+
+You want just the one source file, without anything else?
+
+Here it is, uncompressed, no zips:
+
+http://www.mediafire.com/?0y3amgzhde5
+</POST>
+<POST>
+<POSTER> mike3 &lt;mike4...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-09-18T04:56:00 </POSTDATE>
+On Sep 16, 2:05 pm, mike3 &lt;mike4 ... @yahoo.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 16, 1:48 pm, Logan Shaw &lt;lshaw-use ... @austin.rr.com&gt; wrote:
+
+&gt; &gt; mike3 wrote:
+&gt; &gt; &gt; On Sep 16, 9:04 am, CBFalconer &lt;cbfalco ... @yahoo.com&gt; wrote:
+&gt; &gt; &gt;&gt; mike3 wrote:
+&gt; &gt; &gt;&gt;&gt; If you look at the way the program is structured, I store all the
+&gt; &gt; &gt;&gt;&gt; numbers used in calculations on the hard drive, since they take up
+&gt; &gt; &gt;&gt;&gt; like 3 GB or so.
+&gt; &gt; &gt;&gt; And how can you expect anyone to criticize invisible code?  Put it
+&gt; &gt; &gt;&gt; in a compilable program of under 200 lines and publish it here.
+&gt; &gt; &gt;&gt; The important thing is the algorithm.
+&gt; &gt; &gt; 200 lines? You kidding? There are several parts to the program.
+&gt; &gt; &gt; FFTs, disk math routines, Pi algorithm implementation, and so
+&gt; &gt; &gt; on.
+
+&gt; &gt; You're asking people to volunteer to help you.  You should make it
+&gt; &gt; easy for them to do so, or they won't bother.
+
+&gt; &gt; Maybe you could isolate out the parts that deal with disk access and
+&gt; &gt; post a link to just those parts so that people who want to help don't
+&gt; &gt; have to dig through a bunch of other code to see what part is relevant.
+
+&gt; &gt; Also, uploading it as a zip file makes it more work to view it.  My
+&gt; &gt; level of interest drops off when I see that I'm going to have to
+&gt; &gt; download a zip file, pick some place to extract it, and so on.  That
+&gt; &gt; isn't some kind of insurmountable burden, but it makes it a hassle
+&gt; &gt; instead of fun and interesting.
+
+&gt; &gt;    - Logan
+
+&gt; So I should upload it as decompressed code, one file at a time?
+
+&gt; The disk routines are all in the file &quot;diskint.c&quot;. That contains
+&gt; all the code for the disk-based arithmetic operations.
+
+&gt; You want just the one source file, without anything else?
+
+&gt; Here it is, uncompressed, no zips:
+
+&gt; http://www.mediafire.com/?0y3amgzhde5
+">
+
+More observations: It seems that doing pure
+FFTs with no disk access at all -- to simulate an &quot;Ideal&quot;
+FractalMul+NTT 128 megs multiply with my amount of
+RAM (which involves calling &quot;BigMul_DoNTTMultiplication&quot;
+9 times with a size of 8388608), to gauge how fast the
+FFTs/NTTs will allow this to go, took around 4 minutes, 47
+seconds. That means a full-precision Newton iteration
+would ideally take 3 times that, or around 14.35 minutes.
+For 64 meg multiplies, the time is only 45 secs, so
+3x that is 2.25 minutes. Time for even smaller
+mults for the remaining iterations becomes too little
+to be of real importance. (The additions &amp; subtractions
+in the Newton formulas are, of course, so fast they don't
+really add much time so I don't consider them. It's the
+multiplications that are the toughies.) Ideally, this means
+we should be able to do one Newton iteration in less than 20
+minutes, and one Gauss-Legendre iteration in less than 35.
+(add another 14 or so minutes for the 3 full-precision
+multiplies required.) Yet my program can't even
+get done with the Newton square root even after
+an hour's worth of computation! Obviously that
+Disk Access is eating up sweet, sweet amounts
+of time, and I'd like to find a way to make it as efficient
+as I can possibly get it to be.
+</POST>
+</TEXT>
+</BODY>
+</DOC>

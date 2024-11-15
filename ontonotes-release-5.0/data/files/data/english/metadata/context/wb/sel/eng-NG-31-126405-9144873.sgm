@@ -1,0 +1,4847 @@
+<DOC>
+<DOCID> eng-NG-31-126405-9144873 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-11-08T14:08:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Troubleshooting connection loss (continued)
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Allen Weiner &lt;alwein...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-08T14:08:00 </POSTDATE>
+(I posted a similar thread to this newsgroup on October 29. Due to
+continuing problems, I'm opening this thread.)
+
+I run Fedora 7 and use Verizon DSL. My modem is a Westell 6100-E90
+modem/router.I have no other networking hardware. My DSL connection
+usually runs well, but about once every seven to ten days I lose my
+Internet connection. I can regain my connection by rebooting Fedora.
+I've not been able to regain my Internet connection without a reboot
+(e.g. &quot;service network restart&quot; hangs).
+
+I'm trying to troubleshoot this loss of connection. I've collected a
+bunch of troubleshooting info. I'd like to know what is the next
+troubleshooting step.
+
+Following is what I've got so far:
+
+Modem status: the DSL LED is solid green. The Internet and Ethernet
+LED's are blinking green. I interpret this as meaning that I've not lost
+sync, and that the modem is actually transmitting data to the Internet.
+
+NIC LEDs: NIC is Intel Pro/100 M with two LEDs. The LEDs are both lit.
+The 100Mb LED is solid green. The LINK/ACT LED is blinking green. The
+status of these LEDs is the same as when I have an Internet connection.
+
+GKrellm: The eth0 monitor shows zero activity. When I have an Internet
+connection, the eth0 monitor shows continuous activity, even when I'm
+not accessing anything.
+
+KNetstats monitor: (analogous to the Gnome desktop applet). This shows
+I'm disconnected. The icon has a red circle containing a white &quot;X&quot;.
+
+ifconfig: eth0 UP, BROADCAST, and MULTICAST, but *not* RUNNING. IP
+address 192.168.1.47
+
+ethtool eth0:  link detected: yes
+
+ping 192.168.1.47               OK
+
+ping 192.168.1.1                Destination host unreachable.
+
+I'm running with my IP address statically assigned, instead of using the
+DHCP server on the modem/router.
+
+Following is output of &quot; tail  /var/log/messages&quot;. The connection was
+lost at 11:30. At around 13:00, I power cycled the modem/router and then
+issued &quot;service network restart&quot;, which hung. I then issued ifconfig,
+which also hung.
+
+[root@localhost ~]# tail /var/log/messages
+Nov  8 11:29:33 localhost kernel: Inbound IN=eth0 OUT=
+MAC=00:07:e9:01:b2:09:00:18:3a:53:f7:fb:08:00 SRC=192.168.1.1
+DST=192.168.1.47 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=3996 DF PROTO=TCP
+SPT=1198 DPT=80 WINDOW=8192 RES=0x00 SYN URGP=0
+Nov  8 11:29:39 localhost kernel: Inbound IN=eth0 OUT=
+MAC=00:07:e9:01:b2:09:00:18:3a:53:f7:fb:08:00 SRC=192.168.1.1
+DST=192.168.1.47 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=3997 DF PROTO=TCP
+SPT=1198 DPT=80 WINDOW=8192 RES=0x00 SYN URGP=0
+Nov  8 11:30:03 localhost kernel: Inbound IN=eth0 OUT=
+MAC=00:07:e9:01:b2:09:00:18:3a:53:f7:fb:08:00 SRC=192.168.1.1
+DST=192.168.1.47 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=3998 DF PROTO=TCP
+SPT=1198 DPT=80 WINDOW=8192 RES=0x00 SYN URGP=0
+Nov  8 11:30:21 localhost kernel: Inbound IN=eth0 OUT=
+MAC=00:07:e9:01:b2:09:00:18:3a:53:f7:fb:08:00 SRC=192.168.1.1
+DST=192.168.1.47 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=4015 DF PROTO=TCP
+SPT=1199 DPT=80 WINDOW=8192 RES=0x00 SYN URGP=0
+Nov  8 11:30:26 localhost kernel: Inbound IN=eth0 OUT=
+MAC=00:07:e9:01:b2:09:00:18:3a:53:f7:fb:08:00 SRC=192.168.1.1
+DST=192.168.1.47 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=4016 DF PROTO=TCP
+SPT=1199 DPT=80 WINDOW=8192 RES=0x00 SYN URGP=0
+Nov  8 11:30:50 localhost kernel: Inbound IN=eth0 OUT=
+MAC=00:07:e9:01:b2:09:00:18:3a:53:f7:fb:08:00 SRC=192.168.1.1
+DST=192.168.1.47 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=4017 DF PROTO=TCP
+SPT=1199 DPT=80 WINDOW=8192 RES=0x00 SYN URGP=0
+Nov  8 11:51:44 localhost kernel: NETDEV WATCHDOG: eth0: transmit timed out
+Nov  8 13:16:45 localhost ntpd[1743]: sendto(207.150.167.80) (fd=21):
+Invalid argument
+Nov  8 13:17:26 localhost ntpd[1743]: sendto(209.67.219.106) (fd=21):
+Invalid argument
+Nov  8 13:19:27 localhost ntpd[1743]: sendto(198.144.194.12) (fd=21):
+Invalid argument
+[root@localhost ~]# route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use
+Iface
+[root@localhost ~]# ifconfig
+
+Following the connection loss, but prior to issuing &quot;service network
+restart&quot;, I issued &quot;route -n&quot;. The output was the same as before the
+connection loss.
+
+Following is a listing of my network config. It was taken after
+rebooting (my Internet connection was re-established.)
+
+Thu Nov  8 14:00:53 EST 2007
+======== cat /etc/*release ==========
+Fedora release 7 (Moonshine)
+Fedora release 7 (Moonshine)
+======== uname -rvi =============
+2.6.23.1-21.fc7 #1 SMP Thu Nov 1 21:09:24 EDT 2007 i386
+======== cat /etc/*version ==========
+cat: /etc/subversion: Is a directory
+======== cat /proc/version ==========
+Linux version 2.6.23.1-21.fc7
+(kojibuil ... @xenbuilder4.fedora.phx.redhat.com) (gcc version 4.1.2
+20070925 (Red Hat 4.1.2-27)) #1 SMP Thu Nov 1 21:09:24 EDT 2007
+======== lsb_release -a ==========
+LSB Version:
+:core-3.1-ia32:core-3.1-noarch:graphics-3.1-ia32:graphics-3.1-noarch
+Distributor ID: Fedora
+Description:    Fedora release 7 (Moonshine)
+Release:        7
+Codename:       Moonshine
+
+======== free ==========
+total       used       free     shared    buffers     cached
+Mem:        125128     122368       2760          0       1752      30144
+-/+ buffers/cache:      90472      34656
+Swap:       771080     138024     633056
+======== chkconfig --list ==========
+Double check if /avahi/ needs to be disabled on boot
+avahi-daemon    0:off   1:off   2:off   3:on    4:on    5:off   6:off
+avahi-dnsconfd  0:off   1:off   2:off   3:off   4:off   5:off   6:off
+Double check if /named/ needs to be disabled on boot
+named           0:off   1:off   2:off   3:off   4:off   5:off   6:off
+ConsoleKit      0:off   1:off   2:off   3:on    4:on    5:on    6:off
+NetworkManager  0:off   1:off   2:off   3:off   4:off   5:off   6:off
+NetworkManagerDispatcher        0:off   1:off   2:off   3:off   4:off   5:off   6:off
+acpid           0:off   1:off   2:off   3:on    4:on    5:on    6:off
+anacron         0:off   1:off   2:on    3:on    4:on    5:on    6:off
+apmd            0:off   1:off   2:on    3:on    4:on    5:on    6:off
+atd             0:off   1:off   2:off   3:on    4:on    5:on    6:off
+autofs          0:off   1:off   2:off   3:on    4:on    5:on    6:off
+avahi-daemon    0:off   1:off   2:off   3:on    4:on    5:off   6:off
+avahi-dnsconfd  0:off   1:off   2:off   3:off   4:off   5:off   6:off
+bluetooth       0:off   1:off   2:on    3:on    4:on    5:off   6:off
+capi            0:off   1:off   2:off   3:off   4:off   5:off   6:off
+cpuspeed        0:off   1:on    2:on    3:on    4:on    5:off   6:off
+crond           0:off   1:off   2:on    3:on    4:on    5:on    6:off
+cups            0:off   1:off   2:on    3:on    4:on    5:off   6:off
+dhcdbd          0:off   1:off   2:off   3:off   4:off   5:off   6:off
+dund            0:off   1:off   2:off   3:off   4:off   5:off   6:off
+firestarter     0:off   1:off   2:on    3:on    4:on    5:on    6:off
+firstboot       0:off   1:off   2:off   3:on    4:off   5:off   6:off
+gkrellmd        0:off   1:off   2:off   3:off   4:off   5:off   6:off
+gpm             0:off   1:off   2:on    3:on    4:on    5:on    6:off
+haldaemon       0:off   1:off   2:off   3:on    4:on    5:on    6:off
+hddtemp         0:off   1:off   2:off   3:off   4:off   5:on    6:off
+hidd            0:off   1:off   2:on    3:on    4:on    5:off   6:off
+hplip           0:off   1:off   2:on    3:on    4:on    5:off   6:off
+httpd           0:off   1:off   2:off   3:off   4:off   5:off   6:off
+ip6tables       0:off   1:off   2:on    3:on    4:on    5:off   6:off
+iptables        0:off   1:off   2:off   3:off   4:off   5:on    6:off
+irda            0:off   1:off   2:off   3:off   4:off   5:off   6:off
+irqbalance      0:off   1:off   2:on    3:on    4:on    5:off   6:off
+isdn            0:off   1:off   2:on    3:on    4:on    5:off   6:off
+kdump           0:off   1:off   2:off   3:off   4:off   5:off   6:off
+kudzu           0:off   1:off   2:off   3:on    4:on    5:on    6:off
+lisa            0:off   1:off   2:off   3:off   4:off   5:off   6:off
+lm_sensors      0:off   1:off   2:on    3:on    4:on    5:off   6:off
+mcstrans        0:off   1:off   2:on    3:on    4:on    5:on    6:off
+mdmonitor       0:off   1:off   2:on    3:on    4:on    5:off   6:off
+messagebus      0:off   1:off   2:off   3:on    4:on    5:on    6:off
+named           0:off   1:off   2:off   3:off   4:off   5:off   6:off
+nasd            0:off   1:off   2:off   3:on    4:on    5:on    6:off
+netconsole      0:off   1:off   2:off   3:off   4:off   5:off   6:off
+netfs           0:off   1:off   2:off   3:on    4:on    5:off   6:off
+netplugd        0:off   1:off   2:off   3:off   4:off   5:off   6:off
+network         0:off   1:off   2:on    3:on    4:on    5:on    6:off
+nfs             0:off   1:off   2:off   3:off   4:off   5:off   6:off
+nfslock         0:off   1:off   2:off   3:on    4:on    5:off   6:off
+nscd            0:off   1:off   2:off   3:off   4:off   5:off   6:off
+ntpd            0:off   1:off   2:off   3:off   4:off   5:on    6:off
+pand            0:off   1:off   2:off   3:off   4:off   5:off   6:off
+psacct          0:off   1:off   2:off   3:off   4:off   5:off   6:off
+rdisc           0:off   1:off   2:off   3:off   4:off   5:off   6:off
+readahead_early 0:off   1:off   2:on    3:on    4:on    5:on    6:off
+readahead_later 0:off   1:off   2:off   3:off   4:off   5:on    6:off
+restorecond     0:off   1:off   2:on    3:on    4:on    5:on    6:off
+rpcbind         0:off   1:off   2:off   3:on    4:on    5:off   6:off
+rpcgssd         0:off   1:off   2:off   3:on    4:on    5:off   6:off
+rpcidmapd       0:off   1:off   2:off   3:on    4:on    5:off   6:off
+rpcsvcgssd      0:off   1:off   2:off   3:off   4:off   5:off   6:off
+saslauthd       0:off   1:off   2:off   3:off   4:off   5:off   6:off
+sendmail        0:off   1:off   2:on    3:on    4:on    5:on    6:off
+smartd          0:off   1:off   2:on    3:on    4:on    5:on    6:off
+spamassassin    0:off   1:off   2:off   3:off   4:off   5:off   6:off
+sshd            0:off   1:off   2:on    3:on    4:on    5:off   6:off
+syslog          0:off   1:off   2:on    3:on    4:on    5:on    6:off
+tomcat5         0:off   1:off   2:off   3:off   4:off   5:off   6:off
+vncserver       0:off   1:off   2:off   3:off   4:off   5:off   6:off
+winbind         0:off   1:off   2:off   3:off   4:off   5:off   6:off
+wpa_supplicant  0:off   1:off   2:off   3:off   4:off   5:off   6:off
+xfs             0:off   1:off   2:on    3:on    4:on    5:on    6:off
+ypbind          0:off   1:off   2:off   3:off   4:off   5:off   6:off
+yum-updatesd    0:off   1:off   2:off   3:on    4:on    5:on    6:off
+======== grep hosts: /etc/nsswitch.conf ==========
+#hosts:     db files nisplus nis dns
+hosts:      files dns
+======== grep -v '^#' /etc/resolv.conf ==========
+; generated by /sbin/dhclient-script
+search myhome.westell.com
+nameserver 192.168.1.1
+nameserver 192.168.1.1
+======== hostname  ==========
+localhost.localdomain
+======== grep eth /etc/mod*.conf ==========
+alias eth0 e100
+======== grep -v '^#' /etc/host.conf ==========
+order hosts,bind
+================ ifconfig -a ==============
+...
+read more »
+</POST>
+<POST>
+<POSTER> Bit Twister &lt;BitTwis...@mouse-potato.com&gt; </POSTER>
+<POSTDATE> 2007-11-08T15:21:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Thu, 08 Nov 2007 19:08:10 GMT, Allen Weiner wrote:
+&gt; (I posted a similar thread to this newsgroup on October 29. Due to
+&gt; continuing problems, I'm opening this thread.)
+
+&gt; I run Fedora 7 and use Verizon DSL. My modem is a Westell 6100-E90
+&gt; modem/router.I have no other networking hardware. My DSL connection
+&gt; usually runs well, but about once every seven to ten days I lose my
+&gt; Internet connection. I can regain my connection by rebooting Fedora.
+&gt; I've not been able to regain my Internet connection without a reboot
+&gt; (e.g. &quot;service network restart&quot; hangs).
+
+&gt; GKrellm: The eth0 monitor shows zero activity. When I have an Internet
+&gt; connection, the eth0 monitor shows continuous activity, even when I'm
+&gt; not accessing anything.
+">
+
+You have activity like arp ack/req, email checks, ntp time
+check/sync.... Not to mention anything sent by the router
+&quot;even when you'r not accessing anything&quot;
+
+<QUOTE PREVIOUSPOST="
+&gt; Nov  8 11:51:44 localhost kernel: NETDEV WATCHDOG: eth0: transmit timed out
+">
+
+No experience with netdev watchdog. I wonder if it is tearing down
+your connection.
+
+<QUOTE PREVIOUSPOST="
+&gt; [root@localhost ~]# route -n
+&gt; Kernel IP routing table
+&gt; Destination     Gateway         Genmask         Flags Metric Ref    Use
+&gt; Iface
+">
+
+Well, there goes your routing so the &quot;no route to 192.168.1.1&quot; is correct.
+
+<QUOTE PREVIOUSPOST="
+&gt; [root@localhost ~]# ifconfig
+">
+
+Yep, and that is sad.
+
+<QUOTE PREVIOUSPOST="
+&gt; Following the connection loss, but prior to issuing &quot;service network
+&gt; restart&quot;, I issued &quot;route -n&quot;. The output was the same as before the
+&gt; connection loss.
+">
+
+What you posted above, did not show us that fact.
+
+<QUOTE PREVIOUSPOST="
+&gt; Double check if /avahi/ needs to be disabled on boot
+&gt; avahi-daemon       0:off   1:off   2:off   3:on    4:on    5:off   6:off
+">
+
+avahi-daemon is still not disabled.
+You need to click up a terminal and do the following:
+su - root
+service avahi-daemon stop
+chkconfig --del  avahi-daemon
+
+<QUOTE PREVIOUSPOST="
+&gt; ========== head -15 /etc/hosts ===========
+&gt; 192.168.1.1        gateway
+">
+
+That bites, you should have a local host entry.
+I suggest one for the node, if you would give it a node name.
+
+Looking in your dhcp lease file we find
+option domain-name &quot;myhome.westell.com&quot;;
+
+So you could name it that if you like, but I wonder what is going on
+because I see
+
+$ host westell.com
+westell.com has address 216.203.29.175
+westell.com mail is handled by 10 cluster9.us.messagelabs.com.
+westell.com mail is handled by 20 cluster9a.us.messagelabs.com.
+
+Something is not looking good in the router, from what I can guess so far.
+You better get into the router and veify that the dns servers belong
+to verizon.
+
+Come on just to make eveything standard, Please modify /etc/sysconfig/network
+to set a unique node name, not localhost.localdomain
+
+/etc/sysconfig/network
+NETWORKING=yes
+NEEDHOSTNAME=no                           &lt;==== add this line
+HOSTNAME=darkstar.home.invalid          &lt;==== pick your own node name
+put .invalid on the end
+
+Now your /etc/hosts should have something like:
+127.0.0.1               localhost
+192.168.1.1             gateway
+192.168.1.47            darkstar.home.invalid darkstar
+
+I will suggest changing your ip address to 192.168.1.140
+It is hard to prove if you are running static or dhcp.
+
+Change ip addy in /etc/sysconfig/network-scripts/ifcfg-eth0,
+/etc/hosts to match ip addy and reboot. You should have no problem.
+
+<QUOTE PREVIOUSPOST="
+&gt; ======== cat /etc/sysconfig/network-scripts/ifcfg-eth0 ==========
+&gt; # Intel Corporation 82557/8/9 [Ethernet Pro 100]
+&gt; DEVICE=eth0
+&gt; ONBOOT=yes
+&gt; BOOTPROTO=none
+&gt; HWADDR=00:07:e9:01:b2:09
+&gt; TYPE=Ethernet
+&gt; USERCTL=yes
+&gt; IPV6INIT=no
+&gt; PEERDNS=yes
+&gt; NETMASK=255.255.255.0
+&gt; IPADDR=192.168.1.47
+&gt; GATEWAY=192.168.1.1
+">
+
+BOOTPROTO= seems to indicate static but look,
+renew 3 2007/11/7 05:23:24;
+rebind 3 2007/11/7 15:31:25;
+expire 3 2007/11/7 18:31:25;
+
+Why are you getting a new dhcp lease??????
+Something is still not right. Maybe PEERDNS=yes caused the lease request.
+
+When you made your changes, did you use the gui interface, or did you
+just edit files?
+If edited files for eth0, use gui interface to modify eth0.
+
+<QUOTE PREVIOUSPOST="
+&gt; ======== tail -18 /var/lib/dhclient/dhclient-eth0.leases ==========
+&gt;    rebind 3 2007/11/7 12:23:43;
+&gt;    expire 3 2007/11/7 15:23:43;
+&gt; }
+&gt; lease {
+&gt;    interface &quot;eth0&quot;;
+&gt;    fixed-address 192.168.1.47;
+&gt;    option subnet-mask 255.255.255.0;
+&gt;    option routers 192.168.1.1;
+&gt;    option dhcp-lease-time 86400;
+&gt;    option dhcp-message-type 5;
+&gt;    option domain-name-servers 192.168.1.1,192.168.1.1;
+&gt;    option dhcp-server-identifier 192.168.1.1;
+&gt;    option broadcast-address 255.255.255.255;
+&gt;    option domain-name &quot;myhome.westell.com&quot;;
+&gt;    renew 3 2007/11/7 05:23:24;
+&gt;    rebind 3 2007/11/7 15:31:25;
+&gt;    expire 3 2007/11/7 18:31:25;
+&gt; What troubleshooting step should I do next?
+">
+
+After my suggested changes,
+echo &quot;nameserver 192.168.1.1&quot; &gt; /etc/resolv.conf
+cp /dev/null /var/lib/dhclient/dhclient-eth0.leases
+reboot, because of node name changes, and when the system comes up, do a
+cat /var/lib/dhclient/dhclient-eth0.leases
+and verify no dhcp lease.
+
+If so, I would
+cd /etc/sysconfig/network-scripts/
+cp ifcfg-eth0 ifcfg-eth0.bkup
+
+change
+BOOTPROTO=static
+PEERDNS=no
+in  /etc/sysconfig/network-scripts/ifcfg-eth0
+
+cp /dev/null /var/lib/dhclient/dhclient-eth0.leases
+service network restart
+echo &quot;nameserver 192.168.1.1&quot; &gt; /etc/resolv.conf
+cat /var/lib/dhclient/dhclient-eth0.leases
+I would now think there would be a null dhclient-eth0.leases file.
+
+if restart fails
+cp ifcfg-eth0.bkup ifcfg-eth0
+and change
+PEERDNS=no
+cp /dev/null /var/lib/dhclient/dhclient-eth0.leases
+echo &quot;nameserver 192.168.1.1&quot; &gt; /etc/resolv.conf
+service network restart
+cat /var/lib/dhclient/dhclient-eth0.leases
+
+cat /etc/resolv.conf should show only one nameserver line. If two,
+your dhcp client is still running.
+
+Do veify ip address is 192.168.1.140 in
+ifconfig
+</POST>
+<POST>
+<POSTER> Allen Weiner &lt;alwein...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-08T18:03:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Bit Twister wrote:
+&gt; On Thu, 08 Nov 2007 19:08:10 GMT, Allen Weiner wrote:
+&gt;&gt; (I posted a similar thread to this newsgroup on October 29. Due to
+&gt;&gt; continuing problems, I'm opening this thread.)
+
+&gt;&gt; I run Fedora 7 and use Verizon DSL. My modem is a Westell 6100-E90
+&gt;&gt; modem/router.I have no other networking hardware. My DSL connection
+&gt;&gt; usually runs well, but about once every seven to ten days I lose my
+&gt;&gt; Internet connection. I can regain my connection by rebooting Fedora.
+&gt;&gt; I've not been able to regain my Internet connection without a reboot
+&gt;&gt; (e.g. &quot;service network restart&quot; hangs).
+
+&gt;&gt; GKrellm: The eth0 monitor shows zero activity. When I have an Internet
+&gt;&gt; connection, the eth0 monitor shows continuous activity, even when I'm
+&gt;&gt; not accessing anything.
+
+&gt; You have activity like arp ack/req, email checks, ntp time
+&gt; check/sync.... Not to mention anything sent by the router
+&gt; &quot;even when you'r not accessing anything&quot;
+">
+
+I believe ntp runs only occasionally. I don't have automatic email
+checks. While my connection is up, the Gkrellm eth0 monitor never goes
+blank, even if I'm just browsing local files on my HDD. A partial
+explanation, from the other thread, is that every 15 seconds, Verizon is
+probing to see if I'm running a server.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Nov  8 11:51:44 localhost kernel: NETDEV WATCHDOG: eth0: transmit timed out
+
+&gt; No experience with netdev watchdog. I wonder if it is tearing down
+&gt; your connection.
+
+&gt;&gt; [root@localhost ~]# route -n
+&gt;&gt; Kernel IP routing table
+&gt;&gt; Destination     Gateway         Genmask         Flags Metric Ref    Use
+&gt;&gt; Iface
+
+&gt; Well, there goes your routing so the &quot;no route to 192.168.1.1&quot; is correct.
+
+&gt;&gt; [root@localhost ~]# ifconfig
+
+&gt; Yep, and that is sad.
+
+&gt;&gt; Following the connection loss, but prior to issuing &quot;service network
+&gt;&gt; restart&quot;, I issued &quot;route -n&quot;. The output was the same as before the
+&gt;&gt; connection loss.
+
+&gt; What you posted above, did not show us that fact.
+">
+
+&quot;service network restart&quot; clears the routing table and then hangs.
+
+1. Connection loss.
+
+2. I issue route -n. Result is same as before connection loss.
+
+3. I issue &quot;service network restart&quot;. It hangs.
+
+4. I issue route -n. Routing table is empty.
+
+5. I issue ifconfig. It hangs.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Double check if /avahi/ needs to be disabled on boot
+&gt;&gt; avahi-daemon           0:off   1:off   2:off   3:on    4:on    5:off   6:off
+
+&gt; avahi-daemon is still not disabled.
+&gt; You need to click up a terminal and do the following:
+&gt; su - root
+&gt; service avahi-daemon stop
+&gt; chkconfig --del  avahi-daemon
+">
+
+I boot into runlevel 5. The above result shows that avahi-daemon is not
+activated for runlevel 5. I confirmed this by issuing KDE -&gt; system -&gt;
+services. I selected avahi-daemon, and it reported avahi-daemon is not
+running. Also, if I issue dmesg, those multicast transmissions to/from
+port 5353 are no longer being logged.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; ========== head -15 /etc/hosts ===========
+&gt;&gt; 192.168.1.1    gateway
+
+&gt; That bites, you should have a local host entry.
+&gt; I suggest one for the node, if you would give it a node name.
+">
+
+Novice question: What is the rationale for having a local host entry?
+
+<QUOTE PREVIOUSPOST="
+&gt; Looking in your dhcp lease file we find
+&gt;     option domain-name &quot;myhome.westell.com&quot;;
+
+&gt; So you could name it that if you like, but I wonder what is going on
+&gt; because I see
+
+&gt; $ host westell.com
+&gt; westell.com has address 216.203.29.175
+&gt; westell.com mail is handled by 10 cluster9.us.messagelabs.com.
+&gt; westell.com mail is handled by 20 cluster9a.us.messagelabs.com.
+
+&gt; Something is not looking good in the router, from what I can guess so far.
+&gt; You better get into the router and veify that the dns servers belong
+&gt; to verizon.
+">
+
+When I originally configured for static IP, I got the DNS server
+addresses from the router. Primary: 68.237.161.12. Secondary:
+71.250.0.12. Isn't everything in &quot;12&quot; Verizon? Besides, as long as I can
+browse the web, DNS must be working even if the servers aren't from Verizon.
+
+<QUOTE PREVIOUSPOST="
+&gt; Come on just to make eveything standard, Please modify /etc/sysconfig/network
+&gt; to set a unique node name, not localhost.localdomain
+
+&gt; /etc/sysconfig/network
+&gt; NETWORKING=yes
+&gt; NEEDHOSTNAME=no                           &lt;==== add this line
+&gt; HOSTNAME=darkstar.home.invalid          &lt;==== pick your own node name
+&gt;                                          put .invalid on the end
+
+&gt; Now your /etc/hosts should have something like:
+&gt; 127.0.0.1               localhost
+&gt; 192.168.1.1             gateway
+&gt; 192.168.1.47               darkstar.home.invalid darkstar
+">
+
+Novice comment: I don't understand the rationale for making this change.
+
+<QUOTE PREVIOUSPOST="
+&gt; I will suggest changing your ip address to 192.168.1.140
+&gt; It is hard to prove if you are running static or dhcp.
+">
+
+In the other thread you suggested 192.168.1.147, and that's what I used
+at first. But I had a setback.
+
+My PC is dual-boot: Fedora 7 and Windows/ME. Nowadays I mostly run
+Fedora, but at least once a week I run Windows/ME.
+
+I ran Fedora with static IP for several days with no problem. During
+that time I did not run Windows/ME. When I eventually ran Windows/ME I
+also configured that for static IP. It ran OK, but the domain I selected
+on the DNS configuration screen is not what is recommended.
+
+A few days later, Fedora would not boot. It hung in boot on &quot;starting
+sendmail&quot;. I booted back into Windows/ME. It could not locate Google.
+
+After switching Fedora and Windows back to dynamic IP, everything was OK.
+
+So, I've made a second attempt with static IP. I thought I'd play it
+safe and use the same IP address that DHCP was giving me.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; Change ip addy in /etc/sysconfig/network-scripts/ifcfg-eth0,
+&gt; /etc/hosts to match ip addy and reboot. You should have no problem.
+
+&gt;&gt; ======== cat /etc/sysconfig/network-scripts/ifcfg-eth0 ==========
+&gt;&gt; # Intel Corporation 82557/8/9 [Ethernet Pro 100]
+&gt;&gt; DEVICE=eth0
+&gt;&gt; ONBOOT=yes
+&gt;&gt; BOOTPROTO=none
+&gt;&gt; HWADDR=00:07:e9:01:b2:09
+&gt;&gt; TYPE=Ethernet
+&gt;&gt; USERCTL=yes
+&gt;&gt; IPV6INIT=no
+&gt;&gt; PEERDNS=yes
+&gt;&gt; NETMASK=255.255.255.0
+&gt;&gt; IPADDR=192.168.1.47
+&gt;&gt; GATEWAY=192.168.1.1
+
+&gt; BOOTPROTO= seems to indicate static but look,
+&gt;     renew 3 2007/11/7 05:23:24;
+&gt;     rebind 3 2007/11/7 15:31:25;
+&gt;     expire 3 2007/11/7 18:31:25;
+
+&gt; Why are you getting a new dhcp lease??????
+&gt; Something is still not right. Maybe PEERDNS=yes caused the lease request.
+
+&gt; When you made your changes, did you use the gui interface, or did you
+&gt; just edit files?
+&gt; If edited files for eth0, use gui interface to modify eth0.
+">
+
+I used the GUI.
+
+<QUOTE PREVIOUSPOST="
+
+">
+
+&lt;snip remainder&gt;
+</POST>
+<POST>
+<POSTER> Bit Twister &lt;BitTwis...@mouse-potato.com&gt; </POSTER>
+<POSTDATE> 2007-11-08T19:10:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Thu, 08 Nov 2007 23:03:02 GMT, Allen Weiner wrote:
+&gt; Bit Twister wrote:
+
+&gt; I believe ntp runs only occasionally.
+">
+
+Very true if clock is close to time server.
+
+I don't have automatic email checks.
+
+I had no idea if you had someting like thunderbird up. Default is
+check every 10 minutes.
+
+<QUOTE PREVIOUSPOST="
+&gt; While my connection is up, the Gkrellm eth0 monitor never goes
+&gt; blank, even if I'm just browsing local files on my HDD. A partial
+&gt; explanation, from the other thread, is that every 15 seconds, Verizon is
+&gt; probing to see if I'm running a server.
+">
+
+Yea, saw that. but I never see those in my Verizon router log. You would think
+they would check for servers on us FiOs users.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; What you posted above, did not show us that fact.
+
+&gt; &quot;service network restart&quot; clears the routing table and then hangs.
+">
+
+Yes, but, while down, the proof would be
+route -n &gt; down.txt
+ifconfig &gt;&gt; down.txt
+and include down.txt in your reply
+
+<QUOTE PREVIOUSPOST="
+&gt; 1. Connection loss.
+&gt; 2. I issue route -n. Result is same as before connection loss.
+">
+
+I'll take your word for it.  :-)
+
+<QUOTE PREVIOUSPOST="
+&gt; avahi-daemon       0:off   1:off   2:off   3:on    4:on    5:off   6:off
+&gt; I boot into runlevel 5. The above result shows that avahi-daemon is not
+&gt; activated for runlevel 5.
+">
+
+Ok, I guess I'll need to add code to get runlevel.  :-D
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; ========== head -15 /etc/hosts ===========
+&gt;&gt;&gt; 192.168.1.1        gateway
+
+&gt;&gt; That bites, you should have a local host entry.
+&gt;&gt; I suggest one for the node, if you would give it a node name.
+
+&gt; Novice question: What is the rationale for having a local host entry?
+">
+
+There are apps which want to commicate and they just want to do it on
+the local host (127.0.0.1)
+
+<QUOTE PREVIOUSPOST="
+&gt; When I originally configured for static IP, I got the DNS server
+&gt; addresses from the router. Primary: 68.237.161.12. Secondary:
+&gt; 71.250.0.12. Isn't everything in &quot;12&quot; Verizon?
+">
+
+Make sure,       host ip_here_2_check
+
+<QUOTE PREVIOUSPOST="
+&gt; Besides, as long as I can
+&gt; browse the web, DNS must be working even if the servers aren't from Verizon.
+">
+
+Very true, but what if some cracker manages to put their DNS servers
+in there.   :-(
+
+I was worried, because of the myhome.westell.com hostname being issued to your
+node via dhcp.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Now your /etc/hosts should have something like:
+&gt;&gt; 127.0.0.1               localhost
+&gt;&gt; 192.168.1.1             gateway
+&gt;&gt; 192.168.1.47           darkstar.home.invalid darkstar
+
+&gt; Novice comment: I don't understand the rationale for making this change.
+">
+
+Need the 127. entry for local communications.
+I left the gateway line.
+The  darkstar.home.invalid darkstar was so there was an entry for your
+static ip which matched your node name.
+That ip is normally used by your desktop manager for when it
+uses your node name for ip resolution.
+
+<QUOTE PREVIOUSPOST="
+&gt; In the other thread you suggested 192.168.1.147,
+">
+
+Yep, that was to tell me if dhcp gave you an address or you were realy
+were using a static value. When I indicated 140 in this thread, it
+was to help keep anyone from confusing .147 with .47. Next time I'll
+choose .150    :)
+
+<QUOTE PREVIOUSPOST="
+&gt; and that's what I used  at first. But I had a setback.
+
+&gt; My PC is dual-boot: Fedora 7 and Windows/ME. Nowadays I mostly run
+&gt; Fedora, but at least once a week I run Windows/ME.
+">
+
+I would think one OS set dhcp and other OS set static should not
+matter as long as ip address is different.
+I do it all the time. First install uses dhcp and some time later I
+pick a static ip. My XP Home ran dhcp until the next Second Tuesday
+when I booted for updates.
+
+<QUOTE PREVIOUSPOST="
+&gt; I ran Fedora with static IP for several days with no problem.
+">
+
+Past the normal failure date???
+
+<QUOTE PREVIOUSPOST="
+&gt; During
+&gt; that time I did not run Windows/ME. When I eventually ran Windows/ME I
+&gt; also configured that for static IP. It ran OK, but the domain I selected
+&gt; on the DNS configuration screen is not what is recommended.
+">
+
+If static, I would have set actual verizon dns values found in router.
+But, if you wanted you can use the router's dns vaule (192.168.1.1)
+
+<QUOTE PREVIOUSPOST="
+&gt; A few days later, Fedora would not boot.
+&gt; It hung in boot on &quot;starting sendmail&quot;.
+">
+
+Yep, it may have not been able to lookup node name in /etc/hosts.
+It may have hung because it wanted to look up the upline
+relay/smart host to send email still in the mail queue and network was
+not up.
+
+<QUOTE PREVIOUSPOST="
+&gt; I booted back into Windows/ME. It could not locate Google.
+">
+
+If WinME could not ping 72.14.207.99 (google.com) or 208.101.56.232
+( www.google.com ) then connection was still down.
+
+<QUOTE PREVIOUSPOST="
+&gt; After switching Fedora and Windows back to dynamic IP, everything was OK.
+">
+
+I would set both static with verizon dns values, power off everything,
+wait 1 minute by the wall clock, powerup modem, let leds settle, power
+up pc.
+
+If you switched them to the original .47 then, the router still thinks
+it handed out the lease and it is being used.
+
+As an FYI. I answered yes to a XP Home Windows Update nic driver and I could
+no longer use the nic under linux.  :-(
+
+<QUOTE PREVIOUSPOST="
+&gt; So, I've made a second attempt with static IP. I thought I'd play it
+&gt; safe and use the same IP address that DHCP was giving me.
+">
+
+And that is why I asked for 147. We have to break the dhcp server/client
+out of the loop to see which end of the connection is causing your
+drop out problem.
+
+<QUOTE PREVIOUSPOST="
+&gt; I used the GUI.
+">
+
+Ok, good, I had booted my fedora 7 install and found there is another
+eth0 config file in a default/ directory awhile ago. No idea which one
+is being used to control the nic.
+
+Freaking mlocate cron script does not seem to update the locate database. I
+installed updatates and need to go back and boot fc7, update the
+locate database and see if locate eth0 shows all the config files when logged
+in as root.
+
+I did check, and FC7 GUI does not have a selection to allow setting
+PEERDNS=no in nic config file.
+
+If you have about 10 gig of free space, I can get you setup on
+Mandriva Linux and we can rule out Fedora as your problem.  :-P
+
+Something else to play with the next time your connection drops.
+Before you do the service network restart, I want you to unplug the
+ethernet to pc cable from the modem or nic.
+Wait at least 30 seconds by the wall clock, plug it in and do the
+serice network restart and see if network comes up.
+
+Once in a great while when playing with my network, I have had to
+restart my firewall after restarting the network.
+</POST>
+<POST>
+<POSTER> Allen Weiner &lt;alwein...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-08T20:53:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Bit Twister wrote:
+&gt; On Thu, 08 Nov 2007 23:03:02 GMT, Allen Weiner wrote:
+&gt;&gt; Bit Twister wrote:
+
+&gt;&gt; I believe ntp runs only occasionally.
+
+&gt; Very true if clock is close to time server.
+
+&gt; I don't have automatic email checks.
+
+&gt; I had no idea if you had someting like thunderbird up. Default is
+&gt; check every 10 minutes.
+">
+
+I am using Thunderbird for USENET but not for email. My Thunderbird
+profile broke when I switched ISPs and I can't fix it.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; While my connection is up, the Gkrellm eth0 monitor never goes
+&gt;&gt; blank, even if I'm just browsing local files on my HDD. A partial
+&gt;&gt; explanation, from the other thread, is that every 15 seconds, Verizon is
+&gt;&gt; probing to see if I'm running a server.
+
+&gt; Yea, saw that. but I never see those in my Verizon router log. You would think
+&gt; they would check for servers on us FiOs users.
+">
+
+My Westell modem/router log hardly shows anything. That's another puzzle
+to solve someday.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; What you posted above, did not show us that fact.
+&gt;&gt; &quot;service network restart&quot; clears the routing table and then hangs.
+
+&gt; Yes, but, while down, the proof would be
+&gt;      route -n &gt; down.txt
+&gt;      ifconfig &gt;&gt; down.txt
+&gt; and include down.txt in your reply
+
+&gt;&gt; 1. Connection loss.
+&gt;&gt; 2. I issue route -n. Result is same as before connection loss.
+
+&gt; I'll take your word for it.  :-)
+
+&gt;&gt; avahi-daemon           0:off   1:off   2:off   3:on    4:on    5:off   6:off
+
+&gt;&gt; I boot into runlevel 5. The above result shows that avahi-daemon is not
+&gt;&gt; activated for runlevel 5.
+
+&gt; Ok, I guess I'll need to add code to get runlevel.  :-D
+
+&gt;&gt;&gt;&gt; ========== head -15 /etc/hosts ===========
+&gt;&gt;&gt;&gt; 192.168.1.1    gateway
+
+&gt;&gt;&gt; That bites, you should have a local host entry.
+&gt;&gt;&gt; I suggest one for the node, if you would give it a node name.
+&gt;&gt; Novice question: What is the rationale for having a local host entry?
+
+&gt; There are apps which want to commicate and they just want to do it on
+&gt; the local host (127.0.0.1)
+
+&gt;&gt; When I originally configured for static IP, I got the DNS server
+&gt;&gt; addresses from the router. Primary: 68.237.161.12. Secondary:
+&gt;&gt; 71.250.0.12. Isn't everything in &quot;12&quot; Verizon?
+
+&gt; Make sure,       host ip_here_2_check
+">
+
+68.237.161.12   nsnyny01.verizon.net
+71.250.0.12     nsnwrk01.verizon.net
+I wasn't aware of the host command.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Besides, as long as I can
+&gt;&gt; browse the web, DNS must be working even if the servers aren't from Verizon.
+
+&gt; Very true, but what if some cracker manages to put their DNS servers
+&gt; in there.   :-(
+
+&gt; I was worried, because of the myhome.westell.com hostname being issued to your
+&gt; node via dhcp.
+
+&gt;&gt;&gt; Now your /etc/hosts should have something like:
+&gt;&gt;&gt; 127.0.0.1               localhost
+&gt;&gt;&gt; 192.168.1.1             gateway
+&gt;&gt;&gt; 192.168.1.47               darkstar.home.invalid darkstar
+&gt;&gt; Novice comment: I don't understand the rationale for making this change.
+
+&gt; Need the 127. entry for local communications.
+&gt; I left the gateway line.
+&gt; The  darkstar.home.invalid darkstar was so there was an entry for your
+&gt; static ip which matched your node name.
+&gt; That ip is normally used by your desktop manager for when it
+&gt; uses your node name for ip resolution.
+
+&gt;&gt; In the other thread you suggested 192.168.1.147,
+
+&gt; Yep, that was to tell me if dhcp gave you an address or you were realy
+&gt; were using a static value. When I indicated 140 in this thread, it
+&gt; was to help keep anyone from confusing .147 with .47. Next time I'll
+&gt; choose .150    :)
+
+&gt;&gt; and that's what I used  at first. But I had a setback.
+
+&gt;&gt; My PC is dual-boot: Fedora 7 and Windows/ME. Nowadays I mostly run
+&gt;&gt; Fedora, but at least once a week I run Windows/ME.
+
+&gt; I would think one OS set dhcp and other OS set static should not
+&gt; matter as long as ip address is different.
+&gt; I do it all the time. First install uses dhcp and some time later I
+&gt; pick a static ip. My XP Home ran dhcp until the next Second Tuesday
+&gt; when I booted for updates.
+
+&gt;&gt; I ran Fedora with static IP for several days with no problem.
+
+&gt; Past the normal failure date???
+">
+
+There is no normal failure date. I can go as short as 2 days and as long
+as 10 days between failures. There does seem to be a normal failure time
+of 2 to 2.5 hours into the session. Does not reoccur after reboot.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; During
+&gt;&gt; that time I did not run Windows/ME. When I eventually ran Windows/ME I
+&gt;&gt; also configured that for static IP. It ran OK, but the domain I selected
+&gt;&gt; on the DNS configuration screen is not what is recommended.
+
+&gt; If static, I would have set actual verizon dns values found in router.
+&gt; But, if you wanted you can use the router's dns vaule (192.168.1.1)
+">
+
+I used the same DNS servers for Fedora and Windows. On the Windows DNS
+configuration screen, besides the server IP's, there were entries for
+hostname and domain name. For domain name, it is recommended to use
+something like verizon.net. I used &quot;localdomain&quot;.
+
+If someone can confirm that that error is what caused my subsequent boot
+failure, then I'll gladly change my static IP address to 192.168.1.150.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; A few days later, Fedora would not boot.
+&gt;&gt; It hung in boot on &quot;starting sendmail&quot;.
+
+&gt; Yep, it may have not been able to lookup node name in /etc/hosts.
+&gt; It may have hung because it wanted to look up the upline
+&gt; relay/smart host to send email still in the mail queue and network was
+&gt; not up.
+
+&gt;&gt; I booted back into Windows/ME. It could not locate Google.
+
+&gt; If WinME could not ping 72.14.207.99 (google.com) or 208.101.56.232
+&gt; ( www.google.com ) then connection was still down.
+
+&gt;&gt; After switching Fedora and Windows back to dynamic IP, everything was OK.
+
+&gt; I would set both static with verizon dns values, power off everything,
+&gt; wait 1 minute by the wall clock, powerup modem, let leds settle, power
+&gt; up pc.
+
+&gt; If you switched them to the original .47 then, the router still thinks
+&gt; it handed out the lease and it is being used.
+
+&gt; As an FYI. I answered yes to a XP Home Windows Update nic driver and I could
+&gt; no longer use the nic under linux.  :-(
+
+&gt;&gt; So, I've made a second attempt with static IP. I thought I'd play it
+&gt;&gt; safe and use the same IP address that DHCP was giving me.
+
+&gt; And that is why I asked for 147. We have to break the dhcp server/client
+&gt; out of the loop to see which end of the connection is causing your
+&gt; drop out problem.
+
+&gt;&gt; I used the GUI.
+
+&gt; Ok, good, I had booted my fedora 7 install and found there is another
+&gt; eth0 config file in a default/ directory awhile ago. No idea which one
+&gt; is being used to control the nic.
+
+&gt; Freaking mlocate cron script does not seem to update the locate database. I
+&gt; installed updatates and need to go back and boot fc7, update the
+&gt; locate database and see if locate eth0 shows all the config files when logged
+&gt; in as root.
+
+&gt; I did check, and FC7 GUI does not have a selection to allow setting
+&gt; PEERDNS=no in nic config file.
+
+&gt; If you have about 10 gig of free space, I can get you setup on
+&gt; Mandriva Linux and we can rule out Fedora as your problem.  :-P
+">
+
+I have a Knoppix Live CD. Was thinking about that. But I've never gone
+online with Knoppix.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; Something else to play with the next time your connection drops.
+&gt; Before you do the service network restart, I want you to unplug the
+&gt; ethernet to pc cable from the modem or nic.
+&gt; Wait at least 30 seconds by the wall clock, plug it in and do the
+&gt; serice network restart and see if network comes up.
+will do.
+
+&gt; Once in a great while when playing with my network, I have had to
+&gt; restart my firewall after restarting the network.
+">
+</POST>
+<POST>
+<POSTER> Bit Twister &lt;BitTwis...@mouse-potato.com&gt; </POSTER>
+<POSTDATE> 2007-11-08T21:26:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Fri, 09 Nov 2007 01:53:43 GMT, Allen Weiner wrote:
+
+&gt;    I am using Thunderbird for USENET but not for email. My Thunderbird
+&gt; profile broke when I switched ISPs and I can't fix it.
+">
+
+Delete old servers, set new ones.
+incoming.verizon.net.          (pop3)
+outgoing.verizon.net.          (smtp)
+
+<QUOTE PREVIOUSPOST="
+&gt; I wasn't aware of the host command.
+">
+
+I use it to get ip addies and look up ip addies.
+I think it is the replacement for nslookup
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Past the normal failure date???
+&gt; There is no normal failure date. I can go as short as 2 days and as long
+&gt; as 10 days between failures.
+">
+
+That is where I picked up &quot;fails every ten days&quot;
+
+<QUOTE PREVIOUSPOST="
+&gt; There does seem to be a normal failure time
+&gt; of 2 to 2.5 hours into the session.
+">
+
+Which is odd, because if a dhcp renew failure, it should be half way
+through the lease time, I.E noon after a Midnight lease. That is based
+on the rebind/renew times given in a lease relative to when you
+recived the lease.
+
+<QUOTE PREVIOUSPOST="
+&gt; Does not reoccur after reboot.
+">
+
+And that makes no sense unless, the first boot is after a WinME session.
+If so, just after boot, do a service network restart and verify
+network comes up. Then watch for failure.
+
+<QUOTE PREVIOUSPOST="
+&gt; I used the same DNS servers for Fedora and Windows. On the Windows DNS
+&gt; configuration screen, besides the server IP's, there were entries for
+&gt; hostname and domain name. For domain name, it is recommended to use
+&gt; something like verizon.net.
+">
+
+Well, I wouldn't/didn't follow the suggestion.
+There is nothing wrong with making someting up and putting .invalid on the end.
+
+<QUOTE PREVIOUSPOST="
+&gt; I used &quot;localdomain&quot;.
+">
+
+Yes, and that is the one name I want to talk you out of.
+I do not do windoze, but use the search feature in your FILE explorer
+and look for the  etc.hosts file.   Take a look at it.
+
+<QUOTE PREVIOUSPOST="
+&gt; If someone can confirm that that error is what caused my subsequent boot
+&gt; failure, then I'll gladly change my static IP address to 192.168.1.150.
+">
+
+I am leaning towards a router glitch.
+Do make my node name and /etc/hosts change suggestions.
+
+Just for fun, pick node.domain names like,
+winme.here.invalid
+and  fedora.here.invalid
+Give each OS static numbers,  .140 and .150
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; If you have about 10 gig of free space, I can get you setup on
+&gt;&gt; Mandriva Linux and we can rule out Fedora as your problem.  :-P
+&gt; I have a Knoppix Live CD. Was thinking about that. But I've never gone
+&gt; online with Knoppix.
+">
+
+knoppis  will automagically do your DHCP address selection for you during boot.
+
+Somewhere in the menu is knoppix which is where you can configure the network.
+</POST>
+<POST>
+<POSTER> Bit Twister &lt;BitTwis...@mouse-potato.com&gt; </POSTER>
+<POSTDATE> 2007-11-08T21:37:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Fri, 09 Nov 2007 02:26:23 GMT, Bit Twister wrote:
+
+&gt; Yes, and that is the one name I want to talk you out of.
+&gt; I do not do windoze, but use the search feature in your FILE explorer
+&gt; and look for the  etc.hosts file.   Take a look at it.
+">
+
+that should be etc/hosts
+
+<QUOTE PREVIOUSPOST="
+&gt; I am leaning towards a router glitch.
+&gt; Do make my node name and /etc/hosts change suggestions.
+
+&gt; Just for fun, pick node.domain names like,
+&gt;      winme.here.invalid
+&gt; and  fedora.here.invalid
+&gt; Give each OS static numbers,  .140 and .150
+">
+
+After you make the second system static setup, do power reset the router.
+</POST>
+<POST>
+<POSTER> Bit Twister &lt;BitTwis...@mouse-potato.com&gt; </POSTER>
+<POSTDATE> 2007-11-08T22:00:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Fri, 09 Nov 2007 02:37:34 GMT, Bit Twister wrote:
+&gt; On Fri, 09 Nov 2007 02:26:23 GMT, Bit Twister wrote:
+
+&gt;&gt; Yes, and that is the one name I want to talk you out of.
+&gt;&gt; I do not do windoze, but use the search feature in your FILE explorer
+&gt;&gt; and look for the  etc.hosts file.   Take a look at it.
+
+&gt; that should be etc/hosts
+">
+
+dang, for windows it's \hosts
+
+I think you will find it under C:\Windows or C:\Windows\etc
+
+Please tell me where you find it.
+</POST>
+<POST>
+<POSTER> Allen Weiner &lt;alwein...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-08T22:42:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Bit Twister wrote:
+&gt; On Fri, 09 Nov 2007 02:37:34 GMT, Bit Twister wrote:
+&gt;&gt; On Fri, 09 Nov 2007 02:26:23 GMT, Bit Twister wrote:
+&gt;&gt;&gt; Yes, and that is the one name I want to talk you out of.
+&gt;&gt;&gt; I do not do windoze, but use the search feature in your FILE explorer
+&gt;&gt;&gt; and look for the  etc.hosts file.   Take a look at it.
+&gt;&gt; that should be etc/hosts
+
+&gt; dang, for windows it's \hosts
+
+&gt; I think you will find it under C:\Windows or C:\Windows\etc
+
+&gt; Please tell me where you find it.
+">
+
+I haven't confirmed this on my PC, but from a Google search:
+
+(2.) Try to locate any existing hosts file on your computer:
+
+Windows 95/98/Me c:\windows\hosts
+
+About Thunderbird, I can't access the profile to edit it. This issue has
+been discussed on Fedoraforum. Thunderbird on Fedora is broken. A
+bugzilla on this issue has been filed.
+</POST>
+<POST>
+<POSTER> Clifford Kite &lt;k...@not.available.tld&gt; </POSTER>
+<POSTDATE> 2007-11-08T22:30:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Allen Weiner &lt;alwein ... @hotmail.com&gt; wrote:
+&gt; (I posted a similar thread to this newsgroup on October 29. Due to
+&gt; continuing problems, I'm opening this thread.)
+">
+
+Hey, you've now opened 4 threads here.  Gotta admire your tenacity. :)
+
+Here's a suggestion which is a flat-out guess:
+
+Next time things stop try
+
+ethtool -r eth0
+
+and then check the &quot;ifconfig eth0&quot; output for RUNNING.
+
+Hey, it's quick anyway.
+
+Regards-
+--
+Clifford Kite
+/* My confidence in this answer (X), on a scale of 0 to 10:
+|----|----|----|Roll the dice!|----|----|----|----|
+0----1----2----3----4----5----6----7----8----9----10 */
+</POST>
+<POST>
+<POSTER> Allen Weiner &lt;alwein...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-08T23:22:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Clifford Kite wrote:
+&gt; Allen Weiner &lt;alwein ... @hotmail.com&gt; wrote:
+&gt;&gt; (I posted a similar thread to this newsgroup on October 29. Due to
+&gt;&gt; continuing problems, I'm opening this thread.)
+
+&gt; Hey, you've now opened 4 threads here.  Gotta admire your tenacity. :)
+">
+
+This problem is frustrating. I firmly believe (with almost no supporting
+evidence) that a reboot to regain a lost Internet connection should be a
+last resort.
+
+I also believe (again with no supprting evidence), that there should be
+a straightforward troubleshooting procedure when a &quot;service network
+restart&quot; hangs.
+
+<QUOTE PREVIOUSPOST="
+&gt; Here's a suggestion which is a flat-out guess:
+
+&gt; Next time things stop try
+
+&gt; ethtool -r eth0
+
+&gt; and then check the &quot;ifconfig eth0&quot; output for RUNNING.
+">
+
+I've done ethtool eth0 and ifconfig after connection loss but before
+issuing &quot;service network restart&quot;. Eth0 is UP but not RUNNING. Link
+detected = yes.
+
+<QUOTE PREVIOUSPOST="
+&gt; Hey, it's quick anyway.
+
+&gt; Regards-
+">
+</POST>
+<POST>
+<POSTER> Bit Twister &lt;BitTwis...@mouse-potato.com&gt; </POSTER>
+<POSTDATE> 2007-11-08T23:33:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Fri, 09 Nov 2007 04:22:10 GMT, Allen Weiner wrote:
+
+&gt; This problem is frustrating. I firmly believe (with almost no supporting
+&gt; evidence) that a reboot to regain a lost Internet connection should be a
+&gt; last resort.
+">
+
+I agree.
+
+I might have missed it, but is that first boot after winME was running?
+
+<QUOTE PREVIOUSPOST="
+&gt; I also believe (again with no supprting evidence), that there should be
+&gt; a straightforward troubleshooting procedure when a &quot;service network
+&gt; restart&quot; hangs.
+">
+
+It is staight forward, ethtoo/mii-tool says the nic is connected and
+ping should tell where it fails.
+
+So far, my guess is riding on the router is refusing the connection
+because the dhcp lease issued to winME has expired.
+That is why I wanted your fedora
+/etc/hosts file set somewhat as follows:
+$ head -3 /etc/hosts
+127.0.0.1               localhost
+192.168.1.140           fedora.home.invalid fedora
+192.168.1.1             gateway
+
+$ cat /etc/sysconfig/network
+NETWORKING=yes
+HOSTNAME=fedora.home.invalid
+
+and you have set eth0 up as static for ip 192.168.1.140
+</POST>
+<POST>
+<POSTER> Clifford Kite &lt;k...@not.available.tld&gt; </POSTER>
+<POSTDATE> 2007-11-09T11:00:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Allen Weiner &lt;alwein ... @hotmail.com&gt; wrote:
+&gt; Clifford Kite wrote:
+
+&gt;&gt; Next time things stop try
+
+&gt;&gt; ethtool -r eth0
+
+&gt;&gt; and then check the &quot;ifconfig eth0&quot; output for RUNNING.
+&gt; I've done ethtool eth0 and ifconfig after connection loss but before
+&gt; issuing &quot;service network restart&quot;. Eth0 is UP but not RUNNING. Link
+&gt; detected = yes.
+">
+
+Well, just to be sure we understand one another, &quot;ethtool eth0&quot; the -r
+option tries to restart autonegotiation.
+
+Regards-
+--
+Clifford Kite
+</POST>
+<POST>
+<POSTER> Allen Weiner &lt;alwein...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-09T11:36:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Bit Twister wrote:
+&gt; On Fri, 09 Nov 2007 04:22:10 GMT, Allen Weiner wrote:
+&gt;&gt; This problem is frustrating. I firmly believe (with almost no supporting
+&gt;&gt; evidence) that a reboot to regain a lost Internet connection should be a
+&gt;&gt; last resort.
+
+&gt; I agree.
+
+&gt; I might have missed it, but is that first boot after winME was running?
+">
+
+I'm not sure what you're asking. If you are asking about the time that
+Fedora became unbootable, here is the history:
+
+1. WinME ran with static IP on 11/3
+2. Fedora ran OK with static IP on 11/4
+3. Fedora failed to boot on 11/5.
+
+You commented that it is OK to have dual boot where Linux uses static IP
+and Windows uses dynamic IP. To keep things simple, this is the config I
+would prefer. I kinda thought that when I configured for static IP,
+something was being permanently stored in flash memory in the NIC and/or
+modem/router. I thought that if I left Windows with dynamic IP, it would
+undo those flash changes I configured from Fedora.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; I also believe (again with no supprting evidence), that there should be
+&gt;&gt; a straightforward troubleshooting procedure when a &quot;service network
+&gt;&gt; restart&quot; hangs.
+
+&gt; It is staight forward, ethtoo/mii-tool says the nic is connected and
+&gt; ping should tell where it fails.
+
+&gt; So far, my guess is riding on the router is refusing the connection
+&gt; because the dhcp lease issued to winME has expired.
+&gt; That is why I wanted your fedora
+&gt; /etc/hosts file set somewhat as follows:
+&gt; $ head -3 /etc/hosts
+&gt; 127.0.0.1               localhost
+&gt; 192.168.1.140           fedora.home.invalid fedora
+&gt; 192.168.1.1             gateway
+
+&gt; $ cat /etc/sysconfig/network
+&gt; NETWORKING=yes
+&gt; HOSTNAME=fedora.home.invalid
+
+&gt; and you have set eth0 up as static for ip 192.168.1.140
+">
+
+I've been going over your suggested changes from both threads. For the
+time being, I want to make only changes needed for troubleshooting. For
+now, I'm not concerned about apps which want to communicate over
+127.0.0.1. (I'm not aware of any problem this has caused.)
+
+I'm concerned about making changes that will render Fedora unbootable.
+(I've already had a close call with the change to static IP). I don't
+have the experience to repair Fedora if it becomes unbootable.
+
+Before making changes, I'm going to do some googling into /etc/hosts and
+FQDN to try to raise my confidence level. Also, I'd feel much more
+comfortable if I understood what went wrong with my change to static IP.
+
+By the way, I remembered that I have a Ubuntu 6.06 CD. I've got many
+gigs of free HDD space, and available logical partitions. But that is
+too much of a detour to fix this problem.
+</POST>
+<POST>
+<POSTER> Allen Weiner &lt;alwein...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-09T11:52:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Clifford Kite wrote:
+&gt; Allen Weiner &lt;alwein ... @hotmail.com&gt; wrote:
+&gt;&gt; Clifford Kite wrote:
+&gt;&gt;&gt; Next time things stop try
+
+&gt;&gt;&gt; ethtool -r eth0
+
+&gt;&gt;&gt; and then check the &quot;ifconfig eth0&quot; output for RUNNING.
+
+&gt;&gt; I've done ethtool eth0 and ifconfig after connection loss but before
+&gt;&gt; issuing &quot;service network restart&quot;. Eth0 is UP but not RUNNING. Link
+&gt;&gt; detected = yes.
+
+&gt; Well, just to be sure we understand one another, &quot;ethtool eth0&quot; the -r
+&gt; option tries to restart autonegotiation.
+
+&gt; Regards-
+">
+
+Thanks for pointing that out. I wasn't aware of the -r option and I'll
+put that on my list of things to try on the next connection loss.
+</POST>
+<POST>
+<POSTER> Bit Twister &lt;BitTwis...@mouse-potato.com&gt; </POSTER>
+<POSTDATE> 2007-11-09T14:47:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Fri, 09 Nov 2007 16:36:24 GMT, Allen Weiner wrote:
+&gt; Bit Twister wrote:
+&gt;&gt; On Fri, 09 Nov 2007 04:22:10 GMT, Allen Weiner wrote:
+&gt;&gt;&gt; This problem is frustrating. I firmly believe (with almost no supporting
+&gt;&gt;&gt; evidence) that a reboot to regain a lost Internet connection should be a
+&gt;&gt;&gt; last resort.
+
+&gt;&gt; I agree.
+
+&gt;&gt; I might have missed it, but is that first boot after winME was running?
+
+&gt; I'm not sure what you're asking.
+">
+
+What I was after is the sequences of boots with regard to what was
+running before the boot. Example:  Both systems are set dhcp.
+
+Boot WinMe and run for awhile.
+boot fedora and some time later connection goes down
+boot fedora and no problem
+
+If connection failure is always in that order, then my theory is the router
+remembers the dhcp lease assigned to doze and cannot get a renewal
+when you are running fedora on your first boot.
+
+That will cause the connection drop and the router will refuse
+traffic connections with fedore.
+
+I was guessing winME was not Releasing the lease on shutdown.
+You boot fedora, it gets the connection up on it's old lease contents,
+But, does not get a lease renewal from the router.
+
+Why does reboot not have the problem you ask.
+
+When you reboot, while going down, fedora sends a lease cancel to router,
+comes up, and the router and fedora shake hands over lease
+info and have no problems thereafter.
+
+<QUOTE PREVIOUSPOST="
+&gt; If you are asking about the time that
+&gt; Fedora became unbootable, here is the history:
+
+&gt; 1. WinME ran with static IP on 11/3
+&gt; 2. Fedora ran OK with static IP on 11/4
+&gt; 3. Fedora failed to boot on 11/5.
+">
+
+Here I would be guessing,
+o you used the dhcp ip addresses as static
+o router still thought the ip address was DHCP
+o lease expired
+o no new lease negotiated and refused the connection to 192.168.1.47
+
+And/Or /etc/hosts not set per my sugestions and gave you the hard time. :)
+
+<QUOTE PREVIOUSPOST="
+&gt; You commented that it is OK to have dual boot where Linux uses static IP
+&gt; and Windows uses dynamic IP. To keep things simple, this is the config I
+&gt; would prefer.
+">
+
+Yes, but we are troubleshooting here and need to reduce the suspect list
+and get a known working baseline with the least amount of interaction.
+
+Assuming Verizon does not get into the mix, I see no setup problem
+with doing what you want. IF you use a different static ip, no
+localhost node name, /etc/hosts set as asked.
+
+<QUOTE PREVIOUSPOST="
+&gt; I kinda thought that when I configured for static IP,
+&gt; something was being permanently stored in flash memory in the NIC
+">
+
+I do not think so.
+
+<QUOTE PREVIOUSPOST="
+&gt; and/or modem/router.
+">
+
+Yes, and I am guessing the router is the problem. Why you ask. If it
+was fedora, the reboot should have the same problem as a normal boot.
+
+<QUOTE PREVIOUSPOST="
+&gt; I thought that if I left Windows with dynamic IP, it would
+&gt; undo those flash changes I configured from Fedora.
+">
+
+But you left static ip same as dhcp and if the lease is not renewed, modem
+will drop the connection to 192.168.1.47.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; That is why I wanted your fedora
+&gt;&gt; /etc/hosts file set somewhat as follows:
+&gt;&gt; $ head -3 /etc/hosts
+&gt;&gt; 127.0.0.1               localhost
+&gt;&gt; 192.168.1.140           fedora.home.invalid fedora
+&gt;&gt; 192.168.1.1             gateway
+
+&gt;&gt; $ cat /etc/sysconfig/network
+&gt;&gt; NETWORKING=yes
+&gt;&gt; HOSTNAME=fedora.home.invalid
+
+&gt;&gt; and you have set eth0 up as static for ip 192.168.1.140
+
+&gt; I've been going over your suggested changes from both threads.
+">
+
+Yeah, but your piecemeal approach about putting in my suggestions is
+causing more problems.  :(
+
+Upside is, all the experience/knowledge you are gaining. :)
+
+<QUOTE PREVIOUSPOST="
+&gt; For the
+&gt; time being, I want to make only changes needed for troubleshooting.
+">
+
+So far you are fighting me on getting the job done.  :-D
+What I have been after is:
+
+Get fedora in a normal configuration (node/hosts).
+Static connection with ip address different than dhcp ip.
+Power reset modem, prove fedora boots, reboots and runs without problems.
+
+If so, that would leave fedora's dhcp client as a suspect.
+That is ruled out because you say after reboot, fedora does not have
+the problem when runinnig dhcp.
+
+To cut modem's dhcp server out of the loop, set static ips and verify
+connection does not have problems.
+
+With both OSs set static different ips, and booting winME/fedora does not
+have connection drops, you now have isolated the modem as the culprit.
+
+Now, you boot doze, change it back to dhcp, reboot doze, boot fedora.
+Connection drops you know the modem is causing the problem and have a
+working solution to fall back on.
+
+<QUOTE PREVIOUSPOST="
+&gt; For now, I'm not concerned about apps which want to communicate over
+&gt; 127.0.0.1.
+">
+
+HAHAHAHHaHahahaha, cough, cough, choke. whew....
+
+Did you remember when sendmail stalled your boot.
+
+On normal setups/install, 127.0.0.1 localhost is in /etc/hosts.
+
+On your system you named your node localhost and the ip address comes
+in from the nic. When the network fails to come up, you start seeing
+problems. So far you have been lucky, connection comes up, localhost
+ip addy resolves to 192.168.1.47 and all is well.
+
+When node named localhost, cannot be resolved, you will see problems.
+
+<QUOTE PREVIOUSPOST="
+&gt; I'm concerned about making changes that will render Fedora unbootable.
+&gt; (I've already had a close call with the change to static IP). I don't
+&gt; have the experience to repair Fedora if it becomes unbootable.
+">
+
+I hear where you are comming from. Had /etc/hosts contained the
+127.0.0.1 localhost, you would not have had the problem.
+
+Trust me. give your node a FQDN with a name beside localhost.
+In a static setup, a line with ip FQDN alias in /etc/hosts with a
+127.0.0.1  localhost line.
+
+Here is my suggestion:
+
+Get into the network gui, set it static 192.168.1.150 with a
+node/domain name as fedora.home.invalid, 192.168.1.1 as your DNS
+server. Close the gui.
+
+cat these files and verify contents.
+If not the same, use an editor and fix them
+
+# cat /etc/sysconfig/network
+NETWORKING=yes
+HOSTNAME=fedora.home.invalid
+
+# cat /etc/hosts
+127.0.0.1              localhost
+192.168.1.150          fedora.home.invalid fw
+192.168.1.1            gateway
+
+Power down modem. Wait 30 seconds by watch/clock.
+Power up modem, wait for leds to settle
+Reboot Fedora to prove fedora works.
+
+As far as  &quot;render Fedora unbootable&quot; that is the problem with using
+gui to modify config files. Knowing which confif files to backup, and
+edit from a command line in failsafe/rescue cd helps.
+
+I recommend that you play with vi in a terminal and write these very basic
+commands down and put them in a binder  where you can find them.  :)
+
+vi fn_here
+i                  &lt;======= puts you into the insert mode
+
+Now you can use arrow keys and whatnot.
+When ready to get out,
+
+Esc               &lt;==== (escape key) gets you into the command mode
+:wq                &lt;=== save changes and quit
+:q!                &lt;==== quit without saving.
+
+With Mandriva linux, it provides a rosetta stone file which has what
+values in what file does what.  (/usr/share/doc/initscripts/sysconfig.txt)
+
+If you can not find docs about config files, what you could do is
+install aide.
+That would let you baseline the system.
+Use your gui to make changes, run an aide check and the report would give
+you all the files that changed. :)
+Other option, read source code.  :(
+
+<QUOTE PREVIOUSPOST="
+&gt; Before making changes, I'm going to do some googling into /etc/hosts and
+&gt; FQDN to try to raise my confidence level. Also, I'd feel much more
+&gt; comfortable if I understood what went wrong with my change to static IP.
+">
+
+My guess, with node name = localhost, no 127.0.0.1 and hostname/ip  in
+/etc/hosts; that is what helped you into the ditch.
+
+<QUOTE PREVIOUSPOST="
+&gt; By the way, I remembered that I have a Ubuntu 6.06 CD. I've got many
+&gt; gigs of free HDD space, and available logical partitions. But that is
+&gt; too much of a detour to fix this problem.
+">
+
+Well, you started out with, why is fedora having these problems.  If
+running ubuntu and have the same problem, what would your guess be.   :)
+
+Hey, create a 10 gig logical partition. install ubuntu and pick Manual
+during partition phase, set new partition as / and click format box,
+and you will have a multi-boot system. Let it
+run dhcp and if the connection drops out, you know that fedora is
+not the problem.
+
+Another solution/option you may want to consider, have a hot
+backup/fallback install of fedora.
+
+That is what I do for my install. Anytime I think I might put the
+system in the ditch, I boot the hot backup and play there.
+
+Create/format a logical 10 gig partition with mount point as /hotbu.
+
+e2label /dev/XdYZ  hotbu          &lt;==== creates a label for booting
+You solve for X [h,s], Y [a,b,c...]  &amp; Z [1,2,3..]
+
+mkdir /fc7                 &lt;==== create mount point for original install
+to be used in hotbu's /etc/fstab
+cd /etc
+cp fstab fstab_works
+cp fstab fstab_hotbu
+
+Edit fstab_hotbu and change the label for / and change the hotbu
+line to whatever label the original / had and the mount point to /fc7.
+See the following:
+
+# cat /hotbu/etc/fstab
+LABEL=hotbu             /              ext3    defaults        1 1
+LABEL=fedora            /fc7           ext3    defaults        1 2
+LABEL=accounts          /accounts      ext3    defaults        1 2
+tmpfs                   /dev/shm       tmpfs   defaults        0 0
+devpts                  /dev/pts       devpts  gid=5,mode=620  0 0
+sysfs                   /sys           sysfs   defaults        0 0
+proc                    /proc          proc    defaults        0 0
+LABEL=2008_0            /2008_0        ext3    user,noauto,defaults        1 2
+LABEL=2007_0            /2007_0        ext3    user,noauto,defaults        1 2
+LABEL=bk_up             /bk_up         ext3    user,noauto,defaults        1 2
+LABEL=2007_1            /2007_1        ext3    user,noauto,defaults        1 2
+LABEL=local             /local         ext3    defaults        1 2
+LABEL=kubu7             /kubu7         ext3    user,noauto,defaults        1 2
+/dev/sda6               swap           swap    defaults        0 0
+
+Next you can edt /boot/grub/menu.lst, duplicate the fedora stanza, change
+the label
+...
+read more »
+</POST>
+<POST>
+<POSTER> Allen Weiner &lt;alwein...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-09T15:25:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Bit Twister wrote:
+&gt; On Fri, 09 Nov 2007 16:36:24 GMT, Allen Weiner wrote:
+&gt;&gt; Bit Twister wrote:
+&gt;&gt;&gt; On Fri, 09 Nov 2007 04:22:10 GMT, Allen Weiner wrote:
+&gt;&gt;&gt;&gt; This problem is frustrating. I firmly believe (with almost no supporting
+&gt;&gt;&gt;&gt; evidence) that a reboot to regain a lost Internet connection should be a
+&gt;&gt;&gt;&gt; last resort.
+&gt;&gt;&gt; I agree.
+
+&gt;&gt;&gt; I might have missed it, but is that first boot after winME was running?
+
+&gt;&gt; I'm not sure what you're asking.
+
+&gt; What I was after is the sequences of boots with regard to what was
+&gt; running before the boot. Example:  Both systems are set dhcp.
+
+&gt; Boot WinMe and run for awhile.
+&gt; boot fedora and some time later connection goes down
+&gt; boot fedora and no problem
+
+&gt; If connection failure is always in that order, then my theory is the router
+&gt; remembers the dhcp lease assigned to doze and cannot get a renewal
+&gt; when you are running fedora on your first boot.
+
+&gt; That will cause the connection drop and the router will refuse
+&gt; traffic connections with fedore.
+
+&gt; I was guessing winME was not Releasing the lease on shutdown.
+&gt; You boot fedora, it gets the connection up on it's old lease contents,
+&gt; But, does not get a lease renewal from the router.
+
+&gt; Why does reboot not have the problem you ask.
+
+&gt; When you reboot, while going down, fedora sends a lease cancel to router,
+&gt; comes up, and the router and fedora shake hands over lease
+&gt; info and have no problems thereafter.
+
+&gt;&gt; If you are asking about the time that
+&gt;&gt; Fedora became unbootable, here is the history:
+
+&gt;&gt; 1. WinME ran with static IP on 11/3
+&gt;&gt; 2. Fedora ran OK with static IP on 11/4
+&gt;&gt; 3. Fedora failed to boot on 11/5.
+
+&gt; Here I would be guessing,
+&gt; o you used the dhcp ip addresses as static
+&gt; o router still thought the ip address was DHCP
+&gt; o lease expired
+&gt; o no new lease negotiated and refused the connection to 192.168.1.47
+
+&gt; And/Or /etc/hosts not set per my sugestions and gave you the hard time. :)
+">
+
+Interesting theory. I don't have detailed recollection of what happened.
+Maybe while in  troubleshooting mode I need to keep a log book.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; You commented that it is OK to have dual boot where Linux uses static IP
+&gt;&gt; and Windows uses dynamic IP. To keep things simple, this is the config I
+&gt;&gt; would prefer.
+
+&gt; Yes, but we are troubleshooting here and need to reduce the suspect list
+&gt; and get a known working baseline with the least amount of interaction.
+
+&gt; Assuming Verizon does not get into the mix, I see no setup problem
+&gt; with doing what you want. IF you use a different static ip, no
+&gt; localhost node name, /etc/hosts set as asked.
+
+&gt;&gt; I kinda thought that when I configured for static IP,
+&gt;&gt; something was being permanently stored in flash memory in the NIC
+
+&gt; I do not think so.
+
+&gt;&gt; and/or modem/router.
+
+&gt; Yes, and I am guessing the router is the problem. Why you ask. If it
+&gt; was fedora, the reboot should have the same problem as a normal boot.
+
+&gt;&gt; I thought that if I left Windows with dynamic IP, it would
+&gt;&gt; undo those flash changes I configured from Fedora.
+
+&gt; But you left static ip same as dhcp and if the lease is not renewed, modem
+&gt; will drop the connection to 192.168.1.47.
+
+&gt;&gt;&gt; That is why I wanted your fedora
+&gt;&gt;&gt; /etc/hosts file set somewhat as follows:
+&gt;&gt;&gt; $ head -3 /etc/hosts
+&gt;&gt;&gt; 127.0.0.1               localhost
+&gt;&gt;&gt; 192.168.1.140           fedora.home.invalid fedora
+&gt;&gt;&gt; 192.168.1.1             gateway
+
+&gt;&gt;&gt; $ cat /etc/sysconfig/network
+&gt;&gt;&gt; NETWORKING=yes
+&gt;&gt;&gt; HOSTNAME=fedora.home.invalid
+
+&gt;&gt;&gt; and you have set eth0 up as static for ip 192.168.1.140
+
+&gt;&gt; I've been going over your suggested changes from both threads.
+
+&gt; Yeah, but your piecemeal approach about putting in my suggestions is
+&gt; causing more problems.  :(
+">
+
+Thanks for your patience.
+
+<QUOTE PREVIOUSPOST="
+&gt; Upside is, all the experience/knowledge you are gaining. :)
+">
+
+Agreed. I feel these threads are a really worthwhile learning
+experience. I appreciate all the information and help you are giving me.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; For the
+&gt;&gt; time being, I want to make only changes needed for troubleshooting.
+
+&gt; So far you are fighting me on getting the job done.  :-D
+&gt; What I have been after is:
+
+&gt; Get fedora in a normal configuration (node/hosts).
+&gt; Static connection with ip address different than dhcp ip.
+&gt; Power reset modem, prove fedora boots, reboots and runs without problems.
+
+&gt; If so, that would leave fedora's dhcp client as a suspect.
+&gt; That is ruled out because you say after reboot, fedora does not have
+&gt; the problem when runinnig dhcp.
+
+&gt; To cut modem's dhcp server out of the loop, set static ips and verify
+&gt; connection does not have problems.
+
+&gt; With both OSs set static different ips, and booting winME/fedora does not
+&gt; have connection drops, you now have isolated the modem as the culprit.
+
+&gt; Now, you boot doze, change it back to dhcp, reboot doze, boot fedora.
+&gt; Connection drops you know the modem is causing the problem and have a
+&gt; working solution to fall back on.
+
+&gt;&gt; For now, I'm not concerned about apps which want to communicate over
+&gt;&gt; 127.0.0.1.
+
+&gt; HAHAHAHHaHahahaha, cough, cough, choke. whew....
+
+&gt; Did you remember when sendmail stalled your boot.
+
+&gt; On normal setups/install, 127.0.0.1 localhost is in /etc/hosts.
+
+&gt; On your system you named your node localhost and the ip address comes
+&gt; in from the nic. When the network fails to come up, you start seeing
+&gt; problems. So far you have been lucky, connection comes up, localhost
+&gt; ip addy resolves to 192.168.1.47 and all is well.
+
+&gt; When node named localhost, cannot be resolved, you will see problems.
+
+&gt;&gt; I'm concerned about making changes that will render Fedora unbootable.
+&gt;&gt; (I've already had a close call with the change to static IP). I don't
+&gt;&gt; have the experience to repair Fedora if it becomes unbootable.
+
+&gt; I hear where you are comming from. Had /etc/hosts contained the
+&gt; 127.0.0.1 localhost, you would not have had the problem.
+
+&gt; Trust me. give your node a FQDN with a name beside localhost.
+&gt; In a static setup, a line with ip FQDN alias in /etc/hosts with a
+&gt; 127.0.0.1  localhost line.
+
+&gt; Here is my suggestion:
+
+&gt; Get into the network gui, set it static 192.168.1.150 with a
+&gt; node/domain name as fedora.home.invalid, 192.168.1.1 as your DNS
+&gt; server. Close the gui.
+
+&gt; cat these files and verify contents.
+&gt; If not the same, use an editor and fix them
+
+&gt; # cat /etc/sysconfig/network
+&gt; NETWORKING=yes
+&gt; HOSTNAME=fedora.home.invalid
+
+&gt; # cat /etc/hosts
+&gt; 127.0.0.1              localhost
+&gt; 192.168.1.150          fedora.home.invalid fw
+&gt; 192.168.1.1            gateway
+
+&gt; Power down modem. Wait 30 seconds by watch/clock.
+&gt; Power up modem, wait for leds to settle
+&gt; Reboot Fedora to prove fedora works.
+">
+
+Good news. I spent several hours on Google searching on /etc/hosts &amp;
+localhost. Google pointed me to several Linux books which confirmed your
+recommendations and gave *excellent* explanations that addressed my
+concerns. For example, I was skepticsl about adding 127.0.0.1 to
+/etc/hosts. I thought, &quot;if it's so important, it would have been there
+in the default config&quot;. Well, that concern was addressed in one of the
+book sections. So I'm now ready to accept your recommended changes.
+
+<QUOTE PREVIOUSPOST="
+
+">
+
+&lt;snip remainder&gt;
+</POST>
+<POST>
+<POSTER> Bit Twister &lt;BitTwis...@mouse-potato.com&gt; </POSTER>
+<POSTDATE> 2007-11-09T15:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Fri, 09 Nov 2007 20:25:43 GMT, Allen Weiner wrote:
+
+&gt; Interesting theory. I don't have detailed recollection of what happened.
+&gt; Maybe while in  troubleshooting mode I need to keep a log book.
+">
+
+Or a file with before/after values.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Yeah, but your piecemeal approach about putting in my suggestions is
+&gt;&gt; causing more problems.  :(
+
+&gt; Thanks for your patience.
+">
+
+I was beginning to wonder, if I was getting anyting across.  :)
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Upside is, all the experience/knowledge you are gaining.
+
+&gt; Agreed. I feel these threads are a really worthwhile learning
+&gt; experience. I appreciate all the information and help you are giving me.
+">
+
+Just trying to repay the time given to me on Usenet when I started out.
+
+<QUOTE PREVIOUSPOST="
+&gt; Good news. I spent several hours on Google searching on /etc/hosts &amp;
+&gt; localhost. Google pointed me to several Linux books which confirmed your
+&gt; recommendations and gave *excellent* explanations that addressed my
+&gt; concerns.
+&gt; That concern was addressed in one of the book sections.
+">
+
+I do try to keep the lurkers and people using google in mind when
+posting. It would have been nice had you posted the link which best
+described/provided the informaition you needed.
+
+<QUOTE PREVIOUSPOST="
+&gt; For example, I was skepticsl about adding 127.0.0.1 to
+&gt; /etc/hosts. I thought, &quot;if it's so important, it would have been there
+&gt; in the default config&quot;.
+">
+
+Hmmm, was for me
+cat /fc7/etc/hosts_orig
+# Do not remove the following line, or various programs
+# that require network functionality will fail.
+::1     localhost6.localdomain6 localhost6
+127.0.0.1       localhost.localdomain   localhost    &lt;-------.
+|
+You might want to cut/paste that line into your /etc/hosts---'
+
+<QUOTE PREVIOUSPOST="
+&gt; So I'm now ready to accept your recommended changes.
+">
+
+Here is another recommended change,
+TRIM YOUR POST, leave just enough context above your reply.
+
+You are quoting tooo much of the original text.
+</POST>
+<POST>
+<POSTER> Bit Twister &lt;BitTwis...@mouse-potato.com&gt; </POSTER>
+<POSTDATE> 2007-11-09T16:05:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Fri, 09 Nov 2007 20:40:48 GMT, Bit Twister wrote:
+
+&gt;&gt; For example, I was skepticsl about adding 127.0.0.1 to
+&gt;&gt; /etc/hosts. I thought, &quot;if it's so important, it would have been there
+&gt;&gt; in the default config&quot;.
+
+&gt; Hmmm, was for me
+&gt; cat /fc7/etc/hosts_orig
+">
+
+# Do not remove the following line, or various programs
+# that require network functionality will fail.
+::1     localhost6.localdomain6 localhost6            &lt;-------.
+127.0.0.1       localhost.localdomain   localhost     &lt;-------+
+|
+You might want to cut/paste both lines into your /etc/hosts---'
+</POST>
+<POST>
+<POSTER> Allen Weiner &lt;alwein...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-11T07:22:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Bit Twister wrote:
+">
+
+&lt; snip&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; What troubleshooting step should I do next?
+
+&gt; After my suggested changes,
+&gt; echo &quot;nameserver 192.168.1.1&quot; &gt; /etc/resolv.conf
+&gt; cp /dev/null /var/lib/dhclient/dhclient-eth0.leases
+&gt; reboot, because of node name changes, and when the system comes up, do a
+&gt; cat /var/lib/dhclient/dhclient-eth0.leases
+&gt; and verify no dhcp lease.
+
+&gt; If so, I would
+&gt; cd /etc/sysconfig/network-scripts/
+&gt; cp ifcfg-eth0 ifcfg-eth0.bkup
+
+&gt; change
+&gt;    BOOTPROTO=static
+&gt;    PEERDNS=no
+&gt; in  /etc/sysconfig/network-scripts/ifcfg-eth0
+
+&gt; cp /dev/null /var/lib/dhclient/dhclient-eth0.leases
+&gt; service network restart
+&gt; echo &quot;nameserver 192.168.1.1&quot; &gt; /etc/resolv.conf
+&gt; cat /var/lib/dhclient/dhclient-eth0.leases
+&gt; I would now think there would be a null dhclient-eth0.leases file.
+
+&gt; if restart fails
+&gt; cp ifcfg-eth0.bkup ifcfg-eth0
+&gt; and change
+&gt;    PEERDNS=no
+&gt; cp /dev/null /var/lib/dhclient/dhclient-eth0.leases
+&gt; echo &quot;nameserver 192.168.1.1&quot; &gt; /etc/resolv.conf
+&gt; service network restart
+&gt; cat /var/lib/dhclient/dhclient-eth0.leases
+
+&gt; cat /etc/resolv.conf should show only one nameserver line. If two,
+&gt; your dhcp client is still running.
+">
+
+I don't understand *any* of the above. I've now got Fedora configured
+for static IP of 150 and WinME configured for static IP of 140. The
+dhclient-leases lists an expiration date of 11/7 (today is 11/11).
+
+I'll post my config-dump below. How does it look?
+
+So could you please clarify what is the next step in troubleshooting.
+Some explanatory comments along with the procedural steps might make it
+more understandable. Thanks.
+
+Sun Nov 11 07:09:47 EST 2007
+======== cat /etc/*release ==========
+Fedora release 7 (Moonshine)
+Fedora release 7 (Moonshine)
+======== uname -rvi =============
+2.6.23.1-21.fc7 #1 SMP Thu Nov 1 21:09:24 EDT 2007 i386
+======== cat /etc/*version ==========
+cat: /etc/subversion: Is a directory
+======== cat /proc/version ==========
+Linux version 2.6.23.1-21.fc7
+(kojibuil ... @xenbuilder4.fedora.phx.redhat.com) (gcc version 4.1.2
+20070925 (Red Hat 4.1.2-27)) #1 SMP Thu Nov 1 21:09:24 EDT 2007
+======== lsb_release -a ==========
+LSB Version:
+:core-3.1-ia32:core-3.1-noarch:graphics-3.1-ia32:graphics-3.1-noarch
+Distributor ID: Fedora
+Description:    Fedora release 7 (Moonshine)
+Release:        7
+Codename:       Moonshine
+
+======== free ==========
+total       used       free     shared    buffers     cached
+Mem:        125128     122368       2760          0       1728      31216
+-/+ buffers/cache:      89424      35704
+Swap:       771080     134656     636424
+======== chkconfig --list ==========
+Double check if /avahi/ needs to be disabled on boot
+avahi-daemon    0:off   1:off   2:off   3:on    4:on    5:off   6:off
+avahi-dnsconfd  0:off   1:off   2:off   3:off   4:off   5:off   6:off
+Double check if /named/ needs to be disabled on boot
+named           0:off   1:off   2:off   3:off   4:off   5:off   6:off
+ConsoleKit      0:off   1:off   2:off   3:on    4:on    5:on    6:off
+NetworkManager  0:off   1:off   2:off   3:off   4:off   5:off   6:off
+NetworkManagerDispatcher        0:off   1:off   2:off   3:off   4:off   5:off   6:off
+acpid           0:off   1:off   2:off   3:on    4:on    5:on    6:off
+anacron         0:off   1:off   2:on    3:on    4:on    5:on    6:off
+apmd            0:off   1:off   2:on    3:on    4:on    5:on    6:off
+atd             0:off   1:off   2:off   3:on    4:on    5:on    6:off
+autofs          0:off   1:off   2:off   3:on    4:on    5:on    6:off
+avahi-daemon    0:off   1:off   2:off   3:on    4:on    5:off   6:off
+avahi-dnsconfd  0:off   1:off   2:off   3:off   4:off   5:off   6:off
+bluetooth       0:off   1:off   2:on    3:on    4:on    5:off   6:off
+capi            0:off   1:off   2:off   3:off   4:off   5:off   6:off
+cpuspeed        0:off   1:on    2:on    3:on    4:on    5:off   6:off
+crond           0:off   1:off   2:on    3:on    4:on    5:on    6:off
+cups            0:off   1:off   2:on    3:on    4:on    5:off   6:off
+dhcdbd          0:off   1:off   2:off   3:off   4:off   5:off   6:off
+dund            0:off   1:off   2:off   3:off   4:off   5:off   6:off
+firestarter     0:off   1:off   2:on    3:on    4:on    5:on    6:off
+firstboot       0:off   1:off   2:off   3:on    4:off   5:off   6:off
+gkrellmd        0:off   1:off   2:off   3:off   4:off   5:off   6:off
+gpm             0:off   1:off   2:on    3:on    4:on    5:on    6:off
+haldaemon       0:off   1:off   2:off   3:on    4:on    5:on    6:off
+hddtemp         0:off   1:off   2:off   3:off   4:off   5:on    6:off
+hidd            0:off   1:off   2:on    3:on    4:on    5:off   6:off
+hplip           0:off   1:off   2:on    3:on    4:on    5:off   6:off
+httpd           0:off   1:off   2:off   3:off   4:off   5:off   6:off
+ip6tables       0:off   1:off   2:on    3:on    4:on    5:off   6:off
+iptables        0:off   1:off   2:off   3:off   4:off   5:on    6:off
+irda            0:off   1:off   2:off   3:off   4:off   5:off   6:off
+irqbalance      0:off   1:off   2:on    3:on    4:on    5:off   6:off
+isdn            0:off   1:off   2:on    3:on    4:on    5:off   6:off
+kdump           0:off   1:off   2:off   3:off   4:off   5:off   6:off
+kudzu           0:off   1:off   2:off   3:on    4:on    5:on    6:off
+lisa            0:off   1:off   2:off   3:off   4:off   5:off   6:off
+lm_sensors      0:off   1:off   2:on    3:on    4:on    5:off   6:off
+mcstrans        0:off   1:off   2:on    3:on    4:on    5:on    6:off
+mdmonitor       0:off   1:off   2:on    3:on    4:on    5:off   6:off
+messagebus      0:off   1:off   2:off   3:on    4:on    5:on    6:off
+named           0:off   1:off   2:off   3:off   4:off   5:off   6:off
+nasd            0:off   1:off   2:off   3:on    4:on    5:on    6:off
+netconsole      0:off   1:off   2:off   3:off   4:off   5:off   6:off
+netfs           0:off   1:off   2:off   3:on    4:on    5:off   6:off
+netplugd        0:off   1:off   2:off   3:off   4:off   5:off   6:off
+network         0:off   1:off   2:on    3:on    4:on    5:on    6:off
+nfs             0:off   1:off   2:off   3:off   4:off   5:off   6:off
+nfslock         0:off   1:off   2:off   3:on    4:on    5:off   6:off
+nscd            0:off   1:off   2:off   3:off   4:off   5:off   6:off
+ntpd            0:off   1:off   2:off   3:off   4:off   5:on    6:off
+pand            0:off   1:off   2:off   3:off   4:off   5:off   6:off
+psacct          0:off   1:off   2:off   3:off   4:off   5:off   6:off
+rdisc           0:off   1:off   2:off   3:off   4:off   5:off   6:off
+readahead_early 0:off   1:off   2:on    3:on    4:on    5:on    6:off
+readahead_later 0:off   1:off   2:off   3:off   4:off   5:on    6:off
+restorecond     0:off   1:off   2:on    3:on    4:on    5:on    6:off
+rpcbind         0:off   1:off   2:off   3:on    4:on    5:off   6:off
+rpcgssd         0:off   1:off   2:off   3:on    4:on    5:off   6:off
+rpcidmapd       0:off   1:off   2:off   3:on    4:on    5:off   6:off
+rpcsvcgssd      0:off   1:off   2:off   3:off   4:off   5:off   6:off
+saslauthd       0:off   1:off   2:off   3:off   4:off   5:off   6:off
+sendmail        0:off   1:off   2:on    3:on    4:on    5:on    6:off
+smartd          0:off   1:off   2:on    3:on    4:on    5:on    6:off
+spamassassin    0:off   1:off   2:off   3:off   4:off   5:off   6:off
+sshd            0:off   1:off   2:on    3:on    4:on    5:off   6:off
+syslog          0:off   1:off   2:on    3:on    4:on    5:on    6:off
+tomcat5         0:off   1:off   2:off   3:off   4:off   5:off   6:off
+vncserver       0:off   1:off   2:off   3:off   4:off   5:off   6:off
+winbind         0:off   1:off   2:off   3:off   4:off   5:off   6:off
+wpa_supplicant  0:off   1:off   2:off   3:off   4:off   5:off   6:off
+xfs             0:off   1:off   2:on    3:on    4:on    5:on    6:off
+ypbind          0:off   1:off   2:off   3:off   4:off   5:off   6:off
+yum-updatesd    0:off   1:off   2:off   3:on    4:on    5:on    6:off
+======== grep hosts: /etc/nsswitch.conf ==========
+#hosts:     db files nisplus nis dns
+hosts:      files dns
+======== grep -v '^#' /etc/resolv.conf ==========
+; generated by /sbin/dhclient-script
+search myhome.westell.com
+nameserver 192.168.1.1
+nameserver 192.168.1.1
+======== hostname  ==========
+alweiner.nowhere.invalid
+======== grep eth /etc/mod*.conf ==========
+alias eth0 e100
+======== grep -v '^#' /etc/host.conf ==========
+order hosts,bind
+================ ifconfig -a ==============
+eth0      Link encap:Ethernet  HWaddr 00:07:E9:01:B2:09
+inet addr:192.168.1.150  Bcast:192.168.1.255  Mask:255.255.255.0
+inet6 addr: fe80::207:e9ff:fe01:b209/64 Scope:Link
+UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+RX packets:1793 errors:0 dropped:0 overruns:0 frame:0
+TX packets:1360 errors:0 dropped:0 overruns:0 carrier:0
+collisions:0 txqueuelen:1000
+RX bytes:2126783 (2.0 MiB)  TX bytes:79504 (77.6 KiB)
+
+lo        Link encap:Local Loopback
+inet addr:127.0.0.1  Mask:255.0.0.0
+inet6 addr: ::1/128 Scope:Host
+UP LOOPBACK RUNNING  MTU:16436  Metric:1
+RX packets:2721 errors:0 dropped:0 overruns:0 frame:0
+TX packets:2721 errors:0 dropped:0 overruns:0 carrier:0
+collisions:0 txqueuelen:0
+RX bytes:5660648 (5.3 MiB)  TX bytes:5660648 (5.3 MiB)
+
+============== route -n =================
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use
+Iface
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+169.254.0.0     0.0.0.0         255.255.0.0     U     0      0        0 eth0
+0.0.0.0         192.168.1.1     0.0.0.0         UG    0      0        0 eth0
+======== cat /etc/sysconfig/network ==========
+NETWORKING=yes
+HOSTNAME=alweiner.nowhere.invalid
+========== head -15 /etc/hosts ===========
+127.0.0.1       alweiner.nowhere.invalid        alweiner        localhost
+192.168.1.1     gateway
+192.168.1.150   alweiner.invalid        alweiner
+======== ethtool eth0 ==========
+Settings for eth0:
+Supported ports: [ TP MII ]
+Supported link modes:   10baseT/Half 10baseT/Full
+100baseT/Half 100baseT/Full
+Supports auto-negotiation: Yes
+Advertised link modes:  10baseT/Half 10baseT/Full
+100baseT/Half 100baseT/Full
+Advertised auto-negotiation: Yes
+Speed: 100Mb/s
+Duplex: Full
+Port: MII
+PHYAD: 1
+Transceiver: internal
+Auto-negotiation: on
+Supports Wake-on: g
+Wake-on: g
+Current message level: 0x00000007 (7)
+Link detected: yes
+=== dmesg | grep  eth0 | grep -v SRC=  ===
+e100: eth0: e100_probe: addr 0xfc9ff000, irq 11, MAC addr 00:07:E9:01:B2:09
+ADDRCONF(NETDEV_UP): eth0: link is not ready
+e100: eth0: e100_watchdog: link up, 100Mbps, full-duplex
+ADDRCONF(NETDEV_CHANGE): eth0: link becomes ready
+eth0: no IPv6 routers present
+=== grep eth0 /var/log/messages | tail -10 ===
+Nov 11 07:07:12 alweiner kernel: Inbound IN=eth0 OUT=
+MAC=00:07:e9:01:b2:09:00:18:3a:53:f7:fb:08:00 SRC=192.168.1.1
+DST=192.168.1.150 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=1052 DF PROTO=TCP
+...
+read more »
+</POST>
+<POST>
+<POSTER> Timothy Murphy &lt;t...@birdsnest.maths.tcd.ie&gt; </POSTER>
+<POSTDATE> 2007-11-11T10:04:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Allen Weiner wrote:
+&gt; I've now got Fedora configured
+&gt; for static IP of 150 and WinME configured for static IP of 140. The
+&gt; dhclient-leases lists an expiration date of 11/7 (today is 11/11).
+">
+
+Are you talking about 2 computers,
+or a single dual-boot computer?
+
+If the latter, how does your dhcp server
+know which OS is being used on the computer connected to it?
+</POST>
+<POST>
+<POSTER> Bit Twister &lt;BitTwis...@mouse-potato.com&gt; </POSTER>
+<POSTDATE> 2007-11-11T11:32:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sun, 11 Nov 2007 12:22:46 GMT, Allen Weiner wrote:
+&gt; Bit Twister wrote:
+
+&gt; I don't understand *any* of the above.
+">
+
+Most were actual commands. If you did not understand the command, do a
+man command
+
+when in doubt, try command with junk names and check results. Example:
+
+Given
+cp /dev/null /var/lib/dhclient/dhclient-eth0.leases
+
+do      cp /var/lib/dhclient/dhclient-eth0.leases junk
+cp /dev/null junk
+cat junk
+
+Now you know what the &quot;cp /dev/null fn&quot; does.
+
+<QUOTE PREVIOUSPOST="
+&gt; I've now got Fedora configured
+&gt; for static IP of 150 and WinME configured for static IP of 140. The
+&gt; dhclient-leases lists an expiration date of 11/7 (today is 11/11).
+">
+
+One of those commands was to empty the lease file so it would be ruled
+out of the suspect list. It was
+cp /dev/null /var/lib/dhclient/dhclient-eth0.leases
+
+<QUOTE PREVIOUSPOST="
+&gt; I'll post my config-dump below. How does it look?
+
+&gt; So could you please clarify what is the next step in troubleshooting.
+">
+
+My Karnack gene is defective, what problem?
+
+You have to tell me what is your problem /now/.
+I know what the original problem was.
+
+Are you saying both OSs set static and you are having connection
+problems, or what?
+
+<QUOTE PREVIOUSPOST="
+&gt; Some explanatory comments along with the procedural steps might make it
+&gt; more understandable. Thanks.
+">
+
+We have already covered the trouble shooting steps. The order of the
+steps logicaly test hard/software. When a test fails, that is the area
+to fix, you look at the config files for suspect area failure/vaules.
+
+ethtool/mii-tool tells you the physical cable/path is good.
+
+Assuming static setup, pings tells you which part of the connection fails.
+pinging localhosts indicates your system is working.
+pinging your node name proves dns reads /etc/hosts, local routing are working
+pinging next node in path to internet proves both nodes are working.
+when ping fails, suspects are routing (route -n), firewalls, other node.
+
+node config files match hostname results
+/etc/sysconfig/network
+/etc/hosts
+
+dns files:
+/etc/nsswitch.conf  define which/order to chech what
+/etc/host.conf
+etc/resolv.conf
+
+route has a UG flag and the gateway address matches gateway's ip addy.
+
+ipconfig ip results match
+/etc/hosts
+/etc/sysconfig/network-scripts/ifcfg-eth0
+
+<QUOTE PREVIOUSPOST="
+&gt; ======== cat /etc/*version ==========
+&gt; cat: /etc/subversion: Is a directory
+">
+
+Attaching a new script to fix that error with code to display default runlevel.
+
+<QUOTE PREVIOUSPOST="
+&gt; ======== grep -v '^#' /etc/resolv.conf ==========
+&gt; ; generated by /sbin/dhclient-script
+">
+
+What the hell, That semi-colon should not be there. Look at mine
+$ cat /fc7/etc/resolv.conf
+nameserver 192.168.1.1
+
+<QUOTE PREVIOUSPOST="
+&gt; search myhome.westell.com
+&gt; nameserver 192.168.1.1
+&gt; nameserver 192.168.1.1
+">
+
+Had you followed my instructions, /etc/resolv.conf would have had just
+nameserver 192.168.1.1
+
+At this point, I have no idea if your dhcp clint is helping us into
+the ditch. Run this commands:
+
+echo &quot;nameserver 192.168.1.1&quot; &gt; /etc/resolv.conf
+cat /etc/resolv.conf
+service network restart
+cat /etc/resolv.conf
+
+If resolv.conf reverts back to
+# generated by /sbin/dhclient-script
+search myhome.westell.com
+nameserver 192.168.1.1
+nameserver 192.168.1.1
+
+dhcp client is getting into your problem but it will not stop connectivity.
+We eill have to trap that alligator later.
+
+<QUOTE PREVIOUSPOST="
+&gt; ======== hostname  ==========
+&gt; alweiner.nowhere.invalid
+">
+
+Thank, you thank you, thank you
+I would not have picked your user name, but hey, it is your system.
+
+<QUOTE PREVIOUSPOST="
+&gt; ========== head -15 /etc/hosts ===========
+&gt; 127.0.0.1  alweiner.nowhere.invalid        alweiner        localhost
+&gt; 192.168.1.1        gateway
+&gt; 192.168.1.150      alweiner.invalid        alweiner
+">
+
+Frap, gotta love those gui tools and you need to pay attention to details.
+If you will notice you did not get the .150 line correct.
+Pop test, what is wrong with the 192.168.1.150 line?
+
+You lucked out because of the gui help.
+Your nodename in /etc/sysconfig/network should match the one in /etc/hosts.
+
+READ MY LIPS, you are to delete contents of /etc/hosts
+cut the following and paste them into your hosts file.
+
+127.0.0.1       localhost.localdomain      localhost
+192.168.1.150   alweiner.nowhere.invalid   alweiner
+::1     localhost6.localdomain6 localhost6
+
+When you modify a config file, you should always recheck your work by using
+cat fn_here and double check values.
+
+Except for the prompt, you should see something on your screen as follows:
+
+[root@alweiner ~]# cat /etc/hosts
+127.0.0.1       localhost.localdomain       localhost
+192.168.1.150   alweiner.nowhere.invalid    alweiner
+::1     localhost6.localdomain6 localhost6
+[root@alweiner ~]#
+
+I had expected the gui to add the ::1 line. So much for assuming.
+
+WARING: Changing node/domain/ip addy for your node may cause you to
+lose gui dispay. Reboot is recommended.
+
+Node name changes can cause Mail Transport Agent (MTA), print server
+(cups) and whatnot to feel sad. You may have to fix their config files
+and/or restart their services.
+
+--------------------------------------------------------------------------- ----
+As promised, new-n-improved script follows:
+
+You can use diff to find changes. Example:
+
+diff -bBw my_script your_script
+
+------------------ Script starts below this line ---------
+#!/bin/bash
+#*************************************************************
+#*
+#* xx - Dump network config files and network hardware status
+#*
+#* Output:      a.txt linux file
+#*              doza.txt Windows file
+#*
+#*************************************************************
+
+_fn=a.txt
+_out_fn=$PWD/$_fn
+_dos_fn=$PWD/dos${_fn}
+_home=$PWD
+
+function cat_fn
+{
+_fn=$1
+if [ -f $_fn ] ; then
+_count=$(stat -c %s $_fn )
+if [ $_count -gt 0 ] ; then
+echo &quot;======== cat $_fn ==========&quot; &gt;&gt; $_out_fn
+cat $_fn &gt;&gt; $_out_fn
+fi
+fi
+
+<QUOTE PREVIOUSPOST="
+} # end cat_fn
+">
+
+function grep_fn
+{
+_fn=$1
+if [ -e $_fn ] ; then
+_count=$(stat -c %s $_fn )
+if [ $_count -gt 0 ] ; then
+_count=$(grep -v '^#' $_fn | wc -l)
+if [ $_count -gt 0 ] ; then
+echo &quot;======== grep -v '^#' $_fn ==========&quot; &gt;&gt; $_out_fn
+if [ &quot;$_fn&quot; != &quot;shorewall.conf&quot; ] ; then
+grep -v '^#' $_fn &gt;&gt; $_out_fn
+else
+awk 'empty{if (!/^#/) print; empty=0} /^$/{empty=1}' $_fn &gt;&gt; $_out_fn
+fi
+fi
+fi
+fi
+
+<QUOTE PREVIOUSPOST="
+} # end grep_fn
+">
+
+function ls_dir
+{
+_dr=$1
+if [ -d $_dr ] ; then
+echo &quot;========= cd $_dr ; ls -al ========&quot; &gt;&gt; $_out_fn
+cd $_dr
+ls -al &gt;&gt; $_out_fn
+fi
+
+<QUOTE PREVIOUSPOST="
+} # end ls_dir
+">
+
+function tail_fn
+{
+_fn=$1
+if [ -e $_fn ] ; then
+echo &quot;======== tail -18 $_fn ==========&quot; &gt;&gt; $_out_fn
+tail -18 $_fn &gt;&gt; $_out_fn
+fi
+
+<QUOTE PREVIOUSPOST="
+} # end tail_fn
+">
+
+#********************************
+# check if commands are in $PATH
+# and if not add them to PATH
+#********************************
+
+_path=&quot;&quot;
+type ifconfig &gt; /dev/null 2&gt;&amp;1
+if [ $? -ne 0 ] ; then
+_path=&quot;${_path}/sbin:&quot;
+fi
+
+type cat &gt; /dev/null 2&gt;&amp;1
+if [ $? -ne 0 ] ; then
+_path=&quot;${_path}/bin:&quot;
+fi
+
+type id &gt; /dev/null 2&gt;&amp;1
+if [ $? -ne 0 ] ; then
+_path=&quot;${_path}/usr/bin:&quot;
+fi
+
+if [ -n &quot;$_path&quot; ] ; then
+PATH=${_path}$PATH
+export PATH
+fi
+
+#********************************
+# check if root and logged in correctly
+#********************************
+
+_uid=$(id --user)
+
+if [ $_uid -ne 0 ] ; then
+echo &quot; &quot;
+echo &quot;You need to be root to run $0&quot;
+echo &quot;CLick up a terminal and do the following:&quot;
+echo &quot; &quot;
+echo &quot;su - root&quot;
+echo &quot;$PWD/xx&quot;
+echo &quot; &quot;
+echo &quot;or &quot;
+echo &quot; &quot;
+echo &quot;sudo -i&quot;
+echo &quot;$PWD/xx&quot;
+echo &quot; &quot;
+exit 1
+fi
+
+root_flg=1
+
+if [ -n &quot;$LOGNAME&quot; ] ; then
+if [ &quot;$LOGNAME&quot; != &quot;root&quot; ] ; then
+root_flg=0
+fi
+fi
+
+if [ -n &quot;$USER&quot; ] ; then
+if [ &quot;$USER&quot; != &quot;root&quot; ] ; then
+root_flg=0
+fi
+fi
+
+if [ $root_flg -eq 0 ] ; then
+echo &quot; &quot;
+echo &quot;Guessing you did a su root&quot;
+echo &quot;instead of a       su - root&quot;
+echo &quot;please exit/logout of this session and do the following:&quot;
+echo &quot; &quot;
+echo &quot;su - root&quot;
+echo &quot;$PWD/xx&quot;
+echo &quot; &quot;
+echo &quot;or &quot;
+echo &quot; &quot;
+echo &quot;sudo -i&quot;
+echo &quot;$PWD/xx&quot;
+echo &quot; &quot;
+exit 1
+fi
+
+#********************************
+#       main code starts here
+#********************************
+
+echo &quot;Working, output will be in $_out_fn &quot;
+
+date &gt; $_out_fn
+chmod 666 $_out_fn
+
+if [ -n &quot;$_path&quot; ] ; then
+echo &quot;======== echo $PATH ==========&quot; &gt;&gt; $_out_fn
+echo &quot;$PATH&quot; &gt;&gt; $_out_fn 2&gt;&amp;1
+fi
+
+cat_fn /etc/product.id
+
+for _d in /etc/*release ; do
+if [ ! -d $_d ] ; then
+echo &quot;======== cat $_d ==========&quot; &gt;&gt; $_out_fn
+cat $_d &gt;&gt; $_out_fn
+fi
+done
+
+echo &quot;======== uname -rvi =============&quot; &gt;&gt; $_out_fn
+uname -rvi &gt;&gt; $_out_fn
+
+for _d in /etc/*version ; do
+if [ ! -d $_d ] ; then
+echo &quot;======== cat $_d ==========&quot; &gt;&gt; $_out_fn
+cat $_d &gt;&gt; $_out_fn
+fi
+done
+
+cat_fn /proc/*version
+
+type lsb_release &gt; /dev/null 2&gt;&amp;1
+if [ $? -eq 0 ] ; then
+echo &quot;======== lsb_release -a ==========&quot; &gt;&gt; $_out_fn
+lsb_release -a &gt;&gt; $_out_fn 2&gt;&amp;1
+fi
+
+echo &quot; &quot; &gt;&gt; $_out_fn
+if [ -n &quot;$SECURE_LEVEL&quot; ] ; then
+echo &quot;msec security level is $SECURE_LEVEL&quot; &gt;&gt; $_out_fn
+fi
+
+echo &quot;======== free ==========&quot; &gt;&gt; $_out_fn
+free &gt;&gt; $_out_fn  2&gt;&amp;1
+echo &quot; &quot; &gt;&gt; $_out_fn
+
+if [ -e /etc/inittab ] ; then
+_line=$(grep :initdefault /etc/inittab)
+set -- $(IFS=':'; echo $_line)
+echo &quot; &quot; &gt;&gt; $_out_fn
+echo &quot;Default run level is $2&quot; &gt;&gt; $_out_fn
+echo &quot; &quot; &gt;&gt; $_out_fn
+fi
+
+type chkconfig &gt; /dev/null 2&gt;&amp;1
+if [ $? -eq 0 ] ; then
+echo &quot;======== chkconfig --list ==========&quot; &gt;&gt; $_out_fn
+for _serv in avahi named tmdns ; do
+chkconfig --list | grep -i $_serv &gt; /dev/null 2&gt;&amp;1
+if [ $? -eq 0 ] ; then
+echo &quot;Double check if /$_serv/ needs to be disabled on boot&quot; &gt;&gt; $_out_fn
+chkconfig --list | grep -i $_serv &gt;&gt; $_out_fn
+fi
+done
+
+chkconfig --list &gt;&gt; $_out_fn
+
+else
+echo &quot;======== ls -o /etc/rcS.d/  ==========&quot; &gt;&gt; $_out_fn
+for _serv in avahi named tmdns ; do
+ls /etc/rcS.d/S* | grep $_serv &gt; /dev/null 2&gt;&amp;1
+if [ $? -eq 0 ] ; then
+echo &quot;Double check if /$_serv/ needs to be disabled on boot&quot; &gt;&gt; $_out_fn
+fi
+done
+
+ls -o /etc/rcS.d &gt;&gt; $_out_fn
+fi
+
+_fn=/etc/nsswitch.conf
+if [ -e $_fn ] ; then
+echo &quot;======== grep hosts: $_fn
+...
+read more »
+</POST>
+<POST>
+<POSTER> Bit Twister &lt;BitTwis...@mouse-potato.com&gt; </POSTER>
+<POSTDATE> 2007-11-11T11:55:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sun, 11 Nov 2007 15:04:51 +0000, Timothy Murphy wrote:
+&gt; Are you talking about 2 computers,
+&gt; or a single dual-boot computer?
+">
+
+He has one computer connected to a adsl router.
+
+<QUOTE PREVIOUSPOST="
+&gt; If the latter, how does your dhcp server
+&gt; know which OS is being used on the computer connected to it?
+">
+
+router's dhcp server looks at MAC value to know who is talking to it.  :-D
+
+In my stupid opinion, the router should see the dhcp renew/rebind
+request from the same nic and should extend/issue the same lease
+regardless of what OSs created the initial connection.
+
+What I am not sure about, in the router software, is if WinME gets a
+netbios lease, Allen then boots fedora.
+Router waits for a netbios lease renewal, times out, and blows away
+fedora's connection.
+
+Having finally gotten Allen to set both OSs static, he should have a
+stable connection, regardless of what system was running before boot.
+
+If so, we have solved Allen's connection problem, but do not have a
+working solution which Allen desires.
+
+I think I might have to poke him a little harder and ask him to read
+http://www.catb.org/~esr/faqs/smart-questions.html
+</POST>
+<POST>
+<POSTER> Allen Weiner &lt;alwein...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-11T15:57:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Bit Twister wrote:
+&gt; On Sun, 11 Nov 2007 12:22:46 GMT, Allen Weiner wrote:
+&gt;&gt; Bit Twister wrote:
+&gt;&gt; I don't understand *any* of the above.
+
+&gt; Most were actual commands. If you did not understand the command, do a
+&gt; man command
+
+&gt; when in doubt, try command with junk names and check results. Example:
+
+&gt; Given
+&gt;    cp /dev/null /var/lib/dhclient/dhclient-eth0.leases
+
+&gt; do      cp /var/lib/dhclient/dhclient-eth0.leases junk
+&gt;         cp /dev/null junk
+&gt;         cat junk
+
+&gt; Now you know what the &quot;cp /dev/null fn&quot; does.
+">
+
+Thanks very much for your continuing help and patience. My primary lack
+of understanding is the purpose of the commands. I'm totally missing the
+strategy.  I suspected that the copy of /dev/null into /var/lib/dhclient
+was a means of erasing /var/lib/dhclient. But to me, it's a puzzling and
+unconventional way of erasing a file. (Remember, I'm a refugee from
+Windows.) If there was a comment &quot;clear the file&quot;, I would use Kedit and
+clear the file. Using /dev/null seems to me a &quot;power user&quot; trick.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; I've now got Fedora configured
+&gt;&gt; for static IP of 150 and WinME configured for static IP of 140. The
+&gt;&gt; dhclient-leases lists an expiration date of 11/7 (today is 11/11).
+
+&gt; One of those commands was to empty the lease file so it would be ruled
+&gt; out of the suspect list. It was
+&gt; cp /dev/null /var/lib/dhclient/dhclient-eth0.leases
+
+&gt;&gt; I'll post my config-dump below. How does it look?
+
+&gt;&gt; So could you please clarify what is the next step in troubleshooting.
+
+&gt; My Karnack gene is defective, what problem?
+
+&gt; You have to tell me what is your problem /now/.
+&gt; I know what the original problem was.
+
+&gt; Are you saying both OSs set static and you are having connection
+&gt; problems, or what?
+">
+
+What I meant by the question is, are there additional steps I need to do
+so that I can do effective troubleshooting if the original problem
+(connection loss) happens again. You appear to be assuming that you've
+diagnosed the connection loss problem, repaired it, and it will not
+happen again.
+
+&lt;snip generic network troubleshooting procedure&gt;
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; ======== grep -v '^#' /etc/resolv.conf ==========
+&gt;&gt; ; generated by /sbin/dhclient-script
+
+&gt; What the hell, That semi-colon should not be there. Look at mine
+&gt; $ cat /fc7/etc/resolv.conf
+&gt; nameserver 192.168.1.1
+
+&gt;&gt; search myhome.westell.com
+&gt;&gt; nameserver 192.168.1.1
+&gt;&gt; nameserver 192.168.1.1
+
+&gt; Had you followed my instructions, /etc/resolv.conf would have had just
+&gt; nameserver 192.168.1.1
+">
+
+You explained that removing the &quot;search westell&quot; is a performance
+optimization. For the time being, I'm making only changes necessary for
+troubleshooting, unless I can see (from my novice knowledge base) that
+the change is not potentially harmful. BTW, thanks very much for
+mentioning &quot;Rescue mode&quot; if Fedora becomes unbootable. This thread is a
+real learning experience.
+
+<QUOTE PREVIOUSPOST="
+&gt; At this point, I have no idea if your dhcp clint is helping us into
+&gt; the ditch. Run this commands:
+
+&gt; echo &quot;nameserver 192.168.1.1&quot; &gt; /etc/resolv.conf
+&gt; cat /etc/resolv.conf
+&gt; service network restart
+&gt; cat /etc/resolv.conf
+">
+
+How about if I use Kedit to just change the comment (and nothing else)
+to some garbage sentence? This would eliminate any chance of side-effects.
+
+<QUOTE PREVIOUSPOST="
+&gt; If resolv.conf reverts back to
+&gt;    # generated by /sbin/dhclient-script
+&gt;    search myhome.westell.com
+&gt;    nameserver 192.168.1.1
+&gt;    nameserver 192.168.1.1
+
+&gt; dhcp client is getting into your problem but it will not stop connectivity.
+&gt; We eill have to trap that alligator later.
+
+&gt;&gt; ======== hostname  ==========
+&gt;&gt; alweiner.nowhere.invalid
+
+&gt; Thank, you thank you, thank you
+&gt; I would not have picked your user name, but hey, it is your system.
+">
+
+My user name is &quot;aweiner&quot;.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; ========== head -15 /etc/hosts ===========
+&gt;&gt; 127.0.0.1      alweiner.nowhere.invalid        alweiner        localhost
+&gt;&gt; 192.168.1.1    gateway
+&gt;&gt; 192.168.1.150  alweiner.invalid        alweiner
+
+&gt; Frap, gotta love those gui tools and you need to pay attention to details.
+">
+
+What gui tool are you referring to? I edited the file with Kedit.
+
+<QUOTE PREVIOUSPOST="
+&gt; If you will notice you did not get the .150 line correct.
+&gt; Pop test, what is wrong with the 192.168.1.150 line?
+
+&gt; You lucked out because of the gui help.
+&gt; Your nodename in /etc/sysconfig/network should match the one in /etc/hosts.
+
+&gt; READ MY LIPS, you are to delete contents of /etc/hosts
+&gt; cut the following and paste them into your hosts file.
+
+&gt; 127.0.0.1       localhost.localdomain         localhost
+&gt; 192.168.1.150      alweiner.nowhere.invalid   alweiner
+&gt; ::1     localhost6.localdomain6 localhost6
+">
+
+What's wrong with just fixing the FQDN of 192.168.1.150? I don't
+understand that third line.
+
+<QUOTE PREVIOUSPOST="
+&gt; When you modify a config file, you should always recheck your work by using
+&gt; cat fn_here and double check values.
+">
+
+what is &quot;fn_here&quot;?
+
+<QUOTE PREVIOUSPOST="
+&gt; Except for the prompt, you should see something on your screen as follows:
+
+&gt; [root@alweiner ~]# cat /etc/hosts
+&gt; 127.0.0.1       localhost.localdomain       localhost
+&gt; 192.168.1.150      alweiner.nowhere.invalid    alweiner
+&gt; ::1     localhost6.localdomain6 localhost6
+&gt; [root@alweiner ~]#
+
+&gt; I had expected the gui to add the ::1 line. So much for assuming.
+">
+
+Again, I used Kedit.
+
+&lt;snip remainder&gt;
+</POST>
+<POST>
+<POSTER> Allen Weiner &lt;alwein...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-11T16:36:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Bit Twister wrote:
+">
+
+&lt; snip&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; In my stupid opinion, the router should see the dhcp renew/rebind
+&gt; request from the same nic and should extend/issue the same lease
+&gt; regardless of what OSs created the initial connection.
+
+&gt; What I am not sure about, in the router software, is if WinME gets a
+&gt; netbios lease, Allen then boots fedora.
+&gt; Router waits for a netbios lease renewal, times out, and blows away
+&gt; fedora's connection.
+">
+
+I don't know if this is relevant to your diagnosis of my connection-loss
+problem. Most of the time, I only run WinME on Saturdays. The Fedora
+connection-loss problem happens (apparently) randomly throughout the week.
+
+<QUOTE PREVIOUSPOST="
+&gt; I think I might have to poke him a little harder and ask him to read
+&gt; http://www.catb.org/~esr/faqs/smart-questions.html
+">
+
+Is this about the point you made about me not snipping enough when I
+reply, or something else?
+</POST>
+<POST>
+<POSTER> Bit Twister &lt;BitTwis...@mouse-potato.com&gt; </POSTER>
+<POSTDATE> 2007-11-11T17:05:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sun, 11 Nov 2007 20:57:13 GMT, Allen Weiner wrote:
+&gt; Bit Twister wrote:
+">
+
+Still need to start trimming a bit more please.
+
+<QUOTE PREVIOUSPOST="
+&gt; Thanks very much for your continuing help and patience. My primary lack
+&gt; of understanding is the purpose of the commands.
+">
+
+Now, that is a different story. :-)
+I am subscribed to 130 news groups, and I whip through those providing
+commands when I can.
+So far you have been one of the few who realy want to know what
+is going on. So I have been adding bunches of information for you.
+Order of commands and the commands set the system to a know state.
+Telling you why the command was needed, gets me into typing the rest
+of the day.
+
+<QUOTE PREVIOUSPOST="
+&gt; I'm totally missing the  strategy.
+&gt; I suspected that the copy of /dev/null into /var/lib/dhclient
+&gt; was a means of erasing /var/lib/dhclient.
+">
+
+Hot dang. You are keeping up.
+
+<QUOTE PREVIOUSPOST="
+&gt; But to me, it's a puzzling
+">
+
+Well, I have no problem with you asking the question of why not do it
+this way......
+Then I can give you the reason for not doing someting, as you will see next.
+
+<QUOTE PREVIOUSPOST="
+&gt; and
+&gt; unconventional way of erasing a file. (Remember, I'm a refugee from
+&gt; Windows.) If there was a comment &quot;clear the file&quot;,
+">
+
+Oh, no, Nature is constantly improving the idiot.
+If they cannot cut/paste the command, then there is a good chance of
+Murphy being able to do his best.  :-(
+
+<QUOTE PREVIOUSPOST="
+&gt; I would use Kedit and
+">
+
+Yeah, but, downside to that is if leave a backup file with the Tilde
+on the end.
+
+While on that subject, I want you to do a
+
+ls /etc/sysconfig/network-scripts/ifcfg-eth0*
+
+If there is a /etc/sysconfig/network-scripts/ifcfg-eth0~
+I want you to &quot;delete/remove it&quot;.  See, much simpler to say
+
+rm /etc/sysconfig/network-scripts/ifcfg-eth0~
+
+<QUOTE PREVIOUSPOST="
+&gt; clear the file. Using /dev/null seems to me a &quot;power user&quot; trick.
+">
+
+Hehe, the &quot;power user trick&quot; would be
+
+<QUOTE PREVIOUSPOST="
+&gt;/var/lib/dhclient/dhclient-eth0.leases
+">
+
+But the idiot think the &gt; is part of usenet quoting.  :(
+
+Dang had to snip 21 lines which you should have trimmed.
+That is a rudness which I can get tired of pretty quick.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Are you saying both OSs set static and you are having connection
+&gt;&gt; problems, or what?
+
+&gt; What I meant by the question is, are there additional steps I need to do
+&gt;   so that I can do effective troubleshooting if the original problem
+&gt; (connection loss) happens again. You appear to be assuming that you've
+&gt; diagnosed the connection loss problem, repaired it, and it will not
+&gt; happen again.
+">
+
+No, if you know have both systems using static address, fedora no
+longer loses connectivity after dose used the connection.
+
+Now that both systems are static, we know that we have a dhcp issue,
+modem server or fedora dhcp client.
+
+You indicated second fedora reboot using dhcp ran ok.
+To me the router is the culprit.
+
+You have also indicated you wanted to run doze with dhcp.
+No problem, set it dhcp, fedora static, boot doze, boot fedora and see
+if connection drops. If not, there is the /working/ solution.
+
+My SWAG, on doze shutdown, no dhcp release is issued, modem is half
+smart and knows it was doze who should be using the .47 ip and refuses
+to allow fedora to use the lease.
+fedora shutdown does a dhcp release, you boot fedora again and router
+allows use of the .47 lease to work like it is supposed to.
+
+<QUOTE PREVIOUSPOST="
+&gt;&lt;snip generic network troubleshooting procedure&gt;
+">
+
+Yea, thanks. &lt;snip&gt; is good enough if you realy want to add them.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; search myhome.westell.com
+&gt;&gt;&gt; nameserver 192.168.1.1
+&gt; You explained that removing the &quot;search westell&quot; is a performance
+&gt; optimization. For the time being, I'm making only changes necessary for
+&gt; troubleshooting, unless I can see (from my novice knowledge base) that
+&gt; the change is not potentially harmful.
+">
+
+I hear where you are comming from, but why have myhome.westell.com
+looking up ip addresses for you.
+I consider that a security risk.
+Your dns resolver will try a search there, then ask the nameserver.
+
+<QUOTE PREVIOUSPOST="
+&gt; BTW, thanks very much for
+&gt; mentioning &quot;Rescue mode&quot; if Fedora becomes unbootable. This thread is a
+&gt; real learning experience.
+">
+
+Yeah, as an oh by the way, you can you can make it a practice of
+copying the files into /root/hold or some such thing and copy them
+back in the rescue mode.
+
+As for the dhcp/static, just changing BOOTPROTO= back to dhcp value
+in /etc/sysconfig/network-scripts/ifcfg-eth0
+would have you booting dhcp  :-)
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; At this point, I have no idea if your dhcp clint is helping us into
+&gt;&gt; the ditch. Run this commands:
+
+&gt;&gt; echo &quot;nameserver 192.168.1.1&quot; &gt; /etc/resolv.conf
+&gt;&gt; cat /etc/resolv.conf
+&gt;&gt; service network restart
+&gt;&gt; cat /etc/resolv.conf
+
+&gt; How about if I use Kedit to just change the comment (and nothing else)
+&gt; to some garbage sentence? This would eliminate any chance of side-effects.
+">
+
+I run under general rules.
+You do not go adhoc'ing config files.
+You only change the data to be what it needs to be changed, and
+contents are as close to original as can be.
+You always make sure the last line has a carriage return.
+
+It depends on the code reading the config file as to what you can get
+away with. Example:
+nameserver 192.168.1.1    # router ip
+may not work
+
+cat /etc/resol.conf
+# router ip
+nameserver 192.168.1.1
+might work.
+
+cat /etc/resol.conf
+# router ip
+nameserver 192.168.1.1
+# verizon fallback dns server
+nameserver 68.238.96.12
+
+might not work.
+cat /etc/resol.conf
+# 1'st is router ip
+# 2'nd is verizon fallback dns server
+nameserver 192.168.1.1
+nameserver 68.238.96.12
+would work.
+
+Window newbies using editors tend to not remember to add the carriage return.
+
+Example: I wanted resolv.conf to have just
+nameserver 192.168.1.1&lt;cr&gt;
+
+Now the newbie will use the editor to delete everything, just paste
+nameserver 192.168.1.1, Save and quit.
+
+When you run the xx script you will see the mistake in a.txt as
+
+======== grep -v '^#' /etc/resolv.conf ==========
+nameserver 192.168.1.1======== hostname  ==========
+
+instead of
+======== grep -v '^#' /etc/resolv.conf ==========
+nameserver 192.168.1.1
+======== hostname  ==========
+
+The echo command makes sure that I get the trailing carriage return
+and /etc/resolv.conf will have just what I wanted.
+
+Dang, Had to trim 12 more lines.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; ======== hostname  ==========
+&gt;&gt;&gt; alweiner.nowhere.invalid
+
+&gt;&gt; Thank, you thank you, thank you
+&gt;&gt; I would not have picked your user name, but hey, it is your system.
+
+&gt; My user name is &quot;aweiner&quot;.
+">
+
+Hehe, Ok,
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; ========== head -15 /etc/hosts ===========
+&gt;&gt;&gt; 127.0.0.1  alweiner.nowhere.invalid        alweiner        localhost
+&gt;&gt;&gt; 192.168.1.1        gateway
+&gt;&gt;&gt; 192.168.1.150      alweiner.invalid        alweiner
+
+&gt;&gt; Frap, gotta love those gui tools and you need to pay attention to details.
+
+&gt; What gui tool are you referring to?
+">
+
+Assumed you used the network gui which has a tab to manage host/domain.
+They have the bad habit of putting the node name in the 127.0.0.1 line.
+
+<QUOTE PREVIOUSPOST="
+&gt; I edited the file with Kedit.
+">
+
+Then you did not follow the example given.  :(
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; If you will notice you did not get the .150 line correct.
+&gt;&gt; Pop test, what is wrong with the 192.168.1.150 line?
+
+&gt;&gt; You lucked out because of the gui help.
+&gt;&gt; Your nodename in /etc/sysconfig/network should match the one in /etc/hosts.
+
+&gt;&gt; READ MY LIPS, you are to delete contents of /etc/hosts
+&gt;&gt; cut the following and paste them into your hosts file.
+
+&gt;&gt; 127.0.0.1       localhost.localdomain     localhost
+&gt;&gt; 192.168.1.150  alweiner.nowhere.invalid   alweiner
+&gt;&gt; ::1     localhost6.localdomain6 localhost6
+
+&gt; What's wrong with just fixing the FQDN of 192.168.1.150? I don't
+&gt; understand that third line.
+">
+
+It is there incase you enable ipv 6 and is localhost 120.0.0.1 in
+ipv6 format.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; When you modify a config file, you should always recheck your work by using
+&gt;&gt; cat fn_here and double check values.
+
+&gt; what is &quot;fn_here&quot;?
+">
+
+Dang, there goes all your Gold stars and Atta Boys, :-(
+
+I want you to do a
+cat /whatever/file/you/just/modifed/displayed_on_the_screen_so_you_can_check_it
+
+so you can make sure contents are correct and you have a trailing
+carriage return.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Except for the prompt, you should see something on your screen as follows:
+
+&gt;&gt; [root@alweiner ~]# cat /etc/hosts
+&gt;&gt; 127.0.0.1       localhost.localdomain       localhost
+&gt;&gt; 192.168.1.150  alweiner.nowhere.invalid    alweiner
+&gt;&gt; ::1     localhost6.localdomain6 localhost6
+&gt;&gt; [root@alweiner ~]#
+
+&gt;&gt; I had expected the gui to add the ::1 line. So much for assuming.
+
+&gt; Again, I used Kedit.
+">
+
+And you missed the point. I wanted the cat /etc/hosts to look like
+
+[root@alweiner ~]# cat /etc/hosts
+127.0.0.1       localhost.localdomain       localhost
+192.168.1.150   alweiner.nowhere.invalid    alweiner
+::1     localhost6.localdomain6 localhost6
+[root@alweiner ~]#
+
+not like
+[root@alweiner ~]# cat /etc/hosts
+127.0.0.1       localhost.localdomain       localhost
+192.168.1.150   alweiner.invalid    alweiner
+::1     localhost6.localdomain6 localhost6
+[root@alweiner ~]#
+
+and not like
+[root@alweiner ~]# cat /etc/hosts
+127.0.0.1       localhost.localdomain       localhost
+192.168.1.150   alweiner.nowhere.invalid    alweiner
+::1     localhost6.localdomain6 localhost6[root@alweiner ~]#
+</POST>
+<POST>
+<POSTER> Bit Twister &lt;BitTwis...@mouse-potato.com&gt; </POSTER>
+<POSTDATE> 2007-11-11T17:28:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sun, 11 Nov 2007 21:36:23 GMT, Allen Weiner wrote:
+
+&gt; I don't know if this is relevant to your diagnosis of my connection-loss
+&gt; problem. Most of the time, I only run WinME on Saturdays. The Fedora
+&gt; connection-loss problem happens (apparently) randomly throughout the week.
+">
+
+Ah Frap. Nothing like spending hours troubleshooting the wrong problem.
+Ok, final SWAG. Your router looses it's mind every once in awhile.
+
+Why, you ask. If fedora runs with dhcp ip for more than a day, you know
+it was able to renew/rebind the lease and keep the connection.
+Your ifconfig showed no errors/dropped/overruns/frame tx/rx hardware problems.
+
+AS a matter of fact, while editing that big long reply about 2 to 3
+replies back, my modem lost it's mind and the post failed.
+Leds normal.
+
+Tried pinging yahoo.com failed. did a service network restart. still failed.
+pinged modem. worked. What the F? First time I had this problem since
+getting FiOS
+click router web page. hangs. Dang. Power cycled modem it worked.
+
+Stupid, stupid, stupid. Should have pinged yahoo.com ip first to
+see if it was modem dns problem. Maybe dns server(s) in modem were AFU.
+Should have pinged them. Guess I'll write a little script to
+troubleshoot the problem.  :)
+
+Adding fallback dns nameserver to my resolve.conf as I type.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; I think I might have to poke him a little harder and ask him to read
+&gt;&gt; http://www.catb.org/~esr/faqs/smart-questions.html
+
+&gt; Is this about the point you made about me not snipping enough when I
+&gt; reply, or something else?
+">
+
+Hehehe, well that is in there also, but mosly about you thinking about the
+question(s) you ask.  :-)
+
+Eveytime you had to say What I meant was,.... should tell you where
+your wheel ran off.  :-D
+</POST>
+<POST>
+<POSTER> Allen Weiner &lt;alwein...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-11T19:57:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Bit Twister wrote:
+&gt; On Sun, 11 Nov 2007 21:36:23 GMT, Allen Weiner wrote:
+&gt;&gt; I don't know if this is relevant to your diagnosis of my connection-loss
+&gt;&gt; problem. Most of the time, I only run WinME on Saturdays. The Fedora
+&gt;&gt; connection-loss problem happens (apparently) randomly throughout the week.
+
+&gt; Ah Frap. Nothing like spending hours troubleshooting the wrong problem.
+&gt; Ok, final SWAG. Your router looses it's mind every once in awhile.
+">
+
+Given this new theory, what troubleshooting steps would you recommend
+the next time I get a connection loss and &quot;service network retart&quot; hangs.
+
+I had another connection loss this afternoon.
+
+Following is troubleshooting info plus recent online history.
+
+11/10 Booted WinME with dynamic IP at approx 3:00 PM. Modem was not
+powered on. Powered modem on at 8:00 PM, then rebooted into Fedora
+(static IP). Changed Fedora static IP address and hostname.
+
+11/11 Booted WinME with dynamic IP at 6:40 AM. Modem was not powered on.
+Configured WinME to static IP. Modem powered on around 7:00 AM. Rebooted
+into Fedora. System powered off at 8:40 AM.
+
+11/11 Booted Fedora at 3:00 PM.
+
+5:18 PM Connection loss  (approx 2 hours into session, as with many
+other instances)
+5:22 PM Powered off modem and disconnected ethernet cable.
+5:29 PM Reconnected ethernet cable and powered up modem.
+5:35 PM ran Bit Twister script (dumps configuration info)
+5:38 PM Issued &quot;service network restart&quot;, which hung.
+
+(I did not try ethtool -r eth0)
+
+Following is troubleshooting data (taken after connection loss but
+before &quot;service network restart&quot;:
+
+Sun Nov 11 17:35:59 EST 2007
+======== cat /etc/fedora-release ==========
+Fedora release 7 (Moonshine)
+======== cat /etc/redhat-release ==========
+Fedora release 7 (Moonshine)
+======== uname -rvi =============
+2.6.23.1-21.fc7 #1 SMP Thu Nov 1 21:09:24 EDT 2007 i386
+======== lsb_release -a ==========
+LSB Version:
+:core-3.1-ia32:core-3.1-noarch:graphics-3.1-ia32:graphics-3.1-noarch
+Distributor ID: Fedora
+Description:    Fedora release 7 (Moonshine)
+Release:        7
+Codename:       Moonshine
+
+======== free ==========
+total       used       free     shared    buffers     cached
+Mem:        125128     122408       2720          0       2464      37924
+-/+ buffers/cache:      82020      43108
+Swap:       771080     173584     597496
+
+Default run level is 5
+
+======== chkconfig --list ==========
+Double check if /avahi/ needs to be disabled on boot
+avahi-daemon    0:off   1:off   2:off   3:on    4:on    5:off   6:off
+avahi-dnsconfd  0:off   1:off   2:off   3:off   4:off   5:off   6:off
+Double check if /named/ needs to be disabled on boot
+named           0:off   1:off   2:off   3:off   4:off   5:off   6:off
+ConsoleKit      0:off   1:off   2:off   3:on    4:on    5:on    6:off
+NetworkManager  0:off   1:off   2:off   3:off   4:off   5:off   6:off
+NetworkManagerDispatcher        0:off   1:off   2:off   3:off   4:off   5:off   6:off
+acpid           0:off   1:off   2:off   3:on    4:on    5:on    6:off
+anacron         0:off   1:off   2:on    3:on    4:on    5:on    6:off
+apmd            0:off   1:off   2:on    3:on    4:on    5:on    6:off
+atd             0:off   1:off   2:off   3:on    4:on    5:on    6:off
+autofs          0:off   1:off   2:off   3:on    4:on    5:on    6:off
+avahi-daemon    0:off   1:off   2:off   3:on    4:on    5:off   6:off
+avahi-dnsconfd  0:off   1:off   2:off   3:off   4:off   5:off   6:off
+bluetooth       0:off   1:off   2:on    3:on    4:on    5:off   6:off
+capi            0:off   1:off   2:off   3:off   4:off   5:off   6:off
+cpuspeed        0:off   1:on    2:on    3:on    4:on    5:off   6:off
+crond           0:off   1:off   2:on    3:on    4:on    5:on    6:off
+cups            0:off   1:off   2:on    3:on    4:on    5:off   6:off
+dhcdbd          0:off   1:off   2:off   3:off   4:off   5:off   6:off
+dund            0:off   1:off   2:off   3:off   4:off   5:off   6:off
+firestarter     0:off   1:off   2:on    3:on    4:on    5:on    6:off
+firstboot       0:off   1:off   2:off   3:on    4:off   5:off   6:off
+gkrellmd        0:off   1:off   2:off   3:off   4:off   5:off   6:off
+gpm             0:off   1:off   2:on    3:on    4:on    5:on    6:off
+haldaemon       0:off   1:off   2:off   3:on    4:on    5:on    6:off
+hddtemp         0:off   1:off   2:off   3:off   4:off   5:on    6:off
+hidd            0:off   1:off   2:on    3:on    4:on    5:off   6:off
+hplip           0:off   1:off   2:on    3:on    4:on    5:off   6:off
+httpd           0:off   1:off   2:off   3:off   4:off   5:off   6:off
+ip6tables       0:off   1:off   2:on    3:on    4:on    5:off   6:off
+iptables        0:off   1:off   2:off   3:off   4:off   5:on    6:off
+irda            0:off   1:off   2:off   3:off   4:off   5:off   6:off
+irqbalance      0:off   1:off   2:on    3:on    4:on    5:off   6:off
+isdn            0:off   1:off   2:on    3:on    4:on    5:off   6:off
+kdump           0:off   1:off   2:off   3:off   4:off   5:off   6:off
+kudzu           0:off   1:off   2:off   3:on    4:on    5:on    6:off
+lisa            0:off   1:off   2:off   3:off   4:off   5:off   6:off
+lm_sensors      0:off   1:off   2:on    3:on    4:on    5:off   6:off
+mcstrans        0:off   1:off   2:on    3:on    4:on    5:on    6:off
+mdmonitor       0:off   1:off   2:on    3:on    4:on    5:off   6:off
+messagebus      0:off   1:off   2:off   3:on    4:on    5:on    6:off
+named           0:off   1:off   2:off   3:off   4:off   5:off   6:off
+nasd            0:off   1:off   2:off   3:on    4:on    5:on    6:off
+netconsole      0:off   1:off   2:off   3:off   4:off   5:off   6:off
+netfs           0:off   1:off   2:off   3:on    4:on    5:off   6:off
+netplugd        0:off   1:off   2:off   3:off   4:off   5:off   6:off
+network         0:off   1:off   2:on    3:on    4:on    5:on    6:off
+nfs             0:off   1:off   2:off   3:off   4:off   5:off   6:off
+nfslock         0:off   1:off   2:off   3:on    4:on    5:off   6:off
+nscd            0:off   1:off   2:off   3:off   4:off   5:off   6:off
+ntpd            0:off   1:off   2:off   3:off   4:off   5:on    6:off
+pand            0:off   1:off   2:off   3:off   4:off   5:off   6:off
+psacct          0:off   1:off   2:off   3:off   4:off   5:off   6:off
+rdisc           0:off   1:off   2:off   3:off   4:off   5:off   6:off
+readahead_early 0:off   1:off   2:on    3:on    4:on    5:on    6:off
+readahead_later 0:off   1:off   2:off   3:off   4:off   5:on    6:off
+restorecond     0:off   1:off   2:on    3:on    4:on    5:on    6:off
+rpcbind         0:off   1:off   2:off   3:on    4:on    5:off   6:off
+rpcgssd         0:off   1:off   2:off   3:on    4:on    5:off   6:off
+rpcidmapd       0:off   1:off   2:off   3:on    4:on    5:off   6:off
+rpcsvcgssd      0:off   1:off   2:off   3:off   4:off   5:off   6:off
+saslauthd       0:off   1:off   2:off   3:off   4:off   5:off   6:off
+sendmail        0:off   1:off   2:on    3:on    4:on    5:on    6:off
+smartd          0:off   1:off   2:on    3:on    4:on    5:on    6:off
+spamassassin    0:off   1:off   2:off   3:off   4:off   5:off   6:off
+sshd            0:off   1:off   2:on    3:on    4:on    5:off   6:off
+syslog          0:off   1:off   2:on    3:on    4:on    5:on    6:off
+tomcat5         0:off   1:off   2:off   3:off   4:off   5:off   6:off
+vncserver       0:off   1:off   2:off   3:off   4:off   5:off   6:off
+winbind         0:off   1:off   2:off   3:off   4:off   5:off   6:off
+wpa_supplicant  0:off   1:off   2:off   3:off   4:off   5:off   6:off
+xfs             0:off   1:off   2:on    3:on    4:on    5:on    6:off
+ypbind          0:off   1:off   2:off   3:off   4:off   5:off   6:off
+yum-updatesd    0:off   1:off   2:off   3:on    4:on    5:on    6:off
+======== grep hosts: /etc/nsswitch.conf ==========
+#hosts:     db files nisplus nis dns
+hosts:      files dns
+======== grep -v '^#' /etc/resolv.conf ==========
+; generated by /sbin/dhclient-script
+search myhome.westell.com
+nameserver 192.168.1.1
+nameserver 192.168.1.1
+======== hostname  ==========
+alweiner.nowhere.invalid
+======== grep eth /etc/mod*.conf ==========
+alias eth0 e100
+======== grep -v '^#' /etc/host.conf ==========
+order hosts,bind
+================ ifconfig -a ==============
+eth0      Link encap:Ethernet  HWaddr 00:07:E9:01:B2:09
+inet addr:192.168.1.150  Bcast:192.168.1.255  Mask:255.255.255.0
+inet6 addr: fe80::207:e9ff:fe01:b209/64 Scope:Link
+UP BROADCAST MULTICAST  MTU:1500  Metric:1
+RX packets:4014 errors:0 dropped:0 overruns:0 frame:0
+TX packets:1942 errors:0 dropped:0 overruns:0 carrier:0
+collisions:0 txqueuelen:1000
+RX bytes:498352 (486.6 KiB)  TX bytes:208165 (203.2 KiB)
+
+lo        Link encap:Local Loopback
+inet addr:127.0.0.1  Mask:255.0.0.0
+inet6 addr: ::1/128 Scope:Host
+UP LOOPBACK RUNNING  MTU:16436  Metric:1
+RX packets:4144 errors:0 dropped:0 overruns:0 frame:0
+TX packets:4144 errors:0 dropped:0 overruns:0 carrier:0
+collisions:0 txqueuelen:0
+RX bytes:5700347 (5.4 MiB)  TX bytes:5700347 (5.4 MiB)
+
+============== route -n =================
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use
+Iface
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+169.254.0.0     0.0.0.0         255.255.0.0     U     0      0        0 eth0
+0.0.0.0         192.168.1.1     0.0.0.0         UG    0      0        0 eth0
+======== cat /etc/sysconfig/network ==========
+NETWORKING=yes
+HOSTNAME=alweiner.nowhere.invalid
+========== head -15 /etc/hosts ===========
+127.0.0.1       alweiner.nowhere.invalid        alweiner        localhost
+192.168.1.1     gateway
+192.168.1.150   alweiner.nowhere.invalid        alweiner
+======== ethtool eth0 ==========
+Settings for eth0:
+Supported ports: [ TP MII ]
+Supported link modes:   10baseT/Half 10baseT/Full
+100baseT/Half 100baseT/Full
+Supports auto-negotiation: Yes
+Advertised link modes:  10baseT/Half 10baseT/Full
+100baseT/Half 100baseT/Full
+Advertised auto-negotiation: Yes
+Speed: 100Mb/s
+Duplex: Full
+Port: MII
+PHYAD: 1
+Transceiver: internal
+Auto-negotiation: on
+Supports Wake-on: g
+Wake-on: g
+Current message level: 0x00000007 (7)
+Link detected: yes
+=== dmesg | grep  eth0 | grep -v SRC=  ===
+e100: eth0: e100_probe: addr 0xfc9ff000, irq 11, MAC addr 00:07:E9:01:B2:09
+ADDRCONF(NETDEV_UP): eth0: link is not ready
+e100: eth0: e100_watchdog: link up, 100Mbps, full-duplex
+ADDRCONF(NETDEV_CHANGE): eth0: link becomes ready
+eth0: no IPv6 routers present
+NETDEV WATCHDOG: eth0: transmit timed out
+=== grep eth0 /var/log/messages | tail -10 ===
+Nov 11 17:14:06 alweiner kernel: Inbound IN=eth0 OUT=
+MAC=00:07:e9:01:b2:09:00:18:3a:53:f7:fb:08:00 SRC=192.168.1.1
+DST=192.168.1.150 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=3767 DF PROTO=TCP
+SPT=1197 DPT=80 WINDOW=8192 RES=0x00 SYN URGP=0
+Nov 11 17:14:11 alweiner kernel: Inbound IN=eth0 OUT=
+MAC=00:07:e9:01:b2:09:00:18:3a:53:f7:fb:08:00 SRC=192.168.1.1
+DST=192.168.1.150
+...
+read more »
+</POST>
+<POST>
+<POSTER> Bit Twister &lt;BitTwis...@mouse-potato.com&gt; </POSTER>
+<POSTDATE> 2007-11-11T21:01:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Mon, 12 Nov 2007 00:57:23 GMT, Allen Weiner wrote:
+">
+
+Allen, take note, there are no smiley faces/emoticons in this post.
+
+Read this whole reply before doing any changes.
+Respond to all my questions.
+Make the change to /etc/hosts last, and reboot.
+
+<QUOTE PREVIOUSPOST="
+&gt; Bit Twister wrote:
+
+&gt;&gt; Ah Frap. Nothing like spending hours troubleshooting the wrong problem.
+&gt;&gt; Ok, final SWAG. Your router looses it's mind every once in awhile.
+
+&gt; Given this new theory, what troubleshooting steps would you recommend
+&gt; the next time I get a connection loss
+">
+
+Reset the router.
+
+<QUOTE PREVIOUSPOST="
+&gt; and &quot;service network retart&quot; hangs.
+">
+
+Fix /etc/resolv.conf as will I suggest again.
+Fix /etc/host as I suggest, yet again.
+empty /var/lib/dhclient/dhclient-eth0.leases as I suggest.
+
+<QUOTE PREVIOUSPOST="
+&gt; 11/11 Booted WinME with dynamic IP at 6:40 AM. Modem was not powered on.
+&gt; Configured WinME to static IP. Modem powered on around 7:00 AM. Rebooted
+&gt; into Fedora. System powered off at 8:40 AM.
+">
+
+Hmmm, new data, &quot;Modem powered on&quot; and &quot;System powered off&quot;
+
+<QUOTE PREVIOUSPOST="
+&gt; 11/11 Booted Fedora at 3:00 PM.
+&gt; 5:18 PM Connection loss  (approx 2 hours into session, as with many
+&gt; other instances)
+">
+
+Are the majority of the disconnects happening &quot;approximately 2 hours&quot;
+after the modem is powered up?
+
+<QUOTE PREVIOUSPOST="
+&gt; 5:22 PM Powered off modem and disconnected ethernet cable.
+&gt; 5:29 PM Reconnected ethernet cable and powered up modem.
+">
+
+You can discontinue that step, I was hopping  cable dis/connect
+would reset the modems dhcp lease.
+
+<QUOTE PREVIOUSPOST="
+&gt; 5:35 PM ran Bit Twister script (dumps configuration info)
+&gt; 5:38 PM Issued &quot;service network restart&quot;, which hung.
+
+&gt; (I did not try ethtool -r eth0)
+">
+
+That would indicate if modem and node did the handshake nic to nic.
+If link not OK that can cause a hang.
+Cannot rule that out yet because SOMEONE is not setting resolv.conf
+hosts, leases as requested.
+
+<QUOTE PREVIOUSPOST="
+&gt; Following is troubleshooting data (taken after connection loss but
+&gt; before &quot;service network restart&quot;:
+&gt; ======== grep -v '^#' /etc/resolv.conf ==========
+&gt; ; generated by /sbin/dhclient-script
+&gt; search myhome.westell.com
+&gt; nameserver 192.168.1.1
+&gt; nameserver 192.168.1.1
+">
+
+I realy,  realy,  realy,  realy,  realy,  want you to do a
+echo &quot;nameserver 192.168.1.1&quot; &gt; /etc/resolv.conf
+
+Hopping the ; is causing the restart hang and the SUGGESTION will fix
+your problem.
+
+Not doing the SUGGESTION, will force me to place you in my kill file.
+
+Do you know what a kill file is?
+
+<QUOTE PREVIOUSPOST="
+&gt; ========== head -15 /etc/hosts ===========
+&gt; 127.0.0.1  alweiner.nowhere.invalid        alweiner        localhost
+&gt; 192.168.1.1        gateway
+&gt; 192.168.1.150      alweiner.nowhere.invalid        alweiner
+">
+
+For the last time. Change /etc/hosts to match the following:
+127.0.0.1       localhost
+192.168.1.1     gateway
+192.168.1.150   alweiner.nowhere.invalid        alweiner
+
+That SUGGESTION, may also clear up your restart hang.
+having alweiner.nowhere.invalid resolving to 127.0.0.1 and 192.168.1.150
+is not fair to the system and will make
+ping alweiner.nowhere.invalid hide where a problem exists when trying
+to debug connection problems.
+
+<QUOTE PREVIOUSPOST="
+&gt; ======== tail -18 /var/lib/dhclient/dhclient-eth0.leases ==========
+&gt;    rebind 3 2007/11/7 12:23:43;
+&gt;    expire 3 2007/11/7 15:23:43;
+&gt; }
+&gt; lease {
+&gt;    interface &quot;eth0&quot;;
+&gt;    fixed-address 192.168.1.47;
+&gt;    option subnet-mask 255.255.255.0;
+&gt;    option routers 192.168.1.1;
+&gt;    option dhcp-lease-time 86400;
+&gt;    option dhcp-message-type 5;
+&gt;    option domain-name-servers 192.168.1.1,192.168.1.1;
+&gt;    option dhcp-server-identifier 192.168.1.1;
+&gt;    option broadcast-address 255.255.255.255;
+&gt;    option domain-name &quot;myhome.westell.com&quot;;
+&gt;    renew 3 2007/11/7 05:23:24;
+&gt;    rebind 3 2007/11/7 15:31:25;
+&gt;    expire 3 2007/11/7 18:31:25;
+&gt; }
+">
+
+I would like for you to do a
+
+cp /dev/null  /var/lib/dhclient/dhclient-eth0.leases
+
+I want to rule out that your dhcp server is no longer running.
+
+The following is MANDATORY, Do a
+ls /etc/sysconfig/network-scripts/*~
+
+If you get any file names returned, you NEED to delete them.
+
+I DO NOT want any edit backup files (*~) in that directory.
+</POST>
+<POST>
+<POSTER> Allen Weiner &lt;alwein...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-11T23:46:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Bit Twister wrote:
+&gt; Are the majority of the disconnects happening &quot;approximately 2 hours&quot;
+&gt; after the modem is powered up?
+">
+
+It seems that way. But I haven't kept a log book.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; ======== grep -v '^#' /etc/resolv.conf ==========
+&gt;&gt; ; generated by /sbin/dhclient-script
+&gt;&gt; search myhome.westell.com
+&gt;&gt; nameserver 192.168.1.1
+&gt;&gt; nameserver 192.168.1.1
+
+&gt; I realy,  realy,  realy,  realy,  realy,  want you to do a
+&gt; echo &quot;nameserver 192.168.1.1&quot; &gt; /etc/resolv.conf
+
+&gt; Hopping the ; is causing the restart hang and the SUGGESTION will fix
+&gt; your problem.
+
+&gt; Not doing the SUGGESTION, will force me to place you in my kill file.
+">
+
+That's your choice. I did a Google search on resolv.conf &amp; generated. I
+saw several examples similar to mine. Here's one:
+
+t 11:30 AM 12/30/2005, Jerry57 (GMail) wrote:
+&gt;Hello Robert,
+&gt;
+&gt;   What is listed in /etc/resolv.conf?  You should have something like:
+&gt;     search my.domain
+&gt;     nameserver 10.0.0.1
+
+I got that:
+
+cat resolv.conf
+; generated by /sbin/dhclient-script
+search htt-consult.com
+nameserver 65.84.78.211
+nameserver 65.84.78.209
+
+So, I doubt that that strange first line with the leading semicolon is
+causing a problem. If you choose to &quot;plonk&quot; me, let me take this
+opportunity to again thank you for all the help you've given me.
+
+<QUOTE PREVIOUSPOST="
+&gt; The following is MANDATORY, Do a
+&gt; ls /etc/sysconfig/network-scripts/*~
+">
+
+Result was &quot;no such file or directory&quot;. There are no backup files in
+network-scripts.
+</POST>
+<POST>
+<POSTER> Bit Twister &lt;BitTwis...@mouse-potato.com&gt; </POSTER>
+<POSTDATE> 2007-11-12T00:12:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Mon, 12 Nov 2007 04:46:20 GMT, Allen Weiner wrote:
+&gt; Bit Twister wrote:
+
+&gt;&gt; Are the majority of the disconnects happening &quot;approximately 2 hours&quot;
+&gt;&gt; after the modem is powered up?
+
+&gt; It seems that way. But I haven't kept a log book.
+">
+
+My guess, is there might be a loose connection inside the modem.
+You power up, about 2hrs later, heat causes the problem. little while
+later the heat makes the connection go back together.
+Imagin a loose sodder connection on a pin. Sorry for the bad graphics.
+
+cold connection  (*  )  works
+warm connection  ( * ) breaks
+warmer connection ( *) working again
+
+connection in this context is physical connection.
+
+<QUOTE PREVIOUSPOST="
+&gt; So, I doubt that that strange first line with the leading semicolon is
+&gt; causing a problem.
+">
+
+Well I am happy, you have learned all you need to know.
+Guess we are done.
+
+Here is a present to play with.
+--------------- script starts below this line ----------------
+#!/bin/bash
+#*****************************************************************
+#*
+#* ck_connection - Check internet connection.
+#*
+#*
+#* Install procedure:
+#*  Save into a file named   ck_connection
+#*  actual location should be somewhere in $PATH
+#*  chmod +x ck_connection
+#*
+#*
+#* Code walks through the png array to test each point
+#* in the path to/though the internet. DNS are also tested.
+#*
+#* You will need to modify the script to use system's gateway
+#* and insert the ISP's gateway value.
+#*
+#* You may have to get into the modem's web page to find
+#* the modem's gateway (ISP's gateway) for the modem.
+#*
+#* Depending on your distribution, the $(hostname -s) and
+#* $(hostname) may need changing.
+#*
+#* On Mandriva linux hostname returns the FQDN and
+#* hostname -s returns the short name for the node.
+#*
+#*****************************************************************
+
+function net_info {
+cat &lt;&lt;EOF
+There are settings which define where and what for DNS search order.
+In the following, I'll give commands, results and maybe comments.
+The command line starts with a $ so you can tell it from results and
+my comments. You do not use the leading $ when you run the command.
+
+You can get more help about the command with
+man first_word_here
+Example: you would do a       man grep     to get grep command manual.
+
+The commands and example values follow:
+
+$ grep hosts: /etc/nsswitch.conf
+hosts:          files dns nis
+
+For speed, mine has
+hosts:          files dns
+
+$ grep -v '^#' /etc/host.conf
+order hosts,bind
+multi on
+nospoof on
+spoofalert on
+
+$ grep -v '^#' /etc/resolv.conf
+nameserver 192.168.0.0
+nameserver 0.238.0.12
+nameserver 0.203.0.86
+
+For speed improvements, I alwasy remove any search or domain lines.
+Do not use the above numbers on your system. They are examples only.
+If a nameserver fails to return anything, the next server is tried.
+Because of that, I like to have the last server to be my ISP's public DNS
+
+For routing check, there is
+$ route -n
+Kernel IP routing table
+Destination   Gateway      Genmask         Flags Metric Ref  Use Iface
+192.168.1.0   0.0.0.0      255.255.255.0   U     10     0     0 eth0
+0.0.0.0       192.168.1.1  0.0.0.0         UG    10     0     0 eth0
+
+In the above, UG in the Flags column indicate that line will be used
+as the default Gateway route to ip addresses that can not be routed
+via the lines above it.
+
+The ip address in the Gateway column is where that traffic is sent.
+If you can ping that address, you know that device is alive and
+packets are leaving your node.
+
+$ ifconfig
+will allow you to see the ip address assigned to your nic and allow you
+to check if you are getting unreasonable counts for errors, dropped,
+overruns, frame, carrier and collisions.
+
+If you want to check internet speeds to somewhere, Example:
+$ traceroute -n yahoo.com
+
+Some nodes drop those trace packets, so you may want to use
+$ traceroute -In yahoo.com
+
+For dns testing there is something like
+$ dig google.com @isp_name_server1
+
+You will get information about how isp_name_server1 performed
+researching google.com lookup .
+
+EOF
+
+<QUOTE PREVIOUSPOST="
+} # end net_info
+">
+
+#********************************************
+#*
+#* The following are not acutal checks
+#* The comment box is about what the ping value
+#* will be used to make what check/verification.
+#*
+#* You will need to make changes to match your setup.
+#* If you want to skip a test you either put
+#* 127.0.0.1 in the png[x] test to skip.
+#*
+#* Or you delete the png[] and msg[] lines,
+#* and renumber them to keep the numbers continuous
+#* through the png[12]=&quot;done&quot; line.
+#*
+#* NOTE:
+#* The png[12]=&quot;done&quot; line has to remain and
+#* must be the last one in the png array.
+#*
+#* When renumbering, check the msg[] text to verify
+#* if there is a png[] value used in the text.
+#*
+#* You will also have to fix the code whcih
+#* uses png[9].
+#*
+#********************************************
+
+#********************************************
+#* check ping works on the node
+#********************************************
+
+png[1]=&quot;127.0.0.1&quot;
+msg[1]=&quot;$(hostname -s) problem,
+No idea where to look, I never had the problem
+&quot;
+#********************************************
+#* check dns on my node
+#********************************************
+
+png[2]=&quot;localhost&quot;
+msg[2]=&quot;Check $(hostname -s) /etc/hosts localhost line.
+I assume you have a line like
+127.0.0.1 localhost.localdomain localhost
+man hosts for more info&quot;
+
+#********************************************
+#* check pinging my ip address works
+#********************************************
+
+png[3]=&quot;192.168.1.130&quot;
+msg[3]=&quot;Check $(hostname -s) /etc/hosts $(hostname) ip addy.
+I assume you have a line like
+192.168.1.130 $(hostname) $(hostname -s)
+man hosts for more info&quot;
+
+#********************************************
+#* check dns reads my /etc/hosts by full name
+#********************************************
+
+png[4]=&quot;$(hostname)&quot;
+msg[4]=&quot;Check $(hostname -s) /etc/hosts $(hostname) line.
+I assume you have a line like
+192.168.1.130 $(hostname) $(hostname -s)
+man hosts for more info&quot;
+
+#********************************************
+#* check dns reads my /etc/hosts by alias
+#********************************************
+
+png[5]=&quot;$(hostname -s)&quot;
+msg[5]=&quot;Check $(hostname -s) /etc/hosts $(hostname) line for an alias.
+I assume you have a line like
+192.168.1.130 $(hostname) $(hostname -s)
+man hosts for more info&quot;
+
+#********************************************
+#* check my gatway device is alive
+#********************************************
+
+png[6]=&quot;192.168.1.1&quot;
+msg[6]=&quot;Check physical connection to next device to internet (gateway).
+run  mii-tool -v eth0
+or  ethtool eth0
+You are looking for link ok line
+or      Link detected: yes depending on which tool used
+run   route -n to verify you have a UG Flags line
+$(net_info)&quot;
+
+#********************************************
+#* check my gatway alias in /etc/hosts
+#********************************************
+
+png[7]=&quot;router&quot;
+msg[7]=&quot;Check $(hostname -s) /etc/hosts router line
+I assume you have a
+192.168.1.1  router line
+man hosts for more info
+$(net_info)&quot;
+
+#********************************************
+#* check my ISP's gateway connected to router
+#********************************************
+
+png[8]=&quot;71.252.137.1&quot;
+msg[8]=&quot;Check leds on internet device.
+poweroff internet device (adsl/cable modem)
+wait 30 seconds by watch/clock to let capacitors discharge
+and reset device
+power up, wait for leds to settle down
+run service network restart
+Leds not right, check wiring out to telephone pole
+call your ISP
+$(net_info)&quot;
+
+#********************************************
+#* check if DNS server is alive
+#********************************************
+
+_dns_ip=9
+png[$_dns_ip]=&quot;192.168.1.1&quot;
+msg[$_dns_ip]=&quot;Check $(hostname -s) /etc/resolv.conf nameserver line
+You will have to check the device which has the name server running.
+Your internet device (adsl/cable modem your dns server)
+If none of the above, ${png[$_dns_ip]} is down
+Work around, change namesever ip_here to a public nameserver
+in /etc/resolv.conf
+man resolv.conf  for more info
+$(net_info)&quot;
+
+#********************************************
+#* check ISP can route to yahoo.com
+#********************************************
+
+png[10]=&quot;66.94.234.13&quot;
+msg[10]=&quot;cannot ping yahoo by ip address
+yahoo.com is down or ip address changed.
+check  google.com with  ping -c1 72.14.207.99
+If that fails, google.com is down or ip address changed
+or it is an ISP/internet problem
+$(net_info)&quot;
+
+#********************************************
+#* check DNS can resolve yahoo.com
+#********************************************
+
+png[11]=&quot;yahoo.com&quot;
+msg[11]=&quot;Cannot ping yahoo.com by name
+yahoo.com just went down, or dns is broke on your ISP or somewhere else.
+$(net_info)&quot;
+
+png[12]=&quot;done&quot;
+msg[12]=&quot;Last array element to tell while loop we are done pinging&quot;
+
+#********************************************
+#* Actual testing starts here
+#********************************************
+
+#********************************************
+#* get the first dns server from /etc/reso.conf
+#********************************************
+
+set -- $(grep nameserver /etc/resolv.conf | grep -v '^#' | head -1)
+_ip=$2
+if [ -z &quot;$_ip&quot; ] ; then
+echo &quot;/etc/resolv.conf does not have a nameserver line.
+man resolv.conf
+for more information&quot;
+exit 1
+else
+pgn[$_dns_ip]=$_ip
+fi
+
+#********************************************
+#* loop through all ip/name tests
+#********************************************
+
+i=1
+while [ &quot;${png[$i]}&quot; != &quot;done&quot; ] ; do
+echo &quot;running ping -c 1 -w 3 ${png[$i]} &quot;
+ping -c 1 -w 3 ${png[$i]} &gt; /dev/null
+if [ $? -ne 0 ] ; then
+/bin/echo -e &quot;\nFailure: ping -c 1 -w 3 ${png[$i]} &quot;
+/bin/echo -e &quot;${msg[$i]} &quot;
+exit 1
+fi
+i=$i+1
+done
+
+#********************************************
+#* loop through all nameservers in /etc/resov.conf
+#********************************************
+
+while read line
+do
+set -- $line
+_ip=$2
+if [ &quot;$1&quot; =
+...
+read more »
+</POST>
+<POST>
+<POSTER> fl...@apaflo.com (Floyd L. Davidson) </POSTER>
+<POSTDATE> 2007-11-12T01:21:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Allen Weiner &lt;alwein ... @hotmail.com&gt; wrote:
+&gt;Bit Twister wrote:
+&gt;&gt;&gt; ======== grep -v '^#' /etc/resolv.conf ==========
+&gt;&gt;&gt; ; generated by /sbin/dhclient-script
+&gt;&gt;&gt; search myhome.westell.com
+&gt;&gt;&gt; nameserver 192.168.1.1
+&gt;&gt;&gt; nameserver 192.168.1.1
+&gt;&gt; I realy,  realy,  realy,  realy,  realy,  want you to
+&gt;&gt; do a echo &quot;nameserver 192.168.1.1&quot; &gt; /etc/resolv.conf
+&gt;&gt; Hopping the ; is causing the restart hang and the
+&gt;&gt; SUGGESTION will fix
+&gt;&gt; your problem.
+&gt;&gt; Not doing the SUGGESTION, will force me to place you
+&gt;&gt; in my kill file.
+
+&gt;That's your choice. I did a Google search on resolv.conf
+&gt;&amp; generated. I saw several examples similar to
+&gt;mine. Here's one:
+">
+
+Here's a better one...  Download virtually any source code
+to libc, and look in the .../resolv/res_init.c file for
+this code:
+
+if ((fp = fopen(_PATH_RESCONF, &quot;r&quot;)) != NULL) {
+/* read the config file */
+while (fgets_unlocked(buf, sizeof(buf), fp) != NULL) {
+/* skip comments */
+if (*buf == ';' || *buf == '#')
+continue;
+/* read default domain name */
+if (MATCH(buf, &quot;domain&quot;)) {
+
+What that is doing is reading the /etc/resolv.conf file, and
+skipping any line that begins with either ';' or '#'.
+
+Personally, I would fault it for not initially removing all
+leading white space, but....
+
+--
+Floyd L. Davidson &lt; http://www.apaflo.com/floyd_davidson &gt;
+Ukpeagvik (Barrow, Alaska)              fl ... @apaflo.com
+</POST>
+<POST>
+<POSTER> Allen Weiner &lt;alwein...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-12T13:31:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Floyd L. Davidson wrote:
+&gt; Allen Weiner &lt;alwein ... @hotmail.com&gt; wrote:
+&gt;&gt; Bit Twister wrote:
+&gt;&gt;&gt;&gt; ======== grep -v '^#' /etc/resolv.conf ==========
+&gt;&gt;&gt;&gt; ; generated by /sbin/dhclient-script
+&gt;&gt;&gt;&gt; search myhome.westell.com
+&gt;&gt;&gt;&gt; nameserver 192.168.1.1
+&gt;&gt;&gt;&gt; nameserver 192.168.1.1
+&gt;&gt;&gt; I realy,  realy,  realy,  realy,  realy,  want you to
+&gt;&gt;&gt; do a echo &quot;nameserver 192.168.1.1&quot; &gt; /etc/resolv.conf
+&gt;&gt;&gt; Hopping the ; is causing the restart hang and the
+&gt;&gt;&gt; SUGGESTION will fix
+&gt;&gt;&gt; your problem.
+&gt;&gt;&gt; Not doing the SUGGESTION, will force me to place you
+&gt;&gt;&gt; in my kill file.
+
+&gt;&gt; That's your choice. I did a Google search on resolv.conf
+&gt;&gt; &amp; generated. I saw several examples similar to
+&gt;&gt; mine. Here's one:
+
+&gt; Here's a better one...  Download virtually any source code
+&gt; to libc, and look in the .../resolv/res_init.c file for
+&gt; this code:
+
+&gt;   if ((fp = fopen(_PATH_RESCONF, &quot;r&quot;)) != NULL) {
+&gt;     /* read the config file */
+&gt;     while (fgets_unlocked(buf, sizeof(buf), fp) != NULL) {
+&gt;       /* skip comments */
+&gt;       if (*buf == ';' || *buf == '#')
+&gt;         continue;
+&gt;      /* read default domain name */
+&gt;      if (MATCH(buf, &quot;domain&quot;)) {
+
+&gt; What that is doing is reading the /etc/resolv.conf file, and
+&gt; skipping any line that begins with either ';' or '#'.
+
+&gt; Personally, I would fault it for not initially removing all
+&gt; leading white space, but....
+">
+
+Thanks very much Floyd for your reply. I'm a Linux novice and am a long
+way from having the savvy to do what you did.
+
+By the way, for many years I subscribed to comp.dcom.modems. I always
+found your posts highly informative. I'm really astounded by how much
+more function my small Westell DSL modem/router has than my old USR
+dial-up modem.
+</POST>
+<POST>
+<POSTER> Allen Weiner &lt;alwein...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-12T13:46:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Bit Twister wrote:
+&gt; On Mon, 12 Nov 2007 04:46:20 GMT, Allen Weiner wrote:
+&gt;&gt; Bit Twister wrote:
+
+&gt; My guess, is there might be a loose connection inside the modem.
+&gt; You power up, about 2hrs later, heat causes the problem. little while
+&gt; later the heat makes the connection go back together.
+&gt; Imagin a loose sodder connection on a pin. Sorry for the bad graphics.
+
+&gt; cold connection  (*  )  works
+&gt; warm connection  ( * ) breaks
+&gt; warmer connection ( *) working again
+
+&gt; connection in this context is physical connection.
+">
+
+If that is the problem, the broken connection must be short-lived,
+because without fail, the moment I reboot, My Internet connection is
+restored.
+
+So let's assume there is a momentary connection loss. The next time it
+occurs, what troubleshooting steps can I perform to determine why
+&quot;service network restart&quot; hangs?
+
+We're saying the problem is local, so there is no point in trying to
+verify DNS, or ping outside servers.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; So, I doubt that that strange first line with the leading semicolon is
+&gt;&gt; causing a problem.
+
+&gt; Well I am happy, you have learned all you need to know.
+&gt; Guess we are done.
+">
+
+The post in this thread by Floyd Davidson should close the issue. We
+ought to be done pursuing the angle that there is a DHCP problem. What
+would be worthwhile to me is a troubleshooting procedure for the
+&quot;service network restart&quot; hang that is not predicated on a DHCP problem.
+
+<QUOTE PREVIOUSPOST="
+&gt; Here is a present to play with.
+">
+
+Thanks. But that isn't applicable to diagnosing the hang of &quot;sewrvice
+network restart&quot;.
+</POST>
+<POST>
+<POSTER> Bit Twister &lt;BitTwis...@mouse-potato.com&gt; </POSTER>
+<POSTDATE> 2007-11-12T14:36:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Mon, 12 Nov 2007 18:46:26 GMT, Allen Weiner wrote:
+
+&gt; If that is the problem, the broken connection must be short-lived,
+&gt; because without fail, the moment I reboot, My Internet connection is
+&gt; restored.
+">
+
+Hehe, think about it, router chip connection opens, software goes
+insane and quits working for your internet, sometime later you notice
+connection drop, start process of restart. Plenty of time for the
+metal to keep expanding to the other side of the hols. Those hole are
+pretty tight. Not to mention the chips that are just laided on the
+board and soldered.
+
+<QUOTE PREVIOUSPOST="
+&gt; So let's assume there is a momentary connection loss. The next time it
+&gt; occurs, what troubleshooting steps can I perform to determine why
+&gt; &quot;service network restart&quot; hangs?
+">
+
+You already know how to troubleshoot to which component is not working.
+You refuse to do the three things I want done rule out possible and
+get more information.
+
+It was bad enough to have to work under the hood of your car through
+the tail pipe, now that you have tied my hands, I can not help you
+with that problem.  :-P
+
+<QUOTE PREVIOUSPOST="
+&gt; The post in this thread by Floyd Davidson should close the issue.
+">
+
+Saw that and your reply. Had to laugh, you just got your feet wet with
+scripting in bash. Floyd's post showd the C or C++ (I forget which)
+which is another programming language if you want to drill that far
+down to learn what is going on.
+
+<QUOTE PREVIOUSPOST="
+&gt; We ought to be done pursuing the angle that there is a DHCP problem.
+">
+
+I THINK so, but you will not let me rule that out. :-(
+
+<QUOTE PREVIOUSPOST="
+&gt;  What would be worthwhile to me is a troubleshooting procedure for the
+&gt; &quot;service network restart&quot; hang that is not predicated on a DHCP problem.
+">
+
+Make my 3 SUGGESTIONS, and see if the problem goes away while in a
+static ip setup.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Here is a present to play with.
+
+&gt; Thanks. But that isn't applicable to diagnosing the hang of &quot;sewrvice
+&gt; network restart&quot;.
+">
+
+True, just a nice script to know what is not working next time connection drops.
+
+By the way, here is the lastest one with info on more network trouble
+shooting commands and prints out what is being tested at each point.
+Save/run in your user accout. Does not require root privs to run.
+Run as is and I think it should fail on testing ISP gateway to modem.
+It will give the number of the array to modify with your modems value.
+
+#!/bin/bash
+#*****************************************************************
+#*
+#* ck_connection - Check internet connection.
+#*
+#* Install procedure:
+#*  Save into a file named   ck_connection
+#*  actual location should be somewhere in $PATH
+#*  chmod +x ck_connection
+#*
+#*
+#* Code walks through the png array to test each point
+#* in the path to/though the internet. DNS are also tested.
+#*
+#* You will need to modify the script to use node's gateway
+#* ip in png[$_gate_loc], Usually your modem's ip.
+#* and insert the ISP's gateway value at png[8]
+#*
+#* You may have to get into the modem's web page to find
+#* the modem's gateway (ISP's gateway) for the modem.
+#* If you cannot find it, just change png[8] to 127.0.0.1
+#*
+#* Depending on your distribution, the $(hostname -s) and
+#* $(hostname) may need changing.
+#*
+#* On Mandriva linux hostname returns the FQDN and
+#* hostname -s returns the short name for the node.
+#*
+#*****************************************************************
+
+if [ $# -gt 0 ] ; then
+_arg2=$1
+fi
+
+function net_info {
+
+if [ -z &quot;$_arg2&quot; ] ; then
+echo &quot;$0 hints will give you more research tools/info&quot;
+return
+fi
+
+cat &lt;&lt;EOF
+
+Note: just because you can ping a server does not mean
+it is serving up what it is supposed to be serving. :(
+
+There are settings which define where and what DNS search order.
+In the following, I'll give commands, results and maybe comments.  The
+command line starts with a $ so you can tell command linefrom results
+and my comments. You do not use the leading $ when you run the command.
+
+You can get more help about the command with
+man first_word_here
+Example: you would do a       man grep     to get grep command manual.
+
+The commands and example values follow:
+
+$ grep hosts: /etc/nsswitch.conf
+hosts:          files dns nis
+
+For speed, mine has
+hosts:          files dns
+
+$ grep -v '^#' /etc/host.conf
+order hosts,bind
+multi on
+nospoof on
+spoofalert on
+
+$ grep -v '^#' /etc/resolv.conf
+nameserver 192.168.0.0
+nameserver 0.238.0.12
+nameserver 0.203.0.86
+
+For speed improvements, I alwasy remove any search or domain lines.
+Do not use the above numbers on your system. They are examples only.
+If a nameserver fails to return anything, the next server is tried.
+Because of that, I like to have the last server to be my ISP's public DNS
+
+For routing check, there is
+$ route -n
+Kernel IP routing table
+Destination   Gateway      Genmask         Flags Metric Ref  Use Iface
+192.168.1.0   0.0.0.0      255.255.255.0   U     10     0     0 eth0
+0.0.0.0       192.168.1.1  0.0.0.0         UG    10     0     0 eth0
+
+In the above, UG in the Flags column indicate that line will be used
+as the default Gateway route to ip addresses that can not be routed
+via the lines above it.
+
+The ip address in the Gateway column is where that traffic is sent.
+If you can ping that address, you know that device is alive and
+packets are leaving your node.
+
+$ ifconfig
+will allow you to see the ip address assigned to your nic and allow you
+to check if you are getting unreasonable counts for errors, dropped,
+overruns, frame, carrier and collisions.
+
+If you want to check internet speeds to somewhere, Example:
+$ traceroute -n yahoo.com
+
+Some nodes drop those trace packets, so you may want to use
+$ traceroute -In yahoo.com
+
+For dns testing there is something like
+$ dig google.com @isp_name_server1
+
+You will get information about how isp_name_server1 performed
+researching google.com lookup .
+
+EOF
+
+<QUOTE PREVIOUSPOST="
+} # end net_info
+">
+
+#********************************************
+#*
+#* You will need to make changes to match your setup.
+#* Read script header for details
+#* If you want to skip a test you either put
+#* 127.0.0.1 in the png[x] test to skip.
+#*
+#* Or you delete the png[], tst[] and msg[] lines,
+#* and renumber them to keep the numbers continuous
+#* through the png[12]=&quot;done&quot; line.
+#*
+#* NOTE:
+#* The png[12]=&quot;done&quot; line has to remain and
+#* must be the last one in the png array.
+#*
+#* When renumbering, check the msg[] text to verify
+#* if there is a png[] value used in the text.
+#*
+#********************************************
+
+png[1]=&quot;127.0.0.1&quot;
+tst[1]=&quot;that ping is working on $(hostname -s) &quot;
+msg[1]=&quot;$(hostname -s) problem,
+No idea where to look, I never had the problem
+&quot;
+
+png[2]=&quot;localhost&quot;
+tst[2]=&quot;that resolver reads /etc/hosts &quot;
+msg[2]=&quot;Check $(hostname -s) /etc/hosts localhost line.
+I assume you have a line like
+127.0.0.1 localhost.localdomain localhost
+man hosts for more info&quot;
+
+png[3]=&quot;192.168.1.130&quot;
+tst[3]=&quot;nic access by ip address&quot;
+msg[3]=&quot;Check $(hostname -s) /etc/hosts $(hostname) ip addy.
+I assume you have a line like
+192.168.1.130 $(hostname) $(hostname -s)
+man hosts for more info&quot;
+
+png[4]=&quot;$(hostname)&quot;
+tst[4]=&quot;that resolver reads /etc/hosts by full name &quot;
+msg[4]=&quot;Check $(hostname -s) /etc/hosts $(hostname) line.
+I assume you have a line like
+192.168.1.130 $(hostname) $(hostname -s)
+man hosts for more info&quot;
+
+png[5]=&quot;$(hostname -s)&quot;
+tst[5]=&quot;that resolver reads /etc/hosts by alias &quot;
+msg[5]=&quot;Check $(hostname -s) /etc/hosts $(hostname) line for an alias.
+I assume you have a line like
+192.168.1.130 $(hostname) $(hostname -s)
+man hosts for more info&quot;
+
+#********************************************
+#* Script fills in real value in later.
+#********************************************
+
+_gate_loc=6
+png[$_gate_loc]=&quot;192.168.1.1&quot;
+tst[$_gate_loc]=&quot;that $(hostname -s) gateway is alive &quot;
+msg[$_gate_loc]=&quot;Check connection to next device to internet (gateway).
+run  mii-tool -v eth0
+or  ethtool eth0
+You are looking for link ok
+or      Link detected: yes
+depending on which tool used. run
+route -n
+to verify you have a UG in the Flags column of the last line
+$(net_info)&quot;
+
+png[7]=&quot;gateway&quot;
+tst[7]=&quot;if gateway alias works via /etc/hosts &quot;
+msg[7]=&quot;Check $(hostname -s) /etc/hosts gateway line
+I assume you have added a
+192.168.1.1  gateway
+line to /etc/hosts
+
+That lets you do a quick test by doing a
+ping -c1 router
+at a terminal
+man hosts for more info
+$(net_info)&quot;
+
+#********************************************
+#* Look in modem's web page or dhcp leases file.
+#********************************************
+
+png[8]=&quot;71.252.137.1&quot;
+tst[8]=&quot;modem talks to ISP gateway &quot;
+msg[8]=&quot;Check leds on internet device.
+poweroff internet device (adsl/cable modem)
+wait 30 seconds by watch/clock to let capacitors discharge
+and reset device
+power up, wait for leds to settle down
+run service network restart
+Leds not right, check wiring out to telephone pole
+call your ISP
+$(net_info)&quot;
+
+#********************************************
+#* Script fill in real value from /etc/resolv.conf
+#********************************************
+
+_dns_loc=9
+png[$_dns_loc]=&quot;127.0.0.1&quot;
+tst[$_dns_loc]=&quot;if DNS server is alive &quot;
+msg[$_dns_loc]=&quot;Check $(hostname -s) /etc/resolv.conf nameserver line
+You will have to check the device which has the name server running.
+Your internet device (adsl/cable modem your dns server)
+If none of the above, ${png[$_dns_loc]} is down
+Work around, change namesever ip_here to a public nameserver
+in /etc/resolv.conf
+man resolv.conf  for more info
+$(net_info)&quot;
+
+png[10]=&quot;66.94.234.13&quot;
+tst[10]=&quot;that ISP can route to yahoo.com &quot;
+msg[10]=&quot;cannot ping yahoo by ip address
+yahoo.com is down or ip address changed.
+check  google.com with  ping -c1 72.14.207.99
+If that fails, google.com is down or ip address changed
+or it is an ISP/internet problem
+$(net_info)&quot;
+
+png[11]=&quot;yahoo.com&quot;
+tst[11]=&quot;ISP can get a DNS resolve yahoo.com&quot;
+msg[11]=&quot;Cannot ping yahoo.com by name
+yahoo.com just went down, or dns is broke on your ISP or somewhere else.
+$(net_info)&quot;
+
+png[12]=&quot;done&quot;
+tst[12]=&quot;We never use this because png done is &quot;
+msg[12]=&quot;last array element to tell
+...
+read more »
+</POST>
+<POST>
+<POSTER> Allen Weiner &lt;alwein...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-14T22:11:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Allen Weiner wrote:
+&gt; Bit Twister wrote:
+">
+
+&lt;snip&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; So let's assume there is a momentary connection loss. The next time it
+&gt; occurs, what troubleshooting steps can I perform to determine why
+&gt; &quot;service network restart&quot; hangs?
+">
+
+The &quot;service network restart&quot; hangs after eth0 is closed down.
+
+It seems to me that an effective troubleshooting approach to isolate the
+hang would be to put hooks in the scripts that &quot;service network restart&quot;
+invokes. But being a Linux novice, I'd prefer not play with the
+networking scripts (although I could make backups).
+
+Another possible approach to isolating the hang that avoids modifying
+networking scripts would be to turn on strace from the terminal before
+issuing &quot;service network restart&quot;. To cut down on strace output, it
+would be even better to turn on strace after eth0 is closed down. I have
+no idea how to do this. Suggestions would be appreciated.
+</POST>
+<POST>
+<POSTER> Bit Twister &lt;BitTwis...@mouse-potato.com&gt; </POSTER>
+<POSTDATE> 2007-11-14T23:03:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Thu, 15 Nov 2007 03:11:31 GMT, Allen Weiner wrote:
+
+&gt; The &quot;service network restart&quot; hangs after eth0 is closed down.
+">
+
+Well, WE will not be working that problem, unless you take my
+suggestions as to what config files are to look like.
+
+<QUOTE PREVIOUSPOST="
+&gt; It seems to me that an effective troubleshooting approach to isolate the
+&gt; hang would be to put hooks in the scripts that &quot;service network restart&quot;
+&gt; invokes.
+">
+
+Hehe, I spent a day in those 1 or two years ago.
+What I had to do was create 8 desktops, pretty near each desktop had 3
+or 4 terminals up, 1 term following the code, another to see config files,
+another to hunt down man pages and doucments, ..
+
+When a script would call another script, I would open it in another desktop
+so I could keep drilling down reading code. When I finally hit the
+bottom of the script, I would go back to the desktop which called the script.
+
+<QUOTE PREVIOUSPOST="
+&gt; But being a Linux novice, I'd prefer not play with the
+&gt; networking scripts (although I could make backups).
+">
+
+Sounds good in theory, takes a very methodical, conscientious person
+to make that work, and you better damn well know your backups are good.
+
+That is why a multi-boot system, with selection to boot a copy of your
+&quot;Production Install&quot; is handy for screwing with system scripts that
+could hurt you.  :-D
+
+<QUOTE PREVIOUSPOST="
+&gt; Another possible approach to isolating the hang that avoids modifying
+&gt; networking scripts would be to turn on strace from the terminal before
+&gt; issuing &quot;service network restart&quot;.
+">
+
+Never tried it, but pretty sure trying to do a
+strace /etc/init.d/network restart is not going to work.  :)
+
+<QUOTE PREVIOUSPOST="
+&gt; To cut down on strace output, it
+&gt; would be even better to turn on strace after eth0 is closed down. I have
+&gt; no idea how to do this. Suggestions would be appreciated.
+">
+
+You would do a                   service network stop,
+enable your tracing, then do the service network start.
+
+Restart is just an easy call to stop/start.
+
+FYI:  I assume you are always logged into a user account, not root.
+When you need root privs, you click up a terminal and su - root
+as a security percation.
+
+For debugging scripts, I find playing with the set command can help.
+I would like you to click up a terminal and  add
+set -xv
+to the first line of .bash_profile, save exit.
+Now do the following command
+
+su - $USER
+
+exit
+Up Arrow
+and change set -xv to set -x, save exit
+Up Arrow
+
+exit
+
+Up Arrow
+and remove the set line.
+</POST>
+<POST>
+<POSTER> Allen Weiner &lt;alwein...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-15T10:51:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Bit Twister wrote:
+&gt; On Thu, 15 Nov 2007 03:11:31 GMT, Allen Weiner wrote:
+&gt;&gt; The &quot;service network restart&quot; hangs after eth0 is closed down.
+
+&gt; Well, WE will not be working that problem, unless you take my
+&gt; suggestions as to what config files are to look like.
+">
+
+I did change the hosts file.
+
+My dhclient-eth0.leases has not changed in the past week. Lease expires
+on 11/7. DHCP isn't being invoked.
+
+Suppose either the leases file or the resolv.conf was causing the
+problem. Should that cause &quot;service network restart&quot; to hang?
+
+<QUOTE PREVIOUSPOST="
+&gt; Hehe, I spent a day in those 1 or two years ago.
+&gt; What I had to do was create 8 desktops, pretty near each desktop had 3
+&gt; or 4 terminals up, 1 term following the code, another to see config files,
+&gt; another to hunt down man pages and doucments, ..
+">
+
+It's interesting and discouraging to hear of your experience. It would
+be interesting to hear what troubleshooting technique you use for this
+situation.
+
+<QUOTE PREVIOUSPOST="
+&gt; Never tried it, but pretty sure trying to do a
+&gt; strace /etc/init.d/network restart is not going to work.  :)
+">
+
+Could you elaborate on why this won't work?
+
+<QUOTE PREVIOUSPOST="
+&gt; You would do a                   service network stop,
+&gt; enable your tracing, then do the service network start.
+">
+
+Thanks very much for pointing that out.
+
+<QUOTE PREVIOUSPOST="
+
+">
+
+You might find this interesting. My modem/router uses the AR7 ADSL chip.
+A leading ISP feels this chip provides unreliable connections.
+
+http://www.theregister.com/2007/10/22/zen_ar7_infineon_bt_fault/
+</POST>
+<POST>
+<POSTER> Bit Twister &lt;BitTwis...@mouse-potato.com&gt; </POSTER>
+<POSTDATE> 2007-11-15T12:55:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Thu, 15 Nov 2007 15:51:09 GMT, Allen Weiner wrote:
+&gt; Bit Twister wrote:
+&gt;&gt; On Thu, 15 Nov 2007 03:11:31 GMT, Allen Weiner wrote:
+&gt;&gt;&gt; The &quot;service network restart&quot; hangs after eth0 is closed down.
+
+&gt;&gt; Well, WE will not be working that problem, unless you take my
+&gt;&gt; suggestions as to what config files are to look like.
+
+&gt; I did change the hosts file.
+">
+
+And I know this, how?
+
+And would you provide what you did.
+
+<QUOTE PREVIOUSPOST="
+&gt; My dhclient-eth0.leases has not changed in the past week. Lease expires
+&gt; on 11/7. DHCP isn't being invoked.
+">
+
+Does not, matter, I was not troubleshooting dhclient-eth0.leases file change.
+That information is one one aspect of your problem needing checking.
+Glad you picked up on that tibit, Sorry you refused my suggestion on
+what it is to contain.
+
+<QUOTE PREVIOUSPOST="
+&gt; Suppose either the leases file or the resolv.conf was causing the
+&gt; problem. Should that cause &quot;service network restart&quot; to hang?
+">
+
+Told you, &quot;WE will not be working that problem, unless you take my
+suggestions as to what config files are to look like&quot;
+
+<QUOTE PREVIOUSPOST="
+&gt; It's interesting
+">
+
+Dang, tip on how to follow a complex script gone to waste on the OP. :(
+
+<QUOTE PREVIOUSPOST="
+&gt; and discouraging to hear of your experience.
+">
+
+Sorry to hear that. It was not hard, just lots to things to look at,
+man some_cmd_here to get a feel to what is cmd did. I gave me the
+experience, to what to play with, when, and why, not to mention seeing
+tricks and what you can do with bash scripting language.
+
+<QUOTE PREVIOUSPOST="
+&gt; It would be interesting to hear what troubleshooting technique you
+&gt; use for this situation.
+">
+
+I have been giving you basic troubleshooting techniques and smart
+question link to read, and for all my trouble, I was given was static
+about what you believe, should not make a difference, and was not
+going to change the file, go ahead and kill file me if you want.....
+
+Instead of reading the whole document, this is the section I have in mind.
+http://www.catb.org/~esr/faqs/smart-questions.html#symptoms
+for the above paragraph.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Never tried it, but pretty sure trying to do a
+&gt;&gt; strace /etc/init.d/network restart is not going to work.  :)
+&gt; Could you elaborate on why this won't work?
+">
+
+You have to use the proper tool for the job at hand.
+
+Do not get me wrong, on the whole, I applaude how well you are doing
+and what you have done.
+
+I want you to keep in mind, I try to keep the lurkers in mind when I
+post, and teach you how to fish.  Not cut the pole, sping the line,
+catch the fish, fry, cut it up and feed you.
+
+I do try to keep in mind the poster's skill, and knowledge when making
+my respones.
+
+sevice is basically a wrapper script which runs what is found in /etc/init.d
+If you were to look at the files in /etc/init.d, you would see that
+they for the most part scripts.
+
+Generally speaking, in my mind, you have program/scripts which do the work.
+Scripts are what you can view with the cat command. Programs are
+compiled into a binary form.
+
+Easy way to tell, try   less /bin/ls
+less ~/.bashrc
+See the difference.
+
+Now instead of less, use strace and see what you can see.
+
+Next time you go to ask about a command, you need to
+Read The Fine Manual (RTFM), try the commmand to see what it does.
+
+You never experiment when logged in as root, if possible.
+You boot and play in a hot backup partition.
+
+Always as a user, if possible. If afraid of hurting your account,
+create a junk account. I do not recommend calling it test.
+Log into junk and play around there. You can alwasy delete/create it again.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; You would do a                   service network stop,
+&gt;&gt; enable your tracing, then do the service network start.
+
+&gt; Thanks very much for pointing that out.
+">
+
+That is a function of /etc/init.d/network, not service.
+
+So, doing a bit of reading in /etc/init.d/network, you would find
+stop, start, restart, reload, status were commands available for
+service network cmd_here.
+
+<QUOTE PREVIOUSPOST="
+&gt; http://www.theregister.com/2007/10/22/zen_ar7_infineon_bt_fault/
+">
+
+Yep, saw that article on the site when they posted it.
+</POST>
+</TEXT>
+</BODY>
+</DOC>

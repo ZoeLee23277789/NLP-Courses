@@ -1,0 +1,1314 @@
+<DOC>
+<DOCID> eng-NG-31-135589-9749782 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-21T03:20:00 </DATETIME>
+<BODY>
+<HEADLINE>
+generic INTERFACE and name clash
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Oskar Enoksson &lt;enok_tabort...@lysator.liu.se&gt; </POSTER>
+<POSTDATE> 2007-09-21T03:20:00 </POSTDATE>
+Is it ok to declare a generic interface with a name identical to the
+module procedure? What about if two different modules doing this are
+used from the same program? I.e. in the example below, will the
+interfaces remedy the name clash between the two module procedures below?
+
+MODULE M1
+INTERFACE FOO
+MODULE PROCEDURE FOO
+END INTERFACE
+CONTAINS
+SUBROUTINE FOO(I)
+INTEGER, INTENT(IN) :: I
+WRITE(*,*) 'INTEGER'
+END SUBROUTINE FOO
+END MODULE M1
+
+MODULE M2
+INTERFACE FOO
+MODULE PROCEDURE FOO
+END INTERFACE
+CONTAINS
+SUBROUTINE FOO(R)
+REAL, INTENT(IN) :: R
+WRITE(*,*) 'REAL'
+END SUBROUTINE FOO
+END MODULE M2
+
+PROGRAM P
+USE M1
+USE M2
+CALL FOO(10)
+CALL FOO(10.)
+END PROGRAM P
+
+(By experiment it works with gfortran, ifort, pathf95 and lf95, but not
+with an old version 6.0 of pgf95.)
+
+-bash-2.05b$ pgf95 -o tst tst.f90
+PGF90-S-0155-foo is use-associated from modules m2 and m1, and cannot be
+accessed (tst1.f90: 35)
+PGF90-S-0155-foo is use-associated from modules m2 and m1, and cannot be
+accessed (tst1.f90: 36)
+</POST>
+<POST>
+<POSTER> &quot;James Van Buskirk&quot; &lt;not_va...@comcast.net&gt; </POSTER>
+<POSTDATE> 2007-09-21T12:21:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Oskar Enoksson&quot; &lt;enok_tabort ... @lysator.liu.se&gt; wrote in message
+">
+
+news:fcvj5i$e1j$1@news.lysator.liu.se ...
+
+<QUOTE PREVIOUSPOST="
+&gt; -bash-2.05b$ pgf95 -o tst tst.f90
+&gt; PGF90-S-0155-foo is use-associated from modules m2 and m1, and cannot be
+&gt; accessed (tst1.f90: 35)
+&gt; PGF90-S-0155-foo is use-associated from modules m2 and m1, and cannot be
+&gt; accessed (tst1.f90: 36)
+">
+
+Yep, pgf95 has got it right.  If program P had a line like:
+
+call bar(foo)
+
+the compiler would not know which specific version of foo to
+send.  Only one copy of the same specific name can be visible
+in a scoping unit; you would have the same problem if the
+specific subroutine names were both 'joe' and the generic
+name were 'foo'.
+
+--
+write(*,*) transfer((/17.392111325966148d0,6.5794487871554595D-85, &amp;
+6.0134700243160014d-154/),(/'x'/)); end
+</POST>
+<POST>
+<POSTER> paul.richard.tho...@gmail.com </POSTER>
+<POSTDATE> 2007-09-22T13:02:00 </POSTDATE>
+James,
+
+<QUOTE PREVIOUSPOST="
+&gt; Yep, pgf95 has got it right.  If program P had a line like:
+
+&gt; call bar(foo)
+
+&gt; the compiler would not know which specific version of foo to
+&gt; send.  Only one copy of the same specific name can be visible
+&gt; in a scoping unit; you would have the same problem if the
+&gt; specific subroutine names were both 'joe' and the generic
+&gt; name were 'foo'.
+">
+
+That's spot on - Thank you. gfortran survives the original example
+because it distinguishes the interfaces.  However, as you say, the
+ambiguity comes with specific references.
+
+Could you raise a bug report, please, Oskar?  I'll turn to it, just as
+soon as I have sorted out a couple of other niggles.
+
+Cheers
+
+Paul Thomas
+</POST>
+<POST>
+<POSTER> Herman D. Knoble &lt;SkipKnobleL...@SPAMpsu.DOT.edu&gt; </POSTER>
+<POSTDATE> 2007-09-24T07:34:00 </POSTDATE>
+Craig:
+
+Explicitly, what would be a better (fortunate) way  to write this code?
+
+Thanks.
+skip knble
+
+<QUOTE PREVIOUSPOST="
+On Fri, 21 Sep 2007 07:59:55 -0500, &quot;Craig Dedo&quot; &lt;cd ... @wi.rr.com&gt; wrote:
+-|&quot;Oskar Enoksson&quot; &lt;enok_tabort ... @lysator.liu.se&gt; wrote in message
+">
+
+-| news:fcvj5i$e1j$1@news.lysator.liu.se ...
+-|&gt; Is it ok to declare a generic interface with a name identical to the
+-|&gt; module procedure? What about if two different modules doing this are used
+-|&gt; from the same program? I.e. in the example below, will the interfaces
+-|&gt; remedy the name clash between the two module procedures below?
+-|
+-|    Yes.  Please see explanation below.
+-|
+-|&gt; MODULE M1
+-|&gt;   INTERFACE FOO
+-|&gt;     MODULE PROCEDURE FOO
+-|&gt;   END INTERFACE
+-|&gt; CONTAINS
+-|&gt;   SUBROUTINE FOO(I)
+-|&gt;     INTEGER, INTENT(IN) :: I
+-|&gt;     WRITE(*,*) 'INTEGER'
+-|&gt;   END SUBROUTINE FOO
+-|&gt; END MODULE M1
+-|&gt;
+-|&gt; MODULE M2
+-|&gt;   INTERFACE FOO
+-|&gt;     MODULE PROCEDURE FOO
+-|&gt;   END INTERFACE
+-|&gt; CONTAINS
+-|&gt;   SUBROUTINE FOO(R)
+-|&gt;     REAL, INTENT(IN) :: R
+-|&gt;     WRITE(*,*) 'REAL'
+-|&gt;   END SUBROUTINE FOO
+-|&gt; END MODULE M2
+-|&gt;
+-|&gt; PROGRAM P
+-|&gt;   USE M1
+-|&gt;   USE M2
+-|&gt;   CALL FOO(10)
+-|&gt;   CALL FOO(10.)
+-|&gt; END PROGRAM P
+-|&gt;
+-|&gt; (By experiment it works with gfortran, ifort, pathf95 and lf95, but not
+-|&gt; with an old version 6.0 of pgf95.)
+-|&gt;
+-|&gt; -bash-2.05b$ pgf95 -o tst tst.f90
+-|&gt; PGF90-S-0155-foo is use-associated from modules m2 and m1, and cannot be
+-|&gt; accessed (tst1.f90: 35)
+-|&gt; PGF90-S-0155-foo is use-associated from modules m2 and m1, and cannot be
+-|&gt; accessed (tst1.f90: 36)
+-|
+-|    As unfortunate as it is, this practice is explicitly authorized by
+-|specific normative text in both the Fortran 95 and Fortran 2003 standards.
+-|Here are some of the details.
+-|
+-|    The relevant sections are Fortran 95, s. 14.1.2 and s. 12.3.2.1; Fortran
+-|2003, s. 16.2 and s. 12.3.2.1.  In both standards the normative text is very
+-|close, but not identical.
+-|
+-|    Only the names of external procedures have global scope.  The names of
+-|module procedures, internal procedures, and interfaces have local scope
+-|within their scoping unit (F95, 14.1.1, 14.1.2; F2003, 16.1, 16.2).  More
+-|specifically (F95, 14.1.2),
+-|[Begin F95 quote]
+-|Within a scoping unit, a name that identifies a local entity of one class
+-|shall not be used to identify another local entity of the same class, except
+-|int he case of generic names (12.3.2.1).  A name that identifies a local
+-|entity of one class may be used to identify a local entity of another class.
+-|[End of F95 quote]
+-|
+-|    The Fortran 2003 standard expresses the same thoughts using slighly
+-|revised language (F2003, 16.2).
+-|
+-|    The properties of generic identifiers and generic names are covered in
+-|12.3.2.1 inboth F95 and F2003.  Here is relevant text from both F95 and
+-|F2003:
+-|[Begin F95 and F2003 text]
+-|A generic name specifies a single name to reference all of the procedure
+-|names in the interface block.  A generic name may be the same as any one of
+-|the procedure names in the interface block, or the same as any accessible
+-|generic name.
+-|[End of F95 and F2003 text]
+</POST>
+<POST>
+<POSTER> Oskar Enoksson &lt;enok_tabort...@lysator.liu.se&gt; </POSTER>
+<POSTDATE> 2007-09-24T08:46:00 </POSTDATE>
+Someone else has reported it. But is the concensus that my program
+should be rejected or not? The bugreporter &quot;burnus&quot; seems to think it is
+legal unless FOO is itself used as an actual argument.
+
+/Oskar
+
+<QUOTE PREVIOUSPOST="
+paul.richard.tho ... @gmail.com wrote:
+&gt; James,
+
+&gt;&gt; Yep, pgf95 has got it right.  If program P had a line like:
+
+&gt;&gt; call bar(foo)
+
+&gt;&gt; the compiler would not know which specific version of foo to
+&gt;&gt; send.  Only one copy of the same specific name can be visible
+&gt;&gt; in a scoping unit; you would have the same problem if the
+&gt;&gt; specific subroutine names were both 'joe' and the generic
+&gt;&gt; name were 'foo'.
+
+&gt; That's spot on - Thank you. gfortran survives the original example
+&gt; because it distinguishes the interfaces.  However, as you say, the
+&gt; ambiguity comes with specific references.
+
+&gt; Could you raise a bug report, please, Oskar?  I'll turn to it, just as
+&gt; soon as I have sorted out a couple of other niggles.
+
+&gt; Cheers
+
+&gt; Paul Thomas
+">
+</POST>
+<POST>
+<POSTER> &quot;Craig Dedo&quot; &lt;cd...@wi.rr.com&gt; </POSTER>
+<POSTDATE> 2007-09-24T09:42:00 </POSTDATE>
+&quot;Herman D. Knoble&quot; &lt;SkipKnobleL ... @SPAMpsu.DOT.edu&gt; wrote in message
+news:828ff3dd1dqf0grh86fvi6dhhn2qi1o8uc@4ax.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Craig:
+
+&gt; Explicitly, what would be a better (fortunate) way  to write this code?
+
+&gt; Thanks.
+&gt; skip knble
+">
+
+My general approach is to implement recommended best practices of
+software construction and modular decomposition, given the nature of the
+problem and any constraints imposed by the insitutional environment.  One of
+the best books I have read on software construction practices is Steve
+McConnell's Code Complete: A Practical Handbook of Software Construction,
+1st and 2nd editions.  Although the author has a very negative view of
+Fortran and the 2nd edition is strongly oriented toward the Microsoft Visual
+Studio languages, the book is chock full of sound advice about all aspects
+of software construction.  There is an entire chapter in both editions
+devoted to choosing good names.
+
+That said, here is what I would recommend.  I would define the generic
+interface name and all of the specifics in one module.  If a subroutine,
+generic name would be a strong verb followed by a direct object.  If a
+function, the generic name would be descriptive of the return result.
+
+If there are a lot of specifics in the generic, then it would make sense
+to decompose the module according to the principles of modular
+decomposition.  I usually follow the rule of thumb used in project
+management that each summary task should contain 2 - 20 immediate
+subordinate tasks.  Similarly, each module should contain 2 - 20 specific
+procedures.
+
+Each of the specific names would be the generic name followed by a sufix
+that describes the data type of the arguments.  I do not have a firm
+convention for data type suffixes.
+* I tend to use In for integers, where n is the number of 8-bit bytes.  This
+follows the convention used by almost all Fortran compilers for assigning
+KIND numbers to integer kinds.
+* For Reals, I usually use either a suffix of Rn, again where the n is the
+KIND number or else suffixes of RSP for Single Precision, RDP for Double
+Precision, and RXP for Extended Precision.
+* Complex suffixes would use either Cn or else CSP, CDP, and CXP.
+* I have not had the pleasure of working with multiple kinds of Character,
+since no Fortran compiler has yet implemented ISO 10646 kinds.  However,
+following the current pattern, it would make sense to use S1 for ASCII, S2
+for ISO 10646 UCS-2, and S4 for ISO 10646 UCS-4.  In my experience, UTF-8
+and UTF-16 are used mostly for file encoding, not for internal variables.
+However, following this convention, SU8 and SU16 could be used for UTF-8 and
+UTF-16 respectively.
+* I don't have any convention for Logical arguments.  Usually, there are
+only zero or one Logical arguments per procedure reference.
+* Obviously, this convention breaks down for arguments that are of derived
+type or procedure interfaces that contain arguments of two or more intrinsic
+types.  In these cases, you may need to implement suffixes using some
+sensible numbering system, rather than the mnemonic suffixes I have used
+above.
+
+Now that I have described the general convention, here is how I would
+rewrite the example.  Unfortunately, the name FOO does not give me the
+foggiest ideas of what the subroutine does, so I cannot think of a more
+descriptive subroutine name.
+
+Module Foo_Generic_M
+
+!    Define generic interface for Subroutine Foo() for 2, 4, and 8 byte
+integers and single precision and double precision reals.
+
+Interface
+Module Procedure Foo_I2
+Module Procedure Foo_I4
+Module Procedure Foo_I8
+Module Procedure Foo_RSP
+Module Procedure Foo_RDP
+End Interface
+
+Contains
+
+!    Define specific subroutines for generic subroutine Foo().
+Subroutine Foo_I2 (A)
+Integer(Kind=2), Intent(IN)    :: A
+Write (*,*)    &quot;Integer Kind=2&quot;
+End Subroutine Foo_I2 (A)
+
+Subroutine Foo_I4 (A)
+Integer(Kind=4), Intent(IN)    :: A
+Write (*,*)    &quot;Integer Kind=4&quot;
+End Subroutine Foo_I4 (A)
+
+Subroutine Foo_I8 (A)
+Integer(Kind=8), Intent(IN)    :: A
+Write (*,*)    &quot;Integer Kind=8&quot;
+End Subroutine Foo_I8 (A)
+
+Subroutine Foo_RSP (A)
+Use Kind_Definitions_M            ! Defines named constants for KIND type
+parameters.
+Real (Kind=SP), Intent(IN)    :: A
+Write (*,*)    &quot;Real Kind=SP&quot;
+End Subroutine Foo_RSP (A)
+
+Subroutine Foo_RDP (A)
+Use Kind_Definitions_M            ! Defines named constants for KIND type
+parameters.
+Real (Kind=DP), Intent(IN)    :: A
+Write (*,*)    &quot;Real Kind=DP&quot;
+End Subroutine Foo_RDP (A)
+
+End Module Foo_Generic_M
+Use Kind_Definitions_M            ! Defines named constants for KIND type
+parameters.
+Program Demo_Foo_Generic
+Use Foo_Generic_M
+Call Foo (10_2)
+Call Foo (10_4)
+Call Foo (10_8)
+Call Foo (10.0_SP)
+Call Foo (10.0_DP)
+End Program Demo_Foo_Generic
+
+--
+Craig Dedo
+17130 W. Burleigh Place
+P. O. Box 423
+Brookfield, WI   53008-0423
+Voice:  (262) 783-5869
+Fax:    (262) 783-5928
+Mobile: (414) 412-5869
+E-mail: &lt;cd ... @wi.rr.com&gt; or &lt;cr ... @ctdedo.com&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; On Fri, 21 Sep 2007 07:59:55 -0500, &quot;Craig Dedo&quot; &lt;cd ... @wi.rr.com&gt; wrote:
+
+&gt; -|&quot;Oskar Enoksson&quot; &lt;enok_tabort ... @lysator.liu.se&gt; wrote in message
+&gt; -| news:fcvj5i$e1j$1@news.lysator.liu.se ...
+&gt; -|&gt; Is it ok to declare a generic interface with a name identical to the
+&gt; -|&gt; module procedure? What about if two different modules doing this are
+&gt; used
+&gt; -|&gt; from the same program? I.e. in the example below, will the interfaces
+&gt; -|&gt; remedy the name clash between the two module procedures below?
+&gt; -|
+&gt; -|    Yes.  Please see explanation below.
+&gt; -|
+&gt; -|&gt; MODULE M1
+&gt; -|&gt;   INTERFACE FOO
+&gt; -|&gt;     MODULE PROCEDURE FOO
+&gt; -|&gt;   END INTERFACE
+&gt; -|&gt; CONTAINS
+&gt; -|&gt;   SUBROUTINE FOO(I)
+&gt; -|&gt;     INTEGER, INTENT(IN) :: I
+&gt; -|&gt;     WRITE(*,*) 'INTEGER'
+&gt; -|&gt;   END SUBROUTINE FOO
+&gt; -|&gt; END MODULE M1
+&gt; -|&gt;
+&gt; -|&gt; MODULE M2
+&gt; -|&gt;   INTERFACE FOO
+&gt; -|&gt;     MODULE PROCEDURE FOO
+&gt; -|&gt;   END INTERFACE
+&gt; -|&gt; CONTAINS
+&gt; -|&gt;   SUBROUTINE FOO(R)
+&gt; -|&gt;     REAL, INTENT(IN) :: R
+&gt; -|&gt;     WRITE(*,*) 'REAL'
+&gt; -|&gt;   END SUBROUTINE FOO
+&gt; -|&gt; END MODULE M2
+&gt; -|&gt;
+&gt; -|&gt; PROGRAM P
+&gt; -|&gt;   USE M1
+&gt; -|&gt;   USE M2
+&gt; -|&gt;   CALL FOO(10)
+&gt; -|&gt;   CALL FOO(10.)
+&gt; -|&gt; END PROGRAM P
+&gt; -|&gt;
+&gt; -|&gt; (By experiment it works with gfortran, ifort, pathf95 and lf95, but
+&gt; not
+&gt; -|&gt; with an old version 6.0 of pgf95.)
+&gt; -|&gt;
+&gt; -|&gt; -bash-2.05b$ pgf95 -o tst tst.f90
+&gt; -|&gt; PGF90-S-0155-foo is use-associated from modules m2 and m1, and cannot
+&gt; be
+&gt; -|&gt; accessed (tst1.f90: 35)
+&gt; -|&gt; PGF90-S-0155-foo is use-associated from modules m2 and m1, and cannot
+&gt; be
+&gt; -|&gt; accessed (tst1.f90: 36)
+&gt; -|
+&gt; -|    As unfortunate as it is, this practice is explicitly authorized by
+&gt; -|specific normative text in both the Fortran 95 and Fortran 2003
+&gt; standards.
+&gt; -|Here are some of the details.
+&gt; -|
+&gt; -|    The relevant sections are Fortran 95, s. 14.1.2 and s. 12.3.2.1;
+&gt; Fortran
+&gt; -|2003, s. 16.2 and s. 12.3.2.1.  In both standards the normative text is
+&gt; very
+&gt; -|close, but not identical.
+&gt; -|
+&gt; -|    Only the names of external procedures have global scope.  The names
+&gt; of
+&gt; -|module procedures, internal procedures, and interfaces have local scope
+&gt; -|within their scoping unit (F95, 14.1.1, 14.1.2; F2003, 16.1, 16.2).
+&gt; More
+&gt; -|specifically (F95, 14.1.2),
+&gt; -|[Begin F95 quote]
+&gt; -|Within a scoping unit, a name that identifies a local entity of one
+&gt; class
+&gt; -|shall not be used to identify another local entity of the same class,
+&gt; except
+&gt; -|int he case of generic names (12.3.2.1).  A name that identifies a local
+&gt; -|entity of one class may be used to identify a local entity of another
+&gt; class.
+&gt; -|[End of F95 quote]
+&gt; -|
+&gt; -|    The Fortran 2003 standard expresses the same thoughts using slighly
+&gt; -|revised language (F2003, 16.2).
+&gt; -|
+&gt; -|    The properties of generic identifiers and generic names are covered
+&gt; in
+&gt; -|12.3.2.1 inboth F95 and F2003.  Here is relevant text from both F95 and
+&gt; -|F2003:
+&gt; -|[Begin F95 and F2003 text]
+&gt; -|A generic name specifies a single name to reference all of the procedure
+&gt; -|names in the interface block.  A generic name may be the same as any one
+&gt; of
+&gt; -|the procedure names in the interface block, or the same as any
+&gt; accessible
+&gt; -|generic name.
+&gt; -|[End of F95 and F2003 text]
+">
+</POST>
+<POST>
+<POSTER> Herman D. Knoble &lt;SkipKnobleL...@SPAMpsu.DOT.edu&gt; </POSTER>
+<POSTDATE> 2007-09-24T12:21:00 </POSTDATE>
+Craig:  Thanks for sharing your wisdom here. I'd like to quote your prose and
+example code  for my students. It would be even better documentation
+than it already is  if the code were actually compilable/runable.
+
+Again, many thanks.
+skip
+
+<QUOTE PREVIOUSPOST="
+On Mon, 24 Sep 2007 08:42:32 -0500, &quot;Craig Dedo&quot; &lt;cd ... @wi.rr.com&gt; wrote:
+">
+
+-|&quot;Herman D. Knoble&quot; &lt;SkipKnobleL ... @SPAMpsu.DOT.edu&gt; wrote in message
+-| news:828ff3dd1dqf0grh86fvi6dhhn2qi1o8uc@4ax.com ...
+-|&gt; Craig:
+-|&gt;
+-|&gt; Explicitly, what would be a better (fortunate) way  to write this code?
+-|&gt;
+-|&gt; Thanks.
+-|&gt; skip knble
+-|
+-|    My general approach is to implement recommended best practices of
+-|software construction and modular decomposition, given the nature of the
+-|problem and any constraints imposed by the insitutional environment.  One of
+-|the best books I have read on software construction practices is Steve
+-|McConnell's Code Complete: A Practical Handbook of Software Construction,
+-|1st and 2nd editions.  Although the author has a very negative view of
+-|Fortran and the 2nd edition is strongly oriented toward the Microsoft Visual
+-|Studio languages, the book is chock full of sound advice about all aspects
+-|of software construction.  There is an entire chapter in both editions
+-|devoted to choosing good names.
+-|
+-|    That said, here is what I would recommend.  I would define the generic
+-|interface name and all of the specifics in one module.  If a subroutine,
+-|generic name would be a strong verb followed by a direct object.  If a
+-|function, the generic name would be descriptive of the return result.
+-|
+-|    If there are a lot of specifics in the generic, then it would make sense
+-|to decompose the module according to the principles of modular
+-|decomposition.  I usually follow the rule of thumb used in project
+-|management that each summary task should contain 2 - 20 immediate
+-|subordinate tasks.  Similarly, each module should contain 2 - 20 specific
+-|procedures.
+-|
+-|    Each of the specific names would be the generic name followed by a sufix
+-|that describes the data type of the arguments.  I do not have a firm
+-|convention for data type suffixes.
+-|* I tend to use In for integers, where n is the number of 8-bit bytes.  This
+-|follows the convention used by almost all Fortran compilers for assigning
+-|KIND numbers to integer kinds.
+-|* For Reals, I usually use either a suffix of Rn, again where the n is the
+-|KIND number or else suffixes of RSP for Single Precision, RDP for Double
+-|Precision, and RXP for Extended Precision.
+-|* Complex suffixes would use either Cn or else CSP, CDP, and CXP.
+-|* I have not had the pleasure of working with multiple kinds of Character,
+-|since no Fortran compiler has yet implemented ISO 10646 kinds.  However,
+-|following the current pattern, it would make sense to use S1 for ASCII, S2
+-|for ISO 10646 UCS-2, and S4 for ISO 10646 UCS-4.  In my experience, UTF-8
+-|and UTF-16 are used mostly for file encoding, not for internal variables.
+-|However, following this convention, SU8 and SU16 could be used for UTF-8 and
+-|UTF-16 respectively.
+-|* I don't have any convention for Logical arguments.  Usually, there are
+-|only zero or one Logical arguments per procedure reference.
+-|* Obviously, this convention breaks down for arguments that are of derived
+-|type or procedure interfaces that contain arguments of two or more intrinsic
+-|types.  In these cases, you may need to implement suffixes using some
+-|sensible numbering system, rather than the mnemonic suffixes I have used
+-|above.
+-|
+-|    Now that I have described the general convention, here is how I would
+-|rewrite the example.  Unfortunately, the name FOO does not give me the
+-|foggiest ideas of what the subroutine does, so I cannot think of a more
+-|descriptive subroutine name.
+-|
+-|Module Foo_Generic_M
+-|
+-|!    Define generic interface for Subroutine Foo() for 2, 4, and 8 byte
+-|integers and single precision and double precision reals.
+-|
+-|Interface
+-|    Module Procedure Foo_I2
+-|    Module Procedure Foo_I4
+-|    Module Procedure Foo_I8
+-|    Module Procedure Foo_RSP
+-|    Module Procedure Foo_RDP
+-|End Interface
+-|
+-|Contains
+-|
+-|!    Define specific subroutines for generic subroutine Foo().
+-|Subroutine Foo_I2 (A)
+-|Integer(Kind=2), Intent(IN)    :: A
+-|Write (*,*)    &quot;Integer Kind=2&quot;
+-|End Subroutine Foo_I2 (A)
+-|
+-|Subroutine Foo_I4 (A)
+-|Integer(Kind=4), Intent(IN)    :: A
+-|Write (*,*)    &quot;Integer Kind=4&quot;
+-|End Subroutine Foo_I4 (A)
+-|
+-|Subroutine Foo_I8 (A)
+-|Integer(Kind=8), Intent(IN)    :: A
+-|Write (*,*)    &quot;Integer Kind=8&quot;
+-|End Subroutine Foo_I8 (A)
+-|
+-|Subroutine Foo_RSP (A)
+-|Use Kind_Definitions_M            ! Defines named constants for KIND type
+-|parameters.
+-|Real (Kind=SP), Intent(IN)    :: A
+-|Write (*,*)    &quot;Real Kind=SP&quot;
+-|End Subroutine Foo_RSP (A)
+-|
+-|Subroutine Foo_RDP (A)
+-|Use Kind_Definitions_M            ! Defines named constants for KIND type
+-|parameters.
+-|Real (Kind=DP), Intent(IN)    :: A
+-|Write (*,*)    &quot;Real Kind=DP&quot;
+-|End Subroutine Foo_RDP (A)
+-|
+-|End Module Foo_Generic_M
+-|Use Kind_Definitions_M            ! Defines named constants for KIND type
+-|parameters.
+-|Program Demo_Foo_Generic
+-|Use Foo_Generic_M
+-|Call Foo (10_2)
+-|Call Foo (10_4)
+-|Call Foo (10_8)
+-|Call Foo (10.0_SP)
+-|Call Foo (10.0_DP)
+-|End Program Demo_Foo_Generic
+</POST>
+<POST>
+<POSTER> &quot;James Van Buskirk&quot; &lt;not_va...@comcast.net&gt; </POSTER>
+<POSTDATE> 2007-09-24T15:08:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Oskar Enoksson&quot; &lt;enok_tabort ... @lysator.liu.se&gt; wrote in message
+">
+
+news:fd83cb$ik8$1@news.lysator.liu.se ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Someone else has reported it. But is the concensus that my program should
+&gt; be rejected or not? The bugreporter &quot;burnus&quot; seems to think it is legal
+&gt; unless FOO is itself used as an actual argument.
+">
+
+There doesn't seem to be a consensus as yet.  I consider ISO/IEC
+1539-1:1997(E)
+section 14.2.2 Local Entities:
+
+&quot;Within a scoping unit, entities in the following classes:
+(1)   ... module procedures ...
+are local entities of that scoping unit.&quot;
+
+&quot;Within a scoping unit, a name that identifies a local entity of one
+class shall not be used to identify another local entity of the same
+class, except in the case of generic names (12.3.2.1).&quot;
+
+This says to me that the code as given was nonconforming because the
+name FOO was used to identify the module procedure SUBROUTINE FOO
+from MODULE M1 as well as the module procedure SUBROUTINE FOO from
+MODULE M2.  The case of generic names says to me that any number of
+generic identifiers may have the same name as one module procedure
+provided any possible generic procedure reference is unambiguous
+(section 14.1.2.3).  In the following example, there is no problem
+about module procedures 'joe' having the same generic identifier
+somehow, yet gfortran doesn't seem to mind it:
+
+C:\gfortran\clf\foo_conflict&gt;type joe_conflict.f90
+MODULE M1
+INTERFACE FOO
+MODULE PROCEDURE joe
+END INTERFACE
+CONTAINS
+SUBROUTINE joe(I)
+INTEGER, INTENT(IN) :: I
+WRITE(*,*) 'INTEGER'
+END SUBROUTINE joe
+END MODULE M1
+
+MODULE M2
+INTERFACE FOO
+MODULE PROCEDURE joe
+END INTERFACE
+CONTAINS
+SUBROUTINE joe(R)
+REAL, INTENT(IN) :: R
+WRITE(*,*) 'REAL'
+END SUBROUTINE joe
+END MODULE M2
+
+PROGRAM P
+USE M1
+USE M2
+CALL FOO(10)
+CALL FOO(10.)
+END PROGRAM P
+
+C:\gfortran\clf\foo_conflict&gt;c:\gfortran\win64\bin\x86_64-pc-mingw32-gfortr an
+jo
+e_conflict.f90 -ojoe_conflict
+
+C:\gfortran\clf\foo_conflict&gt;joe_conflict
+INTEGER
+REAL
+
+In PROGRAM P, there are two class 1 entities with the name 'joe',
+but gfortran doesn't seem to mind.  'joe' is not a generic name.
+
+--
+write(*,*) transfer((/17.392111325966148d0,6.5794487871554595D-85, &amp;
+6.0134700243160014d-154/),(/'x'/)); end
+</POST>
+<POST>
+<POSTER> &quot;James Van Buskirk&quot; &lt;not_va...@comcast.net&gt; </POSTER>
+<POSTDATE> 2007-09-24T15:17:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Craig Dedo&quot; &lt;cd ... @wi.rr.com&gt; wrote in message
+">
+
+news:46f7beca$0$28849$4c368faf@roadrunner.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt;    That said, here is what I would recommend.  I would define the generic
+&gt; interface name and all of the specifics in one module.
+">
+
+That is pretty much at orthogonal trajectories to what I would do.
+Instead, I generally define all specific procedures of one type
+and kind in one module and then define the generic name in a module
+that uses the above modules.  This permits templating so that I
+can get double- and quadruple-precision complex BLAS procedures from
+a single complex code base in
+http://home.comcast.net/~kmbtib/Fortran_stuff/GENERIC_BLAS.ZIP .
+
+Also see http://home.comcast.net/~kmbtib/codelets.ZIP , which is an
+older use of templates in Fortran.
+
+--
+write(*,*) transfer((/17.392111325966148d0,6.5794487871554595D-85, &amp;
+6.0134700243160014d-154/),(/'x'/)); end
+</POST>
+<POST>
+<POSTER> nos...@see.signature (Richard Maine) </POSTER>
+<POSTDATE> 2007-09-24T16:30:00 </POSTDATE>
+James Van Buskirk &lt;not_va ... @comcast.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Oskar Enoksson&quot; &lt;enok_tabort ... @lysator.liu.se&gt; wrote in message
+&gt; news:fd83cb$ik8$1@news.lysator.liu.se ...
+
+&gt; &gt; Someone else has reported it. But is the concensus that my program should
+&gt; &gt; be rejected or not? The bugreporter &quot;burnus&quot; seems to think it is legal
+&gt; &gt; unless FOO is itself used as an actual argument.
+
+&gt; There doesn't seem to be a consensus as yet.  I consider ISO/IEC
+&gt; 1539-1:1997(E)
+&gt; section 14.2.2 Local Entities:
+
+&gt; &quot;Within a scoping unit, entities in the following classes:
+&gt;    (1)   ... module procedures ...
+&gt; are local entities of that scoping unit.&quot;
+
+&gt; &quot;Within a scoping unit, a name that identifies a local entity of one
+&gt; class shall not be used to identify another local entity of the same
+&gt; class, except in the case of generic names (12.3.2.1).&quot;
+
+&gt; This says to me that the code as given was nonconforming because the
+&gt; name FOO was used to identify the module procedure SUBROUTINE FOO
+&gt; from MODULE M1 as well as the module procedure SUBROUTINE FOO from
+&gt; MODULE M2.
+">
+
+Well, it is subtle. First, note that I'd never recommend actually doing
+anything like this, but that isn't the question. The question is about
+whether the standard allows it, independent of how bad an idea it might
+be.
+
+The tricky part here is the question of whether the name identifies a
+local entity in the scoping unit in question. If you actually do
+anything with the name, then it does identify a local entity, and thus
+the code would be illegal. By &quot;do anything&quot; I mean the name appearing at
+all, either as a reference or in any other context. (Yes, there are
+several contexts other than a reference that a procedure name can appear
+in). But if the name never appears, one could argue that the name
+doesn't identify anything in the scoping unit. Yes, that's a subtle
+argument. It is one I might not even give credence to... except that
+there is a quote elsewhere in the standard that makes it pretty
+exlpicit. From f2003 (that's closer at hand than f95 right now), pg 252,
+lines 25:26
+
+&quot;Two or more accessible entities, other than generic interfaces or
+defined operators, may have the same identifier only if the identifier
+is not used to refer to an entity in the scoping unit).&quot;
+
+That's a tricky bit, and one I have forgotten about before. I almost
+forgot that it applied here and gave the wrong answer again, but I
+caught myself in time. Anyway, I think I got it right now.
+
+I'd have to say, though, that fixing a compiler that failed to allow his
+would be awfully low on my priority list. I'm sure any compiler out
+there has more important things than this to fix. :-( I'd say that it at
+least merits a warning along the line of &quot;the standard allows this, but
+are you sure that's really what you meant?&quot;
+
+--
+Richard Maine                    | Good judgement comes from experience;
+email: last name at domain . net | experience comes from bad judgement.
+domain: summertriangle           |  -- Mark Twain
+</POST>
+<POST>
+<POSTER> Tobias Burnus &lt;bur...@net-b.de&gt; </POSTER>
+<POSTDATE> 2007-09-24T16:47:00 </POSTDATE>
+On 24 Sep., 21:08, &quot;James Van Buskirk&quot; &lt;not_va ... @comcast.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Oskar Enoksson&quot; &lt;enok_tabort ... @lysator.liu.se&gt; wrote:
+&gt; &gt; Someone else has reported it.
+">
+
+I did as it was not yet reported and I feared that it might get
+forgotten.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; But is the concensus that my program should
+&gt; &gt; be rejected or not? The bugreporter &quot;burnus&quot; seems to think it is legal
+&gt; &gt; unless FOO is itself used as an actual argument.
+">
+
+No, I thought that it was probably invalid, however, I was not
+completely sure and wanted to recheck the Fortran standard* -
+especially after even NAG f95 and Lahey accepted it without any error.
+The point I made was only: As actual argument it is ambiguous (unless
+there is an explicit interface), otherwise it is not ambiguous. The
+ambiguity has nothing to do with whether it is valid according to the
+Fortran standard (except that a good standard should try hard to
+disallow things which are ambiguous). And after re-reading parts of
+the standard, I am convinced that it is invalid, unless someone points
+out something in the standard which I overlooked or misinterpreted.
+
+(* I have serious trouble to find the right spot in the standard and
+to read it as written and not as it can be interpreted thinking
+laterally.)
+
+<QUOTE PREVIOUSPOST="
+&gt; In the following example, there is no problem
+&gt; about module procedures 'joe' having the same generic identifier
+&gt; somehow, yet gfortran doesn't seem to mind it:
+">
+
+I don't see the contradiction (which the &quot;yet&quot; implies) between &quot;there
+is no problem&quot; and &quot;gfortran does not seem to mind it&quot;. The following
+program is valid as JOE is never referred and thus this restriction
+does not apply:
+
+&quot;Two or more accessible entities, other than generic interfaces or
+defined operators, may have the same identifier only if the identifier
+is not used to refer to an entity in the scoping unit.&quot; (Fortran 2003,
+&quot;11.2.1 The USE statement and use association&quot;)
+
+And as the use-associated &quot;JOE&quot; is not used in the main program, there
+is no problem.
+
+<QUOTE PREVIOUSPOST="
+&gt; MODULE M1
+&gt;    INTERFACE FOO
+&gt;      MODULE PROCEDURE joe
+&gt;    END INTERFACE
+&gt; CONTAINS
+&gt;    SUBROUTINE joe(I)
+&gt;      INTEGER, INTENT(IN) :: I
+&gt;      WRITE(*,*) 'INTEGER'
+&gt;    END SUBROUTINE joe
+&gt; END MODULE M1
+
+&gt; MODULE M2
+&gt;    INTERFACE FOO
+&gt;      MODULE PROCEDURE joe
+&gt;    END INTERFACE
+&gt; CONTAINS
+&gt;    SUBROUTINE joe(R)
+&gt;      REAL, INTENT(IN) :: R
+&gt;      WRITE(*,*) 'REAL'
+&gt;    END SUBROUTINE joe
+&gt; END MODULE M2
+
+&gt; PROGRAM P
+&gt;    USE M1
+&gt;    USE M2
+&gt;    CALL FOO(10)
+&gt;    CALL FOO(10.)
+&gt; END PROGRAM P
+">
+
+(By the way, using &quot;external bar; call bar(foo)&quot; fails here as there
+is no specific function FOO and a generic function cannot be used as
+actual argument.)
+
+Coming back to the initial program, which is the same as above except
+with the word &quot;JOE&quot; replaced by &quot;FOO&quot;.
+
+USE makes both the specific FOO and the generic FOO identifier
+accessible and the following applies:
+
+&quot;Two or more accessible entities, other than generic interfaces or
+defined operators, may have the same identifier only if the identifier
+is not used to refer to an entity in the scoping unit.&quot; (Fortran 2003,
+&quot;11.2.1 The USE statement and use association&quot;)
+
+If one now uses the specific procedure FOO then the program is
+invalid. Using the generic interface FOO is in principle ok, except
+that both the specific and the generic subroutines have the same name.
+
+One could now argue that in &quot;CALL FOO(10)&quot; only the generic interface
+and not the specific procedure FOO is referred and that thus the
+program is valid. However, one can also say FOO and FOO are the same
+identifier and thus &quot;CALL FOO(10)&quot; is invalid. I am in favour of the
+latter, which is also in line with the error given by Pathscale and
+g95, and which implies that the original program is invalid (as
+already written by James Van Buskirk and acknowledged by Paul Thomas).
+
+Tobias
+</POST>
+<POST>
+<POSTER> &quot;James Van Buskirk&quot; &lt;not_va...@comcast.net&gt; </POSTER>
+<POSTDATE> 2007-09-24T17:18:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Richard Maine&quot; &lt;nos ... @see.signature&gt; wrote in message
+">
+
+news:1i4y4m4.4o9m1dv5oscqN%nospam@see.signature ...
+
+<QUOTE PREVIOUSPOST="
+&gt;  &quot;Two or more accessible entities, other than generic interfaces or
+&gt; defined operators, may have the same identifier only if the identifier
+&gt; is not used to refer to an entity in the scoping unit).&quot;
+&gt; That's a tricky bit, and one I have forgotten about before. I almost
+&gt; forgot that it applied here and gave the wrong answer again, but I
+&gt; caught myself in time. Anyway, I think I got it right now.
+">
+
+OK, this makes clear what the standard thinks about modules: they
+contain mostly garbage!  If they contained mostly good stuff, there
+would be a requirement that a module USEr would have to straighten out
+any overlapping stuff via ONLY clauses or renaming.  Since modules
+contain mostly garbage, the USEr is supposed to fix up any landmines
+by recursively searching through any USEd modules as each conflict
+arises.
+
+So let's make up a conforming and a nonconforming example, shall we?
+
+C:\gfortran\clf\foo_conflict&gt;type landmine1.f90
+! File: landmine1.f90
+! Public domain 2007 James Van Buskirk
+
+module M1
+real x
+end module M1
+
+module M2
+contains
+subroutine y
+end subroutine y
+end module M2
+
+module M3
+use M2, x =&gt; y
+end module M3
+
+module M4
+use M1
+use M3
+end module M4
+
+module M5
+use M4
+end module M5
+
+module M6
+use M5
+end module M6
+
+program test
+use M6
+
+write(*,*) 'Hello, world!'
+end program test
+
+! End of file: landmine1.f90
+
+C:\gfortran\clf\foo_conflict&gt;c:\gfortran\win64\bin\x86_64-pc-mingw32-gfortr an
+la
+ndmine1.f90 -olandmine1
+
+C:\gfortran\clf\foo_conflict&gt;landmine1
+Hello, world!
+
+C:\gfortran\clf\foo_conflict&gt;type landmine2.f90
+! File: landmine2.f90
+! Public domain 2007 James Van Buskirk
+
+module M1
+real x
+end module M1
+
+module M2
+contains
+subroutine y
+end subroutine y
+end module M2
+
+module M3
+use M2, x =&gt; y
+end module M3
+
+module M4
+use M1
+use M3
+end module M4
+
+module M5
+use M4
+end module M5
+
+module M6
+use M5
+end module M6
+
+program test
+use M6
+interface
+function x(z)
+end function x
+end interface
+
+write(*,*) 'Hello, world!'
+end program test
+
+function x(z)
+x = z
+end function x
+
+! End of file: landmine2.f90
+
+C:\gfortran\clf\foo_conflict&gt;c:\gfortran\win64\bin\x86_64-pc-mingw32-gfortr an
+la
+ndmine2.f90 -olandmine2
+landmine2.f90:10: internal compiler error: Segmentation fault
+Please submit a full bug report,
+with preprocessed source if appropriate.
+See &lt; http://gcc.gnu.org/bugs.html &gt; for instructions.
+
+As we can see, gfortran comnpiles landmine1.f90 correctly, and
+also ICEs as required by the standard when confronted by the
+nonconforming example landmine2.f90.
+
+BTW, your quote of the standard at the top of this post shows
+unambiguously that the original code of the thread is nonconforming:
+two or more accessible entities, other than generic identifiers
+indeed have the same identifier (subroutine foo from module M1
+and subroutine foo from module M2, both in program P) and the
+identifier is used to refer to an entity in the scoping unit
+(generic name foo).
+
+--
+write(*,*) transfer((/17.392111325966148d0,6.5794487871554595D-85, &amp;
+6.0134700243160014d-154/),(/'x'/)); end
+</POST>
+<POST>
+<POSTER> &quot;James Van Buskirk&quot; &lt;not_va...@comcast.net&gt; </POSTER>
+<POSTDATE> 2007-09-24T17:28:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Tobias Burnus&quot; &lt;bur ... @net-b.de&gt; wrote in message
+">
+
+news:1190666841.100003.149080@50g2000hsm.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Two or more accessible entities, other than generic interfaces or
+&gt; defined operators, may have the same identifier only if the identifier
+&gt; is not used to refer to an entity in the scoping unit.&quot; (Fortran 2003,
+&gt; &quot;11.2.1 The USE statement and use association&quot;)
+">
+
+I had not been aware of this until you &amp; Richard pointed it out.
+I now agree that my version you quoted (with 'joe') was indeed
+conforming and that the original version (with 'foo') was
+nonconforming.  I posted an example a couple of minutes ago
+where 'referring to an entity' happened via an interface block.
+Other possibilities I haven't checked are in a use, only clause
+or in a use with renaming (on either end).
+
+--
+write(*,*) transfer((/17.392111325966148d0,6.5794487871554595D-85, &amp;
+6.0134700243160014d-154/),(/'x'/)); end
+</POST>
+<POST>
+<POSTER> gary.l.sc...@lmco.com </POSTER>
+<POSTDATE> 2007-09-24T17:51:00 </POSTDATE>
+On Sep 24, 8:42 am, &quot;Craig Dedo&quot; &lt;cd ... @wi.rr.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Herman D. Knoble&quot; &lt;SkipKnobleL ... @SPAMpsu.DOT.edu&gt; wrote in message news:828ff3dd1dqf0grh86fvi6dhhn2qi1o8uc@4ax.com ...
+
+&gt; &gt; Craig:
+
+&gt; &gt; Explicitly, what would be a better (fortunate) way  to write this code?
+
+&gt; &gt; Thanks.
+&gt; &gt; skip knble
+
+&gt;     My general approach is to implement recommended best practices of
+&gt; software construction and modular decomposition, given the nature of the
+&gt; problem and any constraints imposed by the insitutional environment.  One of
+&gt; the best books I have read on software construction practices is Steve
+&gt; McConnell's Code Complete: A Practical Handbook of Software Construction,
+&gt; 1st and 2nd editions.  Although the author has a very negative view of
+&gt; Fortran and the 2nd edition is strongly oriented toward the Microsoft Visual
+&gt; Studio languages, the book is chock full of sound advice about all aspects
+&gt; of software construction.  There is an entire chapter in both editions
+&gt; devoted to choosing good names.
+">
+
+&lt;snip&gt;
+
+Was curious as to how familiar McConnell is with F95 or F2k3 or
+whether the negativity is directed at prior standards?
+</POST>
+<POST>
+<POSTER> Paul van Delst &lt;Paul.vanDe...@noaa.gov&gt; </POSTER>
+<POSTDATE> 2007-09-24T19:42:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+gary.l.sc ... @lmco.com wrote:
+&gt; On Sep 24, 8:42 am, &quot;Craig Dedo&quot; &lt;cd ... @wi.rr.com&gt; wrote:
+&gt;&gt; &quot;Herman D. Knoble&quot; &lt;SkipKnobleL ... @SPAMpsu.DOT.edu&gt; wrote in message news:828ff3dd1dqf0grh86fvi6dhhn2qi1o8uc@4ax.com ...
+
+&gt;&gt;&gt; Craig:
+&gt;&gt;&gt; Explicitly, what would be a better (fortunate) way  to write this code?
+&gt;&gt;&gt; Thanks.
+&gt;&gt;&gt; skip knble
+&gt;&gt;     My general approach is to implement recommended best practices of
+&gt;&gt; software construction and modular decomposition, given the nature of the
+&gt;&gt; problem and any constraints imposed by the insitutional environment.  One of
+&gt;&gt; the best books I have read on software construction practices is Steve
+&gt;&gt; McConnell's Code Complete: A Practical Handbook of Software Construction,
+&gt;&gt; 1st and 2nd editions.  Although the author has a very negative view of
+&gt;&gt; Fortran and the 2nd edition is strongly oriented toward the Microsoft Visual
+&gt;&gt; Studio languages, the book is chock full of sound advice about all aspects
+&gt;&gt; of software construction.  There is an entire chapter in both editions
+&gt;&gt; devoted to choosing good names.
+&gt; &lt;snip&gt;
+
+&gt; Was curious as to how familiar McConnell is with F95 or F2k3 or
+&gt; whether the negativity is directed at prior standards?
+">
+
+Dunno about 2nd edition, but my 1993 copy tells me:
+
+&quot;As of this writing (late 1992) the Fortran standard is so controversial that most
+language vendors have not fully implemented it. The discussions in this book confine
+themselves to Fortran 77.&quot;
+
+My impression about references to Fortran (as in 77) in that book wasn't that the language
+itself was &quot;bad&quot;, just &quot;old&quot;; i.e. it allowed so many things that violated the general
+consensus (of commercial software designers/writers/etc) about what constituted well
+constructed software in 1993. I wouldn't characterise that as a &quot;negative view&quot;... just,
+uh, lacking in context, maybe? (Waving hands wildly in the air here :o)
+
+cheers,
+
+paulv
+</POST>
+<POST>
+<POSTER> Oskar Enoksson &lt;enok_tabort...@lysator.liu.se&gt; </POSTER>
+<POSTDATE> 2007-09-25T03:11:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Tobias Burnus wrote:
+&gt; On 24 Sep., 21:08, &quot;James Van Buskirk&quot; &lt;not_va ... @comcast.net&gt; wrote:
+&gt;&gt; &quot;Oskar Enoksson&quot; &lt;enok_tabort ... @lysator.liu.se&gt; wrote:
+&gt;&gt;&gt; Someone else has reported it.
+&gt; I did as it was not yet reported and I feared that it might get
+&gt; forgotten.
+">
+
+Yes, thanks. And thanks very much for the very clear explanation below
+of the dilemma. Looks like the standard could need some clarification on
+this point. Until that is settled I'll find another way in my program.
+
+/Oskar
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; But is the concensus that my program should
+&gt;&gt;&gt; be rejected or not? The bugreporter &quot;burnus&quot; seems to think it is legal
+&gt;&gt;&gt; unless FOO is itself used as an actual argument.
+
+&gt; No, I thought that it was probably invalid, however, I was not
+&gt; completely sure and wanted to recheck the Fortran standard* -
+&gt; especially after even NAG f95 and Lahey accepted it without any error.
+&gt; The point I made was only: As actual argument it is ambiguous (unless
+&gt; there is an explicit interface), otherwise it is not ambiguous. The
+&gt; ambiguity has nothing to do with whether it is valid according to the
+&gt; Fortran standard (except that a good standard should try hard to
+&gt; disallow things which are ambiguous). And after re-reading parts of
+&gt; the standard, I am convinced that it is invalid, unless someone points
+&gt; out something in the standard which I overlooked or misinterpreted.
+
+&gt; (* I have serious trouble to find the right spot in the standard and
+&gt; to read it as written and not as it can be interpreted thinking
+&gt; laterally.)
+
+&gt;&gt; In the following example, there is no problem
+&gt;&gt; about module procedures 'joe' having the same generic identifier
+&gt;&gt; somehow, yet gfortran doesn't seem to mind it:
+
+&gt; I don't see the contradiction (which the &quot;yet&quot; implies) between &quot;there
+&gt; is no problem&quot; and &quot;gfortran does not seem to mind it&quot;. The following
+&gt; program is valid as JOE is never referred and thus this restriction
+&gt; does not apply:
+
+&gt; &quot;Two or more accessible entities, other than generic interfaces or
+&gt; defined operators, may have the same identifier only if the identifier
+&gt; is not used to refer to an entity in the scoping unit.&quot; (Fortran 2003,
+&gt; &quot;11.2.1 The USE statement and use association&quot;)
+
+&gt; And as the use-associated &quot;JOE&quot; is not used in the main program, there
+&gt; is no problem.
+
+&gt;&gt; MODULE M1
+&gt;&gt;    INTERFACE FOO
+&gt;&gt;      MODULE PROCEDURE joe
+&gt;&gt;    END INTERFACE
+&gt;&gt; CONTAINS
+&gt;&gt;    SUBROUTINE joe(I)
+&gt;&gt;      INTEGER, INTENT(IN) :: I
+&gt;&gt;      WRITE(*,*) 'INTEGER'
+&gt;&gt;    END SUBROUTINE joe
+&gt;&gt; END MODULE M1
+
+&gt;&gt; MODULE M2
+&gt;&gt;    INTERFACE FOO
+&gt;&gt;      MODULE PROCEDURE joe
+&gt;&gt;    END INTERFACE
+&gt;&gt; CONTAINS
+&gt;&gt;    SUBROUTINE joe(R)
+&gt;&gt;      REAL, INTENT(IN) :: R
+&gt;&gt;      WRITE(*,*) 'REAL'
+&gt;&gt;    END SUBROUTINE joe
+&gt;&gt; END MODULE M2
+
+&gt;&gt; PROGRAM P
+&gt;&gt;    USE M1
+&gt;&gt;    USE M2
+&gt;&gt;    CALL FOO(10)
+&gt;&gt;    CALL FOO(10.)
+&gt;&gt; END PROGRAM P
+
+&gt; (By the way, using &quot;external bar; call bar(foo)&quot; fails here as there
+&gt; is no specific function FOO and a generic function cannot be used as
+&gt; actual argument.)
+
+&gt; Coming back to the initial program, which is the same as above except
+&gt; with the word &quot;JOE&quot; replaced by &quot;FOO&quot;.
+
+&gt; USE makes both the specific FOO and the generic FOO identifier
+&gt; accessible and the following applies:
+
+&gt; &quot;Two or more accessible entities, other than generic interfaces or
+&gt; defined operators, may have the same identifier only if the identifier
+&gt; is not used to refer to an entity in the scoping unit.&quot; (Fortran 2003,
+&gt; &quot;11.2.1 The USE statement and use association&quot;)
+
+&gt; If one now uses the specific procedure FOO then the program is
+&gt; invalid. Using the generic interface FOO is in principle ok, except
+&gt; that both the specific and the generic subroutines have the same name.
+
+&gt; One could now argue that in &quot;CALL FOO(10)&quot; only the generic interface
+&gt; and not the specific procedure FOO is referred and that thus the
+&gt; program is valid. However, one can also say FOO and FOO are the same
+&gt; identifier and thus &quot;CALL FOO(10)&quot; is invalid. I am in favour of the
+&gt; latter, which is also in line with the error given by Pathscale and
+&gt; g95, and which implies that the original program is invalid (as
+&gt; already written by James Van Buskirk and acknowledged by Paul Thomas).
+
+&gt; Tobias
+">
+</POST>
+<POST>
+<POSTER> Craig Powers &lt;eni...@hal-pc.org&gt; </POSTER>
+<POSTDATE> 2007-09-26T14:30:00 </POSTDATE>
+If I may make a minor quibble...
+
+<QUOTE PREVIOUSPOST="
+James Van Buskirk wrote:
+&gt; As we can see, gfortran comnpiles landmine1.f90 correctly, and
+&gt; also ICEs as required by the standard when confronted by the
+&gt; nonconforming example landmine2.f90.
+">
+
+...it's never correct for a compiler to ICE, even in the event of
+nonconforming code (although ICE on invalid will presumably be a
+lower-priority bug than ICE on valid).
+
+(If you were being sarcastic, it was disguised a little too well.)
+</POST>
+<POST>
+<POSTER> &quot;James Van Buskirk&quot; &lt;not_va...@comcast.net&gt; </POSTER>
+<POSTDATE> 2007-09-26T14:44:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Craig Powers&quot; &lt;eni ... @hal-pc.org&gt; wrote in message
+">
+
+news:46faa560$0$63183$a726171b@news.hal-pc.org ...
+
+<QUOTE PREVIOUSPOST="
+&gt; If I may make a minor quibble...
+&gt; James Van Buskirk wrote:
+&gt;&gt; As we can see, gfortran comnpiles landmine1.f90 correctly, and
+&gt;&gt; also ICEs as required by the standard when confronted by the
+&gt;&gt; nonconforming example landmine2.f90.
+&gt; ...it's never correct for a compiler to ICE, even in the event of
+&gt; nonconforming code (although ICE on invalid will presumably be a
+&gt; lower-priority bug than ICE on valid).
+&gt; (If you were being sarcastic, it was disguised a little too well.)
+">
+
+I don't care for laugh tracks and don't watch sitcoms anyhow, and in
+a similar vein think emoticons are rather overused.  Can't you see
+the flashing LAUGHTER and APPLAUSE signs out there in the audience?
+Right there above the monitor?
+
+--
+write(*,*) transfer((/17.392111325966148d0,6.5794487871554595D-85, &amp;
+6.0134700243160014d-154/),(/'x'/)); end
+</POST>
+</TEXT>
+</BODY>
+</DOC>

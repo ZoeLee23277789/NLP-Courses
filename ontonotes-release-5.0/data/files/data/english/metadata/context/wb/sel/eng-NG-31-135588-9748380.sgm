@@ -1,0 +1,3934 @@
+<DOC>
+<DOCID> eng-NG-31-135588-9748380 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2008-01-22T04:50:00 </DATETIME>
+<BODY>
+<HEADLINE>
+the necessity of Lisp's Objects?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Xah Lee &lt;x...@xahlee.org&gt; </POSTER>
+<POSTDATE> 2008-01-22T04:50:00 </POSTDATE>
+2008-01-22
+
+I've been programing mathematica since 1993, worked as intern at
+Wolfram Research Inc in 1995. And since have been coding Mathematica
+daily up to 1998, and on and off since then.
+
+I started to learn emacs in around 1997, and use it daily, about 8
+hours a day, ever since and still today.
+
+I started to learn lisp in about 1997. Mostly, i red word-for-word, 3
+chapters of the book Structure And Interpretation Of Computer Programs
+by Harold Abelson et al. (out of 5 chapters total) And, i have read
+maybe half of the Scheme lisp spec “Revised(4) Report on the
+Algorithmic Language Scheme”. These are all during 1997-1998. However,
+at the time i've never really wrote any programs in lisp other than
+toy factorial function.
+
+In 2005, i started to casually learn emacs lisp. Because i use emacs
+extensively and daily since 1998, thus emacs lisp is quite practical
+for me, and i have kept learning it and in fact have wrote quite a few
+small scale, but nevertheless practical, programs. (typically less
+than a thousand lines of code; for text processing tasks)
+
+--------------
+
+The Mathematica language is very similar to lisp. From a Mathematica
+expert's point of view (me), the first thing that seems odd of lisp is
+the low-level-ness. Perhaps in order of the low level impression:
+
+1. The cons business. (lists are made up of cons cells and it is
+necessary for the programer to understand this to write any non-
+trivial lisp program)
+
+2. No highlevel treatment of lists. (In Mathematica, there are a
+system of functions to extract or manipulate (nested) lists considered
+as trees. e.g. getting all elements at a level, or arbitrary set of
+nodes of a tree. All these based on a tree index concept. (i.e. first
+branch's second branch's third's branch will be 1,2,3.) In lisp,
+programers uses cons, car, cdr, caadr, etc. That is bizarre and
+downright fucking stupid.)
+
+3. The syntax is a bit quirky. In particular, a mathematica programer
+sees that sometimes list is written as “(list a b c)”, but sometimes
+there's this oddity “'(a b c)” (which is syntactically equivalent to
+“(quote a b c)”). And, when mapping a function, sometimes the
+programer also needs to put the apostrophy in front. (A Mathematica
+programer would think, if a function (e.g. “map”) that takes another
+function as argument, why would the function require the programer to
+put the apostrophy, why the function itself could be designed to not
+evaluate that argument.)
+
+4. A behind-the-scenes model of computation. Namely, lisp the language
+deals with the concept of “lisp objects”, and there's a “print syntax”
+that represent these objects. (and a “read syntax” that reads a code
+into these objects)
+
+I think these are probably most odd things in lisp for a Mathematica
+programer on the first exposure.
+
+*       *       *
+
+I was trying to write a emacs major mode and also writing a tutorial
+about it, in the past week. In this process, i find it quite hard.
+Writing a complete, robust, major mode for public consumption will
+require knowledge of:
+
+* mode hooks (basic concept)
+* font lock system (some detail)
+* font and faces intrastructure (basic concept)
+* buffer local variables (datil)
+* regex (detail)
+* keymaps (detail)
+* syntax table (detail)
+* abbreviation system (basics)
+* Emacs mode conventions (a lot elisp coding experience)
+
+(the list gives a rough idea, not meant to be complete or exact in
+some way)
+
+Some of the above are related to a editing programing system (such as
+hooks font system, buffer local var, abbrev system). Some are more
+related to the language. For example, keymaps and syntax table
+themselves are editing-programing-system related concepts, but the
+data themselves utimately calls for understanding of lisp's char-table
+data type. Then, writing a mode will also need to understand “defvar”,
+“defcustom” and ohters, which ultimately involves good understanding
+of lisp's symbols, macros, forms, and evaluation model ...
+
+In short, the study of writing a major mode forced me to start to read
+some of the lisp reference chapters that deals with the technical
+details of lisp language, such as chapters on “Symbols”, “Variables”,
+“Functions”.
+
+What prompted me to write this post, is that yesterday i thought a bit
+about lisp's objects, why Mathematica doesn't have it, and realized:
+
+Mathematica, being high-level as it is, essentially merged the concept
+of read-syntax, print-syntax, and objects, into just one concept of
+“What you see is what you get” _Expressions_ (i.e. the code programer
+types). That is, the code is the object, the object is the code. In
+other words, there is no such “internal” concepts as objects. What you
+type is the code, as well as the meaning.
+
+For example, let's say a list:
+
+In lisp:
+(list 1 2 3)
+
+Mathematica:
+List[1,2,3]
+
+In lisp, we say that the text “(list 1 2 3)” is the read syntax for
+the lisp's list object. So, the lisp interpreter reads this text, and
+turns it into a list object. When the lisp system prints a list
+object, it prints “(list 1 2 3)” too, since list object's read syntax
+and print syntax is the same.
+
+In Mathematica, there's no such steps of concept. The list
+“List[1,2,3]” is just a list as is. There is no such intermediate
+concept of objects. Everything in Mathematica is just a “expression”,
+meaning the texual code you type.
+
+This is a high-level beauty of Mathematica.
+
+Now, one might think further, that if for modern language to be high
+level (such as Mathematica, or to a lesser degree PHP, Javascript,
+Lisp), but if the language also needs to deal with general programing
+with tasks such as writing a compiler, operating system, device
+drivers (such as those usually done with “compiled langs” such as C,
+Java, Haskell and lisp too), then is lisp's internal concept “object”
+necessary in a language such as lisp?
+
+Does anyone know?
+
+(note: typically all compiled lang has some “behind-the-scene” “model”
+of sorts and almost always idiosyncratic to itself. For example, Java
+has “objects” (which is very different from lisp's) and references.
+Another good example to illustrate the point are the terms “list”,
+“array”, “vector”, “sequence”, which engenders huge amount of
+confusion. Typically, in online lang forums, each language proponent
+sees and understands only their own version of these terms.)
+
+See also:
+
+★ What is Expressiveness in a Computer Language
+http://xahlee.org/perl-python/what_is_expresiveness.html
+
+★ The Concepts and Confusions of Prefix, Infix, Postfix and Fully
+Functional Notations
+http://xahlee.org/UnixResource_dir/writ/notations.html
+
+★ Lisp's List Problem
+http://xahlee.org/emacs/lisp_list_problem.html
+
+★ Jargons And High Level Languages
+http://xahlee.org/emacs/jargons_high_level_lang.html
+
+Xah
+x ... @xahlee.org
+∑ http://xahlee.org/
+</POST>
+<POST>
+<POSTER> Joost Diepenmaat &lt;jo...@zeekat.nl&gt; </POSTER>
+<POSTDATE> 2008-01-22T06:46:00 </POSTDATE>
+Please note up front: I'm talking about common lisp only here, but most
+is probably applicable to other lisps too.
+
+<QUOTE PREVIOUSPOST="
+Xah Lee &lt;x ... @xahlee.org&gt; writes:
+&gt; The Mathematica language is very similar to lisp. From a Mathematica
+&gt; expert's point of view (me), the first thing that seems odd of lisp is
+&gt; the low-level-ness. Perhaps in order of the low level impression:
+
+&gt; 1. The cons business. (lists are made up of cons cells and it is
+&gt; necessary for the programer to understand this to write any non-
+&gt; trivial lisp program)
+">
+
+True, but even though I'm quite new to Lisp and cons cells, I didn't
+have a hard time understanding them. Lisp's proper lists are just singly
+linked lists. And making cons cells explicit means you can use them for
+more than just nested lists / trees. You can build alists, circular
+lists, binary trees etc all using the same small set of functions and
+types.
+
+<QUOTE PREVIOUSPOST="
+&gt; 2. No highlevel treatment of lists. (In Mathematica, there are a
+&gt; system of functions to extract or manipulate (nested) lists considered
+&gt; as trees. e.g. getting all elements at a level, or arbitrary set of
+&gt; nodes of a tree. All these based on a tree index concept. (i.e. first
+&gt; branch's second branch's third's branch will be 1,2,3.) In lisp,
+&gt; programers uses cons, car, cdr, caadr, etc. That is bizarre and
+&gt; downright fucking stupid.)
+">
+
+copy-tree, tree-equal subst, etc are not tree functions? and as I said
+above you can use the same functions 3 functions cons, car and cdr
+(plus the combinations of car and cdr) to do a lot already /without/
+having to learn new functions just because something build out of cells
+is now a tree.
+
+I think that's one of the stated reasons to keep car and cdr in arc, too
+(instead of replacing them outright with head and tail, for example):
+car and cdr are applicable to more than just plain lists.
+
+What I'm saying is that car, cons and cdr may be confusing at first but
+they make up for it by giving you a lot of power. Note that all lisp
+expressions except atoms are themselves parsed into structures build out
+of cons cells.
+
+<QUOTE PREVIOUSPOST="
+&gt; 3. The syntax is a bit quirky. In particular, a mathematica programer
+&gt; sees that sometimes list is written as “(list a b c)”, but sometimes
+&gt; there's this oddity “'(a b c)” (which is syntactically equivalent to
+&gt; “(quote a b c)”). And, when mapping a function, sometimes the
+&gt; programer also needs to put the apostrophy in front. (A Mathematica
+&gt; programer would think, if a function (e.g. “map”) that takes another
+&gt; function as argument, why would the function require the programer to
+&gt; put the apostrophy, why the function itself could be designed to not
+&gt; evaluate that argument.)
+">
+
+Lisp functions /always/ evaluate their arguments. Also, I use mapcar on
+function calls a lot, which means I /want/ the arguments to be evaluated
+at least some of the time, and then having to use quote / list
+explicitly when I don't isn't a big deal to me.
+
+I don't know how mathematica deals with that, though.
+
+[ ... ]
+
+<QUOTE PREVIOUSPOST="
+&gt; Mathematica, being high-level as it is, essentially merged the concept
+&gt; of read-syntax, print-syntax, and objects, into just one concept of
+&gt; “What you see is what you get” _Expressions_ (i.e. the code programer
+&gt; types). That is, the code is the object, the object is the code. In
+&gt; other words, there is no such “internal” concepts as objects. What you
+&gt; type is the code, as well as the meaning.
+">
+
+[A] I'm confused.  Do you mean Mathematica has no higher level concept
+of the code than the plain text? Surely it parses the code into /some/
+structure to manipulate / analyze / run?
+
+<QUOTE PREVIOUSPOST="
+&gt; For example, let's say a list:
+
+&gt; In lisp:
+&gt;   (list 1 2 3)
+
+&gt; Mathematica:
+&gt;   List[1,2,3]
+
+&gt; In lisp, we say that the text “(list 1 2 3)” is the read syntax for
+&gt; the lisp's list object. So, the lisp interpreter reads this text, and
+&gt; turns it into a list object. When the lisp system prints a list
+&gt; object, it prints “(list 1 2 3)” too, since list object's read syntax
+&gt; and print syntax is the same.
+">
+
+It does not. Try it out.
+
+<QUOTE PREVIOUSPOST="
+&gt; In Mathematica, there's no such steps of concept. The list
+&gt; “List[1,2,3]” is just a list as is. There is no such intermediate
+&gt; concept of objects. Everything in Mathematica is just a “expression”,
+&gt; meaning the texual code you type.
+">
+
+See my question [A] above.
+
+<QUOTE PREVIOUSPOST="
+&gt; This is a high-level beauty of Mathematica.
+
+&gt; Now, one might think further, that if for modern language to be high
+&gt; level (such as Mathematica, or to a lesser degree PHP, Javascript,
+&gt; Lisp), but if the language also needs to deal with general programing
+&gt; with tasks such as writing a compiler, operating system, device
+&gt; drivers (such as those usually done with “compiled langs” such as C,
+&gt; Java, Haskell and lisp too), then is lisp's internal concept “object”
+&gt; necessary in a language such as lisp?
+
+&gt; Does anyone know?
+">
+
+If you mean, does having integers, cons cells, symbols etc types get you
+anything? If so, the answer is yes, of course. I'm not even sure how
+you'd work with a high level language that doesn't distinguish *at all*
+between functions and numbers, for instance. And as you note below, most
+languages have at least some types &quot;internally&quot; if only for performance
+reasons.
+
+In any case, having an explicit and predicable representation for each
+expression makes writing macros a lot easier.
+
+I've started reading the Lisp in small Pieces book, and I guess it gives
+better answers to these questions in far more detail than I can give
+you. You may want to check it out.
+
+<QUOTE PREVIOUSPOST="
+&gt; (note: typically all compiled lang has some “behind-the-scene” “model”
+&gt; of sorts and almost always idiosyncratic to itself. For example, Java
+&gt; has “objects” (which is very different from lisp's) and references.
+">
+
+Java's &quot;true&quot; objects are almost but not quite entirely unlike
+user-defined CLOS objects.
+
+<QUOTE PREVIOUSPOST="
+&gt; Another good example to illustrate the point are the terms “list”,
+&gt; “array”, “vector”, “sequence”, which engenders huge amount of
+&gt; confusion. Typically, in online lang forums, each language proponent
+&gt; sees and understands only their own version of these terms.)
+">
+
+Yes. Lists in Perl for example are very different from lists in Lisp. If
+only because lists in perl code can only be literals and can't assigned
+to variables (you have to use perl's arrays for that).
+
+I think that sort of confusion between languages is probably
+unavoidable, though arrays and vectors are usually quite comparable
+between languages that have them.
+
+General comment: common lisp is a pretty high level language, when you
+want it to be, but it's also pretty obviously designed &quot;from the low
+level up&quot; with programmer access to almost all low-level details that
+you need for performance, flexibility and building your own high-level
+prettyness. From my limited experience it's the stack of lower-level to
+high-level functionality that give it an advantage over &quot;purely high
+level&quot; or &quot;(relatively) restricted domain&quot; languages like Perl.
+
+Joost.
+</POST>
+<POST>
+<POSTER> Pascal Costanza &lt;p...@p-cos.net&gt; </POSTER>
+<POSTDATE> 2008-01-22T06:58:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Xah Lee wrote:
+&gt; In Mathematica, there's no such steps of concept. The list
+&gt; “List[1,2,3]” is just a list as is. There is no such intermediate
+&gt; concept of objects. Everything in Mathematica is just a “expression”,
+&gt; meaning the texual code you type.
+">
+
+No, &quot;List[1,2,3]&quot; is just a couple of black pixels on the screen.
+
+Pascal
+
+--
+1st European Lisp Symposium (ELS'08)
+http://prog.vub.ac.be/~pcostanza/els08/
+
+My website: http://p-cos.net
+Common Lisp Document Repository: http://cdr.eurolisp.org
+Closer to MOP &amp; ContextL: http://common-lisp.net/project/closer/
+</POST>
+<POST>
+<POSTER> Patrick May &lt;p...@spe.com&gt; </POSTER>
+<POSTDATE> 2008-01-22T08:05:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Pascal Costanza &lt;p ... @p-cos.net&gt; writes:
+&gt; Xah Lee wrote:
+&gt;&gt; In Mathematica, there's no such steps of concept. The list
+&gt;&gt; “List[1,2,3]” is just a list as is. There is no such intermediate
+&gt;&gt; concept of objects. Everything in Mathematica is just a
+&gt;&gt; “expression”, meaning the texual code you type.
+
+&gt; No, &quot;List[1,2,3]&quot; is just a couple of black pixels on the screen.
+">
+
+Are you sure?  They appear in a subdued white on mine.
+
+Regards,
+
+Patrick
+
+------------------------------------------------------------------------
+S P Engineering, Inc.  | Large scale, mission-critical, distributed OO
+| systems design and implementation.
+p ... @spe.com  | (C++, Java, Common Lisp, Jini, middleware, SOA)
+</POST>
+<POST>
+<POSTER> Rainer Joswig &lt;jos...@lisp.de&gt; </POSTER>
+<POSTDATE> 2008-01-22T08:26:00 </POSTDATE>
+In article
+&lt;4b91e167-0570-4f38-abd1-c5b5bdfb5 ... @n22g2000prh.googlegroups.com&gt;,
+Xah Lee &lt;x ... @xahlee.org&gt; wrote:
+
+...
+
+<QUOTE PREVIOUSPOST="
+&gt; 3. The syntax is a bit quirky. In particular, a mathematica programer
+&gt; sees that sometimes list is written as “(list a b c)”, but sometimes
+&gt; there's this oddity “'(a b c)” (which is syntactically equivalent to
+&gt; “(quote a b c)”
+">
+
+No, it is not.
+
+CL-USER 1 &gt; (read-from-string &quot;'(a b c)&quot;)
+(QUOTE (A B C))
+8
+
+...
+
+<QUOTE PREVIOUSPOST="
+&gt; I was trying to write a emacs major mode and also writing a tutorial
+&gt; about it, in the past week. In this process, i find it quite hard.
+&gt; Writing a complete, robust, major mode for public consumption will
+&gt; require knowledge of:
+
+&gt;     * mode hooks (basic concept)
+&gt;     * font lock system (some detail)
+&gt;     * font and faces intrastructure (basic concept)
+&gt;     * buffer local variables (datil)
+&gt;     * regex (detail)
+&gt;     * keymaps (detail)
+&gt;     * syntax table (detail)
+&gt;     * abbreviation system (basics)
+&gt;     * Emacs mode conventions (a lot elisp coding experience)
+
+&gt; (the list gives a rough idea, not meant to be complete or exact in
+&gt; some way)
+">
+
+Right. There is quite a lot of to learn to write a good
+mode. For some modes there seem to be lots of
+people involved and/or some experts spend significant
+time improving it.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; Mathematica, being high-level as it is, essentially merged the concept
+&gt; of read-syntax, print-syntax, and objects, into just one concept of
+&gt; “What you see is what you get” _Expressions_ (i.e. the code programer
+&gt; types). That is, the code is the object, the object is the code. In
+&gt; other words, there is no such “internal” concepts as objects. What you
+&gt; type is the code, as well as the meaning.
+
+&gt; For example, let's say a list:
+
+&gt; In lisp:
+&gt;   (list 1 2 3)
+
+&gt; Mathematica:
+&gt;   List[1,2,3]
+
+&gt; In lisp, we say that the text “(list 1 2 3)” is the read syntax for
+&gt; the lisp's list object.
+">
+
+No. (LIST 1 2 3) is a textual representation of a function call
+to LIST with data 1 2 3. The list itself is just written as (1 2 3).
+Lists have a data syntax that can be printed and read.
+Like arrays, strings, vectors, numbers, characters, ...
+
+<QUOTE PREVIOUSPOST="
+&gt; So, the lisp interpreter reads this text, and
+&gt; turns it into a list object. When the lisp system prints a list
+&gt; object, it prints “(list 1 2 3)” too, since list object's read syntax
+&gt; and print syntax is the same.
+">
+
+? (defun test ()
+(print '(1 2 3))
+(print (list 1 2 3))
+'done)
+TEST
+? (test)
+
+(1 2 3)
+(1 2 3)
+DONE
+
+<QUOTE PREVIOUSPOST="
+&gt; In Mathematica, there's no such steps of concept. The list
+&gt; “List[1,2,3]” is just a list as is. There is no such intermediate
+&gt; concept of objects.
+">
+
+What are two lists then internally if you read them?
+Define two variables. Set both to some lists. What are these lists now?
+Say you pass one of these lists to a function.
+Does the function get a copy? The same? Don't know?
+
+If you print the Mathematica list and then read it back.
+What do you get? A new list (Why?)? The old list? Don't know?
+What with symbols. Print a symbol. Read the symbol?
+Is it a different symbol? The same? Don't know?
+
+We talk of 'objects' being the data in a running (Lisp) system.
+See below. Objects, because we don't see chunks of bits.
+
+<QUOTE PREVIOUSPOST="
+&gt; Everything in Mathematica is just a “expression”,
+&gt; meaning the texual code you type.
+">
+
+Even Mathematica has the idea of data 'objects':
+symbols, numbers, lists, strings, expressions, ...
+The documentation of Mathematica is a huge mess when
+it comes to describing its basic data types.
+Mathematica might be less precisely described compared
+to Common Lisp. Common Lisp has a spec (with its
+own problems), which allows us to have different and
+independent implementations of the programming language
+Common Lisp. Mathematica is not described in a way
+that one can 'easily' implement the thing independently.
+Plus Mathematica is focused on symbol computation
+with lots of stuff added to it somehow. For a Lisp user
+it is similar to an inhouse closed implementation of a
+hacked special purpose Lisp dialect. Common Lisp is a
+general purpose standardized programming language
+which lays down in the standard how a lot of things
+should work (printing, reading, interpreter, compiler,
+data types, ...). I'm not saying that it is necessary
+beautiful, but the Common Lisp describes the language
+in much more detail with more basic facilities.
+
+<QUOTE PREVIOUSPOST="
+&gt; This is a high-level beauty of Mathematica.
+">
+
+With an implementation that is partly in some low-level language.
+You see the beauty of the language. The Lisp programmer
+sees the details and the implementation, too.
+
+Part of it comes from its 'narrow' main domain: symbolic
+mathematics (with lots of stuff added somehow). Lisp has
+a different purpose. Symbolic computation
+is just one. Lisp would let you implement Mathematica
+with all of its functionality: windows, notebooks, language,
+3d graphics, OpenGL interface and so on. This has
+been done for systems like Macsyma or Axiom,
+where Lisp is the implementation language for a system
+like Mathematica (including all the UI stuff).
+
+<QUOTE PREVIOUSPOST="
+&gt; Now, one might think further, that if for modern language to be high
+&gt; level (such as Mathematica, or to a lesser degree PHP, Javascript,
+&gt; Lisp), but if the language also needs to deal with general programing
+&gt; with tasks such as writing a compiler, operating system, device
+&gt; drivers (such as those usually done with “compiled langs” such as C,
+&gt; Java, Haskell and lisp too), then is lisp's internal concept “object”
+&gt; necessary in a language such as lisp?
+
+&gt; Does anyone know?
+">
+
+First: a notation of is always for an external representation.
+
+What we know about languages (syntax, parsers, ...) determines
+how our programming languages look like. The Lisp model
+of a programming language is a bit odd, in that it has been
+shaped by the needs of working interactively with lists and
+other data.
+
+Second: there is an model of data for the running Lisp system.
+We also have a model in our mind how the data is organized
+in a Lisp system. We 'see' how the internal data gets
+gets written to the output and we can also use functions
+to manipulate the data and observe effects.
+
+So here comes the first complication: there are 'objects'.
+What are objects? Objects have an identity
+(so you can have two arrays and you can observe that
+they are different arrays - are they EQ or not?), a type
+(you can ask every object for its type), some
+properties (say, the array dimensions and the element-type
+of an array) and the data ( the array contents).
+
+So, objects have:
+
+* identity
+* a type
+* may have some internal information
+* data
+
+CONS
+* you can check if to cons cells are EQ or not
+* type is cons
+* no internal information
+* CAR and CDR cells are the data
+
+But there are other data types like that: strings, characters, hashtables,
+streams, pathnames, ...
+
+Second complication: there is some data that is not really
+an object like above: numbers are an example.
+
+Third complication: there are objects where you don't get access
+to the data. An example is a compiled function. It is
+a real data object, but there is no function to set or get
+the machine instructions of that function. You can
+create function objects and call them later. But you can'
+access the machine code. You can also not print them in a
+way, so that you can read it back. You would need to
+be able to write and read the machine instructions - which
+makes not that much sense for text output.
+
+So, now we have an idea about the internal data and about
+internal objects. Let's print them:
+
+a number: prints based on its types
+integer: 64568405
+ratio:  1/10
+complex: How do we print a complex number?
+Floats: how do we print a float number? That's not that easy.
+
+symbol:
+usually we want:  FOO
+but symbols can be arbitrary strings so we need sometimes:
+|this sentence is REALLY a symbol|
+
+CONS:
+we print:  (foo . bar)
+what we don't print: the identity and the type.
+
+LISTs, that's odd
+there are no real lists. Lists are conses or NIL.
+We could print them as conses:
+(A . (B . (C . NIL)))
+But for convenience we print (A B C)
+
+PATHNAMES?
+tough. Pathnames are different on various platforms.
+One could give up and say they are strings.
+Common Lisp has pathnames as objects with data
+(host, directory, name, version, ...).
+#P&quot;/foo/bar/test.lisp&quot;
+
+FUNCTIONs ? How would you print the result of:
+(compile nil (lambda (a) (+ a 10))) ??
+It is probably compiled to some machine code.
+so we do just this: #&lt;Function 15 2009528A&gt;
+
+and more...
+
+So the whole business of printing is quite complex and
+we have to make all kinds of decisions how different
+data gets printed. For some data we don't really
+know how to print it (example: functions). For some data we
+we don't want to print all detail. For some data we want
+to optimize printing (lists, ...) based on some decisions.
+So, Common Lisp provides a machinery for all this and
+more.
+
+Decisions the user has to make:
+
+do you want to print the data in a way that can be read back or not?
+for a string this means: double quotes around the string or not?
+
+do you really want to print the data in length?
+do you really want to print a 1000 x 1000 x 1000 array to
+your text console?
+
+do you really want to print the data in full depth?
+say, you have a tree that has a depth of 100, do you want to print
+all levels?
+
+and more...
+
+Now we come to reading.
+
+How do we read data? READing means turning an external
+representation into an internal one.
+
+423423 -&gt; will be read as a integer number
+(A B C) -&gt; will be read as a list. READ will create the conses and symbols (if necessary).
+|this REALLY is a symbol| : we get a fresh new symbol if there isn't one.
+if there is one already, we get that
+&quot;this surely is a string&quot;:  we get a fresh new string object
+#p&quot;/foo/bar.lisp&quot;:  we get a pathname
+#&lt;Function 15 2009528A&gt; : what now? we can't read that.
+
+Complication 1: we can't read everything.
+We can only read what has enough information in the textual
+form, so
+...
+read more »
+</POST>
+<POST>
+<POSTER> Pillsy &lt;pillsb...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-22T08:27:00 </POSTDATE>
+On Jan 22, 4:50 am, Xah Lee &lt;x ... @xahlee.org&gt; wrote:
+[...]
+
+<QUOTE PREVIOUSPOST="
+&gt; The Mathematica language is very similar to lisp. From a Mathematica
+&gt; expert's point of view (me), the first thing that seems odd of lisp is
+&gt; the low-level-ness. Perhaps in order of the low level impression:
+&gt; 1. The cons business. (lists are made up of cons cells and it is
+&gt; necessary for the programer to understand this to write any non-
+&gt; trivial lisp program)
+">
+
+This is a *strength* of Lisp over Mathematica. M'ca's underlying list
+representation is actually a vector, which means that pushing items
+onto the front of a list is quite expensive. A lot of the time M'ca
+programs end up using two-element &quot;lists&quot; as conses, giving you
+results like:
+
+{a[1], {a[2], {a[3], ...}}}
+
+and you have to gratuitously flatten everything when you're done. It's
+just plain annoying.
+
+<QUOTE PREVIOUSPOST="
+&gt; 4. A behind-the-scenes model of computation. Namely, lisp the language
+&gt; deals with the concept of &quot;lisp objects&quot;, and there's a &quot;print syntax&quot;
+&gt; that represent these objects. (and a &quot;read syntax&quot; that reads a code
+&gt; into these objects)
+">
+
+Um, M'ca has a much more elaborate set-up for printing and reading
+syntax, and appropriately so, because it attempts to allow you to use
+notation that mimics standard mathematical notation in an extensible
+way. But it definitely has its own behind-the-scenes model, and one
+that's not so different from Lisp's.  That's what TreeForm and
+FullForm are for, right?
+
+Cheers,
+Pillsy
+</POST>
+<POST>
+<POSTER> Joshua Taylor &lt;joshuaaa...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-22T08:31:00 </POSTDATE>
+On Jan 22, 6:58 am, Pascal Costanza &lt;p ... @p-cos.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Xah Lee wrote:
+&gt; &gt; In Mathematica, there's no such steps of concept. The list
+&gt; &gt; &quot;List[1,2,3]&quot; is just a list as is. There is no such intermediate
+&gt; &gt; concept of objects. Everything in Mathematica is just a &quot;expression&quot;,
+&gt; &gt; meaning the texual code you type.
+
+&gt; No, &quot;List[1,2,3]&quot; is just a couple of black pixels on the screen.
+
+&gt; Pascal
+">
+
+While I won't make a stand for or against constructor style output of
+objects, their use is important in the /design/ of programs. Consider,
+for instance, the typical Fibonacci definition:
+
+fib(0) = 0
+fib(1) = 1
+fib(n) = fib(n-1) + fib(n-2)
+
+A key to understanding the inefficiency of the naive recursive
+implementation is seeing the repeated computation:
+
+fib(n) = fib(n-1) + fib(n-2)
+= [fib(n-1-1) + fib(n-1-2)]+ [fib(n-2-1) + fib(n-2-2)]
+= fib(n-2) + [fib(n-3) + fib(n-3)] + fib(n-4)
+
+(You could get it by tracing, too, I suppose, but I'd hope that this
+is at least as clear to most programmers.) That's not an really an
+argument for any programming language practice, but it's clear that
+working with expressions this way /is/ something that people actually
+do.
+
+One of DrScheme's language options is constructor style output, and I
+wouldn't be surprised if more than a few students (if they know about
+the feature) have found it helpful for understanding that &quot;pairs can
+make all sorts of things!&quot;
+
+(I thought that that feature could print (1 2 3 4) as (cons 1 (cons 2
+(cons 3 (cons 4 ())))), but I can only seem to get (list 1 2 3 4) now.
+(1 . 3) prints as (cons 1 3), though.)
+
+//J
+</POST>
+<POST>
+<POSTER> Maciej Katafiasz &lt;mathr...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-22T10:37:00 </POSTDATE>
+Den Tue, 22 Jan 2008 14:26:05 +0100 skrev Rainer Joswig:
+
+<QUOTE PREVIOUSPOST="
+&gt; In article
+&gt; &lt;4b91e167-0570-4f38-abd1-c5b5bdfb5 ... @n22g2000prh.googlegroups.com&gt;,
+&gt;  Xah Lee &lt;x ... @xahlee.org&gt; wrote:
+&gt;&gt; 3. The syntax is a bit quirky. In particular, a mathematica programer
+&gt;&gt; sees that sometimes list is written as  $B!H (B(list a b c) $B!I
+(B,
+&gt;&gt; but sometimes there's this oddity  $B!H (B'(a b c) $B!I (B (which
+is
+&gt;&gt; syntactically equivalent to  $B!H (B(quote a b c) $B!I (B
+">
+
+I wouldn't mind or notice if you just ignored Xah Lee as is just and
+proper, but your newsreader is broken. It doesn't set Content-type:
+properly, yet it quotes !ASCII characters as is, and Xah happens to use
+ISO-2022-JP and quote characters 「」, so your reader is sending malformed
+posts. Please fix that.
+
+Cheers,
+Maciej
+</POST>
+<POST>
+<POSTER> Steve Harris &lt;steveO...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-22T14:09:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; if a function (e.g. &quot;map&quot;) that takes another
+&gt; function as argument, why would the function require the programer to
+&gt; put the apostrophy, why the function itself could be designed to not
+&gt; evaluate that argument.)
+">
+
+Because usually the argument is not a literal, but an s-expression
+that needs to be evaluated to produce the list.
+</POST>
+<POST>
+<POSTER> Xah Lee &lt;x...@xahlee.org&gt; </POSTER>
+<POSTDATE> 2008-01-23T00:45:00 </POSTDATE>
+2008-01-22
+
+sometimes its quite frustrating when discussing things in newsgroups.
+
+As most know, newsgroups discussions are characterized by ignorance,
+massive confusion, one-upmanship, and in general a showcase of the
+loniness of the tech geekers in technological societies ...
+
+but in this particular thread, a contributing factor is that most
+people don't know Mathematica to the degree that nobody ever seen one
+single line of code in Mathematica, and of the very few who have
+actually used Mathematica (maybe in their school days in the computer
+lab), most don't have the basic knowledge of programing it.
+(Mathematica 6 sells for over 2 thousands dollars i think (check their
+web to be sure), and before that version, it's over one thousand
+dollars, and i guess it is sold perhaps 10 or hundreds times than
+lisps sold by all lisp companies combined)
+
+This doesn't mean that all newsgroup posters are morons, or that all
+messages are of low quality, or that they are not valuable. (many,
+perhaps as much as half of posts in comp.lang.* groups, are highly
+technical, and highly valuable to the questioner or participants) But
+what i'm trying to say here, is that a significant portion of
+messages, esp in debate or opinion oriented discussions (which
+comprise perhaps 50% of posts), most of them missed the mark
+completely. (as in this thread) Often resulting in divisions and
+debates into technical details and facts.
+
+In this thread, my question is about the necessity of lisp's object
+concept. Most simply don't understand this question. This question,
+certainly isn't a typical computer language designing question. (the
+bag of problems the typical language designer have, esp compiler
+experts, are exemplified by recent post of Ray Dillinger
+(comp.lang.lisp, 2008-01-09, &quot;Re: Java as a first language &quot;considered
+harmful&quot;&quot; ( http://groups.google.com/group/comp.lang.lisp/msg/
+365cb58ce1b65914)))
+
+What do i mean by &quot;necessity of lisp's object concept&quot;? I thought i
+gave sufficient explanation in my post, but so far nobody actually
+addressed it squarely. The closest is Rainer Joswig, who gave a
+valuable and technical examination of lisp's objects and why it is
+necessary. (i still need to digest its technicalities detail) Though
+in my opinion it does not address this problem head on, because it is
+addressed from a lisp expert's point of view with not much
+consideration of computer languages in general, and who is also a
+ardent lisp advocate.
+
+To help understand the problem and related issues, perhaps we can ask
+a series of concrete questions that are either a paraphrase of the
+original question or very much related to it.
+
+* Does a lisp variant or descendant, such as Logo, Dylan, (and perhaps
+tcl), all intimately require its programer to have the notion of
+objects? And, how close or remote, is their notion of object differ
+than lisp's object? Do they actually use the term &quot;object&quot;? (note here
+that the word &quot;object&quot; is not to be confused with the term &quot;object&quot; in
+the lang's Object-Oriented Programing facility. The &quot;object&quot; in our
+context is certain &quot;thing&quot; or &quot;entity&quot; type of concept that are
+required understanding for the programer to be proficient in using the
+language. (even almost all langs has certain &quot;internal&quot; or &quot;behind-the-
+scenes&quot; concept that are exposed to the programer, particularly
+&quot;compiled languages&quot;, but as far as i know they do not all necessarily
+all require the programer to understand a notion of a &quot;entity&quot; that
+represent all things/objects/items/living-units of the language. (some
+will just speak of data types)))
+
+* Consider one of emacs lisp, common lisp, or scheme lisp. Suppose we
+make purely documentation changes, such that all mention of the object
+is deleted. In their place, if necessary, the manual talks about
+expressions instead, or, use wordings so that all discussion of lisp
+objects is replaced by speaking about particular instance of its print
+syntax. (in other words, do it like Mathematica does) What is the
+practical effect of this? Is this reasonably doable?
+
+* Does languages like Haskell, Concurrent Clean, or ML, erlang, OCmal/
+f#, has a concept of language's running unit a la lisp's objects?
+
+-------------
+
+A few notes about the idea of a &quot;behind the scenes model&quot; of a
+language.
+
+First of all, all computer languages as we know it, necessarily has a
+textual representation (for simplicity of discussion, we exclude here
+GUI based languages (e.g. Prograph), databases, spreadsheets, cellular
+automata, etc.) Now, since all these languages runs on a silicon chip
+based hardware (we exclude exotic or theoretical hardwares such as
+quantum, DNA, optical etc), inevitably there is a concept of &quot;process&quot;
+when the program runs, and this process may be further broken down to
+as to be constructed out of abstract entities that corresponds to the
+textual elements of the language the programer types. So, it is very
+silly, to answer to the effect that &quot;yes lisp's object is necessary
+because there is a non-textual hardware it runs on&quot;.
+
+Another point, perhaps obvious, to note is that many languages,
+especially high-level ones such as Mathematica, PHP, Javascript, do
+not have such concepts of entities (a la lisp's objects). Also note,
+as stated in my first post, that many other languages, does have
+certain &quot;behind the scenes&quot; language model that the programer need to
+understand before becoming proficient with the language. For example,
+Java has its own &quot;objects&quot; and &quot;references&quot;. Perl has &quot;references&quot;,
+&quot;file handles&quot;. C and C++, have pointers... (i don't know C or C++ so
+i may be wrong here on terminology or technicality)
+
+I think another important thing we need to realize is that what
+constitute the word &quot;necessity&quot; in the phrase &quot;the necessity of lisp's
+object's concept&quot;. For example, in almost all languages, a programer
+can have a working knowledge, perhaps employed as a junior programer,
+without understanding the &quot;behind the scenes&quot; concept of these
+languages. In fact, i assert that one can program in lisp and write
+large scale or significant number of software, without actually having
+a good understanding that lisp's expressions are compiled into
+entities called lisp objects. (certainly i have programed rather a lot
+useful functions in emacs lisp before getting a clear idea of the
+terminology &quot;lisp object&quot; used throughout its manual) For another
+example, in Java, i venture to say that majority of professional java
+programers (&quot;majority&quot; means greater than 50%; &quot;professional&quot; means
+those who makes a living primarily by coding), do NOT understand any
+of the behind-the-scenes java language model. (specifically, what i
+mean by java's &quot;behind-the-scenes java language model&quot; are those you
+acquire when you read the Java Language Specification, but many of its
+terminology and concepts is also used throughout the Java manual (aka
+the Java API) without much explanation)
+
+Given a computer language, to what extent it has &quot;behind the scenes
+language model&quot; concepts, and to what degree that understanding this
+concept is necessary in being practically proficient in the language.
+I think these are all relevant questions.
+
+(I think this is a extremely important realization, that modern
+languages are progressively getting more higher level and they all
+have less and less any &quot;behind the scenes language model&quot; concepts.
+Or, put in somewhat equivalent way, a programer can be highly
+proficient without needing to understand the language's technical
+specification. This &quot;behind the scenes language model&quot; concept is
+intimately tied to compiler/speed concepts that are exposed to the
+programer in the language. (this i've detailed somewhat in my essay
+&quot;jargons and high level languages&quot;))
+
+-------
+
+Thanks Rainer and others for correcting some errors about my statement
+of lisp's &quot;list&quot; and &quot;quote&quot; in relation to the read/print syntax.
+(and thanks Rainer for the technical exposition on lisp's objects)
+
+<QUOTE PREVIOUSPOST="
+Rainer wrote:
+">
+
+「What are two lists then internally if you read them?  Define two
+variables. Set both to some lists. What are these lists now?  Say you
+pass one of these lists to a function.  Does the function get a copy?
+The same? Don't know?  If you print the Mathematica list and then read
+it back.  What do you get? A new list (Why?)? The old list? Don't
+know?  What with symbols. Print a symbol. Read the symbol?  Is it a
+different symbol? The same? Don't know?」
+
+I don't quite understand your questions.
+
+One way to understand Mathematica is by the so-called term-rewriting
+and or graph-rewriting of computer &quot;scientist&quot;. When you think of
+these computing models, you'll see that there's no  &quot;behind the
+scenes&quot; language model like Lisp's Objects, or Java's Objects and
+References and other types, or C's pointers... etc,
+
+「Say you pass one of these lists to a function.  Does the function get
+a copy? 」
+
+Think of term-writing, then its easy to see that in Mathematica, with
+respect to the so-called &quot;getting a copy&quot; &quot;behind-the-scenes&quot; concepts
+in most computer languages, then Mathematica does gets a copy, and
+always.
+
+I do not really know what's so-called &quot;denotational semantics&quot; by
+computer &quot;scientists&quot;. However, for the past decade, i always inferred
+that the term denotational semantics describes Mathematica. Basically,
+the gist of the idea to me is that there's no &quot;behind the scenes
+language model&quot; that exists for just about every other language and
+each idiosyncratic and totally mutually incompatible. The word
+&quot;denotational&quot;, means to me that the language works by notations,
+denote its meaning by notations, which fits my concept of what
+Mathematica is. In other words, a language that has denotational
+semantics just means to me that it is like a live, computable system
+of mathematics as a _formal system_. (for those of you don't know, a
+&quot;formal system&quot; in the context of mathematics, and in our context of
+programing languages, is a language whose computation model is based
+on string transformation or similar notational model, and all meanings
+of the ...
+read more »
+</POST>
+<POST>
+<POSTER> Ken Tilton &lt;kennytil...@optonline.net&gt; </POSTER>
+<POSTDATE> 2008-01-23T01:26:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Maciej Katafiasz wrote:
+&gt; Den Tue, 22 Jan 2008 14:26:05 +0100 skrev Rainer Joswig:
+
+&gt;&gt;In article
+&gt;&gt;&lt;4b91e167-0570-4f38-abd1-c5b5bdfb5 ... @n22g2000prh.googlegroups.com&gt;,
+&gt;&gt; Xah Lee &lt;x ... @xahlee.org&gt; wrote:
+
+&gt;&gt;&gt;3. The syntax is a bit quirky. In particular, a mathematica programer
+&gt;&gt;&gt;sees that sometimes list is written as  $B!H (B(list a b c) $B!I
+
+&gt; (B,
+
+&gt;&gt;&gt;but sometimes there's this oddity  $B!H (B'(a b c) $B!I (B (which
+
+&gt; is
+
+&gt;&gt;&gt;syntactically equivalent to  $B!H (B(quote a b c) $B!I (B
+
+&gt; I wouldn't mind or notice if you just ignored Xah Lee as is just and
+&gt; proper, but your newsreader is broken. It doesn't set Content-type:
+&gt; properly, yet it quotes !ASCII characters as is, and Xah happens to use
+&gt; ISO-2022-JP and quote characters 「」, so your reader is sending malformed
+&gt; posts. Please fix that.
+">
+
+You seem to have appointed yourself the Style Editor of comp.lang.lisp.
+Thanks! I am greatly enjoying your performance. As an encore, ...
+checking ... OK, the tide comes in at 5:43am, I'd love to see you stop it!
+
+kt
+
+--
+http://www.theoryyalgebra.com/
+
+&quot;In the morning, hear the Way;
+in the evening, die content!&quot;
+-- Confucius
+</POST>
+<POST>
+<POSTER> Ken Tilton &lt;kennytil...@optonline.net&gt; </POSTER>
+<POSTDATE> 2008-01-23T01:55:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Xah Lee wrote:
+">
+
+...maciej made me snip this....
+
+<QUOTE PREVIOUSPOST="
+&gt; What prompted me to write this post, is that yesterday i thought a bit
+&gt; about lisp's objects, why Mathematica doesn't have it, and realized:
+
+&gt; Mathematica, being high-level as it is, essentially merged the concept
+&gt; of read-syntax, print-syntax, and objects, into just one concept of
+&gt; “What you see is what you get” _Expressions_ (i.e. the code programer
+&gt; types). That is, the code is the object, the object is the code. In
+&gt; other words, there is no such “internal” concepts as objects. What you
+&gt; type is the code, as well as the meaning.
+
+&gt; For example, let's say a list:
+
+&gt; In lisp:
+&gt;   (list 1 2 3)
+
+&gt; Mathematica:
+&gt;   List[1,2,3]
+">
+
+Well, I do not know Mathematica, so you'll have to help me.
+
+If I say (eq (list 1)(list 1)) in Lisp I get nil, aka, nope, they are
+not EQ, EQ being the test for object identity. (They happen also not to
+be EQL, just EQUAL (the one that digs into structure)).
+
+What happens in Mathematica?
+
+The advantage to me in Lisp is that I can have two lists starting with
+the same textual expression and they will, well, be two different lists,
+not one. I can mutate one without mutating the other, holding references
+to each in different places, and then see different lists when those two
+places are compared, or (the flip side) see &quot;the same&quot; list even when
+the contents of the list have changed. ie, I might have two Lisp
+&quot;places&quot; bound to the same list and want changes to be visible
+regardless of the binding.
+
+Mind you, this all comes down to the question of state. Does Mathematica
+have that concept, or is it purely functional? (not that I am conversant
+with FPL either). If not, sure all list[1,2,3]s can be collapsed into
+one, no need for object identity, there it is, list[1,2,3]. But in Lisp
+we can have two variables bound to the same list:
+
+(setf x (setf y (list 1 2 3))
+
+...and then (delete 2 y) and see the result in x because x is &quot;/the
+same/ list as y&quot;, it is /not/ &quot;the list of 1, 2, and 3&quot;.
+
+Is that necessary? It is what it is, which is different than Mathematica
+it seems, but I do not see an interesting issue here.
+
+<QUOTE PREVIOUSPOST="
+&gt; In lisp, we say that the text “(list 1 2 3)” is the read syntax for
+&gt; the lisp's list object. So, the lisp interpreter reads this text, and
+&gt; turns it into a list object. When the lisp system prints a list
+&gt; object, it prints “(list 1 2 3)” too, since list object's read syntax
+&gt; and print syntax is the same.
+
+&gt; In Mathematica, there's no such steps of concept. The list
+&gt; “List[1,2,3]” is just a list as is. There is no such intermediate
+&gt; concept of objects. Everything in Mathematica is just a “expression”,
+&gt; meaning the texual code you type.
+
+&gt; This is a high-level beauty of Mathematica.
+">
+
+No beauty either way, just different.I think you have a non-issue here,
+either you like state or do not, Lisp does, Mathematica might not or
+might only with globals bound to vectors (making that up as I go).
+
+kt
+
+--
+http://www.theoryyalgebra.com/
+
+&quot;In the morning, hear the Way;
+in the evening, die content!&quot;
+-- Confucius
+</POST>
+<POST>
+<POSTER> Rainer Joswig &lt;jos...@lisp.de&gt; </POSTER>
+<POSTDATE> 2008-01-23T03:37:00 </POSTDATE>
+In article
+&lt;da297d6d-0115-4c19-83dd-c316a2449 ... @v46g2000hsv.googlegroups.com&gt;,
+Xah Lee &lt;x ... @xahlee.org&gt; wrote:
+
+...
+
+I think you are seriously confused when it comes to programming
+language models. Don't take that offensive, just as a recommendation
+to clear up basic things like: 'expression', 'object', 'process',
+'interpretation'. Part of that may come from that Mathematica only
+has a weak specification of the core programming language.
+
+<QUOTE PREVIOUSPOST="
+&gt; Thanks Rainer and others for correcting some errors about my statement
+&gt; of lisp's &quot;list&quot; and &quot;quote&quot; in relation to the read/print syntax.
+&gt; (and thanks Rainer for the technical exposition on lisp's objects)
+
+&gt; Rainer wrote:
+&gt; 「What are two lists then internally if you read them?  Define two
+&gt; variables. Set both to some lists. What are these lists now?  Say you
+&gt; pass one of these lists to a function.  Does the function get a copy?
+&gt; The same? Don't know?  If you print the Mathematica list and then read
+&gt; it back.  What do you get? A new list (Why?)? The old list? Don't
+&gt; know?  What with symbols. Print a symbol. Read the symbol?  Is it a
+&gt; different symbol? The same? Don't know?」
+
+&gt; I don't quite understand your questions.
+
+&gt; One way to understand Mathematica is by the so-called term-rewriting
+&gt; and or graph-rewriting of computer &quot;scientist&quot;. When you think of
+&gt; these computing models, you'll see that there's no  &quot;behind the
+&gt; scenes&quot; language model like Lisp's Objects, or Java's Objects and
+&gt; References and other types, or C's pointers... etc,
+">
+
+Of course there is. Term Rewriting is only part of the story
+in Mathematica. Mathematica has control constructs,
+functions and all kind of weird stuff.
+What is a Term? A Term is recursively
+defined as either a object or a construct with subterms.
+Objects are symbols, strings, numbers, lists, and so on.
+There are also functions and 'pure function' (like
+anonymous functions in Lisp). You can creare
+lists of functions, just like in Lisp.
+
+A Mathematica runtime system is quite similar
+to what a Lisp system does.
+
+Example:
+
+Find the equivalent
+in Mathematica (which has functions, global variables,
+local variables, data constructors, mutable data structures,
+Set, Equal, SameQ, List, ...) for the following:
+
+You can set global variables with values:
+
+(setf foo1 'bar)
+
+You can define functions with parameters and code:
+
+(defun foo (a)
+(list a a))
+
+You can call functions:
+
+(foo foo1)
+
+You get results from these functions.
+
+(foo foo1)  -&gt;  (bar bar)
+
+see below for more
+
+<QUOTE PREVIOUSPOST="
+&gt; 「Say you pass one of these lists to a function.  Does the function get
+&gt; a copy? 」
+
+&gt; Think of term-writing, then its easy to see that in Mathematica, with
+&gt; respect to the so-called &quot;getting a copy&quot; &quot;behind-the-scenes&quot; concepts
+&gt; in most computer languages, then Mathematica does gets a copy, and
+&gt; always.
+">
+
+That's not true. If you set the nth element of an list,
+the original list will be modified. Not a copy.
+
+If you pass that list around and change it, the original
+list will be modified. Not a copy.
+
+See above. The list (bar bar). What are the symbols?
+are they copies of the symbols or is there just one
+symbol and the list points to them from two places?
+
+Do the equivalent to the following in Mathematica:
+
+(setf bar1 (list 'bar-symbol))
+
+(setf bar2 (foo bar1))
+
+(print bar2)
+
+(setf (first bar1) 'new-bar-symbol)
+
+(print bar1)
+
+(print bar2)
+
+Now, what does bar2 print? Is bar2 changed or not?
+
+See also:
+
+http://reference.wolfram.com/mathematica/tutorial/MakingListsOfObject...
+http://reference.wolfram.com/mathematica/tutorial/PrinciplesOfEvaluat...
+
+Also note that above uses the word 'object'.
+</POST>
+<POST>
+<POSTER> Frank Buss &lt;f...@frank-buss.de&gt; </POSTER>
+<POSTDATE> 2008-01-23T03:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Ken Tilton wrote:
+&gt; Mind you, this all comes down to the question of state. Does Mathematica
+&gt; have that concept, or is it purely functional? (not that I am conversant
+&gt; with FPL either).
+">
+
+I'm not a Mathematica expert, but sometimes it is useful for solving
+equations etc. If you hit F1 on &quot;List&quot; in Mathematic, the help screen says:
+
+| Lists are very general objects that represent collections of expressions.
+
+This means, Mathematica has objects and a list is an object. And you can
+modify lists in Mathematica, without modifying other lists with the same
+elements, which would be really strange. Functional languages like Haskell
+doesn't allow to modify lists (with some exceptions and internally some
+operations may be implemented in an efficient modifying way), which makes
+it easier to write more bug-free code, if you think long enough to find a
+good functional solution, which is more difficult for me sometimes than
+writing a non-functional solution.
+
+A Mathematica notebook:
+
+In[1]:=x=List[4,5,6]
+Out[1]={4,5,6}
+
+In[2]:=y=List[4,5,6]
+Out[2]={4,5,6}
+
+In[3]:=x[[2]]
+Out[3]=5
+
+In[4]:=x[[2]]=9
+Out[4]=9
+
+In[5]:=x
+Out[5]={4,9,6}
+
+In[6]:=y
+Out[6]={4,5,6}
+
+The same in Lisp:
+
+CL-USER 1 &gt; (defparameter *x* (list 4 5 6))
+*X*
+
+CL-USER 2 &gt; (defparameter *y* (list 4 5 6))
+*Y*
+
+CL-USER 3 &gt; (elt *x* 1)
+5
+
+CL-USER 4 &gt; (setf (elt *x* 1) 9)
+9
+
+CL-USER 5 &gt; *x*
+(4 9 6)
+
+CL-USER 6 &gt; *y*
+(4 5 6)
+
+--
+Frank Buss, f ... @frank-buss.de
+http://www.frank-buss.de , http://www.it4-systems.de
+</POST>
+<POST>
+<POSTER> &quot;John Thingstad&quot; &lt;jpth...@online.no&gt; </POSTER>
+<POSTDATE> 2008-01-23T07:54:00 </POSTDATE>
+På Wed, 23 Jan 2008 06:45:51 +0100, skrev Xah Lee &lt;x ... @xahlee.org&gt;:
+
+I think you are mixing up object's and object oriented programming.
+Calling atomic entities in a language objects predates object oriented
+programming.
+For the first 30 years or so there was no support for object oriented
+programming in lisp.
+Object oriented programs are data driven. That is the
+functions/procedures/methods/messages (whatever) all relate to the object.
+This is what I will assume you mean.
+
+Correct me if I am wrong, but the support for windows programming in
+mathematic seems weak.
+Sure you have the tree based display subsystem in the notebiook but it
+works essentially to format a document. In particular it is processed
+sequentially. (like HTML)
+
+This brings me to one of the weaknesses of relational logic. It is not
+just in pattern matching and logic programming but also in relational
+databases by the way. It is awkward to represent one to may and many to
+many relationships.
+
+The data flow in a windows app mens you can wander from one state to
+another at random.
+This is very difficult to implement with a relational data model.
+Thus even languages like Prolog have implemented objects. If for no other
+reason than to facilitate writing windows interfaces.
+
+There are problems for which object orientation is the simplest mode.
+Lisp is a multi paradigm language. So it supports procedural to-down
+programming, bottom up programming and object oriented programming.
+There is no style guides in Lisp and probably as many opinions about the
+right way of writing Lisp programs as there are people.
+
+For instance Rainer Josvig does most of his work using the CLOS system,
+while I am much more reluctant to use it.
+
+For the record describing the Mathematica language as a form of Lisp seems
+wrong to me.
+Sure it inherits is idea of storing data in trees and using prefix syntax
+from Lisp. The essential difference to me is how it handles functions.
+Mathematica has relations not functions. So in order to see what code to
+call you have to search the database and find which of the definitions
+makes the closest match. Like in Prolog order left to right and top to
+down is important.
+
+--------------
+John Thingstad
+</POST>
+<POST>
+<POSTER> &quot;John Thingstad&quot; &lt;jpth...@online.no&gt; </POSTER>
+<POSTDATE> 2008-01-23T07:57:00 </POSTDATE>
+På Wed, 23 Jan 2008 13:54:32 +0100, skrev John Thingstad
+&lt;jpth ... @online.no&gt;:
+
+<QUOTE PREVIOUSPOST="
+&gt; Thus even languages like Prolog have implemented objects.
+">
+
+That should be classes.
+
+--------------
+John Thingstad
+</POST>
+<POST>
+<POSTER> Jon Harrop &lt;use...@jdh30.plus.com&gt; </POSTER>
+<POSTDATE> 2008-01-23T10:06:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+John Thingstad wrote:
+&gt; Correct me if I am wrong, but the support for windows programming in
+&gt; mathematic seems weak.
+">
+
+Windows is Mathematica's native platform. Other platforms (like Linux) have
+had missing features.
+
+<QUOTE PREVIOUSPOST="
+&gt; Sure you have the tree based display subsystem in the notebiook but it
+&gt; works essentially to format a document.
+">
+
+Notebooks also typeset code and maths and provide interactive graphics.
+
+<QUOTE PREVIOUSPOST="
+&gt; In particular it is processed sequentially. (like HTML)
+">
+
+Notebook cells can be evaluated out of order and, indeed, they are typically
+evaluated and edited manually in any order with a few &quot;initialization&quot;
+cells that get called once before everything else.
+
+<QUOTE PREVIOUSPOST="
+&gt; The data flow in a windows app mens you can wander from one state to
+&gt; another at random.
+&gt; This is very difficult to implement with a relational data model.
+&gt; Thus even languages like Prolog have implemented objects. If for no other
+&gt; reason than to facilitate writing windows interfaces.
+">
+
+I don't believe Mathematica's language would be inherently bad for
+application programming, although it lacks an expressive static type system
+like OCaml. However, in the absence of static typing you need huge support
+for debugging and unit testing frameworks which Mathematica has also lacked
+(although I believe it is now being addressed).
+
+<QUOTE PREVIOUSPOST="
+&gt; For the record describing the Mathematica language as a form of Lisp seems
+&gt; wrong to me.
+&gt; Sure it inherits is idea of storing data in trees and using prefix syntax
+&gt; from Lisp.
+">
+
+and term rewriting (macros).
+
+<QUOTE PREVIOUSPOST="
+&gt; The essential difference to me is how it handles functions.
+&gt; Mathematica has relations not functions.
+">
+
+Well, rewrite rules.
+
+<QUOTE PREVIOUSPOST="
+&gt; So in order to see what code to
+&gt; call you have to search the database and find which of the definitions
+&gt; makes the closest match. Like in Prolog order left to right and top to
+&gt; down is important.
+">
+
+Equivalently in Lisp, people can and do redefine random stuff and things at
+run-time. As they say &quot;where will the program counter go next? Who
+knows...&quot;. That is the same problem of &quot;rats nest&quot; programs, IMHO.
+
+Incidentally, the Mathematica expression:
+
+{1, 2, 3}
+
+is actually an array/vector rather than a linked list. A true list would be:
+
+{1, {2, {3, {}}}}
+
+Mathematica has very little support for lists and is rather ill-suited to
+handling them, e.g. it segfaults from stack overflow after an order of
+magnitude fewer recursions than any other language I know.
+
+--
+Dr Jon D Harrop, Flying Frog Consultancy Ltd.
+http://www.ffconsultancy.com/products/?u
+</POST>
+<POST>
+<POSTER> Ken Tilton &lt;kennytil...@optonline.net&gt; </POSTER>
+<POSTDATE> 2008-01-23T11:10:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Frank Buss wrote:
+&gt; Ken Tilton wrote:
+
+&gt;&gt;Mind you, this all comes down to the question of state. Does Mathematica
+&gt;&gt;have that concept, or is it purely functional? (not that I am conversant
+&gt;&gt;with FPL either).
+
+&gt; I'm not a Mathematica expert, but sometimes it is useful for solving
+&gt; equations etc. If you hit F1 on &quot;List&quot; in Mathematic, the help screen says:
+
+&gt; | Lists are very general objects that represent collections of expressions.
+
+&gt; This means, Mathematica has objects and a list is an object. And you can
+&gt; modify lists in Mathematica, without modifying other lists with the same
+&gt; elements, which would be really strange. Functional languages like Haskell
+&gt; doesn't allow to modify lists (with some exceptions and internally some
+&gt; operations may be implemented in an efficient modifying way), which makes
+&gt; it easier to write more bug-free code, if you think long enough to find a
+&gt; good functional solution, which is more difficult for me sometimes than
+&gt; writing a non-functional solution.
+
+&gt; A Mathematica notebook:
+
+&gt; In[1]:=x=List[4,5,6]
+&gt; Out[1]={4,5,6}
+
+&gt; In[2]:=y=List[4,5,6]
+&gt; Out[2]={4,5,6}
+
+&gt; In[3]:=x[[2]]
+&gt; Out[3]=5
+
+&gt; In[4]:=x[[2]]=9
+&gt; Out[4]=9
+
+&gt; In[5]:=x
+&gt; Out[5]={4,9,6}
+
+&gt; In[6]:=y
+&gt; Out[6]={4,5,6}
+
+&gt; The same in Lisp:
+
+&gt; CL-USER 1 &gt; (defparameter *x* (list 4 5 6))
+&gt; *X*
+
+&gt; CL-USER 2 &gt; (defparameter *y* (list 4 5 6))
+&gt; *Y*
+
+&gt; CL-USER 3 &gt; (elt *x* 1)
+&gt; 5
+
+&gt; CL-USER 4 &gt; (setf (elt *x* 1) 9)
+&gt; 9
+
+&gt; CL-USER 5 &gt; *x*
+&gt; (4 9 6)
+
+&gt; CL-USER 6 &gt; *y*
+&gt; (4 5 6)
+">
+
+Haha, sure, it is the same, but is it the same same? Lisp's is nothing
+to take lightly:
+
+file:///C:/Program%20Files/acl81/ansicl/glossary/s.htm#symbol
+
+But I digress. Your example does not demonstrate sameness until we also see:
+
+&gt; In[1]:=x=List[4,5,6]
+&gt; Out[1]={4,5,6}
+&gt;
+&gt; In[2]:=y=x  &lt;- bingo
+&gt; Out[2]={4,5,6}
+&gt;
+&gt; In[3]:=x[[2]]
+&gt; Out[3]=5
+&gt;
+&gt; In[4]:=x[[2]]=9
+&gt; Out[4]=9
+&gt;
+&gt; In[5]:=x
+&gt; Out[5]={4,9,6}
+&gt;
+&gt; In[6]:=y
+&gt; Out[6]={4,9,6} &lt;- bongo
+&gt;
+
+Can do? Bingo bongo, I mean. :)
+
+kt
+
+--
+http://www.theoryyalgebra.com/
+
+&quot;In the morning, hear the Way;
+in the evening, die content!&quot;
+-- Confucius
+</POST>
+<POST>
+<POSTER> Xah Lee &lt;x...@xahlee.org&gt; </POSTER>
+<POSTDATE> 2008-01-23T11:16:00 </POSTDATE>
+Hi Kenny!
+
+<QUOTE PREVIOUSPOST="
+Ken Tilton &lt;kennytil ... @optonline.net&gt; wrote:
+">
+
+「If I say (eq (list 1)(list 1)) in Lisp I get nil, aka, nope, they are
+not EQ, EQ being the test for object identity. (They happen also not
+to be EQL, just EQUAL (the one that digs into structure)).
+
+What happens in Mathematica?
+」
+
+In[5]:=
+Equal[List[1],List[1]]
+
+Out[5]=
+True
+
+This is the beauty of mathematica. Simple, easy to understand. What
+you see is what you get. No behind the scenes stuff.
+
+「The advantage to me in Lisp is that I can have two lists starting
+with the same textual expression and they will, well, be two different
+lists, not one.」
+
+This is exactly the point of confusing, behind-the-scenes lang model,
+i mean. Depending on the language, they can get quite convoluted. (in
+particular, Java, with its access specifiers, constructors, objects,
+arrays, references etc.)
+
+「I can mutate one without mutating the other, holding references to
+each in different places, and then see different lists when those two
+places are compared, or (the flip side) see &quot;the same&quot; list even when
+the contents of the list have changed. ie, I might have two Lisp
+&quot;places&quot; bound to the same list and want changes to be visible
+regardless of the binding.」
+
+Note here that Mathematica language programing doesn't have any
+concepts of momeries, pointers, or references in any way. So, this
+means, you can't like change one entity and expect some other entity
+will also be changed mysteriously or magically.
+
+Remember, everything is textual, “what u see is what get”, thinking it
+as a formal mathematics system. (formal means FORMal. The word
+“formal” is a example of bad/mutated terminology that creates endless
+confusion)
+
+<QUOTE PREVIOUSPOST="
+Kenny wrote:
+">
+
+「Mind you, this all comes down to the question of state. Does
+Mathematica
+have that concept, or is it purely functional? (not that I am
+conversant
+with FPL either). If not, sure all list[1,2,3]s can be collapsed into
+one, no need for object identity, there it is, list[1,2,3]. But in
+Lisp
+we can have two variables bound to the same list:
+
+(setf x (setf y (list 1 2 3))
+
+...and then (delete 2 y) and see the result in x because x is &quot;/the
+same/ list as y&quot;, it is /not/ &quot;the list of 1, 2, and 3&quot;.
+
+Is that necessary? It is what it is, which is different than
+Mathematica
+it seems, but I do not see an interesting issue here.
+」
+
+Excellent example to illustrate the issue. I'd pick on your
+characterization about this being stateful vs not-stateful. What the
+behind-the-scenes hard-linked kinda thing is basically modeled on a
+state machine kinda thinking. (actually, more just because it's easy
+to implement)
+
+Mathematica does not use “behing the scenes” lang model but you can
+assign vars in Mathematica and change it later in your program. The
+Mathemtica programing culture is more like “whatever works”, in this
+sense a lot like Common Lisp as contrasted to Scheme lisp.
+
+In Mathematica, if you want the behavior as of hardlinking 2 behind-
+the-scene things, just assign them to the same var... like this:
+
+In[25]:=
+data={1,2,3};
+x := data;
+y := data;
+
+In[28]:=
+data=Delete[data,2]
+
+Out[28]=
+{1,3}
+
+In[29]:=
+x
+
+Out[29]=
+{1,3}
+
+In[30]:=
+y
+
+The “:=” is syntax shortcut for “SetDelayed[]”, while “=” is “Set[]”.
+The difference, is that the Set evaluate the rhs before assignment,
+while SetDelayed evaluate the rhs only when it is called.
+
+In my 2 decades of progaming experiences, with 5+ years of geometry
+programing and 5+ years in web application development and unix sys
+admin, expert at several languages, i don't think there is a instance
+where i needed 2 things to be linked in some hard way. And, whenever a
+lang support such a idea, it usually just hamper the use of the
+language. (one example is unix file system's hardlinks)
+
+Basically, i think the concept of linking things is one of those easy-
+to-implement paradigm that just gets rooted in the early time of
+computing, when hardware (as well as software techs) are rather
+primitive. Over time, these types of paradigms gets shifted and
+eliminated. (e.g. dynamic/lexical scope, pointers vs so-called garbage-
+collection, primitive statics typing (a la C, Java) vs dynamic typing
+(lisp,perl,python,php, ruby, javascript ...on and on) or typing with
+inference (haskell) or no types and mathematical types (Mathematica))
+
+People unfamiliar with ultra high level languages such as Mathematica
+(or perhaps haskell too), can understand this “what u see is what u
+get” by comparing to dynamic and lexical scope. Lexical scope, in a
+sense, is of the model “wysiwyg”, while dynamic can be likened to
+“behind the scenes happenings”. The behavior of Mathematica expression
+is wysiwyg, while lisp's expressions with its “objects” is “behind the
+scenes happenings”. Also, the “behind the scenes” style are often the
+brainless of the two to implement, that's why they are everywhere. But
+as i repeated quite a few times, as computer langs throughout the past
+2 decades, we see a progress towards higher level with less and less
+these behind-the-scenese lang model kinda langs.
+
+<QUOTE PREVIOUSPOST="
+Kenny wrote:
+">
+
+「No beauty either way, just different.」
+
+There is much beauty far beyond lisp, Kenny.
+
+I get frustrated seeing how people truly are moronic in comparison to
+me, having no idea what i'm talking about while i fully understand
+what they are talking about. In the past few years i began to reckon
+that i'm just a genius, whose views are maybe 30 years into the future
+beyond the average computer scientists or industrial programers. (a
+bit scary to say this myself, i know.)
+
+In this particular thread, i claim, that high level langs of the
+future is getting rid of the “behind the scenes” lang model, as i have
+repeatedly voiced it in this thread. When i posted my first post, i
+had some reservations, thinking that lisp's objects concept are
+perhaps necessary in some way for the lang's area of applications. Now
+having seen the many replies and have thought more about it, i more
+inclined to think it's simply another baggage of 1970s computing era,
+and probably can be eliminated without effecting the power of the lang
+in any way.
+
+--------------
+
+I don't like to write short replies... but there are messages going on
+in this thread that's going wild... i'll address a few shortly here.
+
+John Thingstad is going wild stating that i confused “object” in OOP
+with “lisp's objects”. I have absolutely no idea how he construed
+that, honestly, absolutely no idea. In fact in one of my post i
+specifically, explicitly, stated that the 2 shouldn't be confused.
+Possibly he replied to Rainer's writings thinking it was mine.
+
+The Jon Harrop character, although very informative, tends to spew
+taunting remarks selling his stuff. He's throwing a few bad mouthing
+of Mathematica, i may or may not retort. (one about how Mathematica
+doesn't have some beautiful static typing as his love OCaml, the other
+has some technical merits about how mathematica's “list” isnt “true
+lists” but “vectors”. (very computer scientist-moronic, use of
+jargons))
+
+The Rainer Joswig character, is a silly one. He replied to my
+messages, telling me to do some simple computations in Mathematica and
+pointing out some Mathematica documentation to me, as to demonstrate
+some of his points. Did he miss the fact that i'm the world's top
+expert of Mathematica? Or is that not believed? If he belived, at
+least, that i have like 10 years of experience of actually programing
+in Mathematica, how could he think in such a way as if i didn't
+understand some detail in the manual? So, to infer further, perhaps
+any disagreement in our post must be attribute to other causes than my
+not understanding some aspect of Mathematica?
+
+Rainer's posts, are often like this. Perhaps it's his personality or
+way of communication or thinking pattern.
+
+----
+
+... sometimes i think perhaps i should be nicer to people or
+something. Oh well, the depths and mysteries and questions of life and
+living and cosmos...
+
+Xah
+x ... @xahlee.org
+∑ http://xahlee.org/
+
+☄
+</POST>
+<POST>
+<POSTER> Don Geddis &lt;d...@geddis.org&gt; </POSTER>
+<POSTDATE> 2008-01-23T12:43:00 </POSTDATE>
+Xah Lee &lt;x ... @xahlee.org&gt; wrote on Wed, 23 Jan 2008:
+
+<QUOTE PREVIOUSPOST="
+&gt; I get frustrated seeing how people truly are moronic in comparison to me,
+&gt; having no idea what i'm talking about while i fully understand what they
+&gt; are talking about.  In the past few years i began to reckon that i'm just a
+&gt; genius
+">
+
+I have another theory: perhaps other people are able to communicate complex
+ideas clearly, whereas you think muddled thoughts and have very low
+communication skills.
+
+I wonder which theory is more likely to be true?
+
+<QUOTE PREVIOUSPOST="
+&gt; Did he miss the fact that i'm the world's top expert of Mathematica?
+">
+
+Are you?  Can you demonstrate for my your superior knowledge of Mathematica
+over, say, Stephen Wolfram?
+
+Because I've also heard Wolfram claim that he understands Mathematica pretty
+well.  I wonder if there's any way to determine whether it is you, or he, (or
+maybe even someone else!) that is the &quot;world's top expert of Mathematica&quot;.
+
+-- Don
+___________________________________________________________________________ ____
+Don Geddis http://don.geddis.org/ d ... @geddis.org
+Cole's Law:  Thinly sliced cabbage.
+</POST>
+<POST>
+<POSTER> George Sakkis &lt;george.sak...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-23T13:28:00 </POSTDATE>
+On Jan 23, 12:43 pm, Don Geddis &lt;d ... @geddis.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Xah Lee &lt;x ... @xahlee.org&gt; wrote on Wed, 23 Jan 2008:
+
+&gt; &gt; I get frustrated seeing how people truly are moronic in comparison to me,
+&gt; &gt; having no idea what i'm talking about while i fully understand what they
+&gt; &gt; are talking about.  In the past few years i began to reckon that i'm just a
+&gt; &gt; genius
+
+&gt; I have another theory: perhaps other people are able to communicate complex
+&gt; ideas clearly, whereas you think muddled thoughts and have very low
+&gt; communication skills.
+
+&gt; I wonder which theory is more likely to be true?
+">
+
+Are you new on Usenet ? I'm always amazed when people are trying to
+engage in a logical conversation with Xah Lee.
+
+George
+</POST>
+<POST>
+<POSTER> Ken Tilton &lt;kennytil...@optonline.net&gt; </POSTER>
+<POSTDATE> 2008-01-23T13:44:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Xah Lee wrote:
+&gt; Hi Kenny!
+">
+
+Xah!
+
+<QUOTE PREVIOUSPOST="
+&gt; Ken Tilton &lt;kennytil ... @optonline.net&gt; wrote:
+
+&gt; 「If I say (eq (list 1)(list 1)) in Lisp I get nil, aka, nope, they are
+&gt; not EQ, EQ being the test for object identity. (They happen also not
+&gt; to be EQL, just EQUAL (the one that digs into structure)).
+
+&gt; What happens in Mathematica?
+&gt; 」
+
+&gt; In[5]:=
+&gt; Equal[List[1],List[1]]
+
+&gt; Out[5]=
+&gt; True
+
+&gt; This is the beauty of mathematica. Simple, easy to understand. What
+&gt; you see is what you get. No behind the scenes stuff.
+
+&gt; 「The advantage to me in Lisp is that I can have two lists starting
+&gt; with the same textual expression and they will, well, be two different
+&gt; lists, not one.」
+
+&gt; This is exactly the point of confusing, behind-the-scenes lang model,
+&gt; i mean. Depending on the language, they can get quite convoluted. (in
+&gt; particular, Java, with its access specifiers, constructors, objects,
+&gt; arrays, references etc.)
+">
+
+I do find things like C++ pretty scary in this respect, mostly because
+of that whacky syntax. :) I am just not sure mutable state is
+necessarily confusing. I suppose (but am prepared for rectification) you
+are OK with slots of structs and classes (does Mathematica have such
+things?) being mutable, such that a change to a slot of an instance is
+visible from any reference that might be held to that instance. And I
+surmise also you do not consider this magic nor even behind-the-scenes?
+If so (and again I understand you might not in fact agree so far), then
+all we have in Lisp is that our lists (and other things other than
+numbers and characters) also have object identity, so if there are
+multiple references to the same thing they all change together, like an
+in-memory database if you will.
+
+Now if I am wrong and you do find mutable state in general confusing,
+well, I guess many agree with you, namely the entire FP community. And
+even I agree: the functional paradigm is a huge win for transparency and
+program correctness. I just never enslave my self to good principles
+like FP, I always reserve the right to do what I want, shucks, even use
+tagbody-go in moments of weakness. :)
+
+<QUOTE PREVIOUSPOST="
+&gt; 「I can mutate one without mutating the other, holding references to
+&gt; each in different places, and then see different lists when those two
+&gt; places are compared, or (the flip side) see &quot;the same&quot; list even when
+&gt; the contents of the list have changed. ie, I might have two Lisp
+&gt; &quot;places&quot; bound to the same list and want changes to be visible
+&gt; regardless of the binding.」
+
+&gt; Note here that Mathematica language programing doesn't have any
+&gt; concepts of momeries, pointers, or references in any way. So, this
+&gt; means, you can't like change one entity and expect some other entity
+&gt; will also be changed mysteriously or magically.
+">
+
+Well, the c.l.l savages always ridicule me on this, but one /does/ have
+to master the cons to do well with Lisp. And I guess you are right, many
+a noob (all?) trips over Lisp lists early on. Hell, I have always
+maintained Lisp lists should be explained this way: there is no such
+thing as a list, there are just conses with cars and cdrs.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; Remember, everything is textual, “what u see is what get”, thinking it
+&gt; as a formal mathematics system. (formal means FORMal. The word
+&gt; “formal” is a example of bad/mutated terminology that creates endless
+&gt; confusion)
+
+&gt; Kenny wrote:
+&gt; 「Mind you, this all comes down to the question of state. Does
+&gt; Mathematica
+&gt; have that concept, or is it purely functional? (not that I am
+&gt; conversant
+&gt; with FPL either). If not, sure all list[1,2,3]s can be collapsed into
+&gt; one, no need for object identity, there it is, list[1,2,3]. But in
+&gt; Lisp
+&gt; we can have two variables bound to the same list:
+
+&gt;   (setf x (setf y (list 1 2 3))
+
+&gt; ...and then (delete 2 y) and see the result in x because x is &quot;/the
+&gt; same/ list as y&quot;, it is /not/ &quot;the list of 1, 2, and 3&quot;.
+
+&gt; Is that necessary? It is what it is, which is different than
+&gt; Mathematica
+&gt; it seems, but I do not see an interesting issue here.
+&gt; 」
+
+&gt; Excellent example to illustrate the issue. I'd pick on your
+&gt; characterization about this being stateful vs not-stateful. What the
+&gt; behind-the-scenes hard-linked kinda thing is basically modeled on a
+&gt; state machine kinda thinking. (actually, more just because it's easy
+&gt; to implement)
+
+&gt; Mathematica does not use “behing the scenes” lang model but you can
+&gt; assign vars in Mathematica and change it later in your program. The
+&gt; Mathemtica programing culture is more like “whatever works”, in this
+&gt; sense a lot like Common Lisp as contrasted to Scheme lisp.
+
+&gt; In Mathematica, if you want the behavior as of hardlinking 2 behind-
+&gt; the-scene things, just assign them to the same var... like this:
+
+&gt; In[25]:=
+&gt; data={1,2,3};
+&gt; x := data;
+&gt; y := data;
+
+&gt; In[28]:=
+&gt; data=Delete[data,2]
+
+&gt; Out[28]=
+&gt; {1,3}
+
+&gt; In[29]:=
+&gt; x
+
+&gt; Out[29]=
+&gt; {1,3}
+
+&gt; In[30]:=
+&gt; y
+">
+
+And?:
+
+Out[30]=
+{1,3}
+
+I guess so, since it seems no diff than x. Can I go the other way,
+Delete[x,2] and see it back in data? Or has x become like a symbol-macro
+for data? Anyway...
+
+<QUOTE PREVIOUSPOST="
+&gt; The “:=” is syntax shortcut for “SetDelayed[]”, while “=” is “Set[]”.
+&gt; The difference, is that the Set evaluate the rhs before assignment,
+&gt; while SetDelayed evaluate the rhs only when it is called.
+">
+
+And once it is called? What if you had evaluated x /first/ and seen
+1,2,3 and /then/ deleted 2. Would a second evaluation of x still return
+1,2,3? If it returns 1,2, then := in a sense gives one the same thing as
+object identity, except (and this may be an advantage, if I want to
+achieve this behavior I must remember to use :=. ie, if I now want to
+have z refer to the same list, I must say z := x.
+
+<QUOTE PREVIOUSPOST="
+&gt;  In my 2 decades of progaming experiences, with 5+ years of geometry
+&gt; programing and 5+ years in web application development and unix sys
+&gt; admin, expert at several languages, i don't think there is a instance
+&gt; where i needed 2 things to be linked in some hard way.
+">
+
+I do it all the time. Lists are a very powerful data structure and with
+a full suite of list-processing functions such as CL has one can go
+quite far with them without getting into structs and classes. This works
+especially well inside functions where it is not all that hard to keep
+track of what is in each position in a list one dashes off on the fly.
+
+<QUOTE PREVIOUSPOST="
+&gt; And, whenever a
+&gt; lang support such a idea, it usually just hamper the use of the
+&gt; language. (one example is unix file system's hardlinks)
+">
+
+But if we cannot mutate lists we lose expressive power. Lisp programs
+that always copy structure cannot scale beyond toy size. So mutable
+state is not there just to confuse people, it extends the language (so,
+yes, there is more to be learned).
+
+<QUOTE PREVIOUSPOST="
+&gt; Basically, i think the concept of linking things is one of those easy-
+&gt; to-implement paradigm that just gets rooted in the early time of
+&gt; computing, when hardware (as well as software techs) are rather
+&gt; primitive. Over time, these types of paradigms gets shifted and
+&gt; eliminated. (e.g. dynamic/lexical scope, pointers vs so-called garbage-
+&gt; collection, primitive statics typing (a la C, Java) vs dynamic typing
+&gt; (lisp,perl,python,php, ruby, javascript ...on and on) or typing with
+&gt; inference (haskell) or no types and mathematical types (Mathematica))
+
+&gt; People unfamiliar with ultra high level languages such as Mathematica
+&gt; (or perhaps haskell too), can understand this “what u see is what u
+&gt; get” by comparing to dynamic and lexical scope. Lexical scope, in a
+&gt; sense, is of the model “wysiwyg”, while dynamic can be likened to
+&gt; “behind the scenes happenings”.
+">
+
+OK, but if one thinks of dynamic scope as up the stack instead of behind
+the scenes, it is not so scary. Mind you, this means using special
+variables with discipline, only ever binding them in let clauses.
+
+<QUOTE PREVIOUSPOST="
+&gt; The behavior of Mathematica expression
+&gt; is wysiwyg, while lisp's expressions with its “objects” is “behind the
+&gt; scenes happenings”. Also, the “behind the scenes” style are often the
+&gt; brainless of the two to implement, that's why they are everywhere. But
+&gt; as i repeated quite a few times, as computer langs throughout the past
+&gt; 2 decades, we see a progress towards higher level with less and less
+&gt; these behind-the-scenese lang model kinda langs.
+">
+
+I wish I knew more about FP, it sounds like you would prefer that to the
+extra mental housekeeping we Lispers take for granted (and sometimes
+screw up).
+
+<QUOTE PREVIOUSPOST="
+&gt; Kenny wrote:
+&gt; 「No beauty either way, just different.」
+
+&gt; There is much beauty far beyond lisp, Kenny.
+">
+
+You are right, it has been too long since I dropped this URL:
+
+http://www.tilton-technology.com/cello-shot-06.jpg
+
+<QUOTE PREVIOUSPOST="
+&gt; I get frustrated seeing how people truly are moronic in comparison to
+&gt; me, having no idea what i'm talking about while i fully understand
+&gt; what they are talking about. In the past few years i began to reckon
+&gt; that i'm just a genius, whose views are maybe 30 years into the future
+&gt; beyond the average computer scientists or industrial programers. (a
+&gt; bit scary to say this myself, i know.)
+">
+
+I have not read much of the thread, but you are not going to change the
+audience, all you can change is Xah. (No, it is not easy changing
+oneself, either, but unlike changing others it is remotely possible.)
+The change you can make is simply to continue only those subthreads you
+find worthwhile, which may well be the null set. I think you already do
+this with the hysterical Greek chorus that always screeches &quot;Troll!&quot; at
+you, just do the same with exchanges you do not find intellectually
+stimulating.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; In this particular thread, i claim, that high level langs of the
+&gt; future is getting rid of the “behind the scenes” lang model, as i have
+&gt; repeatedly voiced it in this thread. When i posted my first post, i
+&gt; had some reservations, thinking that lisp's objects concept are
+&gt; perhaps necessary in some way for the lang's area of
+">
+
+...
+read more »
+</POST>
+<POST>
+<POSTER> Frank Buss &lt;f...@frank-buss.de&gt; </POSTER>
+<POSTDATE> 2008-01-23T14:25:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Ken Tilton wrote:
+&gt;  &gt; In[2]:=y=x  &lt;- bingo
+&gt;  &gt; Out[2]={4,5,6}
+">
+
+Looks like this does a deep copy in Mathematica.
+
+<QUOTE PREVIOUSPOST="
+&gt;  &gt; In[6]:=y
+&gt;  &gt; Out[6]={4,9,6} &lt;- bongo
+">
+
+Methematica prints {4,5,6} at this point. Maybe this is what Xah Lee means.
+
+--
+Frank Buss, f ... @frank-buss.de
+http://www.frank-buss.de , http://www.it4-systems.de
+</POST>
+<POST>
+<POSTER> Kaz Kylheku &lt;kkylh...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-23T17:04:00 </POSTDATE>
+On Jan 22, 1:50 am, Xah Lee &lt;x ... @xahlee.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In Mathematica, there's no such steps of concept. The list
+&gt; &quot;List[1,2,3]&quot; is just a list as is. There is no such intermediate
+&gt; concept of objects. Everything in Mathematica is just a &quot;expression&quot;,
+&gt; meaning the texual code you type.
+">
+
+If this concept is only described in the Mathematica documentation
+then an expression is not really /in/ Mathematica.
+
+It's just something that you type which becomes a behavior in
+Mathematica, but otherwise has no (programmer-accessible)
+representation.
+
+I.e. List[1, 2, 3] causes something to happen, but is itself not an
+entity.
+
+According to you, anyway. If you understand Mathematica as well as you
+do Lisp, then I'd take all that with a grain of salt. Maybe there is a
+way to quote List[1, 2, 3] to get it as data, only you haven't figured
+it out.
+
+<QUOTE PREVIOUSPOST="
+&gt; This is a high-level beauty of Mathematica.
+">
+
+Not giving the programmers access to the data structure which
+represents the program source is simply a myopic limitation. A myopic
+limitation doesn't give rise to a higher level language.
+
+<QUOTE PREVIOUSPOST="
+&gt; Java, Haskell and lisp too), then is lisp's internal concept &quot;object&quot;
+&gt; necessary in a language such as lisp?
+
+&gt; Does anyone know?
+">
+
+You need the source code as an object if you want to extend the
+compiler with user-defined code to handle new syntax by transforming
+it to existing syntax (e.g. Lisp macros).
+
+Note that in compiled Lisp systems, the object representation of a
+program can ``go away''. It's needed during the source code processing
+steps, including macro expansion. When all of that is done, the
+representation of a program becomes machine language. Of course, any
+literal constants in the program, including quoted pieces of its list
+structure, become run-time data.
+
+So if we have:
+
+(defun foo()
+'(1 2 3))
+
+when we compile it, the list (defun foo () '(1 2 3)) goes away; it is
+not necessary  to retain it in the compiled image. The list (1 2 3)
+however will be represented somewhere in that image as static data,
+just like a numeric or string literal. The function FOO will be
+translated to some little piece of machine code which calculates the
+effective address of that data (i.e. the reference to the first cons
+cell of (1 2 3)) and returns it.
+
+This is analogous to the C language:
+
+/* this ``while'' appears in the compiled image */
+char *str = &quot;while&quot;;
+
+/* this ``while'' doesn't */
+while (1) { /* ... */ }
+
+One is quoted to become literal data, one isn't.
+</POST>
+<POST>
+<POSTER> Jon Harrop &lt;use...@jdh30.plus.com&gt; </POSTER>
+<POSTDATE> 2008-01-23T22:08:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Joost Diepenmaat wrote:
+&gt; General comment: common lisp is a pretty high level language...
+">
+
+You might also like to look at OCaml, Haskell and F#.
+
+--
+Dr Jon D Harrop, Flying Frog Consultancy Ltd.
+http://www.ffconsultancy.com/products/?u
+</POST>
+<POST>
+<POSTER> Xah Lee &lt;x...@xahlee.org&gt; </POSTER>
+<POSTDATE> 2008-01-24T09:21:00 </POSTDATE>
+This reply is long, at over 5 thousand words. It is separated into 3
+posts.
+
+-------------
+
+<QUOTE PREVIOUSPOST="
+Kenny wrote:
+">
+
+«I do find things like C++ pretty scary in this respect, mostly
+because of that whacky syntax. :) I am just not sure mutable state is
+necessarily confusing. I suppose (but am prepared for rectification)
+you are OK with slots of structs and classes (does Mathematica have
+such things?)»
+
+struct as in C's “record” data type? Classes as in Java? Mathematica
+doesn't have these things. For Class, it depend on what you mean. As a
+language's data type, no. As a function that contains data ond inner
+functions one can implement in just about any well designed lang, yes.
+
+<QUOTE PREVIOUSPOST="
+Kenny wrote:
+">
+
+«being mutable, such that a change to a slot of an instance is visible
+from any reference that might be held to that instance. And I surmise
+also you do not consider this magic nor even behind-the-scenes?  If so
+(and again I understand you might not in fact agree so far), then all
+we have in Lisp is that our lists (and other things other than numbers
+and characters) also have object identity, so if there are multiple
+references to the same thing they all change together, like an in-
+memory database if you will. »
+
+As i repeated many times now, programing in Mathematica does not have
+any concept of memory, reference, pointer, WHATSOEVER. There is NO
+behind-the-scene memory, object, abstract storage location, where some
+other entities “reference” to it.
+
+As i repeated many times, one can think of Mathematica as graph-
+rewriting, term-rewriting, symbol-sequence transformation, or a formal
+system. Where, the formal here means mathematical _formalism_ (lookup
+in wikipedia, folks!). Or, think of it as lisp's concept of “forms”
+that are used everywhere in emacs lisp documentation, it is
+essentially the principal concept one needs to understand for lisp's
+macros. So, practically speaking, one could think of Mathematica
+language as if it is programing in lisp using macros and nothing but
+macros. (So, if you think of this way, you'll see what i mean by no
+“behind the scene”, a wysiwyg model of language. I repeat, think of it
+as pure lisp macro and form programing. _Textual_. No “behind the
+scenes” stuff! WHAT YOU SEE IS WHAT YOU GET! _Textual_. No “behind the
+scenes” stuff! WHAT YOU SEE IS WHAT YOU GET! _Textual_. No “behind the
+scenes” stuff! WHAT YOU SEE IS WHAT YOU GET! _Textual_. No “behind the
+scenes” stuff! WHAT YOU SEE IS WHAT YOU GET!)
+
+Of course, despite my profuse talking, i guess it is nigh impossible
+to convey the idea unless one actually start to program or spend a few
+hours in Mathematica. In analogy, imagine yourself trying to preach
+the gospel of lisp to Java programers. You can spend hours and few
+thousands words, on some concept that's so crystal clear and basic to
+you, but the Java guy wouldn't be able to comprehend it. (and if the
+Java person happens to be a hotshot or have years of industrial
+experience, or if you happen to not kiss their asses (why should
+you?), he'll deem you a fucking troll)
+
+The thought has come to my mind to write a few pages of tutorial of
+mathematica for lisp programers. Written in a way such that every
+mathematica construct has a exact analogous counter part in lisp, in
+both syntax and semantics, so that the tutorial actually also
+functions as a fun-oriented lisp programing excursion. (in fact, if
+you are a lisp expert, you can consider yourself already half of a
+Mathematica expert. (lisp's major concepts of fully functional nested
+syntax, forms, macros, lambda, lists, function application are just
+about the same set of fundamental ideas in Mathematica, almost token
+for token identical except few syntax quirks or when we get into hairy
+stuff of evaluation model exhibited in lisp as “quote”, “eval” ... or
+in Mathematica as Hold[], HoldForm[], Evaluate[], ReleaseHold[]...)
+For any seasoned lisper, if you actually just spend 1 month studying
+Mathematica, you can boast 1 year of Mathematica experience in your
+resume. And if you code Mathematica for 1 year, you can boast being a
+Mathematica expert. (in this regard of Lisp/Mathematica, its the same
+with Perl/PHP, Scheme/Common Lisp, and probably similar with Java/C#,
+due to, their intimacies))
+
+In many of my post about lisp here in 2007, often i have hoped that my
+discussion may lead to the discourse of hows and technicalities of a
+writing lisp extension that emulates Mathematica. (am ambivalent in
+leading into this direction since if successful, will piss off Stephen
+Wolfram (robbing his business), possibly entail legal issues, and i
+myself am not ready to gratuitously offer my services to lisp
+community given the way lisper MORONS reacted to my criticisms and
+amidst the fucking militant OpenSource collectivism ambiance)
+
+Lisp can actually relatively easily do it, emulating the full
+Mathematica's systematic list/tree extraction/manipulation functions
+(getting rids of the cons problem for good), as well getting rid of
+the lisp “behind the scenes” object concept with some practical
+benefits, a full automatic code formatter (beyond emacs current
+offerings) that get rid of the endless manual “how you should indent
+parens” once for all (as in the benefit transparently offered by
+Python), and also layer on top of sexp a infix notation while
+maintaining absolutely the full sexp benefits, and even more, if lisp
+experts are interested in spending now quite a lot energy, go as far
+as making lisp a full 2D Mathematical notation display system, and a
+notebook system (think of it as a language feature so powerful that
+the SOURCE CODE actually transparenly functions like a Word Processor
+file format that can contain structures and images).
+
+But before any of the above discussions can sprout, it is already shot
+down by the army of sensitive and clueless lisper morons. Guarding
+their ways in high anxiety, dismissing the FREQUENT and PERSISTANT
+criticisms of lisp (many of these criticisms are from renowned lisp
+luminaries), and kept thinking somehow that a language designed 40
+years ago are destined to be perpetually perfect. (meanwhile
+grudgingly witnessing facts that relative fucking stupid langs like
+Perl, Python, PHP, Java, Ruby, born and rose beyond lisp's combined
+applications in its entire history) Many old lispers still fancy that
+lisp is the only unique, all-powerful, all-living creature that rule
+all languages.
+
+This is a social and psychological problem of lisp mainly caused by
+the old timers. Besides fixing problems of the lisp the language
+proper, other problems and possible solutions such as frequent
+complain of its libraries are similarly thwarted and smiten.
+
+Whenever there's a new lisp, such as dylan or the vapourwear arc,
+there's a high sentiment of hate-love brouhaha. All Common lispers are
+anxious and giddy, throwing mixed remarks of excitment and
+belittlement. The Scheme Lispers live in a fantasy world of their own,
+simultaneously wishing for popularity and aloofness, culminating in
+the R6RS fuckup in late 2007. (if my chances of becoming a Common
+Lisper anytime soon is 1%, my chances to become a Scheme lisper is
+0.01%, by sheer will.)
+
+(this post continues in the next post)
+
+Xah
+x ... @xahlee.org
+∑ http://xahlee.org/
+
+☄
+</POST>
+<POST>
+<POSTER> Xah Lee &lt;x...@xahlee.org&gt; </POSTER>
+<POSTDATE> 2008-01-24T09:22:00 </POSTDATE>
+(this post the 2nd part continuation from previous one)
+
+<QUOTE PREVIOUSPOST="
+Kenny wrote:
+">
+
+«Now if I am wrong and you do find mutable state in general confusing,
+well, I guess many agree with you, namely the entire FP community. And
+even I agree: the functional paradigm is a huge win for transparency
+and program correctness. I just never enslave my self to good
+principles like FP, I always reserve the right to do what I want,
+shucks, even use tagbody-go in moments of weakness. :)»
+
+KENNY!! IT'S NOT A QUESTION OF MUTABILITY! Mutability — another
+computer “scientist-moron” jargon. What you mean by mutability? As i
+have repeatedly explained in different contexts in posts here, opaque
+jargons beget confusion. By mutability, do you mean ultimately the
+ability to reference to the same memory address exhibited in lisp as
+lisp objects? By mutability do you mean Haskell's prevention of a
+variable being assigned twice?
+
+As i tried to explain in previous message... regarding Mathematica, if
+by mutability you mean pointers/references/behind-the-scene-objects,
+then No, mathematica doesn't have any of such notions. If by
+mutability you mean whether a variable can have its values changed,
+then yes, Mathematica do.
+
+The “mutable/mutability/immutable” is another fucking jargon that
+refuse to die precisely because it's a fucking moronic imprecise and
+gaudy jargon. It has different meanings as applied to data types,
+languages, language models, computational models. Every tech geeker
+latches onto it their own conception and brandish it to no ends.
+
+Note here, as i have also repeated in different posts in the past,
+that among Mathematica's over 1 thousand pages of manual, containing
+fucking over 1 thousand build-in functions, with maybe a few hundred
+advanced mathematical functions that only a few handful mathematicians
+in the world understands their meaning, and containing all the fucking
+fancy constructs exhibited by jargons such as lambda, HOF (higher
+order function), fucking first class citizens, fucking fuck you
+“closures”, mutabilatilabilalilaty, M'm'mmmmacros, the over 1 thousand
+pages of Mathematica manual doesn't mention any of these fucking shit
+terms and is extremely easy to read and understand. (i happened to
+have read the over 1 thousand pages of mathematica manual word for
+word from cover to cover 3 times during 1990s in different years)
+
+<QUOTE PREVIOUSPOST="
+Kenny wrote:
+">
+
+«Well, the c.l.l savages always ridicule me on this, but one /does/
+have to master the cons to do well with Lisp. And I guess you are
+right, many a noob (all?) trips over Lisp lists early on. Hell, I have
+always maintained Lisp lists should be explained this way: there is no
+such thing as a list, there are just conses with cars and cdrs.»
+
+Exactly. When will these lispers die?
+
+When?
+
+------------------------------------
+
+In[25]:=
+data={1,2,3};
+x := data;
+y := data;
+
+In[28]:=
+data=Delete[data,2]
+Out[28]=
+{1,3}
+
+In[29]:=
+x
+Out[29]=
+{1,3}
+
+In[30]:=
+y
+Out[30]=
+{1,3}
+
+<QUOTE PREVIOUSPOST="
+Kenny wrote:
+">
+
+«Can I go the other way, Delete[x,2] and see it back in data?»
+
+No, not in the above. Remember, in Mathematica, everything is textual,
+or copies. All functions return copies. There's no such thing as some
+“object” that lives in some ether space that if changed effects others
+entities “pointing/referencing” to it. There is no concept of
+reference/pointer/memory whatsoever. Again, think of programing only
+using lisp's macros. It's all about form changing. What you see is
+what you get. WYSIWYG.
+
+<QUOTE PREVIOUSPOST="
+Kenny wrote:
+">
+
+«Or has x become like a symbol-macro for data?»
+
+Yes. If i understand you correctly, yes.
+
+<QUOTE PREVIOUSPOST="
+Xah wrote:
+">
+
+「The “:=” is syntax shortcut for “SetDelayed[]”, while “=” is
+“Set[]”.  The difference, is that the Set evaluate the rhs before
+assignment, while SetDelayed evaluate the rhs only when it is called.」
+
+<QUOTE PREVIOUSPOST="
+Kenny wrote:
+">
+
+«And once it is called? What if you had evaluated x /first/ and seen
+1,2,3 and /then/ deleted 2. Would a second evaluation of x still
+return 1,2,3? If it returns 1,2, then := in a sense gives one the same
+thing as object identity, except (and this may be an advantage, if I
+want to achieve this behavior I must remember to use :=. ie, if I now
+want to have z refer to the same list, I must say z := x.»
+
+Yes.
+
+Again, if a programer actually want the behavior of certain things
+linked together, you can do it just as one can in any well-designed
+lang. (For example, in lisp, you can program the hard link behavior
+without resorting to lisp's default objects concepts) The concept of
+linked behavior as exhibited by langs that come with the “behind-the-
+scenes” “language model” is essentially having the variables defined
+in terms of another variable, since the hard link concept is basically
+just references pointing to the same memory address.
+
+I'd be happy to show how it can be done in Mathematica if you provide
+lisp code of certain linked behavior you want.
+
+-------------------------------------
+
+The thing to understand here is high-level-ness. It seems to me,
+programers accustomed to compiled languages as well as lispers, have a
+extremely difficult time understanding the concept of computer
+language as a textual interface to computation. In particular,
+compiler writers or those acquainted with compiler knowledge, are
+spectacularly incapable in understanding this because their brain has
+been permanently damaged by low-level exposure. (in this thread, that
+Kaz Kylheku guy is the best example, voicing his dips and jumpers
+mumble jumble into this thread. (if we switch the underlying hardware
+to DNA or quantum qubits, his dips and jumpers goes haywire))
+
+<QUOTE PREVIOUSPOST="
+Kenny wrote:
+">
+
+«But if we cannot mutate lists we lose expressive power. Lisp programs
+that always copy structure cannot scale beyond toy size. So mutable
+state is not there just to confuse people, it extends the language
+(so, yes, there is more to be learned).»
+
+I object your use of the term mutable here as discussed above.
+However, if i understand you correctly... here's the issue.
+
+My issue here, is the complete separation of language as a interface
+to computation, and elements in the language as hints/declarations/
+helpers for the current technology of compilers to achieve speed or
+certain low level issues (such as reference to memory, number size in
+bits), which are necessary when the language is used in certain
+applications (such as writing a OS, compiler, device driver) that by
+definition needs to have direct access to hardware elements.
+
+As i've tried to explain above, the behavior of linked things (of
+which you are calling it “mutability” here), is essentially having 2
+vars pointing to another var that holds the value. As i tried to
+explain, this can be easily done in any well-designed lang, without
+having the language having a behind-the-scenes reference/pointer/
+object model. (how exactly it is done depends on the language, of
+course) As stated before, if you give a code example in lisp that
+shows some linked behavior, i can provide the some behavior coded in
+Mathematica, or i can even try to code the same behavior in emacs lisp
+but implemented without utilizing what you'd call the “mutability”
+concept (what i'd call behind-the-scenes language model, or pointers/
+references/“memory addr”/“lisp's object”.).
+
+In yet another way to see this, is to focus on the _behavior_ of
+computation as a function of the language's textual input (the source
+code). Put it in yet another way, any of the idiosyncratic behind-the-
+scenes language model of Lisp/Java/C are all having no mathematically
+meaningful utility. They are by-products of computer engineering
+constrained by today's hardware, often necessary due to practical,
+speed issues. (and in the case of C and Java or most imperative langs,
+it's mostly because it's brainless to implement)
+
+<QUOTE PREVIOUSPOST="
+Kenny wrote:
+">
+
+«OK, but if one thinks of dynamic scope as up the stack instead of
+behind the scenes, it is not so scary. Mind you, this means using
+special variables with discipline, only ever binding them in let
+clauses.»
+
+Nah.
+
+First of all, please don't use the word stack. I don't know what the
+fuck is a stack, and i know it is mathematically meaningless. What i
+do know, is that one can insert ping pong balls into a pussy, and the
+last one inserted will come out first. Now, that is mathematics.
+
+Dynamic scope is another stupidity, just like the behind-the-scenes
+things i've spoke above, that it has no meaningful Mathematical value.
+Its existence, is just a by-product of computer engineering
+constrained by computer hardware (in this case, the hardware of few
+decades ago). As a “proof” of this, you do realize that dynamic scope
+basically disappeared in langs of the past 2 decades.
+
+Of course, as a review of computing history, we note that the behavior
+of the fortuitous “dynamic scope” of the past is actually desirable
+sometimes. And, it can be easily implemented in any well designed
+langs, without the lang itself having a behind-the-scene stuff.
+Exactly how this can implemented on top depends on the lang of course.
+
+Again, let me emphasize, the issue here, is a clear separation of what
+is mathematical meaningful in a language, from what's practical,
+speed, or hardware issues. If one wants to design a language that's
+not just high-level like mathematica, but also as speedy as C, then as
+i have wrote long esasy before, this should be done by having special
+declarative/hint construct that clearly indicate to user of the
+language that such is for the compiler, and having nothing to do with
+his computation.
+
+<QUOTE PREVIOUSPOST="
+Kenny wrote:
+">
+
+«I wish I knew more about FP, it sounds like you would prefer that to
+the extra mental housekeeping we Lispers take for granted (and
+sometimes screw up).»
+
+I think i'm even aversive to the jargon of Functional Programming. It
+smacks of certain elitism and generates confusion. So-called
+Functional programing practically is just to define your functions so
+it doesn't call global vars. Of course, in a more strict sense, ...
+read more »
+</POST>
+<POST>
+<POSTER> Xah Lee &lt;x...@xahlee.org&gt; </POSTER>
+<POSTDATE> 2008-01-24T09:22:00 </POSTDATE>
+(this post the 3rd part continuation from previous one)
+
+<QUOTE PREVIOUSPOST="
+Kenny wrote:
+">
+
+«If it helps, what I notice is the character-orientation of your
+summary.  eg, What happens if my last sentence instead was, &quot;That
+summary is character-oriented?&quot; You and I just disappeared, and the
+chance of interpersonal conflict diminishes. On those rare occasions
+when I am not actively making trouble here, I sometimes go back and
+rewrite so all the pronouns disappear. Fascinating exercise.»
+
+«...»
+
+«You worried above about being a genius, here's something you might
+like.  I got the idea from a bumper sticker, so you know it's good:
+&quot;If you think you can do anything, try sailing.&quot; Made relevant,
+nothing is harder or more rewarding for folks like us than getting
+along with others. So if you think you are a genius, Xah, figure out
+how to get along with folks on Usenet. I'll give you a headstart from
+your roots: &quot;Win without fighting.&quot;»
+
+Thank you for the kind gesture.
+
+Though, the question here, is whether i'm willing.
+
+Further, the underlying assumption is hostility and benevolence. In
+general, i'm probably one of the most loving person here. I quote:
+
+«The best index to a person's character is (a) how he treats
+people who can't do him any good, and (b) how he treats people who
+can't fight back.» —Abigail Van Buren)
+
+(Compare, the loving, caring, moralists and mother-fuck-faces such as
+George W Bush, who caused the death of 40 thousand to 260 thousand
+people)
+
+Also, consider in a smaller scale of those “benign” and “OpenSource-
+morally-good” tech geekers who holds power. Namely, those ops/
+admins/“first-click”-creators in IRCs, blogs, mailing lists, online
+forums, newsgroups... many have banned/kicked and harassed me (one of
+them in a legal way), some i'd guess wish to do me harm because they
+think i'm a “troll”.
+
+(perhaps i should note here, publicly for the first time, that i was
+banished in freenode's irc emacs channel in 2006 (and still banned to
+this day), by a FSF-abiding (and employee), morality-sensitive,
+vegetarian, fuckface one John Sullivan (aka johnsu01), despite that
+i'm perhaps one of the most helpful member in that channel at the time
+(and i offered verifiable proof on this assertion)
+For detail, see the link at:
+http://xahlee.org/emacs/emacs_essays_index.html
+)
+
+<QUOTE PREVIOUSPOST="
+Kenny wrote:
+">
+
+«Ironically, that is hard for you because you are /too/ social an
+animal.  The sociopath feels no connection to others and so can charm
+them into doing anything. Your thin skin (a great metaphor, btw)
+leaves you no way to keep people out, no way to shrug off those whose
+e-company you do not enjoy. In a sense, by reacting strongly to others
+you make their problems your problem, in that you cannot be
+comfortable as long as they are jerks. Not a recipe for contentment.
+There are billions of people on this planet, put your energy into
+those you enjoy, not so much into those you do not. When your will
+weakens, well, hey, what's a killfile for? :)»
+
+Yeah... i appreciate your comments. I like writing. I used to despise
+writing when i was 20ish (~1990), thinking it a second-rate activity
+that should be allotted to writers as opposed to mathematicians.
+(apparently, this is not a uncommon thought among scientists, among
+which is Einstein) But since about maybe mid 1990s, i find that i
+enjoy writings. I guess there are several reasons i can trace back.
+One is my habit of reading dictionaries. I, perhaps, have checked
+English dictionary entries more number of times than all persons ever
+visited comp.lang.lisp in their lifetimes since the existence of
+comp.lang.lisp, combined. (unless, one of them happens to be a
+lexicographer) (or, altertively assessment: more than 99% of persons
+of who have a PHD in literature or English) Secondly, my study of
+logic has made me practiced extensive writing in a most austere,
+logical style possible, during mid 1990s. This happenstance also
+trained me greatly in critical thinking and made me aware of many deep
+problems and levels of logic and philosophy, esp in communication and
+English expressions. (and i have since come to fucking despise
+grammarians and English writing pedants (because i find their ideas
+and teachings moronic))
+
+Another comment to your above paragraph, is the concept of living by
+hatred. You have seen Star Wars right? In Star War, there's the Siths,
+who live and thrive by hatred. Y'know, there's saying among them, that
+the hatred leads to power. I just found the following verse on the
+web:
+
+The Sith Philosophy
+
+Fear leads to anger.
+Anger leads to hate.
+Hatred leads to power.
+Power leads to victory.
+Let your anger flow through you.
+Your hate will make you strong.
+True power is only achieved through testing the limits of one's
+anger, passing through unscathed.
+Rage channeled through anger is unstoppable.
+The dark side of the Force offers unimaginable power.
+The dark side is stronger than the light.
+The weak deserve their fate.
+
+Speaking of hatred, one has to wonder, whence does hatred origin?
+According to the above, fear leads to anger, anger leads to hate, but
+that's just a theatrical composition. Fear is inherent in every human
+animal, in particular, the fearing of other human animals, but fear
+doesn't necessarily leads to anger, and fear isn't the dominant
+emotion among a human animal's emotions. So, at this point, the
+verse's logic of the origin of hatred breaks down. After all, it is
+theatrical. Now, back in reality, hatred nevertheless usually has a
+cause. You don't hate unless someone, something, made you. The US
+American culture, in general believes in some pure form of evil (such
+as Sadam Hussein).
+
+This can be seen in their comic book stories of superheros they are
+brought up with, where the story line can almost always be
+characterized as a clearly divided forces of good vs evil, and the bad
+guys usually take the form of some pure dark evil lord. It is also
+cultivated from their God-Believing-Sect's scriptures of the concept
+of devil. (contrast this to the Greek mythologies, where gods or
+mortals, good deeds and bad deeds, are all complex and human, and
+nearly impossible to say who's the “bad guy”.)
+
+Although i live by love and knowledge, but I thrive by hatred. Hatred
+gives I a reason to live. Hatred gives me hope. Hatred enpowers me. It
+is hatred, indigence, defiance, that drove me to a quest for
+knowledge. It is hatred, of motherfucking lisping _idiots_ with PHD
+tattood to their faces, that drove the production of this essay that
+explicate a view of high-level language i long had. (will be archived
+on my website soon)
+
+A couple more quotations for the road:
+
+«Few people are capable of expressing with equanimity opinions which
+differ from the prejudices of their social environment. Most people
+are not even capable of forming such opinions.» — Albert Einstein,
+1954
+
+«It takes considerable knowledge just to realize the extent of your
+own ignorance.» —Thomas Sowell
+
+Xah
+x ... @xahlee.org
+∑ http://xahlee.org/
+
+☄
+</POST>
+<POST>
+<POSTER> &quot;Peter Hildebrandt&quot; &lt;peter.hildebra...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-24T09:35:00 </POSTDATE>
+On Tue, 22 Jan 2008 16:37:51 +0100, Maciej Katafiasz &lt;mathr ... @gmail.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Den Tue, 22 Jan 2008 14:26:05 +0100 skrev Rainer Joswig:
+
+&gt;&gt; In article
+&gt;&gt; &lt;4b91e167-0570-4f38-abd1-c5b5bdfb5 ... @n22g2000prh.googlegroups.com&gt;,
+&gt;&gt;  Xah Lee &lt;x ... @xahlee.org&gt; wrote:
+&gt;&gt;&gt; 3. The syntax is a bit quirky. In particular, a mathematica programer
+&gt;&gt;&gt; sees that sometimes list is written as  $B!H (B(list a b c) $B!I
+&gt; (B,
+&gt;&gt;&gt; but sometimes there's this oddity  $B!H (B'(a b c) $B!I (B (which
+&gt; is
+&gt;&gt;&gt; syntactically equivalent to  $B!H (B(quote a b c) $B!I (B
+
+&gt; I wouldn't mind or notice if you just ignored Xah Lee as is just and
+&gt; proper, but your newsreader is broken. It doesn't set Content-type:
+&gt; properly, yet it quotes !ASCII characters as is, and Xah happens to use
+&gt; ISO-2022-JP and quote characters 「」, so your reader is sending
+&gt; malformed
+&gt; posts. Please fix that.
+">
+
+Funny thing:  In my reader (Opera M2) Rainer's response looks just fine.
+Yours OTOH seems to contain some weird stuff ...
+
+Peter
+
+<QUOTE PREVIOUSPOST="
+&gt; Cheers,
+&gt; Maciej
+">
+
+--
+Using Opera's revolutionary e-mail client: http://www.opera.com/mail/
+</POST>
+<POST>
+<POSTER> Ken Tilton &lt;kennytil...@optonline.net&gt; </POSTER>
+<POSTDATE> 2008-01-24T11:10:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Xah Lee wrote:
+&gt;    The Sith Philosophy
+
+&gt;    Fear leads to anger.
+">
+
+I have seen that. I also read once that an attacking German shepherd is
+in a state of fear. Not sure how much consolation that is to the
+attackee.  Frustration is another good source of anger.
+
+<QUOTE PREVIOUSPOST="
+&gt;    Anger leads to hate.
+&gt;    Hatred leads to power.
+">
+
+Nixon showed how hatred can lead to loss of power.
+
+<QUOTE PREVIOUSPOST="
+&gt;    Power leads to victory.
+">
+
+And then we die, after having had a not very good time in life. Happy
+people do not hate. Hatred is a lousy feeling, tho I see the Sith have
+an answer for that.
+
+<QUOTE PREVIOUSPOST="
+&gt;    Let your anger flow through you.
+">
+
+The Sith solution is to feel better by destroying the other, the
+Buddhist solution is to sit until it becomes clear that this is all an
+illusion so don't get too caught up in it. The hater has a weak mind and
+allows the hated object to become their master in that they are now
+spending all their time and energy on destroying the hated when they
+could be down at the corner pub chatting up the lovely beer wench.
+
+The Amish taught the world a lesson when the deranged guy killed all
+those schoolgirls (before offing himself). They reached out to the
+family of the killer and drew them in to their circle of support, and
+they taught the surviving Amish children not to hate the killer. Or in
+modspeak, &quot;Let it go.&quot; That was for their own sake, not the killer's.
+
+<QUOTE PREVIOUSPOST="
+&gt;    Your hate will make you strong.
+&gt;    True power is only achieved through testing the limits of one's
+&gt; anger, passing through unscathed.
+&gt;    Rage channeled through anger is unstoppable.
+&gt;    The dark side of the Force offers unimaginable power.
+">
+
+Yeah, but how are we keeping score? The power only matters if one has to
+destroy something, and one has to destroy something only if one is so
+filled with hatred thay they cannot abide the existence of the hated.
+The Sith Philosophy turns out to be nothng more than a circular
+justification and glorification of a bad temper. Cue Dr. Phil.
+
+<QUOTE PREVIOUSPOST="
+&gt;    The dark side is stronger than the light.
+">
+
+Only locally. The weaker have ganged up in the form of society and laws
+and police (their in-house bad guys) to manage the real bad guys.
+
+<QUOTE PREVIOUSPOST="
+&gt;    The weak deserve their fate.
+">
+
+Inheriting the Earth? Being happy and content with their loved ones,
+with no interest in fighting fights? Sounds good.
+
+<QUOTE PREVIOUSPOST="
+&gt; Although i live by love and knowledge, but I thrive by hatred. Hatred
+&gt; gives I a reason to live. Hatred gives me hope. Hatred enpowers me. It
+&gt; is hatred, indigence, defiance, that drove me to a quest for
+&gt; knowledge. It is hatred, of motherfucking lisping _idiots_ with PHD
+&gt; tattood to their faces, ...
+">
+
+That passage sounds more impotent than empowered. Anger rules us, it
+does not give us power. Dressing it up in Sith Philosophy won't help.
+Anger never helps a discussion or negotiation or collaboration. Anger
+turns other people off, so it leads more to failure than victory because
+many times other people hold the key to what we want. We often see
+people acting out in public in a way that makes it clear they saw a
+movie where someone threw a hissy fit and everyone snapped to attention
+and did their bidding. The reality is that it goes the other way. Blow a
+gasket and anyone around you will do as much as they can to make things
+go harder for you. Handle misturns conspicuously well and you will be
+amazed at the power a DMV clerk has to make your day go well.
+
+If one is a fearful German shepherd who gets thru the day by terrifying
+others, fine, but it is the tail-wagging retrievers who get their ears
+scratched.
+
+kt
+
+--
+http://www.theoryyalgebra.com/
+
+&quot;In the morning, hear the Way;
+in the evening, die content!&quot;
+-- Confucius
+</POST>
+<POST>
+<POSTER> Slobodan Blazeski &lt;slobodan.blaze...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-24T12:45:00 </POSTDATE>
+On Jan 24, 3:22 pm, Xah Lee &lt;x ... @xahlee.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; (this post the 3rd part continuation from previous one)
+
+&gt; Another comment to your above paragraph, is the concept of living by
+&gt; hatred. You have seen Star Wars right? In Star War, there's the Siths,
+&gt; who live and thrive by hatred. Y'know, there's saying among them, that
+&gt; the hatred leads to power. I just found the following verse on the
+&gt; web:
+
+&gt;    The Sith Philosophy
+
+&gt;    Fear leads to anger.
+&gt;    Anger leads to hate.
+&gt;    Hatred leads to power.
+">
+
+I prefer George Bernard Shaw's
+Hatred is the coward's revenge for being intimidated.
+
+The Sith Code
+
+Peace is a lie
+There is only passion
+Through passion I gain strength
+Through strength I gain power
+Through power I gain victory
+Through victory my chains are broken
+The Force shall set me free
+
+Yuthura Ban (Star Wars: Knights of the Old Republic)
+http://www.imdb.com/title/tt0356070/quotes
+
+Where does you quote coming from ? I can't found any good reference to
+any dogma mentioning it, only personal blogs and pages unrelated with
+star wars universe.
+
+cheers
+Slobodan
+
+<QUOTE PREVIOUSPOST="
+&gt;    Power leads to victory.
+&gt;    Let your anger flow through you.
+&gt;    Your hate will make you strong.
+&gt;    True power is only achieved through testing the limits of one's
+&gt; anger, passing through unscathed.
+&gt;    Rage channeled through anger is unstoppable.
+&gt;    The dark side of the Force offers unimaginable power.
+&gt;    The dark side is stronger than the light.
+&gt;    The weak deserve their fate.
+">
+</POST>
+<POST>
+<POSTER> Slobodan Blazeski &lt;slobodan.blaze...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-24T13:10:00 </POSTDATE>
+On Jan 24, 5:10 pm, Ken Tilton &lt;kennytil ... @optonline.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Xah Lee wrote:
+&gt; &gt;    The Sith Philosophy
+
+&gt; &gt;    Fear leads to anger.
+
+&gt; I have seen that. I also read once that an attacking German shepherd is
+&gt; in a state of fear. Not sure how much consolation that is to the
+&gt; attackee.  Frustration is another good source of anger.
+">
+
+Anger  sometimes could be used as a stress valve, but kick some boxing
+bag instead of breaking someone's head
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;    Anger leads to hate.
+&gt; &gt;    Hatred leads to power.
+
+&gt; Nixon showed how hatred can lead to loss of power.
+">
+
+Hartred will give power only to people you hate, making them even
+stronger, while you waste your valuable energy and become weaker. I
+prefer George Bernard Shaw's definitions as
+hatred being the coward's revenge for being intimidated.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;    Power leads to victory.
+
+&gt; And then we die, after having had a not very good time in life. Happy
+&gt; people do not hate. Hatred is a lousy feeling,
+Agreed
+&gt; tho I see the Sith have
+&gt; an answer for that.
+">
+
+I think Xah was trapped in non-dogmatic quote, the real one goes like
+this
+...
+Through passion I gain strength
+Through strength I gain power
+...
+something that I agree. I think there's a secret lisp macro called
+with-passion that wraps lispers to spend so much energy on such an
+*useless* language. Everytime you open your eyes you see difference
+between the things made with passion and those without it. Passion
+will give tou strength.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;    Your hate will make you strong.
+&gt; &gt;    True power is only achieved through testing the limits of one's
+&gt; &gt; anger, passing through unscathed.
+&gt; &gt;    Rage channeled through anger is unstoppable.
+&gt; &gt;    The dark side of the Force offers unimaginable power.
+
+&gt; Yeah, but how are we keeping score? The power only matters if one has to
+&gt; destroy something, and one has to destroy something only if one is so
+&gt; filled with hatred thay they cannot abide the existence of the hated.
+&gt; The Sith Philosophy turns out to be nothng more than a circular
+&gt; justification and glorification of a bad temper. Cue Dr. Phil.
+">
+
+I  don't accept those good vs bad separation
+1st.It depends from your perspective (look at theory of relativity)
+2nd Yin Yang http://dl.nlb.gov.sg/digitalk/random2/images/Stellaris_Yin_Yang.jpg
+shows
+there was a saying going something like:
+Good people have so much  bad in them and bad people have so much good
+that is hard say who should teach who.
+Even if someone is in that good people / bad people analogy, don't
+forgeth that there a good people, there are bad people and there are
+good people in a bad day.
+
+cheers
+Slobodan
+
+The oldest man was once nineteen years old, and full of wisdom. Then
+he studied lisp...
+</POST>
+<POST>
+<POSTER> Xah Lee &lt;x...@xahlee.org&gt; </POSTER>
+<POSTDATE> 2008-01-24T15:01:00 </POSTDATE>
+Dear padawan Slobodan,
+
+As someone said to me on irc recently: your google fu is weak.
+
+<QUOTE PREVIOUSPOST="
+you wrote:
+">
+
+«[some star wars sith quotes] Where does you quote coming from ? I
+can't found any good reference to any dogma mentioning it, only
+personal blogs and pages unrelated with star wars universe.»
+
+The site i found was just some random site i searched thru google by
+the phrase “hate leads to power” or something similar i don't
+remember.
+
+The site is:
+
+http://www.scotty795.zoomshare.com/6.html
+
+(nice music)
+
+Xah
+x ... @xahlee.org
+∑ http://xahlee.org/
+
+☄
+</POST>
+<POST>
+<POSTER> Slobodan Blazeski &lt;slobodan.blaze...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-24T16:42:00 </POSTDATE>
+On Jan 24, 9:01 pm, Xah Lee &lt;x ... @xahlee.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Dear padawan Slobodan,
+
+&gt; As someone said to me on irc recently: your google fu is weak.
+
+&gt; you wrote:
+
+&gt; «[some star wars sith quotes] Where does you quote coming from ? I
+&gt; can't found any good reference to any dogma mentioning it, only
+&gt; personal blogs and pages unrelated with star wars universe.»
+
+&gt; The site i found was just some random site i searched thru google by
+&gt; the phrase “hate leads to power” or something similar i don't
+&gt; remember.
+">
+
+Dear Xah
+
+I said
+
+<QUOTE PREVIOUSPOST="
+&gt;Where does you quote coming from ? I can't found any good reference to
+&gt;any DOGMA(*) mentioning it, only personal blogs and pages unrelated with
+&gt;star wars universe.
+">
+
+That roughly means that I asked for official reference to those verses
+from the starwars universe, it could be movie, book , video game,
+interview with George Lucas etc. The below mentioned site is just a
+personal site from somebody I don't know at all. What's his
+credibility?
+a. Author of star wars book like Matt Stover - Shatterpoint
+b. Director of some star wars movie like Irvin Kershner The Empire
+Strikes Back
+c. Designer of star wars video game like David Falkner Star Wars:
+Knights of the Old Republic
+...
+Lisp(**) paralel would be something like Saying that lisp has an built
+in Prolog engine, and when I ask where you heard that you could point
+me to :
+
+a. ANSI standard X3.226-1994  page _
+b. Common lisp hyperspec    link _
+Both represent official dogma
+c. John McCarthy wrote about it at _
+d. Kent Pittman said it at _
+People with enourmous authority about the subject
+e. Franz Allegro 8.1 link _
+f. Lispworks Enterprise  link _
+Leading vendors
+g. Paul Graham  On Lisp page _
+h. Peter Norvig PAIP page _
+Highly respected authors
+
+Your link is more like:
+I read it at Slobodan Blazeski blog  link  _
+Slobodan who ?
+
+cheers
+Slobodan
+
+<QUOTE PREVIOUSPOST="
+&gt; The site is:
+
+&gt; http://www.scotty795.zoomshare.com/6.html
+
+&gt; (nice music)
+
+&gt;   Xah
+&gt;   x ... @xahlee.org
+&gt; ∑ http://xahlee.org/
+
+&gt; ☄
+">
+
+(*)Dogma -established belief or doctrine held by a religion, ideology
+or any kind of organization, thought to be authoritative and not to be
+disputed, doubted or diverged from.
+(**) When I say lisp I mean common lisp for any other group I use lisp
+family of languages
+</POST>
+<POST>
+<POSTER> Jon Harrop &lt;use...@jdh30.plus.com&gt; </POSTER>
+<POSTDATE> 2008-01-24T18:44:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Xah Lee wrote:
+&gt; struct as in C's ?record? data type? Classes as in Java? Mathematica
+&gt; doesn't have these things. For Class, it depend on what you mean. As a
+&gt; language's data type, no. As a function that contains data ond inner
+&gt; functions one can implement in just about any well designed lang, yes.
+">
+
+I think one might validly claim that Mathematica does provide such
+functionality though. Questions of the type system become trivial because
+it has only a single type (expressions) and, therefore, there are no type
+definitions to worry about. Inheritance is then nothing more than applying
+one set of rewrite rules before another:
+
+f //. {derived, base}
+
+What Mathematica lacks is any way to ensure adherence to an interface.
+Perhaps you can implement such a test at run-time using pattern matching
+but I doubt it would be as elegant as the above. However, is this a
+requirement of OOP? e.g. does Lisp enforce interfaces and, if so, when do
+they get checked?
+
+<QUOTE PREVIOUSPOST="
+&gt; As i repeated many times now, programing in Mathematica does not have
+&gt; any concept of memory, reference, pointer, WHATSOEVER. There is NO
+&gt; behind-the-scene memory, object, abstract storage location, where some
+&gt; other entities ?reference? to it.
+">
+
+That is a triumph of hope over reality, I'm afraid. Here are a couple of
+counter examples that I have experienced:
+
+. You must learn about stack consumption and tail recursion because
+Mathematica is extremely prone to segfaulting when the stack is exhausted.
+Hiding this behind $RecursionLimit does not abstract away this problem but
+merely provides a safe-looking facade compared to segmentation faults
+(which happen if you raise $RecursionLimit)
+
+. You must learn about the memory management of cyclic data structures if
+you want to avoid leaks in your code because Mathematica is not properly
+garbage collected.
+
+The language might not explicitly expose storage concepts but the
+implementation requires users to understand it. This might be fixed in the
+future if Wolfram Research make the core rewriter tail recursive and
+migrate to accurate garbage collection but I don't think that will happen
+any time soon.
+
+<QUOTE PREVIOUSPOST="
+&gt; The thought has come to my mind to write a few pages of tutorial of
+&gt; mathematica for lisp programers. Written in a way such that every
+&gt; mathematica construct has a exact analogous counter part in lisp, in
+&gt; both syntax and semantics, so that the tutorial actually also
+&gt; functions as a fun-oriented lisp programing excursion. (in fact, if
+&gt; you are a lisp expert, you can consider yourself already half of a
+&gt; Mathematica expert. (lisp's major concepts of fully functional nested
+&gt; syntax, forms, macros, lambda, lists, function application are just
+&gt; about the same set of fundamental ideas in Mathematica, almost token
+&gt; for token identical except few syntax quirks or when we get into hairy
+&gt; stuff of evaluation model exhibited in lisp as ?quote?, ?eval? ... or
+&gt; in Mathematica as Hold[], HoldForm[], Evaluate[], ReleaseHold[]...)
+">
+
+There are some important discrepancies though. You've even neglected one:
+Mathematica's lists are arrays where are Lisp's lists are real linked
+lists. This has some important ramifications, e.g. cdr is O(1) in Lisp but
+O(n) in Mathematica.
+
+You've also got other problems like Lisp has better-defined asymptotic
+complexities for its core operations whereas Mathematica has next to
+nothing (what is the complexity of &quot;&lt;&quot;, for example?).
+
+<QUOTE PREVIOUSPOST="
+&gt; Lisp can actually relatively easily do it, emulating the full
+&gt; Mathematica's systematic list/tree extraction/manipulation functions
+&gt; (getting rids of the cons problem for good), as well getting rid of
+&gt; the lisp ?behind the scenes? object concept with some practical
+&gt; benefits, a full automatic code formatter (beyond emacs current
+&gt; offerings) that get rid of the endless manual ?how you should indent
+&gt; parens? once for all (as in the benefit transparently offered by
+&gt; Python), and also layer on top of sexp a infix notation while
+&gt; maintaining absolutely the full sexp benefits, and even more, if lisp
+&gt; experts are interested in spending now quite a lot energy, go as far
+&gt; as making lisp a full 2D Mathematical notation display system, and a
+&gt; notebook system (think of it as a language feature so powerful that
+&gt; the SOURCE CODE actually transparenly functions like a Word Processor
+&gt; file format that can contain structures and images).
+">
+
+I would not call that &quot;relatively easy&quot;. Just implementing Mathematica's
+pattern matcher is a lot of work...
+
+<QUOTE PREVIOUSPOST="
+&gt; This is a social and psychological problem of lisp mainly caused by
+&gt; the old timers. Besides fixing problems of the lisp the language
+&gt; proper, other problems and possible solutions such as frequent
+&gt; complain of its libraries are similarly thwarted and smiten.
+">
+
+I don't think that the social dysfunction of Lispers is caused by old
+timers. Perhaps it is exacerbated by some university lecturers but,
+ultimately, it is the result of users who haven't studied anything more
+modern. I was the same when I was a kid: I'd liked writing rats nest code
+and didn't care a hoot for &quot;a fascist type system&quot; that might encourage me
+to write something more maintainable.
+
+--
+Dr Jon D Harrop, Flying Frog Consultancy Ltd.
+http://www.ffconsultancy.com/products/?u
+</POST>
+<POST>
+<POSTER> Maciej Katafiasz &lt;mathr...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-24T19:19:00 </POSTDATE>
+Den Thu, 24 Jan 2008 15:35:13 +0100 skrev Peter Hildebrandt:
+
+<QUOTE PREVIOUSPOST="
+&gt; Funny thing:  In my reader (Opera M2) Rainer's response looks just fine.
+&gt; Yours OTOH seems to contain some weird stuff ...
+">
+
+It's probably sniffing when there's no Content-type given, so it comes
+out alright. Whereas my post has the header forcing a particular
+encoding, so you see what I see, ie. garbage.
+
+Cheers,
+Maciej
+</POST>
+<POST>
+<POSTER> Maciej Katafiasz &lt;mathr...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-24T19:26:00 </POSTDATE>
+Den Thu, 24 Jan 2008 11:10:36 -0500 skrev Ken Tilton:
+
+<QUOTE PREVIOUSPOST="
+&gt; If one is a fearful German shepherd who gets thru the day by terrifying
+&gt; others, fine, but it is the tail-wagging retrievers who get their ears
+&gt; scratched.
+">
+
+The only fearfulness in German shepherds is how fearsomely intelligent
+and well-tempered they are. It's really not a good personification of
+hatred. And I speak from experience as a long time owner of a German
+shepherd, she was without doubt the most balanced and forgiving in my
+family.
+
+Cheers,
+Maciej
+</POST>
+<POST>
+<POSTER> Maciej Katafiasz &lt;mathr...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-24T19:28:00 </POSTDATE>
+Den Thu, 24 Jan 2008 06:22:57 -0800 skrev Xah Lee:
+
+<QUOTE PREVIOUSPOST="
+&gt;    Rage channeled through anger is unstoppable.
+">
+
+Wait, you can &quot;channel rage through anger&quot; in English? Silly language
+that.
+
+Cheers,
+Maciej
+</POST>
+<POST>
+<POSTER> Jon Harrop &lt;use...@jdh30.plus.com&gt; </POSTER>
+<POSTDATE> 2008-01-24T20:34:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Kaz Kylheku wrote:
+&gt; According to you, anyway. If you understand Mathematica as well as you
+&gt; do Lisp, then I'd take all that with a grain of salt. Maybe there is a
+&gt; way to quote List[1, 2, 3] to get it as data, only you haven't figured
+&gt; it out.
+">
+
+Xah's point is that List[1, 2, 3] is already data and does not need to be
+quoted.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; This is a high-level beauty of Mathematica.
+
+&gt; Not giving the programmers access to the data structure which
+&gt; represents the program source is simply a myopic limitation. A myopic
+&gt; limitation doesn't give rise to a higher level language.
+">
+
+Mathematica only gives you access to program source.
+
+--
+Dr Jon D Harrop, Flying Frog Consultancy Ltd.
+http://www.ffconsultancy.com/products/?u
+</POST>
+<POST>
+<POSTER> Don Geddis &lt;d...@geddis.org&gt; </POSTER>
+<POSTDATE> 2008-01-25T00:37:00 </POSTDATE>
+Xah Lee &lt;x ... @xahlee.org&gt; wrote on Thu, 24 Jan 2008:
+
+<QUOTE PREVIOUSPOST="
+&gt;    The Sith Philosophy
+&gt;    Fear leads to anger.
+&gt;    Anger leads to hate.
+&gt;    Hatred leads to power.
+&gt;    Power leads to victory.
+&gt;    Let your anger flow through you.
+&gt;    Your hate will make you strong.
+&gt;    True power is only achieved through testing the limits of one's anger, passing through unscathed.
+&gt;    Rage channeled through anger is unstoppable.
+&gt;    The dark side of the Force offers unimaginable power.
+&gt;    The dark side is stronger than the light.
+&gt;    The weak deserve their fate.
+">
+
+Probably better as Yoda said it (from The Phantom Menace):
+I sense much fear in you.
+Fear is the path to the dark side.
+Fear leads to anger.
+Anger leads to hate.
+Hate leads to suffering.
+which you can find at 1:30-1:40 here:
+http://youtube.com/watch?v=6iIzDJ1o0Ow
+
+Or perhaps you prefer Darth Maul's version:
+Fear.
+Fear attracts the fearful.
+The strong.  The weak.
+The innocent.  The corrupt.
+Fear.
+Fear is my ally.
+available here:
+http://youtube.com/watch?v=iPfBQ-_7sGE
+
+___________________________________________________________________________ ____
+Don Geddis http://don.geddis.org/ d ... @geddis.org
+To me, clowns aren't funny.  In fact, they're kinda scary.  I've wondered where
+this started, and I think it goes back to the time I went to the circus and a
+clown killed my dad.  -- Deep Thoughts, by Jack Handey
+</POST>
+<POST>
+<POSTER> Ken Tilton &lt;kennytil...@optonline.net&gt; </POSTER>
+<POSTDATE> 2008-01-25T02:29:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Maciej Katafiasz wrote:
+&gt; And I speak from experience as a long time owner of a German
+&gt; shepherd, she was without doubt the most balanced and forgiving in my
+&gt; family.
+">
+
+What was her name?
+
+kt
+
+--
+http://www.theoryyalgebra.com/
+
+&quot;In the morning, hear the Way;
+in the evening, die content!&quot;
+-- Confucius
+</POST>
+<POST>
+<POSTER> Maciej Katafiasz &lt;mathr...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-25T04:33:00 </POSTDATE>
+Den Fri, 25 Jan 2008 02:29:47 -0500 skrev Ken Tilton:
+
+<QUOTE PREVIOUSPOST="
+&gt; Maciej Katafiasz wrote:
+&gt;&gt; And I speak from experience as a long time owner of a German shepherd,
+&gt;&gt; she was without doubt the most balanced and forgiving in my family.
+
+&gt; What was her name?
+">
+
+Pufa.
+
+Cheers,
+Maciej
+</POST>
+<POST>
+<POSTER> Pascal Costanza &lt;p...@p-cos.net&gt; </POSTER>
+<POSTDATE> 2008-01-25T06:35:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Xah Lee wrote:
+&gt; The Mathematica language is very similar to lisp. From a Mathematica
+&gt; expert's point of view (me), the first thing that seems odd of lisp is
+&gt; the low-level-ness.
+">
+
+It's not so much about being low level, but rather about being able to
+change the programming language from within a program itself. This
+requires revealing implementation details of the language and providing
+hooks to actually make effective changes.
+
+If you believe that it's possible to come up with the 'right'
+programming language(s) that don't require tweaking anymore, then this
+probably appears as gratuitous to you. However, if you believe that an
+essential part of solving a problem in a certain domain is to come up
+with a domain-specific language, then this isn't so far off anymore.
+
+Lisp was one of the first languages that enabled such tweaks in a more
+systematic way. Yes, there were mistakes made in early Lisp dialects,
+and some of those mistakes still live on in current dialects (including
+Common Lisp and Scheme). But it is also clear that it is very hard to do
+substantially better than Lisp. Some of the oddities in Lisp actually
+seem to be necessary to be able to perform certain kinds of tweaks.
+
+<QUOTE PREVIOUSPOST="
+&gt; Perhaps in order of the low level impression:
+
+&gt; 1. The cons business. (lists are made up of cons cells and it is
+&gt; necessary for the programer to understand this to write any non-
+&gt; trivial lisp program)
+
+&gt; 2. No highlevel treatment of lists. (In Mathematica, there are a
+&gt; system of functions to extract or manipulate (nested) lists considered
+&gt; as trees. e.g. getting all elements at a level, or arbitrary set of
+&gt; nodes of a tree. All these based on a tree index concept. (i.e. first
+&gt; branch's second branch's third's branch will be 1,2,3.) In lisp,
+&gt; programers uses cons, car, cdr, caadr, etc. That is bizarre and
+&gt; downright fucking stupid.)
+">
+
+This is an example of providing low-level details so that you can change
+the behavior at a higher level. If you provide a list abstraction that
+doesn't let you access low-level details, then you're stuck with the
+design choices and API that the original designers have decided, and
+can't do much about them (except by starting from scratch).
+
+<QUOTE PREVIOUSPOST="
+&gt; 3. The syntax is a bit quirky. In particular, a mathematica programer
+&gt; sees that sometimes list is written as “(list a b c)”, but sometimes
+&gt; there's this oddity “'(a b c)” (which is syntactically equivalent to
+&gt; “(quote a b c)”). And, when mapping a function, sometimes the
+&gt; programer also needs to put the apostrophy in front. (A Mathematica
+&gt; programer would think, if a function (e.g. “map”) that takes another
+&gt; function as argument, why would the function require the programer to
+&gt; put the apostrophy, why the function itself could be designed to not
+&gt; evaluate that argument.)
+
+&gt; 4. A behind-the-scenes model of computation. Namely, lisp the language
+&gt; deals with the concept of “lisp objects”, and there's a “print syntax”
+&gt; that represent these objects. (and a “read syntax” that reads a code
+&gt; into these objects)
+">
+
+Yes, it's an acknowledged issue in Lisp that has its drawbacks, but at
+the same time gives you important expressive power: By being able to
+refer to runtime objects in source code directly you can actually write
+programs about such objects (aka metaprogramming and reflection).
+
+Brian Smith attempted to solve the problems with Lisp in 2-Lisp - see
+his work on reflection and 3-Lisp, for which 2-Lisp was an intermediate
+step. There are also two nice overview papers: &quot;Reflection in logic,
+functional and object-oriented programming: a Short Comparative Study&quot;
+by Demers and Malenfant, and &quot;M-LISP: A Representation-Independent
+Dialect of LISP with Reduction Semantics&quot; by Muller.
+
+I think 2-Lisp is pretty close to a good solution (but not substantially
+better enough to warrant changing all existing Lisp and Scheme source
+code to match the 2-Lisp model). M-LISP seems closer to what you would
+actually prefer, I think (but I haven't checked in detail).
+
+Pascal
+
+--
+1st European Lisp Symposium (ELS'08)
+http://prog.vub.ac.be/~pcostanza/els08/
+
+My website: http://p-cos.net
+Common Lisp Document Repository: http://cdr.eurolisp.org
+Closer to MOP &amp; ContextL: http://common-lisp.net/project/closer/
+</POST>
+<POST>
+<POSTER> Rainer Joswig &lt;jos...@lisp.de&gt; </POSTER>
+<POSTDATE> 2008-01-25T06:38:00 </POSTDATE>
+In article &lt;fncacf$uk ... @news.net.uni-c.dk&gt;,
+Maciej Katafiasz &lt;mathr ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Den Fri, 25 Jan 2008 02:29:47 -0500 skrev Ken Tilton:
+
+&gt; &gt; Maciej Katafiasz wrote:
+&gt; &gt;&gt; And I speak from experience as a long time owner of a German shepherd,
+&gt; &gt;&gt; she was without doubt the most balanced and forgiving in my family.
+
+&gt; &gt; What was her name?
+
+&gt; Pufa.
+
+&gt; Cheers,
+&gt; Maciej
+">
+
+Pufa? I cannot imagine that a German shepherd dog would
+listen to that name. ;-)
+
+I recently read a story where British police men had to
+be trained in German, because their German shepherd dogs
+did not listen to English commands. ;-)
+</POST>
+<POST>
+<POSTER> Xah Lee &lt;x...@xahlee.org&gt; </POSTER>
+<POSTDATE> 2008-01-25T08:01:00 </POSTDATE>
+Hi Jon,
+
+Am responding to some parts of your post.
+
+<QUOTE PREVIOUSPOST="
+Xah wrote:
+">
+
+「As i repeated many times now, programing in Mathematica does not have
+any concept of memory, reference, pointer, WHATSOEVER. There is NO
+behind-the-scene memory, object, abstract storage location, where some
+other entities “reference” to it.」
+
+<QUOTE PREVIOUSPOST="
+Jon wrote:
+&gt; That is a triumph of hope over reality, I'm afraid. Here are a couple of
+&gt; counter examples that I have experienced:
+
+&gt; . You must learn about stack consumption and tail recursion because
+&gt; Mathematica is extremely prone to segfaulting when the stack is exhausted.
+&gt; Hiding this behind $RecursionLimit does not abstract away this problem but
+&gt; merely provides a safe-looking facade compared to segmentation faults
+&gt; (which happen if you raise $RecursionLimit)
+
+&gt; . You must learn about the memory management of cyclic data structures if
+&gt; you want to avoid leaks in your code because Mathematica is not properly
+&gt; garbage collected.
+
+&gt; The language might not explicitly expose storage concepts but the
+&gt; implementation requires users to understand it. This might be fixed in the
+&gt; future if Wolfram Research make the core rewriter tail recursive and
+&gt; migrate to accurate garbage collection but I don't think that will happen
+&gt; any time soon.
+
+&gt; There are some important discrepancies though. You've even neglected one:
+&gt; Mathematica's lists are arrays where are Lisp's lists are real linked
+&gt; lists. This has some important ramifications, e.g. cdr is O(1) in Lisp but
+&gt; O(n) in Mathematica.
+">
+
+I disagree. There are hardware resource limitations, and there's
+nothing a language can do about that.
+
+What you are saying, is that when a programer, say a Schemer, program
+in Mathematica, she would run into errors like $RecursionLimit,
+whereas she wouldn't have such error when programing in Scheme. You
+attribute this as a Mathematica's language problem as a inability to
+abstract the underlying implementation away. (stacks, linked list,
+tail recursion, segfault)
+
+I disagree. Any computer language, has characteristic behaviors
+peculiar to each language's constructs. (the good ones are called
+idioms) You have to learn the idioms of the lang. For example, in
+Scheme, you do recursion happy-go-lucky. In Common Lisp, you'd be more
+careful about that because Common Lisp does not do recursion as well
+as Scheme. (in tech geeking talk, we say that common lisp
+implementations does not always have a optimal implementation for a
+certain type of recursive construct) In non-lisp langs, recursion
+quickly gets you all sort of errors.
+
+Similarly, you can not just import a particular language coding habit
+into another, and expect it to behave optimally or even work. (say,
+Haskell idioms, Java idioms, Mathematica idioms, Prolog idioms, won't
+mesh well)
+
+Likewise in Mathematica, how you program or how exactly you are doing
+recursion, has a lot to do with your knowldege of the language. Doing
+it one way, gets you recursion error or time halts, but changing a
+structure or tweak a part, you are good to go.
+
+For example, you complain that Mathematica's list has the
+computational behavior such that it is very slow to access or work
+with and quickly gets you into some hardware resource error. (i.e. it
+behaves like lisp's “vector” datatype) My retort, is that this is
+simply a result of not knowing the language well. (not necessarily
+that you don't) For example, if i'm a student, i might use lisp's
+alist data type when i actually should use its hash map. The result
+being, my program runs like a slug and quickly hits some hardware
+resource limit. I would be wrong of me, to blame lisp by claiming it
+has bad implementation of key'd list.
+
+As to the actual solution to your complaint about mathematica's
+implementation of list, for a mathematica programer expert, in
+situations when she knew she's gonna do a lot preappending to grow a
+list, she'd just nest the list instead of prepend, then Flatten at the
+end if necessary.
+
+Let me give a reverse example then. In Mathematica, i can do:
+
+In[1]:=
+433333333333333333399999999999999999999999999999999999555+1
+
+Out[1]=
+433333333333333333399999999999999999999999999999999999556
+
+In most languages, that's ugly error. Can i then claim, that all these
+other languages, does not have a good implementation of numbers?
+
+Actually this is a good example of my concept of high level languages:
+aka, A protocol to specify computation.
+
+In Mathematica, this simple example illustrates a most simple, basic,
+elementary specification of a computation. In most other languages,
+they simply cannot do it, or requires some libraries, or requires some
+datatype declaration. All these, are symptoms of the behind-the-scenes
+implementation/practimatics/speeed/hardware issues surfacing to the
+language level, which interferes and complicates the language by
+mumble jumble idiosyncratic to each language.
+
+Perhaps some lisp hotshot fuckheads, will retort, that lisp can do the
+above too. Then, can lisp do this?
+
+In[1]:=
+Flatten@Outer[f,{3,4},{a,b},{x,y,z}]
+
+Out[1]=
+{f[3,a,x],f[3,a,y],f[3,a,z],f[3,b,x],f[3,b,y],f[3,b,z],f[4,a,x],f[4,a,y],
+f[4,a,z],f[4,b,x],f[4,b,y],f[4,b,z]}
+
+Can Lisp do this:
+
+(* compute Pi to 12345 digits*)
+N[Pi, 12345]
+
+Lisp fuckheads may retort, that the above is specialized so-called
+computer algebra or domain specific.
+
+Do lispers think, that general languages in the next 10 or 20 years,
+will still need to call special libraries, so-called “data types”, or
+other behind-the-scenes mumble jumble in order to do the above?
+
+Is there any lispers, still do not understand, my idea of a high level
+language that separats hardware/speed/implementation/pragmatics
+issues? Is it still justified, to call me a troll, or moron, or shove
+your lisp's object technicalities mumble jumble to me? Is it me, who
+didn't understand you, or you, who didn't wrong'd me?
+
+If, the majority of computer scientist and compiler morons, actually
+clearly see the above high-level language idea (as opposed to
+perpetually bury their heads into “types” and other “behind the
+scenes” mumble jumble), by now we could have many high level
+languages, that are not only as beautiful and easy to use as
+Mathematica, but diverse, some will be fast, control hardware, or
+free.
+
+Now, if you do understand the idea of separating the pragmatics stuff
+out of a computer language, then perhaps we can discuss further the
+topic fruitfully. I do not know compilers, many of you do have
+compiler knowledge. Perhaps, we can discuss, to what extend such high
+level language is possible. (don't forget that Mathematica is already
+a existing example. Don't bury your head just in lisp. And, there are
+Haskell, erlang, f#... and there's also denotational semantics which i
+don't understand but i'm sure others here do) The goal of discussion,
+is to grow and cultivate ideas from people with diverse interests and
+knowledges. Not, using your narrow expertise to shot others down.
+
+Further readings
+
+• What is Expressiveness in a Computer Language
+http://xahlee.org/perl-python/what_is_expresiveness.html
+
+• The Concepts and Confusions of Prefix, Infix, Postfix and Fully
+Functional Notations
+http://xahlee.org/UnixResource_dir/writ/notations.html
+
+• Lisp's List Problem
+http://xahlee.org/emacs/lisp_list_problem.html
+
+• Jargons And High Level Languages
+http://xahlee.org/emacs/jargons_high_level_lang.html
+
+• Is Lisp's Objects Concept Necessary?
+http://xahlee.org/emacs/lisps_objects.html
+
+Xah
+x ... @xahlee.org
+∑ http://xahlee.org/
+
+☄
+</POST>
+<POST>
+<POSTER> p...@informatimago.com (Pascal J. Bourguignon) </POSTER>
+<POSTDATE> 2008-01-25T08:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Xah Lee &lt;x ... @xahlee.org&gt; writes:
+&gt; [...]
+&gt; As to the actual solution to your complaint about mathematica's
+&gt; implementation of list, for a mathematica programer expert, in
+&gt; situations when she knew she's gonna do a lot preappending to grow a
+&gt; list, she'd just nest the list instead of prepend, then Flatten at the
+&gt; end if necessary.
+
+&gt; Let me give a reverse example then. In Mathematica, i can do:
+
+&gt; In[1]:=
+&gt; 433333333333333333399999999999999999999999999999999999555+1
+
+&gt; Out[1]=
+&gt; 433333333333333333399999999999999999999999999999999999556
+
+&gt; In most languages, that's ugly error. Can i then claim, that all these
+&gt; other languages, does not have a good implementation of numbers?
+">
+
+(1+ 433333333333333333399999999999999999999999999999999999555)
+433333333333333333399999999999999999999999999999999999556 ; Pffew!
+
+<QUOTE PREVIOUSPOST="
+&gt; Perhaps some lisp hotshot fuckheads, will retort, that lisp can do the
+&gt; above too. Then, can lisp do this?
+
+&gt; In[1]:=
+&gt;  Flatten@Outer[f,{3,4},{a,b},{x,y,z}]
+
+&gt; Out[1]=
+&gt; {f[3,a,x],f[3,a,y],f[3,a,z],f[3,b,x],f[3,b,y],f[3,b,z],f[4,a,x],f[4,a,y],
+&gt;   f[4,a,z],f[4,b,x],f[4,b,y],f[4,b,z]}
+">
+
+Yep, no problem:
+
+C/USER[89]&gt; (COM.INFORMATIMAGO.COMMON-LISP.LIST:COMBINE '(f) '(3 4) '(a b) '(x y z))
+((F 3 A X) (F 3 A Y) (F 3 A Z) (F 3 B X) (F 3 B Y) (F 3 B Z) (F 4 A X) (F 4 A Y) (F 4 A Z) (F 4 B X) (F 4 B Y) (F 4 B Z))
+
+<QUOTE PREVIOUSPOST="
+&gt; Can Lisp do this:
+
+&gt; (* compute Pi to 12345 digits*)
+&gt; N[Pi, 12345]
+
+&gt; Lisp fuckheads may retort, that the above is specialized so-called
+&gt; computer algebra or domain specific.
+">
+
+Or they may retort that the situation has not changed since the last
+time you asked, lisp implementations can still compute Pi to any
+number of digits:
+
+(progn (setf (EXT:LONG-FLOAT-DIGITS) 12345)
+(length (princ-to-string (* 4 (atan 1.0L0)))))
+12353
+
+--
+__Pascal Bourguignon__
+</POST>
+<POST>
+<POSTER> Nicolas Neuss &lt;lastn...@math.uni-karlsruhe.de&gt; </POSTER>
+<POSTDATE> 2008-01-25T09:01:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Xah Lee &lt;x ... @xahlee.org&gt; writes:
+&gt; Hi Jon,
+
+&gt; Am responding to some parts of your post.
+">
+
+Fascinating.  Xah Lee meets Jon Harrop at last.  The final showdown between
+OCaml/F# and Mathematica is taking place.  Since I expect that this will
+take some time, maybe you two could make it out between yourselves with
+email and tell us the outcome, if an agreement has been reached.
+
+Nicolas
+</POST>
+<POST>
+<POSTER> p...@informatimago.com (Pascal J. Bourguignon) </POSTER>
+<POSTDATE> 2008-01-25T10:33:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Nicolas Neuss &lt;lastn ... @math.uni-karlsruhe.de&gt; writes:
+&gt; Xah Lee &lt;x ... @xahlee.org&gt; writes:
+
+&gt;&gt; Hi Jon,
+
+&gt;&gt; Am responding to some parts of your post.
+
+&gt; Fascinating.  Xah Lee meets Jon Harrop at last.  The final showdown between
+&gt; OCaml/F# and Mathematica is taking place.  Since I expect that this will
+&gt; take some time, maybe you two could make it out between yourselves with
+&gt; email and tell us the outcome, if an agreement has been reached.
+">
+
+No! Just bring some pop-corn, the spectacle will be grandiose!
+
+--
+__Pascal Bourguignon__
+</POST>
+<POST>
+<POSTER> Maciej Katafiasz &lt;mathr...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-25T10:58:00 </POSTDATE>
+Den Fri, 25 Jan 2008 12:38:56 +0100 skrev Rainer Joswig:
+
+<QUOTE PREVIOUSPOST="
+&gt; Pufa? I cannot imagine that a German shepherd dog would listen to that
+&gt; name. ;-)
+
+&gt; I recently read a story where British police men had to be trained in
+&gt; German, because their German shepherd dogs did not listen to English
+&gt; commands. ;-)
+">
+
+She seemed to do just fine, in fact her grasp of the language was
+somewhat scary. Unless of course it'd inconvenience her to understand,
+then suddenly comprehension would fall sharply. That's actually the worst
+part of arguing with a dog, you can't really prove it understands you,
+even if you know damn well that that's the case.
+
+Cheers,
+Maciej
+</POST>
+<POST>
+<POSTER> Slobodan Blazeski &lt;slobodan.blaze...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-25T11:03:00 </POSTDATE>
+On Jan 25, 3:01 pm, Nicolas Neuss &lt;lastn ... @math.uni-karlsruhe.de&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Xah Lee &lt;x ... @xahlee.org&gt; writes:
+&gt; &gt; Hi Jon,
+
+&gt; &gt; Am responding to some parts of your post.
+
+&gt; Fascinating.  Xah Lee meets Jon Harrop at last.  The final showdown between
+&gt; OCaml/F# and Mathematica is taking place.  Since I expect that this will
+&gt; take some time, maybe you two could make it out between yourselves with
+&gt; email and tell us the outcome, if an agreement has been reached.
+
+&gt; Nicolas
+">
+
+Settled behind the scene via email, no way, the crowd gathered to see
+the show  and better it be a good one.
+
+cheers
+Slobodan
+</POST>
+</TEXT>
+</BODY>
+</DOC>

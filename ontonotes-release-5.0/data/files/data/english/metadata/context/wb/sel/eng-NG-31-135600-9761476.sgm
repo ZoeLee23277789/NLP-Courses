@@ -1,0 +1,212 @@
+<DOC>
+<DOCID> eng-NG-31-135600-9761476 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2008-02-06T08:55:00 </DATETIME>
+<BODY>
+<HEADLINE>
+FPGA tips report
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Tony Burch&quot; &lt;t...@burched.com.au&gt; </POSTER>
+<POSTDATE> 2008-02-06T08:55:00 </POSTDATE>
+Hi all, I just wrote this report called &quot;Single Top FPGA Tips&quot;
+http://www.burched.com/BurchED_Single_Top_Tips.pdf
+
+It's a bit different to your normal &quot;Top Ten Tips&quot; or &quot;Favourite Recipes&quot;
+because I tried to write a single tip for each level of FPGA designer, right
+through from &quot;not yet started&quot; to &quot;experienced&quot;.
+
+I hope you enjoy it. Best regards,
+Anthony Burch
+</POST>
+<POST>
+<POSTER> Jim Lewis &lt;j...@synthworks.com&gt; </POSTER>
+<POSTDATE> 2008-02-08T00:14:00 </POSTDATE>
+Tony
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi all, I just wrote this report called &quot;Single Top FPGA Tips&quot;
+&gt; http://www.burched.com/BurchED_Single_Top_Tips.pdf
+">
+
+I am curious about #6:
+Perform functional and Timing Simulation to verify
+the performance of your design. Using just the Timing Analyzer
+does not count as verification.
+
+I am curious why you like timing simulation for timing verification?
+Do you have a concern about FPGA timing analyzers?
+
+My experience (from ASIC) is that the average set of
+test vectors do not test the critical paths in a critical
+way - as for some projects we had to write vectors that did
+this and it was not fun.  As long as you validate any timing
+path exceptions (false or multi-cycle paths), the ASIC vendor
+approved timing analyzer was reliable.
+
+Cheers,
+Jim
+</POST>
+<POST>
+<POSTER> Thomas Stanka &lt;usenet_nospam_va...@stanka-web.de&gt; </POSTER>
+<POSTDATE> 2008-02-07T01:39:00 </POSTDATE>
+On 8 Feb., 06:14, Jim Lewis &lt;j ... @synthworks.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I am curious why you like timing simulation for timing verification?
+&gt; Do you have a concern about FPGA timing analyzers?
+">
+
+I agree with Jim. The only part of this rule that I accept as valid,
+is that STA alone is no replace for netlist simulation, but not for
+timing reason but for proof of functionality after synthesis.
+
+In fact there are things like some asynchron inputs that tend to be
+&quot;easy&quot; covered by STA, but are impossible to simulate, as a simulation
+tends to be overpessimistic in case of recovery from 'X'.
+
+I also disagree with rule #5. Even for FPGAs are asynch resets
+necessary for some classes of designs (typically for flash or fuse
+base Fpgas that are active with power-up) which require asynch reset.
+There are several technics available to prevent any problems due to
+the asynch reset.
+
+Tip #4 seems to me to be marketing from Xilinx as other cores are
+available and have their market.
+
+And last: Tip #7 is lacking it should read &quot;every rule may be violated
+if you know why you violate the rule and what happens if you violate
+the rule&quot;
+
+bye Thomas
+</POST>
+<POST>
+<POSTER> JK &lt;krishna.januman...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-02-07T07:31:00 </POSTDATE>
+On Feb 8, 10:14 am, Jim Lewis &lt;j ... @synthworks.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; ...  As long as you validate any timing
+&gt; path exceptions (false or multi-cycle paths), the ASIC vendor
+&gt; approved timing analyzer was reliable.
+">
+
+But how the timing path exceptions are validated?
+I think GLS is the way to validate the timing (false path or multi-
+cycle path added in place &amp; route). Even in ASIC field, GLS (using
+TDLs or testcases) will be done in addition to Logic Equivalence
+check. I accept that GLS is tidious. In case of FPGAs, as SRAM based
+FPGAs are programmable, instead of putting efforts in GLS, we go for
+programming SRAM and test on-board.
+
+Regards,
+JK
+</POST>
+<POST>
+<POSTER> Andy &lt;jonesa...@comcast.net&gt; </POSTER>
+<POSTDATE> 2008-02-07T09:24:00 </POSTDATE>
+On Feb 7, 12:39 am, Thomas Stanka &lt;usenet_nospam_va ... @stanka-web.de&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 8 Feb., 06:14, Jim Lewis &lt;j ... @synthworks.com&gt; wrote:
+
+&gt; &gt; I am curious why you like timing simulation for timing verification?
+&gt; &gt; Do you have a concern about FPGA timing analyzers?
+
+&gt; I agree with Jim. The only part of this rule that I accept as valid,
+&gt; is that STA alone is no replace for netlist simulation, but not for
+&gt; timing reason but for proof of functionality after synthesis.
+
+&gt; In fact there are things like some asynchron inputs that tend to be
+&gt; &quot;easy&quot; covered by STA, but are impossible to simulate, as a simulation
+&gt; tends to be overpessimistic in case of recovery from 'X'.
+
+&gt; I also disagree with rule #5. Even for FPGAs are asynch resets
+&gt; necessary for some classes of designs (typically for flash or fuse
+&gt; base Fpgas that are active with power-up) which require asynch reset.
+&gt; There are several technics available to prevent any problems due to
+&gt; the asynch reset.
+
+&gt; Tip #4 seems to me to be marketing from Xilinx as other cores are
+&gt; available and have their market.
+
+&gt; And last: Tip #7 is lacking it should read &quot;every rule may be violated
+&gt; if you know why you violate the rule and what happens if you violate
+&gt; the rule&quot;
+
+&gt; bye Thomas
+">
+
+I agree with Jim about STA vs Timing Simulation for verifying timing.
+For verifying false/multi-cycle paths, I sometimes add assertions in
+the RTL to ensure that those assumptions are correct. That lets me
+verify those constraints at much faster RTL simulation speeds, where
+more corner cases can be run per unit time (= $).
+
+I think the amount of effort/time spent in full timing simulation has
+to be balanced against the &quot;risk (= cost * propability) of failure&quot;.
+If you have early access to the rest of the hardware with which to
+integrate your design in the lab, debugging there (especially with
+tools like chipscope) can be more productive than running exhaustive
+test cases through slow, full timing simulations. On the other hand,
+if you are a consultant, and your customer expects your design to work
+the first time it touches hardware, then the &quot;cost of failure&quot; can be
+pretty high, and warrants much more effort in full timing simulation.
+I also would take into account what type of design it is, and whether
+or not the tool flow for that design has been proven in the past, to
+get an idea of the likelihood of tool-induced errors. Other than false/
+multi-cycle path constraint errors, tool-induced errors are the only
+type of error a full timing simulation will catch that an RTL
+simulation will miss. If you are using a proven toolset and not
+plowing new ground with it, and your functional (rtl) simulations have
+assertions to catch problems with false/multicycle path constraints
+(or you use other means to verify them), and  your STA results are
+good, there is much less (perhaps even no) need for running full
+timing simulations, and you're better off running more test cases
+through your RTL simulations.
+
+Finally, I would ammend #5 to allow asynchronous reset and clear only
+for initialization (i.e. startup), not for functional operation. And
+such asynchronous control signals must be designed to deassert
+synchronously to each clock domain they affect. Applying asynchronous
+reset is a truly asynchronous function; taking it away is a
+synchronous function, and must be handled with proper synchronization
+techniques.
+
+Andy
+</POST>
+<POST>
+<POSTER> Jim Lewis &lt;j...@synthworks.com&gt; </POSTER>
+<POSTDATE> 2008-02-08T12:13:00 </POSTDATE>
+JK
+
+<QUOTE PREVIOUSPOST="
+&gt; On Feb 8, 10:14 am, Jim Lewis &lt;j ... @synthworks.com&gt; wrote:
+&gt;&gt; ...  As long as you validate any timing
+&gt;&gt; path exceptions (false or multi-cycle paths), the ASIC vendor
+&gt;&gt; approved timing analyzer was reliable.
+
+&gt; But how the timing path exceptions are validated?
+&gt; I think GLS is the way to validate the timing (false path or multi-
+&gt; cycle path added in place &amp; route).
+">
+
+False paths would have to be by analysis and/or assertions (per Andy's
+recommendation).  You may be able to prove multi-cycle paths with
+GLS, but I would expect to write additional vectors to do this.
+I would not assume that running my functional vectors with timing
+would cover any interesting timing cases.
+
+BTW, I do GLS with nominal timing to validate the synthesis
+translation process, however, I do not like doing minimum and
+maximum timing simulations unless there is a project requirement
+to do so or I am doing an ASIC and I want a final check.
+
+Best,
+Jim
+</POST>
+</TEXT>
+</BODY>
+</DOC>

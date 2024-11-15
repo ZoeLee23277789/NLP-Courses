@@ -1,0 +1,578 @@
+<DOC>
+<DOCID> eng-NG-31-135590-9749838 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2008-02-10T21:48:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Crockford's Prototypal Inheritance Function
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> timothytoe &lt;timothy...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-02-10T21:48:00 </POSTDATE>
+I understand JavaScript objects well enough to make objects and add
+prototype functions to them later on.
+
+Despite my success in getting programs written, I keep coming back to
+Crockford's paper on prototypal inheritance, in which he decides that
+all that work he did earlier to bolt a classical inheritance system
+onto JavaScript was missing the point.
+
+http://javascript.crockford.com/prototypal.html
+
+It's an interesting paper, but he just drops a couple functions on us
+and acts as if anyone reading the paper should go ahhh! I've read the
+paper many times and the point eludes me. Just what do these functions
+give me that I don't already have?
+
+function object(o) {
+function F() {}
+F.prototype = o;
+return new F();
+}
+
+and
+
+Object.prototype.begetObject = function () {
+function F() {}
+F.prototype = this;
+return new F();
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+newObject = oldObject.begetObject();
+
+I'm assuming that if I saw an example of one in use, I'd get that
+elusive aha feeling.
+
+Can someone please explain the clever bits? Or give me an example and
+explain how the example is helped by the function.
+
+He even drops one of these into a Powerpoint slideshow he has. One its
+own slide. All alone. As if it requires no explanation.
+
+If you were planning to help a dolt or a dope understand one thing
+today, let that dope be me, and let that thing be this.
+</POST>
+<POST>
+<POSTER> tomtom.wozn...@gmail.com </POSTER>
+<POSTDATE> 2008-02-10T23:53:00 </POSTDATE>
+On Feb 10, 8:48 pm, timothytoe &lt;timothy ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I understand JavaScript objects well enough to make objects and add
+&gt; prototype functions to them later on.
+
+&gt; Despite my success in getting programs written, I keep coming back to
+&gt; Crockford's paper on prototypal inheritance, in which he decides that
+&gt; all that work he did earlier to bolt a classical inheritance system
+&gt; onto JavaScript was missing the point.
+
+&gt; http://javascript.crockford.com/prototypal.html
+
+&gt; It's an interesting paper, but he just drops a couple functions on us
+&gt; and acts as if anyone reading the paper should go ahhh! I've read the
+&gt; paper many times and the point eludes me. Just what do these functions
+&gt; give me that I don't already have?
+
+&gt;     function object(o) {
+&gt;         function F() {}
+&gt;         F.prototype = o;
+&gt;         return new F();
+&gt;     }
+
+&gt; and
+
+&gt; Object.prototype.begetObject = function () {
+&gt;     function F() {}
+&gt;     F.prototype = this;
+&gt;     return new F();
+
+&gt; };
+
+&gt; newObject = oldObject.begetObject();
+
+&gt; I'm assuming that if I saw an example of one in use, I'd get that
+&gt; elusive aha feeling.
+
+&gt; Can someone please explain the clever bits? Or give me an example and
+&gt; explain how the example is helped by the function.
+
+&gt; He even drops one of these into a Powerpoint slideshow he has. One its
+&gt; own slide. All alone. As if it requires no explanation.
+
+&gt; If you were planning to help a dolt or a dope understand one thing
+&gt; today, let that dope be me, and let that thing be this.
+">
+
+Using the few simple lines of begetObject, any new object (function)
+you create can inherit all of the old object's methods but you're free
+to mutate your new object at any time.
+
+Here's an example I found to help explain:
+
+// Ripped from http://www.amundsen.com/blog/archives/395
+&lt;script&gt;
+// extend Object to ease prototypal inheritance
+Object.prototype.begetObject = function() {
+function F() {}
+F.prototype = this;
+return new F();
+};
+// simple class
+function Dog(name) {
+this.name = (name!==undefined?name:'dog');
+};
+// smarter class
+function HungryDog(o) {
+var bo = o.begetObject();
+bo.eat = function() { alert('eating...'); }
+return bo;
+};
+// even smarter class
+function TrainedDog(o) {
+var bo = o.begetObject();
+bo.sit = function() { alert('sitting...'); }
+return bo;
+};
+// show it all works
+var td = new TrainedDog(new HungryDog(new Dog('marvin')));
+td.sit();
+td.eat();
+alert(td.name);
+&lt;/script&gt;
+
+Basically, add whatever extra methods you like to any object.
+
+Does this help explain or did I miss your question entirely?
+
+Cheers!
+
+-Tom Woz
+</POST>
+<POST>
+<POSTER> RobG &lt;rg...@iinet.net.au&gt; </POSTER>
+<POSTDATE> 2008-02-10T23:55:00 </POSTDATE>
+On Feb 11, 12:48 pm, timothytoe &lt;timothy ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I understand JavaScript objects well enough to make objects and add
+&gt; prototype functions to them later on.
+
+&gt; Despite my success in getting programs written, I keep coming back to
+&gt; Crockford's paper on prototypal inheritance, in which he decides that
+&gt; all that work he did earlier to bolt a classical inheritance system
+&gt; onto JavaScript was missing the point.
+
+&gt; http://javascript.crockford.com/prototypal.html
+
+&gt; It's an interesting paper, but he just drops a couple functions on us
+&gt; and acts as if anyone reading the paper should go ahhh! I've read the
+&gt; paper many times and the point eludes me. Just what do these functions
+&gt; give me that I don't already have?
+
+&gt;     function object(o) {
+&gt;         function F() {}
+&gt;         F.prototype = o;
+&gt;         return new F();
+&gt;     }
+
+&gt; and
+
+&gt; Object.prototype.begetObject = function () {
+&gt;     function F() {}
+&gt;     F.prototype = this;
+&gt;     return new F();
+
+&gt; };
+
+&gt; newObject = oldObject.begetObject();
+">
+
+They are his a way of creating new objects with prototype inheritance
+without using the new operator.
+
+<QUOTE PREVIOUSPOST="
+&gt; I'm assuming that if I saw an example of one in use, I'd get that
+&gt; elusive aha feeling.
+
+&gt; Can someone please explain the clever bits? Or give me an example and
+&gt; explain how the example is helped by the function.
+">
+
+Try the following thread:
+
+Subject:  Crockford's JavaScript OOP system
+&lt;URL:
+http://groups.google.com.au/group/comp.lang.javascript/browse_frm/thr...
+
+<QUOTE PREVIOUSPOST="
+
+">
+
+--
+Rob
+</POST>
+<POST>
+<POSTER> Stevo &lt;ple...@spam-me.com&gt; </POSTER>
+<POSTDATE> 2008-02-11T00:46:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+timothytoe wrote:
+&gt; I understand JavaScript objects well enough to make objects and add
+&gt; prototype functions to them later on.
+
+&gt; Can someone please explain the clever bits? Or give me an example and
+&gt; explain how the example is helped by the function.
+
+&gt; He even drops one of these into a Powerpoint slideshow he has. One its
+&gt; own slide. All alone. As if it requires no explanation.
+">
+
+Have you tried watching his video lectures? I recall him mentioning
+beget in there, although I don't know which of the 4 videos it was:
+
+http://developer.yahoo.com/yui/theater/
+</POST>
+<POST>
+<POSTER> Stevo &lt;ple...@spam-me.com&gt; </POSTER>
+<POSTDATE> 2008-02-11T00:59:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Stevo wrote:
+&gt; timothytoe wrote:
+&gt;&gt; I understand JavaScript objects well enough to make objects and add
+&gt;&gt; prototype functions to them later on.
+&gt;&gt; Can someone please explain the clever bits? Or give me an example and
+&gt;&gt; explain how the example is helped by the function.
+&gt; Have you tried watching his video lectures? I recall him mentioning
+&gt; beget in there, although I don't know which of the 4 videos it was:
+
+&gt; http://developer.yahoo.com/yui/theater/
+">
+
+Make that 8 videos. There are 4 that cover Javascript in general, 3 that
+are advanced Javascript, and 1 that's about Ajax. I recommend watching
+them all.
+</POST>
+<POST>
+<POSTER> Joost Diepenmaat &lt;jo...@zeekat.nl&gt; </POSTER>
+<POSTDATE> 2008-02-11T07:17:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+timothytoe &lt;timothy ... @gmail.com&gt; writes:
+&gt; Just what do these functions give me that I don't already have?
+">
+
+These functions just make it more convenient to set up the *actual*
+mechanism that does &quot;inheritance&quot; and &quot;instance-of&quot; relations in
+javascript: the prototype chain. Note that the prototype-lookup
+mechanism only resembles the more well-known, class-based inheritance
+and instance-of relations if you keep your eyes half-closed.
+
+I've argued here before that javascript's constructor functions are if
+not missing the point then at least quite confusing if you expect them
+to work like classes. IMO the main point in favor of the object() and
+begetObject() functions is that they get the constructor confusion out
+of the way.
+
+--
+Joost Diepenmaat | blog: http://joost.zeekat.nl/ | work: http://zeekat.nl/
+</POST>
+<POST>
+<POSTER> timothytoe &lt;timothy...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-02-11T10:11:00 </POSTDATE>
+OK. I get it now. I can get rid of my constructor in my main code. I
+just read his article again and it made sense. Apparently, I'm not
+someone who can grasp an idea without an example. Thanks. All of you
+helped.
+</POST>
+<POST>
+<POSTER> John G Harris &lt;j...@nospam.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2008-02-11T16:07:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sun, 10 Feb 2008 at 20:53:58, in comp.lang.javascript,  wrote:
+">
+
+&lt;snip&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt;  // show it all works
+&gt;  var td = new TrainedDog(new HungryDog(new Dog('marvin')));
+&gt;  td.sit();
+&gt;  td.eat();
+&gt;  alert(td.name);
+&gt;&lt;/script&gt;
+">
+
+That's not a nice thing to do. What happens when you make the mistake of
+writing
+var td1 = new TrainedDog(new Dog('marvin'));
+
+It's better to hide the complications of construction inside a function
+so the user can write what he's thinking, namely
+var td2 = new TrainedDog('marvin');
+
+Or did you want the choice -
+var td3 = new TrainedAndHungryDog('marvin');
+or
+var td4 = new TrainedButNotHungryDog('marvin');
+
+John
+--
+John Harris
+</POST>
+<POST>
+<POSTER> John G Harris &lt;j...@nospam.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2008-02-11T16:23:00 </POSTDATE>
+On Sun, 10 Feb 2008 at 18:48:14, in comp.lang.javascript, timothytoe
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;I understand JavaScript objects well enough to make objects and add
+&gt;prototype functions to them later on.
+
+&gt;Despite my success in getting programs written, I keep coming back to
+&gt;Crockford's paper on prototypal inheritance, in which he decides that
+&gt;all that work he did earlier to bolt a classical inheritance system
+&gt;onto JavaScript was missing the point.
+
+&gt; http://javascript.crockford.com/prototypal.html
+
+&gt;It's an interesting paper, but he just drops a couple functions on us
+&gt;and acts as if anyone reading the paper should go ahhh! I've read the
+&gt;paper many times and the point eludes me. Just what do these functions
+&gt;give me that I don't already have?
+">
+
+&lt;snip&gt;
+
+Remember that you don't *have* to make javascript look like another
+language. Why not do things the javascript way for a while. When you're
+familiar with this you can decide how to do things more easily and more
+clearly, and become famous when you publish this new way. Or infamous if
+other people disagree about the ease and clarity :-)
+
+John
+--
+John Harris
+</POST>
+<POST>
+<POSTER> timothytoe &lt;timothy...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-02-11T17:56:00 </POSTDATE>
+On Feb 11, 1:23 pm, John G Harris &lt;j ... @nospam.demon.co.uk&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sun, 10 Feb 2008 at 18:48:14, in comp.lang.javascript, timothytoe
+&gt; wrote:&gt;I understand JavaScript objects well enough to make objects and add
+&gt; &gt;prototype functions to them later on.
+
+&gt; &gt;Despite my success in getting programs written, I keep coming back to
+&gt; &gt;Crockford's paper on prototypal inheritance, in which he decides that
+&gt; &gt;all that work he did earlier to bolt a classical inheritance system
+&gt; &gt;onto JavaScript was missing the point.
+
+&gt; &gt; http://javascript.crockford.com/prototypal.html
+
+&gt; &gt;It's an interesting paper, but he just drops a couple functions on us
+&gt; &gt;and acts as if anyone reading the paper should go ahhh! I've read the
+&gt; &gt;paper many times and the point eludes me. Just what do these functions
+&gt; &gt;give me that I don't already have?
+
+&gt;   &lt;snip&gt;
+
+&gt; Remember that you don't *have* to make javascript look like another
+&gt; language. Why not do things the javascript way for a while. When you're
+&gt; familiar with this you can decide how to do things more easily and more
+&gt; clearly, and become famous when you publish this new way. Or infamous if
+&gt; other people disagree about the ease and clarity :-)
+
+&gt;   John
+&gt; --
+&gt; John Harris
+">
+
+As far as I can tell, I've been doing things the JavaScript way. I
+just wanted to know what the hell Crockford was talking about.
+</POST>
+<POST>
+<POSTER> Joost Diepenmaat &lt;jo...@zeekat.nl&gt; </POSTER>
+<POSTDATE> 2008-02-11T18:06:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+timothytoe &lt;timothy ... @gmail.com&gt; writes:
+&gt; As far as I can tell, I've been doing things the JavaScript way. I
+&gt; just wanted to know what the hell Crockford was talking about.
+">
+
+Just to give you some examples of what can go wrong with the IMO nasty
+&quot;new constructor()&quot; syntax:
+
+http://joost.zeekat.nl/constructors-considered-mildly-confusing.html
+
+The advantage of Crockford's functions is that they give up any pretense
+that constructors can be referred to later or act like classes or any of
+that nonsense.
+
+Cheers,
+J.
+
+--
+Joost Diepenmaat | blog: http://joost.zeekat.nl/ | work: http://zeekat.nl/
+</POST>
+<POST>
+<POSTER> timothytoe &lt;timothy...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-02-11T18:16:00 </POSTDATE>
+On Feb 11, 3:06 pm, Joost Diepenmaat &lt;jo ... @zeekat.nl&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; timothytoe &lt;timothy ... @gmail.com&gt; writes:
+&gt; &gt; As far as I can tell, I've been doing things the JavaScript way. I
+&gt; &gt; just wanted to know what the hell Crockford was talking about.
+
+&gt; Just to give you some examples of what can go wrong with the IMO nasty
+&gt; &quot;new constructor()&quot; syntax:
+
+&gt; http://joost.zeekat.nl/constructors-considered-mildly-confusing.html
+
+&gt; The advantage of Crockford's functions is that they give up any pretense
+&gt; that constructors can be referred to later or act like classes or any of
+&gt; that nonsense.
+
+&gt; Cheers,
+&gt; J.
+
+&gt; --
+&gt; Joost Diepenmaat | blog: http://joost.zeekat.nl/| work: http://zeekat.nl/
+">
+
+Thanks. Good timing on that blog entry. :-)
+</POST>
+<POST>
+<POSTER> Joost Diepenmaat &lt;jo...@zeekat.nl&gt; </POSTER>
+<POSTDATE> 2008-02-11T18:17:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+timothytoe &lt;timothy ... @gmail.com&gt; writes:
+&gt; Thanks. Good timing on that blog entry. :-)
+">
+
+As long as I get some payed work out of it, I'll consider it time well
+spent :-)
+
+--
+Joost Diepenmaat | blog: http://joost.zeekat.nl/ | work: http://zeekat.nl/
+</POST>
+<POST>
+<POSTER> John G Harris &lt;j...@nospam.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2008-02-12T15:56:00 </POSTDATE>
+On Tue, 12 Feb 2008 at 00:06:02, in comp.lang.javascript, Joost
+
+<QUOTE PREVIOUSPOST="
+Diepenmaat wrote:
+">
+
+&lt;snip&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt;Just to give you some examples of what can go wrong with the IMO nasty
+&gt;&quot;new constructor()&quot; syntax:
+
+&gt; http://joost.zeekat.nl/constructors-considered-mildly-confusing.html
+">
+
+&lt;snip&gt;
+
+There's something not quite right in your notes. You say
+&quot;Also note that the [[Prototype]] chain for each object ends up at
+Object.prototype.&quot;
+In fact it always ends at the *original* Object.prototype. If you
+replace Object.prototype with your own object you will still find that
+the modified chain ends with the *original* Object.prototype.
+
+Likewise, when you say
+&quot;Object.prototype's [[Prototype]] is actually null indicating that
+it's the end of the chain.&quot;
+you are really talking about the *original* Object.prototype.
+
+John
+--
+John Harris
+</POST>
+<POST>
+<POSTER> Joost Diepenmaat &lt;jo...@zeekat.nl&gt; </POSTER>
+<POSTDATE> 2008-02-12T16:12:00 </POSTDATE>
+John G Harris &lt;j ... @nospam.demon.co.uk&gt; writes:
+
+<QUOTE PREVIOUSPOST="
+&gt; There's something not quite right in your notes. You say
+&gt;   &quot;Also note that the [[Prototype]] chain for each object ends up at
+&gt;    Object.prototype.&quot;
+&gt; In fact it always ends at the *original* Object.prototype. If you
+&gt; replace Object.prototype with your own object you will still find that
+&gt; the modified chain ends with the *original* Object.prototype.
+
+&gt; Likewise, when you say
+&gt;   &quot;Object.prototype's [[Prototype]] is actually null indicating that
+&gt;    it's the end of the chain.&quot;
+&gt; you are really talking about the *original* Object.prototype.
+">
+
+That's true. I didn't mention it, because you can overwrite basically
+all of those &quot;constants&quot; in javascript, but for completeness it's
+probably best if I add some more info on that.
+
+Thanks for the feedback,
+
+Joost.
+
+--
+Joost Diepenmaat | blog: http://joost.zeekat.nl/ | work: http://zeekat.nl/
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-02-12T16:18:00 </POSTDATE>
+On Feb 10, 6:48 pm, timothytoe &lt;timothy ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I understand JavaScript objects well enough to make objects and add
+&gt; prototype functions to them later on.
+
+&gt; Despite my success in getting programs written, I keep coming back to
+&gt; Crockford's paper on prototypal inheritance, in which he decides that
+&gt; all that work he did earlier to bolt a classical inheritance system
+&gt; onto JavaScript was missing the point.
+
+&gt; http://javascript.crockford.com/prototypal.html
+
+&gt; It's an interesting paper, but he just drops a couple functions on us
+&gt; and acts as if anyone reading the paper should go ahhh! I've read the
+&gt; paper many times and the point eludes me. Just what do these functions
+&gt; give me that I don't already have?
+
+&gt;     function object(o) {
+&gt;         function F() {}
+&gt;         F.prototype = o;
+&gt;         return new F();
+&gt;     }
+
+&gt; and
+
+&gt; Object.prototype.begetObject = function () {
+&gt;     function F() {}
+&gt;     F.prototype = this;
+&gt;     return new F();
+
+&gt; };
+
+&gt; newObject = oldObject.begetObject();
+">
+
+You may find this thread handy as it talks about the same clone
+function.
+
+&lt;URL:
+http://groups.google.com/group/comp.lang.javascript/browse_frm/thread... &gt;
+
+Peter
+</POST>
+</TEXT>
+</BODY>
+</DOC>

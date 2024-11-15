@@ -1,0 +1,816 @@
+<DOC>
+<DOCID> eng-NG-31-135294-8588002 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-24T04:38:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Trouble with Routes
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Dan Korostelev&quot; &lt;nad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-24T04:38:00 </POSTDATE>
+Hello!
+
+I have a problem with named routes. I defined two routes with different
+names and same dynamic part. Now, when I'm using url_for to generate an url
+for one of the routes, it just use the first connected route, independently
+on the specified name. Like this:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; from routes import *
+&gt;&gt;&gt; m = Mapper()
+&gt;&gt;&gt; m.connect('gallery_thumb', 'images/gallery/:(image_id)_thumbnail.jpg')
+&gt;&gt;&gt; m.connect('gallery', 'images/gallery/:(image_id).jpg')
+&gt;&gt;&gt; url_for('gallery_thumb', image_id=1)
+">
+
+'/images/gallery/1_thumbnail.jpg'
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; url_for('gallery', image_id=1)
+">
+
+'/images/gallery/1_thumbnail.jpg'
+
+I don't get the problem, why that? It drives me crazy :)
+
+Thanks for help!
+
+--
+WBR, Dan Korostelev
+</POST>
+<POST>
+<POSTER> Marcin Kasperski &lt;Marcin.Kasper...@softax.com.pl&gt; </POSTER>
+<POSTDATE> 2007-08-24T05:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt;&gt; from routes import *
+&gt;&gt;&gt;&gt; m = Mapper()
+&gt;&gt;&gt;&gt; m.connect('gallery_thumb', 'images/gallery/:(image_id)_thumbnail.jpg')
+&gt;&gt;&gt;&gt; m.connect('gallery', 'images/gallery/:(image_id).jpg')
+&gt;&gt;&gt;&gt; url_for('gallery_thumb', image_id=1)
+&gt; '/images/gallery/1_thumbnail.jpg'
+&gt;&gt;&gt;&gt; url_for('gallery', image_id=1)
+&gt; '/images/gallery/1_thumbnail.jpg'
+">
+
+I also do not understand why it is implemented this way.
+
+Out of curiosity I debugged through routes and it seems that
+in case named route is used, routes:
+- locate the route by name
+- extracts arguments from this route
+- abandons the route
+- generates url as if no name was given
+
+:-OOOO
+
+Easy workaround is to name parameters differently, the following work
+as expected:
+
+from routes import *
+m = Mapper()
+m.debug = True
+m.connect('gallery_thumb', 'images/gallery/:(image_id)_thumbnail.jpg')
+m.connect('gallery', 'images/gallery/:(img_id).jpg')
+print url_for('gallery_thumb', image_id=1)
+print url_for('gallery', img_id=1)
+
+But I have the feeling that something is really wrong here...
+</POST>
+<POST>
+<POSTER> &quot;Dan Korostelev&quot; &lt;nad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-24T05:56:00 </POSTDATE>
+Yeah, I also worked around the problem this way, but I don't like it. Looks
+like there's a bug in Routes. Thanks for information.
+
+On 8/24/07, Marcin Kasperski &lt;Marcin.Kasper ... @softax.com.pl&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;&gt;&gt;&gt; from routes import *
+&gt; &gt;&gt;&gt;&gt; m = Mapper()
+&gt; &gt;&gt;&gt;&gt; m.connect('gallery_thumb',
+&gt; 'images/gallery/:(image_id)_thumbnail.jpg')
+&gt; &gt;&gt;&gt;&gt; m.connect('gallery', 'images/gallery/:(image_id).jpg')
+&gt; &gt;&gt;&gt;&gt; url_for('gallery_thumb', image_id=1)
+&gt; &gt; '/images/gallery/1_thumbnail.jpg'
+&gt; &gt;&gt;&gt;&gt; url_for('gallery', image_id=1)
+&gt; &gt; '/images/gallery/1_thumbnail.jpg'
+
+&gt; I also do not understand why it is implemented this way.
+
+&gt; Out of curiosity I debugged through routes and it seems that
+&gt; in case named route is used, routes:
+&gt; - locate the route by name
+&gt; - extracts arguments from this route
+&gt; - abandons the route
+&gt; - generates url as if no name was given
+
+&gt; :-OOOO
+
+&gt; Easy workaround is to name parameters differently, the following work
+&gt; as expected:
+
+&gt; from routes import *
+&gt; m = Mapper()
+&gt; m.debug = True
+&gt; m.connect('gallery_thumb', 'images/gallery/:(image_id)_thumbnail.jpg')
+&gt; m.connect('gallery', 'images/gallery/:(img_id).jpg')
+&gt; print url_for('gallery_thumb', image_id=1)
+&gt; print url_for('gallery', img_id=1)
+
+&gt; But I have the feeling that something is really wrong here...
+">
+
+--
+WBR, Dan Korostelev
+</POST>
+<POST>
+<POSTER> Ben Bangert &lt;b...@groovie.org&gt; </POSTER>
+<POSTDATE> 2007-08-25T12:42:00 </POSTDATE>
+On Aug 24, 2007, at 2:56 AM, Dan Korostelev wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Yeah, I also worked around the problem this way, but I don't like
+&gt; it. Looks like there's a bug in Routes. Thanks for information.
+">
+
+There's no bug in routes, this is exactly how it works, and how the
+docs indicate it works. From the docs ( http://routes.groovie.org/
+manual.html):
+&quot;We saw earlier how the route name ties a set of defaults to a name.
+We can use this name with our Route functions and its as if we used
+that set of keyword args&quot;
+
+The route name does *not* mean that the route its at will actually be
+the path generated. It means that the default args you give for that
+route will be pulled in as if you had specified them in the url_for.
+
+Cheers,
+Ben
+
+smime.p7s
+3K Download
+</POST>
+<POST>
+<POSTER> Marcin Kasperski &lt;Marcin.Kasper...@softax.com.pl&gt; </POSTER>
+<POSTDATE> 2007-08-27T05:27:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Ben Bangert &lt;b ... @groovie.org&gt; writes:
+&gt; On Aug 24, 2007, at 2:56 AM, Dan Korostelev wrote:
+
+&gt;&gt; Yeah, I also worked around the problem this way, but I don't like
+&gt;&gt; it. Looks like there's a bug in Routes. Thanks for information.
+
+&gt; There's no bug in routes, this is exactly how it works, and how the
+&gt; docs indicate it works. (...)
+&gt; The route name does *not* mean that the route its at will actually
+&gt; be the path generated. It means that the default args you give for
+&gt; that route will be pulled in as if you had specified them in the
+&gt; url_for.
+">
+
+OK, so it is a bug by design.
+
+Take a look at the original example, and spend a minute thinking
+whether the routes behaviour in this case is what would one expect.
+And ... so how should be this very case solved?
+</POST>
+<POST>
+<POSTER> Ben Bangert &lt;b...@groovie.org&gt; </POSTER>
+<POSTDATE> 2007-08-27T11:35:00 </POSTDATE>
+On Aug 27, 2007, at 2:27 AM, Marcin Kasperski wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; OK, so it is a bug by design.
+
+&gt; Take a look at the original example, and spend a minute thinking
+&gt; whether the routes behaviour in this case is what would one expect.
+&gt; And ... so how should be this very case solved?
+">
+
+It's not a bug by design, please read the docs as there's a
+misunderstanding about what naming your route does. If you assume the
+named route does something that the docs say it doesn't do, then
+sure, its a bug. But why would you assume (and expect) that named
+routes do something that none of the docs say they do?
+
+Harnassing the fact that named routes load the defaults, and Routes
+will always attempt to use a route that uses all the defaults and
+arguments, here's how to handle the original example:
+
+&gt;&gt;&gt; from routes import *
+&gt;&gt;&gt; m = Mapper()
+&gt;&gt;&gt; m.connect('gallery_thumb', 'images/gallery/:(image_id)_:
+(image_size).jpg', image_size='thumbnail')
+&gt;&gt;&gt; m.connect('gallery', 'images/gallery/:(image_id).jpg')
+&gt;&gt;&gt; url_for('gallery_thumb', image_id=1)
+'/images/gallery/1_thumbnail.jpg'
+&gt;&gt;&gt; url_for('gallery', image_id=1)
+'/images/gallery/1.jpg'
+
+Routes loads the 'image_size' argument from the named route, which
+the first route requires (because there is a static part, the '.jpg'
+at the end). This ensures that using 'gallery' will go to the second
+one as there is no image_size argument provided which it needs.
+
+Cheers,
+Ben
+smime.p7s
+3K Download
+</POST>
+<POST>
+<POSTER> Marcin Kasperski &lt;Marcin.Kasper...@softax.com.pl&gt; </POSTER>
+<POSTDATE> 2007-08-27T12:20:00 </POSTDATE>
+&gt;&gt;&gt; m.connect('gallery_thumb', 'images/gallery/:(image_id)_:(image_size).jpg', image_size='thumbnail')
+&gt;&gt;&gt; m.connect('gallery', 'images/gallery/:(image_id).jpg')
+
+Well, that's generally the same trick as discussed earlier as a
+workaround - forcing parameter difference (here - extra param). I do
+not understand why named routes works the way you describe. Does there
+exist any case when one wants to specify the named route while calling
+url_for and then have url generated by another route???
+
+Thanks for the explanation, nevertheless, while I do not understand
+why it is implemented as it is, I at least understand what is
+happening.
+
+If the logic is to stay, I would suggest adding some more docs about
+it, it is really confusing for somebody new to Routes.
+
+(in general, Routes Manual would probably benefit from separate
+section about 'url_for', currently the manual is oriented more towards
+routes resolution)
+</POST>
+<POST>
+<POSTER> Ben Bangert &lt;b...@groovie.org&gt; </POSTER>
+<POSTDATE> 2007-08-27T13:00:00 </POSTDATE>
+On Aug 27, 2007, at 9:20 AM, Marcin Kasperski wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Well, that's generally the same trick as discussed earlier as a
+&gt; workaround - forcing parameter difference (here - extra param). I do
+&gt; not understand why named routes works the way you describe. Does there
+&gt; exist any case when one wants to specify the named route while calling
+&gt; url_for and then have url generated by another route???
+">
+
+If there's a shorter route possible that it might be able to find, it
+can. However, I am open to adding an option to Routes that lets you
+declare &quot;Named routes force generation with the exact route named&quot;.
+Would anyone want this option?
+
+I'd want this a separate option, rather than the default behavior as
+I wouldn't want to catch anyone using Routes given how it operates
+now to be utterly surprised when routes might not be generated as
+they had been expecting.
+
+<QUOTE PREVIOUSPOST="
+&gt; Thanks for the explanation, nevertheless, while I do not understand
+&gt; why it is implemented as it is, I at least understand what is
+&gt; happening.
+
+&gt; If the logic is to stay, I would suggest adding some more docs about
+&gt; it, it is really confusing for somebody new to Routes.
+
+&gt; (in general, Routes Manual would probably benefit from separate
+&gt; section about 'url_for', currently the manual is oriented more towards
+&gt; routes resolution)
+">
+
+Definitely, I'm working on updating the docs and moving them to the
+wiki, so its easier to collect comments and feedback.
+
+Cheers,
+Ben
+smime.p7s
+3K Download
+</POST>
+<POST>
+<POSTER> &quot;Neil Blakey-Milner&quot; &lt;n...@nxsy.org&gt; </POSTER>
+<POSTDATE> 2007-08-27T13:42:00 </POSTDATE>
+On 8/27/07, Ben Bangert &lt;b ... @groovie.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Aug 27, 2007, at 9:20 AM, Marcin Kasperski wrote:
+
+&gt; &gt; Well, that's generally the same trick as discussed earlier as a
+&gt; &gt; workaround - forcing parameter difference (here - extra param). I do
+&gt; &gt; not understand why named routes works the way you describe. Does there
+&gt; &gt; exist any case when one wants to specify the named route while calling
+&gt; &gt; url_for and then have url generated by another route???
+
+&gt; If there's a shorter route possible that it might be able to find, it
+&gt; can. However, I am open to adding an option to Routes that lets you
+&gt; declare &quot;Named routes force generation with the exact route named&quot;.
+&gt; Would anyone want this option?
+">
+
+I'd use it.  I've run into this problem twice (and totally forgot how
+I solved it the first time), and I've had one of my developer
+colleagues come to me with the same problem as well.
+
+We almost exclusively use named routes - I think there's only one
+place in the two projects we've done with Routes where we don't - and
+so the current behaviour feels a bit weird.
+
+Neil
+--
+Neil Blakey-Milner
+http://nxsy.org/
+n ... @nxsy.org
+</POST>
+<POST>
+<POSTER> Ben Bangert &lt;b...@groovie.org&gt; </POSTER>
+<POSTDATE> 2007-08-27T14:28:00 </POSTDATE>
+On Aug 27, 2007, at 10:42 AM, Neil Blakey-Milner wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I'd use it.  I've run into this problem twice (and totally forgot how
+&gt; I solved it the first time), and I've had one of my developer
+&gt; colleagues come to me with the same problem as well.
+
+&gt; We almost exclusively use named routes - I think there's only one
+&gt; place in the two projects we've done with Routes where we don't - and
+&gt; so the current behaviour feels a bit weird.
+">
+
+Okey doke! It's now in the Routes trunk. Just set
+mapper.hardcode_names = True, and using named routes will restrict
+URL generation to only the route with the name. Example:
+
+&gt;&gt;&gt; from routes import *
+&gt;&gt;&gt; m = Mapper()
+&gt;&gt;&gt; m.connect('gallery_thumb', 'images/gallery/:(image_id)
+_thumbnail.jpg')
+&gt;&gt;&gt; m.connect('gallery', 'images/gallery/:(image_id).jpg')
+&gt;&gt;&gt; url_for('gallery_thumb', image_id=1)
+'/images/gallery/1_thumbnail.jpg'
+&gt;&gt;&gt; url_for('gallery', image_id=1)
+'/images/gallery/1_thumbnail.jpg'
+
+And the new option:
+&gt;&gt;&gt; m.hardcode_names = True
+&gt;&gt;&gt; url_for('gallery_thumb', image_id=1)
+'/images/gallery/1_thumbnail.jpg'
+&gt;&gt;&gt; url_for('gallery', image_id=1)
+'/images/gallery/1.jpg'
+
+Routes trunk can be installed with:
+sudo easy_install Routes==dev
+
+Cheers,
+Ben
+smime.p7s
+3K Download
+</POST>
+<POST>
+<POSTER> Marcin Kasperski &lt;Marcin.Kasper...@softax.com.pl&gt; </POSTER>
+<POSTDATE> 2007-08-28T05:00:00 </POSTDATE>
+(after additional reconsideration)
+
+I think that the - with respect to the current behaviour - whole
+term 'named route' and mapper syntax is misleading.
+
+Let's once more take a look at the original example:
+
+&gt;&gt;&gt; from routes import *
+&gt;&gt;&gt; m = Mapper()
+&gt;&gt;&gt; m.connect('gallery_thumb', 'images/gallery/:(image_id)_thumbnail.jpg')
+&gt;&gt;&gt; m.connect('gallery', 'images/gallery/:(image_id).jpg')
+&gt;&gt;&gt; url_for('gallery_thumb', image_id=1)
+'/images/gallery/1_thumbnail.jpg'
+
+Is the name 'gallery_thumb' in any way related to the url
+'images/gallery/:(image_id)_thumbnail.jpg'? Is there any
+association made between the two?
+
+No! The syntax above does not - with the current algorithm - bring any
+association between the name and the url (route).
+
+So ... isn't the name 'named route' just misleading?
+
+Let's now see what is it bringing us? Quoting your example:
+
+&gt;&gt;&gt; m.connect('gallery_thumb', 'images/gallery/:(image_id)_:(image_size).jpg', image_size='thumbnail')
+&gt;&gt;&gt; m.connect('gallery', 'images/gallery/:(image_id).jpg')
+&gt;&gt;&gt; url_for('gallery_thumb', image_id=1)
+'/images/gallery/1_thumbnail.jpg'
+&gt;&gt;&gt; url_for('gallery', image_id=1)
+'/images/gallery/1.jpg'
+
+As you already explained, the 'gallery_thumb' name is bringing us
+*only* one thing: default parameter image_size='thumbnail'.
+
+What surely could be better expressed by some other syntax. For
+example:
+
+&gt;&gt;&gt; m.alias('gallery_thumb', image_size='thumbnail')
+
+Also, it is of course just an alias/macro/parameter set/.... It is
+in no way *named route*.
+
+Note that in this very thread you already have three different
+people who happened to be confused by the current behaviour.
+
+I think that 'named routes' can be very useful in complicated url
+construction cases, but only if they do what the name suggest
+- enforce using the named rule.
+</POST>
+<POST>
+<POSTER> Ben Bangert &lt;b...@groovie.org&gt; </POSTER>
+<POSTDATE> 2007-08-29T13:12:00 </POSTDATE>
+On Aug 28, 2007, at 2:00 AM, Marcin Kasperski wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; (after additional reconsideration)
+
+&gt; I think that the - with respect to the current behaviour - whole
+&gt; term 'named route' and mapper syntax is misleading.
+">
+
+Indeed, in Routes 2.0 the behavior you expect will be the default, I
+blogged more about other Routes 2.0 and 1.X features:
+http://groovie.org/articles/2007/08/29/routes-planning-and-the-road-
+to-routes-2-0
+
+Cheers,
+Ben
+
+smime.p7s
+3K Download
+</POST>
+<POST>
+<POSTER> Marcin Kasperski &lt;Marcin.Kasper...@softax.com.pl&gt; </POSTER>
+<POSTDATE> 2007-08-30T06:44:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Indeed, in Routes 2.0 the behavior you expect will be the default, I
+&gt; blogged more about other Routes 2.0 and 1.X features:
+&gt; http://groovie.org/articles/2007/08/29/routes-planning-and-the-road-t...
+">
+
+Cool!
+
+Apart from clearing name route confusion, I noticed you plan to solve
+another problem I just hit (smooth redirect for legacy urls).
+
+One sidenote for consideration: maybe in some cases it would make
+sense to use alternative (to connect) method names? For example,
+
+m.static_url('google_search', ' http://www.google.com/search' )
+
+seems to me to be more aestethic than the current
+
+m.connect('google_search', ' http://www.google.com/search' , _static=True)
+
+...
+
+Another tiny detail: I feel that it is a bit unclear how should
+be the internal routes to static resources handled. I mean cases
+like generating url to image, stylesheet, javascript - where
+SCRIPT_NAME should be added to the generated url, but the route
+is not expected to be used during url resolution. Maybe this is
+just the documentation issue, but maybe it could also benefit
+from some explicit syntax...
+</POST>
+<POST>
+<POSTER> Jose Galvez &lt;jj.gal...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-30T21:07:00 </POSTDATE>
+Ben I took a look at your link and I'm confused.  When you say &quot;*Routes
+recognition and generation will always be explicit* &quot; does this mean
+that the mapper mapper(':controller/:action/:id' action='index') will
+not match /main as /main/index
+Jose
+
+<QUOTE PREVIOUSPOST="
+Ben Bangert wrote:
+&gt; On Aug 28, 2007, at 2:00 AM, Marcin Kasperski wrote:
+
+&gt;&gt; (after additional reconsideration)
+
+&gt;&gt; I think that the - with respect to the current behaviour - whole
+&gt;&gt; term 'named route' and mapper syntax is misleading.
+
+&gt; Indeed, in Routes 2.0 the behavior you expect will be the default, I
+&gt; blogged more about other Routes 2.0 and 1.X features:
+&gt; http://groovie.org/articles/2007/08/29/routes-planning-and-the-road-t...
+
+&gt; Cheers,
+&gt; Ben
+">
+</POST>
+<POST>
+<POSTER> Ben Bangert &lt;b...@groovie.org&gt; </POSTER>
+<POSTDATE> 2007-08-30T21:13:00 </POSTDATE>
+On Aug 30, 2007, at 6:07 PM, Jose Galvez wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Ben I took a look at your link and I'm confused.  When you say
+&gt; &quot;*Routes
+&gt; recognition and generation will always be explicit* &quot; does this mean
+&gt; that the mapper mapper(':controller/:action/:id' action='index') will
+&gt; not match /main as /main/index
+">
+
+It means that mapper(':controller/:action/:id', action='index') will
+require 3 parts, ie:
+/mail/index/2
+
+If you don't want a 2, leave off the :id part.
+
+This is to prevent multiple valid URL's for the same resource.
+
+- Ben
+smime.p7s
+3K Download
+</POST>
+<POST>
+<POSTER> Jose Galvez &lt;jj.gal...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-30T23:08:00 </POSTDATE>
+ok so if I get it then mapper(':controller/:action', action='index')
+will match /main/index but not main. is that correct?
+Jose
+
+<QUOTE PREVIOUSPOST="
+Ben Bangert wrote:
+&gt; On Aug 30, 2007, at 6:07 PM, Jose Galvez wrote:
+
+&gt;&gt; Ben I took a look at your link and I'm confused.  When you say &quot;*Routes
+&gt;&gt; recognition and generation will always be explicit* &quot; does this mean
+&gt;&gt; that the mapper mapper(':controller/:action/:id' action='index') will
+&gt;&gt; not match /main as /main/index
+
+&gt; It means that mapper(':controller/:action/:id', action='index') will
+&gt; require 3 parts, ie:
+&gt; /mail/index/2
+
+&gt; If you don't want a 2, leave off the :id part.
+
+&gt; This is to prevent multiple valid URL's for the same resource.
+
+&gt; - Ben
+">
+</POST>
+<POST>
+<POSTER> Ben Bangert &lt;b...@groovie.org&gt; </POSTER>
+<POSTDATE> 2007-08-31T12:00:00 </POSTDATE>
+On Aug 30, 2007, at 8:08 PM, Jose Galvez wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; ok so if I get it then mapper(':controller/:action', action='index')
+&gt; will match /main/index but not main. is that correct?
+">
+
+Yep, no more minimizing the URL by leaving off defaults.
+
+- Ben
+smime.p7s
+3K Download
+</POST>
+<POST>
+<POSTER> &quot;Jose Galvez&quot; &lt;jj.gal...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-31T16:02:00 </POSTDATE>
+so would adding mapper(':controller', action='index') above
+mapper(':controller/:action') map /main as main/index or will there be  no
+real way to map a controller without an action to the index action?
+Jose
+
+On 8/31/07, Ben Bangert &lt;b ... @groovie.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Aug 30, 2007, at 8:08 PM, Jose Galvez wrote:
+
+&gt; &gt; ok so if I get it then mapper(':controller/:action', action='index')
+&gt; &gt; will match /main/index but not main. is that correct?
+
+&gt; Yep, no more minimizing the URL by leaving off defaults.
+
+&gt; - Ben
+">
+</POST>
+<POST>
+<POSTER> Ben Bangert &lt;b...@groovie.org&gt; </POSTER>
+<POSTDATE> 2007-08-31T16:31:00 </POSTDATE>
+On Aug 31, 2007, at 1:02 PM, Jose Galvez wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; so would adding mapper(':controller', action='index') above mapper
+&gt; (':controller/:action') map /main as main/index or will there be
+&gt; no real way to map a controller without an action to the index action?
+">
+
+That would work just fine. Though I'd be curious why you would want:
+/users
+/users/index
+To be equivalent, even though thats how it works now.
+
+Especially if your index view has things under a relative URL. This
+means that ppl bookmarking your site could likely be bookmarking the
+same page and it won't show up that way. It'll also show up as
+different in webstat tools making it harder to get accurate page hit
+counts. That's part of the reason why I think you're better off just
+having /users/index and letting url_for take care of generating the
+routes as appropriate.
+
+Cheers,
+Ben
+smime.p7s
+3K Download
+</POST>
+<POST>
+<POSTER> &quot;Jose Galvez&quot; &lt;jj.gal...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-31T17:25:00 </POSTDATE>
+Dear Ben,
+In general I agree with you ambiguity is bad, and /user should be different
+from /users/index, however users are also lazy, and they have grown
+accustomed to being able to type http://somewebsite/ and having that return
+a page.  so I'm just trying to figure out how to get my users to main/index
+(I always call my main controller &quot;main&quot;).  Since pylons does not map to
+files directly, but to controllers, I've used the thought that
+http://mysite/something should be equivalent to
+http://mysite/something/index just as it would be on a filebased system (
+http://mysite/something == http://mysite/something/index.php , index.html or
+what ever the default &quot;page&quot; is).  Not sure if this makes sense or even if
+its valid.  I'd be really interested in your thoughts about this
+Jose
+
+On 8/31/07, Ben Bangert &lt;b ... @groovie.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Aug 31, 2007, at 1:02 PM, Jose Galvez wrote:
+
+&gt; &gt; so would adding mapper(':controller', action='index') above mapper
+&gt; &gt; (':controller/:action') map /main as main/index or will there be
+&gt; &gt; no real way to map a controller without an action to the index action?
+
+&gt; That would work just fine. Though I'd be curious why you would want:
+&gt; /users
+&gt; /users/index
+&gt; To be equivalent, even though thats how it works now.
+
+&gt; Especially if your index view has things under a relative URL. This
+&gt; means that ppl bookmarking your site could likely be bookmarking the
+&gt; same page and it won't show up that way. It'll also show up as
+&gt; different in webstat tools making it harder to get accurate page hit
+&gt; counts. That's part of the reason why I think you're better off just
+&gt; having /users/index and letting url_for take care of generating the
+&gt; routes as appropriate.
+
+&gt; Cheers,
+&gt; Ben
+">
+</POST>
+<POST>
+<POSTER> Ben Bangert &lt;b...@groovie.org&gt; </POSTER>
+<POSTDATE> 2007-08-31T18:13:00 </POSTDATE>
+On Aug 31, 2007, at 2:25 PM, Jose Galvez wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Dear Ben,
+&gt; In general I agree with you ambiguity is bad, and /user should be
+&gt; different from /users/index, however users are also lazy, and they
+&gt; have grown accustomed to being able to type http://somewebsite/ and
+&gt; having that return a page.  so I'm just trying to figure out how to
+&gt; get my users to main/index (I always call my main controller
+&gt; &quot;main&quot;).  Since pylons does not map to files directly, but to
+&gt; controllers, I've used the thought that http://mysite/something
+&gt; should be equivalent to http://mysite/something/index just as it
+&gt; would be on a filebased system ( http://mysite/something == http://
+&gt; mysite/something/index.php, index.html or what ever the default
+&gt; &quot;page&quot; is).  Not sure if this makes sense or even if its valid.
+&gt; I'd be really interested in your thoughts about this
+">
+
+The way a great many websites work is by redirecting / to either /
+their/homepage.cgi or some other URL. Sometimes its quite a big url,
+the user is only typing something.com/ though. Under Routes 2.0 with
+the built-in redirect ability, you'd be free to setup the main / to
+redirect to your main controller.
+
+In the latter case you mention, its not mysite/something == mysite/
+something/index.php but mysite/something/, with the trailing slash as
+well. I think it would still be fine to leave off the very last part
+but require the trailing slash, and have that redirect to your
+'default'. But the more minimizing, like having:
+/users
+Be equivilant to:
+/users/home/index
+
+As a route like:
+map.connect(':controller/:subsection/:action', subsection='home',
+action='index')
+
+Would cause to occur. These URL's having multiple sections cutoff
+never existed very heavily before Rails, as webservers will let you
+drop off the last part and search for a directory index &quot;index.php/
+index.html/etc&quot;, they wouldn't let you drop off multiple URL parts.
+
+So I'm thinking you'd have:
+map.redirect('/', controller='main', action='index')
+
+And it'd end up redirecting you to:
+/main/index
+
+Or if you had:
+map.connect('/:action', controller='main', action='index',
+redirect=True)
+
+Then it would redirect / to /index should there be a default option
+and you explicitly said to redirect. This would only work when
+leaving off the last part, like how Apache directory index works when
+just the last part is left off.
+
+How's that sound?
+
+Cheers,
+Ben
+smime.p7s
+3K Download
+</POST>
+<POST>
+<POSTER> Jose Galvez &lt;jj.gal...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-31T19:44:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Ben Bangert wrote:
+&gt; On Aug 31, 2007, at 2:25 PM, Jose Galvez wrote:
+
+&gt;&gt; Dear Ben,
+&gt;&gt; In general I agree with you ambiguity is bad, and /user should be
+&gt;&gt; different from /users/index, however users are also lazy, and they
+&gt;&gt; have grown accustomed to being able to type http://somewebsite/
+&gt;&gt; &lt; http://somewebsite/ &gt; and having that return a page.  so I'm just
+&gt;&gt; trying to figure out how to get my users to main/index (I always call
+&gt;&gt; my main controller &quot;main&quot;).  Since pylons does not map to files
+&gt;&gt; directly, but to controllers, I've used the thought that
+&gt;&gt; http://mysite/something should be equivalent to
+&gt;&gt; http://mysite/something/index just as it would be on a filebased
+&gt;&gt; system ( http://mysite/something ==
+&gt;&gt; http://mysite/something/index.php , index.html or what ever the
+&gt;&gt; default &quot;page&quot; is).  Not sure if this makes sense or even if its
+&gt;&gt; valid.  I'd be really interested in your thoughts about this
+
+&gt; The way a great many websites work is by redirecting / to either
+&gt; /their/homepage.cgi or some other URL. Sometimes its quite a big url,
+&gt; the user is only typing something.com/ though. Under Routes 2.0 with
+&gt; the built-in redirect ability, you'd be free to setup the main / to
+&gt; redirect to your main controller.
+
+&gt; In the latter case you mention, its not mysite/something ==
+&gt; mysite/something/index.php but mysite/something/, with the trailing
+&gt; slash as well. I think it would still be fine to leave off the very
+&gt; last part but require the trailing slash, and have that redirect to
+&gt; your 'default'. But the more minimizing, like having:
+&gt; /users
+&gt; Be equivilant to:
+&gt; /users/home/index
+
+&gt; As a route like:
+&gt; map.connect(':controller/:subsection/:action', subsection='home',
+&gt; action='index')
+
+&gt; Would cause to occur. These URL's having multiple sections cutoff
+&gt; never existed very heavily before Rails, as webservers will let you
+&gt; drop off the last part and search for a directory index
+&gt; &quot;index.php/index.html/etc&quot;, they wouldn't let you drop off multiple
+&gt; URL parts.
+
+&gt; So I'm thinking you'd have:
+&gt; map.redirect('/', controller='main', action='index')
+">
+
+This would could be very handy
+
+<QUOTE PREVIOUSPOST="
+&gt; And it'd end up redirecting you to:
+&gt; /main/index
+
+&gt; Or if you had:
+&gt; map.connect('/:action', controller='main', action='index', redirect=True)
+">
+
+I think this syntax would work really well, because it would allow users
+to still enter &quot;shorter urls&quot;, but would redirect them to the correct url
+
+<QUOTE PREVIOUSPOST="
+&gt; Then it would redirect / to /index should there be a default option
+&gt; and you explicitly said to redirect. This would only work when leaving
+&gt; off the last part, like how Apache directory index works when just the
+&gt; last part is left off.
+
+&gt; How's that sound?
+">
+
+I really like the redirect=True option
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; Cheers,
+&gt; Ben
+">
+</POST>
+</TEXT>
+</BODY>
+</DOC>

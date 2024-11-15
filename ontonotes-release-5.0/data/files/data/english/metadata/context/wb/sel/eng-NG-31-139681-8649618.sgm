@@ -1,0 +1,1735 @@
+<DOC>
+<DOCID> eng-NG-31-139681-8649618 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-06T22:45:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Can't choose a time system
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Aaron J. M.&quot; &lt;ajm...@ns.sympatico.ca&gt; </POSTER>
+<POSTDATE> 2007-09-06T22:45:00 </POSTDATE>
+All right, the time has come for me to choose an algorithm for my
+time/speed system.  After doing some research it seems I have a few
+options, so I'm going to field some ideas of what I want my time
+system to support.
+
+* Of course, I want some things to act faster than others.  That is,
+some things should receive a greater or lesser amount of turns
+depending on their speed.  A thing's speed can also change over time
+(spells of hast/slowing).
+
+* A thing's reflexes (number of turns per iteration) must be
+independant of metabolic or natural processes such as health
+regeneration, spell effect duration, and monster respawn rate.  How
+fast or regular these things occur should also be tuneable though.
+I want some creatures to regenerate health faster than others for
+example.
+
+* Forms of pillar dancing are a feature.  I want to emphasize the
+tactics of my game, so the way that turns are scheduled for
+everything should be fairly transparent.  I support tactics like
+hack-and-back and strategic pausing, and I actually want certain
+types of AI to be able to do these things.
+
+For this reason I've been intrigued by the system described by Jeff
+Lait for his games (Google Groups link: http://groups.google.com/
+group/rec.games.roguelike.development/msg/edcfbfa20b04d40b; you
+may have to copy and past the link).  The only thing that bothers me
+is that I may want more than four discretations of creature speeds.
+
+* Actions that take different amounts of time (costs different amount
+of future turns I may say) may be interesting, but I'm not sure if I
+need it or not.  I was originally thinking that every single action,
+from item pickup to attacking, would take exactly one turn.  I've
+read a suggestion somewhere though that suggested that attacking
+could take twice as much &quot;time&quot; as moving.  This may lead to some
+interesting tactics; if creature A attacks creature B, at least
+creature A would have its turns delayed enough for creature B to add
+some distance between them.  The point is, if I do have different
+actions taking different amounts of time, how long each action takes
+should also be fairly transparent and have effects obvious to the
+player.  As an aside, I assume all actions are uninterruptable, and
+that an action is performed immediately after the creature chooses
+one.
+
+* When scheduling the creatures in a new level, I want one creature to
+act first no matter what its speed is (this is more than likely to
+be the player).  I don't care how other creatures are scheduled, as
+long as I have control over which creature actually makes the first
+move.
+
+* I don't want to just schedule creature player movement.  I also want
+to schedule other events in the world like timed doors or
+earthquakes.
+
+I just wonder what kind of algorithm or data structure is suitable for
+this.  I've tried a priority queue, but the turn order may be too
+obsfucated for the player if I don't balance the creature speeds
+right.  I also can't find a way to make a certain creature to act
+first without messing up the turn order.  As I've said, Jeff Lait's
+system seems nice and simple, but might be a bit inflexible for
+monster variation (I doubt this was Jeff's concern, but it is for me.
+:/ ).
+</POST>
+<POST>
+<POSTER> &quot;pol&quot; &lt;elis...@bellsouth.net&gt; </POSTER>
+<POSTDATE> 2007-09-07T00:23:00 </POSTDATE>
+I have a couple of lists that each hold a queue of actors in them and every
+turn I go through the list and decide what to do with them. Then when they
+are finished with their action/s I push them back into time at whatever
+queue depending on how long they took to do their action. Sometimes the
+actions take less time than it takes to get into the next queue, so the
+actors get pushed to the back of the current queue. If you always wanted the
+player to go first (it could only happen in whatever queue the player was in
+though) then just push him to the front of the list whenever he gets pushed
+back. I use 10 different queues (probably don't even need that many) right
+now and if I need something to take a long time then I keep the total # of
+queues the actor has to go through and whenever it gets back into play and
+it has not reached 0 yet, it gets pushed ahead the max (10) # of turns or
+however many are left.
+I control when the heartbeats fire off during the actor's turn (because I
+plan on having a nice # of actors and my god actor is doing plenty already)
+and if it's heart beats are controlled by a heart beat timer so if it's
+heart beat is faster then it's turn takes then it beats twice or however
+many # of times, and if it is slower, then it only beats after its heartbeat
+counter has been reached. Any poisoning/dying/suffocation or whatever is
+handled here as well.
+I have an ethereal god actor (actor # -9) handle all world-wide effects,
+things growing, or decaying, I have the factions/gangs as actors too (&lt; -10)
+and handle some tactics, the player is # 0  and everything else (enemies,
+friends, special doors (which could be left out of the time queues
+completely until the player or an actor does something like knocks so it is
+not clogging up the queue) altars etc. ) is considered an actor ( &gt; 0).
+Everytime an entity has taken a turn, they turn the current actor number
+to -1 and my game loop knows to get the next actor # and everytime there is
+nobody else in the queue the current actor number is -5 and the game loop
+increases the actual game time ( a fraction of a second to a couple of
+seconds per turn depending on how detailed you want to be keeping time),
+goes to the next queue and does whatever else happens when time increases.
+The only downside was that at first I had to be careful about where/how I
+pushed (or failed to push) an actor back into the time stream since they
+could fall out or be replicated exponentially in the time stream.
+
+The system I have is not very transparent as to which actor will go next
+though.
+</POST>
+<POST>
+<POSTER> &quot;pol&quot; &lt;elis...@bellsouth.net&gt; </POSTER>
+<POSTDATE> 2007-09-07T00:42:00 </POSTDATE>
+Oh yeah :
+
+An actor's turn is independent of the # of things you can actually do during
+your turn - during your turn you have a # of reflex points that you can use
+to strike, dodge, throw things, put something in your pocket etc.. so if you
+use them all up  in that round, you can not dodge, block etc. - which makes
+combat more interesting and strategic and means that you can not be
+surrounded by 8 people and block everybody (unless your are really
+fast/reflexive/skilled or maybe have some special multi-block/many-attackers
+skill) and gives you the chance to go all out in your attacks thus leaving
+yourself wide open (I just need to have some effective aggressive, normal,
+guarded settings so there is not any more micromanagement then is wanted)
+
+so in essence, if you have a low refelx, but a high speed, you would get
+more turns and could theoretically run faster (since movement is handled
+differently), but be able to do less things per turn, if you have a high
+reflex, but a low speed, you could do a lot of things per turn, but not run
+as fast and be longer in between restoring your reflexes
+
+Movement is different, and you are usually only allowed to move once per
+turn, but you could strike and then move if you are reflexive enough or move
+and then be attacked and be able to block (since that is a passive action) a
+couple times etc.
+</POST>
+<POST>
+<POSTER> Billy Bissette &lt;bai...@coastalnet.com&gt; </POSTER>
+<POSTDATE> 2007-09-07T04:00:00 </POSTDATE>
+&quot;pol&quot; &lt;elis ... @bellsouth.net&gt; wrote in
+news:dC4Ei.36238$mp6.1656@bignews9.bellsouth.net:
+
+<QUOTE PREVIOUSPOST="
+&gt; Oh yeah :
+
+&gt; An actor's turn is independent of the # of things you can actually do
+&gt; during your turn - during your turn you have a # of reflex points that
+&gt; you can use to strike, dodge, throw things, put something in your
+&gt; pocket etc.. so if you use them all up  in that round, you can not
+&gt; dodge, block etc. - which makes combat more interesting and strategic
+&gt; and means that you can not be surrounded by 8 people and block
+&gt; everybody (unless your are really fast/reflexive/skilled or maybe have
+&gt; some special multi-block/many-attackers skill) and gives you the
+&gt; chance to go all out in your attacks thus leaving yourself wide open
+&gt; (I just need to have some effective aggressive, normal, guarded
+&gt; settings so there is not any more micromanagement then is wanted)
+
+&gt; so in essence, if you have a low refelx, but a high speed, you would
+&gt; get more turns and could theoretically run faster (since movement is
+&gt; handled differently), but be able to do less things per turn, if you
+&gt; have a high reflex, but a low speed, you could do a lot of things per
+&gt; turn, but not run as fast and be longer in between restoring your
+&gt; reflexes
+
+&gt; Movement is different, and you are usually only allowed to move once
+&gt; per turn, but you could strike and then move if you are reflexive
+&gt; enough or move and then be attacked and be able to block (since that
+&gt; is a passive action) a couple times etc.
+">
+
+I'm not sure how you mean to handle actions in the above?
+
+How do you signify you are done taking actions and wish the turn to
+end?  Do you include an &quot;End Turn&quot; command (or &quot;End Actions&quot; or
+&quot;Process Turn&quot; or whatever you want to call it.  Even &quot;Defend&quot; might
+work.)?  If so, that could become annoying in a long game, even if
+movement were counted as an automatic turn ender (as it seems to be
+in the above description.)
+
+Is defense automatic if you have the reflex points to spare, or is
+the player queried for response to every incoming attack as long as
+he has points remaining?  The latter adds the annoyance of even more
+keypresses, while the player might not care 90% of the time.  On the
+other hand, when the player is attacked by two or more creatures of
+different deadliness, he very likely will want to make sure his
+defensive actions are applied to the attacks of the deadliest
+creature and not wasted on the weaker ones.
+
+If defensive action is chosen by the player (rather than automatic),
+then would there be multiple defensive options?  Dodge, block, parry,
+or even riposte/counter?  Or what of an additional reflex points
+versus effectiveness trade-off, so that you could choose to put
+minimal effort into defending a single attack that you don't care
+about, but could also put maximal effort (in the form of many points)
+into defending a single attack that you fear greatly?
+</POST>
+<POST>
+<POSTER> Ray Dillinger &lt;b...@sonic.net&gt; </POSTER>
+<POSTDATE> 2007-09-07T04:08:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Aaron J. M. wrote:
+&gt; All right, the time has come for me to choose an algorithm for my
+&gt; time/speed system.  After doing some research it seems I have a few
+&gt; options, so I'm going to field some ideas of what I want my time
+&gt; system to support.
+&gt; * Of course, I want some things to act faster than others....
+&gt; * A thing's reflexes (number of turns per iteration) must be
+&gt;   independant of metabolic or natural processes such as health
+&gt;   regeneration, spell effect duration, and monster respawn rate....
+&gt; * Forms of pillar dancing are a feature....
+&gt; * Actions that take different amounts of time (costs different amount
+&gt;   of future turns I may say) may be interesting, but I'm not sure if I
+&gt;   need it or not....
+&gt; * When scheduling the creatures in a new level, I want one creature to
+&gt;   act first no matter what its speed is (this is more than likely to
+&gt;   be the player)....
+&gt; * I don't want to just schedule creature player movement.  I also want
+&gt;   to schedule other events in the world like timed doors or
+&gt;   earthquakes....
+">
+
+I think you want segmented movement.
+
+Divide your &quot;round&quot; up into 12 &quot;segments.&quot;  Let each creature move on
+particular segments corresponding to its speed.  Here's a sample speed
+chart.
+
+speed:  segments:
+0       none (paralyzed)
+1       6
+2       5 10
+3       2 6 9  (normal speed)
+4       1 4 7 11
+5       2 4 7 9 12
+6       1 3 5 7 9 11
+
+You can play the same kind of game with more segments, if you want:
+sixty's a pretty good number too.
+
+Now you just build an array for each segment of the monsters that
+act on that segment.
+
+If you want one particular actor to go first, you can just suppress
+the moves of all the other actors who would go before them, and then
+continue as normal.
+
+Somewhere on the display, you give the round and segment number and
+people who memorize the time chart (and you know they will) can
+hack-and-back, etc.
+
+Bear
+</POST>
+<POST>
+<POSTER> Gamer_2k4 &lt;gamer...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-07T08:43:00 </POSTDATE>
+On Sep 6, 9:45 pm, &quot;Aaron J. M.&quot; &lt;ajm ... @ns.sympatico.ca&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; All right, the time has come for me to choose an algorithm for my
+&gt; time/speed system.
+">
+
+My game uses action time.  For example, movement might cost 200
+points, meaning that it will take 200 &quot;turns&quot; (I use the term loosely,
+since very few things act every turn).  Creatures with higher speeds
+would have lower numbers.  A bat might only have to wait 50 turns
+before it can act again.
+
+I'm not how I will work this in with hunger though.  Probably, for
+every action waited, you'll gain hunger equal to (1000 / original
+cost).  So if movement cost 200 points, you'd have 5 hunger after you
+moved.  The bat, on the other hand, would have 80 in the same amount
+of time (1000 / 50 = 20, 20 * 4 = 80).  This is representative of a
+high metabolism, but it seems kind of skewed.  I'll work on it
+eventually.
+
+--
+Gamer_2k4
+</POST>
+<POST>
+<POSTER> Gerry Quinn &lt;ger...@indigo.ie&gt; </POSTER>
+<POSTDATE> 2007-09-07T09:24:00 </POSTDATE>
+In article &lt;1189133139.967815.272 ... @g4g2000hsf.googlegroups.com&gt;,
+ajm ... @ns.sympatico.ca says...
+
+<QUOTE PREVIOUSPOST="
+&gt;   For this reason I've been intrigued by the system described by Jeff
+&gt;   Lait for his games (Google Groups link: http://groups.google.com/
+&gt;   group/rec.games.roguelike.development/msg/edcfbfa20b04d40b; you
+&gt;   may have to copy and past the link).  The only thing that bothers me
+&gt;   is that I may want more than four discretations of creature speeds.
+">
+
+I agree with Jeff's argument that time should be transparent - there is
+no need for priority queues etc.  Given this, a wide variety of options
+are still available.
+
+The simplest method is probably to give each monster a speed and a
+balance of accrued time.  When the player moves or acts, the amount of
+time he used is given to every monster.  Monsters that have enough time
+to move or act then do so.
+
+This is what I use in my own game Lair in which you (and monsters) can
+both move and act in a single turn, and turns can take up to ten
+seconds.  But it is equally adaptable to games in which you move one
+square or hit a monster; you can seamlessly drop down to this mode in
+Lair, although you won't be making the most of your tactical options if
+you don't sometimes use/abuse the option of making moves that are up to
+ten seconds long. [My rationale for this is that planning and quickly
+executing a long move followed by an action *should* be more effective
+than tippy-toeing forward in a cowardly fashion while the monsters
+watch.  I'm not sure if most players really 'got' this concept,
+though...]
+
+If the player is hasted (say) just give the monsters less time per
+player move.  Conversely, if a monster is fast, it needs less time per
+move.
+
+Pillar dancing etc. works fine, whether you are taking long or short
+moves.
+
+Anyway, the same system can work well for timing in a roguelike.  In my
+game you can mouse over a monster to see how much time it has stored
+and how fast it moves and acts, so you can actually determine from on-
+screen information which monsters will move after your turn, and what
+they will have time to do.
+
+[Note: all monsters that will move and/or act on a given turn will do
+so in the same order they were created.  Lovers of priority queues etc.
+may see this as a significant wart.  I don't think it matters at all.
+Maybe they have more initiative or something.  Anyway it would be
+possible to randomise it.]
+
+- Gerry Quinn
+--
+Lair of the Demon Ape
+http://indigo.ie/~gerryq/lair/lair.htm
+</POST>
+<POST>
+<POSTER> Jeff Lait &lt;torespondisfut...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-07T10:14:00 </POSTDATE>
+On Sep 7, 9:24 am, Gerry Quinn &lt;ger ... @indigo.ie&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; [Note: all monsters that will move and/or act on a given turn will do
+&gt; so in the same order they were created.  Lovers of priority queues etc.
+&gt; may see this as a significant wart.  I don't think it matters at all.
+&gt; Maybe they have more initiative or something.  Anyway it would be
+&gt; possible to randomise it.]
+">
+
+It is prerequisite for fairness.  Lovers of priority queues would be
+wise to enforce this as a tie breaking rule.
+
+If I'm fighting someone the same speed as me, I expect both of us to
+alternate moves.  This allows tactical planning as I can determine if
+it is safe to attack another round or if I need to escape/heal/etc.
+If turn order is randomized every turn, I need to allow for the enemy
+getting a double move, adding more static to the simulation and less
+room for tactical planning.
+--
+Jeff Lait
+(POWDER: http://www.zincland.com/powder )
+</POST>
+<POST>
+<POSTER> Derek Ray &lt;de...@moot.its.only.a.spamtrap.org&gt; </POSTER>
+<POSTDATE> 2007-09-07T13:07:00 </POSTDATE>
+On 2007-09-07, Jeff Lait &lt;torespondisfut ... @hotmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 7, 9:24 am, Gerry Quinn &lt;ger ... @indigo.ie&gt; wrote:
+&gt;&gt; [Note: all monsters that will move and/or act on a given turn will do
+&gt;&gt; so in the same order they were created.  Lovers of priority queues etc.
+&gt;&gt; may see this as a significant wart.  I don't think it matters at all.
+&gt;&gt; Maybe they have more initiative or something.  Anyway it would be
+&gt;&gt; possible to randomise it.]
+
+&gt; It is prerequisite for fairness.  Lovers of priority queues would be
+&gt; wise to enforce this as a tie breaking rule.
+
+&gt; If I'm fighting someone the same speed as me, I expect both of us to
+&gt; alternate moves.  This allows tactical planning as I can determine if
+&gt; it is safe to attack another round or if I need to escape/heal/etc.
+">
+
+This also potentially allows munchkinning the speed system, and can in
+extreme cases reduce combat to a mathematical exercise of steps.
+
+<QUOTE PREVIOUSPOST="
+&gt; If turn order is randomized every turn, I need to allow for the enemy
+&gt; getting a double move, adding more static to the simulation and less
+&gt; room for tactical planning.
+">
+
+Turn order should not be completely random _every_ turn, either, as this
+is simply the other extreme.  But it is wise to be careful to _not_ make
+your game's speed system too set in stone, as otherwise speed becomes an
+absolute imperative to obtain for the tactical power it offers.
+
+A certain amount of randomness is ideal to prevent players from simply
+saying &quot;This monster can do 1d6, I have 7HP, I'm guaranteed to get in
+one shot and then I can step away and heal.&quot;
+
+--
+Derek
+
+Changelog: http://nethack.nineball.org
+Beta Server: telnet://sporkhack.nineball.org
+IRC: irc.freenode.net, #sporkhack
+</POST>
+<POST>
+<POSTER> &quot;Carlos Gómez Rodríguez (Al-Khwarizmi)&quot; &lt;kom...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-07T14:57:00 </POSTDATE>
+I haven't begun to implement a speed system yet, and I don't know how
+most roguelikes do it. But a simple yet powerful way of doing that,
+which I have used not in a roguelike but in an interactive fiction
+system, is the following:
+
+while(1)
+{
+for each ( creature c in your world )
+{
+c.timer--;
+if ( c.timer == 0 )
+{
+execute stored action;
+decide which action to do next;
+set timer = number of time units required for the next action;
+}
+}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+where the number of time units required for the next action can be
+dependent on the action itself and on the creature's speed. For
+example, putting on a plate mail can have a base cost of 400 time
+units, but a character with speed 1.2 (i.e 1.2x normal speed) would do
+it on 400/1.2 = 333 time units.
+
+Managing interruptions (such as a monster attacking you while you are
+reading a spellbok, and having to ask if you want to interrupt the
+action) can be done via events that bypass the timer: for example, if
+a creature is attacked while executing an action, give it the
+opportunity to reset the timer at that moment if it wants to interrupt
+that action to start a new one.
+</POST>
+<POST>
+<POSTER> Billy Bissette &lt;bai...@coastalnet.com&gt; </POSTER>
+<POSTDATE> 2007-09-07T19:33:00 </POSTDATE>
+Derek Ray &lt;de ... @moot.its.only.a.spamtrap.org&gt; wrote in
+news:slrnfe31ai.pki.derek@still.just.a.spamtrap.org:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2007-09-07, Jeff Lait &lt;torespondisfut ... @hotmail.com&gt; wrote:
+&gt;&gt; On Sep 7, 9:24 am, Gerry Quinn &lt;ger ... @indigo.ie&gt; wrote:
+&gt;&gt; If turn order is randomized every turn, I need to allow for the enemy
+&gt;&gt; getting a double move, adding more static to the simulation and less
+&gt;&gt; room for tactical planning.
+
+&gt; Turn order should not be completely random _every_ turn, either, as
+&gt; this is simply the other extreme.  But it is wise to be careful to
+&gt; _not_ make your game's speed system too set in stone, as otherwise
+&gt; speed becomes an absolute imperative to obtain for the tactical power
+&gt; it offers.
+
+&gt; A certain amount of randomness is ideal to prevent players from simply
+&gt; saying &quot;This monster can do 1d6, I have 7HP, I'm guaranteed to get in
+&gt; one shot and then I can step away and heal.&quot;
+">
+
+To me, the biggest problem with double turns is that there is no
+in-between.  You either get the normal damage range from a monster,
+or you get double damage.
+
+It makes it more difficult to balance damages, as a creature meant
+to be dangerous now may randomly become deadly.  Damage values in
+games generally seem to be designed around the idea of a consistent
+turn order.  The possibility of random double turn throws off that
+balance.  A creature meant to be very dangerous randomly becomes
+capable of insta-kills.  And though players likely don't care, it
+also throws off the monster health and defenses, as players may also
+benefit from a double turn.
+
+Also, if you think about it, it doesn't really make sense when a
+creature that might normally gets four attacks between your actions
+will suddenly get eight attacks.  Five attacks, maybe.  Six would be
+pushing into the boundaries of luck.  But eight?  Or random double
+moves, where something that normally can only advance 10 feet (or
+yards or whatever your scale of choice) surges to 20 foot, or
+conversely gets tagged twice before it makes a 20 foot run and then
+manages to stay 10 feet ahead of you for following turns.
+
+The jump is just so big.  Variable speed systems have similar
+issues, but at least can still be consistent in when the faster
+creature gets a double (or triple or quadruple or whatever) move.
+
+And it is really the double move that is the deadly one, as that
+is the jump that gives the most gain.
+</POST>
+<POST>
+<POSTER> Jeff Lait &lt;torespondisfut...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-07T20:21:00 </POSTDATE>
+On Sep 7, 1:07 pm, Derek Ray &lt;de ... @moot.its.only.a.spamtrap.org&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; A certain amount of randomness is ideal to prevent players from simply
+&gt; saying &quot;This monster can do 1d6, I have 7HP, I'm guaranteed to get in
+&gt; one shot and then I can step away and heal.&quot;
+">
+
+That is where our design theory differs.  I consider that an
+advantage, not a disadvantage.
+
+I think we focus too much on individual combat.  Sure, a character who
+gets an extra moves every three turns can time it to constantly hit an
+opponent with no risk.  If combats were isolated arena fights, this
+would be a problem.  But they are in dungeons.  Longer you take, more
+likely someone else gets involved.  Or you get closer to Hungry.
+--
+Jeff Lait
+(POWDER: http://www.zincland.com/powder )
+</POST>
+<POST>
+<POSTER> &quot;pol&quot; &lt;elis...@bellsouth.net&gt; </POSTER>
+<POSTDATE> 2007-09-07T21:30:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt;  I'm not sure how you mean to handle actions in the above?
+
+&gt;  How do you signify you are done taking actions and wish the turn to
+&gt; end?  Do you include an &quot;End Turn&quot; command (or &quot;End Actions&quot; or
+&gt; &quot;Process Turn&quot; or whatever you want to call it.  Even &quot;Defend&quot; might
+&gt; work.)?  If so, that could become annoying in a long game, even if
+&gt; movement were counted as an automatic turn ender (as it seems to be
+&gt; in the above description.)
+
+&gt;  Is defense automatic if you have the reflex points to spare, or is
+&gt; the player queried for response to every incoming attack as long as
+&gt; he has points remaining?  The latter adds the annoyance of even more
+&gt; keypresses, while the player might not care 90% of the time.  On the
+&gt; other hand, when the player is attacked by two or more creatures of
+&gt; different deadliness, he very likely will want to make sure his
+&gt; defensive actions are applied to the attacks of the deadliest
+&gt; creature and not wasted on the weaker ones.
+
+&gt;  If defensive action is chosen by the player (rather than automatic),
+&gt; then would there be multiple defensive options?  Dodge, block, parry,
+&gt; or even riposte/counter?  Or what of an additional reflex points
+&gt; versus effectiveness trade-off, so that you could choose to put
+&gt; minimal effort into defending a single attack that you don't care
+&gt; about, but could also put maximal effort (in the form of many points)
+&gt; into defending a single attack that you fear greatly?
+">
+
+Yeah I have a Pause which waits until the end of that queue and I have a
+Wait which waits a certain amount of time. Right now I have the AI set up to
+be in aggressive mode, normal mode or defensive mode when attacking and they
+hold back a certain number of points to defend or counterattack when struck
+or whatever depending on their current mode. I do not have everything set up
+for the player, but I am going to allow them to pick a certain # of points
+to reserve every round (like in x-com with reserve long range shot, and
+whatever else they had) and they can pick things like reserve x # of blocks
+(still, you would not be able to dovery many blocks unless you are extremely
+fast or you don't do anything that round except for attempt to block) or
+reserve 1 counter-strike or whatever. - if you have waited or paused then
+the ai will take over if you have enough points left to counterstrike or
+defend depending on how aggressive/defensive you are and whether or not you
+are pausing.
+I was worried about all the querying as well and I plan to handle most of it
+automatically and with different kinds of settings.
+Yes, I have all those different defense options in, your weapon gives you a
+parry skill which is computed when you are being struck at (before the
+dodging/blocking) (as blocking an armed attack with no weapon is a lot
+harder) - blocking is a lot faster (less point requirment than dodging) so
+that will be used most often, unless the person is acrobatic or it is a
+missile weapon then it is better to dodge because blocking is penalized
+(unless it is a shield (unless it is something much more powerful than a
+shield could block)) - I didn't have any thoughts about being able to
+fortify a block or something, but that is a good idea, maybe they could do
+that if they are terrified of the attacker, or if this attacker is much more
+powerful, but I did not want to have to micromanage everything so much as
+having to choose how many points to save
+I would not know how to check if a certain actor actually did have a chance
+to strike before the player has a chance to go again without going through
+each queue and even then I do not know when exactly the player is going to
+be placed back into the time stream (actually, I am wrong - I have the next
+time the the actor is going to move stored within the actor too, so I guess
+I could check on that, and if it is within a certain amount of time withold
+a block for that attacker)
+But this leads me down to some different paths and things I can do - I
+already have a list of current enemies and the current target, so I could
+have the player (or AI more effectively) utilize this by having the current
+target be the focus of his attacks and consequently gain a minor bonus to
+blocking versus other attackers besides the current target, or maybe a minor
+reduction in the points it takes to block - but there is no chance to
+counter-strike (and then using the tactics combat skill be able to have more
+than one focus or more of a bonus or something) - which could lead to
+different tactics vs a very powerful and a couple weaker - just focus on the
+powerful and do not attack - just counterstrike (though that could backfire
+pretty easily) Ok! that is enough of this!
+</POST>
+<POST>
+<POSTER> Billy Bissette &lt;bai...@coastalnet.com&gt; </POSTER>
+<POSTDATE> 2007-09-07T22:49:00 </POSTDATE>
+&quot;pol&quot; &lt;elis ... @bellsouth.net&gt; wrote in
+news:zWmEi.37326$wN3.34350@bignews2.bellsouth.net:
+
+<QUOTE PREVIOUSPOST="
+&gt; I didn't
+&gt; have any thoughts about being able to fortify a block or something,
+&gt; but that is a good idea, maybe they could do that if they are
+&gt; terrified of the attacker, or if this attacker is much more powerful
+">
+
+It was something I had thought of for a combat system I'd never
+actually put into a game.  The idea was that there might be specific
+attacks that you'd really want to go out of your way to avoid, even
+if the extra effort put you at a disadvantage elsewhere.
+
+With special effects on certain attacks, you may find the desire to
+avoid those attacks is much greater than normal attacks.  Automation
+may be possible, but is potentially flawed if vulnerability varies
+from situation to situation.
+
+You might wish to avoid the sting of a giant scorpion even if you
+resist poison, but you may find yourself frantic to do so if you are
+especially vulnerable.
+
+If an enemy can grapple you to put you at a disadvantage, you may
+wish to put more effort into dodging that grapple than into dodging
+its strikes.
+
+If an enemy can strike twice, and either attack can take more than
+half your current life, you may wish to put maximum effort into
+avoiding a single strike rather than trying to avoid both.  You
+might increase the odds of getting hit once, but decrease the odds of
+dying because you got hit twice.  (While if either attack can take
+all your life, and you are fairly certain it will hit twice, you'd
+want to spread your defense evenly.)
+
+If you have hit locations for attacks, a player may wish to put
+extra effort into guarding vulnerable areas even if it didn't
+actually increase the odds of complete avoidance, but instead added
+the chance that the attack may land elsewhere.  If you have no head
+armor, you may be willing to take a hit on the chest or arms if it
+spares the head.  With special effects on some attacks, this can
+become even more something a player might want to decide on the
+spot.
+
+Note: The system I was working on didn't specifically use action
+points.  Rather, it used a discouragement system, where culmulative
+actions built culmulative penalties for all following actions.
+Expending more than normal effort added more than normal to the
+penalties.  The system would either still have a limit on the number
+of actions (which could itself give more reason to put extra effort
+into individual acts when you were sufficiently skilled,) or
+penalties would remain active over multiple rounds until you had
+spent effort to recover.
+</POST>
+<POST>
+<POSTER> Radomir &#39;The Sheep&#39; Dopieralski &lt;n...@sheep.art.pl&gt; </POSTER>
+<POSTDATE> 2007-09-08T06:42:00 </POSTDATE>
+At Fri, 07 Sep 2007 23:33:47 -0000,
+
+<QUOTE PREVIOUSPOST="
+Billy Bissette wrote:
+&gt; Derek Ray &lt;de ... @moot.its.only.a.spamtrap.org&gt; wrote in
+&gt; news:slrnfe31ai.pki.derek@still.just.a.spamtrap.org:
+&gt;&gt; On 2007-09-07, Jeff Lait &lt;torespondisfut ... @hotmail.com&gt; wrote:
+&gt;&gt;&gt; On Sep 7, 9:24 am, Gerry Quinn &lt;ger ... @indigo.ie&gt; wrote:
+&gt;&gt;&gt; If turn order is randomized every turn, I need to allow for the enemy
+&gt;&gt;&gt; getting a double move, adding more static to the simulation and less
+&gt;&gt;&gt; room for tactical planning.
+">
+
+[...]
+
+<QUOTE PREVIOUSPOST="
+&gt;   To me, the biggest problem with double turns is that there is no
+&gt; in-between.  You either get the normal damage range from a monster,
+&gt; or you get double damage.
+">
+
+I remember an old pen-and-paper role-playing game called Trolls and
+Tunnels (apparently X&amp;X naming wash fashionable back then). In that
+game, the combat turn was not described as &quot;you swing your sword at
+the monster and hit/miss&quot;, but instead &quot;you combat with the monster
+for some time, dodging his blows and trying to hit it&quot;. There was a
+formula for computing how much damage you did and a formula for how
+much damage the monster(s) did, depending on your and the monster's
+stats, and skills, and equipment (I think you just rolled a dice to
+see how many blows hit the target).
+
+It sounds much more plausible than &quot;now your turn sir, hit me&quot; kind
+of system, and it also eliminates a lot of artifacts, like the fact
+that attacker gets one attack less and the pillar dancing.
+
+--
+Radomir `The Sheep' Dopieralski &lt; http://sheep.art.pl &gt;
+()  ascii ribbon campaign - against html e-mail
+/\  &lt; www.asciiribbon.org &gt; - against proprietary attachments
+</POST>
+<POST>
+<POSTER> &quot;Carlos Gómez Rodríguez (Al-Khwarizmi)&quot; &lt;kom...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-08T07:32:00 </POSTDATE>
+On Sep 8, 12:42 pm, Radomir 'The Sheep' Dopieralski
+
+<QUOTE PREVIOUSPOST="
+&lt;n ... @sheep.art.pl&gt; wrote:
+&gt; I remember an old pen-and-paper role-playing game called Trolls and
+&gt; Tunnels (apparently X&amp;X naming wash fashionable back then). In that
+&gt; game, the combat turn was not described as &quot;you swing your sword at
+&gt; the monster and hit/miss&quot;, but instead &quot;you combat with the monster
+&gt; for some time, dodging his blows and trying to hit it&quot;. (...)
+&gt; It sounds much more plausible than &quot;now your turn sir, hit me&quot; kind
+&gt; of system (...)
+">
+
+It probably is more plausible, but I think it would go against
+immersion. You feel more identified with the character when you
+control every move (well, at least I do). And, if I ran into a troll,
+attacked, got ten hits from him in a single turn and died, I would
+think: &quot;well, if I actually *were* the character, I would stop after
+the first five hits and cast a healing spell&quot;.
+</POST>
+<POST>
+<POSTER> Gerry Quinn &lt;ger...@indigo.ie&gt; </POSTER>
+<POSTDATE> 2007-09-08T09:23:00 </POSTDATE>
+In article &lt;Xns99A4C720C5185whatcholooki ... @216.168.3.70&gt;,
+bai ... @coastalnet.com says...
+
+<QUOTE PREVIOUSPOST="
+&gt; Derek Ray &lt;de ... @moot.its.only.a.spamtrap.org&gt; wrote in
+&gt; &gt; A certain amount of randomness is ideal to prevent players from simply
+&gt; &gt; saying &quot;This monster can do 1d6, I have 7HP, I'm guaranteed to get in
+&gt; &gt; one shot and then I can step away and heal.&quot;
+
+&gt;   To me, the biggest problem with double turns is that there is no
+&gt; in-between.  You either get the normal damage range from a monster,
+&gt; or you get double damage.
+">
+
+Most games in which 'long turns' are used allow only a single action by
+default in any 'turn unit'.  Probably for this exact reason.
+
+It's okay for the player to get away with the odd double hit, but it's
+not okay for the monsters.
+
+- Gerry Quinn
+</POST>
+<POST>
+<POSTER> Gerry Quinn &lt;ger...@indigo.ie&gt; </POSTER>
+<POSTDATE> 2007-09-08T09:26:00 </POSTDATE>
+In article &lt;1189210900.634403.83 ... @o80g2000hse.googlegroups.com&gt;,
+torespondisfut ... @hotmail.com says...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 7, 1:07 pm, Derek Ray &lt;de ... @moot.its.only.a.spamtrap.org&gt;
+&gt; wrote:
+&gt; &gt; A certain amount of randomness is ideal to prevent players from simply
+&gt; &gt; saying &quot;This monster can do 1d6, I have 7HP, I'm guaranteed to get in
+&gt; &gt; one shot and then I can step away and heal.&quot;
+&gt; That is where our design theory differs.  I consider that an
+&gt; advantage, not a disadvantage.
+">
+
+Same here.  It's part of standard roguelike tactics, in fact, even if
+some might regard it as 'exploitation' of some kind.
+
+- Gerry Quinn
+
+<QUOTE PREVIOUSPOST="
+&gt; I think we focus too much on individual combat.  Sure, a character who
+&gt; gets an extra moves every three turns can time it to constantly hit an
+&gt; opponent with no risk.  If combats were isolated arena fights, this
+&gt; would be a problem.  But they are in dungeons.  Longer you take, more
+&gt; likely someone else gets involved.  Or you get closer to Hungry.
+">
+</POST>
+<POST>
+<POSTER> Kenneth &#39;Bessarion&#39; Boyd &lt;zaim...@zaimoni.com&gt; </POSTER>
+<POSTDATE> 2007-09-08T10:54:00 </POSTDATE>
+On 2007-09-08 01:33:47, Billy Bissette &lt;bai ... @coastalnet.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; ....
+&gt; Also, if you think about it, it doesn't really make sense when a
+&gt; creature that might normally gets four attacks between your actions
+&gt; will suddenly get eight attacks.
+">
+
+Yes, it does -- if those attacks come in sequences. (Eastern martial arts:
+katas).  In fact, modeling these sequences as individual attacks usually doesn't
+make sense -- the time required to execute the sequence is usually much less
+than the sum of the times to execute each individual attack.
+
+<QUOTE PREVIOUSPOST="
+&gt;  Five attacks, maybe.  Six would be
+&gt; pushing into the boundaries of luck.  But eight?
+">
+
+Going from one sequence to two is reasonable.  And if the time system thinks a
+sequence of three to five attack is &quot;atomic&quot;, then occassionally doubling it is
+sensible.
+
+Hengband, now....managed to rig things a bit more interestingly with its
+randomized energy code.  When you got dealt randomly slow energy recovery,
+*everything* normal-speed gets double (or even triple) moves on a normal-speed
+player.
+</POST>
+<POST>
+<POSTER> Billy Bissette &lt;bai...@coastalnet.com&gt; </POSTER>
+<POSTDATE> 2007-09-08T14:30:00 </POSTDATE>
+&quot;Carlos Gómez Rodríguez (Al-Khwarizmi)&quot; &lt;kom ... @gmail.com&gt; wrote in
+news:1189251128.187492.204770@57g2000hsv.googlegroups.com:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 8, 12:42 pm, Radomir 'The Sheep' Dopieralski
+&gt; &lt;n ... @sheep.art.pl&gt; wrote:
+
+&gt;&gt; I remember an old pen-and-paper role-playing game called Trolls and
+&gt;&gt; Tunnels (apparently X&amp;X naming wash fashionable back then). In that
+&gt;&gt; game, the combat turn was not described as &quot;you swing your sword at
+&gt;&gt; the monster and hit/miss&quot;, but instead &quot;you combat with the monster
+&gt;&gt; for some time, dodging his blows and trying to hit it&quot;. (...)
+&gt;&gt; It sounds much more plausible than &quot;now your turn sir, hit me&quot; kind
+&gt;&gt; of system (...)
+
+&gt; It probably is more plausible, but I think it would go against
+&gt; immersion. You feel more identified with the character when you
+&gt; control every move (well, at least I do). And, if I ran into a troll,
+&gt; attacked, got ten hits from him in a single turn and died, I would
+&gt; think: &quot;well, if I actually *were* the character, I would stop after
+&gt; the first five hits and cast a healing spell&quot;.
+">
+
+In nearly any Roguelike with multiple attacks, you don't really
+control every move anyway.  If you get four attacks in a round, you
+can't choose to attack twice and then back away or drink a healing
+potion.  You either attack four times or don't attack at all.
+
+If an enemy is faster than you or naturally gets more attacks than
+you, then you don't get to move away in the middle of its barrage of
+attacks.  You ride the whole thing out.
+
+For games that don't have multiple attacks in a round, they may
+still on some level count combat as an abstraction of a round's
+worth of attempts and defenses, even if it boils down to a single
+hit or miss.  (That was one of the abstractions in D&amp;D from what I
+recall, that despite a single to-hit and specific dice amount, and
+attack wasn't necesssarily a single attack but rather the results
+gained over a period of time.)
+
+As for getting hit ten times versus getting hit five and healing,
+it would really depend on the time slice.  If something hits you
+fast enough, you won't be able to stop to cast a healing spell.
+If the time slice is small enough, something of similar speed and
+nature isn't going to hit you that much before you can change
+actions either.
+</POST>
+<POST>
+<POSTER> Billy Bissette &lt;bai...@coastalnet.com&gt; </POSTER>
+<POSTDATE> 2007-09-08T14:50:00 </POSTDATE>
+Kenneth 'Bessarion' Boyd &lt;zaim ... @zaimoni.com&gt; wrote in
+news:fbud39$2sn$1@news.vol.cz:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2007-09-08 01:33:47, Billy Bissette &lt;bai ... @coastalnet.com&gt; wrote:
+
+&gt;&gt; ....
+
+&gt;&gt; Also, if you think about it, it doesn't really make sense when a
+&gt;&gt; creature that might normally gets four attacks between your actions
+&gt;&gt; will suddenly get eight attacks.
+
+&gt; Yes, it does -- if those attacks come in sequences. (Eastern martial
+&gt; arts: katas).  In fact, modeling these sequences as individual attacks
+&gt; usually doesn't make sense -- the time required to execute the
+&gt; sequence is usually much less than the sum of the times to execute
+&gt; each individual attack.
+">
+
+Even if you use the kata explanation, in a real fight you can still
+interrupt a fixed sequence in the middle as well as at its end point.
+
+Heck, kata don't necessarily work for Roguelikes combat anyway.  In
+Roguelike combat, each attack is almost always separate from its
+surrounding attacks.  With a kata sequence, attacks are often more
+interdependent.  As well, breaking a kata would prevent the rest of
+the attacks from even happening.  That doesn't happen in Roguelike
+combat, where everyone gets their full run of attacks.
+
+As well, you get a timing issue that you can't explain away when
+you have multiple opponents.  If in five seconds, you can land 4
+attacks and your opponent can land 4 attacks, you could claim you
+each control the fight for 2.5 seconds.  If you get a double turn,
+then you just kept control longer.  But then what of when you have
+three opponents, and 16 attacks happen in five seconds?  At some point
+you have to acknowledge that things are overlapping and the game
+is just using an abstraction, and not something that needs be fixed
+in stone.
+</POST>
+<POST>
+<POSTER> Kenneth &#39;Bessarion&#39; Boyd &lt;zaim...@zaimoni.com&gt; </POSTER>
+<POSTDATE> 2007-09-08T15:22:00 </POSTDATE>
+On 2007-09-08 20:50:34, Billy Bissette &lt;bai ... @coastalnet.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Kenneth 'Bessarion' Boyd  wrote in
+&gt; news:fbud39$2sn$1@news.vol.cz:
+
+&gt; &gt; On 2007-09-08 01:33:47, Billy Bissette  wrote:
+
+&gt; &gt;&gt; ....
+
+&gt; &gt;&gt; Also, if you think about it, it doesn't really make sense when a
+&gt; &gt;&gt; creature that might normally gets four attacks between your actions
+&gt; &gt;&gt; will suddenly get eight attacks.
+
+&gt; &gt; Yes, it does -- if those attacks come in sequences. (Eastern martial
+&gt; &gt; arts: katas).  In fact, modeling these sequences as individual attacks
+&gt; &gt; usually doesn't make sense -- the time required to execute the
+&gt; &gt; sequence is usually much less than the sum of the times to execute
+&gt; &gt; each individual attack.
+
+&gt; Even if you use the kata explanation, in a real fight you can still
+&gt; interrupt a fixed sequence in the middle as well as at its end point.
+">
+
+Which can be abstracted away in the to-hit rolls.
+
+<QUOTE PREVIOUSPOST="
+&gt; Heck, kata don't necessarily work for Roguelikes combat anyway.  In
+&gt; Roguelike combat, each attack is almost always separate from its
+&gt; surrounding attacks.
+">
+
+Absolutely not for melee attacks in most *bands (notable exception CthBand).
+Extra shots are handled as you describe (and actually take less time per shot).
+
+<QUOTE PREVIOUSPOST="
+&gt;  With a kata sequence, attacks are often more
+&gt; interdependent.  As well, breaking a kata would prevent the rest of
+&gt; the attacks from even happening.
+">
+
+Yes.  Again, abstractable by to-hit rolls.
+
+<QUOTE PREVIOUSPOST="
+&gt;  That doesn't happen in Roguelike
+&gt; combat, where everyone gets their full run of attacks.
+">
+
+Again, not true for most *bands (or Moria, their ancestor).  If a monster dies
+early in a sequence of melee attacks, the rest of the attacks do not happen and
+the full time is used.
+</POST>
+<POST>
+<POSTER> Gerry Quinn &lt;ger...@indigo.ie&gt; </POSTER>
+<POSTDATE> 2007-09-08T16:57:00 </POSTDATE>
+In article &lt;1189174499.318449.210 ... @g4g2000hsf.googlegroups.com&gt;,
+torespondisfut ... @hotmail.com says...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 7, 9:24 am, Gerry Quinn &lt;ger ... @indigo.ie&gt; wrote:
+&gt; &gt; [Note: all monsters that will move and/or act on a given turn will do
+&gt; &gt; so in the same order they were created.  Lovers of priority queues etc.
+&gt; &gt; may see this as a significant wart.  I don't think it matters at all.
+&gt; &gt; Maybe they have more initiative or something.  Anyway it would be
+&gt; &gt; possible to randomise it.]
+
+&gt; It is prerequisite for fairness.  Lovers of priority queues would be
+&gt; wise to enforce this as a tie breaking rule.
+
+&gt; If I'm fighting someone the same speed as me, I expect both of us to
+&gt; alternate moves.  This allows tactical planning as I can determine if
+&gt; it is safe to attack another round or if I need to escape/heal/etc.
+&gt; If turn order is randomized every turn, I need to allow for the enemy
+&gt; getting a double move, adding more static to the simulation and less
+&gt; room for tactical planning.
+">
+
+This is a concern obviously if friendly characters and monsters are on
+the same list - in my game they are separate, so all friendlies act,
+then all monsters, and so on.
+
+- Gerry Quinn
+</POST>
+<POST>
+<POSTER> Gerry Quinn &lt;ger...@indigo.ie&gt; </POSTER>
+<POSTDATE> 2007-09-08T17:03:00 </POSTDATE>
+In article &lt;fbud39$2s ... @news.vol.cz&gt;, zaim ... @zaimoni.com says...
+
+<QUOTE PREVIOUSPOST="
+&gt; Yes, it does -- if those attacks come in sequences. (Eastern martial arts:
+&gt; katas).  In fact, modeling these sequences as individual attacks usually doesn't
+&gt; make sense -- the time required to execute the sequence is usually much less
+&gt; than the sum of the times to execute each individual attack.
+">
+
+If you want to emulate this sort of combat, you might consider
+something like what World of Warcraft uses for the Rogue class.
+Various attacks add 'combo points' to individual enemies (up to a
+maximum of five per creature), then a 'finishing move' burns the combo
+points on that creature for extra damage or some other effect (a debuff
+on the creature or a buff on the rogue).  The more points there were on
+the creature, the better the effect.
+
+[I think the combo points disappear after about 20 seconds, so you
+can't exploit by putting points on several weak creatures then zapping
+each for buffs.]
+
+- Gerry Quinn
+--
+Lair of the Demon Ape
+http://indigo.ie/~gerryq/lair/lair.htm
+</POST>
+<POST>
+<POSTER> Billy Bissette &lt;bai...@coastalnet.com&gt; </POSTER>
+<POSTDATE> 2007-09-08T17:55:00 </POSTDATE>
+Kenneth 'Bessarion' Boyd &lt;zaim ... @zaimoni.com&gt; wrote in
+news:fbusq9$e6h$1@news.vol.cz:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2007-09-08 20:50:34, Billy Bissette &lt;bai ... @coastalnet.com&gt; wrote:
+&gt;&gt;  That doesn't happen in Roguelike
+&gt;&gt; combat, where everyone gets their full run of attacks.
+
+&gt; Again, not true for most *bands (or Moria, their ancestor).  If a
+&gt; monster dies early in a sequence of melee attacks, the rest of the
+&gt; attacks do not happen and the full time is used.
+">
+
+I was refering to having your attacks interrupted, not stopping
+because the target died halfway through.
+
+And what happens when the target dies in the middle of a run of
+attacks is a topic in and of itself.  Shouldn't a &quot;smart&quot; fighter stop
+attacking a dead foe, and immediately be able to shift to new actions?
+Some Roguelikes didn't believe so, with the full time consumed even
+if the attacks upon the dead were not reported.  (I recall some early
+console RPGs had similar issues, where party members would happily
+swing at thin air if someone killed their assigned target before their
+turn occurred.)  Some Roguelikes do account for only spending such a
+fraction of time, though.
+</POST>
+<POST>
+<POSTER> David Damerell &lt;damer...@chiark.greenend.org.uk&gt; </POSTER>
+<POSTDATE> 2007-09-08T18:08:00 </POSTDATE>
+Quoting  Radomir 'The Sheep' Dopieralski  &lt;n ... @sheep.art.pl&gt;:
+[Tunnels and Trolls combat system]
+
+<QUOTE PREVIOUSPOST="
+&gt;It sounds much more plausible than &quot;now your turn sir, hit me&quot; kind
+&gt;of system, and it also eliminates a lot of artifacts, like the fact
+&gt;that attacker gets one attack less and the pillar dancing.
+">
+
+So presumably whenever A attacks B, B counterattacks if not helpless /
+otherwise engaged, but the force of B's counterattack might depend on
+their relative speeds?
+--
+David Damerell &lt;damer ... @chiark.greenend.org.uk&gt; Kill the tomato!
+Today is Brieday, August.
+</POST>
+<POST>
+<POSTER> Radomir &#39;The Sheep&#39; Dopieralski &lt;n...@sheep.art.pl&gt; </POSTER>
+<POSTDATE> 2007-09-08T18:22:00 </POSTDATE>
+At Sat, 08 Sep 2007 21:55:11 -0000,
+
+<QUOTE PREVIOUSPOST="
+Billy Bissette wrote:
+&gt; Kenneth 'Bessarion' Boyd &lt;zaim ... @zaimoni.com&gt; wrote in
+&gt; news:fbusq9$e6h$1@news.vol.cz:
+&gt;&gt; On 2007-09-08 20:50:34, Billy Bissette &lt;bai ... @coastalnet.com&gt; wrote:
+&gt;&gt;&gt;  That doesn't happen in Roguelike
+&gt;&gt;&gt; combat, where everyone gets their full run of attacks.
+&gt;&gt; Again, not true for most *bands (or Moria, their ancestor).  If a
+&gt;&gt; monster dies early in a sequence of melee attacks, the rest of the
+&gt;&gt; attacks do not happen and the full time is used.
+&gt;   I was refering to having your attacks interrupted, not stopping
+&gt; because the target died halfway through.
+&gt;   And what happens when the target dies in the middle of a run of
+&gt; attacks is a topic in and of itself.  Shouldn't a &quot;smart&quot; fighter stop
+&gt; attacking a dead foe, and immediately be able to shift to new actions?
+&gt; Some Roguelikes didn't believe so, with the full time consumed even
+&gt; if the attacks upon the dead were not reported.
+">
+
+Dying usually takes some time ;)
+
+<QUOTE PREVIOUSPOST="
+&gt; (I recall some early
+&gt; console RPGs had similar issues, where party members would happily
+&gt; swing at thin air if someone killed their assigned target before their
+&gt; turn occurred.)  Some Roguelikes do account for only spending such a
+&gt; fraction of time, though.
+">
+
+It was a design decision, in the combat they were trying to simulate
+the attacks were supposed to take place almost simultaneously, with only
+a split second separating them -- so, obviously they couldn't notice the
+monster has fallen, not to mention interrupting their attacks which were
+surely conducted with full force.
+
+More importantly, it makes the game of properly assigning who attacks whom
+much more interesting and having much greater impact on the actual combat:
+should I spread my attacks, and risk that this already weakened monster
+survives another round, or should I concentrate them and potentially lose
+some of potential damage this turn?
+
+--
+Radomir `The Sheep' Dopieralski &lt; http://sheep.art.pl &gt;
+()  ascii ribbon campaign - against html e-mail
+/\  &lt; www.asciiribbon.org &gt; - against proprietary attachments
+</POST>
+<POST>
+<POSTER> Radomir &#39;The Sheep&#39; Dopieralski &lt;n...@sheep.art.pl&gt; </POSTER>
+<POSTDATE> 2007-09-08T18:28:00 </POSTDATE>
+At 08 Sep 2007 23:08:49 +0100 (BST),
+
+<QUOTE PREVIOUSPOST="
+David Damerell wrote:
+&gt; Quoting  Radomir 'The Sheep' Dopieralski  &lt;n ... @sheep.art.pl&gt;:
+&gt; [Tunnels and Trolls combat system]
+&gt;&gt;It sounds much more plausible than &quot;now your turn sir, hit me&quot; kind
+&gt;&gt;of system, and it also eliminates a lot of artifacts, like the fact
+&gt;&gt;that attacker gets one attack less and the pillar dancing.
+&gt; So presumably whenever A attacks B, B counterattacks if not helpless /
+&gt; otherwise engaged, but the force of B's counterattack might depend on
+&gt; their relative speeds?
+">
+
+Yes, on the speeds, combat skills, armour class, etc. The roll included
+the speed with which you can hit, as well as the accuracy of the hits and
+dodging abilities of your foe, etc. -- all averaged out. It's nice,
+because it allows the human DM to make the combat much more interesting,
+coming up with imaginative descriptions of what happened. Typically, you
+and DM would roll dice, then DM would describe part of the combat, then
+he would tell you what to change on your character sheet.
+
+Of course, in a roguelike game, you would probably replace the single
+dice roll with a lot of calculations involbing all kinds of stats, skills
+and equipment bonuses. Plus facing, body position, moon phase and morale,
+if you wish.
+
+--
+Radomir `The Sheep' Dopieralski &lt; http://sheep.art.pl &gt;
+()  ascii ribbon campaign - against html e-mail
+/\  &lt; www.asciiribbon.org &gt; - against proprietary attachments
+</POST>
+<POST>
+<POSTER> &quot;pol&quot; &lt;elis...@bellsouth.net&gt; </POSTER>
+<POSTDATE> 2007-09-08T22:55:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; I remember an old pen-and-paper role-playing game called Trolls and
+&gt; Tunnels (apparently X&amp;X naming wash fashionable back then). In that
+&gt; game, the combat turn was not described as &quot;you swing your sword at
+&gt; the monster and hit/miss&quot;, but instead &quot;you combat with the monster
+&gt; for some time, dodging his blows and trying to hit it&quot;. There was a
+&gt; formula for computing how much damage you did and a formula for how
+&gt; much damage the monster(s) did, depending on your and the monster's
+&gt; stats, and skills, and equipment (I think you just rolled a dice to
+&gt; see how many blows hit the target).
+
+&gt; It sounds much more plausible than &quot;now your turn sir, hit me&quot; kind
+&gt; of system, and it also eliminates a lot of artifacts, like the fact
+&gt; that attacker gets one attack less and the pillar dancing.
+">
+
+I was originally incorporating some ideas like this into my time-system as
+well - I really liked the idea of  a couple of different actions combined
+into one abstracted little combat round that could be interrupted or maybe
+joined by other people, and be an easy way to determine who is busy with
+combat and removes  and other things like that but I had to remove it when I
+changed how detailed each round is - I originally wanted each round to be
+3-4 seconds or something like that, but I did not like the fact that
+somebody could move around so much at once so I made the rounds much more
+detailed . but I guess I could put it back in and just have the combat
+extend over a certain amount of time
+
+It is also seems like it would be a little bit more interesting (as long as
+your combat is relatively interesting something that is usually very sorely
+lacking in most games. I don't know if they are afraid to get graphic with a
+couple of random messages or just lazy?) to see a couple of different blows
+and counterblows/ back and forth each turn of combat. Or more dramatic: You
+both come together hammering blows down on each other back and forth and
+then spring back a step until you gain another opening. Plus, combat is
+usually chaotic, and unless you are fighting against somebody who doesn't
+know what they are doing you will usually have to adjust what you are doing
+to compensate for what they are throwing at you and that reaction may make a
+backhand swing very advantageous to the attacker or it might lead to a jab
+being much more useful/able to be landed or you may want to get away but not
+be able to at the moment because of all of the attacking coming at you
+This could even be affected by the skill of the attacker vs the defeneder -
+one character with lots of skill may cause the other character to have less
+of a chance of an effective shot and more of a chance of a less effective
+shot.
+
+And if you are one of the simplifiers you could use these as the types of
+damage -
+-each attack does a certain damage:
+1 for poke
+3 for slash
+7 for overhead chop
+
+and if you wanted some basic aggressive-normal-defensive settings you could
+adapt the above example but make overhead chop cause a penalty to defense
+the next round or something and poke give a bonus.
+
+or if you wanted a more hpless simplified system -
+poke doesnt hurt too much but keeps the other person off guard or something
+cut hurts a little and might slow you down but can not kill
+slash hurts and will slow you down and might kill you
+overhead chop hurts a lot and will injure your body and will probably kill
+you
+</POST>
+<POST>
+<POSTER> R. Dan Henry &lt;danhe...@inreach.com&gt; </POSTER>
+<POSTDATE> 2007-09-09T01:24:00 </POSTDATE>
+On Sat, 08 Sep 2007 21:55:11 -0000, Billy Bissette
+
+<QUOTE PREVIOUSPOST="
+&lt;bai ... @coastalnet.com&gt; wrote:
+&gt;Kenneth 'Bessarion' Boyd &lt;zaim ... @zaimoni.com&gt; wrote in
+&gt; news:fbusq9$e6h$1@news.vol.cz:
+&gt;&gt; On 2007-09-08 20:50:34, Billy Bissette &lt;bai ... @coastalnet.com&gt; wrote:
+
+&gt;&gt;&gt;  That doesn't happen in Roguelike
+&gt;&gt;&gt; combat, where everyone gets their full run of attacks.
+
+&gt;&gt; Again, not true for most *bands (or Moria, their ancestor).  If a
+&gt;&gt; monster dies early in a sequence of melee attacks, the rest of the
+&gt;&gt; attacks do not happen and the full time is used.
+
+&gt;  I was refering to having your attacks interrupted, not stopping
+&gt;because the target died halfway through.
+">
+
+There should be some &quot;dependent attacks&quot;, however, in some games. There
+certainly are in some tabletop RPGs. Creatures that only bite you after
+they grasp you with their tentacles. Big cats that get a second attack
+to rake you with the rear claws if they hit with the front claws.
+Martial artists who hit you once to get you into position for their
+follow-up attack. Trample attacks that an animal gets if it knocks you
+over with its charge attack. There are lots of possible combination
+attacks where follow-ups depend on the success of earlier attacks in the
+sequence. I'm all for having such.
+
+<QUOTE PREVIOUSPOST="
+&gt;  And what happens when the target dies in the middle of a run of
+&gt;attacks is a topic in and of itself.  Shouldn't a &quot;smart&quot; fighter stop
+&gt;attacking a dead foe, and immediately be able to shift to new actions?
+">
+
+It depends on what you think you're representing. If those multiple
+attacks are a series of rapid blows after maneuvering for an opening
+that lets you land them, then you won't save enough time by having the
+foe drop dead in the middle to be worth representing. If you assume each
+is a separate, essentially unrelated, attack, then getting a time
+discount is the logical consequence of your interpretation.
+
+--
+R. Dan Henry = danhe ... @inreach.com
+If you wish to put anything I post on your website,
+please be polite enough to ask first.
+</POST>
+<POST>
+<POSTER> Billy Bissette &lt;bai...@coastalnet.com&gt; </POSTER>
+<POSTDATE> 2007-09-09T04:59:00 </POSTDATE>
+R. Dan Henry &lt;danhe ... @inreach.com&gt; wrote in
+news:kr07e3hnsnl6k3q21qsq24ptrnq3khtqmn@4ax.com:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sat, 08 Sep 2007 21:55:11 -0000, Billy Bissette
+&gt; &lt;bai ... @coastalnet.com&gt; wrote:
+&gt; There should be some &quot;dependent attacks&quot;, however, in some games.
+&gt; There certainly are in some tabletop RPGs. Creatures that only bite
+&gt; you after they grasp you with their tentacles. Big cats that get a
+&gt; second attack to rake you with the rear claws if they hit with the
+&gt; front claws. Martial artists who hit you once to get you into
+&gt; position for their follow-up attack. Trample attacks that an animal
+&gt; gets if it knocks you over with its charge attack. There are lots
+&gt; of possible combination attacks where follow-ups depend on the
+&gt; success of earlier attacks in the sequence. I'm all for having such.
+">
+
+You can do that with or without a kata system of attacks.  They
+can be implemented through various methods as well.
+
+You can make bonus attacks that activate if the initial attack
+succeeds.  These may or may not burn an action, depending upon
+preference.  (Examples: If a vampire lands a grab, then it
+automatically bites to feed.  If an elephant succeeds with a
+charge, then it automatically gets an attempt to trample.)
+
+You can have certain attacks put the target into special states.
+Attacks that follow take advantage of that state.  Stuns could be
+handled this way, as well as knock-downs and even grapples.  The
+attacks that follow may gain special bonuses or even be altered
+depending upon the state of the target.  (Examples:  A giant snake
+has a constrict attack that entangles the target, but also does
+extra damage if the target is already entangled.  A vampire may be
+able to bite under any circumstance, but gets a significant bonus
+to both success chance and amount healed when trying to bite a
+target that is immobilized in some way (and perhaps &quot;bite&quot; follows
+&quot;claw with chance to grab&quot; in its attack sequence.)  An elephant
+may be designed so that all its attacks switch to &quot;trample&quot; if the
+target is already in a &quot;downed&quot; state.)
+
+For the above, the duration of the states is again a designer
+decision.  They could last until the player actively does something
+to change his status, last for a duration of multiple turns, last
+until the end of the attack round (works okay for some kata-style
+sequences), or only last until the next attack (though the next
+attack may be designed to re-apply the state, like a wrestler
+continuing to keep a damaging hold.)
+
+You could implement some effects as simply time-based penalties,
+similar to the special states idea.  Stunning in *bands could be
+considered this.  Or bleeding.  Various attacks may have the chance
+to for a duration negatively affect the target in various ways.
+
+You could of course flesh out a wrestling unarmed combat system
+with various grappling dependent attacks.
+
+If you wanted, you could take the kata idea and build a combat
+system almost entirely around dependent attacks.
+
+An idea would be a combat system designed around learning various
+attack forms.  Formless combat would be limited to one or two attacks
+per turn, but attack forms allow three to five attacks.  Forms would
+be dependent upon weapons, as a sequence designed around a two-handed
+sword probably wouldn't apply to an unarmed fighter, just as a
+quarterstaff form wouldn't apply to someone wielding a dagger.  There
+could be overlapping forms though, such as multiple unarmed strings,
+or generic versus specific strings (like &quot;holding two weapons&quot;
+versus &quot;holding a sword and dagger&quot;.)  If strings are designed so
+that one is always better than another, then which form is used at
+any moment can be entirely automated.  Otherwise, you may have a
+partial automation where the player can turn forms on or off in a
+menu, and combat chooses the most specific form that applies for
+current equipment.  (For example: You turn off &quot;sword1&quot;, and leave
+&quot;sword1&quot; and &quot;sharp object&quot; active.  If you wield a sword in combat,
+you use the &quot;sword1&quot; string.  If you wield an axe, you use the more
+generic &quot;sharp object&quot; string.  If you wield a hammer, you use no
+string and only attack once.)
+
+Another idea is to let the player not just pre-define his own
+attack string (as allowed in Omega), but take it a step further by
+defining an attack tree.  More complexity and control could be added
+by increasing the freedom in choosing your success/fail conditions.
+You would want a variety of dependent attacks for such a system, as
+well as likely just various modifiers.  Depending on how many options
+you give the player (in both actions and conditions,) you might see
+some pretty interesting trees develop.
+</POST>
+<POST>
+<POSTER> Martin Read &lt;mpr...@chiark.greenend.org.uk&gt; </POSTER>
+<POSTDATE> 2007-09-09T06:10:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;pol&quot; &lt;elis ... @bellsouth.net&gt; wrote:
+&gt;It is also seems like it would be a little bit more interesting (as long as
+&gt;your combat is relatively interesting something that is usually very sorely
+&gt;lacking in most games. I don't know if they are afraid to get graphic with a
+&gt;couple of random messages or just lazy?)
+">
+
+I don't see any point in &quot;getting graphic with a couple of random
+messages&quot; unless there's a game mechanic justifying them; meaningless
+chrome - unless it is both ignorable and obviously meaningless - *tends*
+to degrade a roguelike's UI.
+
+Dungeon Bash's combat mechanics are very simple, so Dungeon Bash emits
+very simple combat messages.
+--
+\_\/_/ you take a mortal man and put him in control
+\  /  and watch him become a god watch people's heads roll
+\/    --- Megadeth, &quot;Symphony of Destruction&quot;
+</POST>
+<POST>
+<POSTER> &quot;Aaron J. M.&quot; &lt;ajm...@ns.sympatico.ca&gt; </POSTER>
+<POSTDATE> 2007-09-09T17:58:00 </POSTDATE>
+I've thought more about what I want in my speed system, and I think I
+can sum it up like this: a creature's speed determines the number of
+turns it receives in a round.
+
+A &quot;turn&quot; is the opportunity a creature gets to actually do something,
+such as attacking or moving.  To the player, this is when he's aloud
+to make a keypress (except for interface tasks such as examining his
+stats).
+
+A &quot;round&quot; is all of the turns that all creatures make on the current
+level for one iteration.  A creature's speed is the number of turns it
+will get in a round.  For example, say there are three creatures:
+
+Creature | Speed
+------------------
+A |     5
+B |     5
+C |     5
+
+Rounds will consist of 15 turns, and each creature will receive five
+turn per round, acting in this pattern:
+
+A B C A B C A B C A B C A B C   A B C A B C A B C A B C A B C ...
+
+Since their speeds are equal, the creature's turn proceed in a
+classic I-move-You-move pattern.  This would have the same pattern if
+all of the creatures' speeds were 1, though the round breakdown would
+be three.  Note that the player doesn't actaully see the round.
+
+Now suppose the creatures's speeds are unequal (I use smaller numbers
+so that I won't have to type such long patterns):
+
+Creature | Speed
+------------------
+A |     1
+B |     2
+C |     1
+
+The round will have four turns in total; creature B will get two of
+them.  To both creature A and C, B will look like it is getting double
+turns (especially if A and C can't see each other).  Indeed, if it was
+just A and B, truly consecutive turns would happen:
+
+A B B   A B B ...
+
+However, B does not necessarily need to have two consecutive turns.
+Here are some possible patterns when all three creatures are in play:
+
+A B C B  A B C B ... **
+A B B C  A B B C ...
+A C B B  A C B B ...
+B A C B  B A C B ... *
+B A C B  B A B C ... *
+
+The 2nd last and last patterns marked with a '*' are patterns
+generated by a priority queue and an Angband-style energy system,
+respectivally.  I prefer the topmost pattern marked with a '**' since
+B's turns are evenly distributed among the turns in a round and
+because it sticks somewhat closely to the creature order.  The middle
+two I simply made up.
+
+As an aside, my priority queue and energy algorithms also show bugs
+for certain situations.  If I have two creatures with speeds seven and
+two, and I let them act for three rounds, the first creature takes
+twenty turns (it sould have taken twenty one turns) and the second
+creature takes seven turns (it should have taken six).
+
+Another thing about these rounds is that it is important that their
+turn pattern stays (surely the player should be able to figure out
+what the pattern is).  What I'm not sure about is what happens when a
+creature's speed changes.  However, I'm not *too* concerned about this
+as long as the turn pattern is able to stabilize itself.
+
+Indeed, the player may not have to tell what the actual turn pattern
+is.  He may instead figure out how many turns certain creatures get
+relative to his own turns.  It would be usefull for there to be a
+query that asks &quot;When I act, how many times will this creature X act
+until my next turn?&quot;
+
+On Sep 7, 5:21 pm, Jeff Lait &lt;torespondisfut ... @hotmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 7, 1:07 pm, Derek Ray &lt;de ... @moot.its.only.a.spamtrap.org&gt;
+&gt; wrote:
+
+&gt; &gt; A certain amount of randomness is ideal to prevent players from
+&gt; &gt; simply saying &quot;This monster can do 1d6, I have 7HP, I'm guaranteed
+&gt; &gt; to get in one shot and then I can step away and heal.&quot;
+
+&gt; That is where our design theory differs.  I consider that an
+&gt; advantage, not a disadvantage.
+">
+
+I have to say that I'm in the same camp.  If you think about many turn
+based strategies and wargames, alot of your management involves
+positioning your units to attack without leaving them open to enemy
+attacks.  I remember from playing Fire Emblem for the Gameboy Advance
+that alot of my strategy involved keeping my soldiers just out of
+reach of the enemy (and the game had a handy interface for showing how
+far the enemy can move next turn).
+
+<QUOTE PREVIOUSPOST="
+&gt; I think we focus too much on individual combat.  Sure, a character
+&gt; who gets an extra moves every three turns can time it to constantly
+&gt; hit an opponent with no risk.  If combats were isolated arena
+&gt; fights, this would be a problem.  But they are in dungeons.  Longer
+&gt; you take, more likely someone else gets involved.  Or you get closer
+&gt; to Hungry.
+">
+
+Hmm.  I am actually concerned about individual combat, since I want
+boss monsters at some point.  However, this may be addressed by
+providing more ways for a creature to put distance between itself and
+an enemy.  I think I remember that in Ultima 1 or 2 if a monster on
+the overworld gets next to you there is simply no way to shake it off
+without attacking (and this was without a speed system) and it is
+something I want to avoid or minimize.
+
+One possible way could be to make attacks take more &quot;time&quot; than other
+moves, something I got from a previous thread (Google Groups:
+http://groups.google.com/group/rec.games.roguelike.development/
+browse_thread/thread/aeb95a18edf0ad48/).  I imagine that even if a
+creature gets an attack, this will slow the creature down enough for
+the target to get away.  I'm not sure how different-speed actions
+would work in my theoretical system above though.
+
+Something else that could help would be to have automatic dodging
+(where you move a space away) and maybe counter-attacks.  At least a
+dodge that makes a creature back away from the attacker would put some
+distance between them, while counter-attacks would give the attacker a
+hard time.  I'm thinking along the lines of dodging in Dwarf Fortress
+adventure mode, where every time you get attacked you had some chance
+of dodging and counter-attacking (you're also able to set whether you
+would dodge or stay still when attacked).  I'll probably put dodging
+in anyway since I want a fluid combat system where creatures flit and
+dance around each other instead of just bash into each other.
+</POST>
+<POST>
+<POSTER> Gerry Quinn &lt;ger...@indigo.ie&gt; </POSTER>
+<POSTDATE> 2007-09-11T07:45:00 </POSTDATE>
+In article &lt;1189375107.293518.248 ... @57g2000hsv.googlegroups.com&gt;,
+ajm ... @ns.sympatico.ca says...
+
+<QUOTE PREVIOUSPOST="
+&gt; Something else that could help would be to have automatic dodging
+&gt; (where you move a space away) and maybe counter-attacks.  At least a
+&gt; dodge that makes a creature back away from the attacker would put some
+&gt; distance between them, while counter-attacks would give the attacker a
+&gt; hard time.  I'm thinking along the lines of dodging in Dwarf Fortress
+&gt; adventure mode, where every time you get attacked you had some chance
+&gt; of dodging and counter-attacking (you're also able to set whether you
+&gt; would dodge or stay still when attacked).  I'll probably put dodging
+&gt; in anyway since I want a fluid combat system where creatures flit and
+&gt; dance around each other instead of just bash into each other.
+">
+
+That could work.
+
+Reading the aforementioned thread, there was a lot about attack modes.
+I agreed with R.Dan Henry at the end who suggested the use of only two
+modes; berserk and normal, or aggressive and defensive, whatever.  But
+I would accept a special defensive mode if it did something different,
+like giving you an extra move away when hit.
+
+Something like:
+
+Normal: default damage calculations
+
+Berserk: do double melee damage, take double melee damage.
+
+Defensive: unable to attack or cast aggressive spells; a melee hit has
+a 50% chance of moving you one square away from the attacker.  Melee
+damage reduced by 25%.
+
+- Gerry Quinn
+--
+Lair of the Demon Ape
+http://indigo.ie/~gerryq/lair/lair.htm
+</POST>
+<POST>
+<POSTER> &quot;Aaron J. M.&quot; &lt;ajm...@ns.sympatico.ca&gt; </POSTER>
+<POSTDATE> 2007-09-13T02:51:00 </POSTDATE>
+I've been able to come up with the time system to use.  It's actually
+a priority queue based one.  After some bug fixes I've been able to
+get it to work in the ways I described in my last post.
+
+I've written an article about it on RogueBasin if anyone wants to see
+it.  It is available at:
+
+http://roguebasin.roguelikedevelopment.org/index.php?title=A_priority...
+
+Cheers,
+
+Aaron J. M.
+</POST>
+<POST>
+<POSTER> g...@mail.ru (Timofei Shatrov) </POSTER>
+<POSTDATE> 2007-09-13T05:05:00 </POSTDATE>
+On Wed, 12 Sep 2007 23:51:37 -0700, &quot;Aaron J. M.&quot; &lt;ajm ... @ns.sympatico.ca&gt; tried
+to confuse everyone with this message:
+
+<QUOTE PREVIOUSPOST="
+&gt;I've been able to come up with the time system to use.  It's actually
+&gt;a priority queue based one.  After some bug fixes I've been able to
+&gt;get it to work in the ways I described in my last post.
+
+&gt;I've written an article about it on RogueBasin if anyone wants to see
+&gt;it.  It is available at:
+
+&gt; http://roguebasin.roguelikedevelopment.org/index.php?title=A_priority...
+">
+
+Well, after browsing through the barrage of underscores, I can see a few
+problems with your approach.
+
+* You insert a new item using an external library function. This is not only
+useless to those using other languages (not a good quality for example code),
+but you also lose fine control on where exactly the new item should be placed
+in case it's priority is equal to some other priority. I'd argue it should be
+placed _after_ older items who have the same priority, but there is no way to
+tell from your code if bisect.insort actually does that (I bet it doesn't).
+
+* The priorities go to infinity as the time progresses. In a real game you'll
+need average speed at least 10, because speed 1 creature versus speed 2 creature
+is just not fair. You can imagine after a while the numbers will be quite big
+and everything would break or become dog slow (depends on the implementation.
+For example there is a chance someone will implement your algorithm in C++,
+using ints and there would be a dreaded overflow after about 3000 turns). There
+is really no need to keep all these big numbers, because they're usually
+contained in some small range between x and x+n, where n is the longest time an
+action could take. Here is a (bad) description of a better algorithm:
+
+http://groups.google.com/group/rec.games.roguelike.development/browse...
+
+Also, there have to be some modifications if the time is 0 (action cancelled, or
+the player does meta-action, like saving game), in which case the other monsters
+who have zero priority shouldn't get the opportunity to hit you. But that's not
+hard to implement.
+
+--
+|Don't believe this - you're not worthless              ,gr---------.ru
+|It's us against millions and we can't take them all... |  ue     il   |
+|But we can take them on!                               |     @ma      |
+|                       (A Wilhelm Scream - The Rip)    |______________|
+</POST>
+<POST>
+<POSTER> &quot;Aaron J. M.&quot; &lt;ajm...@ns.sympatico.ca&gt; </POSTER>
+<POSTDATE> 2007-09-14T00:00:00 </POSTDATE>
+On Sep 13, 5:05 am, g ... @mail.ru (Timofei Shatrov) wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; * You insert a new item using an external library function. This is
+&gt; not only useless to those using other languages (not a good quality
+&gt; for example code), but you also lose fine control on where exactly
+&gt; the new item should be placed in case it's priority is equal to some
+&gt; other priority. I'd argue it should be placed _after_ older items
+&gt; who have the same priority, but there is no way to tell from your
+&gt; code if bisect.insort actually does that (I bet it doesn't).
+">
+
+OK, I've removed the dependancy on the bisect library.  It's probably
+for the better, since I can now compair just the priorities instead of
+the whole tuple which Python seems to do.
+
+This ends up with a different turn order, and the only way to make it
+consistent is to insert the things with their delays at the very
+beginning.  This does cause me to loose control over who acts first
+(which I complained about earlier).  For that I might do what someone
+suggested earlier and just suppress turns at the beginning until I get
+the creature I want.  That is, things are popped and pushed back into
+the queue, but don't have their AI's run in the middle.
+
+That would make my example on RogueBasin:
+
+b a c b b a c b ...
+
+... look more like this (assuming I want 'a' to go first):
+
+a c b b a c b b ...
+
+I'd have to do some tweaks for the main game clock though if I do
+that though.
+
+As an aside, the bisect.insort actually does insert after older items,
+at least according to the official documentation at
+http://docs.python.org/lib/module-bisect.html .
+
+<QUOTE PREVIOUSPOST="
+&gt; * The priorities go to infinity as the time progresses. In a real
+&gt; game you'll need average speed at least 10, because speed 1 creature
+&gt; versus speed 2 creature is just not fair. You can imagine after a
+&gt; while the numbers will be quite big and everything would break or
+&gt; become dog slow (depends on the implementation. For example there is
+&gt; a chance someone will implement your algorithm in C++, using ints
+&gt; and there would be a dreaded overflow after about 3000 turns). There
+&gt; is really no need to keep all these big numbers, because they're
+&gt; usually contained in some small range between x and x+n, where n is
+&gt; the longest time an action could take. Here is a (bad) description
+&gt; of a better algorithm:
+">
+
+I've tried reading your algorithm.  As far as I can tell, your
+suggestion is that when I pop a monster off the queue, I decrease the
+priorities of all the other waiting monsters by the value that was the
+active monster's original priority.  Is that true?
+
+- Aaron J. M.
+</POST>
+<POST>
+<POSTER> g...@mail.ru (Timofei Shatrov) </POSTER>
+<POSTDATE> 2007-09-14T06:00:00 </POSTDATE>
+On Thu, 13 Sep 2007 21:00:28 -0700, &quot;Aaron J. M.&quot; &lt;ajm ... @ns.sympatico.ca&gt; tried
+to confuse everyone with this message:
+
+<QUOTE PREVIOUSPOST="
+&gt;I've tried reading your algorithm.  As far as I can tell, your
+&gt;suggestion is that when I pop a monster off the queue, I decrease the
+&gt;priorities of all the other waiting monsters by the value that was the
+&gt;active monster's original priority.  Is that true?
+">
+
+Yes, that's what I meant.
+
+--
+|Don't believe this - you're not worthless              ,gr---------.ru
+|It's us against millions and we can't take them all... |  ue     il   |
+|But we can take them on!                               |     @ma      |
+|                       (A Wilhelm Scream - The Rip)    |______________|
+</POST>
+<POST>
+<POSTER> &quot;Aaron J. M.&quot; &lt;ajm...@ns.sympatico.ca&gt; </POSTER>
+<POSTDATE> 2007-09-15T18:58:00 </POSTDATE>
+Just so people know, I've updated the priority queue article on
+RogueBasin to use Timofei's algorithm.
+
+Cheers,
+
+Aaron J. M.
+</POST>
+</TEXT>
+</BODY>
+</DOC>

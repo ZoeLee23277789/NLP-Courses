@@ -1,0 +1,699 @@
+<DOC>
+<DOCID> eng-NG-31-135596-9760477 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-12-04T06:33:00 </DATETIME>
+<BODY>
+<HEADLINE>
+mixing system and user threads
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Laurent Deniau &lt;Laurent.Den...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-04T06:33:00 </POSTDATE>
+I would like to know if there is a &quot;good way&quot; to mix system and user
+threads. Assuming that I use POSIX threads as system threads and GNU
+Portable Threads as user threads on top of the system threads to allow
+M:N:P mapping of tasks. Does it means that each time I'd like to lock
+a &quot;synchronized&quot; object I need to do something like:
+
+pthread_mutex_lock(&amp;obj_sys_mutex);
+pth_mutex_acquire(&amp;obj_usr_mutex);
+...
+pth_mutex_release(&amp;obj_usr_mutex);
+pthread_mutex_unlock(&amp;obj_sys_mutex);
+
+where obj_sys_mutex is of type pthread_mutex_t and obj_usr_mutex is of
+type pth_mutex_t.
+
+I read that some OSes provide a single API for M:N:P mapping and since
+user thread seems to be easier to implement than system thread, why
+POSIX doesn't provide a unified API (or did I missed something)?
+Thanks.
+
+a+, ld.
+</POST>
+<POST>
+<POSTER> Markus Elfring &lt;Markus.Elfr...@web.de&gt; </POSTER>
+<POSTDATE> 2007-12-04T12:40:00 </POSTDATE>
+Laurent Deniau schrieb:
+
+<QUOTE PREVIOUSPOST="
+&gt; I would like to know if there is a &quot;good way&quot; to mix system and user
+&gt; threads. Assuming that I use POSIX threads as system threads and GNU
+&gt; Portable Threads as user threads on top of the system threads to allow
+&gt; M:N:P mapping of tasks.
+">
+
+It seems that the meanings for the key words are mixed up in your wording.
+http://en.wikipedia.org/wiki/Thread_%28computer_science%29#Implementa...
+
+<QUOTE PREVIOUSPOST="
+&gt; Does it means that each time I'd like to lock a &quot;synchronized&quot; object
+&gt; I need to do something like:
+&gt; pthread_mutex_lock(&amp;obj_sys_mutex);
+&gt; pth_mutex_acquire(&amp;obj_usr_mutex);
+">
+
+You are using different APIs.
+http://opengroup.org/onlinepubs/009695399/functions/pthread_mutex_loc...
+http://www.gnu.org/software/pth/pth-manual.html#synchronization
+
+Regards,
+Markus
+</POST>
+<POST>
+<POSTER> Laurent Deniau &lt;Laurent.Den...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-04T13:01:00 </POSTDATE>
+On 4 déc, 18:40, Markus Elfring &lt;Markus.Elfr ... @web.de&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Laurent Deniau schrieb:
+
+&gt; &gt; I would like to know if there is a &quot;good way&quot; to mix system and user
+&gt; &gt; threads. Assuming that I use POSIX threads as system threads and GNU
+&gt; &gt; Portable Threads as user threads on top of the system threads to allow
+&gt; &gt; M:N:P mapping of tasks.
+
+&gt; It seems that the meanings for the key words are mixed up in your wording. http://en.wikipedia.org/wiki/Thread_%28computer_science%29#Implementa ...
+">
+
+Ok, remove &quot;:P&quot; in &quot;M:N:P&quot; to fall in the M:N model (I was mapping M
+tasks on N threads on P CPUs) and rename &quot;system-threads&quot; by &quot;kernel-
+threads&quot;. But I think the wording was not so far.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Does it means that each time I'd like to lock a &quot;synchronized&quot; object
+&gt; &gt; I need to do something like:
+&gt; &gt; pthread_mutex_lock(&amp;obj_sys_mutex);
+&gt; &gt; pth_mutex_acquire(&amp;obj_usr_mutex);
+
+&gt; You are using different APIs.
+">
+
+http://opengroup.org/onlinepubs/009695399/functions/pthread_mutex_loc ...
+http://www.gnu.org/software/pth/pth-manual.html#synchronization
+
+Yes because they do different things. Pth was involved to handle the M
+tasks (user-threads), Pthread was involved to handle N threads (kernel-
+threads). And my question was what will happen if the users of my
+library use both (e.g. need for a two-level scheduler)? Should I
+protect my global/shared variables as above?
+
+Regards,
+
+ld.
+</POST>
+<POST>
+<POSTER> Markus Elfring &lt;Markus.Elfr...@web.de&gt; </POSTER>
+<POSTDATE> 2007-12-04T15:15:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Pth was involved to handle the Mtasks (user-threads),
+&gt; Pthread was involved to handle N threads (kernel-threads).
+">
+
+Did you notice the following description?
+&quot;...
+Additionally Pth provides an optional emulation API for POSIX.1c threads
+...&quot;
+http://www.gnu.org/software/pth/
+
+<QUOTE PREVIOUSPOST="
+&gt; And my question was what will happen if the users of my
+&gt; library use both (e.g. need for a two-level scheduler)?
+">
+
+In which software would you like to apply both?
+
+<QUOTE PREVIOUSPOST="
+&gt; Should I protect my global/shared variables as above?
+">
+
+Each shared data structure must be protected against simultaneous access from
+multiple threads. It will be interesting which library will provide the thread
+and lock abstraction for synchronisation of a specific data access.
+
+Regards,
+Markus
+</POST>
+<POST>
+<POSTER> Steve Watt &lt;steve.removet...@Watt.COM&gt; </POSTER>
+<POSTDATE> 2007-12-04T22:58:00 </POSTDATE>
+In article &lt;b2c8dd3a-789f-4a3d-b488-e7ab3d2b2 ... @e4g2000hsg.googlegroups.com&gt;,
+Laurent Deniau  &lt;Laurent.Den ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;On 4 déc, 18:40, Markus Elfring &lt;Markus.Elfr ... @web.de&gt; wrote:
+&gt;&gt; Laurent Deniau schrieb:
+
+&gt;&gt; &gt; I would like to know if there is a &quot;good way&quot; to mix system and user
+&gt;&gt; &gt; threads. Assuming that I use POSIX threads as system threads and GNU
+&gt;&gt; &gt; Portable Threads as user threads on top of the system threads to allow
+&gt;&gt; &gt; M:N:P mapping of tasks.
+
+&gt;&gt; It seems that the meanings for the key words are mixed up in your
+&gt;wording. http://en.wikipedia.org/wiki/Thread_%28computer_science%29#Implementa ...
+
+&gt;Ok, remove &quot;:P&quot; in &quot;M:N:P&quot; to fall in the M:N model (I was mapping M
+&gt;tasks on N threads on P CPUs) and rename &quot;system-threads&quot; by &quot;kernel-
+&gt;threads&quot;. But I think the wording was not so far.
+">
+
+You're still a little confused, I think.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; &gt; Does it means that each time I'd like to lock a &quot;synchronized&quot; object
+&gt;&gt; &gt; I need to do something like:
+&gt;&gt; &gt; pthread_mutex_lock(&amp;obj_sys_mutex);
+&gt;&gt; &gt; pth_mutex_acquire(&amp;obj_usr_mutex);
+
+&gt;&gt; You are using different APIs.
+
+&gt; http://opengroup.org/onlinepubs/009695399/functions/pthread_mutex_loc ...
+&gt; http://www.gnu.org/software/pth/pth-manual.html#synchronization
+
+&gt;Yes because they do different things. Pth was involved to handle the M
+&gt;tasks (user-threads), Pthread was involved to handle N threads (kernel-
+&gt;threads). And my question was what will happen if the users of my
+&gt;library use both (e.g. need for a two-level scheduler)? Should I
+&gt;protect my global/shared variables as above?
+">
+
+I won't say it can't be done, but what you're after is going to be a
+lot of work.  The user-level thread scheduler and the kernel-level
+thread scheduler must be aware of each other, and I'm pretty certain
+that GNU Pth isn't designed to be part of an M:N thread scheduling
+system.
+
+It takes extensive support all over libc to cope with M:N scheduling;
+see Hans Boehm's paper &quot;Threads Cannot be Implented as a Library&quot;
+( http://portal.acm.org/citation.cfm?doid=1065010.1065042 ).
+
+--
+Steve Watt KD6GGD  PP-ASEL-IA          ICBM: 121W 56' 57.5&quot; / 37N 20' 15.3&quot;
+Internet: steve @ Watt.COM                      Whois: SW32-ARIN
+Free time?  There's no such thing.  It just comes in varying prices...
+</POST>
+<POST>
+<POSTER> Laurent Deniau &lt;Laurent.Den...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-05T06:13:00 </POSTDATE>
+On 4 déc, 21:15, Markus Elfring &lt;Markus.Elfr ... @web.de&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Pth was involved to handle the Mtasks (user-threads),
+&gt; &gt; Pthread was involved to handle N threads (kernel-threads).
+
+&gt; Did you notice the following description?
+&gt; &quot;...
+&gt; Additionally Pth provides an optional emulation API for POSIX.1c threads
+&gt; ...&quot; http://www.gnu.org/software/pth/
+">
+
+Yes. As described (if I understood well), it is an _emulation_ to
+facilitate the conversion of application using Pthread to Pth. It
+doen't mean that Pth has a layer to handle kernel-threads. AFAIK, Pth
+do not deal with kernel-threads at all.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; And my question was what will happen if the users of my
+&gt; &gt; library use both (e.g. need for a two-level scheduler)?
+
+&gt; In which software would you like to apply both?
+
+&gt; &gt; Should I protect my global/shared variables as above?
+
+&gt; Each shared data structure must be protected against simultaneous access from
+&gt; multiple threads. It will be interesting which library will provide the thread
+&gt; and lock abstraction for synchronisation of a specific data access.
+">
+
+In my question, I was considering explicitly Pthread _and_ Pth (could
+be any other mixin providing kernel and user threads). Since thread
+and lock are not at the same level, I was wondering how to do it
+properly.
+
+a+, ld.
+</POST>
+<POST>
+<POSTER> Laurent Deniau &lt;Laurent.Den...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-05T06:40:00 </POSTDATE>
+On 5 déc, 04:58, Steve Watt &lt;steve.removet ... @Watt.COM&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In article &lt;b2c8dd3a-789f-4a3d-b488-e7ab3d2b2 ... @e4g2000hsg.googlegroups.com&gt;,
+&gt; Laurent Deniau  &lt;Laurent.Den ... @gmail.com&gt; wrote:
+
+&gt; &gt;On 4 déc, 18:40, Markus Elfring &lt;Markus.Elfr ... @web.de&gt; wrote:
+&gt; &gt;&gt; Laurent Deniau schrieb:
+
+&gt; &gt;&gt; &gt; I would like to know if there is a &quot;good way&quot; to mix system and user
+&gt; &gt;&gt; &gt; threads. Assuming that I use POSIX threads as system threads and GNU
+&gt; &gt;&gt; &gt; Portable Threads as user threads on top of the system threads to allow
+&gt; &gt;&gt; &gt; M:N:P mapping of tasks.
+
+&gt; &gt;&gt; It seems that the meanings for the key words are mixed up in your
+&gt; &gt;wording. http://en.wikipedia.org/wiki/Thread_%28computer_science%29#Implementa ...
+
+&gt; &gt;Ok, remove &quot;:P&quot; in &quot;M:N:P&quot; to fall in the M:N model (I was mapping M
+&gt; &gt;tasks on N threads on P CPUs) and rename &quot;system-threads&quot; by &quot;kernel-
+&gt; &gt;threads&quot;. But I think the wording was not so far.
+
+&gt; You're still a little confused, I think.
+">
+
+Why? I know that it's not common to mix system and user threads, but
+still this may happen and be useful.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;&gt; &gt; Does it means that each time I'd like to lock a &quot;synchronized&quot; object
+&gt; &gt;&gt; &gt; I need to do something like:
+&gt; &gt;&gt; &gt; pthread_mutex_lock(&amp;obj_sys_mutex);
+&gt; &gt;&gt; &gt; pth_mutex_acquire(&amp;obj_usr_mutex);
+
+&gt; &gt;&gt; You are using different APIs.
+
+&gt; &gt; http://opengroup.org/onlinepubs/009695399/functions/pthread_mutex_loc ...
+&gt; &gt; http://www.gnu.org/software/pth/pth-manual.html#synchronization
+
+&gt; &gt;Yes because they do different things. Pth was involved to handle the M
+&gt; &gt;tasks (user-threads), Pthread was involved to handle N threads (kernel-
+&gt; &gt;threads). And my question was what will happen if the users of my
+&gt; &gt;library use both (e.g. need for a two-level scheduler)? Should I
+&gt; &gt;protect my global/shared variables as above?
+
+&gt; I won't say it can't be done, but what you're after is going to be a
+&gt; lot of work.
+">
+
+Right. That is why I am looking for alternatives with unified API ;-)
+Some high level languages provide API which hides/handles how user
+threads are pooled over system threads.
+
+<QUOTE PREVIOUSPOST="
+&gt; The user-level thread scheduler and the kernel-level
+&gt; thread scheduler must be aware of each other,
+">
+
+I guess that it depends on how user threads are managed:
+
+If it is a cooperative scheme, I expect that user threads can be
+managed on top of system threads has if they where running in a single
+system thread. But users threads in different system threads will not
+be aware of each other.
+
+If it is a preemptive scheme, I expect that user threads requires a
+scheduler (probably running in a different system thread) and
+therefore need to be aware of the system thread layer.
+
+<QUOTE PREVIOUSPOST="
+&gt; and I'm pretty certain
+&gt; that GNU Pth isn't designed to be part of an M:N thread scheduling
+&gt; system.
+">
+
+This is what I understood.
+
+<QUOTE PREVIOUSPOST="
+&gt; It takes extensive support all over libc to cope with M:N scheduling;
+&gt; see Hans Boehm's paper &quot;Threads Cannot be Implented as a Library&quot;
+&gt; ( http://portal.acm.org/citation.cfm?doid=1065010.1065042 ).
+">
+
+Thanks for the link, I'll read asap.
+
+a+, ld.
+</POST>
+<POST>
+<POSTER> Markus Elfring &lt;Markus.Elfr...@web.de&gt; </POSTER>
+<POSTDATE> 2007-12-05T09:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Since thread and lock are not at the same level, I was wondering
+&gt; how to do it properly.
+">
+
+Do you ever need that a shared data structure will be simultaneously accessed by
+threads that were created by different software libraries?
+
+Regards,
+Markus
+</POST>
+<POST>
+<POSTER> Laurent Deniau &lt;Laurent.Den...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-05T10:19:00 </POSTDATE>
+On 5 déc, 15:40, Markus Elfring &lt;Markus.Elfr ... @web.de&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Since thread and lock are not at the same level, I was wondering
+&gt; &gt; how to do it properly.
+
+&gt; Do you ever need that a shared data structure will be simultaneously accessed by
+&gt; threads that were created by different software libraries?
+">
+
+I can't know in advance since I am writing a general purpose library.
+For the moment, I am only Pthread compliant. But some users may find
+Pthread to heavy or too complex (deadlock, race condition, pool of
+threads, etc...) and would prefer some fast lightweight threads to
+implement events or concurrent tasks for examples. Instead of dealing
+with all the complexity of Pthread, they may just rely on Pth (the
+most portable?). So I was evaluating the difficulty of being compliant
+with both levels of threads at the same time and independantly. I
+wasn't saying that I want to implement a two-level scheduler...
+
+a+, ld.
+</POST>
+<POST>
+<POSTER> Markus Elfring &lt;Markus.Elfr...@web.de&gt; </POSTER>
+<POSTDATE> 2007-12-05T11:23:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Instead of dealing with all the complexity of Pthread,
+&gt; they may just rely on Pth (the most portable?).
+">
+
+I do not understand your view that the other library might be easier to use.
+Which features are you missing for convenience?
+
+It is usual that it takes some learning time to get used to multi-threaded
+software development.
+
+<QUOTE PREVIOUSPOST="
+&gt; So I was evaluating the difficulty of being compliant with both levels
+&gt; of threads at the same time and independantly.
+">
+
+Where does it really matter in your own API design?
+Do you need any additional thread objects that will be concurrently running in
+the context of a preemptive thread from the operating system?
+
+Regards,
+Markus
+</POST>
+<POST>
+<POSTER> Laurent Deniau &lt;Laurent.Den...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-05T12:39:00 </POSTDATE>
+On 5 déc, 17:23, Markus Elfring &lt;Markus.Elfr ... @web.de&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Instead of dealing with all the complexity of Pthread,
+&gt; &gt; they may just rely on Pth (the most portable?).
+
+&gt; I do not understand your view that the other library might be easier to use.
+&gt; Which features are you missing for convenience?
+">
+
+A unified API over system threads and user threads since I don't know
+which one (or none, or both) the final user will use for its project.
+
+<QUOTE PREVIOUSPOST="
+&gt; It is usual that it takes some learning time to get used to multi-threaded
+&gt; software development.
+">
+
+Are you talking for me or for the final user of my lib?
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; So I was evaluating the difficulty of being compliant with both levels
+&gt; &gt; of threads at the same time and independantly.
+
+&gt; Where does it really matter in your own API design?
+">
+
+Declaring, locking and unlocking mutexes. Actually, if I want to
+support both Pthread and Pth, I need to declare 2 mutexes (one of each
+type) and to lock/unlock both each time if I want to synchronize
+something. See my original post example. While it is not difficult, it
+can be problematic in some cases like in object-level mutexes. It
+increases the code complexity and the space and the time required to
+manage synchronized objects.
+
+<QUOTE PREVIOUSPOST="
+&gt; Do you need any additional thread objects that will be concurrently running in
+&gt; the context of a preemptive thread from the operating system?
+">
+
+I need _nothing_, I just want to be _compliant_ (i.e. thread safe). I
+only ask the user to select (at build time) the thread level (the
+libs) amongst the proposed ones, that is none, user thread (Pth),
+system thread (Pthread) or both. Then I will know how to protect my
+synchronized objects. Still, I do not understand why POSIX does not
+include a unified API since it provides all the elements to build a
+user-level thread (siglongjmp, sigaltstack, etc...) and this is what
+Pth does BTW...
+
+a+, ld.
+</POST>
+<POST>
+<POSTER> Zeljko Vrba &lt;zvrba.nos...@ieee-sb1.cc.fer.hr&gt; </POSTER>
+<POSTDATE> 2007-12-05T12:46:00 </POSTDATE>
+On 2007-12-05, Laurent Deniau &lt;Laurent.Den ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; user-level thread (siglongjmp, sigaltstack, etc...) and this is what
+&gt; Pth does BTW...
+">
+
+POSIX provides makecontext(), setcontext(), et.al. functions to make your
+own user-level threading.  Those mix well with system threads, though you
+might have &quot;slight&quot; problems in debugging.  If you intend to use those
+functions in conjunction with system threads, you need to provide your
+own synchronization primitives, as well as user-level scheduler.
+</POST>
+<POST>
+<POSTER> Steve Watt &lt;steve.removet...@Watt.COM&gt; </POSTER>
+<POSTDATE> 2007-12-05T19:59:00 </POSTDATE>
+In article &lt;2147fc9d-1ca8-43a4-b28e-87fae0bde ... @o42g2000hsc.googlegroups.com&gt;,
+Laurent Deniau  &lt;Laurent.Den ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;On 5 déc, 04:58, Steve Watt &lt;steve.removet ... @Watt.COM&gt; wrote:
+&gt;&gt; In article &lt;b2c8dd3a-789f-4a3d-b488-e7ab3d2b2 ... @e4g2000hsg.googlegroups.com&gt;,
+&gt;&gt; Laurent Deniau  &lt;Laurent.Den ... @gmail.com&gt; wrote:
+
+&gt;&gt; &gt;On 4 déc, 18:40, Markus Elfring &lt;Markus.Elfr ... @web.de&gt; wrote:
+&gt;&gt; &gt;&gt; Laurent Deniau schrieb:
+
+&gt;&gt; &gt;&gt; &gt; I would like to know if there is a &quot;good way&quot; to mix system and user
+&gt;&gt; &gt;&gt; &gt; threads. Assuming that I use POSIX threads as system threads and GNU
+&gt;&gt; &gt;&gt; &gt; Portable Threads as user threads on top of the system threads to allow
+&gt;&gt; &gt;&gt; &gt; M:N:P mapping of tasks.
+
+&gt;&gt; &gt;&gt; It seems that the meanings for the key words are mixed up in your
+&gt;&gt; &gt;wording. http://en.wikipedia.org/wiki/Thread_%28computer_science%29#Implementa ...
+
+&gt;&gt; &gt;Ok, remove &quot;:P&quot; in &quot;M:N:P&quot; to fall in the M:N model (I was mapping M
+&gt;&gt; &gt;tasks on N threads on P CPUs) and rename &quot;system-threads&quot; by &quot;kernel-
+&gt;&gt; &gt;threads&quot;. But I think the wording was not so far.
+
+&gt;&gt; You're still a little confused, I think.
+
+&gt;Why? I know that it's not common to mix system and user threads, but
+&gt;still this may happen and be useful.
+">
+
+It's something that is inherent to a particular system's threads
+implementation, not something that can be quickly switched in by
+linking differently.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; &gt;&gt; &gt; Does it means that each time I'd like to lock a &quot;synchronized&quot; object
+&gt;&gt; &gt;&gt; &gt; I need to do something like:
+&gt;&gt; &gt;&gt; &gt; pthread_mutex_lock(&amp;obj_sys_mutex);
+&gt;&gt; &gt;&gt; &gt; pth_mutex_acquire(&amp;obj_usr_mutex);
+
+&gt;&gt; &gt;&gt; You are using different APIs.
+
+&gt;&gt; &gt; http://opengroup.org/onlinepubs/009695399/functions/pthread_mutex_loc ...
+&gt;&gt; &gt; http://www.gnu.org/software/pth/pth-manual.html#synchronization
+
+&gt;&gt; &gt;Yes because they do different things. Pth was involved to handle the M
+&gt;&gt; &gt;tasks (user-threads), Pthread was involved to handle N threads (kernel-
+&gt;&gt; &gt;threads). And my question was what will happen if the users of my
+&gt;&gt; &gt;library use both (e.g. need for a two-level scheduler)? Should I
+&gt;&gt; &gt;protect my global/shared variables as above?
+
+&gt;&gt; I won't say it can't be done, but what you're after is going to be a
+&gt;&gt; lot of work.
+
+&gt;Right. That is why I am looking for alternatives with unified API ;-)
+&gt;Some high level languages provide API which hides/handles how user
+&gt;threads are pooled over system threads.
+">
+
+The systems that have M:N level schedulers tend to provide a unified
+API, often pthreads.  There's nothing in the pthreads standard that
+requires 1:1 system-level threads, and Solaris had an M:N thread
+scheduler for a long time.  They never really got it perfect; it's
+very complicated.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; The user-level thread scheduler and the kernel-level
+&gt;&gt; thread scheduler must be aware of each other,
+
+&gt;I guess that it depends on how user threads are managed:
+
+&gt;If it is a cooperative scheme, I expect that user threads can be
+&gt;managed on top of system threads has if they where running in a single
+&gt;system thread. But users threads in different system threads will not
+&gt;be aware of each other.
+
+&gt;If it is a preemptive scheme, I expect that user threads requires a
+&gt;scheduler (probably running in a different system thread) and
+&gt;therefore need to be aware of the system thread layer.
+">
+
+Think about, for example, mutex wakeups.  When the program calls
+mutex_unlock() on a mutex that has some other thread waiting, both
+schedulers need to know that it's time to get a particular context
+running.  If the system scheduler isn't aware of the user-level
+scheduler, it's very likely that incorrect decisions will be made.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; and I'm pretty certain
+&gt;&gt; that GNU Pth isn't designed to be part of an M:N thread scheduling
+&gt;&gt; system.
+
+&gt;This is what I understood.
+">
+
+Now that I've read the other part of this thread, if all you want is
+to write a library that can be thread-safe, use pthreads.  It'll get
+you the most bang for your time investment.
+--
+Steve Watt KD6GGD  PP-ASEL-IA          ICBM: 121W 56' 57.5&quot; / 37N 20' 15.3&quot;
+Internet: steve @ Watt.COM                      Whois: SW32-ARIN
+Free time?  There's no such thing.  It just comes in varying prices...
+</POST>
+<POST>
+<POSTER> Laurent Deniau &lt;Laurent.Den...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-06T03:26:00 </POSTDATE>
+On 5 déc, 18:46, Zeljko Vrba &lt;zvrba.nos ... @ieee-sb1.cc.fer.hr&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2007-12-05, Laurent Deniau &lt;Laurent.Den ... @gmail.com&gt; wrote:
+
+&gt; &gt; user-level thread (siglongjmp, sigaltstack, etc...) and this is what
+&gt; &gt; Pth does BTW...
+
+&gt; POSIX provides makecontext(), setcontext(), et.al. functions to make your
+&gt; own user-level threading.  Those mix well with system threads, though you
+&gt; might have &quot;slight&quot; problems in debugging.  If you intend to use those
+&gt; functions in conjunction with system threads, you need to provide your
+&gt; own synchronization primitives, as well as user-level scheduler.
+">
+
+And we fall back on Pth which provides all this (on top of mak/set-
+context when they are available) and to my original question ;-) Pth
+seems to be the most portable and pthread compliant, and since I
+already use the latter, I just wanted to avoid reinventing the wheel.
+
+a+, ld.
+</POST>
+<POST>
+<POSTER> Laurent Deniau &lt;Laurent.Den...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-06T03:45:00 </POSTDATE>
+On 6 déc, 01:59, Steve Watt &lt;steve.removet ... @Watt.COM&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In article &lt;2147fc9d-1ca8-43a4-b28e-87fae0bde ... @o42g2000hsc.googlegroups.com&gt;,
+&gt; Laurent Deniau  &lt;Laurent.Den ... @gmail.com&gt; wrote:
+&gt; &gt;I know that it's not common to mix system and user threads, but
+&gt; &gt;still this may happen and be useful.
+
+&gt; It's something that is inherent to a particular system's threads
+&gt; implementation, not something that can be quickly switched in by
+&gt; linking differently.
+">
+
+I agree.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;Right. That is why I am looking for alternatives with unified API ;-)
+&gt; &gt;Some high level languages provide API which hides/handles how user
+&gt; &gt;threads are pooled over system threads.
+
+&gt; The systems that have M:N level schedulers tend to provide a unified
+&gt; API, often pthreads.  There's nothing in the pthreads standard that
+&gt; requires 1:1 system-level threads, and Solaris had an M:N thread
+&gt; scheduler for a long time.  They never really got it perfect; it's
+&gt; very complicated.
+">
+
+This is also what I have read.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;&gt; The user-level thread scheduler and the kernel-level
+&gt; &gt;&gt; thread scheduler must be aware of each other,
+
+&gt; &gt;I guess that it depends on how user threads are managed:
+
+&gt; &gt;If it is a cooperative scheme, I expect that user threads can be
+&gt; &gt;managed on top of system threads has if they where running in a single
+&gt; &gt;system thread. But users threads in different system threads will not
+&gt; &gt;be aware of each other.
+
+&gt; &gt;If it is a preemptive scheme, I expect that user threads requires a
+&gt; &gt;scheduler (probably running in a different system thread) and
+&gt; &gt;therefore need to be aware of the system thread layer.
+
+&gt; Think about, for example, mutex wakeups.
+">
+
+Which mutex? By who?
+
+<QUOTE PREVIOUSPOST="
+&gt; When the program calls
+&gt; mutex_unlock() on a mutex that has some other thread waiting, both
+&gt; schedulers need to know that it's time to get a particular context
+&gt; running.
+">
+
+Yes, cooperatively. The user thread scheduler first inspects the mutex
+to see if its a user level mutex and then handle the wakeup.
+Otherwise, it forward the task to the system level scheduler by wakeup
+the system-level mutex. All this could be hidden/unified in a single
+type of mutex. In my example, I cannot identify the level of the
+wakeup since the mutex must take into account both situation.
+
+<QUOTE PREVIOUSPOST="
+&gt; If the system scheduler isn't aware of the user-level
+&gt; scheduler, it's very likely that incorrect decisions will be made.
+">
+
+I am thinking of a situation where each system level thread hold its
+own user level threads, including a scheduler. I am not thinking of a
+general situation where user level threads would be dispatched on
+system-level threads (or would migrate).
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;&gt; and I'm pretty certain
+&gt; &gt;&gt; that GNU Pth isn't designed to be part of an M:N thread scheduling
+&gt; &gt;&gt; system.
+
+&gt; &gt;This is what I understood.
+
+&gt; Now that I've read the other part of this thread, if all you want is
+&gt; to write a library that can be thread-safe, use pthreads.  It'll get
+&gt; you the most bang for your time investment.
+">
+
+Ok, that is already done. So your answer would be &quot;wiser to stay where
+you are&quot; ;-). The problem is then I will probably need to provide some
+thread pooling mecanism to allow fast dispatch of small concurrent
+tasks (e.g. event-driven model). This is the model adopted by many
+libraries (e.g. POCO++). An alternative would be to simplify the
+problem and stick to some coroutine mechanism using mak/set-context
+(no scheduler, no synchronization primitive, hand-made cooperation)
+which is enough for most practical cases.
+
+a+, ld.
+</POST>
+</TEXT>
+</BODY>
+</DOC>

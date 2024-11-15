@@ -1,0 +1,167 @@
+<DOC>
+<DOCID> eng-NG-31-147081-8787401 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-24T17:07:00 </DATETIME>
+<BODY>
+<HEADLINE>
+InputFilter::parse_url() replacement
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Geoffrey Sneddon &lt;foolist...@googlemail.com&gt; </POSTER>
+<POSTDATE> 2007-08-24T17:07:00 </POSTDATE>
+As many of you know, due to the numerous discussions regarding IRIs
+and parsing them, that there has been an intention of moving over to
+a class written solely to deal with IRIs. I did, as part of the work
+I was contracted to do earlier this month, write such a class.
+
+It does, however, have several limitations:
+- It maps all IRIs to URIs by using percent encoding.
+- Some schemes disallow percent encoding within the authority.
+- Some schemes it'd be better to use IDNA (RFC3940) for the authority.
+- Some schemes don't allow either of the above two, so the IRI
+should be marked as invalid.
+- No scheme specific normalisation is done (e.g., counting &lt;http://
+geoffers.uni.cc&gt; as identical to &lt; http://geoffers.uni.cc:/ &gt;).
+
+It is available at &lt; http://geoffers.no-ip.com/hg/foleeo?
+f=8e309ed86578;file=iri.php;style=gitweb&gt;.
+
+I think the inline documentation should be enough, with one
+exception: you should check the IRI::is_valid() before attempting to
+do anything with it.
+
+- Geoffrey Sneddon
+</POST>
+<POST>
+<POSTER> &quot;Owen Winkler&quot; &lt;epit...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-24T20:42:00 </POSTDATE>
+On 8/24/07, Geoffrey Sneddon &lt;foolist ... @googlemail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; As many of you know, due to the numerous discussions regarding IRIs
+&gt; and parsing them, that there has been an intention of moving over to
+&gt; a class written solely to deal with IRIs. I did, as part of the work
+&gt; I was contracted to do earlier this month, write such a class.
+">
+
+This is interesting.  But I have a few questions:
+
+1. What/where is the dependency IPv6.php?
+2. Being a brand-new class, this clearly isn't a drop-in replacement
+for anything that we have.  I assume that it's meant to replace the
+InputFilter::parse_url() function, but that it could be employed for
+other purposes. Can you give a code example of how it might be used?
+
+Owen
+</POST>
+<POST>
+<POSTER> Matthias Bauer &lt;matthias.ba...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-24T23:10:00 </POSTDATE>
+On 24.08.2007 23:07 Geoffrey Sneddon wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; As many of you know, due to the numerous discussions regarding IRIs
+&gt; and parsing them, that there has been an intention of moving over to
+&gt; a class written solely to deal with IRIs. I did, as part of the work
+&gt; I was contracted to do earlier this month, write such a class.
+">
+
+Are you allowed to release that? To relicense it under the AL2?
+
+<QUOTE PREVIOUSPOST="
+&gt; It does, however, have several limitations:
+&gt;   - It maps all IRIs to URIs by using percent encoding.
+&gt;   - Some schemes disallow percent encoding within the authority.
+&gt;   - Some schemes it'd be better to use IDNA (RFC3940) for the authority.
+&gt;   - Some schemes don't allow either of the above two, so the IRI
+&gt; should be marked as invalid.
+&gt;   - No scheme specific normalisation is done (e.g., counting &lt;http://
+&gt; geoffers.uni.cc&gt; as identical to &lt; http://geoffers.uni.cc:/ &gt;).
+">
+
+This is still worlds ahead of what we have now.
+
+If there are no license issues, I'd gladly merge it.
+
+-Matt
+</POST>
+<POST>
+<POSTER> Geoffrey Sneddon &lt;foolist...@googlemail.com&gt; </POSTER>
+<POSTDATE> 2007-08-25T05:22:00 </POSTDATE>
+On 25 Aug 2007, at 01:42, Owen Winkler wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 8/24/07, Geoffrey Sneddon &lt;foolist ... @googlemail.com&gt; wrote:
+
+&gt;&gt; As many of you know, due to the numerous discussions regarding IRIs
+&gt;&gt; and parsing them, that there has been an intention of moving over to
+&gt;&gt; a class written solely to deal with IRIs. I did, as part of the work
+&gt;&gt; I was contracted to do earlier this month, write such a class.
+
+&gt; This is interesting.  But I have a few questions:
+
+&gt; 1. What/where is the dependency IPv6.php?
+">
+
+It's a cut down copy of PEAR's Net_IPv6. It's in the repo as well, at
+&lt; http://geoffers.no-ip.com/hg/foleeo?f=a30ccc1b5a71;file=Net_IPv6/
+IPv6.php;style=gitweb&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; 2. Being a brand-new class, this clearly isn't a drop-in replacement
+&gt; for anything that we have.  I assume that it's meant to replace the
+&gt; InputFilter::parse_url() function, but that it could be employed for
+&gt; other purposes. Can you give a code example of how it might be used?
+">
+
+$iri = new IRI(' http://example.com/');
+
+if ($iri-&gt;is_valid())
+{
+echo $iri-&gt;get_iri();
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+$example_page = IRI::absolutize($iri, '/test.html');
+
+if ($iri-&gt;is_valid())
+{
+echo $iri-&gt;get_path();
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+The inline documentation should mostly be enough. If you find
+anything unclear, I'll just update it. One thing that should be made
+clearer is that an IRI is_valid if it could be made valid. The input
+isn't necessarily valid. The output is.
+
+- Geoffrey Sneddon
+</POST>
+<POST>
+<POSTER> Geoffrey Sneddon &lt;foolist...@googlemail.com&gt; </POSTER>
+<POSTDATE> 2007-08-25T05:23:00 </POSTDATE>
+On 25 Aug 2007, at 04:10, Matthias Bauer wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 24.08.2007 23:07 Geoffrey Sneddon wrote:
+
+&gt;&gt; As many of you know, due to the numerous discussions regarding IRIs
+&gt;&gt; and parsing them, that there has been an intention of moving over to
+&gt;&gt; a class written solely to deal with IRIs. I did, as part of the work
+&gt;&gt; I was contracted to do earlier this month, write such a class.
+
+&gt; Are you allowed to release that? To relicense it under the AL2?
+">
+
+As per the repo's LICENSE file, it's BSD licensed.
+
+- Geoffrey Sneddon
+</POST>
+</TEXT>
+</BODY>
+</DOC>

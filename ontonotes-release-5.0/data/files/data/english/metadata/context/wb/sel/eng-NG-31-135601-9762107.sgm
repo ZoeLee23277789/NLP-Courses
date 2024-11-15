@@ -1,0 +1,754 @@
+<DOC>
+<DOCID> eng-NG-31-135601-9762107 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-30T00:13:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Expressions of interest in a Remote COBOL server, please?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Pete Dashwood&quot; &lt;dashw...@removethis.enternet.co.nz&gt; </POSTER>
+<POSTDATE> 2007-09-30T00:13:00 </POSTDATE>
+A little while back, I  asked here if anybody had any scripts for running
+batch COBOL on client/server. There were some very good responses, but most
+of them were using DOS batch files and I really want to move away from that.
+Richard pointed out that using MAKE would be  a better solution, and I
+agree.
+
+As time has moved on, this problem has percolated up my list of priorities
+and it is now fairly high. I have therefore been applying myself to getting
+a good solution.
+
+As I investigated it, it occurred to me that I have one machine (PetesP4) on
+my WLAN that has Fujitsu COBOL installed on it. Because of their stupid
+Licensing (one of the nails in their coffin as far as I am concerned) I
+can't simply buy the software and install it on a couple of machines. It has
+to go through a whole rigmarole of notifying their server that the license
+is being transferred to another machine, transferring it out to a floppy
+(!... do they even exist any more? I tried it with a memory stick and I
+think it worked; so long ago I can't remember...), killing it on the old
+machine and transferring it in from the floppy to the new machine. Yes, I
+can understand sane people getting a bit annoyed about paying several
+thousand dollars  to be put through hoops. As a result of all this nonsense,
+I resolved NOT to install COBOL on the Vaio machine (Bigblack) (It is a C#
+VS 2005 platform with occasional VB and Java). All of my current development
+is on Bigblack, but part of that development is generating COBOL code,
+which, of course, must be compiled (there can be a number of programs
+generated, so it needs to do a batch compile).
+
+So, the problem comes down to: &quot;How can I get my source programs on Bigblack
+across to the COBOL machine, PetesP4, batch compile them, and get the
+executables back to Bigblack so they can be run?&quot;
+
+There are a number of scripting options available under Windows (Scripting
+serves a similar purpose to JCL in mainframe environments) and my favourite
+is Windows Script Hosting. The customer is running in a Windows environment
+so the necessary support for WSH scripting is already installed.
+
+I transferred the COBOL sources from Bigblack to PetesP4 and knocked up a
+quick batch compile script  (WSH) and ran it locally on PetesP4. It worked
+fine and used NMAKE to build and run the COBOL programs. The good thing
+about this is that if you rerun it, it does no harm. Because it is using
+NMAKE, it detects the build state of each program and only compiles them if
+the COBOL source or options have changed. Good stuff.  There is no
+requirement to set up a project for each (or any) of the COBOL Programs. All
+you need is the COBOL source and a couple of ancilliary files which I
+generate from C# at the time I generate the COBOL program, (one of which
+contains the compiler options and the other has path and build information
+in it. They are standard templates and I just run a C# RegEx to replace the
+program name at various places in them. )
+
+The next step is to be able to remotely invoke this Script from BigBlack,
+after having generated the sources directly to PetesP4. (easy... map to a
+shared drive  on PetesP4 before generating)... it turns out that WSH 5.6
+DOES include remote scripting, so I got stuck into it.
+
+It was a nightmare :-). Instantiating remote objects that actually monitor
+what is really going on and provide status etc. And it uses COM+ as the
+transport layer. (Fortunately, I've had a number of years experience writing
+COM components; without it, it would just be a jungle for newbies...) After
+two days fiddling with COM permissions, impersonations, authentications, and
+still getting &quot;Access denied&quot; every time I tried to run it, I was ready to
+look for &quot;another way&quot;.
+
+Then a light came on and I thought &quot;Why not write a server that can run on
+PetesP4 and accept COBOL compile requests from any machine on the network?&quot;
+It would be like having COBOL on every machine... It could run over sockets
+without needing COM or scripting, and could use TCP/IP as a transport. Any
+machine that wanted to compile COBOL would simply pass the details to a
+small client program that would connect to the remote COBOL server, do the
+biz, and get the executable returned to it. The COBOL server could be
+asynchronous and able to service multiple requests.
+
+In the meantime, I solved the problems with the scripting solution (it
+involved a couple of Registry hacks; how often have we heard that before
+with Windows? :-)) and my WSH solution is now working perfectly.
+
+I estimate the work on writing the remote COBOL server to be a couple of
+days.
+
+Although I'm quite keen to do it (it is an interesting C# exercise), I can't
+really justify doing it, as I  already have a working scripting solution
+(which I'll gladly share publicly here with anyone interested, as I promised
+at the time).
+
+However, if other people could use such a COBOL Server solution, I'd have
+another look at it.
+
+Comments?
+
+Pete.
+--
+&quot;I used to write COBOL...now I can do anything.&quot;
+</POST>
+<POST>
+<POSTER> Richard &lt;rip...@Azonic.co.nz&gt; </POSTER>
+<POSTDATE> 2007-09-30T20:00:00 </POSTDATE>
+On Sep 30, 4:13 pm, &quot;Pete Dashwood&quot;
+
+<QUOTE PREVIOUSPOST="
+&lt;dashw ... @removethis.enternet.co.nz&gt; wrote:
+&gt; A little while back, I  asked here if anybody had any scripts for running
+&gt; batch COBOL on client/server. There were some very good responses, but most
+&gt; of them were using DOS batch files and I really want to move away from that.
+&gt; Richard pointed out that using MAKE would be  a better solution, and I
+&gt; agree.
+
+&gt; As time has moved on, this problem has percolated up my list of priorities
+&gt; and it is now fairly high. I have therefore been applying myself to getting
+&gt; a good solution.
+
+&gt; As I investigated it, it occurred to me that I have one machine (PetesP4) on
+&gt; my WLAN that has Fujitsu COBOL installed on it. Because of their stupid
+&gt; Licensing (one of the nails in their coffin as far as I am concerned) I
+&gt; can't simply buy the software and install it on a couple of machines. It has
+&gt; to go through a whole rigmarole of notifying their server that the license
+&gt; is being transferred to another machine, transferring it out to a floppy
+&gt; (!... do they even exist any more? I tried it with a memory stick and I
+&gt; think it worked; so long ago I can't remember...), killing it on the old
+&gt; machine and transferring it in from the floppy to the new machine. Yes, I
+&gt; can understand sane people getting a bit annoyed about paying several
+&gt; thousand dollars  to be put through hoops. As a result of all this nonsense,
+&gt; I resolved NOT to install COBOL on the Vaio machine (Bigblack) (It is a C#
+&gt; VS 2005 platform with occasional VB and Java). All of my current development
+&gt; is on Bigblack, but part of that development is generating COBOL code,
+&gt; which, of course, must be compiled (there can be a number of programs
+&gt; generated, so it needs to do a batch compile).
+
+&gt; So, the problem comes down to: &quot;How can I get my source programs on Bigblack
+&gt; across to the COBOL machine, PetesP4, batch compile them, and get the
+&gt; executables back to Bigblack so they can be run?&quot;
+
+&gt; There are a number of scripting options available under Windows (Scripting
+&gt; serves a similar purpose to JCL in mainframe environments) and my favourite
+&gt; is Windows Script Hosting. The customer is running in a Windows environment
+&gt; so the necessary support for WSH scripting is already installed.
+
+&gt; I transferred the COBOL sources from Bigblack to PetesP4 and knocked up a
+&gt; quick batch compile script  (WSH) and ran it locally on PetesP4. It worked
+&gt; fine and used NMAKE to build and run the COBOL programs. The good thing
+&gt; about this is that if you rerun it, it does no harm. Because it is using
+&gt; NMAKE, it detects the build state of each program and only compiles them if
+&gt; the COBOL source or options have changed. Good stuff.  There is no
+&gt; requirement to set up a project for each (or any) of the COBOL Programs. All
+&gt; you need is the COBOL source and a couple of ancilliary files which I
+&gt; generate from C# at the time I generate the COBOL program, (one of which
+&gt; contains the compiler options and the other has path and build information
+&gt; in it. They are standard templates and I just run a C# RegEx to replace the
+&gt; program name at various places in them. )
+
+&gt; The next step is to be able to remotely invoke this Script from BigBlack,
+&gt; after having generated the sources directly to PetesP4. (easy... map to a
+&gt; shared drive  on PetesP4 before generating)... it turns out that WSH 5.6
+&gt; DOES include remote scripting, so I got stuck into it.
+
+&gt; It was a nightmare :-). Instantiating remote objects that actually monitor
+&gt; what is really going on and provide status etc. And it uses COM+ as the
+&gt; transport layer. (Fortunately, I've had a number of years experience writing
+&gt; COM components; without it, it would just be a jungle for newbies...) After
+&gt; two days fiddling with COM permissions, impersonations, authentications, and
+&gt; still getting &quot;Access denied&quot; every time I tried to run it, I was ready to
+&gt; look for &quot;another way&quot;.
+
+&gt; Then a light came on and I thought &quot;Why not write a server that can run on
+&gt; PetesP4 and accept COBOL compile requests from any machine on the network?&quot;
+&gt; It would be like having COBOL on every machine... It could run over sockets
+&gt; without needing COM or scripting, and could use TCP/IP as a transport. Any
+&gt; machine that wanted to compile COBOL would simply pass the details to a
+&gt; small client program that would connect to the remote COBOL server, do the
+&gt; biz, and get the executable returned to it. The COBOL server could be
+&gt; asynchronous and able to service multiple requests.
+
+&gt; In the meantime, I solved the problems with the scripting solution (it
+&gt; involved a couple of Registry hacks; how often have we heard that before
+&gt; with Windows? :-)) and my WSH solution is now working perfectly.
+
+&gt; I estimate the work on writing the remote COBOL server to be a couple of
+&gt; days.
+
+&gt; Although I'm quite keen to do it (it is an interesting C# exercise), I can't
+&gt; really justify doing it, as I  already have a working scripting solution
+&gt; (which I'll gladly share publicly here with anyone interested, as I promised
+&gt; at the time).
+
+&gt; However, if other people could use such a COBOL Server solution, I'd have
+&gt; another look at it.
+
+&gt; Comments?
+">
+
+Have you checked your EULA for the Cobol ? It may specify that it can
+only be used by a single user, or preclude server access or something.
+</POST>
+<POST>
+<POSTER> &quot;Pete Dashwood&quot; &lt;dashw...@removethis.enternet.co.nz&gt; </POSTER>
+<POSTDATE> 2007-10-01T10:34:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Richard&quot; &lt;rip ... @Azonic.co.nz&gt; wrote in message
+">
+
+news:1191196859.432712.177690@22g2000hsm.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 30, 4:13 pm, &quot;Pete Dashwood&quot;
+&gt; &lt;dashw ... @removethis.enternet.co.nz&gt; wrote:
+&gt;&gt; A little while back, I  asked here if anybody had any scripts for running
+&gt;&gt; batch COBOL on client/server. There were some very good responses, but
+&gt;&gt; most
+&gt;&gt; of them were using DOS batch files and I really want to move away from
+&gt;&gt; that.
+&gt;&gt; Richard pointed out that using MAKE would be  a better solution, and I
+&gt;&gt; agree.
+
+&gt;&gt; As time has moved on, this problem has percolated up my list of
+&gt;&gt; priorities
+&gt;&gt; and it is now fairly high. I have therefore been applying myself to
+&gt;&gt; getting
+&gt;&gt; a good solution.
+
+&gt;&gt; As I investigated it, it occurred to me that I have one machine (PetesP4)
+&gt;&gt; on
+&gt;&gt; my WLAN that has Fujitsu COBOL installed on it. Because of their stupid
+&gt;&gt; Licensing (one of the nails in their coffin as far as I am concerned) I
+&gt;&gt; can't simply buy the software and install it on a couple of machines. It
+&gt;&gt; has
+&gt;&gt; to go through a whole rigmarole of notifying their server that the
+&gt;&gt; license
+&gt;&gt; is being transferred to another machine, transferring it out to a floppy
+&gt;&gt; (!... do they even exist any more? I tried it with a memory stick and I
+&gt;&gt; think it worked; so long ago I can't remember...), killing it on the old
+&gt;&gt; machine and transferring it in from the floppy to the new machine. Yes, I
+&gt;&gt; can understand sane people getting a bit annoyed about paying several
+&gt;&gt; thousand dollars  to be put through hoops. As a result of all this
+&gt;&gt; nonsense,
+&gt;&gt; I resolved NOT to install COBOL on the Vaio machine (Bigblack) (It is a
+&gt;&gt; C#
+&gt;&gt; VS 2005 platform with occasional VB and Java). All of my current
+&gt;&gt; development
+&gt;&gt; is on Bigblack, but part of that development is generating COBOL code,
+&gt;&gt; which, of course, must be compiled (there can be a number of programs
+&gt;&gt; generated, so it needs to do a batch compile).
+
+&gt;&gt; So, the problem comes down to: &quot;How can I get my source programs on
+&gt;&gt; Bigblack
+&gt;&gt; across to the COBOL machine, PetesP4, batch compile them, and get the
+&gt;&gt; executables back to Bigblack so they can be run?&quot;
+
+&gt;&gt; There are a number of scripting options available under Windows
+&gt;&gt; (Scripting
+&gt;&gt; serves a similar purpose to JCL in mainframe environments) and my
+&gt;&gt; favourite
+&gt;&gt; is Windows Script Hosting. The customer is running in a Windows
+&gt;&gt; environment
+&gt;&gt; so the necessary support for WSH scripting is already installed.
+
+&gt;&gt; I transferred the COBOL sources from Bigblack to PetesP4 and knocked up a
+&gt;&gt; quick batch compile script  (WSH) and ran it locally on PetesP4. It
+&gt;&gt; worked
+&gt;&gt; fine and used NMAKE to build and run the COBOL programs. The good thing
+&gt;&gt; about this is that if you rerun it, it does no harm. Because it is using
+&gt;&gt; NMAKE, it detects the build state of each program and only compiles them
+&gt;&gt; if
+&gt;&gt; the COBOL source or options have changed. Good stuff.  There is no
+&gt;&gt; requirement to set up a project for each (or any) of the COBOL Programs.
+&gt;&gt; All
+&gt;&gt; you need is the COBOL source and a couple of ancilliary files which I
+&gt;&gt; generate from C# at the time I generate the COBOL program, (one of which
+&gt;&gt; contains the compiler options and the other has path and build
+&gt;&gt; information
+&gt;&gt; in it. They are standard templates and I just run a C# RegEx to replace
+&gt;&gt; the
+&gt;&gt; program name at various places in them. )
+
+&gt;&gt; The next step is to be able to remotely invoke this Script from BigBlack,
+&gt;&gt; after having generated the sources directly to PetesP4. (easy... map to a
+&gt;&gt; shared drive  on PetesP4 before generating)... it turns out that WSH 5.6
+&gt;&gt; DOES include remote scripting, so I got stuck into it.
+
+&gt;&gt; It was a nightmare :-). Instantiating remote objects that actually
+&gt;&gt; monitor
+&gt;&gt; what is really going on and provide status etc. And it uses COM+ as the
+&gt;&gt; transport layer. (Fortunately, I've had a number of years experience
+&gt;&gt; writing
+&gt;&gt; COM components; without it, it would just be a jungle for newbies...)
+&gt;&gt; After
+&gt;&gt; two days fiddling with COM permissions, impersonations, authentications,
+&gt;&gt; and
+&gt;&gt; still getting &quot;Access denied&quot; every time I tried to run it, I was ready
+&gt;&gt; to
+&gt;&gt; look for &quot;another way&quot;.
+
+&gt;&gt; Then a light came on and I thought &quot;Why not write a server that can run
+&gt;&gt; on
+&gt;&gt; PetesP4 and accept COBOL compile requests from any machine on the
+&gt;&gt; network?&quot;
+&gt;&gt; It would be like having COBOL on every machine... It could run over
+&gt;&gt; sockets
+&gt;&gt; without needing COM or scripting, and could use TCP/IP as a transport.
+&gt;&gt; Any
+&gt;&gt; machine that wanted to compile COBOL would simply pass the details to a
+&gt;&gt; small client program that would connect to the remote COBOL server, do
+&gt;&gt; the
+&gt;&gt; biz, and get the executable returned to it. The COBOL server could be
+&gt;&gt; asynchronous and able to service multiple requests.
+
+&gt;&gt; In the meantime, I solved the problems with the scripting solution (it
+&gt;&gt; involved a couple of Registry hacks; how often have we heard that before
+&gt;&gt; with Windows? :-)) and my WSH solution is now working perfectly.
+
+&gt;&gt; I estimate the work on writing the remote COBOL server to be a couple of
+&gt;&gt; days.
+
+&gt;&gt; Although I'm quite keen to do it (it is an interesting C# exercise), I
+&gt;&gt; can't
+&gt;&gt; really justify doing it, as I  already have a working scripting solution
+&gt;&gt; (which I'll gladly share publicly here with anyone interested, as I
+&gt;&gt; promised
+&gt;&gt; at the time).
+
+&gt;&gt; However, if other people could use such a COBOL Server solution, I'd have
+&gt;&gt; another look at it.
+
+&gt;&gt; Comments?
+
+&gt; Have you checked your EULA for the Cobol ? It may specify that it can
+&gt; only be used by a single user, or preclude server access or something.
+">
+
+That's a good point.
+
+However it is licensed to a single machine, not to a single user, as far as
+I know.
+
+I can ensure that it is ALWAYS the same User by using COM+ impersonation :-)
+I could make it synchronous so only one user could use it at any given time,
+and it would only be running on the single machine.
+
+I will check the EULA before deciding to proceed, and anyway, I'm too busy
+right at the moment... :-) As I have notebooks all around the house, it is
+more of a convenience thing than a desire to circumvent Fujitsu licensing. I
+have Remote Admin and COULD just &quot;take over&quot; PetesP4 when I want to use
+COBOL but I still think it is cooler to have a remote server facility. And
+there are cases (like the described scenario) where I want transparency, and
+the user should not even be aware that COBOL was run somewhere else and the
+results returned to him.With generated code it should all be behind the
+scenes and under the covers. The user simply gets a solution.
+
+It is on a back burner for now...:-)
+
+Pete.
+--
+&quot;I used to write COBOL...now I can do anything.&quot;
+</POST>
+<POST>
+<POSTER> PR &lt;paul.rauler...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-01T16:49:00 </POSTDATE>
+Maybe a little late Pete, but here is a really simply little server
+written in PERL that I use on Windows to do things like that. You just
+open up a telnet connection to it (on whatever port you pick) and send
+a command on along, like
+&quot;compilethat.bat&quot;.  :)
+
+#!perl
+#---------------------------------------------------------------
+# Small Server in Perl for Pete Dashwood
+#---------------------------------------------------------------
+
+use IO::Socket;
+use strict;
+
+my($buffer,
+$server_port,
+$server,
+$client,
+$counter,
+$rc);
+
+#-- Port to use  (pick whatever you like above 1024)
+$server_port = 9066;
+
+#-- Working Storage
+#
+
+print &quot;Non-blocking TCP Server In Perl for Windows\n&quot;;
+print &quot;\n&quot;;
+
+$server = IO::Socket::INET-&gt;new(LocalPort =&gt; $server_port,
+Type      =&gt; SOCK_STREAM,
+Reuse     =&gt; 1,
+Listen    =&gt; 10 );   # or SOMAXCONN
+
+# Error out if we cannot open the port to listen
+# for connections on
+#
+$server  or die
+&quot;Server could not initialize on port $server_port : $@\n&quot;;
+
+# Go into an infinite loop listening for connections
+#
+print &quot;Listening on Port: $server_port.\n&quot;;
+while ($client = $server-&gt;accept()) {
+
+# $client is the new connection and we can use this like a file
+handle
+
+$counter = 1;
+print &quot;Connection request received...\n&quot;;    #DEBUG
+
+$buffer = &lt;$client&gt;;
+print &quot;Execute command:$buffer:\n&quot;;          #DEBUG
+$rc = system($buffer);
+$rc=$rc/256;
+while (length($rc) &lt; 3) { $rc = &quot;0$rc&quot;; }
+print &quot;ReturnCode: $rc\r\n&quot;;                 #DEBUG
+print $client &quot;$rc\r\n&quot;;
+
+}
+
+print &quot;Server terminated.\n&quot;;
+close($server);
+
+On Sep 29, 11:13 pm, &quot;Pete Dashwood&quot;
+
+<QUOTE PREVIOUSPOST="
+&lt;dashw ... @removethis.enternet.co.nz&gt; wrote:
+&gt; A little while back, I  asked here if anybody had any scripts for running
+&gt; batch COBOL on client/server. There were some very good responses, but most
+&gt; of them were using DOS batch files and I really want to move away from that.
+&gt; Richard pointed out that using MAKE would be  a better solution, and I
+&gt; agree.
+
+&gt; As time has moved on, this problem has percolated up my list of priorities
+&gt; and it is now fairly high. I have therefore been applying myself to getting
+&gt; a good solution.
+
+&gt; As I investigated it, it occurred to me that I have one machine (PetesP4) on
+&gt; my WLAN that has Fujitsu COBOL installed on it. Because of their stupid
+&gt; Licensing (one of the nails in their coffin as far as I am concerned) I
+&gt; can't simply buy the software and install it on a couple of machines. It has
+&gt; to go through a whole rigmarole of notifying their server that the license
+&gt; is being transferred to another machine, transferring it out to a floppy
+&gt; (!... do they even exist any more? I tried it with a memory stick and I
+&gt; think it worked; so long ago I can't remember...), killing it on the old
+&gt; machine and transferring it in from the floppy to the new machine. Yes, I
+&gt; can understand sane people getting a bit annoyed about paying several
+&gt; thousand dollars  to be put through hoops. As a result of all this nonsense,
+&gt; I resolved NOT to install COBOL on the Vaio machine (Bigblack) (It is a C#
+&gt; VS 2005 platform with occasional VB and Java). All of my current development
+&gt; is on Bigblack, but part of that development is generating COBOL code,
+&gt; which, of course, must be compiled (there can be a number of programs
+&gt; generated, so it needs to do a batch compile).
+
+&gt; So, the problem comes down to: &quot;How can I get my source programs on Bigblack
+&gt; across to the COBOL machine, PetesP4, batch compile them, and get the
+&gt; executables back to Bigblack so they can be run?&quot;
+
+&gt; There are a number of scripting options available under Windows (Scripting
+&gt; serves a similar purpose to JCL in mainframe environments) and my favourite
+&gt; is Windows Script Hosting. The customer is running in a Windows environment
+&gt; so the necessary support for WSH scripting is already installed.
+
+&gt; I transferred the COBOL sources from Bigblack to PetesP4 and knocked up a
+&gt; quick batch compile script  (WSH) and ran it locally on PetesP4. It worked
+&gt; fine and used NMAKE to build and run the COBOL programs. The good thing
+&gt; about this is that if you rerun it, it does no harm. Because it is using
+&gt; NMAKE, it detects the build state of each program and only compiles them if
+&gt; the COBOL source or options have changed. Good stuff.  There is no
+&gt; requirement to set up a project for each (or any) of the COBOL Programs. All
+&gt; you need is the COBOL source and a couple of ancilliary files which I
+&gt; generate from C# at the time I generate the COBOL program, (one of which
+&gt; contains the compiler options and the other has path and build information
+&gt; in it. They are standard templates and I just run a C# RegEx to replace the
+&gt; program name at various places in them. )
+
+&gt; The next step is to be able to remotely invoke this Script from BigBlack,
+&gt; after having generated the sources directly to PetesP4. (easy... map to a
+&gt; shared drive  on PetesP4 before generating)... it turns out that WSH 5.6
+&gt; DOES include remote scripting, so I got stuck into it.
+
+&gt; It was a nightmare :-). Instantiating remote objects that actually monitor
+&gt; what is really going on and provide status etc. And it uses COM+ as the
+&gt; transport layer. (Fortunately, I've had a number of years experience writing
+&gt; COM components; without it, it would just be a jungle for newbies...) After
+&gt; two days fiddling with COM permissions, impersonations, authentications, and
+&gt; still getting &quot;Access denied&quot; every time I tried to run it, I was ready to
+&gt; look for &quot;another way&quot;.
+
+&gt; Then a light came on and I thought &quot;Why not write a server that can run on
+&gt; PetesP4 and accept COBOL compile requests from any machine on the network?&quot;
+&gt; It would be like having COBOL on every machine... It could run over sockets
+&gt; without needing COM or scripting, and could use TCP/IP as a transport. Any
+&gt; machine that wanted to compile COBOL would simply pass the details to a
+&gt; small client program that would connect to the remote COBOL server, do the
+&gt; biz, and get the executable returned to it. The COBOL server could be
+&gt; asynchronous and able to service multiple requests.
+
+&gt; In the meantime, I solved the problems with the scripting solution (it
+&gt; involved a couple of Registry hacks; how often have we heard that before
+&gt; with Windows? :-)) and my WSH solution is now working perfectly.
+
+&gt; I estimate the work on writing the remote COBOL server to be a couple of
+&gt; days.
+
+&gt; Although I'm quite keen to do it (it is an interesting C# exercise), I can't
+&gt; really justify doing it, as I  already have a working scripting solution
+&gt; (which I'll gladly share publicly here with anyone interested, as I promised
+&gt; at the time).
+
+&gt; However, if other people could use such a COBOL Server solution, I'd have
+&gt; another look at it.
+
+&gt; Comments?
+
+&gt; Pete.
+&gt; --
+&gt; &quot;I used to write COBOL...now I can do anything.&quot;
+">
+</POST>
+<POST>
+<POSTER> &quot;Pete Dashwood&quot; &lt;dashw...@removethis.enternet.co.nz&gt; </POSTER>
+<POSTDATE> 2007-10-01T20:01:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;PR&quot; &lt;paul.rauler ... @gmail.com&gt; wrote in message
+">
+
+news:1191271791.992842.231350@22g2000hsm.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Maybe a little late Pete, but here is a really simply little server
+&gt; written in PERL that I use on Windows to do things like that. You just
+&gt; open up a telnet connection to it (on whatever port you pick) and send
+&gt; a command on along, like
+&gt; &quot;compilethat.bat&quot;.  :)
+">
+
+Thanks for that, Paul.
+
+It is very similar to what I was looking at in C#. :-)
+
+Perl is really cool and I have managed Perl guys who could do very powerful
+things very quickly with it
+
+There seems to be less of it around since the advent of PHP.
+
+I'm not running Perl on my current network and I don't think my customer
+would accept a Perl solution. It's a pity, because I really like what you
+posted. I have the scripting (WSH) all working now and it interfaces easily
+to C# so that's going to be the solution, at least intially.
+
+Thanks again for posting this, I have saved it for future reference.
+
+Pete.
+--
+&quot;I used to write COBOL...now I can do anything.&quot;
+
+<QUOTE PREVIOUSPOST="
+&gt; #!perl
+&gt; #---------------------------------------------------------------
+&gt; # Small Server in Perl for Pete Dashwood
+&gt; #---------------------------------------------------------------
+
+&gt; use IO::Socket;
+&gt; use strict;
+
+&gt; my($buffer,
+&gt;   $server_port,
+&gt;   $server,
+&gt;   $client,
+&gt;   $counter,
+&gt;   $rc);
+
+&gt; #-- Port to use  (pick whatever you like above 1024)
+&gt; $server_port = 9066;
+
+&gt; #-- Working Storage
+&gt; #
+
+&gt; print &quot;Non-blocking TCP Server In Perl for Windows\n&quot;;
+&gt; print &quot;\n&quot;;
+
+&gt; $server = IO::Socket::INET-&gt;new(LocalPort =&gt; $server_port,
+&gt;                                Type      =&gt; SOCK_STREAM,
+&gt;                                Reuse     =&gt; 1,
+&gt;                                Listen    =&gt; 10 );   # or SOMAXCONN
+
+&gt; # Error out if we cannot open the port to listen
+&gt; # for connections on
+&gt; #
+&gt; $server  or die
+&gt;  &quot;Server could not initialize on port $server_port : $@\n&quot;;
+
+&gt; # Go into an infinite loop listening for connections
+&gt; #
+&gt; print &quot;Listening on Port: $server_port.\n&quot;;
+&gt; while ($client = $server-&gt;accept()) {
+
+&gt;    # $client is the new connection and we can use this like a file
+&gt; handle
+
+&gt;    $counter = 1;
+&gt;    print &quot;Connection request received...\n&quot;;    #DEBUG
+
+&gt;    $buffer = &lt;$client&gt;;
+&gt;    print &quot;Execute command:$buffer:\n&quot;;          #DEBUG
+&gt;    $rc = system($buffer);
+&gt;    $rc=$rc/256;
+&gt;    while (length($rc) &lt; 3) { $rc = &quot;0$rc&quot;; }
+&gt;    print &quot;ReturnCode: $rc\r\n&quot;;                 #DEBUG
+&gt;    print $client &quot;$rc\r\n&quot;;
+
+&gt;    }
+
+&gt; print &quot;Server terminated.\n&quot;;
+&gt; close($server);
+
+&gt; On Sep 29, 11:13 pm, &quot;Pete Dashwood&quot;
+&gt; &lt;dashw ... @removethis.enternet.co.nz&gt; wrote:
+&gt;&gt; A little while back, I  asked here if anybody had any scripts for running
+&gt;&gt; batch COBOL on client/server. There were some very good responses, but
+&gt;&gt; most
+&gt;&gt; of them were using DOS batch files and I really want to move away from
+&gt;&gt; that.
+&gt;&gt; Richard pointed out that using MAKE would be  a better solution, and I
+&gt;&gt; agree.
+
+&gt;&gt; As time has moved on, this problem has percolated up my list of
+&gt;&gt; priorities
+&gt;&gt; and it is now fairly high. I have therefore been applying myself to
+&gt;&gt; getting
+&gt;&gt; a good solution.
+
+&gt;&gt; As I investigated it, it occurred to me that I have one machine (PetesP4)
+&gt;&gt; on
+&gt;&gt; my WLAN that has Fujitsu COBOL installed on it. Because of their stupid
+&gt;&gt; Licensing (one of the nails in their coffin as far as I am concerned) I
+&gt;&gt; can't simply buy the software and install it on a couple of machines. It
+&gt;&gt; has
+&gt;&gt; to go through a whole rigmarole of notifying their server that the
+&gt;&gt; license
+&gt;&gt; is being transferred to another machine, transferring it out to a floppy
+&gt;&gt; (!... do they even exist any more? I tried it with a memory stick and I
+&gt;&gt; think it worked; so long ago I can't remember...), killing it on the old
+&gt;&gt; machine and transferring it in from the floppy to the new machine. Yes, I
+&gt;&gt; can understand sane people getting a bit annoyed about paying several
+&gt;&gt; thousand dollars  to be put through hoops. As a result of all this
+&gt;&gt; nonsense,
+&gt;&gt; I resolved NOT to install COBOL on the Vaio machine (Bigblack) (It is a
+&gt;&gt; C#
+&gt;&gt; VS 2005 platform with occasional VB and Java). All of my current
+&gt;&gt; development
+&gt;&gt; is on Bigblack, but part of that development is generating COBOL code,
+&gt;&gt; which, of course, must be compiled (there can be a number of programs
+&gt;&gt; generated, so it needs to do a batch compile).
+
+&gt;&gt; So, the problem comes down to: &quot;How can I get my source programs on
+&gt;&gt; Bigblack
+&gt;&gt; across to the COBOL machine, PetesP4, batch compile them, and get the
+&gt;&gt; executables back to Bigblack so they can be run?&quot;
+
+&gt;&gt; There are a number of scripting options available under Windows
+&gt;&gt; (Scripting
+&gt;&gt; serves a similar purpose to JCL in mainframe environments) and my
+&gt;&gt; favourite
+&gt;&gt; is Windows Script Hosting. The customer is running in a Windows
+&gt;&gt; environment
+&gt;&gt; so the necessary support for WSH scripting is already installed.
+
+&gt;&gt; I transferred the COBOL sources from Bigblack to PetesP4 and knocked up a
+&gt;&gt; quick batch compile script  (WSH) and ran it locally on PetesP4. It
+&gt;&gt; worked
+&gt;&gt; fine and used NMAKE to build and run the COBOL programs. The good thing
+&gt;&gt; about this is that if you rerun it, it does no harm. Because it is using
+&gt;&gt; NMAKE, it detects the build state of each program and only compiles them
+&gt;&gt; if
+&gt;&gt; the COBOL source or options have changed. Good stuff.  There is no
+&gt;&gt; requirement to set up a project for each (or any) of the COBOL Programs.
+&gt;&gt; All
+&gt;&gt; you need is the COBOL source and a couple of ancilliary files which I
+&gt;&gt; generate from C# at the time I generate the COBOL program, (one of which
+&gt;&gt; contains the compiler options and the other has path and build
+&gt;&gt; information
+&gt;&gt; in it. They are standard templates and I just run a C# RegEx to replace
+&gt;&gt; the
+&gt;&gt; program name at various places in them. )
+
+&gt;&gt; The next step is to be able to remotely invoke this Script from BigBlack,
+&gt;&gt; after having generated the sources directly to PetesP4. (easy... map to a
+&gt;&gt; shared drive  on PetesP4 before generating)... it turns out that WSH 5.6
+&gt;&gt; DOES include remote scripting, so I got stuck into it.
+
+&gt;&gt; It was a nightmare :-). Instantiating remote objects that actually
+&gt;&gt; monitor
+&gt;&gt; what is really going on and provide status etc. And it uses COM+ as the
+&gt;&gt; transport layer. (Fortunately, I've had a number of years experience
+&gt;&gt; writing
+&gt;&gt; COM components; without it, it would just be a jungle for newbies...)
+&gt;&gt; After
+&gt;&gt; two days fiddling with COM permissions, impersonations, authentications,
+&gt;&gt; and
+&gt;&gt; still getting &quot;Access denied&quot; every time I tried to run it, I was ready
+&gt;&gt; to
+&gt;&gt; look for &quot;another way&quot;.
+
+&gt;&gt; Then a light came on and I thought &quot;Why not write a server that can run
+&gt;&gt; on
+&gt;&gt; PetesP4 and accept COBOL compile requests from any machine on the
+&gt;&gt; network?&quot;
+&gt;&gt; It would be like having COBOL on every machine... It could run over
+&gt;&gt; sockets
+&gt;&gt; without needing COM or scripting, and could use TCP/IP as a transport.
+&gt;&gt; Any
+&gt;&gt; machine that wanted to compile COBOL would simply pass the details to a
+&gt;&gt; small client program that would connect to the remote COBOL server, do
+&gt;&gt; the
+&gt;&gt; biz, and get the executable returned to it. The COBOL server could be
+&gt;&gt; asynchronous and able to service multiple requests.
+
+&gt;&gt; In the meantime, I solved the problems with the scripting solution (it
+&gt;&gt; involved a couple of Registry hacks; how often have we heard that before
+&gt;&gt; with Windows? :-)) and my WSH solution is now working perfectly.
+
+&gt;&gt; I estimate the work on writing the remote COBOL server to be a couple of
+&gt;&gt; days.
+
+&gt;&gt; Although I'm quite keen to do it (it is an interesting C# exercise), I
+&gt;&gt; can't
+&gt;&gt; really justify doing it, as I  already have a working scripting solution
+&gt;&gt; (which I'll gladly share publicly here with anyone interested, as I
+&gt;&gt; promised
+&gt;&gt; at the time).
+
+&gt;&gt; However, if other people could use such a COBOL Server solution, I'd have
+&gt;&gt; another look at it.
+
+&gt;&gt; Comments?
+
+&gt;&gt; Pete.
+&gt;&gt; --
+&gt;&gt; &quot;I used to write COBOL...now I can do anything.&quot;
+">
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,249 @@
+<DOC>
+<DOCID> eng-NG-31-151022-8807938 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-31T14:40:00 </DATETIME>
+<BODY>
+<HEADLINE>
+ActionScript Remoting
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> ern...@mdanderson.org </POSTER>
+<POSTDATE> 2007-08-31T14:40:00 </POSTDATE>
+Hello again!
+
+Well I am stuck once again and I need anyone's help with this; I have
+created a function in a cfform item using Actionscript to remotely connect
+to CFC. The good news is that it works but what I am having issues with is
+displaying results from the remote call. Can anyone shed some light on
+this please?
+
+My
+Code----------------------------------------------------------------------
+---------------------------------------------
+
+FUNCTION:
+
+function getGroupData(){
+
+//remote path and connection to gateway
+
+var connection:mx.remoting.Connection =
+mx.remoting.NetServices.createGatewayConnection(&quot; http://utmdocmcfnt:85/fla
+shservices/gateway/&quot;);
+
+var myService:mx.remoting.NetServiceProxy;
+
+var useraccountid = AppUsers.selectedItem.USERACCOUNTID;
+
+var responseHandler = {};
+
+responseHandler.onResult = function( results: Object ):Void {
+
+useraccountid.dataProvider  = results;
+
+}
+
+responseHandler.onStatus = function( stat: Object ):Void {
+
+alert(&quot;Error while calling cfc:&quot; + stat.description);
+
+}
+
+myService = connection.getService(&quot;CFCs.Security&quot;,
+responseHandler );
+
+myService.myGroups(useraccountid);
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+--------------------------------------------------------------------------
+------
+Ernest Pena Jr.
+Applications Systems Analyst
+Division of Cancer Medicine
+University of Texas M. D. Anderson Cancer Center
+FC11.2044
+713-563-8933 Work
+713-404-0974 2-Way Pager
+713-745-2077 Fax
+Interoffice Mail: Unit 421
+ern ... @mdanderson.org
+</POST>
+<POST>
+<POSTER> da...@stonetag.com </POSTER>
+<POSTDATE> 2007-08-31T14:58:00 </POSTDATE>
+Below is how we generally communicate between Actionscript and CFCs.
+(this is obviously just the actionscript side of things) It's just an
+example but it should help you overall.
+
+var Colors:Service = new Service(
+TERMINALstation,
+null,&quot;availability&quot;,null,
+new RelayResponder(this, &quot;Details_Result&quot;));
+
+function Details(MerchID) {
+Colors.GetColors({tempMERCHID:MerchID});
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+var gotName:Array = Array();
+var gotCode:Array = Array();
+
+function Details_Result( re:ResultEvent ) {
+_root.counter = re.result.COUNTER;
+for (i=1;i&lt;=_root.counter;i++) {
+tempname = &quot;re.result.got&quot;+i+&quot;.Name&quot;;
+tempcode = &quot;re.result.got&quot;+i+&quot;.Code&quot;;
+_root.gotName[i] = eval(tempname);
+_root.gotCode[i] = eval(tempcode);
+};
+_root.loadingDock.ITEMSdisplay();
+
+<QUOTE PREVIOUSPOST="
+}
+">
+</POST>
+<POST>
+<POSTER> Force &lt;ForceC...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-01T00:02:00 </POSTDATE>
+Ernest,
+
+Looking at your code I'm guessing that the datagrid
+&quot;useraccountID&quot; is not populating. It could be because it looks like
+you are using useraccountID in two different contexts.
+The first &quot;var useraccountid =
+AppUsers.selectedItem.USERACCOUNTID;&quot;, you are setting the variable
+for use as a parameter being passed to your cfc in the last rown of
+the function.
+The second use is as the name of the datagrid. It's possible that
+the flex engine is getting confused.
+Something I also did with my remote calls was to set my controls
+into scope. For example, if you have a couple of textboxes in your
+form named &quot;firstName&quot; and &quot;lastName&quot; I would set them up with the
+following declaration:
+
+var firstName = firstName;
+var lastName = lastName;
+
+This ensures that all of your controls are seen by the engine as
+being on the root level. You can also call controls like
+_root.firstName and _root.lastName. So potentially the flex engine is
+seeing the remote results set on the _root level and tries to find the
+datagrid, but can't because it believes that it's on another level. It
+doesn't throw an error, but your results don't appear either.
+
+One other thing to remember is that when assigning your results
+column names to the &quot;dataField&quot;?, in your gridcolumn, the case must
+match that of the returned results set. I sort of remember that Oracle
+results are returned in all Upper Caps. The flex engine won't throw an
+error in this case, but it won't display the results either. Hmm, that
+seems to be a trend in Flash Forms.
+
+I don't claim to be an expert, but I spent many nights pondering
+the very same issues. :&gt;).
+Hope that this helps.
+
+Mark Forsberg
+Gulf Coast Regional Blood Center
+
+P.S. If you like doing remoting and you haven't tried Flex 2 I'd
+recommend that you take a look at it. It's the bomb. I don't have much
+love for the Flex Builder 2 IDE (It corrupted today and can't see my
+projects. The reinstall is tomorrow), but Flex itself is awesome.
+</POST>
+<POST>
+<POSTER> ern...@mdanderson.org </POSTER>
+<POSTDATE> 2007-09-04T09:05:00 </POSTDATE>
+Mark,
+
+Thanks for your suggestions I have been looking at Flex all weekend and
+was able to pull data from my CFC using flex. However that opens up a
+whole set of other issues for me and to be frank I don't have the time at
+the moment. After this is over I plan to move exclusively to developing in
+flex; I cant wait but I have to finish this first.
+
+I think I didn't give anyone the whole picture of my app, and maybe if I
+did it might shed some light on what it is I am trying to achieve. Solving
+this will allow me to apply this to another much larger cf application.
+
+My application deals with security for the users, which will allow the
+SuperAdmin to create and edit users for different application for each
+department. This will allow the user to be assigned to many different apps
+with different levels of security. So the main data is being pulled if
+from a view where I load it in to a grid. This grid then populates the cf
+flash form based on the individual you select in the grid, its quite
+simple and works very well.
+
+The part where I am having problems in this app is when I pull up the
+application security part. This is pulled from a second view by the user's
+unique id (useraccountid). Now it seems that I the code I have sent will
+in-fact send the useraccountid to the cfc but I'm not quite sure how to
+pull the data in to the grid. I have attached an image of my app, nothing
+special.
+
+<QUOTE PREVIOUSPOST="
+-----Original Message-----
+From: houcfug@googlegroups.com [mailto:houcfug@googlegroups.com] On Behalf
+
+Of ForceC ... @gmail.com
+Sent: Friday, August 31, 2007 11:02 PM
+To: houcfug@googlegroups.com
+Subject: [houcfug] Re: ActionScript Remoting
+
+Ernest,
+
+Looking at your code I'm guessing that the datagrid
+&quot;useraccountID&quot; is not populating. It could be because it looks like
+you are using useraccountID in two different contexts.
+The first &quot;var useraccountid =
+AppUsers.selectedItem.USERACCOUNTID;&quot;, you are setting the variable
+for use as a parameter being passed to your cfc in the last rown of
+the function.
+The second use is as the name of the datagrid. It's possible that
+the flex engine is getting confused.
+Something I also did with my remote calls was to set my controls
+into scope. For example, if you have a couple of textboxes in your
+form named &quot;firstName&quot; and &quot;lastName&quot; I would set them up with the
+following declaration:
+
+var firstName = firstName;
+var lastName = lastName;
+
+This ensures that all of your controls are seen by the engine as
+being on the root level. You can also call controls like
+_root.firstName and _root.lastName. So potentially the flex engine is
+seeing the remote results set on the _root level and tries to find the
+datagrid, but can't because it believes that it's on another level. It
+doesn't throw an error, but your results don't appear either.
+
+One other thing to remember is that when assigning your results
+column names to the &quot;dataField&quot;?, in your gridcolumn, the case must
+match that of the returned results set. I sort of remember that Oracle
+results are returned in all Upper Caps. The flex engine won't throw an
+error in this case, but it won't display the results either. Hmm, that
+seems to be a trend in Flash Forms.
+
+I don't claim to be an expert, but I spent many nights pondering
+the very same issues. :&gt;).
+Hope that this helps.
+
+Mark Forsberg
+Gulf Coast Regional Blood Center
+
+P.S. If you like doing remoting and you haven't tried Flex 2 I'd
+recommend that you take a look at it. It's the bomb. I don't have much
+love for the Flex Builder 2 IDE (It corrupted today and can't see my
+projects. The reinstall is tomorrow), but Flex itself is awesome.
+">
+
+MyApp.jpg
+368K Download
+</POST>
+</TEXT>
+</BODY>
+</DOC>

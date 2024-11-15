@@ -1,0 +1,606 @@
+<DOC>
+<DOCID> eng-NG-31-135589-9749247 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2008-01-30T10:47:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Allocatable Arrays As Outputs
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Infinity77 &lt;andrea.gav...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-30T10:47:00 </POSTDATE>
+Hi All,
+
+first of all, please forgive my poor mastering of Fortran. I am
+still a beginner who uses Fortran sporadically.
+
+I have a subroutine in which I declare 4 output variables as
+allocatable. This is because, a priori, I don't know their lengths
+(they're all one-dimensional vectors), and I discover this information
+only when I read a file which contains both their lengths and the data
+used to fill these vectors.
+
+My problem is, I don't know how to correctly &quot;declare&quot; these variables
+in the main program, as I keep getting errors on assumed-shape/size
+and dummy arguments. My knowledge of Fortran is so slim I can't find a
+way to solve this problem.
+
+I am attaching a simplified version of my small program (1 subroutine
++ the main) in which I have only 1 allocatable array. I have used my
+google-fu but either I can't interpret correctly the problem or what I
+am doing is completely wrong.
+
+Thank you for all your suggestions.
+
+Andrea.
+
+subroutine ReadINSPEC(fileName, propertyNames)
+
+use ReadECLIPSEBinary
+
+implicit none
+
+character (len=*), intent(in)  :: filename
+character (len=8), allocatable, intent(out) :: propertyNames(:)
+
+integer           numberOfProps
+character (len=4) keywordType
+character (len=8) keywordName
+
+logical feof
+
+open(unit=1, file=filename, form='UNFORMATTED',
+convert='BIG_ENDIAN')
+
+feof = .false.
+
+while_loop: do while (.not.feof)
+
+read(1, end=20, err=18) keywordName, numberOfProps,
+keywordType
+
+if (keywordName == 'NAME') then
+
+allocate(propertyNames(numberOfProps))
+call ReadECLIPSEData(1, numberOfProps,
+stringVector=propertyNames)
+exit while_loop
+
+endif
+
+18    continue
+
+enddo while_loop
+
+20    continue
+
+deallocate(propertyNames)
+
+close(1)
+return
+
+end subroutine ReadINSPEC
+
+program main
+
+! ???????
+! I don't know if this is possible or not...
+! ???????
+
+character(len=14) :: fileName
+character(len=8) :: propertyNames(:)
+
+fileName = 'OPT_INJ.INSPEC'
+
+call ReadINSPEC(fileName, propertyNames)
+
+end program main
+</POST>
+<POST>
+<POSTER> Reinhold Bader &lt;Ba...@lrz.de&gt; </POSTER>
+<POSTDATE> 2008-01-30T11:43:00 </POSTDATE>
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+Hello,
+
+Infinity77 schrieb:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi All,
+
+&gt;     first of all, please forgive my poor mastering of Fortran. I am
+&gt; still a beginner who uses Fortran sporadically.
+
+&gt; I have a subroutine in which I declare 4 output variables as
+&gt; allocatable. This is because, a priori, I don't know their lengths
+&gt; (they're all one-dimensional vectors), and I discover this information
+&gt; only when I read a file which contains both their lengths and the data
+&gt; used to fill these vectors.
+
+&gt; My problem is, I don't know how to correctly &quot;declare&quot; these variables
+&gt; in the main program, as I keep getting errors on assumed-shape/size
+&gt; and dummy arguments. My knowledge of Fortran is so slim I can't find a
+&gt; way to solve this problem.
+
+&gt; I am attaching a simplified version of my small program (1 subroutine
+&gt; + the main) in which I have only 1 allocatable array. I have used my
+&gt; google-fu but either I can't interpret correctly the problem or what I
+&gt; am doing is completely wrong.
+
+&gt; Thank you for all your suggestions.
+">
+
+Allocatable subroutine arguments may not be supported by every
+compiler (while they are standard conforming in F2003, they're not
+in Fortran 95 or earlier).
+
+Even so, they require
+a) an explicit interface (e.g., your subroutine ReadINSPEC should be
+contained in a module, which in turn is use associated by the caller).
+b) the actual argument to be an allocatable entity of same type, kind and rank.
+
+Regards
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; Andrea.
+
+&gt; subroutine ReadINSPEC(fileName, propertyNames)
+
+&gt;     use ReadECLIPSEBinary
+
+&gt;     implicit none
+
+&gt;     character (len=*), intent(in)  :: filename
+&gt;     character (len=8), allocatable, intent(out) :: propertyNames(:)
+
+&gt;     integer           numberOfProps
+&gt;     character (len=4) keywordType
+&gt;     character (len=8) keywordName
+
+&gt;     logical feof
+
+&gt;     open(unit=1, file=filename, form='UNFORMATTED',
+&gt; convert='BIG_ENDIAN')
+
+&gt;     feof = .false.
+
+&gt;     while_loop: do while (.not.feof)
+
+&gt;         read(1, end=20, err=18) keywordName, numberOfProps,
+&gt; keywordType
+
+&gt;         if (keywordName == 'NAME') then
+
+&gt;             allocate(propertyNames(numberOfProps))
+&gt;             call ReadECLIPSEData(1, numberOfProps,
+&gt; stringVector=propertyNames)
+&gt;             exit while_loop
+
+&gt;         endif
+
+&gt; 18    continue
+
+&gt;     enddo while_loop
+
+&gt; 20    continue
+
+&gt;     deallocate(propertyNames)
+
+&gt;     close(1)
+&gt;     return
+
+&gt; end subroutine ReadINSPEC
+
+&gt; program main
+
+&gt; ! ???????
+&gt; ! I don't know if this is possible or not...
+&gt; ! ???????
+
+&gt; character(len=14) :: fileName
+&gt; character(len=8) :: propertyNames(:)
+
+&gt; fileName = 'OPT_INJ.INSPEC'
+
+&gt; call ReadINSPEC(fileName, propertyNames)
+
+&gt; end program main
+">
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.2 (GNU/Linux)
+Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
+
+iD8DBQFHoKkqFVLhKuD7VgsRAquSAJsEVNiqGhwEnj8IJwOOeIwO3EVtlQCfRIGG
+Mmgc8VWKDt8NxWtiBWqWSwk=
+=XerL
+-----END PGP SIGNATURE-----
+</POST>
+<POST>
+<POSTER> bonza...@gmail.com </POSTER>
+<POSTDATE> 2008-01-30T12:34:00 </POSTDATE>
+On Jan 30, 3:47 pm, Infinity77 &lt;andrea.gav ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi All,
+
+&gt;     first of all, please forgive my poor mastering of Fortran. I am
+&gt; still a beginner who uses Fortran sporadically.
+
+&gt; I have a subroutine in which I declare 4 output variables as
+&gt; allocatable. This is because, a priori, I don't know their lengths
+&gt; (they're all one-dimensional vectors), and I discover this information
+&gt; only when I read a file which contains both their lengths and the data
+&gt; used to fill these vectors.
+
+&gt; My problem is, I don't know how to correctly &quot;declare&quot; these variables
+&gt; in the main program, as I keep getting errors on assumed-shape/size
+&gt; and dummy arguments. My knowledge of Fortran is so slim I can't find a
+&gt; way to solve this problem.
+
+&gt; I am attaching a simplified version of my small program (1 subroutine
+&gt; + the main) in which I have only 1 allocatable array. I have used my
+&gt; google-fu but either I can't interpret correctly the problem or what I
+&gt; am doing is completely wrong.
+
+&gt; Thank you for all your suggestions.
+
+&gt; Andrea.
+
+&gt; subroutine ReadINSPEC(fileName, propertyNames)
+
+&gt;     use ReadECLIPSEBinary
+
+&gt;     implicit none
+
+&gt;     character (len=*), intent(in)  :: filename
+&gt;     character (len=8), allocatable, intent(out) :: propertyNames(:)
+
+&gt;     integer           numberOfProps
+&gt;     character (len=4) keywordType
+&gt;     character (len=8) keywordName
+
+&gt;     logical feof
+
+&gt;     open(unit=1, file=filename, form='UNFORMATTED',
+&gt; convert='BIG_ENDIAN')
+
+&gt;     feof = .false.
+
+&gt;     while_loop: do while (.not.feof)
+
+&gt;         read(1, end=20, err=18) keywordName, numberOfProps,
+&gt; keywordType
+
+&gt;         if (keywordName == 'NAME') then
+
+&gt;             allocate(propertyNames(numberOfProps))
+&gt;             call ReadECLIPSEData(1, numberOfProps,
+&gt; stringVector=propertyNames)
+&gt;             exit while_loop
+
+&gt;         endif
+
+&gt; 18    continue
+
+&gt;     enddo while_loop
+
+&gt; 20    continue
+
+&gt;     deallocate(propertyNames)
+
+&gt;     close(1)
+&gt;     return
+
+&gt; end subroutine ReadINSPEC
+
+&gt; program main
+
+&gt; ! ???????
+&gt; ! I don't know if this is possible or not...
+&gt; ! ???????
+
+&gt; character(len=14) :: fileName
+&gt; character(len=8) :: propertyNames(:)
+
+&gt; fileName = 'OPT_INJ.INSPEC'
+
+&gt; call ReadINSPEC(fileName, propertyNames)
+
+&gt; end program main
+">
+
+Hi,
+You can try using pointers instead (they are pretty simple to use in
+f95). If you declare propertynames as a pointer, I.e. replace
+'allocatable' with 'pointer', you can still allocate memory as you
+have. Then you simply need to declare the variable in the calling
+program to also be a pointer (same shape). You also have to use the
+save attribute in the subroutine to ensure the memory isnt lost when
+the subroutine exits.
+
+If you want to call this routine more than once using this approach
+you'll want to assign new memory in the main program (i.e allocate a
+new variable), and add something to the start of the subroutine to
+free up the memory.
+
+Others may know a better way
+
+Hope this is useful
+</POST>
+<POST>
+<POSTER> &quot;Craig Dedo&quot; &lt;cd...@wi.rr.com&gt; </POSTER>
+<POSTDATE> 2008-01-30T14:17:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Reinhold Bader&quot; &lt;Ba ... @lrz.de&gt; wrote in message
+">
+
+news:fnq9fb$esc$1@news.lrz-muenchen.de ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Hello,
+&gt; Infinity77 schrieb:
+&gt;&gt; Hi All,
+
+&gt;&gt;     first of all, please forgive my poor mastering of Fortran. I am
+&gt;&gt; still a beginner who uses Fortran sporadically.
+
+&gt;&gt; I have a subroutine in which I declare 4 output variables as
+&gt;&gt; allocatable. This is because, a priori, I don't know their lengths
+&gt;&gt; (they're all one-dimensional vectors), and I discover this information
+&gt;&gt; only when I read a file which contains both their lengths and the data
+&gt;&gt; used to fill these vectors.
+
+&gt;&gt; My problem is, I don't know how to correctly &quot;declare&quot; these variables
+&gt;&gt; in the main program, as I keep getting errors on assumed-shape/size
+&gt;&gt; and dummy arguments. My knowledge of Fortran is so slim I can't find a
+&gt;&gt; way to solve this problem.
+
+&gt;&gt; I am attaching a simplified version of my small program (1 subroutine
+&gt;&gt; + the main) in which I have only 1 allocatable array. I have used my
+&gt;&gt; google-fu but either I can't interpret correctly the problem or what I
+&gt;&gt; am doing is completely wrong.
+
+&gt;&gt; Thank you for all your suggestions.
+">
+
+&lt;snip&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Andrea.
+
+&gt; Allocatable subroutine arguments may not be supported by every
+&gt; compiler (while they are standard conforming in F2003, they're not
+&gt; in Fortran 95 or earlier).
+
+&gt; Even so, they require
+&gt; a) an explicit interface (e.g., your subroutine ReadINSPEC should be
+&gt;    contained in a module, which in turn is use associated by the caller).
+&gt; b) the actual argument to be an allocatable entity of same type, kind and
+&gt; rank.
+">
+
+Even though the Fortran 95 standard does not support allocatable arrays as
+procedure arguments, function results, or components of derived types, they are
+part of Fortran 2003.  More importantly, removing these three restrictions on
+the use of allocatable arrays is at or near the top of the priority list of
+Fortran 2003 features for implementation with almost every Fortran compiler
+still under active development.
+
+Therefore, there is little real risk in using allocatable arrays in these
+contexts.
+
+Using allocatable arrays is preferable to using pointers to allocatable
+arrays, as suggested by another poster.  Direct use of allocatables is easier to
+understand and easier to avoid troublesome mistakes.
+
+In order to use allocatables in your procedures, you need to add the
+&quot;Allocatable&quot; attribute to the declaration of your arrays in the main program.
+E.g., you would write:
+Character (Len=8), Allocatable    :: propertyNames(:)
+
+Hope this helps.
+
+--
+Craig Dedo
+17130 W. Burleigh Place
+P. O. Box 423
+Brookfield, WI   53008-0423
+Voice:  (262) 783-5869
+Fax:    (262) 783-5928
+Mobile: (414) 412-5869
+E-mail: &lt;cd ... @wi.rr.com&gt; or &lt;cr ... @ctdedo.com&gt;
+</POST>
+<POST>
+<POSTER> glen herrmannsfeldt &lt;g...@ugcs.caltech.edu&gt; </POSTER>
+<POSTDATE> 2008-01-30T15:12:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+bonza ... @gmail.com wrote:
+">
+
+(snip)
+
+<QUOTE PREVIOUSPOST="
+&gt; You can try using pointers instead (they are pretty simple to use in
+&gt; f95). If you declare propertynames as a pointer, I.e. replace
+&gt; 'allocatable' with 'pointer', you can still allocate memory as you
+&gt; have. Then you simply need to declare the variable in the calling
+&gt; program to also be a pointer (same shape). You also have to use the
+&gt; save attribute in the subroutine to ensure the memory isnt lost when
+&gt; the subroutine exits.
+">
+
+The ALLOCATE statement has two uses.  One to allocate an ALLOCATABLE
+variable, the other to allocate the TARGET of a POINTER variable.
+It is probably best not to mix the use of ALLOCATABLE and POINTER
+together.
+
+ALLOCATABLE variables are deallocated as appropriate when the
+appropriate routine exits.   POINTER targets allocated with
+an ALLOCATE statement are not automatically deallocated.
+
+If I understand the post above, there is no need for a SAVE
+attribute.
+
+-- glen
+</POST>
+<POST>
+<POSTER> nos...@see.signature (Richard Maine) </POSTER>
+<POSTDATE> 2008-01-30T16:29:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&lt;bonza ... @gmail.com&gt; wrote:
+&gt; You can try using pointers instead (they are pretty simple to use in
+&gt; f95).
+">
+
+However, they would do nothing to solve either of the problems with the
+OP's code, as pointers have exactly the same requirements. Namely
+
+1. The array in the main program also needs the comparable property
+(pointer or allocatable as the case may be).
+
+2. The subroutine needs an explicit interface.
+
+The only thing solved by using pointer is to make the code
+f90/f95-conforming, as allocatable dummy arguments require either f2003
+or f95+TR. But most compilers do support the TR by now, and that does
+not appear to be the OP's problem.
+
+I would say that changing to using a pointer here would not solve any
+problems, but might add new ones (memory management problems and the
+likelihood of errors both go way up with pointers compared to
+allocatables).
+
+<QUOTE PREVIOUSPOST="
+&gt; If you declare propertynames as a pointer...
+&gt; You also have to use the
+&gt; save attribute in the subroutine to ensure the memory isn't lost when
+&gt; the subroutine exits.
+">
+
+That is not so.
+
+In fact, you are not allowed to use SAVE for dummy arguments at all.
+
+--
+Richard Maine                    | Good judgement comes from experience;
+email: last name at domain . net | experience comes from bad judgement.
+domain: summertriangle           |  -- Mark Twain
+</POST>
+<POST>
+<POSTER> nos...@see.signature (Richard Maine) </POSTER>
+<POSTDATE> 2008-01-30T16:34:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Craig Dedo &lt;cd ... @wi.rr.com&gt; wrote:
+&gt;     Using allocatable arrays is preferable to using pointers to
+&gt; allocatable arrays, as suggested by another poster.  Direct use of
+&gt; allocatables is easier to understand and easier to avoid troublesome
+&gt; mistakes.
+">
+
+While I agree with the above advise in general, please note that none of
+the other posters suggested using pointers to allocatables.... unless
+there was some post that didn't (yet?) make it to my server. There was a
+suggestion to use pointer instead of allocatable, but that's a different
+thing. (I recommend against it also).
+
+<QUOTE PREVIOUSPOST="
+&gt;     In order to use allocatables in your procedures, you need to add the
+&gt; &quot;Allocatable&quot; attribute to the declaration of your arrays in the main program.
+&gt; E.g., you would write:
+&gt;     Character (Len=8), Allocatable    :: propertyNames(:)
+">
+
+And the explicit interface, as mentioned by others.
+
+--
+Richard Maine                    | Good judgement comes from experience;
+email: last name at domain . net | experience comes from bad judgement.
+domain: summertriangle           |  -- Mark Twain
+</POST>
+<POST>
+<POSTER> glen herrmannsfeldt &lt;g...@ugcs.caltech.edu&gt; </POSTER>
+<POSTDATE> 2008-01-30T18:30:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Richard Maine wrote:
+">
+
+(snip)
+
+<QUOTE PREVIOUSPOST="
+&gt; The only thing solved by using pointer is to make the code
+&gt; f90/f95-conforming, as allocatable dummy arguments require either f2003
+&gt; or f95+TR. But most compilers do support the TR by now, and that does
+&gt; not appear to be the OP's problem.
+">
+
+For some that might be enough reason.
+
+<QUOTE PREVIOUSPOST="
+&gt; I would say that changing to using a pointer here would not solve any
+&gt; problems, but might add new ones (memory management problems and the
+&gt; likelihood of errors both go way up with pointers compared to
+&gt; allocatables).
+">
+
+(someone else wrote)
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;You also have to use the
+&gt;&gt;save attribute in the subroutine to ensure the memory isn't lost when
+&gt;&gt;the subroutine exits.
+&gt; That is not so.
+&gt; In fact, you are not allowed to use SAVE for dummy arguments at all.
+">
+
+The only reason I could think of for that statement was that
+one might use a pointer dummy pointing to an ALLOCATABLE.
+If one didn't understand that ALLOCATE could be used with pointer
+variables, one might try that.  It would seem even more error
+prone than using pointers alone.
+
+-- glen
+</POST>
+<POST>
+<POSTER> Infinity77 &lt;andrea.gav...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-31T10:04:00 </POSTDATE>
+Hi All,
+
+thank you very much for your kind and quick suggestions. By
+following the advice provided by Reinhold (and supported by others) I
+was able to make my routine working. Sorry for the newbie question.
+
+Andrea.
+</POST>
+<POST>
+<POSTER> Judge &lt;bonza...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-02-06T11:25:00 </POSTDATE>
+On Jan 31, 3:04 pm, Infinity77 &lt;andrea.gav ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi All,
+
+&gt;     thank you very much for your kind and quick suggestions. By
+&gt; following the advice provided by Reinhold (and supported by others) I
+&gt; was able to make my routine working. Sorry for the newbie question.
+
+&gt; Andrea.
+">
+
+Sorry for the newbie answer!
+
+To clarify, I was suggesting pointing to an allocated array (though I
+didn't make this very clear)
+hence the save attribute.
+I agree that my way wasn't the best approach. I think I have learnt as
+much as the OP!
+</POST>
+</TEXT>
+</BODY>
+</DOC>

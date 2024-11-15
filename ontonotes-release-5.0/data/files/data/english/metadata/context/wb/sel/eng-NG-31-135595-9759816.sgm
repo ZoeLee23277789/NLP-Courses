@@ -1,0 +1,1928 @@
+<DOC>
+<DOCID> eng-NG-31-135595-9759816 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2008-01-03T14:25:00 </DATETIME>
+<BODY>
+<HEADLINE>
+&quot;round&quot; - improvement suggestion
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> ZB &lt;zbREMOVE_THIS@AND_THISispid.com.pl&gt; </POSTER>
+<POSTDATE> 2008-01-03T14:25:00 </POSTDATE>
+I would to suggest a change of that function from:
+
+::tcl::mathfunc::round arg
+
+to:
+
+::tcl::mathfunc::round arg ?arg ...?
+
+Just to have a possibility to round a value having given number of decimal
+places. It could work &quot;by default&quot; like it's working presently, but when
+using syntax like:
+
+set a [round 34.258123 2]
+
+...it should return: 34.26
+
+What do you think? Could be possible?
+--
+ZB
+</POST>
+<POST>
+<POSTER> Jeff Hobbs &lt;jeff.ho...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-03T18:07:00 </POSTDATE>
+On Jan 3, 11:25 am, ZB &lt;zbREMOVE_THIS@AND_THISispid.com.pl&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I would to suggest a change of that function from:
+...
+&gt;   ::tcl::mathfunc::round arg ?arg ...?
+
+&gt; Just to have a possibility to round a value having given number of decimal
+&gt; places. It could work &quot;by default&quot; like it's working presently, but when
+&gt; using syntax like:
+
+&gt;   set a [round 34.258123 2]
+
+&gt; ...it should return: 34.26
+">
+
+But that is just [format %.2f $num].  I don't think round needs to be
+altered from what others would be familiar with coming from any other
+language.
+
+Jeff
+</POST>
+<POST>
+<POSTER> ZB &lt;zbREMOVE_THIS@AND_THISispid.com.pl&gt; </POSTER>
+<POSTDATE> 2008-01-03T17:24:00 </POSTDATE>
+Dnia 03.01.2008 Jeff Hobbs &lt;jeff.ho ... @gmail.com&gt; napisa³/a:
+
+<QUOTE PREVIOUSPOST="
+&gt; But that is just [format %.2f $num].  I don't think round needs to be
+&gt; altered from what others would be familiar with coming from any other
+&gt; language.
+">
+
+My proposal was something &quot;in the spirit&quot; of in/ni. Of course, one could
+still use { [lsearch ... ] == -1} - but isn't in/ni nicer? The same would be
+having optional &quot;decimal places&quot; parameter for &quot;round&quot;. No incompatibility -
+just the additional convenience...
+--
+ZB
+</POST>
+<POST>
+<POSTER> Eric Hassold &lt;hass...@evolane.com&gt; </POSTER>
+<POSTDATE> 2008-01-03T20:22:00 </POSTDATE>
+Hello,
+
+Jeff Hobbs wrote :
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 3, 11:25 am, ZB &lt;zbREMOVE_THIS@AND_THISispid.com.pl&gt; wrote:
+&gt;&gt; I would to suggest a change of that function from:
+&gt;   ...
+&gt;&gt;   ::tcl::mathfunc::round arg ?arg ...?
+
+&gt;&gt; Just to have a possibility to round a value having given number of decimal
+&gt;&gt; places. It could work &quot;by default&quot; like it's working presently, but when
+&gt;&gt; using syntax like:
+
+&gt;&gt;   set a [round 34.258123 2]
+
+&gt;&gt; ...it should return: 34.26
+
+&gt; But that is just [format %.2f $num].  I don't think round needs to be
+&gt; altered from what others would be familiar with coming from any other
+&gt; language.
+">
+
+Maybe I'm misunderstanding the last sentence, but do you mean people
+coming from other language are familiar with round taking only one
+argument? From C, indeed, but many other languages support this
+additional and optional argument (which of course default to 0). Among
+most popular ones:
+
+PHP: http://www.php.net/round
+Python: http://www.python.org/doc/2.2.1/lib/built-in-funcs.html
+SQL: http://www.postgresql.org/docs/8.1/static/typeconv-func.html
+...
+
+Also, rounding is not strictly equivalent to formatting. format returns
+a string, round(value,n) (with n&gt;0) returns a float (an integer or
+bignum if n==0). So I believe OP sample is incorrect, since
+set a [round 34.258123 2]
+which would be equivalent to
+set a [expr {round(34.258123,2)}]
+should return a float number for round(34.258123*100.0)/100.0, which,
+due to IEEE floating point representation, may be different from 34.26.
+For example, in Python:
+
+&gt;&gt;&gt; round(34.258123,2)
+34.259999999999998
+
+So, round(value,n) is useful for those doing maths, and should be more
+efficient (by returning float object) and not equivalent to format.
+Since supporting this optional argument doesn't introduce any potential
+incompability, this may be an interesting addon.
+
+Eric
+</POST>
+<POST>
+<POSTER> ZB &lt;zbREMOVE_THIS@AND_THISispid.com.pl&gt; </POSTER>
+<POSTDATE> 2008-01-03T20:03:00 </POSTDATE>
+Dnia 04.01.2008 Eric Hassold &lt;hass ... @evolane.com&gt; napisa³/a:
+
+<QUOTE PREVIOUSPOST="
+&gt; For example, in Python:
+
+&gt; &gt;&gt;&gt; round(34.258123,2)
+&gt; 34.259999999999998
+">
+
+So, it must be a serious bug there: you wanted 2 decimal places, but you've
+got 15 of them instead.
+
+Using &quot;format&quot;, Tcl gives returns result:
+
+tclsh8.5 [~]set x [format &quot;%.2f&quot; 34.258123]
+34.26
+
+--
+ZB
+</POST>
+<POST>
+<POSTER> Michael Schlenker &lt;schl...@uni-oldenburg.de&gt; </POSTER>
+<POSTDATE> 2008-01-03T21:06:00 </POSTDATE>
+ZB schrieb:
+
+<QUOTE PREVIOUSPOST="
+&gt; I would to suggest a change of that function from:
+
+&gt;   ::tcl::mathfunc::round arg
+
+&gt; to:
+
+&gt;   ::tcl::mathfunc::round arg ?arg ...?
+
+&gt; Just to have a possibility to round a value having given number of decimal
+&gt; places. It could work &quot;by default&quot; like it's working presently, but when
+&gt; using syntax like:
+
+&gt;   set a [round 34.258123 2]
+
+&gt; ...it should return: 34.26
+
+&gt; What do you think? Could be possible?
+">
+
+Possible, even trivial, just write your own round proc in
+::tcl::mathfunc::round that does it.
+
+As a default feature, sounds not too bad.
+
+Michael
+</POST>
+<POST>
+<POSTER> Eric Hassold &lt;hass...@evolane.com&gt; </POSTER>
+<POSTDATE> 2008-01-03T21:08:00 </POSTDATE>
+ZB a écrit :
+
+<QUOTE PREVIOUSPOST="
+&gt; Dnia 04.01.2008 Eric Hassold &lt;hass ... @evolane.com&gt; napisa³/a:
+
+&gt;&gt; For example, in Python:
+
+&gt;&gt;&gt;&gt;&gt; round(34.258123,2)
+&gt;&gt; 34.259999999999998
+
+&gt; So, it must be a serious bug there: you wanted 2 decimal places, but you've
+&gt; got 15 of them instead.
+
+&gt; Using &quot;format&quot;, Tcl gives returns result:
+
+&gt; tclsh8.5 [~]set x [format &quot;%.2f&quot; 34.258123]
+&gt; 34.26
+">
+
+That is precisely why round() is different from format. round() returns
+a float, not a string representation. And float on computers are not
+real numbers. So this is not a bug in Python, and neither this is a bug
+in Tcl when you do something like:
+
+% set tcl_precision 17
+17
+% expr {34.29}
+34.289999999999999
+
+34.29 has no exact IEEE representation. If you explicitely request for
+formating it with 2 decimals, [format] will return a string. But if you
+do math, then round() may be defined as:
+
+round(x,n) = round(x*pow(10,n))/pow(10,n)
+
+and what you get is the closest IEEE float number for this. Then, if you
+ask to display this float number, it won't ever be exactly equal to
+34.29. Since Tcl uses $tcl_precision to implicitely round floats when
+converting them to strings (e.g. when displaying this), this might not
+be obvious to everyone. But setting tcl_precison to higher value shows
+exactly same behaviour than Python (or any other language handling real
+value as double)
+
+If what you want is &quot;format this float number with 2 decimals&quot;, then
+Jeff's reply is correct, this is what format is for. I don't believe
+round() should be an alias for format.
+
+Eric
+</POST>
+<POST>
+<POSTER> Alan Anderson &lt;arand...@insightbb.com&gt; </POSTER>
+<POSTDATE> 2008-01-03T23:17:00 </POSTDATE>
+In article &lt;flk4ev$12a ... @biggoron.nerim.net&gt;,
+Eric Hassold &lt;hass ... @evolane.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; That is precisely why round() is different from format. round() returns
+&gt; a float, not a string representation.
+">
+
+I was under the impression that round() was supposed to give [a string
+representation of] an integer.  It differs so much from format that I
+wouldn't even have thought to compare them.  I would have contrasted it
+with trunc() instead.
+</POST>
+<POST>
+<POSTER> Don Porter &lt;dgpor...@verizon.net&gt; </POSTER>
+<POSTDATE> 2008-01-04T00:21:00 </POSTDATE>
+ZB schrieb:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;   set a [round 34.258123 2]
+&gt;&gt; ...it should return: 34.26
+&gt;&gt; What do you think? Could be possible?
+Michael Schlenker wrote:
+&gt; Possible, even trivial, just write your own round proc in
+&gt; ::tcl::mathfunc::round that does it.
+">
+
+Even better write your own proc [tcl::mathfunc::round] *relative
+to your namespace*.  That is, for code that you are writing in
+the namespace ::my, define ::my::tcl::mathfunc::round to your liking
+and [expr round(...)] evaluated in ::my will use your preferred
+round(.) definition while not disrupting the original built-in
+version that other modules in your program may be relying on.
+
+DGP
+</POST>
+<POST>
+<POSTER> Darren New &lt;d...@san.rr.com&gt; </POSTER>
+<POSTDATE> 2008-01-04T00:33:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Don Porter wrote:
+&gt; round(.) definition while not disrupting the original built-in
+&gt; version that other modules in your program may be relying on.
+">
+
+Now *that* is an awesome feature! :-)  Very well thought-out!
+
+--
+Darren New / San Diego, CA, USA (PST)
+It's not feature creep if you put it
+at the end and adjust the release date.
+</POST>
+<POST>
+<POSTER> Kevin Kenny &lt;kenn...@acm.org&gt; </POSTER>
+<POSTDATE> 2008-01-04T01:02:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Eric Hassold wrote:
+&gt; Also, rounding is not strictly equivalent to formatting. format returns
+&gt; a string, round(value,n) (with n&gt;0) returns a float (an integer or
+&gt; bignum if n==0). So I believe OP sample is incorrect, since
+&gt;   set a [round 34.258123 2]
+&gt; which would be equivalent to
+&gt;   set a [expr {round(34.258123,2)}]
+&gt; should return a float number for round(34.258123*100.0)/100.0, which,
+&gt; due to IEEE floating point representation, may be different from 34.26.
+&gt; For example, in Python:
+
+&gt;  &gt;&gt;&gt; round(34.258123,2)
+&gt; 34.259999999999998
+">
+
+Python isn't getting this quite right.  Tcl 8.5 does a good bit better,
+by choosing the shortest string of digits that reconverts to the
+original floating point number:
+
+% proc round2 {x} {expr {0.01 * round(100.0 * $x)}}
+% round2 34.258123
+34.26
+% info tclversion
+8.5
+
+By the way, in 8.5, you can define your own rounding function
+by putting it in the tcl::mathfunc namespace.
+
+Kevin
+</POST>
+<POST>
+<POSTER> Fredderic &lt;my-name-h...@excite.com&gt; </POSTER>
+<POSTDATE> 2008-01-04T01:41:00 </POSTDATE>
+On Fri, 04 Jan 2008 03:06:59 +0100,
+
+<QUOTE PREVIOUSPOST="
+Michael Schlenker &lt;schl ... @uni-oldenburg.de&gt; wrote:
+&gt;&gt;   set a [round 34.258123 2]
+&gt;&gt; ...it should return: 34.26
+&gt;&gt; What do you think? Could be possible?
+&gt; Possible, even trivial, just write your own round proc in
+&gt; ::tcl::mathfunc::round that does it.
+&gt; As a default feature, sounds not too bad.
+">
+
+I second that, personally...  I've wanted something like that for error
+estimation a few times, and ended up writing a [fix] function to do it
+(from the &quot;fix&quot; mode that appears on calculators, although that mode is
+more like [format] than round(), and not quite right for this purpose).
+
+And the only code it should break, is already seriously broken
+already.  ;)
+
+Fredderic
+</POST>
+<POST>
+<POSTER> ZB &lt;zbREMOVE_THIS@AND_THISispid.com.pl&gt; </POSTER>
+<POSTDATE> 2008-01-04T05:35:00 </POSTDATE>
+Dnia 04.01.2008 Eric Hassold &lt;hass ... @evolane.com&gt; napisa³/a:
+
+<QUOTE PREVIOUSPOST="
+&gt; That is precisely why round() is different from format. round() returns
+&gt; a float, not a string representation.
+">
+
+But taking into consideration Tcl's &quot;everything's a string&quot; approach, I'm
+not really sure (not knowing Tcl's internals at C-level), what exactly I'm
+getting doing that operations. A &quot;real&quot; number value, or &quot;a string, which
+can be interpreted as number&quot;?
+
+And because variables in Tcl need no previous declaration, and are
+automatically &quot;converted&quot; in case of need - it seems, that actually I don't
+need exact information, &quot;what's this&quot; - at least, when it's doing what was
+expected.
+
+<QUOTE PREVIOUSPOST="
+&gt; If what you want is &quot;format this float number with 2 decimals&quot;, then
+&gt; Jeff's reply is correct, this is what format is for.
+">
+
+This time I wanted it just for data output, and so I noticed, that it would
+be easier to have the suggested possibility (it's &quot;natural&quot; to me to say,
+that I want 2 decimal places) - but soon it can be handy for some financial
+calculations (you know: &quot;internally&quot; 4 decimal places, &quot;externally&quot; 2
+decimal places). &quot;format&quot; will work, of course - but the script would be
+more clear using [round $x 2].
+
+<QUOTE PREVIOUSPOST="
+&gt; I don't believe round() should be an alias for format.
+">
+
+Didn't write, it should be. I was just wondering, are the &quot;real numbers&quot; and
+&quot;the strings, which can be interpreted as numbers&quot; really recognized by Tcl
+as two different kind of variables. Not sure.
+--
+ZB
+</POST>
+<POST>
+<POSTER> EKB &lt;e...@kb-creative.net&gt; </POSTER>
+<POSTDATE> 2008-01-04T06:24:00 </POSTDATE>
+On Jan 4, 12:02 am, Kevin Kenny &lt;kenn ... @acm.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Eric Hassold wrote:
+&gt; &gt; Also, rounding is not strictly equivalent to formatting. format returns
+&gt; &gt; a string, round(value,n) (with n&gt;0) returns a float (an integer or
+&gt; &gt; bignum if n==0). So I believe OP sample is incorrect, since
+&gt; &gt;   set a [round 34.258123 2]
+&gt; &gt; which would be equivalent to
+&gt; &gt;   set a [expr {round(34.258123,2)}]
+&gt; &gt; should return a float number for round(34.258123*100.0)/100.0, which,
+&gt; &gt; due to IEEE floating point representation, may be different from 34.26.
+&gt; &gt; For example, in Python:
+
+&gt; &gt;  &gt;&gt;&gt; round(34.258123,2)
+&gt; &gt; 34.259999999999998
+
+&gt; Python isn't getting this quite right.  Tcl 8.5 does a good bit better,
+&gt; by choosing the shortest string of digits that reconverts to the
+&gt; original floating point number:
+
+&gt; % proc round2 {x} {expr {0.01 * round(100.0 * $x)}}
+&gt; % round2 34.258123
+&gt; 34.26
+&gt; % info tclversion
+&gt; 8.5
+
+&gt; By the way, in 8.5, you can define your own rounding function
+&gt; by putting it in the tcl::mathfunc namespace.
+
+&gt; Kevin
+">
+
+So, for pre-8.5,
+
+proc roundn {x {n 0}} {expr {pow(10.0, -$n) * round(pow(10.0, $n) *
+$x)}}
+
+will do it. In 8.5,
+
+tcl::mathfunc::roundn {x {n 0}} {expr {10.0**{-$n} * round(10.0**$n *
+$x)}}
+
+will allow you to do this:
+% expr {roundn(10.335534,2)}
+10.34
+
+Of course it's slower than round, but not too bad:
+
+% time {expr{round(10.5)}} 1000
+1.227 microseconds per iteration
+% time {expr{roundn(10.5)}} 1000
+4.392 microseconds per iteration
+
+Eric
+</POST>
+<POST>
+<POSTER> ZB &lt;zbREMOVE_THIS@AND_THISispid.com.pl&gt; </POSTER>
+<POSTDATE> 2008-01-04T05:56:00 </POSTDATE>
+Dnia 04.01.2008 Michael Schlenker &lt;schl ... @uni-oldenburg.de&gt; napisa³/a:
+
+<QUOTE PREVIOUSPOST="
+&gt; Possible, even trivial, just write your own round proc in
+&gt;::tcl::mathfunc::round that does it.
+">
+
+Of course - but having that in core will mean, that it'll be faster. And it
+won't spoil anything, while making &quot;round&quot; functionality more &quot;natural&quot;;
+presently it's unnecessarily limited just to integers. Of course, not every
+proposal can be thrown into the core - but I don't think, that my suggestion
+can be considered as &quot;bloat&quot;.
+
+Being aware, that I'm using interpreted language, I'm always trying to save
+the cycles  ;) - especially, when repeating something in a loop, etc.
+--
+ZB
+</POST>
+<POST>
+<POSTER> ZB &lt;zbREMOVE_THIS@AND_THISispid.com.pl&gt; </POSTER>
+<POSTDATE> 2008-01-04T06:07:00 </POSTDATE>
+Dnia 04.01.2008 Don Porter &lt;dgpor ... @verizon.net&gt; napisa³/a:
+
+<QUOTE PREVIOUSPOST="
+&gt; define ::my::tcl::mathfunc::round to your liking
+&gt; and [expr round(...)] evaluated in ::my will use your preferred
+&gt; round(.) definition while not disrupting the original built-in
+&gt; version that other modules in your program may be relying on.
+">
+
+Adding an *optional* parameter to existing &quot;round&quot; won't cause any disruption
+--
+ZB
+</POST>
+<POST>
+<POSTER> Eric Hassold &lt;hass...@evolane.com&gt; </POSTER>
+<POSTDATE> 2008-01-04T09:11:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Kevin Kenny wrote:
+&gt; Eric Hassold wrote:
+&gt;&gt; Also, rounding is not strictly equivalent to formatting. format
+&gt;&gt; returns a string, round(value,n) (with n&gt;0) returns a float (an
+&gt;&gt; integer or bignum if n==0). So I believe OP sample is incorrect, since
+&gt;&gt;   set a [round 34.258123 2]
+&gt;&gt; which would be equivalent to
+&gt;&gt;   set a [expr {round(34.258123,2)}]
+&gt;&gt; should return a float number for round(34.258123*100.0)/100.0, which,
+&gt;&gt; due to IEEE floating point representation, may be different from
+&gt;&gt; 34.26. For example, in Python:
+
+&gt;&gt;  &gt;&gt;&gt; round(34.258123,2)
+&gt;&gt; 34.259999999999998
+
+&gt; Python isn't getting this quite right.  Tcl 8.5 does a good bit better,
+&gt; by choosing the shortest string of digits that reconverts to the
+&gt; original floating point number:
+
+&gt; % proc round2 {x} {expr {0.01 * round(100.0 * $x)}}
+&gt; % round2 34.258123
+&gt; 34.26
+&gt; % info tclversion
+&gt; 8.5
+">
+
+Hello,
+
+Yes, thanks to the tcl_precision used in getting string representation
+of floats.
+
+% proc round2 {x} {expr {0.01 * round(100.0 * $x)}}
+% round2 34.258123
+34.26
+% format %.2f 34.258123
+34.26
+
+% set tcl_precision 17
+17
+%  round2 34.258123
+34.259999999999998
+% format %.2f 34.258123
+34.26
+
+My sample aims only to show difference between round and format. Former
+returns a float object, which append to be correcly displayed according
+to tcl_precision setting, latter returns always a string, which won't
+change, but which will be unefficient if chaining returned value in
+other math ops.
+
+Another difference between format and round:
+
+% round2 1.0000003
+1.0
+% format %.2f 1.0000003
+1.00
+
+Eric
+</POST>
+<POST>
+<POSTER> Kevin Kenny &lt;kenn...@acm.org&gt; </POSTER>
+<POSTDATE> 2008-01-04T09:25:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Kevin Kenny wrote:
+&gt;&gt; Python isn't getting this quite right.  Tcl 8.5 does a good bit better,
+&gt;&gt; by choosing the shortest string of digits that reconverts to the
+&gt;&gt; original floating point number:
+
+&gt;&gt; % proc round2 {x} {expr {0.01 * round(100.0 * $x)}}
+&gt;&gt; % round2 34.258123
+&gt;&gt; 34.26
+&gt;&gt; % info tclversion
+&gt;&gt; 8.5
+Eric Hassold wrote:
+&gt; Yes, thanks to the tcl_precision used in getting string representation
+&gt; of floats.
+
+&gt; % proc round2 {x} {expr {0.01 * round(100.0 * $x)}}
+&gt; % round2 34.258123
+&gt; 34.26
+&gt; % format %.2f 34.258123
+&gt; 34.26
+
+&gt; % set tcl_precision 17
+&gt; 17
+&gt; %  round2 34.258123
+&gt; 34.259999999999998
+&gt; % format %.2f 34.258123
+&gt; 34.26
+
+&gt; My sample aims only to show difference between round and format. Former
+&gt; returns a float object, which append to be correcly displayed according
+&gt; to tcl_precision setting, latter returns always a string, which won't
+&gt; change, but which will be unefficient if chaining returned value in
+&gt; other math ops.
+">
+
+In 8.5, you should not change tcl_precision, but leave it at its
+(new) default value of 0. (You will note that I mentioned Tcl 8.5
+specifically!)  As I said above, in Tcl 8.5 with default settings,
+the Tcl library chooses the shortest string of digits that
+reconverts to a given floating point number.  This change fixes a
+number of problems where precision is lost if the internal
+representation shimmers away, and corresponding problems where
+two values with identical string representations could have
+different numeric representations.
+
+Tcl 8.5 is considerably more predictable in this area than
+earlier versions were, as long as you don't mess with tcl_precision.
+If you *do* change tcl_precision to a positive value, then you
+get the 8.4 behaviour.
+</POST>
+<POST>
+<POSTER> Eric Hassold &lt;hass...@evolane.com&gt; </POSTER>
+<POSTDATE> 2008-01-04T09:52:00 </POSTDATE>
+Kevin Kenny wrote :
+
+<QUOTE PREVIOUSPOST="
+&gt; In 8.5, you should not change tcl_precision, but leave it at its
+&gt; (new) default value of 0. (You will note that I mentioned Tcl 8.5
+&gt; specifically!)  As I said above, in Tcl 8.5 with default settings,
+&gt; the Tcl library chooses the shortest string of digits that
+&gt; reconverts to a given floating point number.  This change fixes a
+&gt; number of problems where precision is lost if the internal
+&gt; representation shimmers away, and corresponding problems where
+&gt; two values with identical string representations could have
+&gt; different numeric representations.
+
+&gt; Tcl 8.5 is considerably more predictable in this area than
+&gt; earlier versions were, as long as you don't mess with tcl_precision.
+&gt; If you *do* change tcl_precision to a positive value, then you
+&gt; get the 8.4 behaviour.
+">
+
+Kevin,
+
+I'm not trying to show Tcl doesn't behave fine. It does (and 8.5 even
+more), and that's why it's my prefered dynamic language.
+
+I was only trying to illustrate (say, for educational purpose) the
+difference between a function returning a string (format) and a function
+returning a double (like round2), following  Jeff's suggestion to use
+e.g. [format %.2f]. I used tcl_precision only as a way to (try to)
+expose this difference in objects at the Tcl level (I don't remember
+having ever changed tcl_precison in real code). Saying it differently, I
+wanted to put focus on:
+
+proc round2 {x} {expr {0.01 * round(100.0 * $x)}}
+proc round2s {x} { format %.2f $x }
+
+being different, even if, at the prompt level, they seem very similar.
+One consequence of this difference is of course performance:
+
+% time {expr {1.3*[round2  1.12345676]}} 10000
+1.9806 microseconds per iteration
+% time {expr {1.3*[round2s 1.12345676]}} 10000
+5.7781 microseconds per iteration
+
+Eric
+</POST>
+<POST>
+<POSTER> Michael Schlenker &lt;schl...@uni-oldenburg.de&gt; </POSTER>
+<POSTDATE> 2008-01-04T10:32:00 </POSTDATE>
+ZB schrieb:
+
+<QUOTE PREVIOUSPOST="
+&gt; Dnia 04.01.2008 Michael Schlenker &lt;schl ... @uni-oldenburg.de&gt; napisa³/a:
+
+&gt;&gt; Possible, even trivial, just write your own round proc in
+&gt;&gt; ::tcl::mathfunc::round that does it.
+
+&gt; Of course - but having that in core will mean, that it'll be faster.
+">
+
+No. You can nearly trivially write your own round with critcl as a cproc
+or similar and install that inside the namespace. Its not faster, its
+just you dumping the burden of maintaining another feature from your
+desk onto the core maintainers.
+
+<QUOTE PREVIOUSPOST="
+&gt;And it
+&gt; won't spoil anything, while making &quot;round&quot; functionality more &quot;natural&quot;;
+&gt; presently it's unnecessarily limited just to integers. Of course, not every
+&gt; proposal can be thrown into the core - but I don't think, that my suggestion
+&gt; can be considered as &quot;bloat&quot;.
+">
+
+No, not really bloat. But things add up if you take a hundred small
+suggestions.
+
+<QUOTE PREVIOUSPOST="
+&gt; Being aware, that I'm using interpreted language, I'm always trying to save
+&gt; the cycles  ;) - especially, when repeating something in a loop, etc.
+">
+
+Which is often a waste of developer time if things are fast enough already.
+
+Michael
+</POST>
+<POST>
+<POSTER> EKB &lt;e...@kb-creative.net&gt; </POSTER>
+<POSTDATE> 2008-01-04T14:27:00 </POSTDATE>
+On Jan 4, 9:32 am, Michael Schlenker &lt;schl ... @uni-oldenburg.de&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; ZB schrieb:&gt; Dnia 04.01.2008 Michael Schlenker &lt;schl ... @uni-oldenburg.de&gt; napisa³/a:
+
+&gt; &gt;&gt; Possible, even trivial, just write your own round proc in
+&gt; &gt;&gt; ::tcl::mathfunc::round that does it.
+
+&gt; &gt; Of course - but having that in core will mean, that it'll be faster.
+
+&gt; No. You can nearly trivially write your own round with critcl as a cproc
+&gt; or similar and install that inside the namespace. Its not faster, its
+&gt; just you dumping the burden of maintaining another feature from your
+&gt; desk onto the core maintainers.
+
+&gt; &gt;And it
+&gt; &gt; won't spoil anything, while making &quot;round&quot; functionality more &quot;natural&quot;;
+&gt; &gt; presently it's unnecessarily limited just to integers. Of course, not every
+&gt; &gt; proposal can be thrown into the core - but I don't think, that my suggestion
+&gt; &gt; can be considered as &quot;bloat&quot;.
+
+&gt; No, not really bloat. But things add up if you take a hundred small
+&gt; suggestions.
+
+&gt; &gt; Being aware, that I'm using interpreted language, I'm always trying to save
+&gt; &gt; the cycles  ;) - especially, when repeating something in a loop, etc.
+
+&gt; Which is often a waste of developer time if things are fast enough already.
+
+&gt; Michael
+">
+
+I respectfully disagree with this, and agree with ZB. This is a
+sensible change, it does match the convention in several other
+languages, affects no current code, and offers a fast implementation
+of a function that could appear deep in a loop.
+
+Eric
+</POST>
+<POST>
+<POSTER> Michael Schlenker &lt;schl...@uni-oldenburg.de&gt; </POSTER>
+<POSTDATE> 2008-01-04T14:40:00 </POSTDATE>
+EKB schrieb:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 4, 9:32 am, Michael Schlenker &lt;schl ... @uni-oldenburg.de&gt; wrote:
+&gt;&gt; ZB schrieb:&gt; Dnia 04.01.2008 Michael Schlenker &lt;schl ... @uni-oldenburg.de&gt; napisa³/a:
+
+&gt;&gt;&gt;&gt; Possible, even trivial, just write your own round proc in
+&gt;&gt;&gt;&gt; ::tcl::mathfunc::round that does it.
+&gt;&gt;&gt; Of course - but having that in core will mean, that it'll be faster.
+&gt;&gt; No. You can nearly trivially write your own round with critcl as a cproc
+&gt;&gt; or similar and install that inside the namespace. Its not faster, its
+&gt;&gt; just you dumping the burden of maintaining another feature from your
+&gt;&gt; desk onto the core maintainers.
+
+&gt;&gt;&gt; And it
+&gt;&gt;&gt; won't spoil anything, while making &quot;round&quot; functionality more &quot;natural&quot;;
+&gt;&gt;&gt; presently it's unnecessarily limited just to integers. Of course, not every
+&gt;&gt;&gt; proposal can be thrown into the core - but I don't think, that my suggestion
+&gt;&gt;&gt; can be considered as &quot;bloat&quot;.
+&gt;&gt; No, not really bloat. But things add up if you take a hundred small
+&gt;&gt; suggestions.
+
+&gt;&gt;&gt; Being aware, that I'm using interpreted language, I'm always trying to save
+&gt;&gt;&gt; the cycles  ;) - especially, when repeating something in a loop, etc.
+&gt;&gt; Which is often a waste of developer time if things are fast enough already.
+
+&gt;&gt; Michael
+
+&gt; I respectfully disagree with this, and agree with ZB. This is a
+&gt; sensible change, it does match the convention in several other
+&gt; languages, affects no current code, and offers a fast implementation
+&gt; of a function that could appear deep in a loop.
+">
+
+I might have been a bit too harsh in my wording. In another posting i
+already wrote its a reasonable thing to do, but the misinformation about
+'put it in the core to get it fast' prompted me to the post.
+
+The tcl 8.5 mathfunc namespaces makes it really really easy to add your
+own mathfuncs to Tcl without patching the core, those are not second
+class citizens. If you implement them in C you should get very close to
+the same speed you get when included in the core and they are available
+inside expr with the typical math function issue.
+
+As others have pointed out, round to some precision would needs some
+closer definition to be well defined and distinct from format with some
+specifier.
+
+So if the precise meaning of a round() with argument is defined well,
+its a good issue and could be easily included in the core if there is
+real interest and someone pushes a small TIP through. But ZBs argument
+about speed and saving cycles is bogus.
+
+Michael
+</POST>
+<POST>
+<POSTER> ZB &lt;zbREMOVE_THIS@AND_THISispid.com.pl&gt; </POSTER>
+<POSTDATE> 2008-01-04T14:04:00 </POSTDATE>
+Dnia 04.01.2008 Michael Schlenker &lt;schl ... @uni-oldenburg.de&gt; napisa³/a:
+
+<QUOTE PREVIOUSPOST="
+&gt; So if the precise meaning of a round() with argument is defined well,
+&gt; its a good issue and could be easily included in the core if there is
+&gt; real interest and someone pushes a small TIP through. But ZBs argument
+&gt; about speed and saving cycles is bogus.
+">
+
+My personal point of view is that any function (inside, or outside the core)
+is defined just to be useful, and not only &quot;to be well-defined&quot; - therefore
+speed has its meaning, if someone really wants to use it - and not only
+appreciate well done definition.
+
+OK, that was just my _suggestion_. Every reader can have his own opinion.
+--
+ZB
+</POST>
+<POST>
+<POSTER> EKB &lt;e...@kb-creative.net&gt; </POSTER>
+<POSTDATE> 2008-01-04T20:04:00 </POSTDATE>
+On Jan 4, 1:40 pm, Michael Schlenker &lt;schl ... @uni-oldenburg.de&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; The tcl 8.5 mathfunc namespaces makes it really really easy to add your
+&gt; own mathfuncs to Tcl without patching the core, those are not second
+&gt; class citizens. If you implement them in C you should get very close to
+&gt; the same speed you get when included in the core and they are available
+&gt; inside expr with the typical math function issue.
+">
+
+That makes sense. Thanks for clarifying.
+
+Eric
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-05T13:00:00 </POSTDATE>
+On Jan 4, 5:04 pm, EKB &lt;e ... @kb-creative.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 4, 1:40 pm, Michael Schlenker &lt;schl ... @uni-oldenburg.de&gt; wrote:
+
+&gt; &gt; The tcl 8.5 mathfunc namespaces makes it really really easy to add your
+&gt; &gt; own mathfuncs to Tcl without patching the core, those are not second
+&gt; &gt; class citizens. If you implement them in C you should get very close to
+&gt; &gt; the same speed you get when included in the core and they are available
+&gt; &gt; inside expr with the typical math function issue.
+
+&gt; That makes sense. Thanks for clarifying.
+">
+
+There is something else to consider here. It seems that the only
+motivation for this mathfunc is for formatting output. In fact that
+can be the only motivation, because there isn't a good mathematical
+motivation.
+
+From a math/data point of view, rounding is only done at the end of a
+calculation, and the purpose is to present a result which represents
+the true precision of the overall calculation.
+
+But in [expr] the round() function is specifically targeted at
+creating an integer. The easiest way to explain the problem is with an
+example:
+
+% expr round(47/10)
+4
+% expr round(47/10.0)
+5
+
+When analyzing the round() function, you need to take into account how
+[expr] works with integer values. This is a feature of sorts, but it
+has to be kept in mind if you think you are working with real numbers
+(floats, whatever, things with a decimal point).
+
+So Rounding in the above example, is a 'workaround' for the fact that
+you had to 'add precision' to the original integer looking value '10'.
+It gives you the closest integer to 47/10. There is no other way to do
+this generically in Tcl.
+
+If a round(d,n) function is added to Tcl, it will likely be use by
+some as a formatting tool. Although this could be considered okay, it
+is entirely incorrect to do this as a math function in Tcl (Maybe some
+other language have a reason for it, but not Tcl).
+
+Here are some examples of how round(d,n) can be misused in the
+mathematical sense:
+
+% round(1.5, 2) ==&gt; 1.50 (this adds precision which doesn't exist in
+the original value).
+
+% round(1.4999, 2) ==&gt; 1.50 (this looks good so far)
+
+% round(round(1.5,0)         ==&gt; 2
+% round(round(1.4999, 2), 0) ==&gt; 2
+
+The last is the reason that rounding beyond the decimal point is a
+final step for mathematical operations. If developers use round(d,n)
+as a formatting tool, it is likely that they will not appreciate this
+fact, that you can't reliably nest round(d,n) and you end up with data
+dependent bugs.
+
+One last problem is that any future maintenance of the code which uses
+round(d,n) will require reanalysis of the reason for using it. Is it
+formatting? Is the precision correct? Is there any nesting?
+
+I think the real problem is that round() is misnamed somewhat, but it
+is hard to think of an exact name which would be understood to round
+to the nearest integer value. But the fact that we don't have a
+round(d,n) is not an oversight in the Tcl language. It is
+mathematically correct and will not lead to any data dependent bugs or
+abuse by developers. Although you could argue that it is okay to allow
+developers to shoot themselves in the foot, maybe it is also okay to
+allow them to learn the subtleties of the Tcl language.
+
+This is where [format] comes in. It is a horrible, but necessary tool.
+It is horribly documented. Only someone familiar with actual examples
+could understand the manpage. But [format] is the correct thing to use
+because it causes a separation between the code which creates the
+value and the code which mangles the value into some useful display
+format. This is a good programming style to follow in general because
+it reduces the amount of thinking you have to do with each command
+(now and in the future).  Some things you would have to think about if
+you combine these two operations:
+
+1. will you ever use the raw value again, maybe in a later
+calculation?
+2. will you ever need to edit the calculation code in the future?
+3. will you ever display the value in two different formats?
+4. will you ever need to use any of the other formatting options
+missing from round(d,n)?
+5. will future/fellow developers need to understand what you were
+intending to do?
+
+Answering anything other than 'no' is an indication that you need to
+separate the two operations.
+</POST>
+<POST>
+<POSTER> ZB &lt;zbREMOVE_THIS@AND_THISispid.com.pl&gt; </POSTER>
+<POSTDATE> 2008-01-05T12:43:00 </POSTDATE>
+Dnia 05.01.2008 tom.rmadilo &lt;tom.rmad ... @gmail.com&gt; napisa³/a:
+
+<QUOTE PREVIOUSPOST="
+&gt; There is something else to consider here. It seems that the only
+&gt; motivation for this mathfunc is for formatting output. In fact that
+&gt; can be the only motivation, because there isn't a good mathematical
+&gt; motivation.
+&gt; [..]
+&gt; This is where [format] comes in. It is a horrible, but necessary tool.
+&gt; It is horribly documented. Only someone familiar with actual examples
+&gt; could understand the manpage. But [format] is the correct thing to use
+&gt; because it causes a separation between the code which creates the
+&gt; value and the code which mangles the value into some useful display
+&gt; format. This is a good programming style to follow in general because
+&gt; it reduces the amount of thinking you have to do with each command
+&gt; (now and in the future).  Some things you would have to think about if
+&gt; you combine these two operations: [..]
+">
+
+Yes, it was - entirely - very convincing, and such way one can deny
+implementing round(x,dp) in any other language as well. After reading all
+that, I'm truly amazed, that round(x,dp) has been implemented anywhere
+at all. It was even more convincing, than other very convincing argument
+against: &quot;take critcl and do it yourself&quot; (at the same time it's another
+&quot;contra&quot; valid for any other feature suggestion, wanted in Tcl or in any
+other language).
+
+But I'm still voting for adding an *optional* &quot;decimal places&quot; parameter for
+those about to use it; the ones, who won't need it - just won't use it. Isn't
+it simple?
+--
+ZB
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-05T16:50:00 </POSTDATE>
+On Jan 5, 9:43 am, ZB &lt;zbREMOVE_THIS@AND_THISispid.com.pl&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; But I'm still voting for adding an *optional* &quot;decimal places&quot; parameter for
+&gt; those about to use it; the ones, who won't need it - just won't use it. Isn't
+&gt; it simple?
+">
+
+If you want simplicity, adding this feature doesn't give it. But this
+is another argument not worth pursing just yet.
+
+I think there are more problems with this idea that it appears at
+first. Before I get in to them, why not enable round(d,n), but name it
+something more useful:
+
+proc ::tcl::mathfunc::format {format value} {
+puts stderr &quot;format = '$format' value = '$value'&quot;
+::format $format $value
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+We'll leave the [puts] in for analysis.
+
+Try  this:
+% ::tcl::mathfunc::format %2.2f 5
+format = '%2.2f' value = '5'
+5.00
+
+This looks right, so the function is working. Now in [expr]:
+
+% expr format(&quot;%2.2f&quot;, 5)
+format = '%2.2f' value = '5'
+5.0
+
+Hmmm, interesting. The rounding got truncated, removing any trailing
+zeros. Now you will have to work around this property of [expr] in
+order to add your simple rounding feature.
+
+But you can just use my one line proc above (after removing the puts)
+and be somewhat satisfied, it will work most of the time.
+
+Yes it works for nested calculations:
+
+% expr format(&quot;%2.2f&quot;, (100.002 * 200))
+format = '%2.2f' value = '20000.399999999998'
+20000.4
+
+But what is up with the original calculated value? I wonder if there
+is something wrong with my install of 8.5 (x86_64):
+
+% expr entier(20.4)
+20
+% expr entier(20000000000000000.4)
+20000000000000000
+% expr entier(200000000000000000000.4)
+200000000000000000000
+% expr entier(2000000000000000000000000000.4)
+2000000000000000026575110144
+</POST>
+<POST>
+<POSTER> EKB &lt;e...@kb-creative.net&gt; </POSTER>
+<POSTDATE> 2008-01-05T17:05:00 </POSTDATE>
+On Jan 5, 11:43 am, ZB &lt;zbREMOVE_THIS@AND_THISispid.com.pl&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Dnia 05.01.2008 tom.rmadilo &lt;tom.rmad ... @gmail.com&gt; napisa³/a:
+
+&gt; &gt; There is something else to consider here. It seems that the only
+&gt; &gt; motivation for this mathfunc is for formatting output. In fact that
+&gt; &gt; can be the only motivation, because there isn't a good mathematical
+&gt; &gt; motivation.
+&gt; &gt; [..]
+&gt; &gt; This is where [format] comes in. It is a horrible, but necessary tool.
+&gt; &gt; It is horribly documented. Only someone familiar with actual examples
+&gt; &gt; could understand the manpage. But [format] is the correct thing to use
+&gt; &gt; because it causes a separation between the code which creates the
+&gt; &gt; value and the code which mangles the value into some useful display
+&gt; &gt; format. This is a good programming style to follow in general because
+&gt; &gt; it reduces the amount of thinking you have to do with each command
+&gt; &gt; (now and in the future).  Some things you would have to think about if
+&gt; &gt; you combine these two operations: [..]
+
+&gt; Yes, it was - entirely - very convincing, and such way one can deny
+&gt; implementing round(x,dp) in any other language as well. After reading all
+&gt; that, I'm truly amazed, that round(x,dp) has been implemented anywhere
+&gt; at all. It was even more convincing, than other very convincing argument
+&gt; against: &quot;take critcl and do it yourself&quot; (at the same time it's another
+&gt; &quot;contra&quot; valid for any other feature suggestion, wanted in Tcl or in any
+&gt; other language).
+
+&gt; But I'm still voting for adding an *optional* &quot;decimal places&quot; parameter for
+&gt; those about to use it; the ones, who won't need it - just won't use it. Isn't
+&gt; it simple?
+&gt; --
+&gt; ZB
+">
+
+ZB, under what circumstances do you foresee using this feature?
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-05T17:10:00 </POSTDATE>
+On Jan 5, 1:50 pm, &quot;tom.rmadilo&quot; &lt;tom.rmad ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; % expr format(&quot;%2.2f&quot;, (100.002 * 200))
+&gt; format = '%2.2f' value = '20000.399999999998'
+&gt; 20000.4
+
+&gt; But what is up with the original calculated value? I wonder if there
+&gt; is something wrong with my install of 8.5 (x86_64):
+">
+
+Here are some more, weird examples:
+
+% expr (1.002 * 200)
+200.4
+% expr (10.002 * 200)
+2000.4
+% expr (100.002 * 200)
+20000.399999999998
+% expr (1000.002 * 200)
+200000.4
+% expr (10000.002 * 200)
+2000000.4000000001
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-05T17:36:00 </POSTDATE>
+On Jan 5, 1:50 pm, &quot;tom.rmadilo&quot; &lt;tom.rmad ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; proc ::tcl::mathfunc::format {format value} {
+&gt;     puts stderr &quot;format = '$format' value = '$value'&quot;
+&gt;     ::format $format $value
+
+&gt; }
+">
+
+....
+
+<QUOTE PREVIOUSPOST="
+&gt; Yes it works for nested calculations:
+
+&gt; % expr format(&quot;%2.2f&quot;, (100.002 * 200))
+&gt; format = '%2.2f' value = '20000.399999999998'
+&gt; 20000.4
+">
+
+This is a value of [expr], not what format returns inside the
+expression:
+
+% expr format(&quot;%2.2f&quot;, format(&quot;%3.3f&quot;, (100.002 * 200)))
+format = '%3.3f' value = '20000.399999999998'
+format = '%2.2f' value = '20000.400'
+20000.4
+
+I've also checked the examples in my previous comment (100.002*200),
+etc. On Tcl8.4, these all work as expected. Anyone seen this. I'm
+hoping it is just a botched installation.
+</POST>
+<POST>
+<POSTER> &quot;Donal K. Fellows&quot; &lt;donal.k.fell...@man.ac.uk&gt; </POSTER>
+<POSTDATE> 2008-01-05T18:28:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+tom.rmadilo wrote:
+&gt; But what is up with the original calculated value? I wonder if there
+&gt; is something wrong with my install of 8.5 (x86_64):
+
+&gt; % expr entier(20.4)
+&gt; 20
+&gt; % expr entier(20000000000000000.4)
+&gt; 20000000000000000
+&gt; % expr entier(200000000000000000000.4)
+&gt; 200000000000000000000
+&gt; % expr entier(2000000000000000000000000000.4)
+&gt; 2000000000000000026575110144
+">
+
+No, it's just called IEEE double-precision arithmetic. It really is
+that strange, though in most cases Tcl now hides the strangeness quite
+well.
+
+Donal.
+</POST>
+<POST>
+<POSTER> ZB &lt;zbREMOVE_THIS@AND_THISispid.com.pl&gt; </POSTER>
+<POSTDATE> 2008-01-05T19:19:00 </POSTDATE>
+Dnia 05.01.2008 tom.rmadilo &lt;tom.rmad ... @gmail.com&gt; napisa³/a:
+
+<QUOTE PREVIOUSPOST="
+&gt; If you want simplicity, adding this feature doesn't give it. But this
+&gt; is another argument not worth pursing just yet.
+">
+
+But of course, it does. What more natural, than operation &quot;round $x to 3 dp
+after comma&quot; - instead of using some &quot;format&quot; patterns? Of course, having no
+other possibility, I'm using format - but it's as natural and easy, as using
+&quot;{[lsearch $x $y] == -1}&quot; instead of &quot;in/ni&quot;.
+
+<QUOTE PREVIOUSPOST="
+&gt; I think there are more problems with this idea that it appears at
+&gt; first. Before I get in to them, why not enable round(d,n), but name it
+&gt; something more useful: [..]
+">
+
+I think, we all (or most of us) are interested in programming because
+solving such puzzles is much more interesting, than - say - laying the
+bricks one on top of another.
+
+Of course, adding more code always will mean adding some more occasions to
+make an error. So what? Replace development with reduction?
+
+And don't take my opinion as attempt to make any pressure on the dev-team,
+cause I'm aware, that I'm unable to extort anything, and I'm not trying to.
+As I (two times already?) wrote: it's just my opinion, that &quot;round&quot; limited
+to produce only integers - is crippled &quot;round&quot;. Yes, &quot;there can be more
+problems&quot; when ev. improving it - and it's not related to fact, that
+&quot;integer-only round&quot; is simply incomplete function.
+--
+ZB
+</POST>
+<POST>
+<POSTER> ZB &lt;zbREMOVE_THIS@AND_THISispid.com.pl&gt; </POSTER>
+<POSTDATE> 2008-01-05T19:32:00 </POSTDATE>
+Dnia 05.01.2008 EKB &lt;e ... @kb-creative.net&gt; napisa³/a:
+
+<QUOTE PREVIOUSPOST="
+&gt; ZB, under what circumstances do you foresee using this feature?
+">
+
+I'm currently particularly interested in writing applications for business,
+and - as I wrote already - there is convention, that financial calculations
+&quot;internally&quot; are made with 4 dp precision, while input/output is made - of
+course - using 2 dp. That's one example, but quite obvious one.
+
+But Tom Rmadilo was right, that rounding is mostly useful for output - but
+I would to ask here: so what? Is proper output of the information considered
+as not important?
+
+But I think, this discussion is going into side threads: my main point was,
+that *any* properly made rounding function should have possibility to set:
+&quot;using how many decimal places?&quot; - and it's really unbelievable, that nobody
+noticed such essential thing during all that years of development of Tcl.
+--
+ZB
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-06T02:15:00 </POSTDATE>
+On Jan 5, 4:32 pm, ZB &lt;zbREMOVE_THIS@AND_THISispid.com.pl&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; But I think, this discussion is going into side threads: my main point was,
+&gt; that *any* properly made rounding function should have possibility to set:
+&gt; &quot;using how many decimal places?&quot; - and it's really unbelievable, that nobody
+&gt; noticed such essential thing during all that years of development of Tcl.
+">
+
+Right, this is your mistake. That is thinking that someone missed
+this. It isn't a miss. Rounding does nothing for internal
+calculations, this is even more true for languages which have actual
+float types. Rounding in these languages doesn't change the storage
+cost, access cost, nothing. It just takes up 'cycles'. And in most, if
+not all, languages which have actual storage for float, there must be
+a conversion to a string type during output.
+
+The key to your analysis above is extremely important. It is almost a
+point-of-view, which you really must rid yourself of. And this is that
+everyone who came before you, everyone who has used these tools,
+somehow missed this.
+
+If the developers of this language could make such a simple mistake,
+and not correct it for 15 years, why would you consider using it? The
+maintainers must be supremely ignorant and uninterested in change. If
+such a simple problem could persist for so long, there must be other,
+much more important issues which need to be addressed. But these
+issues will be even more difficult to fix because those in charge of
+development can't even see the easy stuff.
+
+Instead I recommend that before you express outrage or disbelief at
+the current state of the code, that you redirect this energy to
+investigation. Is it even possible that 15 years worth of input could
+have overlooked your observed missing feature? If the answer is yes,
+then it seems to me that the quality of the code is in inverse
+proportion to the simplicity of the missing feature. If simple, basic
+features are missing, this is a huge oversight for the developers. For
+instance, not supporting threads is an obvious missing feature, but it
+isn't something which is missing by pure oversight. Bashing developers
+for not supporting threads is nearly pointless, because it is so easy
+to see the intention to leave it out.
+
+However, seasoned developers would place support for threads on the
+same level as any other feature. It is either part of the system, or
+not. If it is not part of the system, there is probably a very good
+reason why. The more years that go by, the more users who adopt and
+use the system without complaint, reinforces the original decisions.
+
+If you want to attack these long supported decisions, you really need
+to provide good, very good arguments.
+
+You admit that you are looking for a formatting function. For some
+unknown reason you think this function belongs to in the expr
+category. I've even shown that your formatting will not survive the
+[expr] command! This simple fact should inform you that [expr] is not
+a formatting tool.
+
+Some arguments are bad, some don't apply, but some stand out as purely
+defensive. One of these arguments is the 'simple' argument, otherwise
+known as 'it-is-only-a-little-thing-to-ask'. The argument is that the
+proposal is of such small degree, that it isn't worth arguing about.
+But for some reason the isn't worth arguing about is only applied to
+the other parties who are arguing. The person using the 'simple'
+argument feels free to argue long and hard for their 'simple' change.
+If it is such a little thing, then it doesn't matter much if it isn't
+there, right? So before you argue it is a 'simple' thing, why not just
+save your breath/fingers and say/type it to yourself? What could be
+more simple than that?
+
+But I question one of your supporting arguments...that some financial
+system performs calculations in a four decimal point precision. Where
+does this come from? What is unique about financial calculations that
+would exempt them from the known problems of intermediate rounding?
+Remember we are talking about intermediate rounding, not formatting
+for output or storage. However, I have never seen a system for storing
+important data which couldn't take a float value and round it to a
+predetermined range. This type of 'rounding' requires no programming
+code, just set up the type definition correctly, like once. Rounding
+or formatting is correct for any final result, but inappropriate for
+any intermediate result. This is the long and short of rounding. In
+addition, the term 'rounding' has a specific meaning, distinct from
+formatting. From what I understand, most everyone would be confused to
+get a bill for $1.0 or $34.5. Imagine an invoice where you have items
+for 2.31 and 6.7. This is what Tcl rounding will give you.
+
+At first I thought the argument was for speed, to save cycles, like
+for some unknown superfast something-or-other. But it is becoming more
+obvious that the intent is to avoid using format. It is almost like a
+two-fer backslap. [format] is hard, and [expr] can't do what I want,
+therefore, the problem is [expr], since I read somewhere that rounding
+is possible to more than zero decimal points. This is just piling
+inexperience and misunderstanding layer upon layer. Yes, we are all a
+bunch of dumb f*cks here. Most of us have a clue about languages in
+the whole and realize that any individual command is difficult to
+defend all by itself. Unfortunately, you picked one command which is
+easy to defend.
+</POST>
+<POST>
+<POSTER> EKB &lt;e...@kb-creative.net&gt; </POSTER>
+<POSTDATE> 2008-01-06T02:41:00 </POSTDATE>
+On Jan 5, 6:32 pm, ZB &lt;zbREMOVE_THIS@AND_THISispid.com.pl&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Dnia 05.01.2008 EKB &lt;e ... @kb-creative.net&gt; napisa³/a:
+
+&gt; &gt; ZB, under what circumstances do you foresee using this feature?
+
+&gt; I'm currently particularly interested in writing applications for business,
+&gt; and - as I wrote already - there is convention, that financial calculations
+&gt; &quot;internally&quot; are made with 4 dp precision, while input/output is made - of
+&gt; course - using 2 dp. That's one example, but quite obvious one.
+
+&gt; But Tom Rmadilo was right, that rounding is mostly useful for output - but
+&gt; I would to ask here: so what? Is proper output of the information considered
+&gt; as not important?
+
+&gt; But I think, this discussion is going into side threads: my main point was,
+&gt; that *any* properly made rounding function should have possibility to set:
+&gt; &quot;using how many decimal places?&quot; - and it's really unbelievable, that nobody
+&gt; noticed such essential thing during all that years of development of Tcl.
+&gt; --
+&gt; ZB
+">
+
+I would imagine that they noticed it, just chose not to implement it.
+As evidence I offer the discussion on the page for [round] on the
+tcler's wiki: http://wiki.tcl.tk/2044 .
+
+For what it's worth, I'd tend to agree with you (and have, earlier in
+this thread). It's easy and common to implement round with an optional
+number of decimal places. It's implemented that way in many languages.
+But... I'm not totally surprised at the decision not to implement
+round the way you suggest. It fits with Tcl's minimalism (in the
+core), and it's easy to re-define the function as you desire. You
+could also take IBM's suggestions ( http://www2.hursley.ibm.com/decimal/
+decifaq.html) and do a full decimal implementation. The difference
+with in/ni is that that comes up all the time in all sorts of
+programs.
+
+My 2 cents
+Eric
+</POST>
+<POST>
+<POSTER> ZB &lt;zbREMOVE_THIS@AND_THISispid.com.pl&gt; </POSTER>
+<POSTDATE> 2008-01-06T16:21:00 </POSTDATE>
+Dnia 06.01.2008 tom.rmadilo &lt;tom.rmad ... @gmail.com&gt; napisa³/a:
+
+<QUOTE PREVIOUSPOST="
+&gt; If the developers of this language could make such a simple mistake,
+&gt; and not correct it for 15 years, why would you consider using it? The
+&gt; maintainers must be supremely ignorant and uninterested in change. [..]
+">
+
+It can have a simple reason: Tcl-programmers during long time just didn't
+need it so much, because the scripts, which were written in Tcl, just
+weren't especially strongly math-oriented. It's as good explaining, as yours.
+
+Why should need this someone for writing FTP-frontend, or for another
+MP3-player, or for CD-RW burner (front-end for cdrecord)? Yes, those are
+the examples of most typical applications (in Linux world, anyway), written
+using Tcl/Tk, which I met before. And I'm not really sure, are rounding
+operations needed in design process of that AOL-servers. And even, when
+somebody needed this - just used &quot;format&quot;.
+
+OK, let's take your point of view, that - for some reasons, which you've
+counted off (I'm afraid, partially...) already, we just don't need
+round(x,dp) in Tcl. So, why we've got that crippled round(x) at all? Look:
+[format &quot;%.0f&quot; $x] works pretty well... so, all your arguments against
+completion of &quot;round&quot; (it's incomplete to me) are valid against &quot;round&quot;
+in its present form as well... why is it here?
+
+<QUOTE PREVIOUSPOST="
+&gt; [cut]
+">
+
+But could you perhaps tell me, why (almost?) every other language has
+round(x,dp)? Are that languages designed by the men, who are not quite
+aware, what are they doing? So, they did useless thing? Yes, I can use
+format - as you can see, even for integers - but I'm voting for round(x,dp)
+just because it's convenient. It's natural.
+
+And, please, don't take my writing as offensive - if it sometimes looks like
+this to you, it's my (still) not very well english.
+--
+ZB
+</POST>
+<POST>
+<POSTER> ZB &lt;zbREMOVE_THIS@AND_THISispid.com.pl&gt; </POSTER>
+<POSTDATE> 2008-01-06T16:32:00 </POSTDATE>
+Dnia 06.01.2008 EKB &lt;e ... @kb-creative.net&gt; napisa³/a:
+
+<QUOTE PREVIOUSPOST="
+&gt; I would imagine that they noticed it, just chose not to implement it.
+&gt; As evidence I offer the discussion on the page for [round] on the
+&gt; tcler's wiki: http://wiki.tcl.tk/2044 .
+">
+
+Nothing serious &quot;against&quot; there. Tom Rmadillo wrote much (much, much... ;)
+more in this thread.
+
+<QUOTE PREVIOUSPOST="
+&gt; For what it's worth, I'd tend to agree with you (and have, earlier in
+&gt; this thread). It's easy and common to implement round with an optional
+&gt; number of decimal places. It's implemented that way in many languages.
+">
+
+Indeed. I think, there is a reason, that it's implemented that way: it's
+just natural to &quot;round x to 4 decimal places&quot;.
+
+<QUOTE PREVIOUSPOST="
+&gt; But... I'm not totally surprised at the decision not to implement
+&gt; round the way you suggest. It fits with Tcl's minimalism (in the
+&gt; core), and it's easy to re-define the function as you desire.
+">
+
+Yes, I understand this - but pay attention, that answering such way, all
+the further development can be stopped, &quot;because the users can make any new
+functions by themselves; if they want speed - they got critcl&quot;... or similar
+way.
+
+<QUOTE PREVIOUSPOST="
+&gt; You could also take IBM's suggestions [..]
+">
+
+...or just use &quot;format&quot;, which indeed I'm using. It's the simplest solution
+for today.
+--
+ZB
+</POST>
+<POST>
+<POSTER> Roy Terry &lt;r...@terryhome.org&gt; </POSTER>
+<POSTDATE> 2008-01-06T17:29:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+ZB wrote:
+&gt; Dnia 06.01.2008 tom.rmadilo &lt;tom.rmad ... @gmail.com&gt; napisa³/a:
+
+&gt;&gt; If the developers of this language could make such a simple mistake,
+&gt;&gt; and not correct it for 15 years, why would you consider using it? The
+&gt;&gt; maintainers must be supremely ignorant and uninterested in change. [..]
+
+&gt; It can have a simple reason: Tcl-programmers during long time just didn't
+&gt; need it so much, because the scripts, which were written in Tcl, just
+&gt; weren't especially strongly math-oriented. It's as good explaining, as yours.
+
+&gt; Why should need this someone for writing FTP-frontend, or for another
+&gt; MP3-player, or for CD-RW burner (front-end for cdrecord)? Yes, those are
+&gt; the examples of most typical applications (in Linux world, anyway), written
+&gt; using Tcl/Tk, which I met before. And I'm not really sure, are rounding
+&gt; operations needed in design process of that AOL-servers. And even, when
+&gt; somebody needed this - just used &quot;format&quot;.
+
+&gt; OK, let's take your point of view, that - for some reasons, which you've
+&gt; counted off (I'm afraid, partially...) already, we just don't need
+&gt; round(x,dp) in Tcl. So, why we've got that crippled round(x) at all? Look:
+&gt; [format &quot;%.0f&quot; $x] works pretty well... so, all your arguments against
+&gt; completion of &quot;round&quot; (it's incomplete to me) are valid against &quot;round&quot;
+&gt; in its present form as well... why is it here?
+">
+
+Round to integer is useful when calculating between canvas coords
+(floats) and image measurements (integer) Format is bad here because
+it forces an pointless string string conversion. I'm sure other examples
+exists as well. It's never occurred to me that round should be different
+because I would only care about non-integer rounding for human
+consumption and would be looking at format, a full fledged command,
+rather than round() an expr function.
+</POST>
+<POST>
+<POSTER> ZB &lt;zbREMOVE_THIS@AND_THISispid.com.pl&gt; </POSTER>
+<POSTDATE> 2008-01-06T16:57:00 </POSTDATE>
+Dnia 06.01.2008 tom.rmadilo &lt;tom.rmad ... @gmail.com&gt; napisa³/a:
+
+Sorry, forgot this one:
+
+<QUOTE PREVIOUSPOST="
+&gt; But I question one of your supporting arguments...that some financial
+&gt; system performs calculations in a four decimal point precision. Where
+&gt; does this come from?
+">
+
+Honestly: I don't know. It's just &quot;a convention&quot;, which should be kept in
+financial software, that calculations should be made using 4 dp. Perhaps
+it's tied to the fact, that most currency units have 1/100 sub-unit (one
+dollar has 100 cents), and - at the same time - very common financial
+operation is counting percentage. So: &quot;x/100 * y/100&quot; makes &quot;x * y / 10000&quot;.
+It's just demanding, which I had to fullfill - and it doesn't make much
+trouble to me.
+
+It's likely (didn't checked it), that it's not &quot;exactly&quot; but &quot;at least 4 dp&quot;
+- I'm not sure. I'm using 4 dp, just because it works for me, and I can't
+see a real need for more dp, when all I'm using counting money are 4 basic
+arithmetic operations, and ev. counting percentage.
+
+Take a look at the paper www.gov.pe.ca/forms/pdf/903.pdf - as you can see,
+from some (perhaps important) reason, the percentage has been rounded to
+4 decimal places. Why? Not sure. I read several years ago, that 4 dp are
+requested, and because that's not that much, I wasn't digging any deeper,
+why four - and not fourteen, for example.
+
+Take a look at:
+
+http://www.regdeveloper.co.uk/2006/08/12/floating_point_approximation...
+
+#v+
+In engineering contracts, the tradition is to do all calculations to four
+decimal places, only rounding to two when a financial value is displayed.
+#v-
+
+As I wrote before: calculations using 4 dp, output using 2 dp.
+--
+ZB
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-06T20:53:00 </POSTDATE>
+On Jan 6, 1:32 pm, ZB &lt;zbREMOVE_THIS@AND_THISispid.com.pl&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Dnia 06.01.2008 EKB &lt;e ... @kb-creative.net&gt; napisa³/a:
+&gt; &gt; You could also take IBM's suggestions [..]
+
+&gt; ...or just use &quot;format&quot;, which indeed I'm using. It's the simplest solution
+&gt; for today.
+">
+
+Yes, please read IBM's suggestions. The main problem is that for many
+types of problems, such as financial and scientific, you need
+something called decimal arithmetic. This sound fancy, but it means
+that you get results which are what you would get using pencil and
+paper, and you don't get surprising values.
+
+This is usually done by working with integers, keeping the value and
+exponent separate.
+
+The [expr] command does not and should not provide this type of math.
+It is expensive, and doesn't save any cycles. If that is your goal,
+then you too should want the [expr] command to use ordinary binary
+arithmetic, and only use it on relatively unimportant data.
+
+If sure that if you look around you will find that the standard
+arithmetic in most languages gives you the same thing, you need to
+move to a specialized library.
+
+I just noticed that XML Schema 1.1 how has a precisionDecimal type.
+One nice thing about XML-Schema is they provide some pseudo-code
+algorithms for certain key calculations. The precisionDecimal type has
+a long list of these, including several for rounding, one for integers
+and one for float. These are reported to be suitable for high-
+precision rounding, and it should be relatively easy to implement
+their algorithms. I've done this with adding duration to dateTime, and
+they work very well in Tcl.
+
+I can't guarantee when I'll get around to it, but I will need to
+implement precisionDecimal, and I'll have to start by turning this
+pseudocode into real Tcl code.
+
+This still will not guarantee that Tcl can work reliably with decimal
+arithmetic, you still need algorithms for all the operations.
+
+If there is a C library which would work with the Tcl license, it
+might be worth exploring a Tcl interface for this, it'll be much
+easier and faster.
+
+Although Tcl has a round(d), I have never made an argument against it.
+I specifically listed several reasons it is necessary in Tcl, mostly
+because Tcl does integer division differently than float division. But
+also, any time you do division where the result can only be a quantum
+result, you need to truncate. Tiny errors in this case are
+unimportant, rounding to a whole number in IEEE implies that you are
+willing to take a large error (up to .97 off), but best approximation
+rounding gives an error of at most .5 units of the least significant
+digit.
+
+Now, back to round(d,n). What is wrong with including this in [expr]?
+To appreciate this, it really is necessary to take a very wide view.
+No matter what implementation is used for round(d,n), it will
+certainly fall &quot;just short&quot; of some potential future user's needs.
+There is more than one type of rounding, which one do you decide to
+put in? So no matter what the choice, someone is going to be left in
+the cold, and they can come in and argue even more intelligently: why
+was their flavor of rounding skipped?
+
+[expr] is simply not the place to do math of much consequence. Tcl,
+currently, is not the place to carry out financial calculations of
+significant proportion, at least not without a full understanding of
+the details of the arithmetic involved. Beyond that, there is no good
+reason to use round() except as a final step in a calculation of a
+floating point number. For this we have format. It is infinitely more
+useful than round, regardless of how challenging it is to use compared
+to the rest of Tcl. This is also by design. Although it is not
+'tclish', the point is that these parts of Tcl rely on the commonly
+used libraries that every programmer must eventually become familiar
+with. If we assume that the syntax for format is at least efficiently
+small, then any Tcl version could never be any easier and provide the
+same functionality (this is essentially a parser specification). But
+the upside of going with an existing specification is that you can
+find documentation and examples from other languages. This is very
+important for a specialize feature like [format].
+</POST>
+<POST>
+<POSTER> EKB &lt;e...@kb-creative.net&gt; </POSTER>
+<POSTDATE> 2008-01-06T22:02:00 </POSTDATE>
+On Jan 6, 7:53 pm, &quot;tom.rmadilo&quot; &lt;tom.rmad ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; [expr] is simply not the place to do math of much consequence.
+">
+
+Yikes! I hope that's not true. I do mathematical modeling with it.
+(And also with other languages.) It works fine for many purposes, and
+I get to link to a GUI very easily.
+
+<QUOTE PREVIOUSPOST="
+&gt; Tcl, currently, is not the place to carry out financial calculations of
+&gt; significant proportion, at least not without a full understanding of
+&gt; the details of the arithmetic involved.
+">
+
+I doubt this is true. I also suspect (from the content of his posts)
+that ZB is well aware of what he's doing. He's also convincing me that
+modifying round could be a useful, easy, and unproblematic change.
+
+But I do agree with you (and it's the reason I posted it) that for
+some purposes it may be necessary and useful to go all the way and
+develop a decimal-based library for financial calculations.
+
+Eric
+</POST>
+<POST>
+<POSTER> EKB &lt;e...@kb-creative.net&gt; </POSTER>
+<POSTDATE> 2008-01-06T22:04:00 </POSTDATE>
+On Jan 6, 3:32 pm, ZB &lt;zbREMOVE_THIS@AND_THISispid.com.pl&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; But... I'm not totally surprised at the decision not to implement
+&gt; &gt; round the way you suggest. It fits with Tcl's minimalism (in the
+&gt; &gt; core), and it's easy to re-define the function as you desire.
+
+&gt; Yes, I understand this - but pay attention, that answering such way, all
+&gt; the further development can be stopped, &quot;because the users can make any new
+&gt; functions by themselves; if they want speed - they got critcl&quot;... or similar
+&gt; way.
+">
+
+True enough. In fact, you're convincing me (not that that means much,
+since I'm not one of the core developers). You could suggest this
+formally as a TIP (see http://wiki.tcl.tk/978 ).
+</POST>
+<POST>
+<POSTER> Andreas Leitgeb &lt;a...@gamma.logic.tuwien.ac.at&gt; </POSTER>
+<POSTDATE> 2008-01-07T03:31:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Michael Schlenker &lt;schl ... @uni-oldenburg.de&gt; wrote:
+&gt; its just you dumping the burden of maintaining another feature from your
+&gt; desk onto the core maintainers.
+">
+
+Of course, everyone could maintain one's own tcl, to remove that
+burden off the core maintainers ;-)
+
+For features that seem to be of general use, dumping it on the
+core maintainers' desk seems to be a sensible thing to do.
+
+PS: not that it really mattered, but IMO round() with extra arg
+does seem like a generally useful feature, even though I
+personally haven't yet had a use for it.
+</POST>
+<POST>
+<POSTER> Andreas Leitgeb &lt;a...@gamma.logic.tuwien.ac.at&gt; </POSTER>
+<POSTDATE> 2008-01-07T04:19:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+tom.rmadilo &lt;tom.rmad ... @gmail.com&gt; wrote:
+&gt; You admit that you are looking for a formatting function. [...]
+">
+
+I can't speak for ZB, but I don't think formatting would be the
+use of rounding to decimal places.
+
+Think, you're dealing with currencies and after adding some values,
+you end up with a floating point value of 42.499999999.
+Now the sensible thing is rounding to two(*) places, first,
+because that is the &quot;real&quot; value, and further rounding should
+be based on that. Later rounding to integers should indeed
+yield 43 in this domain.
+
+(*) the &quot;two&quot; of course depends on the actual currency. I think
+there are still countries, whose sub-currency is 1/1000 of
+the base currency. No idea, if that can be derived from
+the locale-database, other than as a format-string.
+The point of course applies to all fixed-point math domains.
+
+<QUOTE PREVIOUSPOST="
+&gt; Some arguments are bad, some don't apply, but some stand out as purely
+&gt; defensive. One of these arguments is the 'simple' argument, otherwise
+&gt; known as 'it-is-only-a-little-thing-to-ask'.
+">
+
+No, not at all.  It's just trying to imply that &quot;bloat-alarm&quot;'s
+are not an issue from poster's point of view.
+If some developer does diagnose bloat with that feature, then
+either the poster's estimate was wrong, or the developer mis-
+understood, what the poster tried to describe. It's often
+a matter of a followup to clarify that.
+
+<QUOTE PREVIOUSPOST="
+&gt; What is unique about financial calculations that
+&gt; would exempt them from the known problems of intermediate rounding?
+">
+
+The intermediate rounding &quot;problem&quot; might be a wanted effect in the
+respective domain.
+
+<QUOTE PREVIOUSPOST="
+&gt; At first I thought the argument was for speed, to save cycles, like
+&gt; for some unknown superfast something-or-other.
+">
+
+I agree here.  Speed alone is no argument.
+Speed and general usefulness is a different pair of shoes, though.
+</POST>
+<POST>
+<POSTER> &quot;Donal K. Fellows&quot; &lt;donal.k.fell...@man.ac.uk&gt; </POSTER>
+<POSTDATE> 2008-01-07T05:28:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+tom.rmadilo wrote:
+&gt; Yes, please read IBM's suggestions. The main problem is that for many
+&gt; types of problems, such as financial and scientific, you need
+&gt; something called decimal arithmetic.
+">
+
+While you're right for financial arithmetic (where fixed precision
+math is definitely the way to go) I'm not at all sure that you're
+right about scientific calculations. In my experience (long ago) what
+you needed there was to work out how many digits of significance you
+had, and to ignore anything after that (i.e. you needed to compute
+error bars). But IEEE arithmetic (which is what Tcl actually provides
+you on virtually all machines these days) gives you just what you need
+to work with that, and it's good enough for thousands of physicists,
+chemists and engineers of all types...
+
+Donal.
+</POST>
+<POST>
+<POSTER> Uwe Klein &lt;uwe_klein_habertw...@t-online.de&gt; </POSTER>
+<POSTDATE> 2008-01-07T05:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Donal K. Fellows wrote:
+&gt; tom.rmadilo wrote:
+
+&gt;&gt;Yes, please read IBM's suggestions. The main problem is that for many
+&gt;&gt;types of problems, such as financial and scientific, you need
+&gt;&gt;something called decimal arithmetic.
+
+&gt; While you're right for financial arithmetic (where fixed precision
+&gt; math is definitely the way to go) I'm not at all sure that you're
+&gt; right about scientific calculations. In my experience (long ago) what
+&gt; you needed there was to work out how many digits of significance you
+&gt; had, and to ignore anything after that (i.e. you needed to compute
+&gt; error bars). But IEEE arithmetic (which is what Tcl actually provides
+&gt; you on virtually all machines these days) gives you just what you need
+&gt; to work with that, and it's good enough for thousands of physicists,
+&gt; chemists and engineers of all types...
+
+&gt; Donal.
+">
+
+rounding numbers to discard nonexistent precission introduces
+artefacts that may well ruin your computation.
+
+I once had to evaluate a spectrometer that returned an
+array of unsigned shorts comprised of bits 5..21 of the
+corresponding accumulator counts. The designer argued that
+the lower 6 bits were only noise anyway.
+
+In an ON/OFF measurement environment this unfortunately made
+further processing (nearly) impossible.
+
+The quantization noise introduced thus made minced meat of the
+regular noise distribution and magnitude.
+
+uwe
+</POST>
+<POST>
+<POSTER> &quot;Donal K. Fellows&quot; &lt;donal.k.fell...@man.ac.uk&gt; </POSTER>
+<POSTDATE> 2008-01-07T05:58:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+ZB wrote:
+&gt; Yes, I understand this - but pay attention, that answering such way, all
+&gt; the further development can be stopped, &quot;because the users can make any new
+&gt; functions by themselves; if they want speed - they got critcl&quot;... or similar
+&gt; way.
+">
+
+I'll put it a different way. Right now, you can put your own function
+in Tcl by just writing a procedure with the right name. That's right,
+you can have your new function in about a minute or so. You can also
+take a bit longer and write a version in C that is faster to execute
+(critcl's one way to do this, but anything that works is good). Note
+that once you've plugged a C implementation in, you've got code that
+is *just as good* as if it was in Tcl itself; there are no (longer
+any) special bytecodes for functions, they're just conventional
+commands.
+
+Actually, you can do the rounding functionality without even creating
+a new command as such, so long as you're willing to swap the
+arguments:
+
+% interp alias {} tcl::mathfunc::roundto {} format %.*f
+tcl::mathfunc::roundto
+% expr roundto(3, 7.353961666)
+7.354
+
+Donal.
+</POST>
+<POST>
+<POSTER> ZB &lt;zbREMOVE_THIS@AND_THISispid.com.pl&gt; </POSTER>
+<POSTDATE> 2008-01-07T05:30:00 </POSTDATE>
+Dnia 07.01.2008 Donal K. Fellows &lt;donal.k.fell ... @man.ac.uk&gt; napisa³/a:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Yes, I understand this - but pay attention, that answering such way, all
+&gt;&gt; the further development can be stopped, &quot;because the users can make any new
+&gt;&gt; functions by themselves; if they want speed - they got critcl&quot;... or similar
+&gt;&gt; way.
+
+&gt; I'll put it a different way. Right now, you can put your own function
+&gt; in Tcl by just writing a procedure with the right name. [..]
+">
+
+It's (almost) exactly the same way. Can't see any significant difference.
+
+<QUOTE PREVIOUSPOST="
+&gt; Actually, you can do the rounding functionality without even creating
+&gt; a new command as such, so long as you're willing to swap the
+&gt; arguments:
+
+&gt;   % interp alias {} tcl::mathfunc::roundto {} format %.*f
+&gt;   tcl::mathfunc::roundto
+&gt;   % expr roundto(3, 7.353961666)
+&gt;   7.354
+">
+
+Yes, I know. I didn't made any procs or aliases (one - or two - cycles less)
+just because &quot;format&quot; is one-liner.
+--
+ZB
+</POST>
+<POST>
+<POSTER> ZB &lt;zbREMOVE_THIS@AND_THISispid.com.pl&gt; </POSTER>
+<POSTDATE> 2008-01-07T06:00:00 </POSTDATE>
+Perhaps I should express &quot;my 2-3 cents&quot; a different way:
+
+All that my writing in this thread was not &quot;because I'm unable to define
+a new procedure&quot;, then call it myRound or give it any other name.
+
+I'm writing now an application, where I need rounding, this time just for
+validating entry fields and for output. Just didn't need rounding before in
+my short &quot;Tcl career&quot; - and I'm learning this just by trying and using it.
+
+And yes: I was really surprised with so limited functionality of &quot;default&quot;
+[round $x]. Of course, I can easily define a procedure the way you presented
+- but, really, some basic operations (and proper, not limited to integers
+rounding is one of the basic math operations) should be, IMHO, available
+&quot;out of the box&quot;. No, it's not against Tcl's simplicity - I like this
+RISC-like approach - because it's about just one *optional* parameter. It's
+not f.e. the special, separate function for matrix-multiplication we're
+talking about, neither we're talking about differentiation functions.
+
+My personal point of view is that the really basic operators/functions (like
+power **), should have been introduced much earlier. From the other,
+&quot;minimalistic&quot; side: actually, everyone can define his own multiplication
+function (during one minute, as you wrote) as loop of additions. But should
+it mean, that &quot;*&quot; operator is actually a kind of luxury?
+
+There were several threads &quot;how to increase Tcl's popularity&quot; - take the
+above into consideration. Yes, the visual side (Tk) is very important - but
+some essential things, perhaps not always directly visible, any newbie can
+expect, when making first steps in Tcl.
+--
+ZB
+</POST>
+<POST>
+<POSTER> Uwe Klein &lt;uwe_klein_habertw...@t-online.de&gt; </POSTER>
+<POSTDATE> 2008-01-07T07:08:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+ZB wrote:
+&gt; I'm writing now an application, where I need rounding, this time just for
+&gt; validating entry fields and for output. Just didn't need rounding before in
+&gt; my short &quot;Tcl career&quot; - and I'm learning this just by trying and using it.
+">
+
+How do you intend to apply rounding to user input validation?
+
+a bit of tracing ( or $widget -validate* stuff ) and format work
+quite well for this.
+Be carefull with nagging (or even worse correcting) the user while he is
+still busy typing.
+
+uwe
+</POST>
+</TEXT>
+</BODY>
+</DOC>

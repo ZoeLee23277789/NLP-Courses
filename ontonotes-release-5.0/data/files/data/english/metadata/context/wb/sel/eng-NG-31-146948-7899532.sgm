@@ -1,0 +1,250 @@
+<DOC>
+<DOCID> eng-NG-31-146948-7899532 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-07-09T11:58:00 </DATETIME>
+<BODY>
+<HEADLINE>
+file descriptor limit reached during depot-setup
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Chuck Scott &lt;ch...@controltier.com&gt; </POSTER>
+<POSTDATE> 2007-07-09T11:58:00 </POSTDATE>
+I found an issue while running depot-setup today on a brand new
+project (ran after importing library and loading objects)
+
+The initial error on the client didn't tell me much, but on the
+tomcat catalina.out log, I found an Exception:  &quot;Too many open files&quot;
+
+Executing bash ulimit, I saw that file limit was set to 256 which may
+be a reasonable amt, however, for databases and such I could imagine
+maybe this should be raised.  It isn't clear to me if it could be a
+leak meaning that when tomcat is running for a while, this error
+could be reached over time (just a thought).  So what I did was
+restart tomcat with ulimit set to 1024 file limit (ulimit -n 1024)
+reran depot-setup deploy with no error.
+
+I can do more testing perhaps to see if restarting tomcat with
+default set to 256 and see if this error reoccurs.
+
+Initial error:
+
+atg@codepot01&gt; depot-setup -p TestProject -a deploy
+deploying object: (AtgSite) prd
+deploying object: (AtgModuleUpdater) stg
+deploying object: (AtgSite) stg
+deploying object: (AtgModuleUpdater) prd
+Install command running for object: (AtgSite) prd
+Install command running for object: (AtgModuleUpdater) stg
+Install command running for object: (AtgSite) stg
+Getting: https://codepot01.edc.cingular.net:8080/webdav/TestProject/
+publish/modules/AtgAppServerCollection-head.jar
+To: /home/atg/ctier/antdepo/var/TestProject/AtgAppServerCollection-
+head.jar
+Created dir: /home/atg/ctier/antdepo/depots/TestProject/lib/ant/
+modules/AtgAppServerCollection
+Expanding: /home/atg/ctier/antdepo/var/TestProject/
+AtgAppServerCollection-head.jar into /home/atg/ctier/antdepo/depots/
+TestProject/lib/ant/modules/AtgAppServerCollection
+Getting: https://codepot01.edc.cingular.net:8080/webdav/TestProject/
+publish/modules/ServiceMediator-1.jar
+To: /home/atg/ctier/antdepo/var/TestProject/ServiceMediator-1.jar
+Created dir: /home/atg/ctier/antdepo/depots/TestProject/lib/ant/
+modules/ServiceMediator
+Expanding: /home/atg/ctier/antdepo/var/TestProject/
+ServiceMediator-1.jar into /home/atg/ctier/antdepo/depots/TestProject/
+lib/ant/modules/ServiceMediator
+Created dir: /home/atg/ctier/antdepo/depots/TestProject/deployments/
+AtgAppServerCollection/stg
+Created dir: /home/atg/ctier/antdepo/depots/TestProject/deployments/
+AtgAppServerCollection/stg/bin
+Created dir: /home/atg/ctier/antdepo/depots/TestProject/deployments/
+AtgAppServerCollection/stg/conf
+Created dir: /home/atg/ctier/antdepo/depots/TestProject/deployments/
+AtgAppServerCollection/stg/logs
+Created dir: /home/atg/ctier/antdepo/depots/TestProject/deployments/
+AtgAppServerCollection/stg/var
+org.antdepo.cli.addeploy.DeployException: no message: no message
+[/home/atg/ctier/antdepo/depots]
+
+Error with verbosity turned on:
+
+Expanding: /home/atg/ctier/antdepo/var/TestProject/
+AtgAppServerCollection-head.jar into /home/atg/ctier/antdepo/depots/
+TestProject/lib/ant/modules/AtgAppServerCollection
+Getting: https://codepot01.edc.cingular.net:8080/webdav/TestProject/
+publish/modules/ServiceMediator-1.jar
+To: /home/atg/ctier/antdepo/var/TestProject/ServiceMediator-1.jar
+Created dir: /home/atg/ctier/antdepo/depots/TestProject/lib/ant/
+modules/ServiceMediator
+Expanding: /home/atg/ctier/antdepo/var/TestProject/
+ServiceMediator-1.jar into /home/atg/ctier/antdepo/depots/TestProject/
+lib/ant/modules/ServiceMediator
+Created dir: /home/atg/ctier/antdepo/depots/TestProject/deployments/
+AtgAppServerCollection/prd_1
+Created dir: /home/atg/ctier/antdepo/depots/TestProject/deployments/
+AtgAppServerCollection/prd_1/bin
+Created dir: /home/atg/ctier/antdepo/depots/TestProject/deployments/
+AtgAppServerCollection/prd_1/conf
+Created dir: /home/atg/ctier/antdepo/depots/TestProject/deployments/
+AtgAppServerCollection/prd_1/logs
+Created dir: /home/atg/ctier/antdepo/depots/TestProject/deployments/
+AtgAppServerCollection/prd_1/var
+org.antdepo.cli.depotsetup.DepotSetupException:
+org.antdepo.cli.addeploy.DeployException: no message
+at org.antdepo.cli.ADDepotSetupMain.executeAction
+(ADDepotSetupMain.java:151)
+at org.antdepo.cli.ADDepotSetupMain.run
+(ADDepotSetupMain.java:93)
+at org.antdepo.cli.ADDepotSetupMain.main
+(ADDepotSetupMain.java:80)
+at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+at sun.reflect.NativeMethodAccessorImpl.invoke
+(NativeMethodAccessorImpl.java:39)
+at sun.reflect.DelegatingMethodAccessorImpl.invoke
+(DelegatingMethodAccessorImpl.java:25)
+at java.lang.reflect.Method.invoke(Method.java:324)
+at launcher.ADDepotSetupLauncher.main
+(ADDepotSetupLauncher.java:34)
+Caused by: org.antdepo.cli.addeploy.DeployException: no message
+at org.antdepo.cli.addeploy.Deployer.runObjectCommand
+(Deployer.java:112)
+at org.antdepo.cli.addeploy.Deployer.runObjectCommand
+(Deployer.java:117)
+at org.antdepo.cli.addeploy.ObjectDeployer.runObjectCommand
+(ObjectDeployer.java:96)
+at org.antdepo.cli.addeploy.ObjectDeployer.runCommands
+(ObjectDeployer.java:86)
+at org.antdepo.cli.addeploy.ObjectDeployer.deploy
+(ObjectDeployer.java:49)
+at org.antdepo.cli.addeploy.ObjectDeployer.deploy
+(ObjectDeployer.java:60)
+at org.antdepo.cli.depotsetup.DeployAction.deployObjects
+(DeployAction.java:54)
+at org.antdepo.cli.depotsetup.DeployAction.exec
+(DeployAction.java:49)
+at org.antdepo.cli.ADDepotSetupMain.executeAction
+(ADDepotSetupMain.java:149)
+... 7 more
+Caused by: /home/atg/ctier/antdepo/depots/TestProject/lib/ant/modules/
+Mediator/commands/Install.xml:105: No message
+at org.apache.tools.ant.taskdefs.Exit.execute(Exit.java:142)
+at org.apache.tools.ant.UnknownElement.execute
+(UnknownElement.java:288)
+at sun.reflect.GeneratedMethodAccessor3.invoke(Unknown Source)
+at sun.reflect.DelegatingMethodAccessorImpl.invoke
+(DelegatingMethodAccessorImpl.java:25)
+at java.lang.reflect.Method.invoke(Method.java:324)
+at org.apache.tools.ant.dispatch.DispatchUtils.execute
+(DispatchUtils.java:105)
+at org.apache.tools.ant.Task.perform(Task.java:348)
+at
+org.antdepo.tasks.controller.ErrorhandlerController.doTasksequence
+(ErrorhandlerController.java:165)
+at
+org.antdepo.tasks.controller.ErrorhandlerController.handleErrorAndContin
+ue(ErrorhandlerController.java:186)
+at
+org.antdepo.tasks.controller.TaskContainerStrategy.performSequence
+(TaskContainerStrategy.java:172)
+at org.antdepo.tasks.controller.TaskContainerStrategy.perform
+(TaskContainerStrategy.java:113)
+at org.antdepo.tasks.controller.Workflow.execute
+(Workflow.java:334)
+at org.antdepo.tasks.ApplyMacro.apply(ApplyMacro.java:225)
+at org.antdepo.tasks.ApplyMacro.execute(ApplyMacro.java:190)
+at org.apache.tools.ant.UnknownElement.execute
+(UnknownElement.java:288)
+at sun.reflect.GeneratedMethodAccessor3.invoke(Unknown Source)
+at sun.reflect.DelegatingMethodAccessorImpl.invoke
+(DelegatingMethodAccessorImpl.java:25)
+at java.lang.reflect.Method.invoke(Method.java:324)
+at org.apache.tools.ant.dispatch.DispatchUtils.execute
+(DispatchUtils.java:105)
+at org.apache.tools.ant.Task.perform(Task.java:348)
+at com.idaremedia.antx.starters.TaskSet.performTheTasksList
+(TaskSet.java:350)
+at
+com.idaremedia.antx.starters.ConditionalTaskSet.performTheCheckedTasks
+(ConditionalTaskSet.java:125)
+at
+com.idaremedia.antx.starters.ConditionalTaskSet.performNestedTasks
+(ConditionalTaskSet.java:107)
+at com.idaremedia.antx.starters.TaskSet.execute(TaskSet.java:
+422)
+at org.apache.tools.ant.UnknownElement.execute
+(UnknownElement.java:288)
+at sun.reflect.GeneratedMethodAccessor3.invoke(Unknown Source)
+at sun.reflect.DelegatingMethodAccessorImpl.invoke
+(DelegatingMethodAccessorImpl.java:25)
+at java.lang.reflect.Method.invoke(Method.java:324)
+at org.apache.tools.ant.dispatch.DispatchUtils.execute
+(DispatchUtils.java:105)
+at org.apache.tools.ant.Task.perform(Task.java:348)
+at com.idaremedia.antx.starters.TaskSet.performTheTasksList
+(TaskSet.java:350)
+at
+com.idaremedia.antx.starters.ConditionalTaskSet.performTheCheckedTasks
+(ConditionalTaskSet.java:125)
+at
+com.idaremedia.antx.starters.ConditionalTaskSet.performNestedTasks
+(ConditionalTaskSet.java:107)
+at com.idaremedia.antx.starters.TaskSet.execute(TaskSet.java:
+422)
+at org.apache.tools.ant.UnknownElement.execute
+(UnknownElement.java:288)
+at sun.reflect.GeneratedMethodAccessor3.invoke(Unknown Source)
+at sun.reflect.DelegatingMethodAccessorImpl.invoke
+(DelegatingMethodAccessorImpl.java:25)
+at java.lang.reflect.Method.invoke(Method.java:324)
+at org.apache.tools.ant.dispatch.DispatchUtils.execute
+(DispatchUtils.java:105)
+at org.apache.tools.ant.Task.perform(Task.java:348)
+at org.apache.tools.ant.Target.execute(Target.java:357)
+at org.apache.tools.ant.Target.performTasks(Target.java:385)
+at org.apache.tools.ant.Project.executeSortedTargets
+(Project.java:1329)
+at org.apache.tools.ant.Project.executeTarget(Project.java:
+1298)
+at org.antdepo.common.AntProject.execute(AntProject.java:467)
+at org.antdepo.cli.addeploy.Deployer.runObjectCommand
+(Deployer.java:110)
+... 15 more
+[/home/atg/ctier/antdepo/depots]
+
+catalina.out log:
+
+Jul 9, 2007 8:39:20 AM org.apache.tomcat.util.net.PoolTcpEndpoint
+acceptSocket
+WARNING: Reinitializing ServerSocket
+Jul 9, 2007 8:39:20 AM org.apache.tomcat.util.net.PoolTcpEndpoint
+acceptSocket
+SEVERE: Endpoint ServerSocket
+[addr=0.0.0.0/0.0.0.0,port=0,localport=8001] ignored exception:
+java.net.Socket
+Exception: Too many open files
+java.net.SocketException: Too many open files
+at java.net.PlainSocketImpl.socketAccept(Native Method)
+at java.net.PlainSocketImpl.accept(PlainSocketImpl.java:353)
+at java.net.ServerSocket.implAccept(ServerSocket.java:448)
+at java.net.ServerSocket.accept(ServerSocket.java:419)
+at
+org.apache.tomcat.util.net.DefaultServerSocketFactory.acceptSocket
+(DefaultServerSocketFactory.jav
+a:61)
+at org.apache.tomcat.util.net.PoolTcpEndpoint.acceptSocket
+(PoolTcpEndpoint.java:408)
+at
+org.apache.tomcat.util.net.LeaderFollowerWorkerThread.runIt
+(LeaderFollowerWorkerThread.java:71)
+at org.apache.tomcat.util.threads.ThreadPool
+$ControlRunnable.run(ThreadPool.java:685)
+at java.lang.Thread.run(Thread.java:534)
+Jul 9, 2007 8:39:20 AM org.apache.tomcat.util.net.PoolTcpEndpoint
+acceptSocket
+WARNING: Reinitializing ServerSocket
+INFO  : dispatching command: Install to:  (AtgAppServerCollection) prd_1
+</POST>
+</TEXT>
+</BODY>
+</DOC>

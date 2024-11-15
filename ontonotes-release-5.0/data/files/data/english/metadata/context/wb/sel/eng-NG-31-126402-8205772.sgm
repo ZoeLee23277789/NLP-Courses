@@ -1,0 +1,500 @@
+<DOC>
+<DOCID> eng-NG-31-126402-8205772 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-01T19:41:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Q on localizing *STDOUT and fork
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> kj &lt;so...@987jk.com.invalid&gt; </POSTER>
+<POSTDATE> 2007-08-01T19:41:00 </POSTDATE>
+Let me preface this question by making it clear that there's no
+particular problem I'm trying to solve, but rather I'm trying to
+clarify my understanding of how Perl works, at least under Unix.
+
+In the following snippet, the key fragment is the block labeled
+LOOK_HERE.  There I first &quot;save&quot; STDOUT by duplicating the handle;
+then I redirect STDOUT; then I execute a (forked) command that has
+the effect of sending some output to (the now redirected) STDOUT;
+and finally I &quot;restore&quot; STDOUT with another duplication.
+
+my $file = 'somefile';
+open my $out, '&gt;', $file or die $!;
+
+LOOK_HERE:
+{
+open my $save, '&gt;&amp;', STDOUT or die $!;
+open STDOUT, '&gt;&amp;', $out or die $!;
+
+{
+open my $pipe, '|-', '/usr/bin/sort', '-n' or die $!;
+print $pipe int( rand( ~0 ) ), &quot;\n&quot; for 1..1_000_000;
+}
+
+open STDOUT, '&gt;&amp;', $save or die $!;
+}
+
+print &quot;OK\n&quot;;
+close $out;
+my @sorted = map { chomp; $_ } File::Slurp::read_file( $file );
+
+This all works: the output of /usr/bin/sort does end up in 'somefile',
+and &quot;OK\n&quot; gets printed to the terminal, confirming that STDOUT
+was properly restored.
+
+So far so good.
+
+My question is this: is there a way to avoid the bothersome saving
+and restoring of STDOUT.  I naively thought that one could do so
+by localizing *STDOUT.  IOW, replace the LOOK_HERE block with:
+
+{
+local *STDOUT;
+open STDOUT, '&gt;&amp;', $out or die $!;
+
+{
+open my $pipe, '|-', '/usr/bin/sort', '-n' or die $!;
+print $pipe int( rand( ~0 ) ), &quot;\n&quot; for 1..1_000_000;
+}
+}
+
+Very nice, except it doesn't work.  Now the output /usr/bin/sort
+(which, incidentally, in this example happens to be pretty big)
+goes to the terminal.  BTW, this same thing happens if instead of
+redirecting STDOUT by duplicating the write-handle $out, I simply
+re-open STDOUT like this:
+
+{
+local *STDOUT;
+open STDOUT, '&gt;', 'somefile' or die $!;
+
+{
+open my $pipe, '|-', '/usr/bin/sort', '-n' or die $!;
+print $pipe int( rand( ~0 ) ), &quot;\n&quot; for 1..1_000_000;
+}
+}
+
+Ditto if instead I select $out before execution of the sort command.
+
+I suspect that the problem with these failed solutions has to do
+with the implicit fork triggered by the '|-' mode in the call to
+open.  I.e., I'm guessing that the child process uses the default
+STDOUT irrespective of the parent's maneuvers.  But if this is the
+case, then my confusion simply shifts to wondering how the first
+approach could have worked at all!
+
+Anyway, BTAIM, is there anyway to avoid the save/restore rigmarole?
+
+TIA!
+
+kj
+--
+NOTE: In my address everything before the first period is backwards;
+and the last period, and everything after it, should be discarded.
+</POST>
+<POST>
+<POSTER> Brian McCauley &lt;nobul...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-02T02:26:00 </POSTDATE>
+On Aug 2, 12:41 am, kj &lt;so ... @987jk.com.invalid&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Let me preface this question by making it clear that there's no
+&gt; particular problem I'm trying to solve, but rather I'm trying to
+&gt; clarify my understanding of how Perl works, at least under Unix.
+&gt; My question is this: is there a way to avoid the bothersome saving
+&gt; and restoring of STDOUT.  I naively thought that one could do so
+&gt; by localizing *STDOUT.  IOW, replace the LOOK_HERE block with:
+
+&gt;   {
+&gt;     local *STDOUT;
+&gt;     open STDOUT, '&gt;&amp;', $out or die $!;
+
+&gt;     {
+&gt;       open my $pipe, '|-', '/usr/bin/sort', '-n' or die $!;
+&gt;       print $pipe int( rand( ~0 ) ), &quot;\n&quot; for 1..1_000_000;
+&gt;     }
+&gt;   }
+
+&gt; Very nice, except it doesn't work.  Now the output /usr/bin/sort
+&gt; (which, incidentally, in this example happens to be pretty big)
+&gt; goes to the terminal.  BTW, this same thing happens if instead of
+&gt; redirecting STDOUT by duplicating the write-handle $out, I simply
+&gt; re-open STDOUT like this:
+
+&gt;   {
+&gt;     local *STDOUT;
+&gt;     open STDOUT, '&gt;', 'somefile' or die $!;
+
+&gt;     {
+&gt;       open my $pipe, '|-', '/usr/bin/sort', '-n' or die $!;
+&gt;       print $pipe int( rand( ~0 ) ), &quot;\n&quot; for 1..1_000_000;
+&gt;     }
+&gt;   }
+">
+
+I wrote a quite detailed explanation of this here...
+
+http://groups.google.com/group/comp.lang.perl.misc/browse_frm/thread/...
+
+<QUOTE PREVIOUSPOST="
+&gt; Anyway, BTAIM, is there anyway to avoid the save/restore rigmarole?
+">
+
+I'm fairly sure I've seen modules on CPAN to wrap it up a bit but
+under the hood AFAIK they'd still do the same thing.
+</POST>
+<POST>
+<POSTER> xhos...@gmail.com </POSTER>
+<POSTDATE> 2007-08-02T12:42:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+kj &lt;so ... @987jk.com.invalid&gt; wrote:
+
+&gt; My question is this: is there a way to avoid the bothersome saving
+&gt; and restoring of STDOUT.  I naively thought that one could do so
+&gt; by localizing *STDOUT.  IOW, replace the LOOK_HERE block with:
+
+&gt;   {
+&gt;     local *STDOUT;
+&gt;     open STDOUT, '&gt;&amp;', $out or die $!;
+
+&gt;     {
+&gt;       open my $pipe, '|-', '/usr/bin/sort', '-n' or die $!;
+&gt;       print $pipe int( rand( ~0 ) ), &quot;\n&quot; for 1..1_000_000;
+&gt;     }
+&gt;   }
+
+&gt; Very nice, except it doesn't work.  Now the output /usr/bin/sort
+&gt; (which, incidentally, in this example happens to be pretty big)
+&gt; goes to the terminal.
+">
+
+The piped &quot;sort&quot; doesn't inherit the Perl notion of STDOUT, it inherits the
+C's notion of stdout.  When Perl starts, Perl's STDOUT &quot;points&quot; to C's
+stdout. When you localize STDOUT, you break that linkage, and so whatever
+is done to Perl's STDOUT doesn't affect C's stdout.
+
+<QUOTE PREVIOUSPOST="
+&gt; I suspect that the problem with these failed solutions has to do
+&gt; with the implicit fork triggered by the '|-' mode in the call to
+&gt; open.  I.e., I'm guessing that the child process uses the default
+&gt; STDOUT irrespective of the parent's maneuvers.  But if this is the
+&gt; case, then my confusion simply shifts to wondering how the first
+&gt; approach could have worked at all!
+">
+
+When you reopen STDOUT without localizing it, it does this by reopening
+C's notion of stdout and leaving Perl's STDOUT pointing to C's stdout.
+Forked commands inherit this C notion, complete with the change made to it.
+
+<QUOTE PREVIOUSPOST="
+&gt; Anyway, BTAIM, is there anyway to avoid the save/restore rigmarole?
+">
+
+You could do the redirect in the open command:
+
+open my $pipe, '|-', &quot;/usr/bin/sort -n &gt; $filename&quot;, or die $!;
+
+Alas, this requires you to use the shell-interpreted-version of the open
+rather than the shell-less version.
+
+Xho
+
+--
+-------------------- http://NewsReader.Com/ --------------------
+Usenet Newsgroup Service                        $9.95/Month 30GB
+</POST>
+<POST>
+<POSTER> kj &lt;so...@987jk.com.invalid&gt; </POSTER>
+<POSTDATE> 2007-08-03T11:55:00 </POSTDATE>
+In &lt;1186036012.070979.170 ... @19g2000hsx.googlegroups.com&gt; Brian McCauley &lt;nobul ... @gmail.com&gt; writes:
+
+<QUOTE PREVIOUSPOST="
+&gt;On Aug 2, 12:41 am, kj &lt;so ... @987jk.com.invalid&gt; wrote:
+&gt;I wrote a quite detailed explanation of this here...
+&gt; http://groups.google.com/group/comp.lang.perl.misc/browse_frm/thread/...
+">
+
+That was certainly illuminating.  Thank you!
+
+In that post you wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; But if you do local(*STDOUT) you stash away the current contents of
+&gt; *STDOUT{IO} and make it empty. Now when you open(STDOUT,...) you get a
+&gt; new IO-thingy associated with *STDOUT{IO} but this IO-thingy is not
+&gt; associated with FD 1.  As far as the current Perl process is concerned
+&gt; this is now the &quot;standard output&quot; but any child process that's created
+&gt; will still think of FD 1 as standard out.
+">
+
+Inspired by this I replaced
+
+local *STDOUT;
+
+with
+
+local *STDOUT = *STDOUT;
+
+The subsequent redirection of STDOUT now worked as desired, but
+the original STDOUT was not restored after the end of the enclosing
+block.  My guess is that the &quot;stashing away&quot; that happens when one
+uses local does not include the association of the file descriptor
+with the file control block, which just gets lost after the
+duplication with &quot;open STDOUT, '&gt;&amp;', ...&quot;.  If correct, this is a
+shame, because it breaks the localization model.  But I'm waaay
+out of my depth here.
+
+<QUOTE PREVIOUSPOST="
+&gt;I'm fairly sure I've seen modules on CPAN to wrap it up a bit...
+">
+
+If anyone happens to know the CPAN module that Brian is referring
+to here please let me know.  I looked for it without any luck.  I
+searched for terms like &quot;redirect&quot; and &quot;redirection&quot;.  (FWIW, I
+did my search with Google restricted to site:search.cpan.org.)
+
+TIA!
+
+kj
+
+--
+NOTE: In my address everything before the first period is backwards;
+and the last period, and everything after it, should be discarded.
+</POST>
+<POST>
+<POSTER> Brian McCauley &lt;nobul...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-03T15:02:00 </POSTDATE>
+On Aug 3, 4:55 pm, kj &lt;so ... @987jk.com.invalid&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In &lt;1186036012.070979.170 ... @19g2000hsx.googlegroups.com&gt; Brian McCauley
+&gt; &gt;I'm fairly sure I've seen modules on CPAN to wrap it up a bit...
+
+&gt; If anyone happens to know the CPAN module that Brian is referring
+&gt; to here please let me know.  I looked for it without any luck.  I
+&gt; searched for terms like &quot;redirect&quot; and &quot;redirection&quot;.  (FWIW, I
+&gt; did my search with Google restricted to site:search.cpan.org.)
+">
+
+I think I was miss-remembering either Hook::Output::File or
+SelectSaver - neither of which does what you want. Hook::Output::File
+could be rewritten to do the right thing.
+</POST>
+<POST>
+<POSTER> kj &lt;so...@987jk.com.invalid&gt; </POSTER>
+<POSTDATE> 2007-08-03T16:44:00 </POSTDATE>
+In &lt;1186167749.116827.250 ... @q75g2000hsh.googlegroups.com&gt; Brian McCauley &lt;nobul ... @gmail.com&gt; writes:
+
+<QUOTE PREVIOUSPOST="
+&gt;On Aug 3, 4:55 pm, kj &lt;so ... @987jk.com.invalid&gt; wrote:
+&gt;&gt; In &lt;1186036012.070979.170 ... @19g2000hsx.googlegroups.com&gt; Brian McCauley
+&gt;&gt; &gt;I'm fairly sure I've seen modules on CPAN to wrap it up a bit...
+
+&gt;&gt; If anyone happens to know the CPAN module that Brian is referring
+&gt;&gt; to here please let me know.  I looked for it without any luck.  I
+&gt;&gt; searched for terms like &quot;redirect&quot; and &quot;redirection&quot;.  (FWIW, I
+&gt;&gt; did my search with Google restricted to site:search.cpan.org.)
+&gt;I think I was miss-remembering either Hook::Output::File or
+&gt;SelectSaver - neither of which does what you want. Hook::Output::File
+&gt;could be rewritten to do the right thing.
+">
+
+Thanks!  (That's one utterly mystifying chunk of code...  And so
+short too!  I can't even begin to understand it; it sure is humbling.
+Time for me to crawl back to my little world...)
+
+kj
+
+--
+NOTE: In my address everything before the first period is backwards;
+and the last period, and everything after it, should be discarded.
+</POST>
+<POST>
+<POSTER> Brian McCauley &lt;nobul...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-04T05:44:00 </POSTDATE>
+On Aug 3, 4:55 pm, kj &lt;so ... @987jk.com.invalid&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In &lt;1186036012.070979.170 ... @19g2000hsx.googlegroups.com&gt; Brian McCauley &lt;nobul ... @gmail.com&gt; writes:
+
+&gt; &gt;On Aug 2, 12:41 am, kj &lt;so ... @987jk.com.invalid&gt; wrote:
+&gt; &gt;I wrote a quite detailed explanation of this here...
+&gt; &gt; http://groups.google.com/group/comp.lang.perl.misc/browse_frm/thread/ ...
+
+&gt; That was certainly illuminating.  Thank you!
+
+&gt; In that post you wrote:
+
+&gt; &gt; But if you do local(*STDOUT) you stash away the current contents of
+&gt; &gt; *STDOUT{IO} and make it empty. Now when you open(STDOUT,...) you get a
+&gt; &gt; new IO-thingy associated with *STDOUT{IO} but this IO-thingy is not
+&gt; &gt; associated with FD 1.  As far as the current Perl process is concerned
+&gt; &gt; this is now the &quot;standard output&quot; but any child process that's created
+&gt; &gt; will still think of FD 1 as standard out.
+
+&gt; Inspired by this I replaced
+
+&gt;   local *STDOUT;
+
+&gt; with
+
+&gt;   local *STDOUT = *STDOUT;
+
+&gt; The subsequent redirection of STDOUT now worked as desired, but
+&gt; the original STDOUT was not restored after the end of the enclosing
+&gt; block.  My guess is that the &quot;stashing away&quot; that happens when one
+&gt; uses local does not include the association of the file descriptor
+&gt; with the file control block, which just gets lost after the
+&gt; duplication with &quot;open STDOUT, '&gt;&amp;', ...&quot;.
+">
+
+With local *STDOUT = *STDOUT all you are doing is manipulating the
+very top layers of the stuff described in my other post.
+
+You are not creating a new IO-thingy nor are you changing anything in
+the IO-thingy, filedescriptor, FCB chain. There's still only one
+filedescriptor (1) associated with the original FCB and as soon as you
+reopen STDOUT your process looses all connection with that FCB.
+</POST>
+<POST>
+<POSTER> Brian McCauley &lt;nobul...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-04T06:25:00 </POSTDATE>
+On Aug 3, 8:02 pm, Brian McCauley &lt;nobul ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Aug 3, 4:55 pm, kj &lt;so ... @987jk.com.invalid&gt; wrote:
+
+&gt; &gt; In &lt;1186036012.070979.170 ... @19g2000hsx.googlegroups.com&gt; Brian McCauley
+&gt; &gt; &gt;I'm fairly sure I've seen modules on CPAN to wrap it up a bit...
+
+&gt; &gt; If anyone happens to know the CPAN module that Brian is referring
+&gt; &gt; to here please let me know.  I looked for it without any luck.  I
+&gt; &gt; searched for terms like &quot;redirect&quot; and &quot;redirection&quot;.  (FWIW, I
+&gt; &gt; did my search with Google restricted to site:search.cpan.org.)
+
+&gt; I think I was miss-remembering either Hook::Output::File or
+&gt; SelectSaver - neither of which does what you want. Hook::Output::File
+&gt; could be rewritten to do the right thing.
+">
+
+On the other hand simply abstracting the code from my previous post
+into a subroutine is not too hard:
+
+use AtExit;
+sub save_fd {
+my $std = shift;
+open ( my $saved,'&gt;&amp;', $std) or die $!;
+my $mode = shift;
+open $std, $mode, @_ and new AtExit sub {
+# Actually the or die is of dubious utility here
+open ($std,'&gt;&amp;', $saved) or die $!;
+};
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+print &quot;To terminal\n&quot;;
+{
+my $save_STDOUT = save_fd \*STDOUT, '&gt;', 'x.log' or die $!;
+print &quot;To log\n&quot;;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+print &quot;To terminal\n&quot;;
+</POST>
+<POST>
+<POSTER> kj &lt;so...@987jk.com.invalid&gt; </POSTER>
+<POSTDATE> 2007-08-04T11:23:00 </POSTDATE>
+In &lt;1186223134.723592.105 ... @d55g2000hsg.googlegroups.com&gt; Brian McCauley &lt;nobul ... @gmail.com&gt; writes:
+
+<QUOTE PREVIOUSPOST="
+&gt;On Aug 3, 8:02 pm, Brian McCauley &lt;nobul ... @gmail.com&gt; wrote:
+&gt;On the other hand simply abstracting the code from my previous post
+&gt;into a subroutine is not too hard:
+&gt;use AtExit;
+&gt;sub save_fd {
+&gt;    my $std = shift;
+&gt;    open ( my $saved,'&gt;&amp;', $std) or die $!;
+&gt;    my $mode = shift;
+&gt;    open $std, $mode, @_ and new AtExit sub {
+&gt;    # Actually the or die is of dubious utility here
+&gt;    open ($std,'&gt;&amp;', $saved) or die $!;
+&gt;    };
+&gt;}
+">
+
+Thanks once more.  AtExit is a handy module to know.
+
+kj
+
+--
+NOTE: In my address everything before the first period is backwards;
+and the last period, and everything after it, should be discarded.
+</POST>
+<POST>
+<POSTER> &quot;Dr.Ruud&quot; &lt;rvtol+n...@isolution.nl&gt; </POSTER>
+<POSTDATE> 2007-08-11T17:47:00 </POSTDATE>
+xhos ... @gmail.com schreef:
+
+<QUOTE PREVIOUSPOST="
+&gt;       open my $pipe, '|-', &quot;/usr/bin/sort -n &gt; $filename&quot;, or die $!;
+
+&gt; Alas, this requires you to use the shell-interpreted-version of the
+&gt; open rather than the shell-less version.
+">
+
+Isn't there &quot;concept&quot; in Perl to change &quot;SHELLMETAS&quot;? (name as is used
+in `man procmailrc`)
+
+I often undefine SHELLMETAS in a .procmailrc, to prevent the shell being
+used.
+
+--
+Affijn, Ruud
+
+&quot;Gewoon is een tijger.&quot;
+</POST>
+<POST>
+<POSTER> xhos...@gmail.com </POSTER>
+<POSTDATE> 2007-08-11T20:13:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Dr.Ruud&quot; &lt;rvtol+n ... @isolution.nl&gt; wrote:
+&gt; xhos ... @gmail.com schreef:
+
+&gt; &gt;       open my $pipe, '|-', &quot;/usr/bin/sort -n &gt; $filename&quot;, or die $!;
+
+&gt; &gt; Alas, this requires you to use the shell-interpreted-version of the
+&gt; &gt; open rather than the shell-less version.
+
+&gt; Isn't there &quot;concept&quot; in Perl to change &quot;SHELLMETAS&quot;? (name as is used
+&gt; in `man procmailrc`)
+">
+
+Well, there is the 4 or more form of open.  That suppresses the shell.
+
+<QUOTE PREVIOUSPOST="
+&gt; I often undefine SHELLMETAS in a .procmailrc, to prevent the shell being
+&gt; used.
+">
+
+But that would defeat the purpose.  The &quot;&gt;&quot; redirection has to be
+interpreted by the shell, otherwise there is no point to doing it that way.
+
+You could always pass $filename through quotemeta, although for all I know
+that might backwhack some things which are ordinary to the shell but become
+special when backwhacked.
+
+Xho
+
+--
+-------------------- http://NewsReader.Com/ --------------------
+Usenet Newsgroup Service                        $9.95/Month 30GB
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,655 @@
+<DOC>
+<DOCID> eng-NG-31-135586-9746593 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-11-24T06:31:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Newbie Security Questions
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Dan &lt;djdr...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-24T06:31:00 </POSTDATE>
+Hello!
+
+I've got some misc. questions about PHP and its usage with MySQL.
+
+The following web page:
+
+http://www.freewebmasterhelp.com/tutorials/phpmysql/3
+
+shows that it is normal to include mysql database usernames and
+passwords in the php file. Is this good programming practice? I'm
+worried that people would be able to read my php file through a web
+browser or through other nefarious means.
+
+This is the statement that must be in the source file to connect to a
+database:
+
+mysql_connect(localhost,$username,$password);
+
+with $username and $password defined elsewhere in the source file.
+This seems scary to me!
+
+How to properly defend against an injection attack? Wikipedia has the
+following code as for how to defend:
+
+$query_result = mysql_query
+(
+&quot;select * from users where name = '&quot;
+.
+mysql_real_escape_string($user_name, $dbh)
+.
+&quot;'&quot;
+);
+
+If this is all it takes to defend against the attacks why is such a
+big deal made about them? Is there something more that you need to
+defend against?
+
+Also one more question on how to keep track of people who are
+submitting information on a website. How to set a time limit to how
+often people can submit information? This is easy to do on the client
+side, just disable the button for a set amount of time, but if they
+went hunting through my html and found the php script they could
+easily whip up a program to POST information willy nilly as fast as
+they wanted.
+
+Also any more information or websites that would contain useful
+information for newcomers to PHP and MySQL would be grand!
+
+Thanks a lot!
+</POST>
+<POST>
+<POSTER> The Natural Philosopher &lt;a...@b.c&gt; </POSTER>
+<POSTDATE> 2007-11-24T07:48:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Dan wrote:
+&gt; Hello!
+
+&gt; I've got some misc. questions about PHP and its usage with MySQL.
+
+&gt; The following web page:
+
+&gt; http://www.freewebmasterhelp.com/tutorials/phpmysql/3
+
+&gt; shows that it is normal to include mysql database usernames and
+&gt; passwords in the php file. Is this good programming practice? I'm
+&gt; worried that people would be able to read my php file through a web
+&gt; browser or through other nefarious means.
+">
+
+Only on a misconfigured server. Files with a .php extension will ALWAYS
+be executed rather than downladed by te web serve.
+
+And even if they do, its a strange Mysql server that is sitting on the
+internet accepting requests from all and sundry..normally you run them
+(php/apache/mysql)on a local network, or the same box and set mysql to
+only accept requests FROM the apache server..
+
+Of course if your server machine itself is hacked, all bets are off
+anyway..never mind password access to Mysql, just strip all the database
+files out and run them on YOUR mysql setup..
+
+In essence, on a properly configured server, php sources are private.
+End of story.
+
+<QUOTE PREVIOUSPOST="
+&gt; Also one more question on how to keep track of people who are
+&gt; submitting information on a website. How to set a time limit to how
+&gt; often people can submit information? This is easy to do on the client
+&gt; side, just disable the button for a set amount of time, but if they
+&gt; went hunting through my html and found the php script they could
+&gt; easily whip up a program to POST information willy nilly as fast as
+&gt; they wanted.
+">
+
+Should be able to use a cookie or session thing to keep track of
+individual users..but no absolute certainty. One of essences of web
+acess is there is intrinsically no notion of a connected user. You have
+to layer that over the top using cookies and user logins if you want it.
+But that relies on co-operation from the remote user.
+
+So, unless you enforce some kind of user login, you cant distinguish
+between loads of different people doing stuff, and one person doing lots
+of stuff.
+
+IP address stuff doesn't work either as you may be dealing with a proxy
+server.
+</POST>
+<POST>
+<POSTER> &quot;Shelly&quot; &lt;sheldonlg.n...@asap-consult.com&gt; </POSTER>
+<POSTDATE> 2007-11-24T07:39:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Dan wrote:
+&gt; Hello!
+
+&gt; I've got some misc. questions about PHP and its usage with MySQL.
+
+&gt; The following web page:
+
+&gt; http://www.freewebmasterhelp.com/tutorials/phpmysql/3
+
+&gt; shows that it is normal to include mysql database usernames and
+&gt; passwords in the php file. Is this good programming practice? I'm
+&gt; worried that people would be able to read my php file through a web
+&gt; browser or through other nefarious means.
+
+&gt; This is the statement that must be in the source file to connect to a
+&gt; database:
+
+&gt; mysql_connect(localhost,$username,$password);
+
+&gt; with $username and $password defined elsewhere in the source file.
+&gt; This seems scary to me!
+
+&gt; How to properly defend against an injection attack? Wikipedia has the
+&gt; following code as for how to defend:
+
+&gt; $query_result = mysql_query
+&gt;  (
+&gt;        &quot;select * from users where name = '&quot;
+&gt;    .
+&gt;        mysql_real_escape_string($user_name, $dbh)
+&gt;    .
+&gt;        &quot;'&quot;
+&gt;   );
+
+&gt; If this is all it takes to defend against the attacks why is such a
+&gt; big deal made about them? Is there something more that you need to
+&gt; defend against?
+
+&gt; Also one more question on how to keep track of people who are
+&gt; submitting information on a website. How to set a time limit to how
+&gt; often people can submit information? This is easy to do on the client
+&gt; side, just disable the button for a set amount of time, but if they
+&gt; went hunting through my html and found the php script they could
+&gt; easily whip up a program to POST information willy nilly as fast as
+&gt; they wanted.
+
+&gt; Also any more information or websites that would contain useful
+&gt; information for newcomers to PHP and MySQL would be grand!
+
+&gt; Thanks a lot!
+">
+
+Here is the simple answer:  they cannot see your PHP script./  The PHP
+script resides on the server.  It generates html as output and it is the
+html that is sent to the browser.  Try looking at a &quot;Page source&quot; in a
+browser for a page with a php suffix.  All you will see is the resultant
+html.
+
+--
+Shelly
+</POST>
+<POST>
+<POSTER> Jerry Stuckle &lt;jstuck...@attglobal.net&gt; </POSTER>
+<POSTDATE> 2007-11-24T07:58:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Dan wrote:
+&gt; Hello!
+
+&gt; I've got some misc. questions about PHP and its usage with MySQL.
+
+&gt; The following web page:
+
+&gt; http://www.freewebmasterhelp.com/tutorials/phpmysql/3
+
+&gt; shows that it is normal to include mysql database usernames and
+&gt; passwords in the php file. Is this good programming practice? I'm
+&gt; worried that people would be able to read my php file through a web
+&gt; browser or through other nefarious means.
+
+&gt; This is the statement that must be in the source file to connect to a
+&gt; database:
+
+&gt; mysql_connect(localhost,$username,$password);
+
+&gt; with $username and $password defined elsewhere in the source file.
+&gt; This seems scary to me!
+">
+
+You need to define the userid and password somewhere in the source file
+so that you can access MySQL.  If your server is properly configured, no
+one will be able to see your PHP source code (as long as it's in .php
+files, anyway).
+
+But for additional safety, just put the information in an include file
+outside the web server's document root.  Then it will be accessible via
+PHP (which uses the file system) but not through the web server.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; How to properly defend against an injection attack? Wikipedia has the
+&gt; following code as for how to defend:
+
+&gt; $query_result = mysql_query
+&gt;   (
+&gt;         &quot;select * from users where name = '&quot;
+&gt;     .
+&gt;         mysql_real_escape_string($user_name, $dbh)
+&gt;     .
+&gt;         &quot;'&quot;
+&gt;    );
+
+&gt; If this is all it takes to defend against the attacks why is such a
+&gt; big deal made about them? Is there something more that you need to
+&gt; defend against?
+">
+
+That's part of it.  Always process strings with
+mysql_real_escape_string(), something too many people don't do.  But
+also validate your numeric values to ensure they are numeric.  And if
+there are specific values which can be passed (i.e. from a list), ensure
+the value passed is in that list.
+
+<QUOTE PREVIOUSPOST="
+&gt; Also one more question on how to keep track of people who are
+&gt; submitting information on a website. How to set a time limit to how
+&gt; often people can submit information? This is easy to do on the client
+&gt; side, just disable the button for a set amount of time, but if they
+&gt; went hunting through my html and found the php script they could
+&gt; easily whip up a program to POST information willy nilly as fast as
+&gt; they wanted.
+">
+
+You need to do it server side.  Every time the user submits information,
+check against the time they previously submitted.  If it's not too
+quick, save the new time and allow the submission.
+
+<QUOTE PREVIOUSPOST="
+&gt; Also any more information or websites that would contain useful
+&gt; information for newcomers to PHP and MySQL would be grand!
+
+&gt; Thanks a lot!
+">
+
+How many years do you want to spend?  There are millions of pages about
+this on the internet.
+
+--
+==================
+Remove the &quot;x&quot; from my email address
+Jerry Stuckle
+JDS Computer Training Corp.
+jstuck ... @attglobal.net
+==================
+</POST>
+<POST>
+<POSTER> Dan &lt;djdr...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-24T10:18:00 </POSTDATE>
+Thanks for all the help all!
+
+Yeah the users are anonymous when submitting information so there
+really is no way to keep track of them, as there are no usernames and
+passwords to go around.
+
+I was toying with the idea of maybe creating a buffer of submissions,
+with their IP address, and maybe checking the buffer every 5 seconds
+or so and seeing if there was an inordinate amount of submissions from
+the same IP address. I'd then flush the buffer and process the
+requests if there was no bad juju detected. This is out of my league
+at the moment though, and wouldn't really solve the problem of proxy
+servers, or say if a botnet decided to focus it's attention on my
+amateurish website. :P
+
+But once again thanks for the help! :D
+</POST>
+<POST>
+<POSTER> Jerry Stuckle &lt;jstuck...@attglobal.net&gt; </POSTER>
+<POSTDATE> 2007-11-24T10:29:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Dan wrote:
+&gt; Thanks for all the help all!
+
+&gt; Yeah the users are anonymous when submitting information so there
+&gt; really is no way to keep track of them, as there are no usernames and
+&gt; passwords to go around.
+
+&gt; I was toying with the idea of maybe creating a buffer of submissions,
+&gt; with their IP address, and maybe checking the buffer every 5 seconds
+&gt; or so and seeing if there was an inordinate amount of submissions from
+&gt; the same IP address. I'd then flush the buffer and process the
+&gt; requests if there was no bad juju detected. This is out of my league
+&gt; at the moment though, and wouldn't really solve the problem of proxy
+&gt; servers, or say if a botnet decided to focus it's attention on my
+&gt; amateurish website. :P
+
+&gt; But once again thanks for the help! :D
+">
+
+And also not accurate.  A person may come from different IP addresses on
+different requests (i.e. a round-robin proxy).  AOL does this, for
+instance.  Or you might have 1000 users behind one corporate proxy and
+all using the same IP address.
+
+If you want to control submissions, you can use cookies, but that's not
+foolproof.  If you need to prevent it, you'll need userid's and passwords.
+
+Which you will probably need anyway, or you will be deluged with spammers.
+
+--
+==================
+Remove the &quot;x&quot; from my email address
+Jerry Stuckle
+JDS Computer Training Corp.
+jstuck ... @attglobal.net
+==================
+</POST>
+<POST>
+<POSTER> Jerry Stuckle &lt;jstuck...@attglobal.net&gt; </POSTER>
+<POSTDATE> 2007-11-24T14:27:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Michael Vilain wrote:
+&gt; In article &lt;13kg7mvjssbn ... @corp.supernews.com&gt;,
+&gt;  &quot;Shelly&quot; &lt;sheldonlg.n ... @asap-consult.com&gt; wrote:
+
+&gt;&gt; Dan wrote:
+&gt;&gt;&gt; Hello!
+
+&gt;&gt;&gt; I've got some misc. questions about PHP and its usage with MySQL.
+
+&gt;&gt;&gt; The following web page:
+
+&gt;&gt;&gt; http://www.freewebmasterhelp.com/tutorials/phpmysql/3
+
+&gt;&gt;&gt; shows that it is normal to include mysql database usernames and
+&gt;&gt;&gt; passwords in the php file. Is this good programming practice? I'm
+&gt;&gt;&gt; worried that people would be able to read my php file through a web
+&gt;&gt;&gt; browser or through other nefarious means.
+
+&gt;&gt;&gt; This is the statement that must be in the source file to connect to a
+&gt;&gt;&gt; database:
+
+&gt;&gt;&gt; mysql_connect(localhost,$username,$password);
+
+&gt;&gt;&gt; with $username and $password defined elsewhere in the source file.
+&gt;&gt;&gt; This seems scary to me!
+
+&gt;&gt;&gt; How to properly defend against an injection attack? Wikipedia has the
+&gt;&gt;&gt; following code as for how to defend:
+
+&gt;&gt;&gt; $query_result = mysql_query
+&gt;&gt;&gt;  (
+&gt;&gt;&gt;        &quot;select * from users where name = '&quot;
+&gt;&gt;&gt;    .
+&gt;&gt;&gt;        mysql_real_escape_string($user_name, $dbh)
+&gt;&gt;&gt;    .
+&gt;&gt;&gt;        &quot;'&quot;
+&gt;&gt;&gt;   );
+
+&gt;&gt;&gt; If this is all it takes to defend against the attacks why is such a
+&gt;&gt;&gt; big deal made about them? Is there something more that you need to
+&gt;&gt;&gt; defend against?
+
+&gt;&gt;&gt; Also one more question on how to keep track of people who are
+&gt;&gt;&gt; submitting information on a website. How to set a time limit to how
+&gt;&gt;&gt; often people can submit information? This is easy to do on the client
+&gt;&gt;&gt; side, just disable the button for a set amount of time, but if they
+&gt;&gt;&gt; went hunting through my html and found the php script they could
+&gt;&gt;&gt; easily whip up a program to POST information willy nilly as fast as
+&gt;&gt;&gt; they wanted.
+
+&gt;&gt;&gt; Also any more information or websites that would contain useful
+&gt;&gt;&gt; information for newcomers to PHP and MySQL would be grand!
+
+&gt;&gt;&gt; Thanks a lot!
+&gt;&gt; Here is the simple answer:  they cannot see your PHP script./  The PHP
+&gt;&gt; script resides on the server.  It generates html as output and it is the
+&gt;&gt; html that is sent to the browser.  Try looking at a &quot;Page source&quot; in a
+&gt;&gt; browser for a page with a php suffix.  All you will see is the resultant
+&gt;&gt; html.
+
+&gt; I read in an article a neat trick--store the username and password for
+&gt; your MySQL database as environment variables in an INCLUDE to the
+&gt; startup file for your Apache server.  This way the file can be protected
+&gt; with appropriate permissions and is run as root when Apache starts.  I'm
+&gt; lucky.  My web host was willing to do this for my site.  Yours may not.
+
+&gt; http://shiflett.org/articles/shared-hosting
+">
+
+Which also means anyone else on your host can also see your userid and
+password with a simple phpinfo()....
+
+--
+==================
+Remove the &quot;x&quot; from my email address
+Jerry Stuckle
+JDS Computer Training Corp.
+jstuck ... @attglobal.net
+==================
+</POST>
+<POST>
+<POSTER> Rob &lt;ratkin...@tbs-ltd.co.uk&gt; </POSTER>
+<POSTDATE> 2007-11-26T04:36:00 </POSTDATE>
+On Nov 24, 11:31 am, Dan &lt;djdr ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hello!
+
+&gt; I've got some misc. questions about PHP and its usage with MySQL.
+
+&gt; The following web page:
+
+&gt; http://www.freewebmasterhelp.com/tutorials/phpmysql/3
+
+&gt; shows that it is normal to include mysql database usernames and
+&gt; passwords in the php file. Is this good programming practice? I'm
+&gt; worried that people would be able to read my php file through a web
+&gt; browser or through other nefarious means.
+
+&gt; This is the statement that must be in the source file to connect to a
+&gt; database:
+
+&gt; mysql_connect(localhost,$username,$password);
+
+&gt; with $username and $password defined elsewhere in the source file.
+&gt; This seems scary to me!
+
+&gt; How to properly defend against an injection attack? Wikipedia has the
+&gt; following code as for how to defend:
+
+&gt; $query_result = mysql_query
+&gt;   (
+&gt;         &quot;select * from users where name = '&quot;
+&gt;     .
+&gt;         mysql_real_escape_string($user_name, $dbh)
+&gt;     .
+&gt;         &quot;'&quot;
+&gt;    );
+
+&gt; If this is all it takes to defend against the attacks why is such a
+&gt; big deal made about them? Is there something more that you need to
+&gt; defend against?
+
+&gt; Also one more question on how to keep track of people who are
+&gt; submitting information on a website. How to set a time limit to how
+&gt; often people can submit information? This is easy to do on the client
+&gt; side, just disable the button for a set amount of time, but if they
+&gt; went hunting through my html and found the php script they could
+&gt; easily whip up a program to POST information willy nilly as fast as
+&gt; they wanted.
+
+&gt; Also any more information or websites that would contain useful
+&gt; information for newcomers to PHP and MySQL would be grand!
+
+&gt; Thanks a lot!
+">
+
+I would be inclined to put the username, password, etc in a seperate
+file. There are a number of advantages, the main one being if you
+accidentally delete the '&lt;?php' tag, the sensitive information won't
+be automatically displayed.
+
+Unlikely I know, but might as well be safe.
+
+Rob.
+</POST>
+<POST>
+<POSTER> Michael Martinek &lt;michael.marti...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-26T08:20:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; This is the statement that must be in the source file to connect to a
+&gt; database:
+
+&gt; mysql_connect(localhost,$username,$password);
+
+&gt; with $username and $password defined elsewhere in the source file.
+&gt; This seems scary to me!
+">
+
+Indeed. And I've been working on solutions to that problem lately.
+Typically, the reason you want to worry about this is an attack
+gaining access to the server who can just obtain your passwords and
+such from scripts to access databases. It doesn't usually have
+anything to do with someone downloading the PHP source from a
+misconfigured server, as you'd be a fool to have your database server
+open to the internet. I'll cover more on my idea in a moment.
+
+<QUOTE PREVIOUSPOST="
+&gt; How to properly defend against an injection attack? Wikipedia has the
+&gt; following code as for how to defend:
+
+&gt; $query_result = mysql_query
+&gt;   (
+&gt;         &quot;select * from users where name = '&quot;
+&gt;     .
+&gt;         mysql_real_escape_string($user_name, $dbh)
+&gt;     .
+&gt;         &quot;'&quot;
+&gt;    );
+
+&gt; If this is all it takes to defend against the attacks why is such a
+&gt; big deal made about them? Is there something more that you need to
+&gt; defend against?
+">
+
+A lot of outsourced work and &quot;out of college&quot; developers don't take
+security into consideration. In some cases, it's companies going to
+pre-packages solutions or source snippets from the web which are just
+examples to do something; which never get fixed.
+
+You can even defend against attacks by using addslashes(). Situations
+where addslashes() and mysql_real_escape_string() is useless is
+something like this:
+
+$nAccountID = /*some user input..*/ &quot;0; DROP users;&quot;
+$nAccountID = mysql_real_escape_string($nAccountID);
+$sSQL = &quot;SELECT * from users where account_id = {$nAccountID}&quot;;
+
+mysql_real_escape_string will not change $nAccountID from the value of
+&quot;0; DROP users;&quot;.. there's nothing to be escaped in the string. The
+proper way to protect against SQL injection is usually a combination
+of sprintf() or intval(), and mysql_real_escape_string(). For example:
+
+$nAccountID = intval(&quot;0; DROP users;&quot;); // comes out 0
+
+$sSQL = sprintf('SELECT * FROM users WHERE account_id = %u',
+$nAccountID)
+
+Note here we don't need mysql_real_escape_string() because sprintf()
+is going to error if $nAccountID is not a number.
+
+$sSQL = sprintf('SELECT * FROM users WHERE user_name = &quot;%s&quot;',
+mysql_real_escape_string($sUsername));
+
+This will escape the string to remove SQL escape attempts.
+
+Now, mysql_query() has a protection built-in.. it will only execute
+one query. So if $sUsername included multiple statements, only the
+first would be executed.. which would be enough to complete the
+statement you started, then the second statement would be the harmful
+one.
+
+<QUOTE PREVIOUSPOST="
+&gt; Also one more question on how to keep track of people who are
+&gt; submitting information on a website. How to set a time limit to how
+&gt; often people can submit information? This is easy to do on the client
+&gt; side, just disable the button for a set amount of time, but if they
+&gt; went hunting through my html and found the php script they could
+&gt; easily whip up a program to POST information willy nilly as fast as
+&gt; they wanted.
+">
+
+JavaScript methods are like car keys. They keep honest people honest.
+Anyone who really wants to, or knows how can just bypass it. That's
+where you implement something server side with a database. This would
+usually be done by creating a table in a database to track recent
+submissions.. usually tracking IP or account ID and submission
+timestamp.
+
+When you get a submission request, check
+
+sprintf('SELECT COUNT(*) FROM thetable WHERE ip = %u AND submit_stamp
+= &gt;= %u',
+ip2long($_REQUEST['REMOTE_ADDR']), time() - (60 * 5))
+
+To check for how many submissions were made in the last five minutes.
+
+In securing a site and protecting your databases.. it comes down to,
+NEVER trust user input! Even if you're writing an internal tool where
+employees of your own company will be using them.. DON'T pass
+unescaped data to the database! Even if they aren't trying to cause
+problems, eventually something is going to happen. Also, don't give
+more rights to a script than it needs. I have a lot of user accounts
+in my databases. When a page only needs to execute a function or issue
+a SELECT, there's no reason to give it UPDATE, INSERT, or DROP
+privileges. In some situations, I don't even give it SELECT.. I only
+give it EXECUTE, and write a procedure which issues the SELECT, which
+the PHP page will do a &quot;CALL getAccountName(%u)&quot; where %u is the
+provided account ID on and process the results. The procedure in MySQL
+is written with minimal security needed. For example, if my user on
+the PHP page only has rights for a EXECUTE but they need to SELECT or
+UPDATE data.. you need to define your procedure or function in MySQL
+with SQL SECURITY DEFINER, and provide a DEFINER which has rights to
+update or edit the table in question.
+
+Really, I could go on all day about this.. security has always been a
+big thing for me, having turned ethical hacker many years ago.
+
+As for the solution I'm working on, it'll work with Apache and PHP.
+It's an application written in PHP, compiled with Roadsend PHP
+compiler to an application. It gets the MD5 checksum of scripts and
+all theirs parents, up to the init() process. It makes sure that
+nothing has been edited or tampered with. To get a DB connection,
+you'd provide the DB hostname and user name; and the script itself
+would return the password. The password is actually generated off the
+hostname, user name and script MD5.. so not even the local developers
+would know it. If the page trying to get the password for a DB
+connection is modified.. say, to add a &quot;echo $sPassword;&quot; then it
+wouldn't pass the sanity check and would never get a password back.
+The way this would work, is that a PHP script is created that contains
+a wrapper to this application.. that's the primary script we're making
+sure hasn't been changed. It returns a link to the database. This
+allows changes to other scripts which call the wrapper, without making
+an administrator re-run the password generation tools to sync with
+MySQL every time scripts are changed on a web site.
+
+But whee.. security. Fun stuff.
+
+Regards,
+Michael Martinek
+</POST>
+<POST>
+<POSTER> Michael Fesser &lt;neti...@gmx.de&gt; </POSTER>
+<POSTDATE> 2007-11-26T11:49:00 </POSTDATE>
+.oO(Michael Martinek)
+
+<QUOTE PREVIOUSPOST="
+&gt;mysql_real_escape_string will not change $nAccountID from the value of
+&gt;&quot;0; DROP users;&quot;.. there's nothing to be escaped in the string. The
+&gt;proper way to protect against SQL injection is usually a combination
+&gt;of sprintf() or intval(), and mysql_real_escape_string().
+">
+
+Or prepared statements.
+
+Micha
+</POST>
+</TEXT>
+</BODY>
+</DOC>

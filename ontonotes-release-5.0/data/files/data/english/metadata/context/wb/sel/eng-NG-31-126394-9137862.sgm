@@ -1,0 +1,275 @@
+<DOC>
+<DOCID> eng-NG-31-126394-9137862 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-24T04:51:00 </DATETIME>
+<BODY>
+<HEADLINE>
+What is the purpose of a const in the prototype for a non member method
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;parag_p...@hotmail.com&quot; &lt;parag_p...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-24T04:51:00 </POSTDATE>
+I have a non member function , which has a prototype
+
+const print() const{
+
+What could be the purpose of the same?
+</POST>
+<POST>
+<POSTER> Uday Bidkar &lt;uday.bid...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-24T04:58:00 </POSTDATE>
+On Oct 24, 1:51 pm, &quot;parag_p ... @hotmail.com&quot; &lt;parag_p ... @hotmail.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I have a non member function , which has a prototype
+
+&gt; const print() const{
+
+&gt; What could be the purpose of the same?
+">
+
+You can not use function modifiers like const, volatile on nonmember
+functions. It won't allow your code to compile.
+
+-Uday Bidkar
+</POST>
+<POST>
+<POSTER> &quot;parag_p...@hotmail.com&quot; &lt;parag_p...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-24T06:54:00 </POSTDATE>
+#include&lt;iostream&gt;
+using namespace::std;
+
+const void print () {
+cout &lt;&lt; &quot; wow &quot;&lt;&lt; endl;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+int main(){
+print();
+return 0;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+But I compile the above with g++ 3.6 and  it does work for me.
+without any warnings. i think we might have misunderstanding
+-Parag
+</POST>
+<POST>
+<POSTER> &quot;parag_p...@hotmail.com&quot; &lt;parag_p...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-24T06:58:00 </POSTDATE>
+I am sorry about the const modifier declaration after the method.
+This was not intended. I am talking about the initial one
+</POST>
+<POST>
+<POSTER> &quot;Daniel T.&quot; &lt;danie...@earthlink.net&gt; </POSTER>
+<POSTDATE> 2007-10-24T07:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;parag_p ... @hotmail.com&quot; &lt;parag_p ... @hotmail.com&gt; wrote:
+&gt; #include&lt;iostream&gt;
+&gt; using namespace::std;
+
+&gt; const void print () {
+&gt; cout &lt;&lt; &quot; wow &quot;&lt;&lt; endl;
+&gt; }
+
+&gt; int main(){
+&gt; print();
+&gt; return 0;
+&gt; }
+
+&gt; But I compile the above with g++ 3.6 and  it does work for me.
+&gt; without any warnings. i think we might have misunderstanding
+&gt; -Parag
+">
+
+Maybe some realistic examples will help:
+
+struct Foo {
+int i;
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+const Foo cbar() { return Foo(); }
+Foo  bar() { return Foo(); }
+
+int main() {
+int i = ++bar().i; // compiles fine
+i = ++cbar().i; // doesn't compile
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+When the return is non-const, the value returned can be modified. Note,
+however that this is only the case with user defined types, if 'bar()'
+and 'cbar()' returned integral types (e.g., int, double) then the
+'const' would be superfluous. In your example &quot;const void&quot;, the const is
+also pointless because you can't modify a void in any case. :-)
+
+There is a guideline that whenever a function returns a user defined
+type by value, it should actually be modified by const. That way they
+behave more like the integral types. Chances are, you are looking at
+code where someone over applied that guideline.
+</POST>
+<POST>
+<POSTER> red floyd &lt;no.s...@here.dude&gt; </POSTER>
+<POSTDATE> 2007-10-24T11:36:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+parag_p ... @hotmail.com wrote:
+&gt; I have a non member function , which has a prototype
+
+&gt; const print() const{
+
+&gt; What could be the purpose of the same?
+">
+
+This has got to be a homework question.  I've seen the exact same
+question asked four or five times within the past week.
+</POST>
+<POST>
+<POSTER> red floyd &lt;no.s...@here.dude&gt; </POSTER>
+<POSTDATE> 2007-10-24T11:37:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+parag_p ... @hotmail.com wrote:
+&gt; I am sorry about the const modifier declaration after the method.
+&gt; This was not intended. I am talking about the initial one
+">
+
+It's a syntax error.
+
+const print() const;
+
+has no return type, and implicit int is illegal.
+</POST>
+<POST>
+<POSTER> James Kanze &lt;james.ka...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-25T04:37:00 </POSTDATE>
+On Oct 24, 12:54 pm, &quot;parag_p ... @hotmail.com&quot; &lt;parag_p ... @hotmail.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; #include&lt;iostream&gt;
+&gt; using namespace::std;
+&gt; const void print () {
+&gt; cout &lt;&lt; &quot; wow &quot;&lt;&lt; endl;
+&gt; }
+&gt; int main(){
+&gt; print();
+&gt; return 0;
+&gt; }
+&gt; But I compile the above with g++ 3.6 and  it does work for me.
+&gt; without any warnings. i think we might have misunderstanding
+">
+
+It's legal.  Void is the basic type of the return value, and you
+are allowed to add cv qualifiers to the type of the return
+value.  They only have any real meaning if the return value is a
+class type; a function return is an rvalue, and non-class type
+rvalues never have a cv qualified type, regardless of the
+declaration.  Thus, &quot;int const f()&quot; and &quot;int f()&quot; both declare a
+function returning an int (and not an int const); &quot;ClassType
+const f()&quot; and &quot;ClassType f()&quot;, on the other hand, return
+different types.  (This is my interpretation of the standard,
+but I don't think that the standard is as clear as it could be
+here.  Both g++ and Sun CC do treat &quot;int const f()&quot; and &quot;int
+f()&quot; as having different return types.  Although §3.10/9 clearly
+says &quot;Class rvalues can have cv-qualified types; non-class
+rvalues always have cv-unqualified types.&quot;)
+
+You wouldn't normally write something like the above, but such
+things might easily occur in the instantiation of a template,
+e.g.:
+
+template&lt; typename T &gt;
+T const f( T* p ) { ... } ;
+
+Call this function with a void const*, and it will return a void
+const.
+
+--
+James Kanze (GABI Software)             email:james.ka ... @gmail.com
+Conseils en informatique orientée objet/
+Beratung in objektorientierter Datenverarbeitung
+9 place Sémard, 78210 St.-Cyr-l'École, France, +33 (0)1 30 23 00 34
+</POST>
+<POST>
+<POSTER> &quot;parag_p...@hotmail.com&quot; &lt;parag_p...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-26T18:35:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; template&lt; typename T &gt;
+">
+
+&gt;   T const f( T* p ) { ... } ;
+
+<QUOTE PREVIOUSPOST="
+&gt;Call this function with a void const*, and it will return a void
+&gt;const.
+&gt;--
+">
+
+template&lt; typename T &gt;
+T const f( T* p ) { ... } ;
+
+I dont understand the above,
+int const f(int* p)
+
+How to call this with a void const *  ,  I also have never seen a
+const*
+</POST>
+<POST>
+<POSTER> James Kanze &lt;james.ka...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-27T08:49:00 </POSTDATE>
+On Oct 27, 12:35 am, &quot;parag_p ... @hotmail.com&quot; &lt;parag_p ... @hotmail.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; template&lt; typename T &gt;
+&gt;  &gt;   T const f( T* p ) { ... } ;
+&gt; &gt;Call this function with a void const*, and it will return a void
+&gt; &gt;const.
+&gt; template&lt; typename T &gt;
+&gt;     T const f( T* p ) { ... } ;
+&gt; I dont understand the above,
+&gt; int const f(int* p)
+">
+
+That's something different.  That function will always return an
+int const---which is the same as an int, given that const is
+ignored on non-class type rvalues.
+
+<QUOTE PREVIOUSPOST="
+&gt; How to call this with a void const *  ,  I also have never
+&gt; seen a const*
+">
+
+For my function, it's easy:
+
+void const* p = NULL ;
+f( p ) ;
+
+calls the function with a void const*.  As for the const*, in
+isolation, of course, it doesn't mean anything.  The const
+applies to whatever is to the left of the const.
+
+--
+James Kanze (GABI Software)             email:james.ka ... @gmail.com
+Conseils en informatique orientée objet/
+Beratung in objektorientierter Datenverarbeitung
+9 place Sémard, 78210 St.-Cyr-l'École, France, +33 (0)1 30 23 00 34
+</POST>
+<POST>
+<POSTER> cplusplus &lt;zapp...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-27T08:59:00 </POSTDATE>
+LOSER GO OUT SIDE AND DO SOME THING PRODUCTIVE WITH YOUR LIFE
+</POST>
+</TEXT>
+</BODY>
+</DOC>

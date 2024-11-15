@@ -1,0 +1,402 @@
+<DOC>
+<DOCID> eng-NG-31-135459-8593878 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-10T00:10:00 </DATETIME>
+<BODY>
+<HEADLINE>
+I can't pass a memory pointer between DLLs
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> soxmax &lt;soxmax_2...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-08-10T00:10:00 </POSTDATE>
+I am working with very limited memory so I thought I would allocate
+all the memory I would need in my top level DLL and then pass a
+pointer to the other DLLs so they could use the same allocated
+memory.
+It crashes the application. From primitive debugging I find that the
+pointer gets Nulled when I pass it. System status shows that the
+memory is still allocated but the pointer is not being passed
+properly. Anyone know how to fix this?
+
+Adieu,
+Derek
+</POST>
+<POST>
+<POSTER> Ulrich Eckhardt &lt;eckha...@satorlaser.com&gt; </POSTER>
+<POSTDATE> 2007-08-10T02:45:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+soxmax wrote:
+&gt; I am working with very limited memory so I thought I would allocate
+&gt; all the memory I would need in my top level DLL and then pass a
+&gt; pointer to the other DLLs so they could use the same allocated
+&gt; memory.
+&gt; It crashes the application. From primitive debugging I find that the
+&gt; pointer gets Nulled when I pass it. System status shows that the
+&gt; memory is still allocated but the pointer is not being passed
+&gt; properly. Anyone know how to fix this?
+">
+
+I'm pretty sure that passing memory from one DLL to another works. I think
+that the error is rather in the things you're not telling us. So: what
+exactly are you doing? When and how do you allocate the storage, how do you
+pass it along, how do you determine that it's null?
+
+Uli
+
+--
+Sator Laser GmbH
+Geschäftsführer: Ronald Boers, Amtsgericht Hamburg HR B62 932
+</POST>
+<POST>
+<POSTER> soxmax &lt;soxmax_2...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-08-10T14:41:00 </POSTDATE>
+On Aug 10, 12:45 am, Ulrich Eckhardt &lt;eckha ... @satorlaser.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; soxmax wrote:
+&gt; &gt; I am working with very limited memory so I thought I would allocate
+&gt; &gt; all the memory I would need in my top level DLL and then pass a
+&gt; &gt; pointer to the other DLLs so they could use the same allocated
+&gt; &gt; memory.
+&gt; &gt; It crashes the application. From primitive debugging I find that the
+&gt; &gt; pointer gets Nulled when I pass it. System status shows that the
+&gt; &gt; memory is still allocated but the pointer is not being passed
+&gt; &gt; properly. Anyone know how to fix this?
+
+&gt; I'm pretty sure that passing memory from one DLL to another works. I think
+&gt; that the error is rather in the things you're not telling us. So: what
+&gt; exactly are you doing? When and how do you allocate the storage, how do you
+&gt; pass it along, how do you determine that it's null?
+
+&gt; Uli
+
+&gt; --
+&gt; Sator Laser GmbH
+&gt; Geschäftsführer: Ronald Boers, Amtsgericht Hamburg HR B62 932
+">
+
+Right. I didn't mention that I am creating the DLL in Visual Studio
+2005 in C++. The destination platform is a hand held device using
+Windows CE 5.0. I just figured it was a DLL issue; but you are correct
+- I have been able to pass memory pointers between win32 DLLs on a
+desktop application. I probably am not even posting my question in the
+correct forum (again). I would appreciate any direction you could give
+me. Thanks. Here are clippets from the code:
+
+........dllNumber1.......
+//Global memory pointer
+DWORD* memptr;
+
+int dllNumber1_open(void)
+{
+.
+.
+.
+//call dllNumber2_open to allocate system memory
+status = dllNumber2_open(memptr);
+
+//halfass way to debug this
+wchar_t buft[150];
+swprintf(buft,TEXT(&quot;memPtrOpen2 = %p&quot;),memptr);
+MessageBox(0,buft,0,0); //displays 000000000
+
+return status;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+........dllNumber2.......
+//block memory to be allocated
+DWORD* blockMemory;
+
+int dllNumber2_open(DWORD* memPtr)
+{
+
+.
+.
+.
+
+//allocate block memory
+blockMemory = (DWORD*)malloc( totalBlockMemorySize );
+
+memPtr = blockMemory;
+
+//halfass way to debug this
+wchar_t buft[150];
+swprintf(buft,TEXT(&quot;memPtrOpen1 = %p&quot;),memPtr);
+MessageBox(0,buft,0,0); //displays 054000230
+
+return status;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+Adieu,
+Derek
+</POST>
+<POST>
+<POSTER> &quot;Scott McPhillips [MVP]&quot; &lt;org-dot-mvps-at-scottmcp&gt; </POSTER>
+<POSTDATE> 2007-08-10T15:38:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+soxmax wrote:
+&gt; Right. I didn't mention that I am creating the DLL in Visual Studio
+&gt; 2005 in C++. The destination platform is a hand held device using
+&gt; Windows CE 5.0. I just figured it was a DLL issue; but you are correct
+&gt; - I have been able to pass memory pointers between win32 DLLs on a
+&gt; desktop application. I probably am not even posting my question in the
+&gt; correct forum (again). I would appreciate any direction you could give
+&gt; me. Thanks. Here are clippets from the code:
+
+&gt; ........dllNumber1.......
+&gt; //Global memory pointer
+&gt; DWORD* memptr;
+
+&gt; int dllNumber1_open(void)
+&gt; {
+&gt; .
+&gt; .
+&gt; .
+&gt;     //call dllNumber2_open to allocate system memory
+&gt;     status = dllNumber2_open(memptr);
+
+&gt;     //halfass way to debug this
+&gt;     wchar_t buft[150];
+&gt;     swprintf(buft,TEXT(&quot;memPtrOpen2 = %p&quot;),memptr);
+&gt;     MessageBox(0,buft,0,0); //displays 000000000
+
+&gt;     return status;
+&gt; }
+
+&gt; ........dllNumber2.......
+&gt; //block memory to be allocated
+&gt; DWORD* blockMemory;
+
+&gt; int dllNumber2_open(DWORD* memPtr)
+&gt; {
+">
+
+This is a basic C mistake that has nothing to do with DLLs. You pass a
+DWORD* by value.  DLLnumber2 gets a copy of it and has no way to access
+or change the original variable.
+
+You need the dllNumber2_open parameter to be DWORD** and you need to
+pass it the address of memptr.  Then of course you have to dereference
+the passed in pointer in order to change the original variable.
+
+--
+Scott McPhillips [MVP VC++]
+</POST>
+<POST>
+<POSTER> soxmax &lt;soxmax_2...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-08-10T15:55:00 </POSTDATE>
+On Aug 10, 1:38 pm, &quot;Scott McPhillips [MVP]&quot; &lt;org-dot-mvps-at-
+
+<QUOTE PREVIOUSPOST="
+scottmcp&gt; wrote:
+&gt; soxmax wrote:
+&gt; &gt; Right. I didn't mention that I am creating the DLL in Visual Studio
+&gt; &gt; 2005 in C++. The destination platform is a hand held device using
+&gt; &gt; Windows CE 5.0. I just figured it was a DLL issue; but you are correct
+&gt; &gt; - I have been able to pass memory pointers between win32 DLLs on a
+&gt; &gt; desktop application. I probably am not even posting my question in the
+&gt; &gt; correct forum (again). I would appreciate any direction you could give
+&gt; &gt; me. Thanks. Here are clippets from the code:
+
+&gt; &gt; ........dllNumber1.......
+&gt; &gt; //Global memory pointer
+&gt; &gt; DWORD* memptr;
+
+&gt; &gt; int dllNumber1_open(void)
+&gt; &gt; {
+&gt; &gt; .
+&gt; &gt; .
+&gt; &gt; .
+&gt; &gt;     //call dllNumber2_open to allocate system memory
+&gt; &gt;     status = dllNumber2_open(memptr);
+
+&gt; &gt;     //halfass way to debug this
+&gt; &gt;     wchar_t buft[150];
+&gt; &gt;     swprintf(buft,TEXT(&quot;memPtrOpen2 = %p&quot;),memptr);
+&gt; &gt;     MessageBox(0,buft,0,0); //displays 000000000
+
+&gt; &gt;     return status;
+&gt; &gt; }
+
+&gt; &gt; ........dllNumber2.......
+&gt; &gt; //block memory to be allocated
+&gt; &gt; DWORD* blockMemory;
+
+&gt; &gt; int dllNumber2_open(DWORD* memPtr)
+&gt; &gt; {
+
+&gt; This is a basic C mistake that has nothing to do with DLLs. You pass a
+&gt; DWORD* by value.  DLLnumber2 gets a copy of it and has no way to access
+&gt; or change the original variable.
+
+&gt; You need the dllNumber2_open parameter to be DWORD** and you need to
+&gt; pass it the address of memptr.  Then of course you have to dereference
+&gt; the passed in pointer in order to change the original variable.
+
+&gt; --
+&gt; Scott McPhillips [MVP VC++]- Hide quoted text -
+
+&gt; - Show quoted text -
+">
+
+Thanks for the help. I don't know how to dereference - but it should
+be pretty easy to find out how. I'm a hardware engineer trapped in a
+software engineer's job (more money and more fun) so thanks for your
+explaination - and the forum's patience. I'll let you know how it
+works out and post the code when I get it to work.
+
+Best Regards,
+Derek
+</POST>
+<POST>
+<POSTER> soxmax &lt;soxmax_2...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-08-10T18:42:00 </POSTDATE>
+On Aug 10, 1:55 pm, soxmax &lt;soxmax_2 ... @yahoo.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Aug 10, 1:38 pm, &quot;Scott McPhillips [MVP]&quot; &lt;org-dot-mvps-at-
+
+&gt; scottmcp&gt; wrote:
+&gt; &gt; soxmax wrote:
+&gt; &gt; &gt; Right. I didn't mention that I am creating the DLL in Visual Studio
+&gt; &gt; &gt; 2005 in C++. The destination platform is a hand held device using
+&gt; &gt; &gt; Windows CE 5.0. I just figured it was a DLL issue; but you are correct
+&gt; &gt; &gt; - I have been able to pass memory pointers between win32 DLLs on a
+&gt; &gt; &gt; desktop application. I probably am not even posting my question in the
+&gt; &gt; &gt; correct forum (again). I would appreciate any direction you could give
+&gt; &gt; &gt; me. Thanks. Here are clippets from the code:
+
+&gt; &gt; &gt; ........dllNumber1.......
+&gt; &gt; &gt; //Global memory pointer
+&gt; &gt; &gt; DWORD* memptr;
+
+&gt; &gt; &gt; int dllNumber1_open(void)
+&gt; &gt; &gt; {
+&gt; &gt; &gt; .
+&gt; &gt; &gt; .
+&gt; &gt; &gt; .
+&gt; &gt; &gt;     //call dllNumber2_open to allocate system memory
+&gt; &gt; &gt;     status = dllNumber2_open(memptr);
+
+&gt; &gt; &gt;     //halfass way to debug this
+&gt; &gt; &gt;     wchar_t buft[150];
+&gt; &gt; &gt;     swprintf(buft,TEXT(&quot;memPtrOpen2 = %p&quot;),memptr);
+&gt; &gt; &gt;     MessageBox(0,buft,0,0); //displays 000000000
+
+&gt; &gt; &gt;     return status;
+&gt; &gt; &gt; }
+
+&gt; &gt; &gt; ........dllNumber2.......
+&gt; &gt; &gt; //block memory to be allocated
+&gt; &gt; &gt; DWORD* blockMemory;
+
+&gt; &gt; &gt; int dllNumber2_open(DWORD* memPtr)
+&gt; &gt; &gt; {
+
+&gt; &gt; This is a basic C mistake that has nothing to do with DLLs. You pass a
+&gt; &gt; DWORD* by value.  DLLnumber2 gets a copy of it and has no way to access
+&gt; &gt; or change the original variable.
+
+&gt; &gt; You need the dllNumber2_open parameter to be DWORD** and you need to
+&gt; &gt; pass it the address of memptr.  Then of course you have to dereference
+&gt; &gt; the passed in pointer in order to change the original variable.
+
+&gt; &gt; --
+&gt; &gt; Scott McPhillips [MVP VC++]- Hide quoted text -
+
+&gt; &gt; - Show quoted text -
+
+&gt; Thanks for the help. I don't know how to dereference - but it should
+&gt; be pretty easy to find out how. I'm a hardware engineer trapped in a
+&gt; software engineer's job (more money and more fun) so thanks for your
+&gt; explaination - and the forum's patience. I'll let you know how it
+&gt; works out and post the code when I get it to work.
+
+&gt; Best Regards,
+&gt; Derek- Hide quoted text -
+
+&gt; - Show quoted text -
+">
+
+Working Code:
+
+........dllNumber1.......
+//Global memory pointer
+DWORD* memptr;
+
+int dllNumber1_open(void)
+{
+.
+.
+.
+//call dllNumber2_open to allocate system memory
+status = dllNumber2_open(&amp;memptr);
+
+return status;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+........dllNumber2.......
+//block memory to be allocated
+DWORD* blockMemory;
+
+int dllNumber2_open(DWORD** memPtr)
+{
+
+.
+.
+.
+
+//allocate block memory
+blockMemory = (DWORD*)malloc( totalBlockMemorySize );
+
+*memPtr = blockMemory; //dereference here
+
+return status;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+Thanks for the help Scott.
+
+Best Regards,
+Derek
+</POST>
+<POST>
+<POSTER> &quot;Scott McPhillips [MVP]&quot; &lt;org-dot-mvps-at-scottmcp&gt; </POSTER>
+<POSTDATE> 2007-08-10T19:22:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+soxmax wrote:
+&gt;&gt;... I'm a hardware engineer trapped in a
+&gt;&gt;software engineer's job (more money and more fun) so thanks for your
+&gt;&gt;explaination -
+">
+
+The same thing happened to me years ago.  It was getting pretty hard for
+these aging eyes to read pin numbers, so it was just as well.
+
+<QUOTE PREVIOUSPOST="
+&gt; Thanks for the help Scott.
+
+&gt; Best Regards,
+&gt; Derek
+">
+
+Sure :)
+
+--
+Scott McPhillips [MVP VC++]
+</POST>
+</TEXT>
+</BODY>
+</DOC>

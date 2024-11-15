@@ -1,0 +1,2790 @@
+<DOC>
+<DOCID> eng-NG-31-135589-9749289 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2008-01-15T15:23:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Several questions about character C binding
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> fj &lt;francois.j...@irsn.fr&gt; </POSTER>
+<POSTDATE> 2008-01-15T15:23:00 </POSTDATE>
+I have many questions about character variables passed to a C
+routine.
+
+For me, it seems clear that the F2003 only solves the problem for a
+vector of characters :
+
+void c_routine(const char * name,int lname);
+
+INTERFACE
+SUBROUTINE c_routine(name,lname) BIND(C,name=&quot;c_routine&quot;)
+USE iso_c_binding
+CHARACTER(kind=c_char),INTENT(in) :: name(*)
+INTEGER(c_int),VALUE :: lname
+END SUBROUTINE
+END INTERFACE
+
+But what is the situation with a string of characters, i.e. a
+character variable with a length greater than 1 ?
+
+I tested an interface passing a TYPE(C_PTR). But this solution makes
+obligatory the use of the   C_LOC function from the FORTRAN side :
+
+INTERFACE
+SUBROUTINE c_routine(name,lname) BIND(C,name=&quot;c_routine&quot;)
+USE iso_c_binding
+TYPE(C_PTR),INTENT(in),value :: name
+INTEGER(c_int),VALUE :: lname
+END SUBROUTINE
+END INTERFACE
+
+To simplify the FORTRAN part, I tested the following interface which
+works well with all the compilers I use (g95, gfortran, ifort, Sun
+f90, lf95) :
+
+INTERFACE
+SUBROUTINE c_routine(name,lname) BIND(C,name=&quot;c_routine&quot;)
+USE iso_c_binding
+CHARACTER(len=*,kind=c_char),INTENT(in) :: name
+INTEGER(c_int),VALUE :: lname
+END SUBROUTINE
+END INTERFACE
+
+At last, as the FORTRAN compilers I already mentioned continue to pass
+the dimension of the string behind the scene as an additional argument
+( =&gt; additional question : why ? This seems dangerous when the C
+binding is required), the following simplified interface works too :
+
+INTERFACE
+SUBROUTINE c_routine(name) BIND(C,name=&quot;c_routine&quot;)
+USE iso_c_binding
+CHARACTER(len=*,kind=c_char),INTENT(in) :: name
+END SUBROUTINE
+END INTERFACE
+
+Does F2008 provide a clear support a FORTRAN strings ?
+
+What is the most elegant and portable way to translate strings into C
+character vectors ? An equivalence statement (Fortran side) is of
+course possible and efficient but not very elegant.
+
+Last question : what is the best way to bind a FORTRAN string and a C
+string ? I only know the famous //CHAR(0) ... but it does not seem
+even standard conforming !
+</POST>
+<POST>
+<POSTER> Tobias Burnus &lt;bur...@net-b.de&gt; </POSTER>
+<POSTDATE> 2008-01-15T15:37:00 </POSTDATE>
+On Jan 15, 9:23 pm, fj &lt;francois.j ... @irsn.fr&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; For me, it seems clear that the F2003 only solves the problem for a
+&gt; vector of characters :
+&gt; INTERFACE
+&gt;   SUBROUTINE c_routine(name,lname) BIND(C,name=&quot;c_routine&quot;)
+&gt;     USE iso_c_binding
+&gt;     CHARACTER(kind=c_char),INTENT(in) :: name(*)
+&gt;     INTEGER(c_int),VALUE :: lname
+&gt;   END SUBROUTINE
+&gt; END INTERFACE
+
+&gt; But what is the situation with a string of characters, i.e. a
+&gt; character variable with a length greater than 1 ?
+">
+
+Well, you can simply do
+call c_routine(&quot;I am a string&quot;//C_NULL_CHAR, 99)
+i.e. passing a character variable with length &gt; 1 to the procedure.
+(There are some restrictions on the character kind, which should not
+matter with most compilers.)
+
+I am not sure whether all BIND(C) supporting compilers already support
+this.
+
+<QUOTE PREVIOUSPOST="
+&gt; At last, as the FORTRAN compilers I already mentioned continue to pass
+&gt; the dimension of the string behind the scene as an additional argument
+&gt; ( =&gt; additional question : why?
+">
+
+Probably because no one has realized yet. Actually, your statement is
+no longer true for recent gfortran compilers. If you look at the dump
+(-fdump-tree-original), you will find:
+
+c_routine (&amp;&quot;I am a string&quot;[1]{lb: 1 sz: 1}, 99);
+
+But since the calling procedure cleans up the argument stack, it
+should not be a problem. (Well, using stdcall on Windows 32 it is a
+problem, but here one should use &quot;!DEC$&quot; compiler directives as
+otherwise no stdcall is used [with most compilers].)
+
+<QUOTE PREVIOUSPOST="
+&gt; Last question : what is the best way to bind a FORTRAN string and a C
+&gt; string ? I only know the famous //CHAR(0) ... but it does not seem
+&gt; even standard conforming !
+">
+
+Better use C_NULL_CHAR.
+
+Tobias
+</POST>
+<POST>
+<POSTER> nos...@see.signature (Richard Maine) </POSTER>
+<POSTDATE> 2008-01-15T18:02:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+fj &lt;francois.j ... @irsn.fr&gt; wrote:
+&gt; I have many questions about character variables passed to a C
+&gt; routine.
+
+&gt; For me, it seems clear that the F2003 only solves the problem for a
+&gt; vector of characters :
+...
+&gt; But what is the situation with a string of characters, i.e. a
+&gt; character variable with a length greater than 1 ?
+">
+
+See Note 15.23 of f2003. That's exactly what it is about. In short, you
+can use such a string as an actual argument corresponding to a dummy
+argument that is an array of characters. This is a special case in the
+usual rules of argument matching. It is done intentionally to support
+exactly the kind of thing you are talking about.
+
+<QUOTE PREVIOUSPOST="
+&gt; Does F2008 provide a clear support a FORTRAN strings ?
+">
+
+Yes, because it will include f2003, which already does so. See above.
+
+--
+Richard Maine                    | Good judgement comes from experience;
+email: last name at domain . net | experience comes from bad judgement.
+domain: summertriangle           |  -- Mark Twain
+</POST>
+<POST>
+<POSTER> &quot;James Van Buskirk&quot; &lt;not_va...@comcast.net&gt; </POSTER>
+<POSTDATE> 2008-01-15T21:05:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;fj&quot; &lt;francois.j ... @irsn.fr&gt; wrote in message
+">
+
+news:78a7500a-98d2-4209-94fa-71c5d9623c52@v29g2000hsf.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; void c_routine(const char * name,int lname);
+&gt; INTERFACE
+&gt;  SUBROUTINE c_routine(name,lname) BIND(C,name=&quot;c_routine&quot;)
+&gt;    USE iso_c_binding
+&gt;    CHARACTER(kind=c_char),INTENT(in) :: name(*)
+&gt;    INTEGER(c_int),VALUE :: lname
+&gt;  END SUBROUTINE
+&gt; END INTERFACE
+">
+
+N1601.pdf, Note 15.19:
+&quot;The C programming language defines null-terminated strings, which
+are actually arrays of the C type char that have a C null character
+in them to indicate the last valid element.  A Fortran array of type
+character with a kind type parameter equal to C_CHAR is
+interoperable with a C string.
+
+Fortran's rules of sequence association (12.4.1.5) permit a character
+scalar argument to be associated with a dummy argument array.  This
+makes it possible to argument associate a Fortran character string
+with a C string.&quot;
+
+That says that the intent of the standard is that the above interface
+block should be OK, and if it turns out not to be so, then it's a bug
+in the standard.
+
+<QUOTE PREVIOUSPOST="
+&gt; INTERFACE
+&gt;  SUBROUTINE c_routine(name,lname) BIND(C,name=&quot;c_routine&quot;)
+&gt;    USE iso_c_binding
+&gt;    TYPE(C_PTR),INTENT(in),value :: name
+&gt;    INTEGER(c_int),VALUE :: lname
+&gt;  END SUBROUTINE
+&gt; END INTERFACE
+">
+
+If the above is what is required, then the standard is broken.  It
+means, for example, that you can't pass the result of an expression
+to a bind(C) procedure.
+
+<QUOTE PREVIOUSPOST="
+&gt; INTERFACE
+&gt;  SUBROUTINE c_routine(name,lname) BIND(C,name=&quot;c_routine&quot;)
+&gt;    USE iso_c_binding
+&gt;    CHARACTER(len=*,kind=c_char),INTENT(in) :: name
+&gt;    INTEGER(c_int),VALUE :: lname
+&gt;  END SUBROUTINE
+&gt; END INTERFACE
+">
+
+The above is wrong according to section 15.2.1:
+&quot;if the type is character, interoperability also requires that the
+length type parameter be omitted or be specified by an initialization
+expression whose value is one.&quot;
+
+<QUOTE PREVIOUSPOST="
+&gt; At last, as the FORTRAN compilers I already mentioned continue to pass
+&gt; the dimension of the string behind the scene as an additional argument
+&gt; ( =&gt; additional question : why ? This seems dangerous when the C
+&gt; binding is required), the following simplified interface works too :
+&gt; INTERFACE
+&gt;  SUBROUTINE c_routine(name) BIND(C,name=&quot;c_routine&quot;)
+&gt;    USE iso_c_binding
+&gt;    CHARACTER(len=*,kind=c_char),INTENT(in) :: name
+&gt;  END SUBROUTINE
+&gt; END INTERFACE
+">
+
+No, that's just a bug.  Whan this came up
+http://groups.google.com/group/comp.lang.fortran/msg/ed1f5103d761a4ab
+Steve Lionel said he would fix it, and there was also a discussion
+in bugzilla about fixing it for gfortran.  From section 15.2.6:
+&quot;A Fortran procedure interface is interoperable with a C function
+prototype if
+...
+(3) the number of dummy arguments of the interface is equal to the
+number of formal parameters of the prototype&quot;
+which precludes passing a hidden length argument.
+
+<QUOTE PREVIOUSPOST="
+&gt; Last question : what is the best way to bind a FORTRAN string and a C
+&gt; string ? I only know the famous //CHAR(0) ... but it does not seem
+&gt; even standard conforming !
+">
+
+I always do //ACHAR(0), although some give preference to //C_NULL_CHAR.
+You haven't even encountered the ugly part, which is what is supposed
+to happen when the C prototype has a pointer argument (as would be the
+case for a C string) and you want to pass it C_NULL_PTR.  My claim is
+that there are 3 ways to do this when the dummy argument is a variable
+without the VALUE attribute:
+1) declare a pointer of the appropriate type and use C_F_POINTER to
+convert C_NULL_PTR to that pointer, then pass the pointer.
+2) declare a pointer of the appropriate type and nullify it, then pass
+the pointer.
+3) pass NULL()
+If any of these methods don't work, then the standard is just broken
+and should be fixed at the earliest opportunity.  Note the mehtods
+1 and 2 above work for gfortran, but if you try method 3 it passes
+a pointer to C_NULL_PTR, not the value of C_NULL_PTR, so gfortran is
+broken regarding method 3.
+
+--
+write(*,*) transfer((/17.392111325966148d0,6.5794487871554595D-85, &amp;
+6.0134700243160014d-154/),(/'x'/)); end
+</POST>
+<POST>
+<POSTER> fj &lt;francois.j...@irsn.fr&gt; </POSTER>
+<POSTDATE> 2008-01-16T03:19:00 </POSTDATE>
+On 16 jan, 03:05, &quot;James Van Buskirk&quot; &lt;not_va ... @comcast.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;fj&quot; &lt;francois.j ... @irsn.fr&gt; wrote in message
+
+&gt; news:78a7500a-98d2-4209-94fa-71c5d9623c52@v29g2000hsf.googlegroups.com ...
+
+&gt; &gt; void c_routine(const char * name,int lname);
+&gt; &gt; INTERFACE
+&gt; &gt;  SUBROUTINE c_routine(name,lname) BIND(C,name=&quot;c_routine&quot;)
+&gt; &gt;    USE iso_c_binding
+&gt; &gt;    CHARACTER(kind=c_char),INTENT(in) :: name(*)
+&gt; &gt;    INTEGER(c_int),VALUE :: lname
+&gt; &gt;  END SUBROUTINE
+&gt; &gt; END INTERFACE
+
+&gt; N1601.pdf, Note 15.19:
+&gt; &quot;The C programming language defines null-terminated strings, which
+&gt; are actually arrays of the C type char that have a C null character
+&gt; in them to indicate the last valid element.  A Fortran array of type
+&gt; character with a kind type parameter equal to C_CHAR is
+&gt; interoperable with a C string.
+
+&gt; Fortran's rules of sequence association (12.4.1.5) permit a character
+&gt; scalar argument to be associated with a dummy argument array.  This
+&gt; makes it possible to argument associate a Fortran character string
+&gt; with a C string.&quot;
+
+&gt; That says that the intent of the standard is that the above interface
+&gt; block should be OK, and if it turns out not to be so, then it's a bug
+&gt; in the standard.
+
+&gt; &gt; INTERFACE
+&gt; &gt;  SUBROUTINE c_routine(name,lname) BIND(C,name=&quot;c_routine&quot;)
+&gt; &gt;    USE iso_c_binding
+&gt; &gt;    TYPE(C_PTR),INTENT(in),value :: name
+&gt; &gt;    INTEGER(c_int),VALUE :: lname
+&gt; &gt;  END SUBROUTINE
+&gt; &gt; END INTERFACE
+
+&gt; If the above is what is required, then the standard is broken.  It
+&gt; means, for example, that you can't pass the result of an expression
+&gt; to a bind(C) procedure.
+
+&gt; &gt; INTERFACE
+&gt; &gt;  SUBROUTINE c_routine(name,lname) BIND(C,name=&quot;c_routine&quot;)
+&gt; &gt;    USE iso_c_binding
+&gt; &gt;    CHARACTER(len=*,kind=c_char),INTENT(in) :: name
+&gt; &gt;    INTEGER(c_int),VALUE :: lname
+&gt; &gt;  END SUBROUTINE
+&gt; &gt; END INTERFACE
+
+&gt; The above is wrong according to section 15.2.1:
+&gt; &quot;if the type is character, interoperability also requires that the
+&gt; length type parameter be omitted or be specified by an initialization
+&gt; expression whose value is one.&quot;
+
+&gt; &gt; At last, as the FORTRAN compilers I already mentioned continue to pass
+&gt; &gt; the dimension of the string behind the scene as an additional argument
+&gt; &gt; ( =&gt; additional question : why ? This seems dangerous when the C
+&gt; &gt; binding is required), the following simplified interface works too :
+&gt; &gt; INTERFACE
+&gt; &gt;  SUBROUTINE c_routine(name) BIND(C,name=&quot;c_routine&quot;)
+&gt; &gt;    USE iso_c_binding
+&gt; &gt;    CHARACTER(len=*,kind=c_char),INTENT(in) :: name
+&gt; &gt;  END SUBROUTINE
+&gt; &gt; END INTERFACE
+
+&gt; No, that's just a bug.  Whan this came up http://groups.google.com/group/comp.lang.fortran/msg/ed1f5103d761a4ab
+&gt; Steve Lionel said he would fix it, and there was also a discussion
+&gt; in bugzilla about fixing it for gfortran.  From section 15.2.6:
+&gt; &quot;A Fortran procedure interface is interoperable with a C function
+&gt; prototype if
+&gt; ...
+&gt; (3) the number of dummy arguments of the interface is equal to the
+&gt; number of formal parameters of the prototype&quot;
+&gt; which precludes passing a hidden length argument.
+
+&gt; &gt; Last question : what is the best way to bind a FORTRAN string and a C
+&gt; &gt; string ? I only know the famous //CHAR(0) ... but it does not seem
+&gt; &gt; even standard conforming !
+
+&gt; I always do //ACHAR(0), although some give preference to //C_NULL_CHAR.
+&gt; You haven't even encountered the ugly part, which is what is supposed
+&gt; to happen when the C prototype has a pointer argument (as would be the
+&gt; case for a C string) and you want to pass it C_NULL_PTR.  My claim is
+&gt; that there are 3 ways to do this when the dummy argument is a variable
+&gt; without the VALUE attribute:
+&gt; 1) declare a pointer of the appropriate type and use C_F_POINTER to
+&gt; convert C_NULL_PTR to that pointer, then pass the pointer.
+&gt; 2) declare a pointer of the appropriate type and nullify it, then pass
+&gt; the pointer.
+&gt; 3) pass NULL()
+&gt; If any of these methods don't work, then the standard is just broken
+&gt; and should be fixed at the earliest opportunity.  Note the mehtods
+&gt; 1 and 2 above work for gfortran, but if you try method 3 it passes
+&gt; a pointer to C_NULL_PTR, not the value of C_NULL_PTR, so gfortran is
+&gt; broken regarding method 3.
+
+&gt; --
+&gt; write(*,*) transfer((/17.392111325966148d0,6.5794487871554595D-85, &amp;
+&gt; 6.0134700243160014d-154/),(/'x'/)); end
+">
+
+I totally missed that a character string is allowed as actual argument
+when the corresponding dummy argument is a vector of characters.
+
+Thank you very much.
+
+F. Jacq
+</POST>
+<POST>
+<POSTER> Tobias Burnus &lt;bur...@net-b.de&gt; </POSTER>
+<POSTDATE> 2008-01-16T05:30:00 </POSTDATE>
+On Jan 16, 3:05 am, &quot;James Van Buskirk&quot; &lt;not_va ... @comcast.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; there was also a discussion in bugzilla about fixing it for gfortran.
+">
+
+As written it has been fixed a while ago. (Bugzilla: 34079; fixed
+2007-11-22.)
+
+Much more fun are actually scalar character returning functions with
+BIND(C)...
+
+<QUOTE PREVIOUSPOST="
+&gt; You haven't even encountered the ugly part, which is what is supposed
+&gt; to happen when the C prototype has a pointer argument (as would be the
+&gt; case for a C string) and you want to pass it C_NULL_PTR.
+">
+
+The solution is simple: mark the argument OPTIONAL and if it is not
+present it becomes NULL. I think that is how the enhanced C
+interoperability TR handles this case, which is a quite natural
+choice. However, I think *no compiler* implements this, yet - and I
+actually also failed to find the draft TR.
+
+(There is also a part in there about C interoperability of assumed-
+shaped arrays which might be interesting. I hope the suggestion is
+useful; the internal representation of such arrays is highly compiler
+dependent.)
+
+Tobias
+</POST>
+<POST>
+<POSTER> &quot;Craig Dedo&quot; &lt;cd...@wi.rr.com&gt; </POSTER>
+<POSTDATE> 2008-01-16T09:05:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Tobias Burnus&quot; &lt;bur ... @net-b.de&gt; wrote in message
+">
+
+news:4d0f53ac-b7c5-4e7d-a728-469f709c8b5d@l1g2000hsa.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 16, 3:05 am, &quot;James Van Buskirk&quot; &lt;not_va ... @comcast.net&gt; wrote:
+&gt;&gt; there was also a discussion in bugzilla about fixing it for gfortran.
+&gt; As written it has been fixed a while ago. (Bugzilla: 34079; fixed
+&gt; 2007-11-22.)
+
+&gt; Much more fun are actually scalar character returning functions with
+&gt; BIND(C)...
+
+&gt;&gt; You haven't even encountered the ugly part, which is what is supposed
+&gt;&gt; to happen when the C prototype has a pointer argument (as would be the
+&gt;&gt; case for a C string) and you want to pass it C_NULL_PTR.
+
+&gt; The solution is simple: mark the argument OPTIONAL and if it is not
+&gt; present it becomes NULL. I think that is how the enhanced C
+&gt; interoperability TR handles this case, which is a quite natural
+&gt; choice. However, I think *no compiler* implements this, yet - and I
+&gt; actually also failed to find the draft TR.
+
+&gt; (There is also a part in there about C interoperability of assumed-
+&gt; shaped arrays which might be interesting. I hope the suggestion is
+&gt; useful; the internal representation of such arrays is highly compiler
+&gt; dependent.)
+
+&gt; Tobias
+">
+
+The Enhanced C Interoperability TR is paper J3/06-171.  It is available only
+in plain text format.  Aleksandar Donev wrote it.  It is available on the J3 web
+site, at:
+http://www.j3-fortran.org/doc/year/06/06-171.txt
+
+I have no idea whether there has been any further work on it since 2006.
+Perhaps you could contact Aleksandar Donev directly or post an inquiry to the J3
+Mailing List.  Here is the contact information:
+J3 Mailing List:  j ... @j3-fortran.org
+
+Aleksandar Donev
+Lawrence Livermore National Laboratory
+P. O. Box 808, L-367
+Livermore, CA   94551-9900
+Work Phone:  (925) 424-6816
+Fax Phone:    (925) 423-0785
+E-mail:  name {at} domain
+Name:  donev1
+Domain:  llnl {dot} gov
+
+Hope this helps.
+
+--
+Craig Dedo
+17130 W. Burleigh Place
+P. O. Box 423
+Brookfield, WI   53008-0423
+Voice:  (262) 783-5869
+Fax:    (262) 783-5928
+Mobile: (414) 412-5869
+E-mail: &lt;cd ... @wi.rr.com&gt; or &lt;cr ... @ctdedo.com&gt;
+</POST>
+<POST>
+<POSTER> &quot;James Van Buskirk&quot; &lt;not_va...@comcast.net&gt; </POSTER>
+<POSTDATE> 2008-01-16T14:07:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;fj&quot; &lt;francois.j ... @irsn.fr&gt; wrote in message
+">
+
+news:63f5d227-26c3-4a61-a400-4e85ec392c5b@v4g2000hsf.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; I totally missed that a character string is allowed as actual argument
+&gt; when the corresponding dummy argument is a vector of characters.
+">
+
+You're not the only one to have missed this.  This exception to the
+sequence association rules prevalent in f95 is there I suppose mostly
+to facilitate the C interoperability features of f03.  It's not
+ballyhooed as much as other features of f03, so it's one I certainly
+didn't notice at a first glance at the standard.
+
+--
+write(*,*) transfer((/17.392111325966148d0,6.5794487871554595D-85, &amp;
+6.0134700243160014d-154/),(/'x'/)); end
+</POST>
+<POST>
+<POSTER> &quot;James Van Buskirk&quot; &lt;not_va...@comcast.net&gt; </POSTER>
+<POSTDATE> 2008-01-16T14:56:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Tobias Burnus&quot; &lt;bur ... @net-b.de&gt; wrote in message
+">
+
+news:4d0f53ac-b7c5-4e7d-a728-469f709c8b5d@l1g2000hsa.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 16, 3:05 am, &quot;James Van Buskirk&quot; &lt;not_va ... @comcast.net&gt; wrote:
+&gt;&gt; You haven't even encountered the ugly part, which is what is supposed
+&gt;&gt; to happen when the C prototype has a pointer argument (as would be the
+&gt;&gt; case for a C string) and you want to pass it C_NULL_PTR.
+&gt; The solution is simple: mark the argument OPTIONAL and if it is not
+&gt; present it becomes NULL. I think that is how the enhanced C
+&gt; interoperability TR handles this case, which is a quite natural
+&gt; choice. However, I think *no compiler* implements this, yet - and I
+&gt; actually also failed to find the draft TR.
+">
+
+I think it may be a long wait for this TR as it's even beyond f03
+and has much more complexity than required to address this problem.
+I think that gfortran has a bug here that can be demonstrated by the
+following example:
+
+C:\gfortran\clf\bind_c&gt;type NULL1.f90
+! File: NULL1.f90
+! Public domain 2008 James Van Buskirk
+
+module NULLmod
+use ISO_C_BINDING
+implicit none
+private
+contains
+subroutine sub(x) bind(C,name='sub_')
+type(C_PTR), value :: x
+type(C_PTR), pointer :: y
+
+if(.NOT.C_ASSOCIATED(x)) then
+write(*,'(a)') 'Input to sub is C_NULL_PTR'
+else
+call C_F_POINTER(x,y)
+write(*,'(a,z16.16)') 'Input to sub is pointer to ', &amp;
+transfer(y,0_C_INTPTR_T)
+end if
+end subroutine sub
+end module NULLmod
+
+program NULL1
+use ISO_C_BINDING
+implicit none
+external sub
+type(C_PTR), pointer :: x
+
+write(*,'(a)') 'Invoking sub with NULL()'
+call sub(NULL(x))
+nullify(x)
+write(*,'(a)') 'Invoking sub with nullified pointer'
+call sub(x)
+end program NULL1
+
+! End of file: NULL1.f90
+
+C:\gfortran\clf\bind_c&gt;C:\gfortran\win64\bin\x86_64-pc-mingw32-gfortran
+NULL1.f9
+0 -oNULL1
+
+C:\gfortran\clf\bind_c&gt;NULL1
+Invoking sub with NULL()
+Input to sub is pointer to 0000000000000000
+Invoking sub with nullified pointer
+Input to sub is C_NULL_PTR
+
+You see, the result of NULL() should be a nullified pointer,
+but that's not what gfortran is doing.  Instead it's giving
+us a pointer to C_NULL_PTR.
+
+--
+write(*,*) transfer((/17.392111325966148d0,6.5794487871554595D-85, &amp;
+6.0134700243160014d-154/),(/'x'/)); end
+</POST>
+<POST>
+<POSTER> Tobias Burnus &lt;bur...@net-b.de&gt; </POSTER>
+<POSTDATE> 2008-01-16T15:41:00 </POSTDATE>
+On Jan 16, 8:56 pm, &quot;James Van Buskirk&quot; &lt;not_va ... @comcast.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I think it may be a long wait for this TR as it's even beyond f03
+&gt; and has much more complexity than required to address this problem.
+">
+
+Well, I could imagine that the &quot;Bind(C) with OPTIONAL&quot; part gets
+implemented first while the more complicated stuff will be implemented
+later. The OPTIONAL part is actual quite easy to implement. Though you
+are right that not all Fortran 2003 compilers will have it.
+
+<QUOTE PREVIOUSPOST="
+&gt; I think that gfortran has a bug here that can be demonstrated by the
+&gt; following example
+[...]
+&gt;    use ISO_C_BINDING
+&gt;    type(C_PTR), pointer :: x
+&gt;    nullify(x)
+&gt;    call sub(x)
+">
+
+If I understand it correctly, you would like to have the following:
+The target of the Fortran pointer (i.e. the C pointer/&quot;type(c_ptr)&quot;)
+should be nullified instead of the Fortran pointer itself? I find it
+much more natural to nullify the pointer and not its target, which is
+also in line with non-TYPE(C_PTR) pointers.
+
+In other words, I think you expect the following C equivalent (from
+the dump of g95):
+
+void * * x;
+x = &amp;0B;
+sub_ (x);;
+
+while I believe ifort and gfortran's result (in the following, dump of
+gfortran) is more appropriate:
+
+void * * x;
+x = 0B;
+sub (x);
+
+Can you elaborate why you think the former is correct? (Or, if I miss
+understood you, can you state more clearly what you actually mean.)
+
+Tobias
+</POST>
+<POST>
+<POSTER> &quot;James Van Buskirk&quot; &lt;not_va...@comcast.net&gt; </POSTER>
+<POSTDATE> 2008-01-16T16:01:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Tobias Burnus&quot; &lt;bur ... @net-b.de&gt; wrote in message
+">
+
+news:cb863251-9d22-4146-80ad-bcb80e5190be@k2g2000hse.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 16, 8:56 pm, &quot;James Van Buskirk&quot; &lt;not_va ... @comcast.net&gt; wrote:
+&gt;&gt; I think that gfortran has a bug here that can be demonstrated by the
+&gt;&gt; following example
+&gt; [...]
+&gt;&gt;    use ISO_C_BINDING
+&gt;&gt;    type(C_PTR), pointer :: x
+&gt;&gt;    nullify(x)
+&gt;&gt;    call sub(x)
+&gt; If I understand it correctly, you would like to have the following:
+&gt; The target of the Fortran pointer (i.e. the C pointer/&quot;type(c_ptr)&quot;)
+&gt; should be nullified instead of the Fortran pointer itself? I find it
+&gt; much more natural to nullify the pointer and not its target, which is
+&gt; also in line with non-TYPE(C_PTR) pointers.
+">
+
+No, nullify(x) should nullify the Fortran pointer, not its target.
+Also x =&gt; NULL() should nullify the Fortran pointer.  There is already
+a syntax to nullify the target: x = C_NULL_PTR.
+
+<QUOTE PREVIOUSPOST="
+&gt; In other words, I think you expect the following C equivalent (from
+&gt; the dump of g95):
+&gt;  void * * x;
+&gt;  x = &amp;0B;
+&gt;  sub_ (x);;
+&gt; while I believe ifort and gfortran's result (in the following, dump of
+&gt; gfortran) is more appropriate:
+&gt;  void * * x;
+&gt;  x = 0B;
+&gt;  sub (x);
+&gt; Can you elaborate why you think the former is correct? (Or, if I miss
+&gt; understood you, can you state more clearly what you actually mean.)
+">
+
+No, the invocation:
+
+call sub(x)
+
+was fine.  The problem I perceive lies in the behavior of:
+
+call sub(NULL(x))
+
+It's kind of tricky when you have two levels of pointer, but I
+thought I had made myself clear.  Evidently I hadn't, so to clarify:
+
+nullify(x)
+call sub(x)
+
+gfortran was perfect, IMHO.
+But the case of
+
+call sub(NULL(x))
+
+was a bug in that the behavior should have been the same as
+invoking sub with a nullified pointer, but it was not.  The fix as I
+see it should be to change the behavior of
+
+call sub(NULL(x))
+
+so that it matches the correct behavior of
+
+nullify(x)
+call sub(x)
+
+Does that bridge the gap in our communication?
+
+--
+write(*,*) transfer((/17.392111325966148d0,6.5794487871554595D-85, &amp;
+6.0134700243160014d-154/),(/'x'/)); end
+</POST>
+<POST>
+<POSTER> Steve Lionel &lt;steve.lio...@intel.com&gt; </POSTER>
+<POSTDATE> 2008-01-16T16:05:00 </POSTDATE>
+On Jan 16, 2:56 pm, &quot;James Van Buskirk&quot; &lt;not_va ... @comcast.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; You see, the result of NULL() should be a nullified pointer,
+&gt; but that's not what gfortran is doing.  Instead it's giving
+&gt; us a pointer to C_NULL_PTR.
+">
+
+I see that Tobias has commented, but I want to chime in as well.
+
+From what I can see, the inclusion of C_PTR in this program is a red
+herring - it may be helpful to demonstrate the behavior but it is not
+required.  The fundamental issue is that NULL() as an actual argument,
+when there is no explicit interface saying that the corresponding
+dummy argument is a POINTER. does not &quot;dereference&quot; the pointer the
+way that passing a nullified pointer does.
+
+I agree that the behavior of gfortran and ifort is inconsistent here,
+but I also want to point out that your program is not legal Fortran
+2003.  The standard sez:
+
+&quot;Except in references to intrinsic inquiry functions, if the dummy
+argument is not a pointer and the corresponding actual argument is a
+pointer, the actual argument shall be associated with a target and the
+dummy argument becomes associated with that target.&quot; (p269, lines
+20-22)
+
+Neither of the calls are valid, as in neither case is the actual
+argument associated with a target.  I'd be interested in seeing if you
+could rework the example to show the problem in a legal manner.
+
+--
+Steve Lionel
+Developer Products Division
+Intel Corporation
+Nashua, NH
+
+User communities for Intel Software Development Products
+http://softwareforums.intel.com/
+Intel Fortran Support
+http://support.intel.com/support/performancetools/fortran
+My Fortran blog
+http://www.intel.com/software/drfortran
+</POST>
+<POST>
+<POSTER> &quot;James Van Buskirk&quot; &lt;not_va...@comcast.net&gt; </POSTER>
+<POSTDATE> 2008-01-16T17:11:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Steve Lionel&quot; &lt;steve.lio ... @intel.com&gt; wrote in message
+">
+
+news:b4e6530d-2bcf-4b5d-b9ff-0af39239899a@v4g2000hsf.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 16, 2:56 pm, &quot;James Van Buskirk&quot; &lt;not_va ... @comcast.net&gt; wrote:
+&gt;&gt; You see, the result of NULL() should be a nullified pointer,
+&gt;&gt; but that's not what gfortran is doing.  Instead it's giving
+&gt;&gt; us a pointer to C_NULL_PTR.
+&gt; I see that Tobias has commented, but I want to chime in as well.
+&gt; From what I can see, the inclusion of C_PTR in this program is a red
+&gt; herring - it may be helpful to demonstrate the behavior but it is not
+&gt; required.  The fundamental issue is that NULL() as an actual argument,
+&gt; when there is no explicit interface saying that the corresponding
+&gt; dummy argument is a POINTER. does not &quot;dereference&quot; the pointer the
+&gt; way that passing a nullified pointer does.
+&gt; I agree that the behavior of gfortran and ifort is inconsistent here,
+&gt; but I also want to point out that your program is not legal Fortran
+&gt; 2003.  The standard sez:
+&gt; &quot;Except in references to intrinsic inquiry functions, if the dummy
+&gt; argument is not a pointer and the corresponding actual argument is a
+&gt; pointer, the actual argument shall be associated with a target and the
+&gt; dummy argument becomes associated with that target.&quot; (p269, lines
+&gt; 20-22)
+&gt; Neither of the calls are valid, as in neither case is the actual
+&gt; argument associated with a target.  I'd be interested in seeing if you
+&gt; could rework the example to show the problem in a legal manner.
+">
+
+I already have posted an example.  What is wrong with:
+
+http://groups.google.com/group/comp.lang.fortran/msg/099e36193cf17b94 ?
+
+In that example I used the TR on Directive Enhanced Compilation.  Also
+it should be feasible with !DEC$ ATTRIBUTES NO_ARG_CHECK although I
+haven't tried it yet.
+
+It may be that all these calls are illegal under C binding rules, but
+that's just a bug in the standard, not a fundamental problem with my
+examples.  In Note 15.22 of N1601.pdf:
+
+&quot;A C pointer may correspond to a Fortran dummy argument of type
+C_PTR or to a Fortran scalar that does not have the VALUE attribute.&quot;
+
+If you don't need to pass %VAL(C_NULL_PTR), then the scalar without
+VALUE is what you want.  If you don't need to pass something that has
+the TARGET attribute, then type(C_PTR), value :: is what you want.
+If you need to pass both varieties of entity, then the only recourse
+would be to create 2**n interfaces for the procedure with n arguments,
+all with the same binding name but different Fortran names, except
+that the standard probably has some fussy rule about that, too.
+
+If the standard really doesn't allow any of the reasonable alternatives,
+all we are left with is to declare all dummies type(C_PTR), value ::
+but then we have to do major brain surgery backwards into all of our
+Fortran code, turning it into C just so that it can interoperate with
+some incidental but essential C function.  If that's the case the
+committee might just as well throw out the C interoperability and
+adopt the TR on Directive Enhanced Compilation ASAP because it's just
+going to cause a lot of grief otherwise.
+
+I realize that Intel is adopting at best a wait and see approach to
+the tricky issues surrounding bind(C) stuff as evidenced by your
+comments in regards to the -mrtd issue (did gfortran ever fix that,
+BTW?)  What do you think should be the resolution of this issue,
+assuming that the intent is to retain bind(C) instead of going over
+to the dark side?  What gfortran does is just to accept nullified
+pointers as an extension (modulo bugs).  Hopefully they continue to
+do that at least for bind(C) procedures, or throw in some other
+extension such as an ALLOW_NULL attribute for dummy arguments to
+bind(C) procedures without the VALUE attribute.  Of course it would
+work differently from !DEC$ ATTRIBUTES ALLOW_NULL in that it would
+allow nullified pointers, not just NULL() but not permit the literal
+0 as an actual argument.  Ummm... maybe that's tricky enough that
+another keyword should be adopted for such an extension.  I guess
+that's where OPTIONAL comes in, but it's used in another context
+already.  Would it mean, for example, that the Fortran caller
+could either pass NULL() or omit the actual argument at its pleasure?
+
+--
+write(*,*) transfer((/17.392111325966148d0,6.5794487871554595D-85, &amp;
+6.0134700243160014d-154/),(/'x'/)); end
+</POST>
+<POST>
+<POSTER> Steven Correll &lt;steven.corr...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-17T09:28:00 </POSTDATE>
+On Jan 15, 7:05 pm, &quot;James Van Buskirk&quot; &lt;not_va ... @comcast.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; At last, as the FORTRAN compilers I already mentioned continue to pass
+&gt; &gt; the dimension of the string behind the scene as an additional argument
+&gt; &gt; ( =&gt; additional question : why ? This seems dangerous when the C
+&gt; &gt; binding is required), the following simplified interface works too :
+&gt; &gt; INTERFACE
+&gt; &gt;  SUBROUTINE c_routine(name) BIND(C,name=&quot;c_routine&quot;)
+&gt; &gt;    USE iso_c_binding
+&gt; &gt;    CHARACTER(len=*,kind=c_char),INTENT(in) :: name
+&gt; &gt;  END SUBROUTINE
+&gt; &gt; END INTERFACE
+
+&gt; No, that's just a bug.  Whan this came up http://groups.google.com/group/comp.lang.fortran/msg/ed1f5103d761a4ab
+&gt; Steve Lionel said he would fix it, and there was also a discussion
+&gt; in bugzilla about fixing it for gfortran.  From section 15.2.6:
+&gt; &quot;A Fortran procedure interface is interoperable with a C function
+&gt; prototype if
+&gt; ...
+&gt; (3) the number of dummy arguments of the interface is equal to the
+&gt; number of formal parameters of the prototype&quot;
+&gt; which precludes passing a hidden length argument.
+">
+
+You're misinterpreting the Fortran standard. You're confusing the
+Fortran standard term &quot;dummy argument&quot; and the C Standard term &quot;formal
+parameter&quot; with the term &quot;argument&quot; which may appear in the machine-
+language ABI of the computer used to execute the program.
+
+The number of Fortran &quot;dummy arguments&quot; must match the number of C
+&quot;formal parameters&quot;, but a Fortran dummy argument may correspond to
+zero, one, or many ABI &quot;arguments.&quot; The only requirement in the
+Fortran standard is that the Fortran processor and an interoperable C
+processor must succeed in communicating values when the program
+conforms to the Standard. The processors could do it by storing and
+retrieving information in a database, thereby using no ABI &quot;arguments&quot;
+at all; they could do it by enlisting an army of grad students to
+carry values from one processor to the other. If they do choose to use
+a machine-language ABI involving a stack frame, they can push as many
+or as few words onto the stack as
+they like.
+
+If the extra arguments prevent the two processors from correctly
+executing a conforming program as the standards prescribe (which is
+apparently the case in some situations on Microsoft Windows) then
+that's a violation of some other part of the standard, but not section
+15.2.6. If they're harmless (as they would be on Linux) there is no
+violation. A conforming processor might usefully push extra words onto
+the stack to improve debugging, enable runtime checking, or propagate
+exceptions (in a case where the C and Fortran processors are
+coexisting with a processor for a language which supports exception
+handling.)  It would be a pity if the Fortran standard were to
+preclude such improvements--fortunately it doesn't.
+</POST>
+<POST>
+<POSTER> Steve Lionel &lt;steve.lio...@intel.com&gt; </POSTER>
+<POSTDATE> 2008-01-17T09:52:00 </POSTDATE>
+On Jan 16, 5:11 pm, &quot;James Van Buskirk&quot; &lt;not_va ... @comcast.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I realize that Intel is adopting at best a wait and see approach to
+&gt; the tricky issues surrounding bind(C) stuff as evidenced by your
+&gt; comments in regards to the -mrtd issue (did gfortran ever fix that,
+&gt; BTW?)  What do you think should be the resolution of this issue,
+&gt; assuming that the intent is to retain bind(C) instead of going over
+&gt; to the dark side?
+">
+
+I'm not sure what to make of your &quot;wait and see approach&quot; comment.  We
+certainly want to do the right thing by the standard.  We're not
+eager, however, to further extend BIND(C) to support semantics we
+already offer through what you amusingly call the &quot;TR for Directive
+Enhanced Compilation&quot;.
+
+Personally, I think that ifort's behavior when NULL() is passed to a
+non-pointer argument is a bug, though I don't think you can write a
+standard-conforming program that demonstrates it. (Your earlier
+program suffers from the same problem I noted.)  I think that the
+behavior you want, as an extension, is useful and consistent with what
+happens when passing a nullified pointer.  I have filed a bug report
+with the ifort developers on this.
+
+I spent quite a bit of time yesterday reading parts of the standard to
+try to get my head around the issue of whether or not it was allowable
+for ifort to pass the character argument lengths.  When I last wrote
+on this topic I did not think it was, but I came around to the
+position Steven Correll outlines in that the standard specifies the
+relationship between the Fortran *interface* and the C prototype.  As
+Steven notes, the standard is silent on what happens behind the
+curtain, as it usually is.
+
+Where this poses a problem is in your desire to extend BIND(C) to
+accommodate the IA-32 Windows STDCALL mechanism.  If you somehow tell
+the compiler to use STDCALL, then the external name it generates for
+the call depends on the actual number of arguments pushed on the
+stack, including any &quot;hidden&quot; arguments.  But you have to use some
+mechanism outside the standard to do this, so the standard no longer
+applies.
+
+I'll be honest and say that I can't get too worked up over trying to
+ensure consistent behavior with BIND(C) and STDCALL, noting that not
+only do you have to use a method outside the standard to get STDCALL
+in ifort, but you also have to do so in the C compiler of your
+choice.  I'd go further and say that even if the Fortran compiler
+defaulted to STDCALL (as CVF did), a BIND(C) routine would be
+reasonably assumed to imply the C mechanism and that an attempt to
+force it to use STDCALL should either be an error or be ignored.  I
+haven't discussed this with the rest of the team yet, but I will.
+
+--
+Steve Lionel
+Developer Products Division
+Intel Corporation
+Nashua, NH
+
+User communities for Intel Software Development Products
+http://softwareforums.intel.com/
+Intel Fortran Support
+http://support.intel.com/support/performancetools/fortran
+My Fortran blog
+http://www.intel.com/software/drfortran
+</POST>
+<POST>
+<POSTER> &quot;James Van Buskirk&quot; &lt;not_va...@comcast.net&gt; </POSTER>
+<POSTDATE> 2008-01-18T18:18:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Steven Correll&quot; &lt;steven.corr ... @gmail.com&gt; wrote in message
+">
+
+news:8a63aa03-cec1-45b2-8fd8-d3862837ed29@x69g2000hsx.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 15, 7:05 pm, &quot;James Van Buskirk&quot; &lt;not_va ... @comcast.net&gt; wrote:
+&gt;&gt; &gt; At last, as the FORTRAN compilers I already mentioned continue to pass
+&gt;&gt; &gt; the dimension of the string behind the scene as an additional argument
+&gt;&gt; &gt; ( =&gt; additional question : why ? This seems dangerous when the C
+&gt;&gt; &gt; binding is required), the following simplified interface works too :
+&gt;&gt; &gt; INTERFACE
+&gt;&gt; &gt;  SUBROUTINE c_routine(name) BIND(C,name=&quot;c_routine&quot;)
+&gt;&gt; &gt;    USE iso_c_binding
+&gt;&gt; &gt;    CHARACTER(len=*,kind=c_char),INTENT(in) :: name
+&gt;&gt; &gt;  END SUBROUTINE
+&gt;&gt; &gt; END INTERFACE
+&gt;&gt; No, that's just a bug.  Whan this came
+&gt;&gt; up http://groups.google.com/group/comp.lang.fortran/msg/ed1f5103d761a4ab
+&gt;&gt; Steve Lionel said he would fix it, and there was also a discussion
+&gt;&gt; in bugzilla about fixing it for gfortran.  From section 15.2.6:
+&gt;&gt; &quot;A Fortran procedure interface is interoperable with a C function
+&gt;&gt; prototype if
+&gt;&gt; ...
+&gt;&gt; (3) the number of dummy arguments of the interface is equal to the
+&gt;&gt; number of formal parameters of the prototype&quot;
+&gt;&gt; which precludes passing a hidden length argument.
+&gt; You're misinterpreting the Fortran standard. You're confusing the
+&gt; Fortran standard term &quot;dummy argument&quot; and the C Standard term &quot;formal
+&gt; parameter&quot; with the term &quot;argument&quot; which may appear in the machine-
+&gt; language ABI of the computer used to execute the program.
+&gt; The number of Fortran &quot;dummy arguments&quot; must match the number of C
+&gt; &quot;formal parameters&quot;, but a Fortran dummy argument may correspond to
+&gt; zero, one, or many ABI &quot;arguments.&quot; The only requirement in the
+&gt; Fortran standard is that the Fortran processor and an interoperable C
+&gt; processor must succeed in communicating values when the program
+&gt; conforms to the Standard. The processors could do it by storing and
+&gt; retrieving information in a database, thereby using no ABI &quot;arguments&quot;
+&gt; at all; they could do it by enlisting an army of grad students to
+&gt; carry values from one processor to the other. If they do choose to use
+&gt; a machine-language ABI involving a stack frame, they can push as many
+&gt; or as few words onto the stack as
+&gt; they like.
+&gt; If the extra arguments prevent the two processors from correctly
+&gt; executing a conforming program as the standards prescribe (which is
+&gt; apparently the case in some situations on Microsoft Windows) then
+&gt; that's a violation of some other part of the standard, but not section
+&gt; 15.2.6. If they're harmless (as they would be on Linux) there is no
+&gt; violation. A conforming processor might usefully push extra words onto
+&gt; the stack to improve debugging, enable runtime checking, or propagate
+&gt; exceptions (in a case where the C and Fortran processors are
+&gt; coexisting with a processor for a language which supports exception
+&gt; handling.)  It would be a pity if the Fortran standard were to
+&gt; preclude such improvements--fortunately it doesn't.
+">
+
+I just can't believe you made this comment.  Do you think there is
+some kind of bug in the standard due to which after the whole of
+chpater 15 (on C interop) as well as the extra effort made in sections
+12.4.1.2 and 12.4.1.5 to allow interoperability of character scalars
+with C strings it just doesn't work?  If so, you should inform the
+committee so that they can fix it.
+
+The problem of including extra arguments isn't just due to Windows,
+a compiler that imlemented /iface:mixed_str_len_arg would break C
+interoperability independent of operating system if it put the hidden
+string lengths in there.  C doesn't have an automatic mechanism for
+reading string lengths because, of course, it doesn't have strings
+and it's not designed to interoperate with anything.  There is no
+need for a Fortran program to insert string lengths all over the
+place implicitly because it can do so explicitly if there is some
+mechanism for the non-Fortran callee to read them.  OK, I can think
+of cases where implicit string lengths might be a good thing:
+
+C:\gfortran\clf\hidden&gt;type write_hidden.f90
+! File: write_hidden.f90
+! Public domain 2008 James Van Buskirk
+
+module hidden
+use ISO_C_BINDING
+implicit none
+interface
+subroutine read_hidden(x) bind(C,name='read_hidden_')
+use ISO_C_BINDING
+implicit none
+
+character(kind=C_CHAR) x(*)
+end subroutine read_hidden
+end interface
+
+integer, save :: global_variable
+character(9,C_CHAR), parameter :: teens(11:19) = ['eleven   ', &amp;
+'twelve   ','thirteen ','fourteen ','fifteen  ','sixteen  ', &amp;
+'seventeen','eighteen ','nineteen ']
+contains
+subroutine init_impure()
+real harvest
+
+call random_seed()
+call random_number(harvest)
+global_variable = min(int(9*harvest)+11,19)
+end subroutine init_impure
+
+function impure_character_function()
+character(specification_function(),C_CHAR)
+impure_character_function
+real harvest
+
+impure_character_function = teens(global_variable)
+call random_number(harvest)
+global_variable = min(int(9*harvest)+11,19)
+end function impure_character_function
+
+pure function specification_function()
+integer specification_function
+
+specification_function = len_trim(teens(global_variable))
+end function specification_function
+end module hidden
+
+program write_hidden
+use hidden
+use ISO_C_BINDING
+implicit none
+integer i
+
+call init_impure
+call read_hidden(impure_character_function())
+end program write_hidden
+
+! End of file: write_hidden.f90
+
+C:\gfortran\clf\hidden&gt;type read_hidden_32.f90
+! File: read_hidden_32.f90
+! Public domain 2008 James Van Buskirk
+
+subroutine read_hidden(x)
+use ISO_C_BINDING
+implicit none
+type(C_PTR), value, target :: x
+type(C_PTR), pointer :: array(:)
+integer xlen
+
+call C_F_POINTER(C_LOC(x), array, [2])
+xlen = transfer(array(2),0_C_INTPTR_T)
+write(*,'(a)') 'In read_hidden'
+write(*,'(a,i0)') 'Hidden length = ', xlen
+end subroutine read_hidden
+
+! End of file: read_hidden_32.f90
+
+C:\gfortran\clf\hidden&gt;type read_hidden_64.f90
+! File: read_hidden_64.f90
+! Public domain 2008 James Van Buskirk
+
+subroutine read_hidden(x)
+use ISO_C_BINDING
+implicit none
+character(*) x
+
+write(*,'(a)') 'In read_hidden'
+write(*,'(a,i0)') 'Hidden length = ', len(x)
+end subroutine read_hidden
+
+! End of file: read_hidden_64.f90
+
+C:\gfortran\clf\hidden&gt;c:\gfortran\win64\bin\x86_64-pc-mingw32-gfortran -c
+read_
+hidden_32.f90
+
+C:\gfortran\clf\hidden&gt;c:\gfortran\win64\bin\x86_64-pc-mingw32-gfortran
+write_hi
+dden.f90 read_hidden_32.o -owrite_hidden
+
+C:\gfortran\clf\hidden&gt;write_hidden
+In read_hidden
+Hidden length = 8
+
+C:\gfortran\clf\hidden&gt;c:\gfortran\win64\bin\x86_64-pc-mingw32-gfortran -c
+read_
+hidden_64.f90
+
+C:\gfortran\clf\hidden&gt;c:\gfortran\win64\bin\x86_64-pc-mingw32-gfortran
+write_hi
+dden.f90 read_hidden_64.o -owrite_hidden
+
+C:\gfortran\clf\hidden&gt;write_hidden
+In read_hidden
+Hidden length = 520486913
+
+Discussion: in the above example, some complicated character
+expression in program write_hidden, represented here by
+impure_character_function, creates one of the arguments to subroutine
+read_hidden.  The function can't simply be invoked a second time
+because it's impure and its result and len change every time.  If
+a hidden argument were to be passed we could try to read it via an
+extra argument as read_hidden_64.f90 does, which could not work if
+the callee were determined to pop its arguments off the stack
+because it would corrupt the stack.  Alternatively, we could get
+a pointer to the last argument on the stack and read the higher
+addresses on the stack as read_hidden_32.f90 does.  This last
+attempt could fail if arguments were passed in registers.  If we
+know enough about the argument passing mechanism we could extract
+the hidden string length with an assembly language, or as shown above,
+even perhaps a Fortran subroutine.
+
+Those hidden string lengths don't necessarily do you any good,
+though.  If the actual argument to subroutine read_hidden were
+[('',i=1,10)]//impure_character_function() then the len the
+subroutine eventually extracts would only be 1/10 of the size
+of its dummy argument.  A true C function would probably be
+happier with [[('',i=1,10)]//impure_character_function(),achar(0)]
+so that it could search for its favorite sentinel character itself.
+
+--
+write(*,*) transfer((/17.392111325966148d0,6.5794487871554595D-85, &amp;
+6.0134700243160014d-154/),(/'x'/)); end
+</POST>
+<POST>
+<POSTER> &quot;James Van Buskirk&quot; &lt;not_va...@comcast.net&gt; </POSTER>
+<POSTDATE> 2008-01-18T18:44:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Steve Lionel&quot; &lt;steve.lio ... @intel.com&gt; wrote in message
+">
+
+news:b72f833c-87d2-46ca-b0a3-a6a3e6c7e2ee@u10g2000prn.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; I'm not sure what to make of your &quot;wait and see approach&quot; comment.  We
+&gt; certainly want to do the right thing by the standard.  We're not
+&gt; eager, however, to further extend BIND(C) to support semantics we
+&gt; already offer through what you amusingly call the &quot;TR for Directive
+&gt; Enhanced Compilation&quot;.
+">
+
+ISTR that you said in an earlier post that ifort wasn't going to
+permit bind(C) and STDCALL for the same interface.  An optimist would
+consider that you were waiting for somebody else to get these two
+things working together correctly, perhaps testing problematic
+extensions so that Intel didn't get stuck with them, sort of like
+the
+
+parameter wp = kind(1.0d0)
+
+extension I saw on your forum even today.
+
+<QUOTE PREVIOUSPOST="
+&gt; Personally, I think that ifort's behavior when NULL() is passed to a
+&gt; non-pointer argument is a bug, though I don't think you can write a
+&gt; standard-conforming program that demonstrates it. (Your earlier
+&gt; program suffers from the same problem I noted.)  I think that the
+&gt; behavior you want, as an extension, is useful and consistent with what
+&gt; happens when passing a nullified pointer.  I have filed a bug report
+&gt; with the ifort developers on this.
+">
+
+That's good because it would mean that a program could use bind(C)
+or ALLOW_NULL modules but use the same visible user code.  Just
+change the INCLUDE environmental variable so as to use the other
+style of module and at least this aspect would work.  Probably a
+lot of other incompatibilities I haven't thought about, though...
+
+<QUOTE PREVIOUSPOST="
+&gt; I spent quite a bit of time yesterday reading parts of the standard to
+&gt; try to get my head around the issue of whether or not it was allowable
+&gt; for ifort to pass the character argument lengths.  When I last wrote
+&gt; on this topic I did not think it was, but I came around to the
+&gt; position Steven Correll outlines in that the standard specifies the
+&gt; relationship between the Fortran *interface* and the C prototype.  As
+&gt; Steven notes, the standard is silent on what happens behind the
+&gt; curtain, as it usually is.
+">
+
+Yes, but if what goes on behind the curtain means that interoperability
+just doesn't work, then the standard is broken.  If Fortran invoked
+a STDCALL procedure and passed the hidden string lengths but appended
+@n for n = 4*(# of non-hidden arguments) and assumed responsibility for
+popping its hidden arguments off the stack itself (for a bind(C)
+procedure call) it would still be usable.  But if the callee is to be
+responsible for knowing about those hidden arguments, then the compiler
+is forcing the callee to be interoperable with Fortran rather than the
+standard permitting a syntax where the Fortran caller can accomodate
+the callee's needs which is what I thought interoperability meant.
+Only one language can be arrogant enough to annihilate all software
+and hardware that is not designed with it in mind, and that language
+today is C.  If Fortran interoperability doesn't mean that it can
+humor the C geeks it is simply broken.
+
+<QUOTE PREVIOUSPOST="
+&gt; Where this poses a problem is in your desire to extend BIND(C) to
+&gt; accommodate the IA-32 Windows STDCALL mechanism.  If you somehow tell
+&gt; the compiler to use STDCALL, then the external name it generates for
+&gt; the call depends on the actual number of arguments pushed on the
+&gt; stack, including any &quot;hidden&quot; arguments.  But you have to use some
+&gt; mechanism outside the standard to do this, so the standard no longer
+&gt; applies.
+">
+
+Discussed above.
+
+<QUOTE PREVIOUSPOST="
+&gt; I'll be honest and say that I can't get too worked up over trying to
+&gt; ensure consistent behavior with BIND(C) and STDCALL, noting that not
+&gt; only do you have to use a method outside the standard to get STDCALL
+&gt; in ifort, but you also have to do so in the C compiler of your
+&gt; choice.  I'd go further and say that even if the Fortran compiler
+&gt; defaulted to STDCALL (as CVF did), a BIND(C) routine would be
+&gt; reasonably assumed to imply the C mechanism and that an attempt to
+&gt; force it to use STDCALL should either be an error or be ignored.  I
+&gt; haven't discussed this with the rest of the team yet, but I will.
+">
+
+I thought that in an earlier post you already had considered it an
+error.  I thought that in this context 'C' and 'STDCALL' were only
+names of two of several calling mechanisms that a C (or any other)
+compiler could use.  I don't think we are going to resolve our
+discordance on this issue today, but it's always a good thing to
+be informed as to the problems with ones own position so that we
+can refine our proposals towards something actually useful.
+
+--
+write(*,*) transfer((/17.392111325966148d0,6.5794487871554595D-85, &amp;
+6.0134700243160014d-154/),(/'x'/)); end
+</POST>
+<POST>
+<POSTER> glen herrmannsfeldt &lt;g...@ugcs.caltech.edu&gt; </POSTER>
+<POSTDATE> 2008-01-18T21:18:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Steve Lionel wrote:
+">
+
+(snip)
+
+<QUOTE PREVIOUSPOST="
+&gt; Where this poses a problem is in your desire to extend BIND(C) to
+&gt; accommodate the IA-32 Windows STDCALL mechanism.  If you somehow tell
+&gt; the compiler to use STDCALL, then the external name it generates for
+&gt; the call depends on the actual number of arguments pushed on the
+&gt; stack, including any &quot;hidden&quot; arguments.  But you have to use some
+&gt; mechanism outside the standard to do this, so the standard no longer
+&gt; applies.
+">
+
+For x86, there are calling conventions where the caller pops the
+stack, and those where the callee pops the stack.  The latter
+case requires that the callee know the number of arguments.
+
+<QUOTE PREVIOUSPOST="
+&gt; I'll be honest and say that I can't get too worked up over trying to
+&gt; ensure consistent behavior with BIND(C) and STDCALL, noting that not
+&gt; only do you have to use a method outside the standard to get STDCALL
+&gt; in ifort, but you also have to do so in the C compiler of your
+&gt; choice.  I'd go further and say that even if the Fortran compiler
+&gt; defaulted to STDCALL (as CVF did), a BIND(C) routine would be
+&gt; reasonably assumed to imply the C mechanism and that an attempt to
+&gt; force it to use STDCALL should either be an error or be ignored.  I
+&gt; haven't discussed this with the rest of the team yet, but I will.
+">
+
+C varargs routines are pretty much incompatible with STDCALL, as
+the number of arguments to pop is not known.  ANSI C (unlike K&amp;R C)
+requires that varargs (routines with a variable number of arguments)
+be specifically declared, and allows a different calling convention
+to be used.  Even though it is allowed, it is not usually done.
+
+So yes, I would be very surprised to see a C compiler with STDCALL
+as its default calling convention.
+
+-- glen
+</POST>
+<POST>
+<POSTER> glen herrmannsfeldt &lt;g...@ugcs.caltech.edu&gt; </POSTER>
+<POSTDATE> 2008-01-18T21:34:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+James Van Buskirk wrote:
+&gt; &quot;Steven Correll&quot; &lt;steven.corr ... @gmail.com&gt; wrote:
+">
+
+(snip)
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;The number of Fortran &quot;dummy arguments&quot; must match the number of C
+&gt;&gt;&quot;formal parameters&quot;, but a Fortran dummy argument may correspond to
+&gt;&gt;zero, one, or many ABI &quot;arguments.&quot; The only requirement in the
+&gt;&gt;Fortran standard is that the Fortran processor and an interoperable C
+&gt;&gt;processor must succeed in communicating values when the program
+&gt;&gt;conforms to the Standard. The processors could do it by storing and
+&gt;&gt;retrieving information in a database, thereby using no ABI &quot;arguments&quot;
+&gt;&gt;at all; they could do it by enlisting an army of grad students to
+&gt;&gt;carry values from one processor to the other. If they do choose to use
+&gt;&gt;a machine-language ABI involving a stack frame, they can push as many
+&gt;&gt;or as few words onto the stack as
+&gt;&gt;they like.
+&gt;&gt;If the extra arguments prevent the two processors from correctly
+&gt;&gt;executing a conforming program as the standards prescribe (which is
+&gt;&gt;apparently the case in some situations on Microsoft Windows) then
+&gt;&gt;that's a violation of some other part of the standard, but not section
+&gt;&gt;15.2.6. If they're harmless (as they would be on Linux) there is no
+&gt;&gt;violation. A conforming processor might usefully push extra words onto
+&gt;&gt;the stack to improve debugging, enable runtime checking, or propagate
+&gt;&gt;exceptions (in a case where the C and Fortran processors are
+&gt;&gt;coexisting with a processor for a language which supports exception
+&gt;&gt;handling.)  It would be a pity if the Fortran standard were to
+&gt;&gt;preclude such improvements--fortunately it doesn't.
+&gt; I just can't believe you made this comment.  Do you think there is
+&gt; some kind of bug in the standard due to which after the whole of
+&gt; chpater 15 (on C interop) as well as the extra effort made in sections
+&gt; 12.4.1.2 and 12.4.1.5 to allow interoperability of character scalars
+&gt; with C strings it just doesn't work?  If so, you should inform the
+&gt; committee so that they can fix it.
+&gt; The problem of including extra arguments isn't just due to Windows,
+&gt; a compiler that imlemented /iface:mixed_str_len_arg would break C
+&gt; interoperability independent of operating system if it put the hidden
+&gt; string lengths in there.  C doesn't have an automatic mechanism for
+&gt; reading string lengths because, of course, it doesn't have strings
+&gt; and it's not designed to interoperate with anything.  There is no
+&gt; need for a Fortran program to insert string lengths all over the
+&gt; place implicitly because it can do so explicitly if there is some
+&gt; mechanism for the non-Fortran callee to read them.  OK, I can think
+&gt; of cases where implicit string lengths might be a good thing:
+">
+
+The usual C calling method will ignore extra arguments at
+the end of the argument list.  (Do any Fortran implementations
+put the length immediately after each string argument?)
+
+The C calling sequence for varargs (variable number of arguments)
+routines (such as printf) is fairly tolerant of extra arguments.
+It is usual, though not required, to use the same calling sequence
+for non-varargs routines.
+
+The x86 instruction set has a return instruction that will pop a
+constant (in the absence of self modifying code) number of bytes off
+the stack.  This small advantage is, as far as I know, the reason
+for the STDCALL convention.
+
+-- glen
+</POST>
+<POST>
+<POSTER> Gary Scott &lt;garylsc...@sbcglobal.net&gt; </POSTER>
+<POSTDATE> 2008-01-18T21:47:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+glen herrmannsfeldt wrote:
+&gt; Steve Lionel wrote:
+&gt; (snip)
+
+&gt;&gt; Where this poses a problem is in your desire to extend BIND(C) to
+&gt;&gt; accommodate the IA-32 Windows STDCALL mechanism.  If you somehow tell
+&gt;&gt; the compiler to use STDCALL, then the external name it generates for
+&gt;&gt; the call depends on the actual number of arguments pushed on the
+&gt;&gt; stack, including any &quot;hidden&quot; arguments.  But you have to use some
+&gt;&gt; mechanism outside the standard to do this, so the standard no longer
+&gt;&gt; applies.
+
+&gt; For x86, there are calling conventions where the caller pops the
+&gt; stack, and those where the callee pops the stack.  The latter
+&gt; case requires that the callee know the number of arguments.
+
+&gt;&gt; I'll be honest and say that I can't get too worked up over trying to
+&gt;&gt; ensure consistent behavior with BIND(C) and STDCALL, noting that not
+&gt;&gt; only do you have to use a method outside the standard to get STDCALL
+&gt;&gt; in ifort, but you also have to do so in the C compiler of your
+&gt;&gt; choice.  I'd go further and say that even if the Fortran compiler
+&gt;&gt; defaulted to STDCALL (as CVF did), a BIND(C) routine would be
+&gt;&gt; reasonably assumed to imply the C mechanism and that an attempt to
+&gt;&gt; force it to use STDCALL should either be an error or be ignored.  I
+&gt;&gt; haven't discussed this with the rest of the team yet, but I will.
+
+&gt; C varargs routines are pretty much incompatible with STDCALL, as
+&gt; the number of arguments to pop is not known.  ANSI C (unlike K&amp;R C)
+&gt; requires that varargs (routines with a variable number of arguments)
+&gt; be specifically declared, and allows a different calling convention
+&gt; to be used.  Even though it is allowed, it is not usually done.
+
+&gt; So yes, I would be very surprised to see a C compiler with STDCALL
+&gt; as its default calling convention.
+">
+
+Not likely but the main reason why STDCALL (PASCAL) exists on Windows is
+because the OS API wasn't originally written in C.  The only think I
+care about is being able to call the OS API, whatever language it is
+written in.
+
+<QUOTE PREVIOUSPOST="
+&gt; -- glen
+">
+
+--
+
+Gary Scott
+mailto:garylscott@sbcglobal dot net
+
+Fortran Library: http://www.fortranlib.com
+
+Support the Original G95 Project: http://www.g95.org
+-OR-
+Support the GNU GFortran Project: http://gcc.gnu.org/fortran/index.html
+
+If you want to do the impossible, don't hire an expert because he knows
+it can't be done.
+
+-- Henry Ford
+</POST>
+<POST>
+<POSTER> glen herrmannsfeldt &lt;g...@ugcs.caltech.edu&gt; </POSTER>
+<POSTDATE> 2008-01-18T22:09:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Gary Scott wrote:
+">
+
+(snip)
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; So yes, I would be very surprised to see a C compiler with STDCALL
+&gt;&gt; as its default calling convention.
+&gt; Not likely but the main reason why STDCALL (PASCAL) exists on Windows is
+&gt; because the OS API wasn't originally written in C.  The only think I
+&gt; care about is being able to call the OS API, whatever language it is
+&gt; written in.
+">
+
+How about BIND(STDCALL)?
+
+It makes more sense than using BIND(C).
+
+-- glen
+</POST>
+<POST>
+<POSTER> Steve Lionel &lt;steve.lio...@intel.com&gt; </POSTER>
+<POSTDATE> 2008-01-19T08:52:00 </POSTDATE>
+On Jan 18, 9:34 pm, glen herrmannsfeldt &lt;g ... @ugcs.caltech.edu&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; The usual C calling method will ignore extra arguments at
+&gt; the end of the argument list.  (Do any Fortran implementations
+&gt; put the length immediately after each string argument?)
+">
+
+Microsoft Fortran PowerStation did, and therefore so did DVF/CVF.
+Neither of those compilers is ever going to see BIND(C), so the issue
+is moot for them. Intel Fortran changed the default to put the lengths
+at the end but the &quot;mixed&quot; method is available as an option.
+
+Steve
+</POST>
+<POST>
+<POSTER> Gary Scott &lt;garylsc...@sbcglobal.net&gt; </POSTER>
+<POSTDATE> 2008-01-19T10:47:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+glen herrmannsfeldt wrote:
+&gt; Gary Scott wrote:
+
+&gt; (snip)
+
+&gt;&gt;&gt; So yes, I would be very surprised to see a C compiler with STDCALL
+&gt;&gt;&gt; as its default calling convention.
+
+&gt;&gt; Not likely but the main reason why STDCALL (PASCAL) exists on Windows
+&gt;&gt; is because the OS API wasn't originally written in C.  The only think
+&gt;&gt; I care about is being able to call the OS API, whatever language it is
+&gt;&gt; written in.
+
+&gt; How about BIND(STDCALL)?
+
+&gt; It makes more sense than using BIND(C).
+">
+
+Absolutely.  It isn't BIND(C) that I wanted.  It was the ability to
+perform everything that $DEC... provides, portably.
+
+<QUOTE PREVIOUSPOST="
+&gt; -- glen
+">
+
+--
+
+Gary Scott
+mailto:garylscott@sbcglobal dot net
+
+Fortran Library: http://www.fortranlib.com
+
+Support the Original G95 Project: http://www.g95.org
+-OR-
+Support the GNU GFortran Project: http://gcc.gnu.org/fortran/index.html
+
+If you want to do the impossible, don't hire an expert because he knows
+it can't be done.
+
+-- Henry Ford
+</POST>
+<POST>
+<POSTER> Gary Scott &lt;garylsc...@sbcglobal.net&gt; </POSTER>
+<POSTDATE> 2008-01-19T10:49:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Steve Lionel wrote:
+&gt; On Jan 18, 9:34 pm, glen herrmannsfeldt &lt;g ... @ugcs.caltech.edu&gt; wrote:
+
+&gt;&gt;The usual C calling method will ignore extra arguments at
+&gt;&gt;the end of the argument list.  (Do any Fortran implementations
+&gt;&gt;put the length immediately after each string argument?)
+
+&gt; Microsoft Fortran PowerStation did, and therefore so did DVF/CVF.
+&gt; Neither of those compilers is ever going to see BIND(C), so the issue
+&gt; is moot for them. Intel Fortran changed the default to put the lengths
+&gt; at the end but the &quot;mixed&quot; method is available as an option.
+">
+
+I hope it remains because I build libraries that I want to be compatible
+with FPS.
+
+<QUOTE PREVIOUSPOST="
+&gt; Steve
+">
+
+--
+
+Gary Scott
+mailto:garylscott@sbcglobal dot net
+
+Fortran Library: http://www.fortranlib.com
+
+Support the Original G95 Project: http://www.g95.org
+-OR-
+Support the GNU GFortran Project: http://gcc.gnu.org/fortran/index.html
+
+If you want to do the impossible, don't hire an expert because he knows
+it can't be done.
+
+-- Henry Ford
+</POST>
+<POST>
+<POSTER> Walter Spector &lt;w6ws_xthiso...@earthlink.net&gt; </POSTER>
+<POSTDATE> 2008-01-19T19:49:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+James Van Buskirk wrote:
+&gt; ...  I thought that in this context 'C' and 'STDCALL' were only
+&gt; names of two of several calling mechanisms that a C (or any other)
+&gt; compiler could use...
+">
+
+It seems to me that BIND(C) should generate code to be compatible
+with the C compiler, and just that.  If something else is needed,
+maybe BIND(STDCALL) or some other BIND(calling_sequence_of_choice)
+would be the natural extension to F2003 to specify it.
+
+W.
+</POST>
+<POST>
+<POSTER> &quot;James Van Buskirk&quot; &lt;not_va...@comcast.net&gt; </POSTER>
+<POSTDATE> 2008-01-19T21:29:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Walter Spector&quot; &lt;w6ws_xthiso ... @earthlink.net&gt; wrote in message
+">
+
+news:13p56m6lvhimkd5@corp.supernews.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; James Van Buskirk wrote:
+&gt;&gt; ...  I thought that in this context 'C' and 'STDCALL' were only
+&gt;&gt; names of two of several calling mechanisms that a C (or any other)
+&gt;&gt; compiler could use...
+&gt; It seems to me that BIND(C) should generate code to be compatible
+&gt; with the C compiler, and just that.  If something else is needed,
+&gt; maybe BIND(STDCALL) or some other BIND(calling_sequence_of_choice)
+&gt; would be the natural extension to F2003 to specify it.
+">
+
+No, the 'C' doesn't need to have anything to do with 'the' C
+compiler because there isn't really any 'the' C compiler.  Here, the
+following reference is about C++, not C, but mostly the former is a
+superset of the latter; anyhow it might give you a taste of what we
+are up against here.
+
+http://www.agner.org/optimize/calling_conventions.pdf
+
+It's common in C to be able to specify the calling convention you
+want in the function declaration or definition and also to be able
+to specify a default calling convention via command line switch or
+environmental variable.  Also not unusual in 32-bit Windows Fortran
+compilers: ifort has /iface:stdcall switch and gfortran and g95
+have -mrtd, Silverfrost has /IMPORT_LIB &lt;pathname&gt; which may do
+something similar, and I haven't checked the others.
+
+If a module is compiled with a switch that specifies STDCALL as
+the default calling convention, it would seem logical for any
+procedures or interfaces defined in that module to consider 'the'
+C compiler to be the one that uses STDCALL.  Any program unit
+that USEd such a module would know that it had better generate
+a STDCALL invocation of a procedure or interface thus accessed.
+
+--
+write(*,*) transfer((/17.392111325966148d0,6.5794487871554595D-85, &amp;
+6.0134700243160014d-154/),(/'x'/)); end
+</POST>
+<POST>
+<POSTER> Steven Correll &lt;steven.corr...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-19T21:52:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Steven Correll&quot; &lt;steven.corr ... @gmail.com&gt; wrote in message
+">
+
+news:8a63aa03-cec1-45b2-8fd8-
+d3862837e ... @x69g2000hsx.googlegroups.com...
+
+<QUOTE PREVIOUSPOST="
+&gt; The number of Fortran &quot;dummy arguments&quot; must match the number of C
+&gt; &quot;formal parameters&quot;, but a Fortran dummy argument may correspond to
+&gt; zero, one, or many ABI &quot;arguments.&quot;
+">
+
+On Jan 18, 4:18 pm, &quot;James Van Buskirk&quot; &lt;not_va ... @comcast.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I just can't believe you made this comment.  Do you think there is
+&gt; some kind of bug in the standard due to which after the whole of
+&gt; chpater 15 (on C interop) as well as the extra effort made in sections
+&gt; 12.4.1.2 and 12.4.1.5 to allow interoperability of character scalars
+&gt; with C strings it just doesn't work?  If so, you should inform the
+&gt; committee so that they can fix it.
+">
+
+I don't see any bug in the standard. To repeat: The rule you cited
+from 15.2.6 says that the number of Fortran &quot;dummy arguments&quot; and the
+number of C &quot;formal parameters&quot; (each term has a precise definition in
+its respective standard) must be the same: that's a restriction on the
+programmer. It does not say that the number of machine-level arguments
+must also be the same (which would be a restriction on the
+implementation.)
+
+If a Fortran compiler claims to be interoperable with a C compiler
+while using STDCALL, and it executes a conforming program incorrectly
+due to extra machine-level arguments, then the compiler fails to
+conform to the standard: not because of the rule in 15.2.6, but
+because it executes the program incorrectly. On Linux (for example)
+where extra arguments are harmless, the compiler is free to pass them.
+
+You may reasonably say that a Windows Fortran compiler isn't useful to
+you unless it supports STDCALL calls to Windows OS functions, but you
+can't say it violates the standard. As a thought experiment, imagine
+an interoperable Fortran interpreter and C interpreter which both work
+by emitting code for a Java-like virtual machine, rather than machine
+language. Imagine that the C interpreter conforms to the C standard,
+providing all the C library functions, but not the Windows OS
+functions (the C standard doesn't require them.) It's difficult to
+believe that the Fortran standard could, under the rubric of
+interoperability, compel the Fortran processor to do something which
+the C processor itself is not required to do.
+</POST>
+<POST>
+<POSTER> &quot;James Van Buskirk&quot; &lt;not_va...@comcast.net&gt; </POSTER>
+<POSTDATE> 2008-01-19T23:12:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Steven Correll&quot; &lt;steven.corr ... @gmail.com&gt; wrote in message
+">
+
+news:73214c62-ed98-4e04-a49a-5fda26ff66ea@i12g2000prf.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; I don't see any bug in the standard. To repeat: The rule you cited
+&gt; from 15.2.6 says that the number of Fortran &quot;dummy arguments&quot; and the
+&gt; number of C &quot;formal parameters&quot; (each term has a precise definition in
+&gt; its respective standard) must be the same: that's a restriction on the
+&gt; programmer. It does not say that the number of machine-level arguments
+&gt; must also be the same (which would be a restriction on the
+&gt; implementation.)
+">
+
+Again and again we see questions about interfacing Fortran character
+arguments with other languages.  Even Fortran-to-Fortran can be
+problematic.  The reason, of course, stems from Fortran 77 which
+allowed assumed length character dummy variables but not explicit
+interfaces.  Since any character actual argument could, for all the
+compiler knows, be associated with an assumed length dummy argument,
+its length had to be passed even though the dummy argument wasn't
+assumed length.  These lengths have to be passed by any procedure
+that calls a Fortran procedure, or taken into account by any
+procedure that is called from Fortran.  Unless there is some
+mechanism provided to the Fortran compiler to turn off these
+lengths.  ifort has one, viz. !DEC$ ATTRIBUTES REFERENCE :: string
+to turn off the passing of the length for string.  Now you are
+telling me that this problem has not in fact been solved by the
+bind(C) stuff, even though it obviously forbids character variables
+with LEN /= 1 just to enable the lengths to be turned off on both
+sides.  You know this goes both ways: if a Fortran caller is allowed
+to pass the extra lengths even though they are superfluous, a
+Fortran callee, even though it was defined as bind(C) should be
+allowed to attempt to read those lengths, as in my example which
+you naturally elided.
+
+<QUOTE PREVIOUSPOST="
+&gt; If a Fortran compiler claims to be interoperable with a C compiler
+&gt; while using STDCALL, and it executes a conforming program incorrectly
+&gt; due to extra machine-level arguments, then the compiler fails to
+&gt; conform to the standard: not because of the rule in 15.2.6, but
+&gt; because it executes the program incorrectly. On Linux (for example)
+&gt; where extra arguments are harmless, the compiler is free to pass them.
+">
+
+On 64-bit Windows extra arguments are harmless.  Not so on Linux where
+extra arguments in xmm registers and the function is unprototyped or
+varargs, but bind(C) doesn't consider such functions, so I'll let it
+slide.  Passing a different number of arguments than specified in the
+bind(C) interface and failing as a consequence but not considering
+that to be a violation of the rule about number of arguments matching,
+well if you say so.  You know, a compiler could return .TRUE. for
+
+logical function is_broken()
+is_broken=transfer(transfer(2,.TRUE.).NEQV.transfer(4,.TRUE.),0)==1
+end
+
+and one could argue forever about whether that is reasonable
+behavior, but it would not mean that the compiler was usable.
+
+<QUOTE PREVIOUSPOST="
+&gt; You may reasonably say that a Windows Fortran compiler isn't useful to
+&gt; you unless it supports STDCALL calls to Windows OS functions, but you
+&gt; can't say it violates the standard. As a thought experiment, imagine
+&gt; an interoperable Fortran interpreter and C interpreter which both work
+&gt; by emitting code for a Java-like virtual machine, rather than machine
+&gt; language. Imagine that the C interpreter conforms to the C standard,
+&gt; providing all the C library functions, but not the Windows OS
+&gt; functions (the C standard doesn't require them.) It's difficult to
+&gt; believe that the Fortran standard could, under the rubric of
+&gt; interoperability, compel the Fortran processor to do something which
+&gt; the C processor itself is not required to do.
+">
+
+But it would be so cool if we could force Linux to implement the
+Windows OS functions, because then it might be almost usable!  Maybe
+you should rethink your stance on that issue.
+
+--
+write(*,*) transfer((/17.392111325966148d0,6.5794487871554595D-85, &amp;
+6.0134700243160014d-154/),(/'x'/)); end
+</POST>
+<POST>
+<POSTER> &quot;Regan Revised&quot; &lt;inva...@invalid.net&gt; </POSTER>
+<POSTDATE> 2008-01-20T00:18:00 </POSTDATE>
+&quot;James Van Buskirk&quot; &lt;not_va ... @comcast.net&gt; wrote in message
+news:m7CdnTxBqNC3Vw_anZ2dnUVZ_r-vnZ2d@comcast.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; But it would be so cool if we could force Linux to implement the
+&gt; Windows OS functions, because then it might be almost usable!  Maybe
+&gt; you should rethink your stance on that issue.
+">
+
+I've never read an indictment of C's ugly stepchild besides my own so I
+appreciate the company.
+
+--
+
+Regan R.
+
+Deep within the heart of every evangelist lies the wreck of a car salesman.
+-- H L Mencken, describing the Christian author Ray Comfort.
+</POST>
+<POST>
+<POSTER> Walter Spector &lt;w6ws_xthiso...@earthlink.net&gt; </POSTER>
+<POSTDATE> 2008-01-20T01:13:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+James Van Buskirk wrote:
+&gt; &quot;Walter Spector&quot; &lt;w6ws_xthiso ... @earthlink.net&gt; wrote in message
+&gt; news:13p56m6lvhimkd5@corp.supernews.com ...
+&gt;&gt; It seems to me that BIND(C) should generate code to be compatible
+&gt;&gt; with the C compiler, and just that.  If something else is needed,
+&gt;&gt; maybe BIND(STDCALL) or some other BIND(calling_sequence_of_choice)
+&gt;&gt; would be the natural extension to F2003 to specify it.
+
+&gt; No, the 'C' doesn't need to have anything to do with 'the' C
+&gt; compiler because there isn't really any 'the' C compiler.
+">
+
+Sure there is.
+
+In order to implement BIND(C), the Fortran implementer first has to
+have a target C compiler environment in mind.  And whatever is the
+default calling sequence for that C compiler should be what BIND(C)
+targets.  For example, it would be natural for a gfortran to use the
+same calling sequence as gcc defaults to.  The same with ifort and icc.
+
+When there are several calling sequences to choose from, as is
+apparently the case in Windows (at least the 32-bit version),
+extending the BIND(C) to BIND(something_else) seems very reasonable.
+
+W.
+</POST>
+<POST>
+<POSTER> &quot;James Van Buskirk&quot; &lt;not_va...@comcast.net&gt; </POSTER>
+<POSTDATE> 2008-01-20T02:58:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Walter Spector&quot; &lt;w6ws_xthiso ... @earthlink.net&gt; wrote in message
+">
+
+news:13p5pkkn14c26d8@corp.supernews.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; In order to implement BIND(C), the Fortran implementer first has to
+&gt; have a target C compiler environment in mind.  And whatever is the
+&gt; default calling sequence for that C compiler should be what BIND(C)
+&gt; targets.  For example, it would be natural for a gfortran to use the
+&gt; same calling sequence as gcc defaults to.  The same with ifort and icc.
+">
+
+If you consider that the default calling sequence is what the C
+compiler uses after compiler switches, defines, and environmental
+variables are taken into account but before directives in the function
+prototypes or definitions themselves potentially override it, then
+we are in agreement, but somehow I think I am an army of one here.
+
+<QUOTE PREVIOUSPOST="
+&gt; When there are several calling sequences to choose from, as is
+&gt; apparently the case in Windows (at least the 32-bit version),
+&gt; extending the BIND(C) to BIND(something_else) seems very reasonable.
+">
+
+Except that that means user-defined types and global variables
+would then have to be bind(something_else) as well, so that the
+entirety of chapter 15 of f03 would have to be written anew for
+each calling sequence possible and approved after f08 is finished.
+By the time all that stuff got through most folks would likely be
+using 64-bit Windows where all this is a non-issue because there is
+one dominant calling convention and there is no reason to deviate
+from it because the ISA isn't as register-starved as 80386 was.
+The only reason I am interested in this is so that any programs I
+might write using 64-bit Windows could compile directly on 32-bit
+Windows (memory permitting).  For example,
+http://home.comcast.net/~kmbtib/Fortran_stuff/hello1.f90 and
+http://home.comcast.net/~kmbtib/Fortran_stuff/HelloWin1.f90 should
+work on any 64-bit Windows compiler that supports bind(C), but I
+don't know of any 32-bit compiler where they work without
+modification.
+
+BTW, I once suggested bind(F77) for procedures so that TKR rules
+could just become TK rules for resolution of generics through the
+miracle of sequence association.  This might permit
+http://home.comcast.net/~kmbtib/Fortran_stuff/GENERIC_BLAS.ZIP
+to be extended to GENERIC_LAPACK.ZIP where three or four kinds of
+the REAL type LAPACK functions could be implemented via just a
+single template version.  Same for the COMPLEX versions -- three
+or four for the price of 1+epsilon.  I was told that no, BIND()
+isn't about that kind of thing.  I'm still not exactly sure just
+what it's about [the majority of my respondents would likely agree
+on that point -- that I don't know what it's about :) ] but if it
+isn't the right thing to do for bind(F77) it seems inconsistent to
+me that it should be the right thing for bind(STDCALL).
+
+--
+write(*,*) transfer((/17.392111325966148d0,6.5794487871554595D-85, &amp;
+6.0134700243160014d-154/),(/'x'/)); end
+</POST>
+<POST>
+<POSTER> Walter Spector &lt;w6ws_xthiso...@earthlink.net&gt; </POSTER>
+<POSTDATE> 2008-01-20T09:41:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+James Van Buskirk wrote:
+&gt; &quot;Walter Spector&quot; &lt;w6ws_xthiso ... @earthlink.net&gt; wrote in message
+&gt; news:13p5pkkn14c26d8@corp.supernews.com ...
+
+&gt;&gt; In order to implement BIND(C), the Fortran implementer first has to
+&gt;&gt; have a target C compiler environment in mind.  And whatever is the
+&gt;&gt; default calling sequence for that C compiler should be what BIND(C)
+&gt;&gt; targets.  For example, it would be natural for a gfortran to use the
+&gt;&gt; same calling sequence as gcc defaults to.  The same with ifort and icc.
+
+&gt; If you consider that the default calling sequence is what the C
+&gt; compiler uses after compiler switches, defines, and environmental
+&gt; variables are taken into account but before directives in the function
+&gt; prototypes or definitions themselves potentially override it, then
+&gt; we are in agreement, but somehow I think I am an army of one here.
+">
+
+Ok, so if I am on a Windows 32 platform and, with no environment vars
+or directives or switches, I type:
+
+gcc -c myprog.c
+
+What do I get?
+
+A Fortran compiler designed to to C Interop with gcc would match the
+above - again with no environment vars, directives, or switches.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; When there are several calling sequences to choose from, as is
+&gt;&gt; apparently the case in Windows (at least the 32-bit version),
+&gt;&gt; extending the BIND(C) to BIND(something_else) seems very reasonable.
+
+&gt; Except that that means user-defined types and global variables
+&gt; would then have to be bind(something_else) as well, so that the
+&gt; entirety of chapter 15 of f03 would have to be written anew for
+&gt; each calling sequence possible and approved after f08 is finished.
+">
+
+Maybe if the derived types had procedure pointers in them.
+
+But we are talking about an *extension*, not anything the Standards
+Committee would want to have anything to do with.
+
+<QUOTE PREVIOUSPOST="
+&gt; ... The only reason I am interested in this is so that any programs I
+&gt; might write using 64-bit Windows could compile directly on 32-bit
+&gt; Windows (memory permitting)...
+">
+
+Remember that I am one of the few voices who has always maintained that
+C Interop was oversold.  It is what it is, and useful in some cases.
+But also lets the user create some very non-portable code.
+
+W.
+</POST>
+<POST>
+<POSTER> &quot;James Van Buskirk&quot; &lt;not_va...@comcast.net&gt; </POSTER>
+<POSTDATE> 2008-01-20T11:56:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Walter Spector&quot; &lt;w6ws_xthiso ... @earthlink.net&gt; wrote in message
+">
+
+news:13p6ncbtg0jrsb8@corp.supernews.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; James Van Buskirk wrote:
+&gt;&gt; &quot;Walter Spector&quot; &lt;w6ws_xthiso ... @earthlink.net&gt; wrote in message
+&gt;&gt; news:13p5pkkn14c26d8@corp.supernews.com ...
+&gt;&gt;&gt; In order to implement BIND(C), the Fortran implementer first has to
+&gt;&gt;&gt; have a target C compiler environment in mind.  And whatever is the
+&gt;&gt;&gt; default calling sequence for that C compiler should be what BIND(C)
+&gt;&gt;&gt; targets.  For example, it would be natural for a gfortran to use the
+&gt;&gt;&gt; same calling sequence as gcc defaults to.  The same with ifort and icc.
+&gt;&gt; If you consider that the default calling sequence is what the C
+&gt;&gt; compiler uses after compiler switches, defines, and environmental
+&gt;&gt; variables are taken into account but before directives in the function
+&gt;&gt; prototypes or definitions themselves potentially override it, then
+&gt;&gt; we are in agreement, but somehow I think I am an army of one here.
+&gt; Ok, so if I am on a Windows 32 platform and, with no environment vars
+&gt; or directives or switches, I type:
+&gt; gcc -c myprog.c
+&gt; What do I get?
+&gt; A Fortran compiler designed to to C Interop with gcc would match the
+&gt; above - again with no environment vars, directives, or switches.
+">
+
+We are in agreement here, I think, but now comes the interesting
+part:
+
+What if you typed:
+
+gcc -c -mrtd myprog.c
+
+If you had a module with interfaces describing the prototypes of the
+functions in myprog.c and procedures that would be invoked by the
+procedures in myprog.c according to the prototypes in myprog.c and
+compiled it with:
+
+gfortran -c -mrtd mymod.f90
+
+again my hope is that it would match what is demanded by myprog.o.
+Further if the above compilation generated also mymod.mod and mymod
+were USEd in program main in main.f90, then my expectation would be
+that
+
+gfortran main.f90 myprog.o mymod.o -omain
+
+would work, providing STDCALL interfaces to functions defined in
+myprog.c with interface blocks in mymod.f90 to be invoked by
+procedures in main.f90 even though main.f90 doesn't have STDCALL
+enabled by default.  The DVF/CVF/IFORT way with
+
+!DEC$ ATTRIBUTES STDCALL
+
+has to be able to pass the info about the calling convention along
+with the other stuff that is communicated via module USE, so it
+makes sense that bind(C) could as well.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; When there are several calling sequences to choose from, as is
+&gt;&gt;&gt; apparently the case in Windows (at least the 32-bit version),
+&gt;&gt;&gt; extending the BIND(C) to BIND(something_else) seems very reasonable.
+&gt;&gt; Except that that means user-defined types and global variables
+&gt;&gt; would then have to be bind(something_else) as well, so that the
+&gt;&gt; entirety of chapter 15 of f03 would have to be written anew for
+&gt;&gt; each calling sequence possible and approved after f08 is finished.
+&gt; Maybe if the derived types had procedure pointers in them.
+&gt; But we are talking about an *extension*, not anything the Standards
+&gt; Committee would want to have anything to do with.
+">
+
+I was being a bit hyperbolic in that last paragraph.  But if we want
+extensions there is already a popular extension set that does all the
+bind(C) stuff does and then some.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; ... The only reason I am interested in this is so that any programs I
+&gt;&gt; might write using 64-bit Windows could compile directly on 32-bit
+&gt;&gt; Windows (memory permitting)...
+&gt; Remember that I am one of the few voices who has always maintained that
+&gt; C Interop was oversold.  It is what it is, and useful in some cases.
+&gt; But also lets the user create some very non-portable code.
+">
+
+Once you have enabled C interop, just about anything goes just as it
+must in C because the latter is simply a shorthand for PDP-11
+assembler so you can do anything that you could with a virtual PDP-11
+machine.
+
+I am aware that my interpretation of the things you could do with
+C interop is much richer than a barebones implementation might
+provide and still claim C interop.  A Fortran processor could
+evaluate COS(0.0) and come up with 0.0 and claim that it was a
+reasonable approximation of the exact result.  I have even used
+a compiler which did this (implicit trivia Q) and the compiler was
+still useful, just not so much for computing COS(0.0).
+
+--
+write(*,*) transfer((/17.392111325966148d0,6.5794487871554595D-85, &amp;
+6.0134700243160014d-154/),(/'x'/)); end
+</POST>
+<POST>
+<POSTER> Tim Prince &lt;tpri...@nospamcomputer.org&gt; </POSTER>
+<POSTDATE> 2008-01-20T15:48:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+James Van Buskirk wrote:
+&gt; &quot;Walter Spector&quot; &lt;w6ws_xthiso ... @earthlink.net&gt; wrote in message
+&gt; news:13p6ncbtg0jrsb8@corp.supernews.com ...
+&gt; We are in agreement here, I think, but now comes the interesting
+&gt; part:
+
+&gt; What if you typed:
+
+&gt; gcc -c -mrtd myprog.c
+
+&gt; If you had a module with interfaces describing the prototypes of the
+&gt; functions in myprog.c and procedures that would be invoked by the
+&gt; procedures in myprog.c according to the prototypes in myprog.c and
+&gt; compiled it with:
+
+&gt; gfortran -c -mrtd mymod.f90
+
+&gt; again my hope is that it would match what is demanded by myprog.o.
+&gt; Further if the above compilation generated also mymod.mod and mymod
+&gt; were USEd in program main in main.f90, then my expectation would be
+&gt; that
+
+&gt; gfortran main.f90 myprog.o mymod.o -omain
+
+&gt; would work, providing STDCALL interfaces to functions defined in
+&gt; myprog.c with interface blocks in mymod.f90 to be invoked by
+&gt; procedures in main.f90 even though main.f90 doesn't have STDCALL
+&gt; enabled by default.  The DVF/CVF/IFORT way with
+
+&gt; !DEC$ ATTRIBUTES STDCALL
+
+&gt; has to be able to pass the info about the calling convention along
+&gt; with the other stuff that is communicated via module USE, so it
+&gt; makes sense that bind(C) could as well.
+">
+
+As STDCALL and Fortran ISO C binding are from separate eras, it seems
+unlikely that anyone will offer to take up your suggestion to combine
+them.  I'm not going to assume that the Fortran committee hoped to see
+ISO C binding support direct calls to Windows API without modification
+from the versions available when they began working on the standard.
+If you haven't seen posts from people more knowledgeable than I,
+pointing out that DVF/CVF will never be retrofitted with any additional
+f2003 features, I could dig up 1 or 2.  Even the organizations which
+used to support STDCALL have never extended it to 64-bit OS, as another
+example of the problems with support of outdated APIs.
+</POST>
+<POST>
+<POSTER> &quot;James Van Buskirk&quot; &lt;not_va...@comcast.net&gt; </POSTER>
+<POSTDATE> 2008-01-20T21:07:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Tim Prince&quot; &lt;tpri ... @nospamcomputer.org&gt; wrote in message
+">
+
+news:4793B3AC.4060609@nospamcomputer.org ...
+
+<QUOTE PREVIOUSPOST="
+&gt; As STDCALL and Fortran ISO C binding are from separate eras, it seems
+&gt; unlikely that anyone will offer to take up your suggestion to combine
+&gt; them.
+">
+
+I don't understand this.  g95 can combine STDCALL and bind(C), and the
+only reason gfortran has a problem with STDCALL is bugs.
+
+<QUOTE PREVIOUSPOST="
+&gt;                                         Even the organizations which
+&gt; used to support STDCALL have never extended it to 64-bit OS, as another
+&gt; example of the problems with support of outdated APIs.
+">
+
+Since Microsoft defines STDCALL to be a synonym for their completely
+different calling convention on x64, it makes no sense for anyone to
+define an incompatible calling convention and refer to it as
+STDCALL.  As i said before there is not the same degree of motivation
+for creation of a new galaxy of calling conventions on x64 as there
+was on *32.  Having more registers makes the difference.
+
+--
+write(*,*) transfer((/17.392111325966148d0,6.5794487871554595D-85, &amp;
+6.0134700243160014d-154/),(/'x'/)); end
+</POST>
+<POST>
+<POSTER> &quot;James Giles&quot; &lt;jamesgi...@worldnet.att.net&gt; </POSTER>
+<POSTDATE> 2008-01-21T14:58:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+James Van Buskirk wrote:
+">
+
+...
+
+<QUOTE PREVIOUSPOST="
+&gt; [,,,]              You know, a compiler could return .TRUE. for
+
+&gt; logical function is_broken()
+&gt; is_broken=transfer(transfer(2,.TRUE.).NEQV.transfer(4,.TRUE.),0)==1
+&gt; end
+
+&gt; and one could argue forever about whether that is reasonable
+&gt; behavior, but it would not mean that the compiler was usable.
+">
+
+It wouldn't mean the compiler was UNusable either.  It's not at all
+difficult to contrive a possible case.  Suppose you have a platform
+with instructions that XOR (the actual operation of .NEQV.) whole
+words of the operands or, faster, just an individual byte of the
+operands.  Suppose further that the Fortran implementor chose
+to use the leading bit (the sign, if the data is interpreted as an
+INTEGER) as the significant bit as far as LOGICAL goes.  It would
+not be at all surprising for the implementation to choose to XOR
+only the leading byte of the operands and store only that leading byte
+into the result location (register or memory) - it's faster.  Well, that
+means contents of the operand values below the top byte are not
+relevant or even referenced.  It means that the contents of the result
+value below the top byte will remain whatever was there before
+the .NEQV. result was stored there - it's all irrelevant anyway.
+It could be the value one (1).  Who cares?  Hey maybe the
+implementor chose to guarantee by some means that all LOGICAL
+results have odd parity regardless of their value.
+
+There are two aspects to this question.  The first is that TRANSFER
+portably guarantees only one thing: If (and only if) type2 is at least
+as large as type1, TRANSFER from type1 to type2 and back again is
+guaranteed to yield that same value as you started with.  If you do any
+operations on the data as a type2 entity all bets are off (this includes
+assignment, since the implementation is free to &quot;normalize&quot; during
+assignment).  Beyond that one guarantee, the use of TRANSFER is
+entirely implementation dependent.  To assume that ANY property
+of those implementation dependent things is portably reliable is
+not justified.
+
+The second aspect of this issue is that I've never seen, and can't
+even imagine, any case where I would want to TRANSFER between
+LOGICAL and anything else.  At least, not any cases where I would
+do any operations on the intermediate results of such a transfer.
+Sure, if I wanted a heterogenous array I might transfer a logical
+value into what the compiler considers an integer array element.
+But in that case I'd remember what that element really was and
+*never* use it as an integer.
+
+--
+J. Giles
+
+&quot;I conclude that there are two ways of constructing a software
+design: One way is to make it so simple that there are obviously
+no deficiencies and the other way is to make it so complicated
+that there are no obvious deficiencies.&quot;   --  C. A. R. Hoare
+</POST>
+<POST>
+<POSTER> &quot;James Van Buskirk&quot; &lt;not_va...@comcast.net&gt; </POSTER>
+<POSTDATE> 2008-01-21T16:11:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;James Giles&quot; &lt;jamesgi ... @worldnet.att.net&gt; wrote in message
+">
+
+news:pP6lj.469042$kj1.58346@bgtnsc04-news.ops.worldnet.att.net ...
+
+<QUOTE PREVIOUSPOST="
+&gt; The second aspect of this issue is that I've never seen, and can't
+&gt; even imagine, any case where I would want to TRANSFER between
+&gt; LOGICAL and anything else.  At least, not any cases where I would
+&gt; do any operations on the intermediate results of such a transfer.
+&gt; Sure, if I wanted a heterogenous array I might transfer a logical
+&gt; value into what the compiler considers an integer array element.
+&gt; But in that case I'd remember what that element really was and
+&gt; *never* use it as an integer.
+">
+
+I guess you've not done much C interop, then.  If you check out
+N1601.pdf, table 15.2, LOGICAL(C_BOOL) is considered interoperable
+with C type _Bool which may just mean int.  Suppose you are given
+a *.mod file which contains interfaces to C functions.  You may not
+be able to recompile it so you may have to follow the choices made
+by the programmer who compiled that *.mod file.  Such a programmer
+could quite easily have typed dummy arguments as LOGICAL(C_BOOL).
+Since you have to send a LOGICAL actual argument, but there is no
+way of guaranteeing that .TRUE. and .FALSE. correspond to C99 true
+and false which are defined as 1 and 0, you would have to use
+actual arguments of TRANSFER(1,.TRUE.) and TRANSFER(0,.FALSE.).
+
+Similarly if a function result were LOGICAL(C_BOOL) we would
+need to use TRANSFER once again to convert to an integer which
+could be tested for its zero or nonzero properties.  Instead of
+
+if(f(x)) then
+...
+
+we would need to write
+
+if(TRANSFER(f(x),0) /= 0) then
+...
+
+ISTR that I have seen some Win32 API *.mod files where you had
+to do this, but looking at kernel32.f90 from the ifort
+distribution, everything is typed as INTEGER(BOOL) so the
+TRANSFERs aren't necessary.  Perhaps my recollection is wrong
+on this point.
+
+--
+write(*,*) transfer((/17.392111325966148d0,6.5794487871554595D-85, &amp;
+6.0134700243160014d-154/),(/'x'/)); end
+</POST>
+<POST>
+<POSTER> &quot;James Giles&quot; &lt;jamesgi...@worldnet.att.net&gt; </POSTER>
+<POSTDATE> 2008-01-21T16:36:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+James Van Buskirk wrote:
+">
+
+...
+
+<QUOTE PREVIOUSPOST="
+&gt; I guess you've not done much C interop, then.  If you check out
+&gt; N1601.pdf, table 15.2, LOGICAL(C_BOOL) is considered interoperable
+&gt; with C type _Bool which may just mean int.  [...]
+">
+
+And that's relevant to what I said how?  LOGICAL(B_BOOL) isn't
+(as your last example supposed) a *default* LOGICAL KIND.  At
+least it isn't necessarily so.
+
+<QUOTE PREVIOUSPOST="
+&gt; [...]                                         Suppose you are given
+&gt; a *.mod file which contains interfaces to C functions.  You may not
+&gt; be able to recompile it so you may have to follow the choices made
+&gt; by the programmer who compiled that *.mod file.  Such a programmer
+&gt; could quite easily have typed dummy arguments as LOGICAL(C_BOOL).
+&gt; Since you have to send a LOGICAL actual argument, but there is no
+&gt; way of guaranteeing that .TRUE. and .FALSE. correspond to C99 true
+&gt; and false which are defined as 1 and 0, you would have to use
+&gt; actual arguments of TRANSFER(1,.TRUE.) and TRANSFER(0,.FALSE.).
+">
+
+No, you have to use TRUE._C_BOOL and .FALSE._C_BOOL.
+
+<QUOTE PREVIOUSPOST="
+&gt; Similarly if a function result were LOGICAL(C_BOOL) we would
+&gt; need to use TRANSFER once again to convert to an integer which
+&gt; could be tested for its zero or nonzero properties.  Instead of
+
+&gt; if(f(x)) then
+&gt; ...
+
+&gt; we would need to write
+
+&gt; if(TRANSFER(f(x),0) /= 0) then
+">
+
+The function f(x) has an interface does it not?  That interface declared
+the return type as LOGICAL(C_BOOL) did it not?  You shouldn't need
+TRANSFER at all.  IF(F(X)) then ... should work just fine.  Complain
+to your vendor if it gets something that simple so very wrong.
+
+Yes, because of the fact that the C standard makes specific requirements
+on booleans, the KIND C_BOOL of LOGICAL can be relied to portably
+have those properties.  The Fortran companion processor should get those
+right without the need for TRANSFER.
+
+--
+J. Giles
+
+&quot;I conclude that there are two ways of constructing a software
+design: One way is to make it so simple that there are obviously
+no deficiencies and the other way is to make it so complicated
+that there are no obvious deficiencies.&quot;   --  C. A. R. Hoare
+</POST>
+<POST>
+<POSTER> &quot;James Van Buskirk&quot; &lt;not_va...@comcast.net&gt; </POSTER>
+<POSTDATE> 2008-01-22T01:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;James Giles&quot; &lt;jamesgi ... @worldnet.att.net&gt; wrote in message
+">
+
+news:wf8lj.469433$kj1.393176@bgtnsc04-news.ops.worldnet.att.net ...
+
+<QUOTE PREVIOUSPOST="
+&gt; The function f(x) has an interface does it not?  That interface declared
+&gt; the return type as LOGICAL(C_BOOL) did it not?  You shouldn't need
+&gt; TRANSFER at all.  IF(F(X)) then ... should work just fine.  Complain
+&gt; to your vendor if it gets something that simple so very wrong.
+&gt; Yes, because of the fact that the C standard makes specific requirements
+&gt; on booleans, the KIND C_BOOL of LOGICAL can be relied to portably
+&gt; have those properties.  The Fortran companion processor should get those
+&gt; right without the need for TRANSFER.
+">
+
+Oog.  Looking at the C99 standard, I see that _Bool, although it's
+an integer type, has semantics distinct from int.  In particular,
+when conversion to _Bool is required any mumeric value that isn't
+zero gets converted to 1 (didn't carefully check what happens to
+imaginary values, though) and the example given in the standard is
+that (int)0.5 = 0, but (_Bool)0.5 = 1 .  That means that I have
+introduced a red herring into my own argument in that LOGICAL(C_BOOL)
+is to preexisting Fortran LOGICAL kinds what IEEE-754 data types are
+to, say, VAX floating types like G_FLOAT.
+
+G_FLOAT has different internal representation from IEEE-754 double
+precision (T_FLOAT), but it is still a floating point data type and
+operations between T_FLOATs should yield predictable T_FLOAT values
+while operations between G_FLOATs should yield predictable G_FLOAT
+values and operations between a G_FLOAT and a T_FLOAT should convert
+one of the inputs to the kind of the other before computing a
+result.  Similar rules would be expected for preexisting LOGICAL
+kinds and LOGICAL(C_BOOL).  Just as implementing IEEE-754 is
+optional, implementing LOGICAL(C_BOOL) is optional, and would have
+different internal representation from other kinds.  In particular,
+transfer(.NOT.transfer(1,.TRUE._C_BOOL),0) would have to come out 0,
+whereas the more normal result (due to the use of masking
+expressions pre-MIL-STD 1753) would be -2 .
+
+The big difference is the conversion of true values to 1 for a C99
+_Bool which doesn't happen for C ints.  What I was thinking about
+was for pre-C99 where _Bool might get defined as int, but this is
+not the case covered by f03 and LOGICAL(C_BOOL).  So I am back to
+discussing interoperability with pre-99 C where you really could
+get passed values with internal representations identical to those
+of 2 or 4 .  I wanted to find an instance of that in Win32 API
+modules included with Fortran compilers, but in at least the more
+recent versions of CVF, BOOL is properly typed an INTEGER(BOOL).
+
+In LF95 there is a file call win32mod.mod and if you USE win32mod
+you get type definitions and interfaces to Win32 API functions but
+I couldn't find any documentation about the module and if you don't
+correctly guess the type LF95 chose for a dummy argument it prints
+an error statement that doesn't tell you which one it didn't like,
+so I don't know how to get enough working so that I could tell
+whether LF95 is using LOGICAL or INTEGER types to represent Win32
+API BOOL.
+
+And I was going to write up an example where a C function passed
+values of 2 and 4 to a Fortran callback function which took them
+to be LOGICAL and then preformed the .NEQV. binary operation
+between them and passed the result back to the C function and
+caused some undesirable action if the result were 1 , but I'm just
+too tired so I will have to leave it as an exercise for the reader.
+
+--
+write(*,*) transfer((/17.392111325966148d0,6.5794487871554595D-85, &amp;
+6.0134700243160014d-154/),(/'x'/)); end
+</POST>
+<POST>
+<POSTER> &quot;James Van Buskirk&quot; &lt;not_va...@comcast.net&gt; </POSTER>
+<POSTDATE> 2008-01-22T02:23:00 </POSTDATE>
+&quot;James Van Buskirk&quot; &lt;not_va ... @comcast.net&gt; wrote in message
+news:8eKdnZ1dHM2CDwjanZ2dnUVZ_rqlnZ2d@comcast.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt;              I wanted to find an instance of that in Win32 API
+&gt; modules included with Fortran compilers, but in at least the more
+&gt; recent versions of CVF, BOOL is properly typed an INTEGER(BOOL).
+">
+
+I can find some examples in Norman Lawrence, &quot;Compaq Visual Fortran
+a Guide to Creating Windows Applications&quot; Digital Press 2002, where
+the results of several Win32 API functions are typed as LOGICAL.
+The book uses interchangeablility between LOGICAL and INTEGER types
+quite freely which is an extension which I am on record as hating.
+Redoing all the Win32 interface blocks in f03 bind(C) style and
+using C_FUNLOC, TYPE(C_FUNPTR) and C_F_PROCPOINTER and f03
+procedure pointers would allow us to enable standards checking so
+that we could wipe out all the places where an example that we are
+modifying gets fast and loose with LOGICAL &lt;-&gt; INTEGER relationships.
+
+p. 111: logical*4 lret
+p. 112: do while( GetMessage (mesg, NULL, 0, 0) )
+p. 112: lret = TranslateMessage( mesg )
+p. 123: integer(4) fontItalic
+p. 123: fontItalic = .true.
+p. 123: lf%lfItalic = fontItalic
+
+Makes you wish some kind of hyperpedantic freak would have reviewed
+the crap out of some of that code.  This kind of thing is how
+INTEGER values get TRANSFERed to LOGICAL values, subtly and
+invisibly.
+
+--
+write(*,*) transfer((/17.392111325966148d0,6.5794487871554595D-85, &amp;
+6.0134700243160014d-154/),(/'x'/)); end
+</POST>
+<POST>
+<POSTER> glen herrmannsfeldt &lt;g...@ugcs.caltech.edu&gt; </POSTER>
+<POSTDATE> 2008-01-22T14:12:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+James Van Buskirk wrote:
+">
+
+(snip)
+
+<QUOTE PREVIOUSPOST="
+&gt; Oog.  Looking at the C99 standard, I see that _Bool, although it's
+&gt; an integer type, has semantics distinct from int.  In particular,
+&gt; when conversion to _Bool is required any mumeric value that isn't
+&gt; zero gets converted to 1 (didn't carefully check what happens to
+&gt; imaginary values, though) and the example given in the standard is
+&gt; that (int)0.5 = 0, but (_Bool)0.5 = 1 .  That means that I have
+&gt; introduced a red herring into my own argument in that LOGICAL(C_BOOL)
+&gt; is to preexisting Fortran LOGICAL kinds what IEEE-754 data types are
+&gt; to, say, VAX floating types like G_FLOAT.
+">
+
+This makes some sense even regarding C89.
+
+In C89 when a logical value is required, as for a logical operator
+or if() statement, any non-zero value is considered true.
+Floating point values are not converted to int first.
+
+if(0.5) printf(&quot;0.5 is true&quot;);
+
+I haven't looked at C99 much, but it would seem to make sense in
+extending to complex values that non-zero imaginary values would
+also be true.
+
+-- glen
+</POST>
+<POST>
+<POSTER> glen herrmannsfeldt &lt;g...@ugcs.caltech.edu&gt; </POSTER>
+<POSTDATE> 2008-01-22T14:52:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+James Giles wrote:
+">
+
+(snip)
+
+<QUOTE PREVIOUSPOST="
+&gt; It wouldn't mean the compiler was UNusable either.  It's not at all
+&gt; difficult to contrive a possible case.  Suppose you have a platform
+&gt; with instructions that XOR (the actual operation of .NEQV.) whole
+&gt; words of the operands or, faster, just an individual byte of the
+&gt; operands.  Suppose further that the Fortran implementor chose
+&gt; to use the leading bit (the sign, if the data is interpreted as an
+&gt; INTEGER) as the significant bit as far as LOGICAL goes.  It would
+&gt; not be at all surprising for the implementation to choose to XOR
+&gt; only the leading byte of the operands and store only that leading byte
+&gt; into the result location (register or memory) - it's faster.
+">
+
+On many machines an aligned fullword operation is faster than
+a byte operation.  This has been true for a while, and is likely
+more true on newer machines.
+
+There was a big discussion when the Pentium-pro first came out,
+optimized for 32 bit operations (because that is where its
+designers expected it to be used).  It turned out slower for many
+16 bit operations that were used in DOS and Win95.
+
+-- glen
+</POST>
+<POST>
+<POSTER> &quot;James Giles&quot; &lt;jamesgi...@worldnet.att.net&gt; </POSTER>
+<POSTDATE> 2008-01-22T15:16:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+glen herrmannsfeldt wrote:
+&gt; James Giles wrote:
+&gt; (snip)
+
+&gt;&gt; It wouldn't mean the compiler was UNusable either.  It's not at all
+&gt;&gt; difficult to contrive a possible case.  Suppose you have a platform
+&gt;&gt; with instructions that XOR (the actual operation of .NEQV.) whole
+&gt;&gt; words of the operands or, faster, just an individual byte of the
+&gt;&gt; operands.  Suppose further that the Fortran implementor chose
+&gt;&gt; to use the leading bit (the sign, if the data is interpreted as an
+&gt;&gt; INTEGER) as the significant bit as far as LOGICAL goes.  It would
+&gt;&gt; not be at all surprising for the implementation to choose to XOR
+&gt;&gt; only the leading byte of the operands and store only that leading
+&gt;&gt; byte into the result location (register or memory) - it's faster.
+
+&gt; On many machines an aligned fullword operation is faster than
+&gt; a byte operation.  This has been true for a while, and is likely
+&gt; more true on newer machines.
+">
+
+OK scale my example up a little.  Suppose you're on a platform
+where the default INTEGER/LOGICAL/REAL size is 64-bits
+and the C companion processor makes the same decision for
+int, bool, and float.  It may still be faster for doing .NEQV.
+to load, process, and store only the high order 32-bits of a
+LOGICAL value.  Since the low order half isn't relevant to
+the meaning of LOGICAL values anyway, what's the problem?
+
+The point is that your program can't portably make *any*
+assumptions about TRANSFERred data (other than the property
+that immediately TRANSFERring back yields the original value,
+provided the intermediate type is big enough).  It's best to avoid
+TRANSFER unless nothing else works at all.
+
+--
+J. Giles
+
+&quot;I conclude that there are two ways of constructing a software
+design: One way is to make it so simple that there are obviously
+no deficiencies and the other way is to make it so complicated
+that there are no obvious deficiencies.&quot;   --  C. A. R. Hoare
+</POST>
+<POST>
+<POSTER> glen herrmannsfeldt &lt;g...@ugcs.caltech.edu&gt; </POSTER>
+<POSTDATE> 2008-01-22T16:17:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+James Giles wrote:
+">
+
+(snip)
+
+<QUOTE PREVIOUSPOST="
+&gt; The point is that your program can't portably make *any*
+&gt; assumptions about TRANSFERred data (other than the property
+&gt; that immediately TRANSFERring back yields the original value,
+&gt; provided the intermediate type is big enough).  It's best to avoid
+&gt; TRANSFER unless nothing else works at all.
+">
+
+Yes.  Also, INTEGER values may have padding bits that
+aren't copied on assignment.   Floating point values
+might be normalized on assignment.
+
+In C, copies to/from arrays of unsigned char are guaranteed
+to work, otherwise the same statement applies to C.
+
+-- glen
+</POST>
+<POST>
+<POSTER> Jan Vorbrüggen &lt;Jan.Vorbrueg...@not-thomson.net&gt; </POSTER>
+<POSTDATE> 2008-02-04T04:26:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; And that's relevant to what I said how?  LOGICAL(B_BOOL) isn't
+&gt; (as your last example supposed) a *default* LOGICAL KIND.  At
+&gt; least it isn't necessarily so.
+">
+
+Does the standard allow C_BOOL to be negative?
+
+Jan
+</POST>
+<POST>
+<POSTER> Dick Hendrickson &lt;dick.hendrick...@att.net&gt; </POSTER>
+<POSTDATE> 2008-02-04T07:05:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jan Vorbrüggen wrote:
+&gt;&gt; And that's relevant to what I said how?  LOGICAL(B_BOOL) isn't
+&gt;&gt; (as your last example supposed) a *default* LOGICAL KIND.  At
+&gt;&gt; least it isn't necessarily so.
+
+&gt; Does the standard allow C_BOOL to be negative?
+
+&gt;     Jan
+">
+
+Yes, page 392 says
+&quot;The value of C_BOOL shall be a valid value for a logical kind
+parameter on the processor or shall be -1.&quot;
+
+I think that's just the general rule for kind specifiers.  It's
+up to the programmer to only use &quot;correct&quot; kind specifiers.
+There's a constraint to R403 about intrinsic-type-spec says
+that the kind specifier must be non-negative.  If the companion
+processor doesn't support a C_BOOL (remember, it doesn't have
+to be a C processor) then C_BOOL would be negative.
+
+Dick Hendrickson
+</POST>
+<POST>
+<POSTER> &quot;James Giles&quot; &lt;jamesgi...@worldnet.att.net&gt; </POSTER>
+<POSTDATE> 2008-02-04T07:29:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jan Vorbrüggen wrote:
+&gt;&gt; And that's relevant to what I said how?  LOGICAL(B_BOOL) isn't
+&gt;&gt; (as your last example supposed) a *default* LOGICAL KIND.  At
+&gt;&gt; least it isn't necessarily so.
+
+&gt; Does the standard allow C_BOOL to be negative?
+">
+
+I don't know.  I probably knew sometime in the past.  It seems to
+me that the whole point of C interop being part of the Fortran
+standard is that I should never again *need* to know such stuff.
+If a C procedure calls my Fortran and passes a value which I've
+declared:
+
+Logical(C_BOOL) :: CBVAL
+
+Then I should be able to locally use it in, say, an IF statement
+directly:
+
+If(CBVAL) then
+...
+
+If I need to pass it to another Fortran procedure which is expecting
+just a Fortran default LOGICAL, then I need to convert it:
+
+Call my_sub(logical(CBVAL))
+
+This converts the non-default LOGICAL KIND to a default LOGICAL.
+I shouldn't need to know how such things look internally.  I personally
+don't want to know.  Similarly, if I need to call a C procedure which
+is expecting a C_BOOL argument I must convert my default KIND
+Fortran logicals:
+
+ans = c_func( logical(x&gt;=5.0, C_BOOL))
+
+Here the expression x&gt;=5.0 is default LOGICAL and the LOGICAL
+intrinsic function converts that to a C_BOOL by whatever means
+is required.  Maybe it shifts right by wordsize minus one?  I don't
+need to know.  It's likely different on different Fortran/C companion
+processor pairs anyway.  So that if I made some assumption about
+it my code would no longer port.  Why would I want that?
+
+--
+J. Giles
+
+&quot;I conclude that there are two ways of constructing a software
+design: One way is to make it so simple that there are obviously
+no deficiencies and the other way is to make it so complicated
+that there are no obvious deficiencies.&quot;   --  C. A. R. Hoare
+</POST>
+<POST>
+<POSTER> &quot;James Giles&quot; &lt;jamesgi...@worldnet.att.net&gt; </POSTER>
+<POSTDATE> 2008-02-04T08:02:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Dick Hendrickson wrote:
+&gt; Jan Vorbrüggen wrote:
+&gt;&gt;&gt; And that's relevant to what I said how?  LOGICAL(B_BOOL) isn't
+&gt;&gt;&gt; (as your last example supposed) a *default* LOGICAL KIND.  At
+&gt;&gt;&gt; least it isn't necessarily so.
+
+&gt;&gt; Does the standard allow C_BOOL to be negative?
+
+&gt;&gt;     Jan
+&gt; Yes, page 392 says
+&gt; &quot;The value of C_BOOL shall be a valid value for a logical kind
+&gt; parameter on the processor or shall be -1.&quot;
+">
+
+That's interestig.  I had assumed he meant: does the C standard allow
+a _bool value to be negative?
+
+--
+J. Giles
+
+&quot;I conclude that there are two ways of constructing a software
+design: One way is to make it so simple that there are obviously
+no deficiencies and the other way is to make it so complicated
+that there are no obvious deficiencies.&quot;   --  C. A. R. Hoare
+</POST>
+<POST>
+<POSTER> Jan Vorbrüggen &lt;Jan.Vorbrueg...@not-thomson.net&gt; </POSTER>
+<POSTDATE> 2008-02-06T06:20:00 </POSTDATE>
+James Giles schrieb:
+
+<QUOTE PREVIOUSPOST="
+&gt; Dick Hendrickson wrote:
+&gt;&gt; Jan Vorbrüggen wrote:
+&gt;&gt;&gt;&gt; And that's relevant to what I said how?  LOGICAL(B_BOOL) isn't
+&gt;&gt;&gt;&gt; (as your last example supposed) a *default* LOGICAL KIND.  At
+&gt;&gt;&gt;&gt; least it isn't necessarily so.
+&gt;&gt;&gt; Does the standard allow C_BOOL to be negative?
+
+&gt;&gt;&gt;     Jan
+&gt;&gt; Yes, page 392 says
+&gt;&gt; &quot;The value of C_BOOL shall be a valid value for a logical kind
+&gt;&gt; parameter on the processor or shall be -1.&quot;
+
+&gt; That's interestig.  I had assumed he meant: does the C standard allow
+&gt; a _bool value to be negative?
+">
+
+Nope, Dick understood the question I wanted to ask perfectly: Does the
+Fortran standard allow the companion compiler to not define certain
+interoperability kinds?
+
+Jan
+</POST>
+</TEXT>
+</BODY>
+</DOC>

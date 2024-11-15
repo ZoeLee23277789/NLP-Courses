@@ -1,0 +1,251 @@
+<DOC>
+<DOCID> eng-NG-31-135461-9741324 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-12-09T06:01:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Bootsetup will not create floppy
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> alasd...@iprimus.com.au (Alasdair Reed) </POSTER>
+<POSTDATE> 2007-12-09T06:01:00 </POSTDATE>
+Hi,
+
+I have successfully (?) installed plan 9 from the Live/installation CD .
+However Bootsetup will not create a boot floppy.
+Afer inserting  a floppy in the drive and pressing 'enter' I get the following error message:
+
+ls /dev/sd0/cdboot '/dev/sdD0' file does not exist
+will not format non-floppy disk /dev/sdD0/cdboot
+
+My CD drive is sdC1 (primary slave) . So I guess that Bootsetup is unable to find the source file it needs to create the floppy .
+Is this assessment of the problem correct?
+If so,
+How do I let Bootsetup know where my CD drive is?
+
+Or if that is not possible, is there a way to create a boot floppy from the Live CD?
+Or some other source for a boot floppy?
+
+Thanks,
+
+Regards,
+
+Alasdair
+</POST>
+<POST>
+<POSTER> navin....@gmail.com (Navin Johnson) </POSTER>
+<POSTDATE> 2007-12-09T07:47:00 </POSTDATE>
+On Dec 9, 2007 8:01 PM, Alasdair Reed &lt;alasd ... @iprimus.com.au&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I have successfully (?) installed plan 9 from the Live/installation CD .
+&gt; However Bootsetup will not create a boot floppy.
+&gt; Afer inserting  a floppy in the drive and pressing 'enter' I get the following error message:
+
+&gt; ls /dev/sd0/cdboot '/dev/sdD0' file does not exist
+&gt; will not format non-floppy disk /dev/sdD0/cdboot
+
+&gt; My CD drive is sdC1 (primary slave) . So I guess that Bootsetup is unable to find the source file it needs to create the floppy .
+&gt; Is this assessment of the problem correct?
+">
+
+Yes.
+
+<QUOTE PREVIOUSPOST="
+&gt; If so,
+&gt; How do I let Bootsetup know where my CD drive is?
+">
+
+It is hardcoded, so your current options are:
+1) download and use a boot floppy from Bell Labs[1] site, or
+2) move your CD to another IDE cable (i.e. primary master on another
+cable) and go through the installation process again.
+
+Regards,
+Navin
+
+[1] http://plan9.bell-labs.com/plan9/download/plan9.flp.gz
+</POST>
+<POST>
+<POSTER> quans...@quanstro.net (erik quanstrom) </POSTER>
+<POSTDATE> 2007-12-09T08:10:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; &gt; I have successfully (?) installed plan 9 from the Live/installation CD .
+&gt; &gt; However Bootsetup will not create a boot floppy.
+&gt; &gt; Afer inserting  a floppy in the drive and pressing 'enter' I get the following error message:
+
+&gt; &gt; ls /dev/sd0/cdboot '/dev/sdD0' file does not exist
+&gt; &gt; will not format non-floppy disk /dev/sdD0/cdboot
+
+&gt; &gt; My CD drive is sdC1 (primary slave) . So I guess that Bootsetup is unable to find the source file it needs to create the floppy .
+&gt; &gt; Is this assessment of the problem correct?
+
+&gt; Yes.
+">
+
+i think the problem is a bit different. /sys/lib/dist/pc/inst/bootfloppy
+appears to have been told that the floppy is /dev/sdD0/cdboot.  the
+floppy is /dev/fd0disk.  in any event, i believe that plan 9 kernels with
+venti/fossil are too large for a 1.44MB floppy:
+
+; 9fs sources; cd /n/sources/plan9/386
+; ls -l 9load 9pcf.gz|awk '{s+=$6}END{print s}'
+1567751
+
+generally one boots from the 9fat partition instead.  the
+livecd can also be used in case of emergency.
+
+- erik
+</POST>
+<POST>
+<POSTER> j...@utopian.net (Joshua Wood) </POSTER>
+<POSTDATE> 2007-12-09T08:12:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; It is hardcoded, so your current options are:
+&gt; 1) download and use a boot floppy from Bell Labs[1] site, or
+&gt; 2) move your CD to another IDE cable (i.e. primary master on another
+&gt; cable) and go through the installation process again.
+">
+
+Seems like there would be an option number:
+
+3) Make a boot floppy, as discussed in update(8) and esp. the
+EXAMPLES subhead in prep(8).
+
+<QUOTE PREVIOUSPOST="
+&gt; [1] http://plan9.bell-labs.com/plan9/download/plan9.flp.gz
+">
+
+--
+Josh
+</POST>
+<POST>
+<POSTER> alasd...@iprimus.com.au (Alasdair Reed) </POSTER>
+<POSTDATE> 2007-12-11T07:21:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sun, Dec 09, 2007 at 05:11:55AM -0800, Joshua Wood wrote:
+&gt; &gt;It is hardcoded, so your current options are:
+&gt; &gt;1) download and use a boot floppy from Bell Labs[1] site, or
+&gt; &gt;2) move your CD to another IDE cable (i.e. primary master on another
+&gt; &gt;cable) and go through the installation process again.
+
+&gt; Seems like there would be an option number:
+
+&gt; 3) Make a boot floppy, as discussed in update(8) and esp. the
+&gt; EXAMPLES subhead in prep(8).
+
+&gt; &gt;[1] http://plan9.bell-labs.com/plan9/download/plan9.flp.gz
+
+&gt; --
+&gt; Josh
+">
+
+Hi, CD drive is now sdD0, installed again but got the same error message on attempting to create boot floppy.
+
+Downloaded plan9.flp.gz, on attempting to decompress got the following error:
+gunzip: data stream error
+gunzip: plan9.flp.gz: uncompress failed
+
+this was uncompressing in NetBSD
+
+tried several more freshly downloaded files, all with same result. Tried Same on windows got &quot;crc error&quot;
+Is the file on the server corrupt, or am I doing something wrong (again!).
+&quot; 3) Make a boot floppy, as discussed in update(8) and esp. the
+EXAMPLES subhead in prep(8).&quot;
+
+disk/format -b /386/pbs -df /dev/fd0disk \
+/386/9load /tmp/plan9.ini /386/9pcf.gz
+
+Returned the message:
+
+add 9load at clust 2
+format:open /tmp/plan9.ini: '/tmp/plan9.ini' file does not exist
+
+Not bad, half way there!! I guess the live CD doesn't place a copy of plan9.ini there ? Where do I find it to copy it to tmp?
+
+One last thing, perhaps I should have mentioned. Plan 9 (on the hard disk) is installed in the last 6 GB of a 40 GB disk, behind Windows XP on NTFS, Windows is the active partition.
+
+Thanks in advance for any assistance.
+
+Regards,
+
+Alasdair
+</POST>
+<POST>
+<POSTER> j...@utopian.net (Joshua Wood) </POSTER>
+<POSTDATE> 2007-12-11T10:23:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Seems like there would be an option number:
+
+&gt;&gt; 3) Make a boot floppy, as discussed in update(8) and esp. the
+&gt;&gt; EXAMPLES subhead in prep(8).
+">
+
+My advice above is not directly useful to you. As Eric pointed out,
+9load + 9pcf.gz won't fit together on a 1.44MB floppy. I just didn't
+see his message before sending mine, and hadn't thought about putting
+a fossil kernel on a floppy. My apologies for the misdirection.
+
+As Erik also notes, fossil systems generally boot not from floppy,
+but from the 9fat partition on a hard disk.
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi, CD drive is now sdD0, installed again but got the same error
+&gt; message on attempting to create boot floppy.
+
+&gt; Downloaded plan9.flp.gz, on attempting to decompress got the
+&gt; following error:
+&gt; gunzip: data stream error
+&gt; gunzip: plan9.flp.gz: uncompress failed
+
+&gt; Is the file on the server corrupt, or am I doing something wrong
+&gt; (again!).
+">
+
+Plan9.flp.gz is an installer image -- basically what you already have
+on the bootable CD. I don't think it's appropriate for what you're
+trying to do, and I didn't recommend it. That said, while gnu gzip
+may not open it, plan9 gzip(1) will (from your live cd); windows 7zip
+will too, by my test. So I don't believe it's corrupt on the server.
+
+<QUOTE PREVIOUSPOST="
+&gt; One last thing, perhaps I should have mentioned. Plan 9 (on the
+&gt; hard disk) is installed in the last 6 GB of a 40 GB disk, behind
+&gt; Windows XP on NTFS, Windows is the active partition.
+">
+
+That's rather pertinent. There are messages in the list archives
+about dual-booting; I think /n/sources/contrib/rsc/mbr.bootmgr,
+``Smart Boot Manager,'' might help. I can't say I've tried it myself,
+beyond just now checking that it brings up a partition selection
+screen on boot, once installed as the mbr on a disk.
+
+--
+Josh
+</POST>
+<POST>
+<POSTER> &quot;Juan M. Méndez&quot; &lt;vej...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-04T04:34:00 </POSTDATE>
+On Dec 11 2007, 4:23 pm, j ... @utopian.net (Joshua Wood) wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Downloaded plan9.flp.gz, on attempting to decompress got the
+&gt; &gt; following error:
+&gt; &gt; gunzip: data stream error
+&gt; &gt; gunzip: plan9.flp.gz: uncompress failed
+
+&gt; Plan9.flp.gz is an installer image -- basically what you already have
+&gt; on the bootable CD. I don't think it's appropriate for what you're
+&gt; trying to do, and I didn't recommend it. That said, while gnu gzip
+&gt; may not open it, plan9 gzip(1) will (from your live cd); windows 7zip
+&gt; will too, by my test. So I don't believe it's corrupt on the server.
+">
+
+In Debian GNU/Linux I found the package p7zip-full with '7za' that
+also
+can decompress the floppy image.
+</POST>
+</TEXT>
+</BODY>
+</DOC>

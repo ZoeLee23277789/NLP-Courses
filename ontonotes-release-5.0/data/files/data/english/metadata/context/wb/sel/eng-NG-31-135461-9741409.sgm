@@ -1,0 +1,1258 @@
+<DOC>
+<DOCID> eng-NG-31-135461-9741409 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-11-13T04:30:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Glendix?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> an...@kix.in (Anant Narayanan) </POSTER>
+<POSTDATE> 2007-11-13T04:30:00 </POSTDATE>
+Hi All,
+
+I picked this idea from the GSoC07 Wiki page: porting the Plan 9
+userspace to the Linux kernel.
+
+I am aware that Plan9Port is something very close to the goal, but I
+think we can eliminate all of the GNU and X dependencies and have a pure
+Linux/Plan9 setup. Why Linux? Simply because it supports a wide-range of
+hardware, is one of the most documented free kernels out there, and
+already has the support of many developers.
+
+I think there are 3 ways in which we can do this:
+
+1) Modify the Linux kernel to present a 9P interface to itself (too
+hard, almost like re-writing several important parts of the kernel)
+2) Modify the Plan 9 userspace to work with POSIX (Yuck, and Plan9Port
+already does this)
+3) Create a custom INIT process which will be responsible for providing
+all the &quot;plan 9 kernelish&quot; features that userspace programs expect (for
+eg. providing the /net directory), so that all of them can run unmodified.
+
+I am of the opinion that (3) is the best way to go about it. With the
+KenCC port to Linux (a result of Kris' work for this year's summer of
+code), we can generate ELF executables. Recompiling all of Plan 9's
+userspace should then do the trick, if we get the INIT process right.
+
+Am I on the right track?
+
+--
+Anant
+
+P.S. I will be doing this project as a final-year undergraduate thesis
+at my university, which means I will have time and resources to attempt
+this - about 4 months of it :)
+</POST>
+<POST>
+<POSTER> pau...@gmail.com (Gorka Guardiola) </POSTER>
+<POSTDATE> 2007-11-13T05:06:00 </POSTDATE>
+On Nov 13, 2007 10:28 AM, Anant Narayanan &lt;an ... @kix.in&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Am I on the right track?
+">
+
+See THNX by rminnich, an lguest port of plan 9 with drawterm using framebuffers.
+It is very close to what you want.
+--
+- curiosity sKilled the cat
+</POST>
+<POST>
+<POSTER> fors...@terzarima.net (Charles Forsyth) </POSTER>
+<POSTDATE> 2007-11-13T05:13:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Am I on the right track?
+">
+
+especially if it's a final-year project, i'd pick something
+that's more than a demonstration of endurance.
+</POST>
+<POST>
+<POSTER> urie...@gmail.com (Uriel) </POSTER>
+<POSTDATE> 2007-11-13T05:15:00 </POSTDATE>
+Actually, I suspect THNX is completely different from what he wants.
+As far as I know THNX doesn't run any plan9 userspace on linux.
+
+What might be more useful is to use Inferno to provide things like
+/net and /draw as an start (mounted over v9fs) (and perhaps later on
+replace
+them with custom userspace servers.
+
+uriel
+
+On Nov 13, 2007 11:05 AM, Gorka Guardiola &lt;pau ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Nov 13, 2007 10:28 AM, Anant Narayanan &lt;an ... @kix.in&gt; wrote:
+&gt; &gt; Am I on the right track?
+
+&gt; See THNX by rminnich, an lguest port of plan 9 with drawterm using framebuffers.
+&gt; It is very close to what you want.
+&gt; --
+&gt; - curiosity sKilled the cat
+">
+</POST>
+<POST>
+<POSTER> pau...@gmail.com (Gorka Guardiola) </POSTER>
+<POSTDATE> 2007-11-13T05:34:00 </POSTDATE>
+On Nov 13, 2007 11:14 AM, Uriel &lt;urie ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Actually, I suspect THNX is completely different from what he wants.
+&gt; As far as I know THNX doesn't run any plan9 userspace on linux.
+">
+
+No, it runs proper Plan 9 using linux as drivers. Which is *exactly*
+what he asked for.
+
+<QUOTE PREVIOUSPOST="
+&gt; What might be more useful is to use Inferno to provide things like
+">
+
+Why would that be?.
+
+<QUOTE PREVIOUSPOST="
+&gt; /net and /draw as an start (mounted over v9fs) (and perhaps later on
+&gt; replace
+&gt; them with custom userspace servers.
+
+&gt; uriel
+">
+
+You still have X under at least, unless there is a frambuffer version
+of inferno I am not aware of. Anyway, inferno is not Plan 9 even
+if it looks very similar if you squint.
+
+X means loads of other stuff  it depends on which have already been trimmed out
+of THNX.
+
+--
+- curiosity sKilled the cat
+</POST>
+<POST>
+<POSTER> rogpe...@gmail.com (roger peppe) </POSTER>
+<POSTDATE> 2007-11-13T05:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; I am aware that Plan9Port is something very close to the goal, but I
+&gt; think we can eliminate all of the GNU and X dependencies and have a pure
+&gt; Linux/Plan9 setup. Why Linux? Simply because it supports a wide-range of
+&gt; hardware, is one of the most documented free kernels out there, and
+&gt; already has the support of many developers.
+">
+
+you could do this, but i think it would end up being quite unsatisfactory,
+as you'd surely end up wanting to use aspects of linux other than its drivers.
+
+so you might get more hardware support, but you'd lose all the userspace
+code, so would it really end up that much more capable?
+</POST>
+<POST>
+<POSTER> an...@kix.in (Anant Narayanan) </POSTER>
+<POSTDATE> 2007-11-13T05:48:00 </POSTDATE>
+Hi,
+
+<QUOTE PREVIOUSPOST="
+&gt; so you might get more hardware support, but you'd lose all the userspace
+&gt; code, so would it really end up that much more capable?
+">
+
+I don't understand what &quot;lose all the userspace code&quot; means. The
+objective of the exercise is to enable Plan 9's userspace to work
+unmodified on Linux.
+
+It boils down to Linux's drivers/schedulers/et.al. but Plan 9's
+programming environment. You'd still use /net to do network programming,
+use libdraw and not X, so to the programmer the fact that the
+distribution is running the Linux kernel is not known.
+
+Performance-wise, I see how it would be a bad idea; since read/write to
+/net will ultimately result in a socket-like call, so there would be a
+overhead.
+
+--
+Anant
+</POST>
+<POST>
+<POSTER> urie...@gmail.com (Uriel) </POSTER>
+<POSTDATE> 2007-11-13T07:21:00 </POSTDATE>
+On Nov 13, 2007 11:47 AM, Anant Narayanan &lt;an ... @kix.in&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi,
+
+&gt; &gt; so you might get more hardware support, but you'd lose all the userspace
+&gt; &gt; code, so would it really end up that much more capable?
+
+&gt; I don't understand what &quot;lose all the userspace code&quot; means. The
+&gt; objective of the exercise is to enable Plan 9's userspace to work
+&gt; unmodified on Linux.
+">
+
+I still think being able to run lunix programs in the same environment
+would be quite useful (and not too hard, you could use namespaces
+to build a more 'lunix friendly' environment inside glendix).
+Otherwise it would not be too different from running native plan9
+inside a VM as Gorka pointed out. (And that is is IMHO what makes THNX
+not particularly useful, that it adds very little over just running
+Plan 9 on qemu, or vmware, or whatever.
+
+<QUOTE PREVIOUSPOST="
+&gt; It boils down to Linux's drivers/schedulers/et.al. but Plan 9's
+&gt; programming environment. You'd still use /net to do network programming,
+&gt; use libdraw and not X, so to the programmer the fact that the
+&gt; distribution is running the Linux kernel is not known.
+
+&gt; Performance-wise, I see how it would be a bad idea; since read/write to
+&gt; /net will ultimately result in a socket-like call, so there would be a
+&gt; overhead.
+">
+
+If that is an issue you could eventually swap inferno for an in-kernel
+/net server (using the new 9p server bits of v9fs).
+
+The beauty of the approach is that it works nicely in steps, and if
+you want to do that change later on you wont need to change anything
+else.
+
+uriel
+</POST>
+<POST>
+<POSTER> quans...@quanstro.net (erik quanstrom) </POSTER>
+<POSTDATE> 2007-11-13T08:10:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Hi,
+
+&gt; &gt; so you might get more hardware support, but you'd lose all the userspace
+&gt; &gt; code, so would it really end up that much more capable?
+
+&gt; I don't understand what &quot;lose all the userspace code&quot; means. The
+&gt; objective of the exercise is to enable Plan 9's userspace to work
+&gt; unmodified on Linux.
+
+&gt; It boils down to Linux's drivers/schedulers/et.al. but Plan 9's
+&gt; programming environment. You'd still use /net to do network programming,
+&gt; use libdraw and not X, so to the programmer the fact that the
+&gt; distribution is running the Linux kernel is not known.
+
+&gt; Performance-wise, I see how it would be a bad idea; since read/write to
+&gt; /net will ultimately result in a socket-like call, so there would be a
+&gt; overhead.
+
+&gt; --
+&gt; Anant
+">
+
+what an unholy marrage!
+
+what happens when you're tracking a bug?  do you give up when
+it enters linux?  how do you configure hardware if you're not
+going to use the linux machinery?
+
+why are linux schedulers interesting?
+
+i think that rather than the best of both worlds, you'd end up
+with the worst of both.  all the joys of linux administration and
+yet no (insert favorite browser here).
+
+- erik
+</POST>
+<POST>
+<POSTER> stal...@maths.tcd.ie (John Stalker) </POSTER>
+<POSTDATE> 2007-11-13T08:31:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; I picked this idea from the GSoC07 Wiki page: porting the Plan 9
+&gt; userspace to the Linux kernel.
+">
+
+For your own sanity I would suggest that you consider a NetBSD base
+rather than a Linux base.  You get most of the portability and you
+get a much better thought out binary emulation layer.  It's also
+a lot less ugly, which will matter a lot as you need to read and
+modify a fair amount of code.  You should be able to run both
+native and plan9 binaries, unmodified, side by side if you do things
+right.  You should even be able to run NetBSD apps in X on one virtual
+terminal and plan9 apps, of which there are sadly very few, in rio
+on another virtual terminal.
+
+--
+John Stalker
+School of Mathematics
+Trinity College Dublin
+tel +353 1 896 1983
+fax +353 1 896 2282
+</POST>
+<POST>
+<POSTER> urie...@gmail.com (Uriel) </POSTER>
+<POSTDATE> 2007-11-13T08:32:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; what an unholy marrage!
+">
+
+I'm not sure marriage is ever holy...
+
+<QUOTE PREVIOUSPOST="
+&gt; what happens when you're tracking a bug?  do you give up when
+&gt; it enters linux?  how do you configure hardware if you're not
+&gt; going to use the linux machinery?
+
+&gt; why are linux schedulers interesting?
+
+&gt; i think that rather than the best of both worlds, you'd end up
+&gt; with the worst of both.  all the joys of linux administration and
+&gt; yet no (insert favorite browser here).
+">
+
+Well, the goal is to try to get the best of both worlds: plan9 user
+space environment and administration while taking advantage of linux
+dirvers and allowing lunix programs to run inside a sandbox
+(namespace).
+
+Admittedly how one deals with udev and other such linux userspace
+monsters might be  tricky, but I think that is the whole point, to
+replace such things with saner Plan 9-based solutions.
+
+Think of it as an exercises on how a linux distribution would look
+like if they had learned something from Plan 9.
+
+And while there are similarities with THNX, I think it is also quite
+different, as far as understand it, the only way to run linux apps on
+thnx is via VNC, which seems far from ideal (and you are still having
+a lunix environment outside the plan9 environment).
+
+In any case, I'm not sure I see the point of all this arguments before
+not a single line of code has been written (and much less released),
+the more people we have bringing plan9 technologies to the world the
+better.
+
+uriel
+</POST>
+<POST>
+<POSTER> rogpe...@gmail.com (roger peppe) </POSTER>
+<POSTDATE> 2007-11-13T08:51:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; allowing lunix programs to run inside a sandbox (namespace).
+">
+
+how do you do that?
+</POST>
+<POST>
+<POSTER> fors...@terzarima.net (Charles Forsyth) </POSTER>
+<POSTDATE> 2007-11-13T08:53:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; In any case, I'm not sure I see the point of all this arguments before
+&gt; not a single line of code has been written (and much less released),
+&gt; the more people we have bringing plan9 technologies to the world the
+&gt; better.
+">
+
+well, perhaps.  in this case, however, he's looking for a student project,
+and one that's essentially a load of grunge work isn't a good choice.
+
+<QUOTE PREVIOUSPOST="
+&gt; I picked this idea from the GSoC07 Wiki page: porting the Plan 9
+&gt; userspace to the Linux kernel.
+">
+
+it might or might not have been a good gsoc project, but i don't think
+it's the best choice for a final year project, even if you're in Engineering not CS.
+(the aims are often quite different for gsoc projects than for a final-year project.)
+
+if you're looking for something plan9-related, i'd pick an application area
+of interest to you that looks as though it could benefit from applying plan 9's
+techniques, mechanisms, etc., and apply them in an implementation.
+if you aim to finish in about 2 months, you should be done in time in 4, with write-up.
+a modular project is always good, so if you've actually got spare time
+at the end, you can add another component.  (for instance, if the project
+is split into 9p server and 9p clients, you can add a different type of client
+for the same service.)
+
+the aim is to show plan 9 doing something simpler,
+more flexibly, faster/easier (in development time or effort) than some existing
+implementation, just because of name spaces and concurrent programming (say).
+on the other hand you're not doing original research, so implementing or
+reimplementing an existing idea should be fine — it's an exercise.
+usually it's very helpful if non-specialists can assess the result.
+
+it's just my experience dealing with undergraduate projects in the past.
+</POST>
+<POST>
+<POSTER> sqw...@gmail.com (sqweek) </POSTER>
+<POSTDATE> 2007-11-13T09:12:00 </POSTDATE>
+On Nov 13, 2007 10:47 PM, roger peppe &lt;rogpe ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; allowing lunix programs to run inside a sandbox (namespace).
+
+&gt; how do you do that?
+">
+
+Linux has private namespaces (see CLONE_NEWNS in clone(2)), they're
+just not used by standard linux tools afaik.
+-sqweek
+</POST>
+<POST>
+<POSTER> quans...@quanstro.net (erik quanstrom) </POSTER>
+<POSTDATE> 2007-11-13T09:31:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Admittedly how one deals with udev and other such linux userspace
+&gt; monsters might be  tricky, but I think that is the whole point, to
+&gt; replace such things with saner Plan 9-based solutions.
+">
+
+i see two problems with this.
+
+1.  linux interfaces change all the time, requiring constant linux tinkering.
+2.  covering up the linux interface will always be imperfect.  you won't
+be able to ignore it's existance and i think you underestimate the amount
+of glue code required.  p9p succeedes because it refuses to do this.
+
+i am reminded by a line from the labs' response to ast's usenix posting
+- UNIX can be successfully run as an application program
+`Run' perhaps, `successfully' no.  Name a product that succeeds
+by running UNIX as an application.
+
+s/UNIX/Plan 9/g
+
+- erik
+
+reference: http://groups.google.com/group/comp.os.research/browse_thread/thread/...
+</POST>
+<POST>
+<POSTER> leim...@gmail.com (David Leimbach) </POSTER>
+<POSTDATE> 2007-11-13T09:33:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; You still have X under at least, unless there is a frambuffer version
+&gt; of inferno I am not aware of. Anyway, inferno is not Plan 9 even
+&gt; if it looks very similar if you squint.
+">
+
+There is or at least was a framebuffer linux version of inferno to my
+recollection.&gt;
+</POST>
+<POST>
+<POSTER> santu...@gmail.com (Alexander Sychev) </POSTER>
+<POSTDATE> 2007-11-13T09:54:00 </POSTDATE>
+On Tue, 13 Nov 2007 07:25:39 -0700, David Leimbach &lt;leim ... @gmail.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; There is or at least was a framebuffer linux version of inferno to my
+&gt; recollection.&gt;
+">
+
+There is one :-). Now the implementation of the linux framebuffer support
+can be found in the archive of inferno mailing list, but I going to make a
+project inferno-fb on code.google.com and upload the sources.
+
+--
+Best regards,
+santucco
+</POST>
+<POST>
+<POSTER> an...@kix.in (Anant Narayanan) </POSTER>
+<POSTDATE> 2007-11-13T10:20:00 </POSTDATE>
+Hi,
+
+<QUOTE PREVIOUSPOST="
+&gt; what happens when you're tracking a bug?  do you give up when
+&gt; it enters linux?  how do you configure hardware if you're not
+&gt; going to use the linux machinery?
+&gt;From a very theoretical perspective, using a different userspace with
+">
+
+the Linux kernel shouldn't be all that difficult. I'm not sure how much
+tied a traditional Linux userspace is to the kernel, so I don't the
+answers to your questions.
+
+<QUOTE PREVIOUSPOST="
+&gt; why are linux schedulers interesting?
+">
+
+Well, to be honest, I haven't looked at the Plan 9 schedulers; so
+amongst the ones that we have seen so far, Linux has the most
+interesting set of schedulers (purely from a classroom perspective).
+
+<QUOTE PREVIOUSPOST="
+&gt; i think that rather than the best of both worlds, you'd end up
+&gt; with the worst of both.  all the joys of linux administration and
+&gt; yet no (insert favorite browser here).
+">
+
+So, the best of both worlds would mean the Plan 9 kernel and the GNU
+userspace? Or perhaps Plan 9 wants to be single all his (her?) life ;)
+
+--
+Anant
+</POST>
+<POST>
+<POSTER> an...@kix.in (Anant Narayanan) </POSTER>
+<POSTDATE> 2007-11-13T10:24:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Admittedly how one deals with udev and other such linux userspace
+&gt; monsters might be  tricky, but I think that is the whole point, to
+&gt; replace such things with saner Plan 9-based solutions.
+">
+
+Off the top of my head, I don't think coming with a file-system approach
+to dynamic devices would be that hard; say for example a notification
+that a USB drive has just been plugged in and automounting it...
+
+Can this already be done in Plan 9? :)
+
+--
+Anant
+</POST>
+<POST>
+<POSTER> an...@kix.in (Anant Narayanan) </POSTER>
+<POSTDATE> 2007-11-13T10:27:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; well, perhaps.  in this case, however, he's looking for a student project,
+&gt; and one that's essentially a load of grunge work isn't a good choice.
+">
+
+I don't think grunge work is bad if the result is usable. Hence, what I
+am trying to evaluate via the discussion is whether the result is
+something that can actually be used by developers.
+
+<QUOTE PREVIOUSPOST="
+&gt; it might or might not have been a good gsoc project, but i don't think
+&gt; it's the best choice for a final year project, even if you're in Engineering not CS.
+&gt; (the aims are often quite different for gsoc projects than for a final-year project.)
+">
+
+Incidentally, I am pursuing Computer Engineering - but syllabi can be
+easily mistaken for a CS course, there's no difference.
+
+<QUOTE PREVIOUSPOST="
+&gt; if you're looking for something plan9-related, i'd pick an application area
+&gt; of interest to you that looks as though it could benefit from applying plan 9's
+&gt; techniques, mechanisms, etc., and apply them in an implementation.
+&gt; if you aim to finish in about 2 months, you should be done in time in 4, with write-up.
+&gt; a modular project is always good, so if you've actually got spare time
+&gt; at the end, you can add another component.  (for instance, if the project
+&gt; is split into 9p server and 9p clients, you can add a different type of client
+&gt; for the same service.)
+">
+
+Thanks, I'll look some more and see if I can find more ideas.
+(Trouble is, I already registered glendix.org ;))
+
+--
+Anant
+</POST>
+<POST>
+<POSTER> harr...@mail.student.oulu.fi (Harri Haataja) </POSTER>
+<POSTDATE> 2007-11-13T10:36:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Tue, Nov 13, 2007 at 01:30:24PM +0000, John Stalker wrote:
+&gt; &gt; I picked this idea from the GSoC07 Wiki page: porting the Plan 9
+&gt; &gt; userspace to the Linux kernel.
+&gt; For your own sanity I would suggest that you consider a NetBSD base
+&gt; rather than a Linux base.  You get most of the portability and you
+&gt; get a much better thought out binary emulation layer.
+&gt; You should be able to run both
+&gt; native and plan9 binaries, unmodified, side by side if you do things
+&gt; right.
+">
+
+Isn't there also an &quot;emulator&quot; for Linux binaries on the
+same arch (nearly always x86 if we think in binaries).
+
+Another thing is, if you could get NetBSD to look like plan9,
+maybe you would get this Glendix on all (or even some) of the
+hw architectures the &quot;world's most portable operating system&quot;
+supports!
+
+--
+To know what you prefer, instead of humbly saying Amen
+to what the world tells you you ought to prefer,
+is to have kept your soul alive.
+-- Robert Louis Stevenson
+</POST>
+<POST>
+<POSTER> stal...@maths.tcd.ie (John Stalker) </POSTER>
+<POSTDATE> 2007-11-13T11:23:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Isn't there also an &quot;emulator&quot; for Linux binaries on the
+&gt; same arch (nearly always x86 if we think in binaries).
+">
+
+Yes, and also SVR4, HPUX, BSDI, SCO, Solaris, Irix, Ultrix,
+and Amiga Unix binaries.  They aren't, strictly speaking,
+emulators, though.  The idea is that exec determines the
+type of the binary and then when the process makes a syscall
+the kernel sends it to the appropriate handler for that ABI.
+There is a mechanism for making each ABI see a slightly
+different view of the file system so the binaries see an
+environment more like the one they are expecting.
+
+See: http://www.netbsd.org/docs/compat.html
+
+<QUOTE PREVIOUSPOST="
+&gt; Another thing is, if you could get NetBSD to look like plan9,
+&gt; maybe you would get this Glendix on all (or even some) of the
+&gt; hw architectures the &quot;world's most portable operating system&quot;
+&gt; supports!
+">
+
+Yes, it would allow you to run plan9 binaries on a toaster, if
+you port kencc to the TS-7200 architecture.
+--
+John Stalker
+School of Mathematics
+Trinity College Dublin
+tel +353 1 896 1983
+fax +353 1 896 2282
+</POST>
+<POST>
+<POSTER> r...@swtch.com (Russ Cox) </POSTER>
+<POSTDATE> 2007-11-13T11:27:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; 1) Modify the Linux kernel to present a 9P interface to itself (too
+&gt; hard, almost like re-writing several important parts of the kernel)
+&gt; 2) Modify the Plan 9 userspace to work with POSIX (Yuck, and Plan9Port
+&gt; already does this)
+&gt; 3) Create a custom INIT process which will be responsible for providing
+&gt; all the &quot;plan 9 kernelish&quot; features that userspace programs expect (for
+&gt; eg. providing the /net directory), so that all of them can run unmodified.
+">
+
+As Forsyth says, this may not be such a great final-year project,
+especially if you have only two months in which to do the work.
+
+That said again, I don't think any of the three strategies above would
+really make Linux feel like Plan 9.  For example, I should be able to
+&quot;9fs sources&quot; and then run the Unix ls or the Gnome file browser
+or whatever on /n/sources and have it work.
+
+To really make it feel like Plan 9, you'd first want to write a binary
+format driver (in Linux) for Plan 9's a.out binaries.  Then you can
+load Plan 9 binaries directly.  That much is pretty simple.
+
+Next, you'd want to implement the Plan 9 system calls as an &quot;alternate
+personality&quot; for the Linux kernel, to be used when running the Plan 9
+binaries.  Some of the system calls are fairly easy -- open, read, write,
+close, stat, wstat -- but bind / mount will require:
+
+- per-process name spaces accessible to normal users
+(CLONE_NEWNS is only available to root, but you can
+probably reuse some or all of the code)
+
+- letting normal users do 9p mounts anywhere in their
+own name space (can probably use v9fs here)
+
+Also rfork, notes, etc. will require a little bit of work,
+but they're straightforward.
+
+Once you've got that, then the icing on the cake would be doing
+things like writing a /net for Linux and then rewriting the socket
+calls to do user space file operations on /net.  Then you could
+do things like
+
+import othermachine /net
+firefox
+
+Also the missing /proc files and so on.
+
+Russ
+</POST>
+<POST>
+<POSTER> fors...@terzarima.net (Charles Forsyth) </POSTER>
+<POSTDATE> 2007-11-13T11:38:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; As Forsyth says, this may not be such a great final-year project,
+&gt; especially if you have only two months in which to do the work.
+">
+
+he's got 4 months but my suggestion was therefore to go for something
+that `should' take 2 (or 3 at most) on the grounds that the time required
+usually increases.  sadly.
+</POST>
+<POST>
+<POSTER> anyrh...@gmail.com (Aki Nyrhinen) </POSTER>
+<POSTDATE> 2007-11-13T11:44:00 </POSTDATE>
+On Nov 13, 2007 6:22 PM, John Stalker &lt;stal ... @maths.tcd.ie&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Yes, it would allow you to run plan9 binaries on a toaster, if
+&gt; you port kencc to the TS-7200 architecture.
+">
+
+no need to port anything. plan9 runs on ts7200 native.
+</POST>
+<POST>
+<POSTER> urie...@gmail.com (Uriel) </POSTER>
+<POSTDATE> 2007-11-13T11:41:00 </POSTDATE>
+That would make sense if NetBSD had private namespaces and 9P support.
+(There is a userspace
+9P driver now using puffs, but I'm not sure how well it works, and
+v9fs is much more widely used). Not to mention
+that if you want to run lunix software, linux is the best option by
+far (in other words, if you want to run software that sucks, you need
+an OS that sucks properly, BSDs suck at sucking ;P)).
+
+In any case, I think private namespaces are the dealbreaker, if you
+want a Plan 9 environment, you need a kernel with private namespaces,
+I wish the BSD people would see how important they are, but then, I
+feel sorry for the VFS they have to deal with...
+
+uriel
+
+On Nov 13, 2007 2:30 PM, John Stalker &lt;stal ... @maths.tcd.ie&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; I picked this idea from the GSoC07 Wiki page: porting the Plan 9
+&gt; &gt; userspace to the Linux kernel.
+
+&gt; For your own sanity I would suggest that you consider a NetBSD base
+&gt; rather than a Linux base.  You get most of the portability and you
+&gt; get a much better thought out binary emulation layer.  It's also
+&gt; a lot less ugly, which will matter a lot as you need to read and
+&gt; modify a fair amount of code.  You should be able to run both
+&gt; native and plan9 binaries, unmodified, side by side if you do things
+&gt; right.  You should even be able to run NetBSD apps in X on one virtual
+&gt; terminal and plan9 apps, of which there are sadly very few, in rio
+&gt; on another virtual terminal.
+
+&gt; --
+&gt; John Stalker
+&gt; School of Mathematics
+&gt; Trinity College Dublin
+&gt; tel +353 1 896 1983
+&gt; fax +353 1 896 2282
+">
+</POST>
+<POST>
+<POSTER> iru.mu...@gmail.com (Iruata Souza) </POSTER>
+<POSTDATE> 2007-11-13T11:47:00 </POSTDATE>
+On Nov 13, 2007 2:39 PM, Uriel &lt;urie ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In any case, I think private namespaces are the dealbreaker, if you
+&gt; want a Plan 9 environment, you need a kernel with private namespaces,
+&gt; I wish the BSD people would see how important they are, but then, I
+&gt; feel sorry for the VFS they have to deal with...
+
+&gt; uriel
+">
+
+I wish them to see that too. Feel sorry for me, then :]
+</POST>
+<POST>
+<POSTER> urie...@gmail.com (Uriel) </POSTER>
+<POSTDATE> 2007-11-13T11:57:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; i am reminded by a line from the labs' response to ast's usenix posting
+&gt;    - UNIX can be successfully run as an application program
+&gt;         `Run' perhaps, `successfully' no.  Name a product that succeeds
+&gt;         by running UNIX as an application.
+
+&gt; s/UNIX/Plan 9/g
+">
+
+I love that post, but I don't think s/UNIX/Plan 9/g is valid, we are
+not talking about microkernels here, and see also Inferno.
+
+uriel
+</POST>
+<POST>
+<POSTER> quans...@coraid.com (erik quanstrom) </POSTER>
+<POSTDATE> 2007-11-13T12:21:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; &gt; i am reminded by a line from the labs' response to ast's usenix posting
+&gt; &gt;    - UNIX can be successfully run as an application program
+&gt; &gt;         `Run' perhaps, `successfully' no.  Name a product that succeeds
+&gt; &gt;         by running UNIX as an application.
+
+&gt; &gt; s/UNIX/Plan 9/g
+
+&gt; I love that post, but I don't think s/UNIX/Plan 9/g is valid, we are
+&gt; not talking about microkernels here, and see also Inferno.
+">
+
+i'm not saying it can't be done.  osx is *nix run as an application on
+a bastardized mach kernel.  but &quot;microkernel&quot; is an empty nonsequitor.
+
+what i am saying is that the glue layer is going to be huge.  and like
+mach needed to be compromized to run osx well, linux will need to
+be hacked to run plan 9 well.
+
+and personally, i don't see the appeal.  you've been the most vocal
+opponent of layering goo like this.
+
+- erik
+</POST>
+<POST>
+<POSTER> iru.mu...@gmail.com (Iruata Souza) </POSTER>
+<POSTDATE> 2007-11-13T12:25:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; what i am saying is that the glue layer is going to be huge.  and like
+&gt; mach needed to be compromized to run osx well, linux will need to
+&gt; be hacked to run plan 9 well.
+">
+
+imho that work would be more well applied if directed to porting or
+driver writing or something.
+iru
+</POST>
+<POST>
+<POSTER> quans...@coraid.com (erik quanstrom) </POSTER>
+<POSTDATE> 2007-11-13T12:26:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Well, to be honest, I haven't looked at the Plan 9 schedulers; so
+&gt; amongst the ones that we have seen so far, Linux has the most
+&gt; interesting set of schedulers (purely from a classroom perspective).
+
+&gt; &gt; i think that rather than the best of both worlds, you'd end up
+&gt; &gt; with the worst of both.  all the joys of linux administration and
+&gt; &gt; yet no (insert favorite browser here).
+
+&gt; So, the best of both worlds would mean the Plan 9 kernel and the GNU
+&gt; userspace? Or perhaps Plan 9 wants to be single all his (her?) life ;)
+">
+
+the converse does not always hold.
+
+- erik
+</POST>
+<POST>
+<POSTER> lu...@gmx.net (Latchesar Ionkov) </POSTER>
+<POSTDATE> 2007-11-13T12:45:00 </POSTDATE>
+I agree. Trying to do this in 4 months will end up as one of the too
+many unfinished Plan9 related projects.
+
+Lucho
+
+On Nov 13, 2007 9:42 AM, Charles Forsyth &lt;fors ... @terzarima.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; As Forsyth says, this may not be such a great final-year project,
+&gt; &gt; especially if you have only two months in which to do the work.
+
+&gt; he's got 4 months but my suggestion was therefore to go for something
+&gt; that `should' take 2 (or 3 at most) on the grounds that the time required
+&gt; usually increases.  sadly.
+">
+</POST>
+<POST>
+<POSTER> stal...@maths.tcd.ie (John Stalker) </POSTER>
+<POSTDATE> 2007-11-13T12:49:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; That would make sense if NetBSD had private namespaces and 9P support.
+">
+
+I think this is fixable without enormous effort if you are willing
+to let the BSD applications lose most of the benefits of having
+plan9 around.  The way ABI emulation works you need to intercept
+system calls in any case and, as I noted before, the emulators NetBSD
+already has catch calls to open and show them a modified hierarchy.
+It would not be too difficult to make that modified hierarchy
+potentially different for each process.  What you lose is that only
+plan9 applications would get the benefits of private name spaces,
+not native applications.  Still, you would get something a lot better
+than running plan9 under qemu in a virtual terminal, which is what
+I find myself doing a lot lately.
+
+--
+John Stalker
+School of Mathematics
+Trinity College Dublin
+tel +353 1 896 1983
+fax +353 1 896 2282
+</POST>
+<POST>
+<POSTER> fors...@terzarima.net (Charles Forsyth) </POSTER>
+<POSTDATE> 2007-11-13T12:58:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt;&gt; I wish the BSD people would see how important they are, but then, I
+&gt;&gt; feel sorry for the VFS they have to deal with...
+
+&gt;&gt; uriel
+">
+
+really? i'd supposed the bsd vfs was better designed.  isn't it? (i hadn't really looked at it
+for a years, so that wasn't rhetorical, i was really asking a question.)
+the linux one has lots of things in quite the wrong place
+because ... all decent files are on proper storage somewhere or they are damned!
+</POST>
+<POST>
+<POSTER> iru.mu...@gmail.com (Iruata Souza) </POSTER>
+<POSTDATE> 2007-11-13T13:13:00 </POSTDATE>
+On Nov 13, 2007 4:02 PM, Charles Forsyth &lt;fors ... @terzarima.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;&gt; I wish the BSD people would see how important they are, but then, I
+&gt; &gt;&gt; feel sorry for the VFS they have to deal with...
+
+&gt; &gt;&gt; uriel
+
+&gt; really? i'd supposed the bsd vfs was better designed.  isn't it? (i hadn't really looked at it
+&gt; for a years, so that wasn't rhetorical, i was really asking a question.)
+&gt; the linux one has lots of things in quite the wrong place
+&gt; because ... all decent files are on proper storage somewhere or they are damned!
+">
+
+since I'm writing o9fs for OpenBSD I've been dealing with it's VFS for
+the last months... the little I've read of linux VFS makes me thing
+BSD ones are easy stuff to deal with.
+
+iru
+</POST>
+<POST>
+<POSTER> bakul+pl...@bitblocks.com (Bakul Shah) </POSTER>
+<POSTDATE> 2007-11-13T13:24:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; I don't think grunge work is bad if the result is usable. Hence, what I
+&gt; am trying to evaluate via the discussion is whether the result is
+&gt; something that can actually be used by developers.
+">
+
+The thing about grunge work is it always takes far longer
+than you think it would.  Besides, when you enter the real
+world you will have plenty of grunge work to do.  Why get a
+head start on it?!
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; if you aim to finish in about 2 months, you should be done in time in 4, wi
+&gt; th write-up.
+&gt; &gt; a modular project is always good, so if you've actually got spare time
+&gt; &gt; at the end, you can add another component.  (for instance, if the project
+&gt; &gt; is split into 9p server and 9p clients, you can add a different type of cli
+&gt; ent
+&gt; &gt; for the same service.)
+">
+
+I will second that.  You can use any remaining time for all
+sorts of things -- there is always something more to do.
+
+Long ago a famous engineer/painter/architect/sculptor said
+&quot;Art is never finished, only abandoned&quot;.  It is the same with
+final year projects.  What matters is the quality of what is
+done. So pick a small canvas and paint a still life!
+
+<QUOTE PREVIOUSPOST="
+&gt; Thanks, I'll look some more and see if I can find more ideas.
+&gt; (Trouble is, I already registered glendix.org ;))
+">
+
+Call whatever you build glendix. Most s/w projects have silly
+names.  Not plan9 of course.
+</POST>
+<POST>
+<POSTER> joelcsalo...@gmail.com (Joel C. Salomon) </POSTER>
+<POSTDATE> 2007-11-13T16:38:00 </POSTDATE>
+On Nov 13, 2007 5:05 AM, Gorka Guardiola &lt;pau ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; See THNX by rminnich, an lguest port of plan 9 with drawterm using framebuffers.
+&gt; It is very close to what you want.
+">
+
+Actually, an early version of P9P for Windows, 9pm, is closer to
+Anant's idea.  See &lt; http://swtch.com/usr/local/plan9/9pm/README.html &gt;.
+
+--Joel
+</POST>
+<POST>
+<POSTER> joelcsalo...@gmail.com (Joel C. Salomon) </POSTER>
+<POSTDATE> 2007-11-13T16:42:00 </POSTDATE>
+On Nov 13, 2007 9:29 AM, Anant Narayanan &lt;an ... @kix.in&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Or perhaps Plan 9 wants to be single all his (her?) life ;)
+">
+
+See &lt; http://groups.google.com/group/comp.os.plan9/msg/e2e66725a9fb9855 &gt;:
+
+&quot;Under the Unix's tutelage, the Plan 9 grew to be a beautiful young
+maid herself.  She had far fewer suitors than the Unix had once
+enjoyed, since she was competing with the Unix imitators.  Even so, a
+small but faithful group of savants admired her, dazzled by the grace
+and civility the Unix had taught her.&quot;
+
+(Thanks, Russ!)
+--Joel
+</POST>
+<POST>
+<POSTER> leim...@gmail.com (David Leimbach) </POSTER>
+<POSTDATE> 2007-11-13T17:02:00 </POSTDATE>
+On Nov 13, 2007 9:19 AM, erik quanstrom &lt;quans ... @coraid.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; &gt; i am reminded by a line from the labs' response to ast's usenix posting
+&gt; &gt; &gt;    - UNIX can be successfully run as an application program
+&gt; &gt; &gt;         `Run' perhaps, `successfully' no.  Name a product that succeeds
+&gt; &gt; &gt;         by running UNIX as an application.
+
+&gt; &gt; &gt; s/UNIX/Plan 9/g
+
+&gt; &gt; I love that post, but I don't think s/UNIX/Plan 9/g is valid, we are
+&gt; &gt; not talking about microkernels here, and see also Inferno.
+
+&gt; i'm not saying it can't be done.  osx is *nix run as an application on
+&gt; a bastardized mach kernel.  but &quot;microkernel&quot; is an empty nonsequitor.
+">
+
+Not quite.  The mac os x kernel is XNU which stands for XNU's Not
+Unix.  It might have mach inside, but the unix is in there too.
+
+I used to run Mac OS X on my own custom kernels back in 2001 for &quot;fun&quot;.
+
+Dave
+</POST>
+<POST>
+<POSTER> leim...@gmail.com (David Leimbach) </POSTER>
+<POSTDATE> 2007-11-13T17:06:00 </POSTDATE>
+On Nov 13, 2007 10:02 AM, Charles Forsyth &lt;fors ... @terzarima.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;&gt; I wish the BSD people would see how important they are, but then, I
+&gt; &gt;&gt; feel sorry for the VFS they have to deal with...
+
+&gt; &gt;&gt; uriel
+
+&gt; really? i'd supposed the bsd vfs was better designed.  isn't it? (i hadn't really looked at it
+&gt; for a years, so that wasn't rhetorical, i was really asking a question.)
+&gt; the linux one has lots of things in quite the wrong place
+&gt; because ... all decent files are on proper storage somewhere or they are damned!
+">
+
+I was of the impression the Linux VFS layer was set up to work well with NFS.
+
+I've no idea how the BSD VFS is these days.  Mac OS X had stackable
+filesystems for a while, then Apple discouraged that practice
+(presumably due to overheads of doing so... so goodbye original
+implementation of unionfs).
+
+DragonflyBSD was going to have a VFS based on a message passing system
+of sorts... but not 9p :-).  That would make things like FUSE pretty
+easy I'd think, or 9p for that matter.
+
+FreeBSD may still allow stackable filesystems, but it's hard to tell
+where they are because all the cool kids work on linux.
+
+Dave
+</POST>
+<POST>
+<POSTER> leim...@gmail.com (David Leimbach) </POSTER>
+<POSTDATE> 2007-11-13T17:18:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; DragonflyBSD was going to have a VFS based on a message passing system
+&gt; of sorts... but not 9p :-).  That would make things like FUSE pretty
+&gt; easy I'd think, or 9p for that matter.
+">
+
+Not sure where they are yet but here's their idea:
+
+http://www.dragonflybsd.org/docs/goals.shtml#vfsmodel
+
+<QUOTE PREVIOUSPOST="
+&gt; Dave
+">
+</POST>
+<POST>
+<POSTER> iru.mu...@gmail.com (Iruata Souza) </POSTER>
+<POSTDATE> 2007-11-13T18:20:00 </POSTDATE>
+On Nov 13, 2007 8:04 PM, David Leimbach &lt;leim ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I was of the impression the Linux VFS layer was set up to work well with NFS.
+
+&gt; I've no idea how the BSD VFS is these days.  Mac OS X had stackable
+&gt; filesystems for a while, then Apple discouraged that practice
+&gt; (presumably due to overheads of doing so... so goodbye original
+&gt; implementation of unionfs).
+">
+
+OpenBSD has dropped stackable filesystems long ago. The original BSD
+unionfs implementation was a nightmare. I started writing a trivial
+just for the sake of learning.
+
+<QUOTE PREVIOUSPOST="
+&gt; DragonflyBSD was going to have a VFS based on a message passing system
+&gt; of sorts... but not 9p :-).  That would make things like FUSE pretty
+&gt; easy I'd think, or 9p for that matter.
+">
+
+I haven't touched the VFS itself, but with o9fs (9P filesystem for
+OpenBSD) one should be allow ed to write userland file servers (that's
+one of my personal goals).
+
+iru
+</POST>
+<POST>
+<POSTER> 0xef967...@gmail.com (R) </POSTER>
+<POSTDATE> 2007-11-13T21:24:00 </POSTDATE>
+On Nov 14, 2007 1:19 AM, Iruata Souza &lt;iru.mu ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I haven't touched the VFS itself, but with o9fs (9P filesystem for
+&gt; OpenBSD) one should be allow ed to write userland file servers (that's
+&gt; one of my personal goals).
+">
+
+OpenBSD already has filesystems in userland. Look for mount_xfs
+(nothing to do with the SGI/linux thing). It is used by their afs client
+implementation.
+</POST>
+<POST>
+<POSTER> rminn...@gmail.com (ron minnich) </POSTER>
+<POSTDATE> 2007-11-14T00:45:00 </POSTDATE>
+On Nov 13, 2007 9:44 AM, Latchesar Ionkov &lt;lu ... @gmx.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I agree. Trying to do this in 4 months will end up as one of the too
+&gt; many unfinished Plan9 related projects.
+">
+
+yep, We have too many of those.
+
+We could use help in making THNX a really solid environment, if anyone
+is interested.
+
+There are a bunch of half-finished projects in Plan 9, and it would
+make sense to go toward finishing them, rather than starting another
+half-finished project.
+
+Sorry to be discouraging. But part of learning is seeing the
+difference between &quot;works sometimes&quot; and &quot;finished project&quot;. The rule
+is true: 80% of the work is in the last 20% of the project. Or worse.
+
+ron
+</POST>
+<POST>
+<POSTER> iru.mu...@gmail.com (Iruata Souza) </POSTER>
+<POSTDATE> 2007-11-14T06:45:00 </POSTDATE>
+On 11/14/07, R &lt;0xef967 ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; OpenBSD already has filesystems in userland. Look for mount_xfs
+&gt; (nothing to do with the SGI/linux thing). It is used by their afs client
+&gt; implementation.
+">
+
+if you talking about /sbin/mount_xfs, it's just a mounter for the xfs
+filesystem. if you take a look at /sys/xfs you'll see what have to be
+done in the kernel.
+o9fs is the only thing residing in the kernel in my case. the userland
+filesystem/fileserver could be written entirely in userland with
+lib9pclient or libixp.
+
+iru
+</POST>
+<POST>
+<POSTER> 0xef967...@gmail.com (R) </POSTER>
+<POSTDATE> 2007-11-14T07:18:00 </POSTDATE>
+On Nov 14, 2007 1:44 PM, Iruata Souza &lt;iru.mu ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 11/14/07, R &lt;0xef967 ... @gmail.com&gt; wrote:
+&gt; &gt; OpenBSD already has filesystems in userland. Look for mount_xfs
+&gt; &gt; (nothing to do with the SGI/linux thing). It is used by their afs client
+&gt; &gt; implementation.
+
+&gt; if you talking about /sbin/mount_xfs, it's just a mounter for the xfs
+&gt; filesystem. if you take a look at /sys/xfs you'll see what have to be
+&gt; done in the kernel.
+">
+
+No, you're wrong !
+
+You can write a new filesystem as a userland daemon - and have
+it communicate with the kernel via a /dev/xfs* device.
+There's no need for extra code in the kernel.
+
+In fact, that's exactly how afsd (the Andrew Filesystem client, part
+of the standard distribution) is working.
+
+This has become off-topic here, I excuse myself to other people
+not interested in OpenBSD details, etc ;-)
+</POST>
+<POST>
+<POSTER> Christian.Kellerm...@nefkom.net (Christian Kellermann) </POSTER>
+<POSTDATE> 2007-11-14T07:41:00 </POSTDATE>
+* R &lt;0xef967 ... @gmail.com&gt; [071114 13:19]:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Nov 14, 2007 1:44 PM, Iruata Souza &lt;iru.mu ... @gmail.com&gt; wrote:
+&gt; &gt; On 11/14/07, R &lt;0xef967 ... @gmail.com&gt; wrote:
+&gt; &gt; &gt; OpenBSD already has filesystems in userland. Look for mount_xfs
+&gt; &gt; &gt; (nothing to do with the SGI/linux thing). It is used by their afs client
+&gt; &gt; &gt; implementation.
+
+&gt; &gt; if you talking about /sbin/mount_xfs, it's just a mounter for the xfs
+&gt; &gt; filesystem. if you take a look at /sys/xfs you'll see what have to be
+&gt; &gt; done in the kernel.
+
+&gt; No, you're wrong !
+
+&gt; You can write a new filesystem as a userland daemon - and have
+&gt; it communicate with the kernel via a /dev/xfs* device.
+&gt; There's no need for extra code in the kernel.
+
+&gt; In fact, that's exactly how afsd (the Andrew Filesystem client, part
+&gt; of the standard distribution) is working.
+">
+
+You are both right. The AFS daemon runs in userspace. There has to be
+a kernel interface to get it into the systems namespace facility
+(here it is called VFS). For AFS this interface is very application specific
+(/dev/xfs) but Iru's approach would allow to write drivers in userspace and
+communicate with the kernel through an application independent interface.
+
+This is what 9p is all about...
+
+--
+You may use my gpg key for replies:
+pub  1024D/47F79788 2005/02/02 Christian Kellermann (C-Keen)
+
+application_pgp-signature_part
+1K Download
+</POST>
+<POST>
+<POSTER> 0xef967...@gmail.com (R) </POSTER>
+<POSTDATE> 2007-11-14T08:03:00 </POSTDATE>
+On Nov 14, 2007 2:40 PM, Christian Kellermann
+
+<QUOTE PREVIOUSPOST="
+&lt;Christian.Kellerm ... @nefkom.net&gt; wrote:
+&gt; You are both right. The AFS daemon runs in userspace. There has to be
+&gt; a kernel interface to get it into the systems namespace facility
+&gt; (here it is called VFS). For AFS this interface is very application specific
+&gt; (/dev/xfs) but Iru's approach would allow to write drivers in userspace and
+">
+
+It's a generic interface, not application specific and  not tied to AFS
+peculiarities.
+Think FUSE, only with using character devices instead of unix sockets
+to communicate with the userland.
+
+<QUOTE PREVIOUSPOST="
+&gt; communicate with the kernel through an application independent interface.
+
+&gt; This is what 9p is all about...
+">
+</POST>
+<POST>
+<POSTER> Christian.Kellerm...@nefkom.net (Christian Kellermann) </POSTER>
+<POSTDATE> 2007-11-14T08:10:00 </POSTDATE>
+* R &lt;0xef967 ... @gmail.com&gt; [071114 14:04]:
+
+<QUOTE PREVIOUSPOST="
+&gt; Think FUSE, only with using character devices instead of unix sockets
+&gt; to communicate with the userland.
+">
+
+indeed. My apologies.
+--
+You may use my gpg key for replies:
+pub  1024D/47F79788 2005/02/02 Christian Kellermann (C-Keen)
+
+application_pgp-signature_part
+1K Download
+</POST>
+</TEXT>
+</BODY>
+</DOC>

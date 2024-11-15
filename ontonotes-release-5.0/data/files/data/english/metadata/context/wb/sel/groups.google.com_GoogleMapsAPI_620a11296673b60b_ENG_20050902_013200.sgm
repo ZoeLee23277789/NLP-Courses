@@ -1,0 +1,2321 @@
+<DOC>
+<DOCID> groups.google.com_GoogleMapsAPI_620a11296673b60b_ENG_20050902_013200 </DOCID>
+<DOCTYPE SOURCE="usenet">USENET TEXT</DOCTYPE>
+<DATETIME>2005-09-02T01:32:00</DATETIME>
+<BODY>
+<HEADLINE>
+So you need International Geocoding?
+</HEADLINE>
+<TEXT>
+
+<POST>
+<POSTER> Aaron Kreider </POSTER>
+<POSTDATE> 2005-09-02T01:32:00 </POSTDATE>
+
+I'm using the GNS database from
+
+It has almost 4 million populated places. My implementation provides
+an approximate geocode of a city, state, and country. If you don't
+give the state - it guesses.
+
+Normal Version
+
+With Google Map API of the Result
+
+Worldkit's geocoder uses the same data (see
+) but when I checked Manila
+Philippines - they don't give the location for the capital city.
+
+If there are multiple cities in the same country (and the user
+doesn't enter the state properly), I prioritize
+1) the capital city
+2) an administrative capital
+3) places with higher population (unfortunately this information only
+covers a small percent of the GNS database)
+
+If there are still multiple instances of a city in a country, then I
+give an error message.
+
+I'd appreciate feedback. How accurate is this? Are there any major
+inaccuracies?
+
+For my purposes, I'm happy if it is within 1-5 miles. I just want
+people to find other people, groups, and events that are near them.
+I don't need street-level geocoding for that =)
+
+Somebody should offer this as a webservice. I guess I might do it,
+but I'm not sure my cheap shared hosting plan can take the traffic.
+If you want to implement it yourself, the mysql database I'm using is
+around 400mb (could possibly be reduced in size, as 2/3 of it is
+indexes). I might make it available (and the php code to run it) in
+the future once I make sure everything works ok.
+
+I'll talk to geocoder.us and see what the best thing is to do
+regarding a web service.
+
+-Aaron-
+
+</POST>
+
+
+
+<POST>
+<POSTER> Oceatoon </POSTER>
+<POSTDATE> 2005-09-02T06:31:00 </POSTDATE>
+
+Hi Aaron, great stuff
+Since you're on the subject and seem to be in it at the moment, please
+concider this request. I think an xml file extracted from these same
+data files you are using would really be usefull to a lot of us. I
+haven't had the time to do it myself.
+Maybe you could compile an xml file with the same base marker structure
+as GMaps example?
+
+&lt;markers&gt;
+&lt;marker lat=&quot;&quot; long=&quot;&quot; state=&quot;&quot; city=&quot;&quot; country=&quot;&quot;&gt;
+...
+&lt;/markers&gt;
+
+Cheers
+Tibor
+
+</POST>
+
+
+
+<POST>
+<POSTER> Joaquin Cuenca Abela </POSTER>
+<POSTDATE> 2005-09-02T07:30:00 </POSTDATE>
+
+Hi Tibor,
+
+the GNS database is more than 700MB uncompressed.
+A big xml file will be unusuable.
+Your only option is to import this data in your database of choice, and
+use it from there.
+
+Cheers,
+
+</POST>
+
+
+
+<POST>
+<POSTER> Claire </POSTER>
+<POSTDATE> 2005-09-02T09:28:00 </POSTDATE>
+
+Hi Aaron,
+
+We use the same data and do provide a service for people
+to map out their groups, etc. on a map at:
+
+We'd be happy to provide a geocode web service if people want
+that.
+
+Other than that, it seems you've added the state in addition
+to the cities, and have a way of dealing with multiple entries.
+We've been stumped by that, and have taken the easy way
+out by picking one (the last entry) and hoping it's correct.
+
+Would be very interested in pursuing a discussion with you
+on how to get more accurate data in our database, either
+by taking your db, or improving our import mechanism.
+
+Thanks for bringing this up for discussion.
+
+Claire
+
+</POST>
+
+
+
+<POST>
+<POSTER> pmj7 </POSTER>
+<POSTDATE> 2005-09-02T11:27:00 </POSTDATE>
+
+Hi Aaron
+
+Good work!
+
+If I enter &quot;vancouver&quot; and &quot;british columbia&quot; then your page says that
+it couldn't find my state, but found the city and corrected the state
+to &quot;British Columbia&quot;.
+
+Peter
+
+</POST>
+
+
+
+<POST>
+<POSTER> aaron@campusactivism.org </POSTER>
+<POSTDATE> 2005-09-02T16:29:00 </POSTDATE>
+
+A capitalization bug. I fixed it =)
+
+<QUOTE PREVIOUSPOST="
+pmj7 wrote:
+&gt; Hi Aaron
+
+&gt; Good work!
+
+&gt; If I enter &quot;vancouver&quot; and &quot;british columbia&quot; then your page says that
+&gt; it couldn't find my state, but found the city and corrected the state
+&gt; to &quot;British Columbia&quot;.
+
+&gt; Peter
+
+"/>
+
+
+</POST>
+
+
+
+<POST>
+<POSTER> aaron@campusactivism.org </POSTER>
+<POSTDATE> 2005-09-02T16:45:00 </POSTDATE>
+
+Claire,
+
+In my system people can choose to use the state if they want to.
+
+I suspect there will be problems with state names being slightly
+mispelt. The solution for this is to create some kind of spell
+checker, and/or a database of either common mispellings or alternative
+names (often proper names that are translated into English can be done
+so in multiple ways).
+
+For spell checking, someone recommended Metaphone
+
+Alternatively you could use the Google search API to do spell-checking,
+but it might not do a good job with non-English state names.
+
+Also the list of states is incomplete. For instance, for France it has
+the 22 regions - not the 100 departments. How are people in France
+going to know this?
+
+Otherwise you could create a drop down list of states that is populated
+when the user types in the country. Unfortunately there are over 4000
+states in the GNS database, so storing them in javascript would make
+for large webpages.
+
+For dealing with multiple entries I used the DSG field which tells you
+if the place is a capital city or an adminstrative (aka state) capital,
+and PC field (Population Code).
+
+I'm guessing this kind of method could have 90-95% accuracy. Hard to
+say without a thorough testing process. Also, the accuracy might vary
+considerably by country. Some countries might have more duplicate city
+names, and some countries might not have their smaller cities in the
+database.
+
+<QUOTE PREVIOUSPOST="
+Claire wrote:
+&gt; Hi Aaron,
+
+&gt; We use the same data and do provide a service for people
+&gt; to map out their groups, etc. on a map at:
+
+&gt; http://www.zeemaps.com
+
+&gt; We'd be happy to provide a geocode web service if people want
+&gt; that.
+
+&gt; Other than that, it seems you've added the state in addition
+&gt; to the cities, and have a way of dealing with multiple entries.
+&gt; We've been stumped by that, and have taken the easy way
+&gt; out by picking one (the last entry) and hoping it's correct.
+
+&gt; Would be very interested in pursuing a discussion with you
+&gt; on how to get more accurate data in our database, either
+&gt; by taking your db, or improving our import mechanism.
+
+&gt; Thanks for bringing this up for discussion.
+
+&gt; Claire
+
+"/>
+
+
+</POST>
+
+
+
+<POST>
+<POSTER> Joaquin Cuenca Abela </POSTER>
+<POSTDATE> 2005-09-02T17:28:00 </POSTDATE>
+
+You also take in account that sometimes the same city appears several
+times, once in english and once in the native spelling (the nt field
+may be N for Native or V for Variant or...)
+
+There are still some duplicates that I don't know why are they
+duplicated. They are usually together, and they have minimal
+differences in their position. Any further insight about this issue
+will be appreciated.
+
+I have built a search engine that downloads suggestions as the user
+completes the name. It's still very very alpha quality, but you can
+take a look at
+
+It starts giving suggestions after you type three or more letters.
+
+I tried several strategies to reduce the bandwidth used between the
+server and the client, but they made things slower due to the posterior
+javascript massaging I had to do. I still expect however to find a way
+to reduce the bandwidth usage and make javascript run fast.
+
+</POST>
+
+
+
+<POST>
+<POSTER> aaron@campusactivism.org </POSTER>
+<POSTDATE> 2005-09-02T18:29:00 </POSTDATE>
+
+More Filtering
+
+If there are multiple entries that are approximately in the same area,
+then you can just pick one or take an average.
+
+Eg if both the latitude and longitude of the two places are within say
+0.1 degrees, then you are probably dealing with the same city.
+
+I'm going to try doing that.
+
+</POST>
+
+
+
+<POST>
+<POSTER> Claire </POSTER>
+<POSTDATE> 2005-09-02T18:31:00 </POSTDATE>
+
+We used the files from:
+
+These files do not have the state names in them.
+Where did you guys find the State names? Am I
+missing something?
+
+The double entries are indeed troublesome.
+e.g., for Paris, the file contains:
+
+45.6333333,5.7333333,P,PPL,,Paris
+48.8666667,2.3333333,P,PPLC,1,Paris
+
+(lat,lng,FC,DSG,PC,Fullname_ND)
+
+The second entry is correct. What is the
+first entry pointing to? Also what is the difference
+between PPL and PPLC for DSG? I suppose
+your heuristic is to pick the one that has a
+greater value of PC?
+
+Joaquin, your search thing looks cool. Don't know
+if this can address the issue, though.
+
+Over time, our users have been very helpful in correcting
+the entries. We've had users pointing problems to us,
+and then we have gone and corrected them. This is a
+manual process, however, and is very tedious.
+
+</POST>
+
+
+
+<POST>
+<POSTER> Claire </POSTER>
+<POSTDATE> 2005-09-02T18:38:00 </POSTDATE>
+
+I just found another one, for India where the population
+hueristic does not apply:
+
+28.4333333,77.3166667,P,PPL,,Faridabad
+17.3591667,78.2983333,P,PPL,,Faridabad
+
+My heuristic fails also, as the first one is more
+accurate.
+
+</POST>
+
+
+
+<POST>
+<POSTER> Claire </POSTER>
+<POSTDATE> 2005-09-02T18:42:00 </POSTDATE>
+
+There's another hueristic, and this might work:
+
+Take a look at the last column mod_date. It seems
+both the correct entries in this case have the later
+date. So, they seem to be adding entries over each
+other rather than deleting the previous entry?
+
+</POST>
+
+
+
+<POST>
+<POSTER> aaron@campusactivism.org </POSTER>
+<POSTDATE> 2005-09-02T19:18:00 </POSTDATE>
+
+State Names
+_fips_adm1_code_def.txt
+_fips_adm1_code_def_2.txt
+
+PPLC - capital city
+See   for a
+list of DSG codes
+
+</POST>
+
+
+
+<POST>
+<POSTER> aaron@campusactivism.org </POSTER>
+<POSTDATE> 2005-09-02T19:21:00 </POSTDATE>
+
+The first entry points to Paris in the Rhone Alpes region. I believe,
+but am by no means certain, that there are two Paris's in France.
+
+</POST>
+
+
+
+<POST>
+<POSTER> aaron@campusactivism.org </POSTER>
+<POSTDATE> 2005-09-02T19:43:00 </POSTDATE>
+
+Faridabad is in two states
+-Haryana
+-Andhra Pradesh
+
+In this case you need to let the user choose.
+
+I'm fixing bugs on my implementation - so now if you type in Faridabad
+it will show you these two states.
+
+I don't have it setup so the user can actually click on the state (cuz
+I'm lazy). But they can paste the state name into the state box.
+
+</POST>
+
+
+
+<POST>
+<POSTER> aaron@campusactivism.org </POSTER>
+<POSTDATE> 2005-09-04T16:51:00 </POSTDATE>
+
+I tried this out on some data and it looks like the success rate for
+international geocoding is very roughly around 90%.
+
+The 10% failure is due to: mispelt cities, mispelt states, multiple
+cities in a country, and cities that aren't in the database.
+
+Anyways, I wrote a sample webservice using NuSOAP (a php library)
+
+*Sample Client*
+
+&lt;?
+//include nusoap.php here...
+//download nusoap from
+
+$cData = new
+soapclient('
+
+$aData =
+$cData-&gt;call('IntlGeocode',array('sCity'=&gt;'Vancouver', 'sState'=&gt;
+'','sCountry'=&gt; 'Canada'));
+
+print_r ($aData);
+
+?&gt;
+
+I'd create something for xml-rpc, but I need a good xml-rpc tutorial.
+And a simple example of a server and client where the client passes
+multiple variables to the server, and is returned an array. Could
+someone help me with that?
+
+I was having trouble adapting the example that comes with the xml-rpc
+php module.
+
+</POST>
+
+
+
+<POST>
+<POSTER> aaron@campusactivism.org </POSTER>
+<POSTDATE> 2005-09-05T15:51:00 </POSTDATE>
+
+Duplicates
+1/4 of the places in the GNS database are city/country duplicates.
+
+Thus if you are trying to get a unique record based on a city/country
+combination then it will often fail.
+
+For instance, France has 23000 duplicate city/country combinations, out
+of 97000 places. 1/4 are duplicates.
+
+Examples
+Saint-Martin - 230
+Saint-Jean - 163
+Saint-Pierre - 156
+
+For the entire thing, I detected slightly over 1 million duplicates out
+of 3.7 million populated places (a subset of the database).
+
+Better than a 75% success rate is still possible because I think larger
+cities are less likely to have duplicates - and most of the time you
+will be geocoding larger cities.
+
+</POST>
+
+
+
+<POST>
+<POSTER> ludovic.gnemmi@gmail.com </POSTER>
+<POSTDATE> 2005-09-18T11:55:00 </POSTDATE>
+
+Hi,
+I'm thinking about doing a localisation tool, to help users of a forum
+of a french non profit organisation to map their postion.
+Actually i have data for france but i would be interested by a
+webservice for international data.
+
+ps: If anyone is intersted in, i can send a mysql dump of french cities
+(include zipcodes and departments).
+
+Ludovic
+
+</POST>
+
+
+
+<POST>
+<POSTER> Raj </POSTER>
+<POSTDATE> 2005-09-19T16:25:00 </POSTDATE>
+
+Hi,
+
+We have now created a web service at:
+
+that can give you lat/lng given the name of a city, state, and country.
+Check out the parameters to the service by using the URL
+
+Please note that this is in very early stages, so there are no
+gaurantees.
+Right now, the state parameter is ignored and the service returns
+results it finds based on City and Country.
+
+We will be improving this over the week, so any comments are
+appreciated.
+
+Currently there is no throttle on the service, so please do not
+bombard it with queries.
+
+Raj
+
+<QUOTE PREVIOUSPOST="
+ludovic.gne ... @gmail.com wrote:
+&gt; Hi,
+&gt; I'm thinking about doing a localisation tool, to help users of a forum
+&gt; of a french non profit organisation to map their postion.
+&gt; Actually i have data for france but i would be interested by a
+&gt; webservice for international data.
+
+&gt; ps: If anyone is intersted in, i can send a mysql dump of french cities
+&gt; (include zipcodes and departments).
+
+&gt; Ludovic
+
+"/>
+
+
+</POST>
+
+
+
+<POST>
+<POSTER> QQS </POSTER>
+<POSTDATE> 2005-09-19T18:00:00 </POSTDATE>
+
+Great Thing~Good Stuff~
+
+</POST>
+
+
+
+<POST>
+<POSTER> zurdo1119 </POSTER>
+<POSTDATE> 2005-09-19T19:07:00 </POSTDATE>
+
+More international geocoding here:
+
+Argentine streets geocoding
+
+zurdo
+
+
+</POST>
+
+
+
+<POST>
+<POSTER> ludovic.gnemmi@gmail.com </POSTER>
+<POSTDATE> 2005-09-20T07:13:00 </POSTDATE>
+
+Great !
+I've tested with success you're webservice...
+
+Would it be possible with such a webservice to retrieve multiple
+results (first 5 or 10) when the query doesn't match exactly with
+database records?
+
+Thanks,
+
+Ludovic
+
+</POST>
+
+
+
+<POST>
+<POSTER> Raj </POSTER>
+<POSTDATE> 2005-09-20T11:26:00 </POSTDATE>
+
+okay, sounds good. We will implement this additional feature and let
+you know.
+
+Raj
+
+<QUOTE PREVIOUSPOST="
+ludovic.gne ... @gmail.com wrote:
+&gt; Great !
+&gt; I've tested with success you're webservice...
+
+&gt; Would it be possible with such a webservice to retrieve multiple
+&gt; results (first 5 or 10) when the query doesn't match exactly with
+&gt; database records?
+
+&gt; Thanks,
+
+&gt; Ludovic
+
+"/>
+
+
+</POST>
+
+
+
+<POST>
+<POSTER> Raj </POSTER>
+<POSTDATE> 2005-09-22T21:43:00 </POSTDATE>
+
+We have implemented the new features, and the International Geocode
+should be more flexible now. It does honor the state input also.
+
+You can get the new interface from
+
+Now it returns an array of five objects. Each object contains a lat,
+lng, city, state, and country.
+
+In case it finds less than five objects, it will return nulls for those
+values. Null is returned if no values are found. Let me know if you
+want more objects returned, and we can set it to 10 instead of 5.
+
+Give it a spin, and let me know what you think. Will appreciate any
+feedback. This is work-in-progress, so please excuse errors and bugs.
+
+Raj
+
+<QUOTE PREVIOUSPOST="
+Raj wrote:
+&gt; okay, sounds good. We will implement this additional feature and let
+&gt; you know.
+
+&gt; Raj
+
+&gt; ludovic.gne ... @gmail.com wrote:
+&gt;&gt; Great !
+&gt;&gt; I've tested with success you're webservice...
+
+&gt;&gt; Would it be possible with such a webservice to retrieve multiple
+&gt;&gt; results (first 5 or 10) when the query doesn't match exactly with
+&gt;&gt; database records?
+
+&gt;&gt; Thanks,
+
+&gt;&gt; Ludovic
+
+"/>
+
+
+</POST>
+
+
+
+<POST>
+<POSTER> Jabash </POSTER>
+<POSTDATE> 2005-09-24T11:19:00 </POSTDATE>
+
+When I click on the zeesource link I get the source code of the page.
+Is this a service that is meant to be incorporated into another page or
+am I missing something?
+
+</POST>
+
+
+
+<POST>
+<POSTER> Raj </POSTER>
+<POSTDATE> 2005-09-24T14:10:00 </POSTDATE>
+
+The 'source code' is an XML description of the Web Service API that is
+exposed by the service. For example it describes the 'Coordinates'
+object that is returned by the function, 'getCoordinates'.
+It also describes the parameters (city, state, country) required by the
+service.
+
+You use this API to call the Web Service at:
+
+If it will help, I can post a simple Java client that can be used with
+Apache Axis to make the Web service call.
+
+Raj
+
+<QUOTE PREVIOUSPOST="
+Jabash wrote:
+&gt; When I click on the zeesource link I get the source code of the page.
+&gt; Is this a service that is meant to be incorporated into another page or
+&gt; am I missing something?
+
+"/>
+
+
+</POST>
+
+
+
+<POST>
+<POSTER> Micke </POSTER>
+<POSTDATE> 2005-09-25T07:13:00 </POSTDATE>
+
+Hi,
+I just tried using your geocode webservice and have some problems.
+
+I tried it with code generated by wsdl2java (incase there is an issue
+there), but I don't get any results back. Which is probably because I
+search with the wrong terms :)
+
+I've tried:
+raleigh,nc,us
+cambridge,cambridshire,uk
+
+but no nothing.
+Could you please give me some help, thanks.
+
+ps.
+Below are the sent and retrieved Envelopes if it helps:
+Sent:
+POST /maps/services/Geocode HTTP/1.0
+Content-Type: text/xml; charset=utf-8
+Accept: application/soap+xml, application/dime, multipart/related,
+text/*
+User-Agent: Axis/1.2.1
+Host:
+Cache-Control: no-cache
+Pragma: no-cache
+SOAPAction: &quot;&quot;
+Content-Length: 730
+
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;soapenv:Envelope
+xmlns:soapenv=&quot;&quot;
+xmlns:xsd=&quot;&quot;xmlns:xsi=&quot;&quot;&gt;
+&lt;soapenv:Body&gt;
+&lt;ns1:getCoordinates
+soapenv:encodingStyle=&quot;&quot;xmlns:ns1=&quot;&quot;&gt;
+&lt;city xsi:type=&quot;soapenc:string&quot;
+xmlns:soapenc=&quot;&quot;&gt;Cambridge&lt;/city&gt;
+&lt;state xsi:type=&quot;soapenc:string&quot;
+xmlns:soapenc=&quot;&quot;&gt;cambridgeshire&lt;/state&gt;
+&lt;country xsi:type=&quot;soapenc:string&quot;
+xmlns:soapenc=&quot;&quot;&gt;UK&lt;/country&gt;
+&lt;/ns1:getCoordinates&gt;
+&lt;/soapenv:Body&gt;
+&lt;/soapenv:Envelope&gt;
+
+Retrieved:
+HTTP/1.0 200 OK
+Date: Sun, 25 Sep 2005 11:50:38 GMT
+Content-Type: text/xml;charset=utf-8
+Server: Apache/2.0.52 (Unix) mod_ssl/2.0.52 OpenSSL/0.9.6e mod_jk/1.2.5
+
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+&lt;soapenv:Envelope
+xmlns:soapenv=&quot;&quot;
+xmlns:xsd=&quot;&quot;xmlns:xsi=&quot;&quot;&gt;
+&lt;soapenv:Body&gt;
+&lt;ns1:getCoordinatesResponse
+soapenv:encodingStyle=&quot;&quot;xmlns:ns1=&quot;&quot;&gt;
+&lt;getCoordinatesReturn
+soapenc:arrayType=&quot;ns2:Coordinates[5]&quot; xsi:type=&quot;soapenc:Array&quot;
+xmlns:ns2=&quot;urn:ZeemapsService&quot;
+xmlns:soapenc=&quot;&quot;&gt;
+&lt;getCoordinatesReturn xsi:type=&quot;ns2:Coordinates&quot;
+xsi:nil=&quot;true&quot;/&gt;
+&lt;getCoordinatesReturn xsi:type=&quot;ns2:Coordinates&quot;
+xsi:nil=&quot;true&quot;/&gt;
+&lt;getCoordinatesReturn xsi:type=&quot;ns2:Coordinates&quot;
+xsi:nil=&quot;true&quot;/&gt;
+&lt;getCoordinatesReturn xsi:type=&quot;ns2:Coordinates&quot;
+xsi:nil=&quot;true&quot;/&gt;
+&lt;getCoordinatesReturn xsi:type=&quot;ns2:Coordinates&quot;
+xsi:nil=&quot;true&quot;/&gt;
+&lt;/getCoordinatesReturn&gt;
+&lt;/ns1:getCoordinatesResponse&gt;
+&lt;/soapenv:Body&gt;
+&lt;/soapenv:Envelope&gt;
+
+<QUOTE PREVIOUSPOST="
+Raj wrote:
+&gt; The 'source code' is an XML description of the Web Service API that is
+&gt; exposed by the service. For example it describes the 'Coordinates'
+&gt; object that is returned by the function, 'getCoordinates'.
+&gt; It also describes the parameters (city, state, country) required by the
+&gt; service.
+
+&gt; You use this API to call the Web Service at:
+&gt; http://www.zeesource.net/maps/services/Geocode
+
+&gt; If it will help, I can post a simple Java client that can be used with
+&gt; Apache Axis to make the Web service call.
+
+&gt; Raj
+
+&gt; Jabash wrote:
+&gt;&gt; When I click on the zeesource link I get the source code of the page.
+&gt;&gt; Is this a service that is meant to be incorporated into another page or
+&gt;&gt; am I missing something?
+
+"/>
+
+
+</POST>
+
+
+
+<POST>
+<POSTER> Raj </POSTER>
+<POSTDATE> 2005-09-25T13:11:00 </POSTDATE>
+
+our apologies, the webservice is currently very sensitive to names and
+spellings.
+
+Try looking for:
+
+Cambridge,Cambridgeshire,United Kingdom
+Raleigh,North Carolina,United States
+
+We'll be improving the interface in the coming days to accept short
+forms for countries, e.g., UK and US. For now, please enter the full
+name of a country with each word capitalized (including 'and' and
+'the', etc.)
+
+Let us know if the above queries still do not work.
+
+Raj
+
+<QUOTE PREVIOUSPOST="
+Micke wrote:
+&gt; Hi,
+&gt; I just tried using your geocode webservice and have some problems.
+
+&gt; I tried it with code generated by wsdl2java (incase there is an issue
+&gt; there), but I don't get any results back. Which is probably because I
+&gt; search with the wrong terms :)
+
+&gt; I've tried:
+&gt; raleigh,nc,us
+&gt; cambridge,cambridshire,uk
+
+&gt; but no nothing.
+&gt; Could you please give me some help, thanks.
+
+&gt; ps.
+&gt; Below are the sent and retrieved Envelopes if it helps:
+&gt; Sent:
+&gt; POST /maps/services/Geocode HTTP/1.0
+&gt; Content-Type: text/xml; charset=utf-8
+&gt; Accept: application/soap+xml, application/dime, multipart/related,
+&gt; text/*
+&gt; User-Agent: Axis/1.2.1
+&gt; Host:  www.zeesource.net
+&gt; Cache-Control: no-cache
+&gt; Pragma: no-cache
+&gt; SOAPAction: &quot;&quot;
+&gt; Content-Length: 730
+
+&gt;&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&gt;&lt;soapenv:Envelope
+&gt; xmlns:soapenv=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;
+&gt; xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot;
+&gt; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+&gt;&lt;soapenv:Body&gt;
+&gt;&lt;ns1:getCoordinates
+&gt; soapenv:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot;
+&gt; xmlns:ns1=&quot;http://maps.zeesource.com&quot;&gt;
+&gt;&lt;city xsi:type=&quot;soapenc:string&quot;
+&gt; xmlns:soapenc=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot;&gt;Cambridge&lt;/city&gt;
+&gt;&lt;state xsi:type=&quot;soapenc:string&quot;
+&gt; xmlns:soapenc=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot;&gt;cambridgeshire&lt;/state&gt;
+&gt;&lt;country xsi:type=&quot;soapenc:string&quot;
+&gt; xmlns:soapenc=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot;&gt;UK&lt;/country&gt;
+&gt;&lt;/ns1:getCoordinates&gt;
+&gt;&lt;/soapenv:Body&gt;
+&gt;&lt;/soapenv:Envelope&gt;
+
+&gt; Retrieved:
+&gt; HTTP/1.0 200 OK
+&gt; Date: Sun, 25 Sep 2005 11:50:38 GMT
+&gt; Content-Type: text/xml;charset=utf-8
+&gt; Server: Apache/2.0.52 (Unix) mod_ssl/2.0.52 OpenSSL/0.9.6e mod_jk/1.2.5
+
+&gt;&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+&gt;&lt;soapenv:Envelope
+&gt; xmlns:soapenv=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;
+&gt; xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot;
+&gt; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+&gt;&lt;soapenv:Body&gt;
+&gt;&lt;ns1:getCoordinatesResponse
+&gt; soapenv:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot;
+&gt; xmlns:ns1=&quot;http://maps.zeesource.com&quot;&gt;
+&gt;&lt;getCoordinatesReturn
+&gt; soapenc:arrayType=&quot;ns2:Coordinates[5]&quot; xsi:type=&quot;soapenc:Array&quot;
+&gt; xmlns:ns2=&quot;urn:ZeemapsService&quot;
+&gt; xmlns:soapenc=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot;&gt;
+&gt;&lt;getCoordinatesReturn xsi:type=&quot;ns2:Coordinates&quot;
+&gt; xsi:nil=&quot;true&quot;/&gt;
+&gt;&lt;getCoordinatesReturn xsi:type=&quot;ns2:Coordinates&quot;
+&gt; xsi:nil=&quot;true&quot;/&gt;
+&gt;&lt;getCoordinatesReturn xsi:type=&quot;ns2:Coordinates&quot;
+&gt; xsi:nil=&quot;true&quot;/&gt;
+&gt;&lt;getCoordinatesReturn xsi:type=&quot;ns2:Coordinates&quot;
+&gt; xsi:nil=&quot;true&quot;/&gt;
+&gt;&lt;getCoordinatesReturn xsi:type=&quot;ns2:Coordinates&quot;
+&gt; xsi:nil=&quot;true&quot;/&gt;
+&gt;&lt;/getCoordinatesReturn&gt;
+&gt;&lt;/ns1:getCoordinatesResponse&gt;
+&gt;&lt;/soapenv:Body&gt;
+&gt;&lt;/soapenv:Envelope&gt;
+
+&gt; Raj wrote:
+&gt;&gt; The 'source code' is an XML description of the Web Service API that is
+&gt;&gt; exposed by the service. For example it describes the 'Coordinates'
+&gt;&gt; object that is returned by the function, 'getCoordinates'.
+&gt;&gt; It also describes the parameters (city, state, country) required by the
+&gt;&gt; service.
+
+&gt;&gt; You use this API to call the Web Service at:
+&gt;&gt; http://www.zeesource.net/maps/services/Geocode
+
+&gt;&gt; If it will help, I can post a simple Java client that can be used with
+&gt;&gt; Apache Axis to make the Web service call.
+
+&gt;&gt; Raj
+
+&gt;&gt; Jabash wrote:
+&gt;&gt;&gt; When I click on the zeesource link I get the source code of the page.
+&gt;&gt;&gt; Is this a service that is meant to be incorporated into another page or
+&gt;&gt;&gt; am I missing something?
+
+"/>
+
+
+</POST>
+
+
+
+<POST>
+<POSTER> dhpollack </POSTER>
+<POSTDATE> 2005-09-25T20:17:00 </POSTDATE>
+
+Are there any plans for an xml-rpc version of this geocoder?
+
+</POST>
+
+
+
+<POST>
+<POSTER> ludovic.gnemmi@gmail.com </POSTER>
+<POSTDATE> 2005-09-26T16:32:00 </POSTDATE>
+
+Hi Raj,
+I always receive an error (HTTP Error: socket read of headers timed
+out) when there is no result. Do i miss something?
+
+With full and existing names everything ok.
+
+Thanks
+
+Ludovic
+
+</POST>
+
+
+
+<POST>
+<POSTER> ludovic.gnemmi@gmail.com </POSTER>
+<POSTDATE> 2005-09-26T16:42:00 </POSTDATE>
+
+btw,
+here is a small php code i use (with nusoap library) to test the
+webservice:
+
+&lt;html&gt;
+&lt;head&gt;
+&lt;title&gt;Webservice Test&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;?php
+
+include('../lib/nusoap.php');
+
+$wsdl = &quot;&quot;;
+
+$client = new soapclient($wsdl, 'wsdl');
+
+$params = array(
+'city' =&gt; 'Paris',
+'state' =&gt; '',
+'country' =&gt; 'France'
+);
+
+$result=$client-&gt;call('getCoordinates', $params);
+
+// Check for errors
+$err = $client-&gt;getError();
+if ($err)
+{
+// Display the error
+echo '&lt;h2&gt;Error&lt;/h2&gt;&lt;pre&gt;' . $err . '&lt;/pre&gt;';
+<QUOTE PREVIOUSPOST="
+} else
+
+"/>
+
+{
+// Display the result
+echo '&lt;h2&gt;Result&lt;/h2&gt;&lt;pre&gt;';
+print_r($result);
+echo '&lt;/pre&gt;';
+
+<QUOTE PREVIOUSPOST="
+}
+
+"/>
+
+?&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+
+</POST>
+
+
+
+<POST>
+<POSTER> Raj </POSTER>
+<POSTDATE> 2005-09-26T16:54:00 </POSTDATE>
+
+Yes, we should be able to pull this together. Please give us a day or
+two, and we will post a message on this group.
+
+Raj
+
+<QUOTE PREVIOUSPOST="
+dhpollack wrote:
+&gt; Are there any plans for an xml-rpc version of this geocoder?
+
+"/>
+
+
+</POST>
+
+
+
+<POST>
+<POSTER> Raj </POSTER>
+<POSTDATE> 2005-09-26T16:56:00 </POSTDATE>
+
+Don't know what may be causing this. My java client does not give the
+same problem with no results.
+
+For the time being, will this work for you to assume a &quot;No Result&quot; when
+this message occurs?
+
+If anyone can help us debug this, would appreciate it!
+
+Raj
+
+</POST>
+
+
+
+<POST>
+<POSTER> Micke </POSTER>
+<POSTDATE> 2005-09-29T03:09:00 </POSTDATE>
+
+Hi Ray,
+thanks for the information and for a great service.
+
+Micke
+
+</POST>
+
+
+
+<POST>
+<POSTER> Oceatoon </POSTER>
+<POSTDATE> 2005-10-05T13:29:00 </POSTDATE>
+
+Hi there
+Yes me too ?
+Are your geocoders in database format ? in which case would it possible
+to have access to a csv or an sql file, this would make me gain loads
+of time, of parsing nga and other files ?
+I'm also curious of what rows you would put in your tables for a
+geocoder ?
+Thx
+Tibor
+
+</POST>
+
+
+
+<POST>
+<POSTER> aaron@campusactivism.org </POSTER>
+<POSTDATE> 2005-10-13T03:24:00 </POSTDATE>
+
+The MySQL is rather big. Mine is 400 mb, though you might be able to
+get rid of some of the 250mb of indexes. Still I think it'd be more
+than 300mb and probably at least 350mb.
+
+I created three tables. One for the places. One for
+states/administrative districts. One for countries.
+
+Here are the fields I used:
+
+Geonames Table
+3.6 million rows - up to 4.5 million if you include unpopulated
+places
+iAdmid smallint(6)
+ID mediumint(8)
+sRegionCode tinyint(3)
+fLat float
+fLong float
+sDSG varchar(255)
+sPopulationcode char(2)
+sCountrycode char(2)
+sADM1 char(2)
+sADM2 char(2)
+sCountrycode2 char(2)
+sFull_namend varchar(255)
+
+ADM Table
+4791 rows - states/administrative districts
+iAdmid smallint (6)
+sCountryCode char (2)
+sADM char (2)
+sName varchar (100)
+
+country_code table
+251 rows (includes very small islands)
+ID smallint (6)
+sCountrycode char (2)
+sName varchar (200)
+
+</POST>
+
+
+
+<POST>
+<POSTER> aaron@campusactivism.org </POSTER>
+<POSTDATE> 2005-10-13T03:26:00 </POSTDATE>
+
+When I enter a city that I know doesn't exist I get the following
+error:
+
+Fatal error: Maximum execution time of 30 seconds exceeded in
+c:\webserve\eactobj\include-both\nusoap.php on line 2560
+
+</POST>
+
+
+
+<POST>
+<POSTER> aaron@campusactivism.org </POSTER>
+<POSTDATE> 2005-10-13T03:39:00 </POSTDATE>
+
+The webservice works ok. It doesn't work if you have a slightly old
+version of Nusoap.php (ex. version 0.6.7 which is only 8 months old
+gives a string error).
+
+I would suggest
+1) providing a webservice that guesses the longitude and latitude if
+there are multiple city/country combinations.
+
+AND (in a seperate service)
+
+2) providing the user with the information that they need to make an
+informed guess (notably DSG and the Population Code)
+
+For information on prioritization, see my previous posts. Basically:
+
+<QUOTE PREVIOUSPOST="
+&gt;If there are multiple cities in the same country (and the user
+&gt;doesn't enter the state properly), I prioritize
+&gt;1) the capital city
+&gt;2) an administrative capital
+&gt;3) places with higher population (unfortunately this information only
+&gt;covers a small percent of the GNS database)
+
+"/>
+
+Also, if two or more cities are within a couple miles of each other (I
+did plus or minus 0.1 degrees longitude/latitude), assume that they are
+the same city.
+
+Without a state you'll still have massive trouble (as 1/4 of the
+city/country combinations are duplicates). And getting a state might
+be hard, as each country has it's own way of organizing its state
+structure (ex. in france they use regions, when you might expect them
+to use departments -- france has two levels of states).
+
+</POST>
+
+
+
+<POST>
+<POSTER> aaron@campusactivism.org </POSTER>
+<POSTDATE> 2005-10-16T22:13:00 </POSTDATE>
+
+You can download my PHP script and my MySQL database (my compact
+version of the GNS database).
+
+Note: The script outputs an array of states, if the user doesn't
+provide one (and if it doesn't make sense to guess the state).
+
+My script doesn't include the code to ask the user to choose a state,
+and then to find the longitude/latitude based on that. However that's
+pretty simple stuff and is slightly dependant upon your user interface.
+
+</POST>
+
+
+
+<POST>
+<POSTER> ludovic.gnemmi@gmail.com </POSTER>
+<POSTDATE> 2005-10-17T07:28:00 </POSTDATE>
+
+Hi Raj,
+- I noticed that you did some improvements. How sensitive is your
+webservice exactly?
+- I'd like to add in my app a drop down country list with french
+spelling. Could you give us a complete list of countries which are
+supported?
+- i don't receive any time out errors anymore but it's quite long
+(20-25 seconds) when there's no result. Is that time the regular
+response time?
+
+Thanks a lot for your answer.
+
+</POST>
+
+
+
+<POST>
+<POSTER> Raj </POSTER>
+<POSTDATE> 2005-10-17T22:26:00 </POSTDATE>
+
+Hi Ludovic,
+
+- Don't know how sensitive the service is right now. Quite a few
+people have made world-wide entries at zeemaps.com and they seemed to
+be satisfied with the results they are getting. No major complaints so
+far.
+
+- Yes, the country list is available from the original data source.
+You can get the list from their FTP server at:
+. I think it's the
+_fips_country_code_def.txt file. Keep in mind that we capitalized each
+word of all countries.
+
+- The service is currently not throttled, and if there's heavy load
+then response times can be really poor. For example, yesterday we
+noticed someone was doing several geocoding queries relatively fast,
+and it brought the server to a crawl.
+
+We are looking at throttling solutions, but it doesn't seem that
+straightforward. We are using Apache 2.0 with mod_jk, tomcat, and axis
+servlet. If anyone knows how to effectively throttle requests, please
+let me know. Otherwise, we'll work out our own solution. The idea would
+be to space out automated queries somewhat so that the server doesn't
+get too bogged down.
+
+BTW, this looks like an interesting applciation for a nice distributed
+P2P service. If someone has ideas of how we can distribute the load
+over several servers so that one server doesn't bear the whole load,
+let us know.
+
+Raj
+
+</POST>
+
+
+
+<POST>
+<POSTER> Raj </POSTER>
+<POSTDATE> 2005-10-17T22:39:00 </POSTDATE>
+
+1) I'm not sure I understand this point. Usually, a city/state/country
+spec is pretty unique. We also do provide upto five answers when there
+are multiple results.
+
+2) Oops... we already took that information out when importing the
+data. So, will have to wait until we need to re-import again.
+
+3) I suppose the last two points you are making is for trying to clean
+up the data. This may not be necessary in practice as if there are
+multiple locations close to each other as long as each one of them is
+correct in its own way, then we are okay. Sometimes cities have
+multiple names, or they may record different points in the same city.
+For our purpose (zeemaps) we are trying to give users a general handle
+of a location on a world map.
+
+Yes states could potentially be an issue, but again in practice it may
+be okay.
+
+Let me know if you notice any specific problems with the results
+returned.
+
+<QUOTE PREVIOUSPOST="
+a ... @campusactivism.org wrote:
+&gt; The webservice works ok. It doesn't work if you have a slightly old
+&gt; version of Nusoap.php (ex. version 0.6.7 which is only 8 months old
+&gt; gives a string error).
+
+&gt; I would suggest
+&gt; 1) providing a webservice that guesses the longitude and latitude if
+&gt; there are multiple city/country combinations.
+
+&gt; AND (in a seperate service)
+
+&gt; 2) providing the user with the information that they need to make an
+&gt; informed guess (notably DSG and the Population Code)
+
+&gt; For information on prioritization, see my previous posts. Basically:
+
+&gt;&gt;If there are multiple cities in the same country (and the user
+&gt;&gt;doesn't enter the state properly), I prioritize
+&gt;&gt;1) the capital city
+&gt;&gt;2) an administrative capital
+&gt;&gt;3) places with higher population (unfortunately this information only
+&gt;&gt;covers a small percent of the GNS database)
+
+&gt; Also, if two or more cities are within a couple miles of each other (I
+&gt; did plus or minus 0.1 degrees longitude/latitude), assume that they are
+&gt; the same city.
+
+&gt; Without a state you'll still have massive trouble (as 1/4 of the
+&gt; city/country combinations are duplicates). And getting a state might
+&gt; be hard, as each country has it's own way of organizing its state
+&gt; structure (ex. in france they use regions, when you might expect them
+&gt; to use departments -- france has two levels of states).
+
+"/>
+
+
+</POST>
+
+
+
+<POST>
+<POSTER> J. Shirley </POSTER>
+<POSTDATE> 2005-10-18T07:23:00 </POSTDATE>
+
+Hey there Raj,
+I think that this is your best bet for Apache2:
+
+I haven't used it yet, so please do keep me posted if you try it how it
+works for you.
+
+-J
+
+--
+
+toEat.com: Hungry? Lost? We can help.
+
+</POST>
+
+
+
+<POST>
+<POSTER> Paul Sidler </POSTER>
+<POSTDATE> 2005-10-18T24:18:00 </POSTDATE>
+
+Hi,
+
+I tried your service at
+and it works great
+for me!
+
+Is this service just a quick test environment, or will this be a
+long-term service which I can rely on when building my website?
+
+Regards,
+Paul
+
+</POST>
+
+
+
+<POST>
+<POSTER> Andrew </POSTER>
+<POSTDATE> 2005-10-18T13:01:00 </POSTDATE>
+
+I'm eagerly awaiting a REST interface. Possible?
+
+</POST>
+
+
+
+<POST>
+<POSTER> Raj </POSTER>
+<POSTDATE> 2005-10-18T15:35:00 </POSTDATE>
+
+My apologies, XML-RPC and REST interface sort off fell into the cracks.
+Will be first priority now.
+
+Raj
+
+</POST>
+
+
+
+<POST>
+<POSTER> Raj </POSTER>
+<POSTDATE> 2005-10-18T15:37:00 </POSTDATE>
+
+This is here to stay for the forseeable future. If we are going to take
+it down, we will give at least two months notice.
+
+That being said, this is still work under progress. If the service
+receives too many requests concurrently, it seems to come to a halt. We
+are in the process of fixing this. So, please expect it as a Alpha
+service for the next month or so.
+
+Raj
+
+</POST>
+
+
+
+<POST>
+<POSTER> Oceatoon </POSTER>
+<POSTDATE> 2005-10-19T13:29:00 </POSTDATE>
+
+Hi Raj
+
+I'm testing your webservice
+it's great that when I only right a few letters he returns
+possibilities on the other hand if I submit a non sens string like this
+fgsgsf fsgfsg , it runs till an inactivity messge pops up ?
+is this the correct result ? in which case maybe return a empty array
+would be better no ?
+or am I getting it wrong ?
+
+Regards Tibor
+
+</POST>
+
+
+
+<POST>
+<POSTER> Raj </POSTER>
+<POSTDATE> 2005-10-19T17:44:00 </POSTDATE>
+
+Okay, we have an EARLY version of REST and XML-RPC interface available
+for testing.
+
+For the REST interface:
+
+Try:
+
+It should give you back CSV lines as:
+48.866667,2.333333,Paris,France (general),France
+45.633333,5.733333,Paris,Rhone-alpes,France
+where the CSV lines are:
+latitude, longitude, city, state, country
+
+For the XML-RPC interface:
+Here's my test python client:
+
+import xmlrpclib
+server_url = '
+server = xmlrpclib.Server(server_url);
+print server.getCoordinates('delhi', '', 'India')
+
+This prints out:
+
+[{'latitude': 28.800000000000001, 'city': 'Bawana Delhi', 'state':
+'Delhi', 'longitude': 77.033332999999999, 'country': 'India'},
+{'latitude': 28.666667, 'city': 'Delhi', 'state': 'Delhi', 'longitude':
+77.216667000000001, 'country': 'India'}, {'latitude': 28.75, 'city':
+'State Of Delhi', 'state': 'Delhi', 'longitude': 77.25, 'country':
+'India'}, {'latitude': 28.75, 'city': 'Union Territory Of Delhi',
+'state': 'Delhi', 'longitude': 77.25, 'country': 'India'}, {'latitude':
+28.616667, 'city': 'Delhi Paharganj', 'state': 'Delhi', 'longitude':
+77.216667000000001, 'country': 'India'}]
+
+This is all preliminary versions to be tested. Pl. let me know if you
+see any problems. We are working on better documentation and further
+testing.
+
+Raj
+
+<QUOTE PREVIOUSPOST="
+Andrew wrote:
+&gt; I'm eagerly awaiting a REST interface. Possible?
+
+"/>
+
+
+</POST>
+
+
+
+<POST>
+<POSTER> Raj </POSTER>
+<POSTDATE> 2005-10-19T17:45:00 </POSTDATE>
+
+Thanks, Tibor.
+
+The unusually long delay is because it's doing a lot of searching etc.
+and not finding those strings. We are currently working on the
+performance issue, and it should be fixed soon.
+
+The XML-RPC and REST interfaces that I just posted should not have such
+unusually large response times.
+
+Will let you know as soon as the SOAP performance is improved.
+
+Raj
+
+</POST>
+
+
+
+<POST>
+<POSTER> Raj </POSTER>
+<POSTDATE> 2005-10-20T10:46:00 </POSTDATE>
+
+Tibor,
+
+We have now fixed the performance problem with the SOAP interface.
+Please give it another try and let me know if you still have those
+problems.
+
+Also, there is now some documentation for the interface at:
+
+Raj
+
+</POST>
+
+
+
+<POST>
+<POSTER> Oceatoon </POSTER>
+<POSTDATE> 2005-10-24T24:00:00 </POSTDATE>
+
+Hi Raj
+Good stuff :)
+would it be possible to return more than 4 search results ? 10 would be
+great .
+I noticed that your search engine function looks for substring of the
+word and not starts with.
+Ex: if I type: ban in india the first results will be cities :
+Abaibani, India
+Agaibani, India
+Asanbani, India
+Asurabandh, India
+Babbanpur, India
+and not those starting with 'ban' like bangalor or bangali
+maybe this is made purposly??
+Regards
+Tibor
+
+</POST>
+
+
+
+<POST>
+<POSTER> Paul Sidler </POSTER>
+<POSTDATE> 2005-10-24T14:14:00 </POSTDATE>
+
+Hello all,
+
+I made a most simple form, to submit to the webservice-test page:
+
+&lt;FORM METHOD=&quot;GET&quot; ACTION=&quot;&lt;?=$PHP_SELF?&gt;&quot;&gt;
+City &lt;INPUT TYPE=&quot;TEXT&quot; NAME=&quot;city&quot;&gt;&lt;BR&gt;&lt;BR&gt;
+Country &lt;INPUT TYPE=&quot;TEXT&quot; NAME=&quot;country&quot;&gt;&lt;BR&gt;&lt;BR&gt;
+&lt;INPUT TYPE=&quot;HIDDEN&quot; NAME=&quot;ingevoerd&quot; value=&quot;1&quot;&gt;
+&lt;INPUT TYPE=&quot;SUBMIT&quot;&gt;
+&lt;/FORM&gt;
+
+The only thing I changed in this test page is this:
+$params = array(
+'city' =&gt; $HTTP_POST_VARS['city'],
+'state' =&gt; '',
+'country' =&gt; $HTTP_POST_VARS['country']
+);
+
+Why isn't this working? When I type the city &amp; country in the source code
+instead, it works fine.
+
+Thanks for any help.
+
+Regards,
+Paul Sidler
+
+</POST>
+
+
+
+<POST>
+<POSTER> Oceatoon </POSTER>
+<POSTDATE> 2005-10-25T03:09:00 </POSTDATE>
+
+Hi Raj
+I&quot;m thinking of how to mirror your service cause once people will be
+using it massively it can quickly go into overload. could you please
+describe which language you use and which DB, to see if we can help out
+on this point, if your interested ?
+This is also to know in what format we should set up data if we want to
+send you our DB content (I have correct France geocoding), coz
+sometimes(very few :) results are ambiguous.
+
+I made a city suggestion system as people type in the city name, and
+when they click on a suggestion takes them to that location, check it
+out
+it calls your SOAP interface through HttpRequest, works great :-),
+Thanks again.
+
+Regards
+Tibor
+
+</POST>
+
+
+
+<POST>
+<POSTER> Paul Sidler </POSTER>
+<POSTDATE> 2005-10-25T05:26:00 </POSTDATE>
+
+Hi,
+
+That looks really good to me! I was wondering: would you share this PHP code with us? I am still trying to pass throug city &amp; country to the example connect &amp; get data page, but without many luck.
+
+Thanks in advance.
+
+Regards,
+Paul
+--------- Oorspronkelijk bericht --------
+Van: Google-Maps-API@googlegroups.com
+Naar: "Google-Maps-API" &lt;Google-Maps-API@googlegroups.com&gt;
+Onderwerp: Re: So you need International Geocoding?
+Datum: 25/10/05 09:13
+
+Hi Raj
+I"m thinking of how to mirror your service cause once people will be
+using it massively it can quickly go into overload. could you please
+describe which language you use and which DB, to see if we can help out
+on this point, if your interested ?
+This is also to know in what format we should set up data if we want to
+send you our DB content (I have correct France geocoding), coz
+sometimes(very few :) results are ambiguous.
+
+I made a city suggestion system as people type in the city name, and
+when they click on a suggestion takes them to that location, check it
+out  http://uneternet.free.fr/modules/GMaps/
+it calls your SOAP interface through HttpRequest, works great :-),
+Thanks again.
+
+Regards
+Tibor
+
+________________________________________________
+Dit bericht is verzonden met ImageCompany webmail 2.7.2
+
+</POST>
+
+
+
+<POST>
+<POSTER> Oceatoon </POSTER>
+<POSTDATE> 2005-10-25T08:28:00 </POSTDATE>
+
+Offcourse I can share but I'd like Raj to tell us how much load he can
+take cause these kind of accesses to his DB from many sources might be
+an overload for them, which is why it would be good to have more than
+one source of data.
+WDYT then Raj 'n' Co ?
+Regards
+Tibor
+
+</POST>
+
+
+
+<POST>
+<POSTER> Raj </POSTER>
+<POSTDATE> 2005-10-25T10:44:00 </POSTDATE>
+
+Hi Tibor,
+
+Thanks for using the service and your feedback.
+
+We do the name matching for city name and state name using the
+Postgresql regular expression matching, case insensitive. So, for
+example if you do:
+
+bang&amp;state=&amp;country=India
+
+You should get:
+
+31.186944,75.992222,Banga,Punjab,India
+24.866667,88.283333,Bangabari,India (general),India
+24.866667,88.283333,Bangahari,India (general),India
+26.783333,94.583333,Bangali,Assam,India
+26.783333,94.583333,Bangali Garigaon,Assam,India
+
+You can find more information about the regular expression syntax at:
+
+We can certainly increase the number of results to 10. Will get to it,
+may take some time. Let me know if it is urgent.
+
+Raj
+
+<QUOTE PREVIOUSPOST="
+Oceatoon wrote:
+&gt; Hi Raj
+&gt; Good stuff :)
+&gt; would it be possible to return more than 4 search results ? 10 would be
+&gt; great .
+&gt; I noticed that your search engine function looks for substring of the
+&gt; word and not starts with.
+&gt; Ex: if I type: ban in india the first results will be cities :
+&gt; Abaibani, India
+&gt; Agaibani, India
+&gt; Asanbani, India
+&gt; Asurabandh, India
+&gt; Babbanpur, India
+&gt; and not those starting with 'ban' like bangalor or bangali
+&gt; maybe this is made purposly??
+&gt; Regards
+&gt; Tibor
+
+"/>
+
+
+</POST>
+
+
+
+<POST>
+<POSTER> Raj </POSTER>
+<POSTDATE> 2005-10-25T10:52:00 </POSTDATE>
+
+Hi Tibor,
+
+We are using postgresql as our database. The query for geocoding is
+written as a PL/pgsql stored procedure.
+
+One way you can help is if you can put a link to Zeemaps
+( ) on your site :-)
+
+More seriously, it will be great if you can provide some of the
+geocoding on your server. For instance, we could distribute by country.
+If you have good data for France, then we can send queries for France
+to your site, and the rest of the queries can be answered from zeemaps
+server. To start off, we can do this manually and later shift to a more
+automated system.
+
+Let me know if this makes sense and I can post some more details of
+the DB schema and the stored procedure.
+
+So far, the server seems to be handling the load okay after the
+performance improvements.
+
+Raj
+
+</POST>
+
+
+
+<POST>
+<POSTER> Oceatoon </POSTER>
+<POSTDATE> 2005-10-25T24:27:00 </POSTDATE>
+
+- thanks for the RegEx hint , works well .
+- your link is on my site :-)
+- I gathered a DB for French locations, but how can we set this up I
+don't have much experience with SOAP, RPC nore REST, but it doesn't
+scare me if you guide me in. I use Mysql but that should make a
+difference. Send me your specs , and directions I should take, and I'll
+set things up. you can use my gmail on this account.
+I also set up a process for moderators of the site to have the right to
+add any extra location if it's not in DB.
+Regards
+Tibor
+
+</POST>
+
+
+
+<POST>
+<POSTER> Andrew </POSTER>
+<POSTDATE> 2005-10-25T24:52:00 </POSTDATE>
+
+I know this is asking a lot, but is there a possibility to allow for
+just one single string of text for the REST interface? For instance, I
+am limited on space and can only easily display one text field. I
+envision just sending directly whatever is entered, something like:
+
+?region=San+Diego%2C+CA+92103
+
+It's possible that on your end you could do a &quot;best guess&quot; via regular
+expressions. Or is this already possible?
+
+</POST>
+
+
+
+<POST>
+<POSTER> Paul Sidler </POSTER>
+<POSTDATE> 2005-10-26T07:47:00 </POSTDATE>
+
+Hello,
+
+I tried the SOAP connection on my localhost and everything works fine. But,
+when I upload it to an external server, I get the following message:
+
+HTTP Error: Couldn't open socket connection to server
+, Error (110): Connection
+timed out
+
+What is going wrong, do I have to change something in the server config?
+
+Regards,
+Paul
+
+</POST>
+
+
+
+<POST>
+<POSTER> Raj </POSTER>
+<POSTDATE> 2005-10-26T11:53:00 </POSTDATE>
+
+Sure. SOAP, XML-RPC, and REST are not that hard to set up, they just
+sound big at the moment:-)
+
+I'd suggest you start with REST, which is the simplest of all. Here you
+are just providing a URL to your clients, with the right parameters.
+Instead of returning HTML, you will return a list of CSV values. You
+can do this in your favorite language for web server ... looks like you
+are using PHP, we use Java servlets.
+
+For SOAP and XML-RPC, pick up the PHP libraries for severs and they
+should have instructions on how to write the servers. They are usually
+simple. For example, we got the basic Python XML-RPC server working in
+about an hour or so.
+
+Raj
+
+P.S. I could not locate our link on your web page. Am I missing
+something?
+
+<QUOTE PREVIOUSPOST="
+Oceatoon wrote:
+&gt; - thanks for the RegEx hint , works well .
+&gt; - your link is on my site :-)
+&gt; - I gathered a DB for French locations, but how can we set this up I
+&gt; don't have much experience with SOAP, RPC nore REST, but it doesn't
+&gt; scare me if you guide me in. I use Mysql but that should make a
+&gt; difference. Send me your specs , and directions I should take, and I'll
+&gt; set things up. you can use my gmail on this account.
+&gt; I also set up a process for moderators of the site to have the right to
+&gt; add any extra location if it's not in DB.
+&gt; Regards
+&gt; Tibor
+
+"/>
+
+
+</POST>
+
+
+
+<POST>
+<POSTER> Raj </POSTER>
+<POSTDATE> 2005-10-26T11:56:00 </POSTDATE>
+
+Well, I suppose the question is which side we do the parsing, on the
+client or the server :-) You could also do the parsing on the
+Javascript or your server side and then send the query with appropriate
+parameters to our server.
+
+In general that may be a better solution as it takes some load (albeit
+small) off the server.
+
+Raj
+
+</POST>
+
+
+
+<POST>
+<POSTER> Raj </POSTER>
+<POSTDATE> 2005-10-26T11:57:00 </POSTDATE>
+
+Hmm.. that's strange. Do you have some proxy or other settings that
+require changing?
+
+Raj
+
+</POST>
+
+
+
+<POST>
+<POSTER> ludovic.gnemmi@gmail.com </POSTER>
+<POSTDATE> 2005-10-31T05:48:00 </POSTDATE>
+
+Hi Raj,
+Your SOAP interface is now really fast (maybe faster than my DB
+:)...Great !!
+
+I have another request...Maybe it's too much or you simply don't have
+data...Would it be possible, when city is empty in our queries that you
+return the centroid of the country rather than 5 first cities. It would
+be cool.
+
+Ludovic
+
+</POST>
+
+
+
+<POST>
+<POSTER> Raj </POSTER>
+<POSTDATE> 2005-10-31T17:43:00 </POSTDATE>
+
+Hi Ludovic,
+
+Thanks. Glad to know the performance is improved now.
+
+Regarding the centroid of countries, how about if we have another
+function, say getCentroid(country), or getCoordinates(country)?
+
+That way, the change will be backward compatible.
+
+Raj
+
+<QUOTE PREVIOUSPOST="
+ludovic.gne ... @gmail.com wrote:
+&gt; Hi Raj,
+&gt; Your SOAP interface is now really fast (maybe faster than my DB
+&gt; :)...Great !!
+
+&gt; I have another request...Maybe it's too much or you simply don't have
+&gt; data...Would it be possible, when city is empty in our queries that you
+&gt; return the centroid of the country rather than 5 first cities. It would
+&gt; be cool.
+
+&gt; Ludovic
+
+"/>
+
+
+</POST>
+
+
+
+<POST>
+<POSTER> Oceatoon </POSTER>
+<POSTDATE> 2005-11-01T06:10:00 </POSTDATE>
+
+Thanks Raj
+Will be checking the REST, SOAP and XML-RPC as soon as I get a moment,
+about your link please look on the open atlas projects page. I don't an
+image for your logo though if you could end me something it would look
+better.
+Cheers
+Tibor
+
+</POST>
+
+
+
+<POST>
+<POSTER> ludovic.gnemmi@gmail.com </POSTER>
+<POSTDATE> 2005-11-01T07:13:00 </POSTDATE>
+
+Hi Raj,
+Good idea. Let us know when this new function will be available. Both
+names seem ok to me.
+
+Thanks a lot
+
+</POST>
+
+
+
+<POST>
+<POSTER> Raj </POSTER>
+<POSTDATE> 2005-11-08T14:14:00 </POSTDATE>
+
+Hi Ludovic,
+
+We have augmented the Geocoder with the function getCoordinates(String
+country). As before, it returns null when country is not found,
+otherwise returns the lat,lng,city,state,country. Currently the city
+and state are empty or null, but in the future we might be able to fill
+in these values.
+
+This is available as both REST and SOAP.
+
+Let me know if somone wants this as XML-RPC also.
+
+Best wishes
+
+Raj
+
+</POST>
+
+
+
+<POST>
+<POSTER> aaron@campusactivism.org </POSTER>
+<POSTDATE> 2005-11-14T19:05:00 </POSTDATE>
+
+There was a bug in the script. I was referring to the wrong table. It
+should work better now, though I haven't tested it.
+
+</POST>
+
+
+
+<POST>
+<POSTER> ludovic.gnemmi@gmail.com </POSTER>
+<POSTDATE> 2005-11-18T09:06:00 </POSTDATE>
+
+Hi List,
+I'm having problem with my php-soap client to query zeesource soap
+interface since geocoder return also country centroid. I'm using nusaop
+library (v 1.94 2005/08/04).
+
+I can't get city coordinates anymore. I only receive centroid of
+country.Does anyone experiencing the same problem or have an idea?
+Thanks a lot for your help?
+
+Here is my simple php test code:
+
+include('./lib/nusoap.php');
+$wsdl = &quot;&quot;;
+
+$client = new soapclient($wsdl, 'wsdl');
+
+$parametres = array(
+'city' =&gt; 'Faridabad',
+'state' =&gt; 'Haryana',
+'country' =&gt; 'India'
+);
+
+$result=$client-&gt;call('getCoordinates', $parametres);
+
+// Display the result
+echo '&lt;h2&gt;Result&lt;/h2&gt;&lt;pre&gt;';
+else print_r($result);
+echo '&lt;/pre&gt;';
+
+And here answer i receive:
+
+Array
+(
+[city] =&gt;
+[country] =&gt; India
+[latitude] =&gt; 20
+[longitude] =&gt; 77
+[state] =&gt;
+)
+
+</POST>
+
+
+
+<POST>
+<POSTER> Raj </POSTER>
+<POSTDATE> 2005-11-18T09:15:00 </POSTDATE>
+
+Interestingly, I'm not experiencing the same problem with a Java SOAP
+client. So, we were wondering if this is a PHP/SOAP issue for
+overloaded function.
+
+The server has two functions: getCoordinates(city, state, country) and
+getCoordinates(country). The SOAP client is returning the country
+coordinates, even though a city and state are specified.
+
+Raj
+
+</POST>
+
+
+
+<POST>
+<POSTER> ludovic.gnemmi@gmail.com </POSTER>
+<POSTDATE> 2005-11-19T04:46:00 </POSTDATE>
+
+php-nusoap list finally gave me an explanation (Thanks to Scott
+Nichol):
+&quot;NuSOAP does not support polymorphism of methods in WSDL. In cases
+where services use polymorphism, only the last definition in the WSDL
+is
+used by NuSOAP. A workaround is to call the service without using
+WSDL.&quot;
+
+I've corrected my code. Everything is ok now. I past here the code i
+use to connect with success Zeesource SOAP interface using nusoap
+library:
+
+&lt;html&gt;
+&lt;body&gt;
+&lt;?php
+
+include('../path to/nusoap.php');
+
+$service = &quot;&quot;;
+$client = new soapclient($service);
+
+//to receive city coordinates
+$params = array('city' =&gt; 'Faridabad','state' =&gt; 'Haryana','country' =&gt;
+'India');
+
+//if you need country centroid coordinates use:
+//$params=array('country' =&gt; 'India');
+
+$result=$client-&gt;call('getCoordinates', $params);
+
+// Check for errors
+$err = $client-&gt;getError();
+if ($err)
+{
+// Display the error
+echo '&lt;h2&gt;Error&lt;/h2&gt;&lt;pre&gt;' . $err . '&lt;/pre&gt;';
+<QUOTE PREVIOUSPOST="
+} else
+
+"/>
+
+{
+// Display the result
+echo '&lt;h2&gt;Result&lt;/h2&gt;&lt;pre&gt;';
+print_r($result);
+echo '&lt;/pre&gt;';
+
+<QUOTE PREVIOUSPOST="
+}
+
+"/>
+
+?&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+
+</POST>
+
+
+
+<POST>
+<POSTER> Markus </POSTER>
+<POSTDATE> 2005-12-07T09:21:00 </POSTDATE>
+
+I tried running your example but got the following error. I suspect the
+problem lies in the server I'm using (University of Linköping). Does
+anyone have an explanation?
+
+HTTP Error: Couldn't open socket connection to server
+, Error (110): Connection
+timed out
+
+</POST>
+
+
+
+<POST>
+<POSTER> Raj </POSTER>
+<POSTDATE> 2005-12-07T24:23:00 </POSTDATE>
+
+Someone else from the same region had a similar problem. Don't know
+what caused it. Maybe a firewall issue?
+
+Try accessing the REST interface at:
+
+This seemed the work fine for the other person.
+
+Raj
+
+</POST>
+
+
+
+<POST>
+<POSTER> ludovic.gnemmi@gmail.com </POSTER>
+<POSTDATE> 2005-12-09T07:53:00 </POSTDATE>
+
+Hi,
+Everythings ok for me with soap interface.
+
+Ludovic
+
+</POST>
+
+
+
+<POST>
+<POSTER> popoholic </POSTER>
+<POSTDATE> 2005-12-17T08:36:00 </POSTDATE>
+
+Hi!
+
+I'm having problems getting a script to work with this web service. I
+tried using the scripts posted here previously, the ones with the
+$params array preset to $params = array('city' =&gt; 'Faridabad','state'
+=&gt; 'Haryana','country' =&gt; 'India');
+I've written a script of my own based on that one. The difference is
+that I've added a simple search form from which $params is set via a
+variable called $request. When I run it I don't seem to get anything
+back from the web service.
+
+This is my code:
+&lt;meta http-equiv=&quot;content-type&quot; content=&quot;text/html;charset=iso-8859-1&quot;&gt;
+
+&lt;?php
+// include the SOAP classes
+include('lib/nusoap.php');
+
+// define parameter array
+$request = array('city' =&gt; $_GET['city'],
+'state' =&gt; $_GET['state'],
+'country' =&gt; $_GET['country'] );
+print_r('REQUEST');
+print_r($_GET);
+
+if (sizeof($_GET)&gt;0)
+
+{
+
+$params = $request;
+
+print_r('PARAMS');
+print_r($params);
+
+$service = &quot;&quot;;
+$client = new soapclient($service);
+
+$result=$client-&gt;call('getCoordinates', $params);
+
+// Check for errors
+$err = $client-&gt;getError();
+if ($err)
+{
+// Display the error
+echo '&lt;h2&gt;Error&lt;/h2&gt;&lt;pre&gt;' . $err . '&lt;/pre&gt;';
+
+}
+
+else
+{
+// Display the result
+echo '&lt;h2&gt;Result&lt;/h2&gt;&lt;pre&gt;';
+print_r($result);
+echo '&lt;/pre&gt;';
+
+}
+
+// kill object
+//unset($client);
+}
+
+else
+{
+echo &quot;Not all data given in HTTP request&quot;;
+}
+
+//&lt;form action=&quot;client3.php&quot;&gt;
+?&gt;
+
+&lt;h3&gt;Input course code&lt;/h3&gt;
+
+&lt;form method=&quot;get&quot;&gt;
+&lt;input type=&quot;TEXT&quot; name=&quot;city&quot;&gt;
+&lt;br&gt;
+&lt;input type=&quot;TEXT&quot; name=&quot;state&quot;&gt;
+&lt;br&gt;
+&lt;input type=&quot;TEXT&quot; name=&quot;country&quot;&gt;
+&lt;br&gt;
+&lt;input type=&quot;SUBMIT&quot;&gt;
+&lt;/form&gt;
+
+These are the messages I get:
+Array ( [city] =&gt; Faridabad [state] =&gt; Haranya [country] =&gt; India )
+Array ( ) Array ( [city] =&gt; Faridabad [state] =&gt; Haranya [country] =&gt;
+India )
+Result
+Array
+(
+[0] =&gt;
+[1] =&gt;
+[2] =&gt;
+[3] =&gt;
+[4] =&gt;
+)
+
+Am I sending information of a wrong type? What can I do to get this to
+work? I'd be really thankful for any help since this is an application
+I'm hoping to use in a school project.
+
+</POST>
+
+
+
+<POST>
+<POSTER> Ludovic </POSTER>
+<POSTDATE> 2005-12-20T11:56:00 </POSTDATE>
+
+Your example is working.
+There is just no result for state Haranya;o)
+Replace Haranya by Haryana.
+
+Ludovic Gnemmi
+
+</POST>
+
+
+
+</TEXT>
+</BODY>
+</DOC>

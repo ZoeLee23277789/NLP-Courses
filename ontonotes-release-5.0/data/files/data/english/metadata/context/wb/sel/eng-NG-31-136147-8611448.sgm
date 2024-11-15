@@ -1,0 +1,259 @@
+<DOC>
+<DOCID> eng-NG-31-136147-8611448 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-09T21:44:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Ruby, Windows, Threads and sockets
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Sven Schott&quot; &lt;sven.sch...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-09T21:44:00 </POSTDATE>
+Hi all
+
+This is a Ruby question instead of a Rails question but smart people
+live here so here is where I'll send it. :)
+
+I wrote a quickie class for doing network scans (VNC) and it works
+fine on Mac OS X. But when I move it over to Windows, is spits the
+dummy. Here's the class:
+
+require 'socket'
+require 'timeout'
+require 'thread'
+
+class Hash
+def with_defaults(defaults)
+self.merge(defaults) { |key, old, new| old.nil? ? new : old }
+end
+
+def with_defaults!(defaults)
+self.merge!(defaults) { |key, old, new| old.nil? ? new : old }
+end
+end
+
+class TCPScanner
+# Constructor arguments TCPScanner.new(:port =&gt; 5852, :timeout =&gt; 1,
+:subnet =&gt; '192.168.0')
+def initialize(opts={})
+@opts = opts
+defaults = {
+:port         =&gt; 5900,
+:subnet       =&gt; '10.0.0',
+:timeout      =&gt; 5
+}
+@opts.with_defaults! defaults
+end
+
+def run
+threads = []
+addresses = []
+for host in 1..254
+threads &lt;&lt; Thread.new(host) do |h|
+begin
+timeout(@opts[:timeout]) do
+address = @opts[:subnet]+&quot;.&quot;+h.to_s
+s = TCPsocket.open(address, @opts[:port])
+puts &quot;Port &quot; + @opts[:port].to_s + &quot; open on &quot;+
+@opts[:subnet] + h.to_s
+addresses &lt;&lt; address
+s.close
+end
+rescue Errno::ECONNREFUSED
+next
+rescue Timeout::Error
+next
+end
+end
+end
+threads.each { |thr| thr.join }
+addresses
+end
+
+end
+
+The ruby interpreter on Windows give the following error:
+
+Bad file descriptor - connect(2) (Errno::EBADF)
+
+when it gets to opening the socket. The bad file descriptor thing
+tells me the address is in use, but since I'm the only one using that
+address, I'm guessing that since the next thread will try a connect
+before the timeout of the first, there is a clash between the threads.
+However, I know that sounds stupid since each thread has it's own
+socket and source port. Is it possible that the socket is being shared
+(however ridiculous that may seem)? Am I just doing something really
+retarded and have yet to realise? I thought so at first but the fact
+it works fine on the Mac pushed me to the notion that is was Windows
+or the ruby interpreter having to play nice with Windows threads and
+sockets.
+
+Any suggestions, criticisms or wild speculation would be greatly appreciated.
+
+Sven
+</POST>
+<POST>
+<POSTER> Tim Lucas &lt;t.lu...@toolmantim.com&gt; </POSTER>
+<POSTDATE> 2007-08-09T21:52:00 </POSTDATE>
+On 10/08/2007, at 11:44 AM, Sven Schott wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;     for host in 1..254
+&gt;       threads &lt;&lt; Thread.new(host) do |h|
+">
+
+opening up 254 sockets at once probably isn't very nice...
+
+I've been doing the exact same thing recently, and am trying to
+figure out eventmachine so I can move to a single-threaded event
+based queue rather than 85 threads at a time...
+
+See the tcp socket tester in the eventmachine docs.
+
+http://rubyforge.org/projects/eventmachine
+http://rubyeventmachine.com/pub/rdoc/index.html
+
+-- tim
+</POST>
+<POST>
+<POSTER> &quot;Julio Cesar Ody&quot; &lt;julio...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-09T21:57:00 </POSTDATE>
+Not sure how you would scan in parallel using eventmachine. I might be
+missing something.
+
+Anyway, what I would do is:
+
+- set up a threadpool, define a maximum of, say, 10 threads, or make
+that user defined.
+- create  thread-safe array to store the ports range (1..254). There's
+examples on how to do that everywhere I suppose.
+- have the threads pop()ing elements from the array and performing the scan.
+- For each thread that finds the array empty, kill the thread.
+
+In the event of Windows doing some crazy shit like what you said, try
+setting the socket opt SO_REUSEADDR to 1. E.g.:
+
+socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, 1)
+
+I have zero experience with network programming in Windows, so my
+guess is as good as yours.
+
+On 8/10/07, Tim Lucas &lt;t.lu ... @toolmantim.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 10/08/2007, at 11:44 AM, Sven Schott wrote:
+
+&gt; &gt;     for host in 1..254
+&gt; &gt;       threads &lt;&lt; Thread.new(host) do |h|
+
+&gt; opening up 254 sockets at once probably isn't very nice...
+
+&gt; I've been doing the exact same thing recently, and am trying to
+&gt; figure out eventmachine so I can move to a single-threaded event
+&gt; based queue rather than 85 threads at a time...
+
+&gt; See the tcp socket tester in the eventmachine docs.
+
+&gt; http://rubyforge.org/projects/eventmachine
+&gt; http://rubyeventmachine.com/pub/rdoc/index.html
+
+&gt; -- tim
+">
+</POST>
+<POST>
+<POSTER> Clifford Heath &lt;clifford.he...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-09T22:05:00 </POSTDATE>
+On 10/08/2007, at 11:57 AM, Julio Cesar Ody wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In the event of Windows doing some crazy shit like what you said, try
+&gt; setting the socket opt SO_REUSEADDR to 1. E.g.:
+
+&gt; socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, 1)
+
+&gt; I have zero experience with network programming in Windows, so my
+&gt; guess is as good as yours.
+">
+
+I've done a fair bit of network programming on Windows, and SO_REUSEADDR
+is the right answer.
+
+Clifford Heath.
+</POST>
+<POST>
+<POSTER> Lachie &lt;lach...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-09T22:08:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Any suggestions, criticisms or wild speculation would be greatly appreciated.
+">
+
+This is very interesting - I've been trying some plain sockets
+recently and finding the edges of ruby's implementation, even on
+linux. Take this for example:
+
+http://blade.nagaokaut.ac.jp/cgi-bin/scat.rb/ruby/ruby-talk/18680
+
+Ugh!
+
+However, I'd be remiss not to mention that if this was &quot;mission
+critical&quot; I'd use nmap :)
+http://insecure.org/nmap/
+
+Lachie
+http://smartbomb.com.au
+http://lachie.info/
+http://www.flickr.com/photos/lachie/
+</POST>
+<POST>
+<POSTER> Tim Lucas &lt;t.lu...@toolmantim.com&gt; </POSTER>
+<POSTDATE> 2007-08-09T22:21:00 </POSTDATE>
+On 10/08/2007, at 11:57 AM, Julio Cesar Ody wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Not sure how you would scan in parallel using eventmachine. I might be
+&gt; missing something.
+">
+
+hrmm i guess it wouldn't be in parallel at all would it...
+
+hrmm so maybe the threadpool is just foine.
+
+-- tim
+</POST>
+<POST>
+<POSTER> &quot;Sven Schott&quot; &lt;sven.sch...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-09T22:24:00 </POSTDATE>
+No, it's not. :)
+
+The class is only for testing (it's going to be part of a VNC client
+management utility), but I figured that it should be able to handle
+that without too many issues. However, it needs to be in parallel so
+I'm not sure that eventmachine will help me. But I'll have a look at
+it. Thanks.
+
+On 8/10/07, Tim Lucas &lt;t.lu ... @toolmantim.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 10/08/2007, at 11:44 AM, Sven Schott wrote:
+
+&gt; &gt;     for host in 1..254
+&gt; &gt;       threads &lt;&lt; Thread.new(host) do |h|
+
+&gt; opening up 254 sockets at once probably isn't very nice...
+
+&gt; I've been doing the exact same thing recently, and am trying to
+&gt; figure out eventmachine so I can move to a single-threaded event
+&gt; based queue rather than 85 threads at a time...
+
+&gt; See the tcp socket tester in the eventmachine docs.
+
+&gt; http://rubyforge.org/projects/eventmachine
+&gt; http://rubyeventmachine.com/pub/rdoc/index.html
+
+&gt; -- tim
+">
+</POST>
+</TEXT>
+</BODY>
+</DOC>

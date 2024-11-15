@@ -1,0 +1,553 @@
+<DOC>
+<DOCID> eng-NG-31-126405-9144789 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-11-21T05:07:00 </DATETIME>
+<BODY>
+<HEADLINE>
+PPPoE doesn't work
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Bartlomiej F. Tajchman&quot; &lt;bar...@merigold.NOSPAM.pl&gt; </POSTER>
+<POSTDATE> 2007-11-21T05:07:00 </POSTDATE>
+Hello!
+
+I have a problem with starting pppoe.
+
+Distribution: CentOS
+
+Packages installed in system:
+
+ppp-2.4.4-1.el5
+rp-pppoe-3.5-32.1
+
+File /etc/options:
+
+debug
+auth
+-pap
++chap
+
+refuse-pap
+require-chap
+
+ms-dns xx.xx.xx.xx
+
+File /etc/pppoe-server-options:
+
+# PPP options for the PPPoE server
+# LIC: GPL
+lock
+local
+require-chap
+default-mru
+default-asyncmap
+proxyarp
+ktune
+login
+lcp-echo-interval 20
+lcp-echo-failure 2
+nobsdcomp
+noccp
+noendpoint
+noipdefault
+noipx
+novj
+receive-all
+proxyarp
+
+And now... PPPoE server is starting:
+
+pppoe-server -I eth1 -L xx.xx.xx.xx -T 40 -C xxx -S xxx -N 1024
+
+Trying to connect... Logs:
+
+using channel 37
+Using interface ppp0
+Connect: ppp0 &lt;--&gt; /dev/pts/7
+sent [LCP ConfReq id=0x1 &lt;auth chap MD5&gt; &lt;magic 0xae7423f9&gt;]
+sent [LCP ConfReq id=0x1 &lt;auth chap MD5&gt; &lt;magic 0xae7423f9&gt;]
+rcvd [LCP ConfReq id=0x1 &lt;mru 1492&gt; &lt;magic 0xdbb91a91&gt;]
+sent [LCP ConfRej id=0x1 &lt;mru 1492&gt;]
+sent [LCP ConfReq id=0x1 &lt;auth chap MD5&gt; &lt;magic 0xae7423f9&gt;]
+sent [LCP ConfReq id=0x1 &lt;auth chap MD5&gt; &lt;magic 0xae7423f9&gt;]
+rcvd [LCP ConfReq id=0x1 &lt;mru 1492&gt; &lt;magic 0xdbb91a91&gt;]
+sent [LCP ConfRej id=0x1 &lt;mru 1492&gt;]
+sent [LCP ConfReq id=0x1 &lt;auth chap MD5&gt; &lt;magic 0xae7423f9&gt;]
+sent [LCP ConfReq id=0x1 &lt;auth chap MD5&gt; &lt;magic 0xae7423f9&gt;]
+rcvd [LCP ConfReq id=0x1 &lt;mru 1492&gt; &lt;magic 0xdbb91a91&gt;]
+sent [LCP ConfRej id=0x1 &lt;mru 1492&gt;]
+sent [LCP ConfReq id=0x1 &lt;auth chap MD5&gt; &lt;magic 0xae7423f9&gt;]
+sent [LCP ConfReq id=0x1 &lt;auth chap MD5&gt; &lt;magic 0xae7423f9&gt;]
+rcvd [LCP ConfReq id=0x1 &lt;mru 1492&gt; &lt;magic 0xdbb91a91&gt;]
+sent [LCP ConfRej id=0x1 &lt;mru 1492&gt;]
+sent [LCP ConfReq id=0x1 &lt;auth chap MD5&gt; &lt;magic 0xae7423f9&gt;]
+sent [LCP ConfReq id=0x1 &lt;auth chap MD5&gt; &lt;magic 0xae7423f9&gt;]
+Terminating on signal 15
+sent [LCP TermReq id=0x2 &quot;User request&quot;]
+sent [LCP TermReq id=0x3 &quot;User request&quot;]
+Connection terminated.
+Modem hangup
+Waiting for 1 child processes...
+script /usr/sbin/pppoe -n -I eth1 -e 6:00:19:e3:42:3e:60 -S ' -T 40',
+pid 24274
+sending SIGTERM to process 24274
+
+And nothing happened. Session hangs:
+
+root     15564  0.0  0.1   1644   448 ?        S    00:33   0:00
+/usr/sbin/pppoe -n -I eth1 -e 1:00:0f:3d:de:84:c6xxx -S  -T 40
+
+What should I do to start it correct?
+
+Pozdrawiam,
+Uncle Bart
+--
+* Bart³omiej F. Tajchman                     +48 781 871 861 *
+* http://www.bart.merigold.krakow.pl GG #162270 *
+* http://www.bykom-stop.avx.pl skype: wuj_bart_27 *
+*     Niebo gwia¼dziste nade mn±, o¶lizg³e flaki we mnie.    *
+</POST>
+<POST>
+<POSTER> Pascal Hambourg &lt;boite-a-s...@plouf.fr.eu.org&gt; </POSTER>
+<POSTDATE> 2007-11-21T06:31:00 </POSTDATE>
+Hello,
+
+Bartlomiej F. Tajchman a écrit :
+
+<QUOTE PREVIOUSPOST="
+&gt; I have a problem with starting pppoe.
+">
+
+[...]
+
+<QUOTE PREVIOUSPOST="
+&gt; File /etc/pppoe-server-options:
+[...]
+&gt; default-mru
+">
+
+[...]
+
+<QUOTE PREVIOUSPOST="
+&gt; Trying to connect... Logs:
+[...]
+&gt; rcvd [LCP ConfReq id=0x1 &lt;mru 1492&gt; &lt;magic 0xdbb91a91&gt;]
+&gt; sent [LCP ConfRej id=0x1 &lt;mru 1492&gt;]
+">
+
+The local pppd rejects the MRU negotiation.
+
+Quoted from pppd manpage :
+=======================================================================
+default-mru
+Disable  MRU  [Maximum  Receive  Unit]  negotiation.   With this
+option, pppd will use the default MRU value of  1500  bytes  for
+both the transmit and receive direction.
+=======================================================================
+
+Remove default-mru from your options file.
+
+<QUOTE PREVIOUSPOST="
+&gt;   script /usr/sbin/pppoe -n -I eth1 -e 6:00:19:e3:42:3e:60 -S ' -T 40',
+&gt; pid 24274
+">
+
+Note that the -S parameter seems to be incorrectly passed by
+pppoe-server to the pppoe child process.
+Cf. &lt; http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=313476 &gt;
+</POST>
+<POST>
+<POSTER> &quot;Bartlomiej F. Tajchman&quot; &lt;bar...@merigold.NOSPAM.pl&gt; </POSTER>
+<POSTDATE> 2007-11-22T03:29:00 </POSTDATE>
+Pascal Hambourg pisze:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hello,
+
+&gt; Bartlomiej F. Tajchman a écrit :
+
+&gt;&gt; I have a problem with starting pppoe.
+&gt; [...]
+
+&gt;&gt; File /etc/pppoe-server-options:
+&gt; [...]
+&gt;&gt; default-mru
+&gt; [...]
+
+&gt;&gt; Trying to connect... Logs:
+&gt; [...]
+&gt;&gt; rcvd [LCP ConfReq id=0x1 &lt;mru 1492&gt; &lt;magic 0xdbb91a91&gt;]
+&gt;&gt; sent [LCP ConfRej id=0x1 &lt;mru 1492&gt;]
+
+&gt; The local pppd rejects the MRU negotiation.
+
+&gt; Quoted from pppd manpage :
+&gt; =======================================================================
+&gt; default-mru
+&gt;        Disable  MRU  [Maximum  Receive  Unit]  negotiation.   With this
+&gt;        option, pppd will use the default MRU value of  1500  bytes  for
+&gt;        both the transmit and receive direction.
+&gt; =======================================================================
+
+&gt; Remove default-mru from your options file.
+">
+
+I removed it and started pppoe with minimal configuration:
+
+options:
+
+debug
+plugin rp-pppoe.so
+asyncmap 0
+login
+lock
++pap
++chap
+
+pppoe-server-options
+
+require-pap
+require-chap
+require-mschap-v2
+login
+lcp-echo-interval 20
+lcp-echo-failure 2
+ms-dns xx.xx.xx.xx
+
+Connection still doesn't work:
+
+Connect: ppp0 &lt;--&gt; /dev/pts/3
+sent [LCP ConfReq id=0x1 &lt;mru 1492&gt; &lt;auth chap MS-v2&gt; &lt;magic 0xd512cef1&gt;]
+rcvd [LCP ConfReq id=0x1 &lt;mru 1480&gt; &lt;magic 0x12614217&gt; &lt;callback CBCP&gt;]
+sent [LCP ConfRej id=0x1 &lt;callback CBCP&gt;]
+sent [LCP ConfReq id=0x1 &lt;mru 1492&gt; &lt;auth chap MS-v2&gt; &lt;magic 0xd512cef1&gt;]
+
+etc.
+
+I haven't ConfAck and it doesn't try to send password/user. I tried it
+with PAP/CHAP/MS-CHAP-v2 - the same (no) effect.
+
+Pozdrawiam,
+Uncle Bart
+--
+* Bart?omiej F. Tajchman                     +48 781 871 861 *
+* http://www.bart.merigold.krakow.pl GG #162270 *
+* http://www.bykom-stop.avx.pl skype: wuj_bart_27 *
+*     Niebo gwiaz'dziste nade mna;, os'lizg?e flaki we mnie.    *
+</POST>
+<POST>
+<POSTER> Pascal Hambourg &lt;boite-a-s...@plouf.fr.eu.org&gt; </POSTER>
+<POSTDATE> 2007-11-22T06:02:00 </POSTDATE>
+Bartlomiej F. Tajchman a écrit :
+
+<QUOTE PREVIOUSPOST="
+&gt; options:
+
+&gt; debug
+&gt; plugin rp-pppoe.so
+&gt; asyncmap 0
+&gt; login
+&gt; lock
+&gt; +pap
+&gt; +chap
+">
+
+Not sure that &quot;plugin rp-pppoe.so&quot; is required for a server
+configuration. Not sure about how pppd will handle multiple
+authentication protocol requirements too.
+
+<QUOTE PREVIOUSPOST="
+&gt; pppoe-server-options
+
+&gt; require-pap
+&gt; require-chap
+&gt; require-mschap-v2
+&gt; login
+&gt; lcp-echo-interval 20
+&gt; lcp-echo-failure 2
+&gt; ms-dns xx.xx.xx.xx
+
+&gt; Connection still doesn't work:
+
+&gt; Connect: ppp0 &lt;--&gt; /dev/pts/3
+&gt; sent [LCP ConfReq id=0x1 &lt;mru 1492&gt; &lt;auth chap MS-v2&gt; &lt;magic 0xd512cef1&gt;]
+&gt; rcvd [LCP ConfReq id=0x1 &lt;mru 1480&gt; &lt;magic 0x12614217&gt; &lt;callback CBCP&gt;]
+">
+
+MRU 1480, callback control protocol... you tried to connect from a
+Windows machine, didn't you ?
+
+<QUOTE PREVIOUSPOST="
+&gt; sent [LCP ConfRej id=0x1 &lt;callback CBCP&gt;]
+">
+
+Nothing wrong here, I have the same when I connect from a Windows
+station to my Linux PPTP server.
+
+<QUOTE PREVIOUSPOST="
+&gt; sent [LCP ConfReq id=0x1 &lt;mru 1492&gt; &lt;auth chap MS-v2&gt; &lt;magic 0xd512cef1&gt;]
+
+&gt; etc.
+">
+
+Looking again at your logs, they show no received ConfAck or ConfRej
+replies to the server ConfReq nor reactions to the server ConfRej, only
+retries of the same ConfReq. It looks very much like the remote peer
+does not see the server requests or replies. Now I remember an old bug
+on Debian with pppoe-server and &quot;recent&quot; versions of pppd (2.4.1 worked
+fine, 2.4.3 didn't) which caused packets sent by pppd not to be
+transmitted on the ethernet wire when pppoe-server used the user-mode
+pppoe. You can check this with a packet sniffer like tcpdump or
+ethereal/wireshark. A workaround was to tell pppoe-server to use the
+kernel-mode pppoe module with the -k option (which was disabled on
+Debian at that time, duh).
+</POST>
+<POST>
+<POSTER> Clifford Kite &lt;k...@not.available.tld&gt; </POSTER>
+<POSTDATE> 2007-11-22T13:20:00 </POSTDATE>
+Bartlomiej F. Tajchman &lt;bar ... @merigold.nospam.pl&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Pascal Hambourg pisze:
+
+&gt;&gt; Remove default-mru from your options file.
+&gt; I removed it and started pppoe with minimal configuration:
+">
+
+Please DON'T change configurations unless someone suggested the change.
+Restore the original options, sans the default-mru of course.
+
+<QUOTE PREVIOUSPOST="
+&gt; options:
+&gt; debug
+&gt; plugin rp-pppoe.so
+">
+
+It's highly unlikely you are attempting kernel mode PPPoE, as desirable
+as that might be.
+
+&lt;snip&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; Connection still doesn't work:
+&gt; Connect: ppp0 &lt;--&gt; /dev/pts/3
+&gt; sent [LCP ConfReq id=0x1 &lt;mru 1492&gt; &lt;auth chap MS-v2&gt; &lt;magic 0xd512cef1&gt;]
+&gt; rcvd [LCP ConfReq id=0x1 &lt;mru 1480&gt; &lt;magic 0x12614217&gt; &lt;callback CBCP&gt;]
+&gt; sent [LCP ConfRej id=0x1 &lt;callback CBCP&gt;]
+&gt; sent [LCP ConfReq id=0x1 &lt;mru 1492&gt; &lt;auth chap MS-v2&gt; &lt;magic 0xd512cef1&gt;]
+&gt; etc.
+">
+
+As PH has observed, the LCP messages sent to the peer are either corrupted
+or lost in transit.  Since they are sent through pppoe-server it seems
+likely that pppoe-server is part of the problem.
+
+<QUOTE PREVIOUSPOST="
+&gt; I haven't ConfAck and it doesn't try to send password/user. I tried it
+&gt; with PAP/CHAP/MS-CHAP-v2 - the same (no) effect.
+">
+
+You didn't mention the pppoe-server bug PH pointed out.  That must
+be fixed.  Even if it's not part of the current problem it will cause
+another problem later.  A pristine rp-pppoe-3.8 doesn't have the bug.
+
+--
+Clifford Kite
+/* 97.3% of all statistics are made up. */
+</POST>
+<POST>
+<POSTER> Pascal Hambourg &lt;boite-a-s...@plouf.fr.eu.org&gt; </POSTER>
+<POSTDATE> 2007-11-23T04:51:00 </POSTDATE>
+Clifford Kite a écrit :
+
+<QUOTE PREVIOUSPOST="
+&gt; As PH has observed, the LCP messages sent to the peer are either corrupted
+&gt; or lost in transit.  Since they are sent through pppoe-server it seems
+&gt; likely that pppoe-server is part of the problem.
+">
+
+Actually, PPP packets are not sent through pppoe-server but through
+pppoe which is invoked by pppd with a 'pty' option. pppoe-server handles
+the PPPoE discovery phase, and pppoe handles the PPPoE session phase.
+According to &lt; http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=298582 &gt;
+the bug seems to lie in pppd which invokes pppoe with file descriptor 0
+closed. Dunno if it was fixed in later upstream pppd versions.
+</POST>
+<POST>
+<POSTER> Pascal Hambourg &lt;boite-a-s...@plouf.fr.eu.org&gt; </POSTER>
+<POSTDATE> 2007-11-23T05:01:00 </POSTDATE>
+Pascal Hambourg a écrit :
+
+<QUOTE PREVIOUSPOST="
+&gt; Clifford Kite a écrit :
+
+&gt;&gt; As PH has observed, the LCP messages sent to the peer are either corrupted
+&gt;&gt; or lost in transit.  Since they are sent through pppoe-server it seems
+&gt;&gt; likely that pppoe-server is part of the problem.
+
+&gt; Actually, PPP packets are not sent through pppoe-server but through
+&gt; pppoe which is invoked by pppd with a 'pty' option. pppoe-server handles
+&gt; the PPPoE discovery phase, and pppoe handles the PPPoE session phase.
+&gt; According to &lt; http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=298582 &gt;
+&gt; the bug seems to lie in pppd which invokes pppoe with file descriptor 0
+&gt; closed. Dunno if it was fixed in later upstream pppd versions.
+">
+
+However you're right when you say that pppoe-server is part of the
+problem : the bug in pppd is triggered because pppoe-server invokes pppd
+with no file descriptors open.
+</POST>
+<POST>
+<POSTER> Clifford Kite &lt;k...@not.available.tld&gt; </POSTER>
+<POSTDATE> 2007-11-23T14:49:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Pascal Hambourg &lt;boite-a-s ... @plouf.fr.eu.org&gt; wrote:
+&gt; Clifford Kite a écrit :
+
+&gt;&gt; As PH has observed, the LCP messages sent to the peer are either corrupted
+&gt;&gt; or lost in transit.  Since they are sent through pppoe-server it seems
+&gt;&gt; likely that pppoe-server is part of the problem.
+&gt; Actually, PPP packets are not sent through pppoe-server but through
+&gt; pppoe which is invoked by pppd with a 'pty' option. pppoe-server handles
+&gt; the PPPoE discovery phase, and pppoe handles the PPPoE session phase.
+">
+
+Right.  I realized that &quot;through pppoe-server&quot; wasn't really correct
+after posting.  But the bug in pppoe-server (from your first post)
+might cause a session parameter the client uses to be different from
+what pppoe expects it to use.
+
+In particular from the OP's original post:
+
+And nothing happened. Session hangs:
+
+root     15564  0.0  0.1   1644   448 ?        S    00:33   0:00
+/usr/sbin/pppoe -n -I eth1 -e 1:00:0f:3d:de:84:c6xxx -S  -T 40
+
+This is consistent with xxx being the session service name that should
+be added to the parameter list as &quot;-S xxx&quot; but which the bug causes to
+be appended to the client Ethernet address.
+
+<QUOTE PREVIOUSPOST="
+&gt; According to &lt; http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=298582 &gt;
+&gt; the bug seems to lie in pppd which invokes pppoe with file descriptor 0
+&gt; closed. Dunno if it was fixed in later upstream pppd versions.
+">
+
+That bug appears to be fixed in pppd 2.4.4.
+
+Regards-
+--
+Clifford Kite
+</POST>
+<POST>
+<POSTER> Pascal Hambourg &lt;boite-a-s...@plouf.fr.eu.org&gt; </POSTER>
+<POSTDATE> 2007-11-23T19:43:00 </POSTDATE>
+Clifford Kite a écrit :
+
+<QUOTE PREVIOUSPOST="
+&gt; I realized that &quot;through pppoe-server&quot; wasn't really correct
+&gt; after posting.  But the bug in pppoe-server (from your first post)
+&gt; might cause a session parameter the client uses to be different from
+&gt; what pppoe expects it to use.
+
+&gt; In particular from the OP's original post:
+
+&gt;    And nothing happened. Session hangs:
+
+&gt;    root     15564  0.0  0.1   1644   448 ?        S    00:33   0:00
+&gt;    /usr/sbin/pppoe -n -I eth1 -e 1:00:0f:3d:de:84:c6xxx -S  -T 40
+
+&gt; This is consistent with xxx being the session service name that should
+&gt; be added to the parameter list as &quot;-S xxx&quot; but which the bug causes to
+&gt; be appended to the client Ethernet address.
+">
+
+Yes, but I don't think it harms. Here is the code scanning the -e
+command line option in pppoe.c :
+
+/* Existing session: &quot;sess:xx:yy:zz:aa:bb:cc&quot; where &quot;sess&quot; is
+session-ID, and xx:yy:zz:aa:bb:cc is MAC-address of peer */
+n = sscanf(optarg, &quot;%u:%2x:%2x:%2x:%2x:%2x:%2x&quot;,
+&amp;s, &amp;m[0], &amp;m[1], &amp;m[2], &amp;m[3], &amp;m[4], &amp;m[5]);
+
+IIRC the sscanf() function should safely ignore extra characters after
+the last hex digit of the MAC address. Also, after checking in RFC 2516,
+it appears that the service name is not used during the PPPoE session
+phase, so it does not matter if it has the wrong value. By the way I
+wonder why the service name is even passed to pppoe. The fact that PPP
+packets from the peer are received by pppd indicates that the MAC
+address of the peer was correctly read from the command line.
+</POST>
+<POST>
+<POSTER> Clifford Kite &lt;k...@not.available.tld&gt; </POSTER>
+<POSTDATE> 2007-11-24T12:37:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Pascal Hambourg &lt;boite-a-s ... @plouf.fr.eu.org&gt; wrote:
+&gt; Clifford Kite a écrit :
+
+&gt;&gt;    root     15564  0.0  0.1   1644   448 ?        S    00:33   0:00
+&gt;&gt;    /usr/sbin/pppoe -n -I eth1 -e 1:00:0f:3d:de:84:c6xxx -S  -T 40
+
+&gt;&gt; This is consistent with xxx being the session service name that should
+&gt;&gt; be added to the parameter list as &quot;-S xxx&quot; but which the bug causes to
+&gt;&gt; be appended to the client Ethernet address.
+&gt; Yes, but I don't think it harms. Here is the code scanning the -e
+&gt; command line option in pppoe.c :
+&gt;      /* Existing session: &quot;sess:xx:yy:zz:aa:bb:cc&quot; where &quot;sess&quot; is
+&gt;         session-ID, and xx:yy:zz:aa:bb:cc is MAC-address of peer */
+&gt;      n = sscanf(optarg, &quot;%u:%2x:%2x:%2x:%2x:%2x:%2x&quot;,
+&gt;           &amp;s, &amp;m[0], &amp;m[1], &amp;m[2], &amp;m[3], &amp;m[4], &amp;m[5]);
+&gt; IIRC the sscanf() function should safely ignore extra characters after
+&gt; the last hex digit of the MAC address.
+">
+
+It does seem so, although I found the sscanf man pages weren't definitive
+enough for me to say extra characters would be ignored.  (And finding and
+examining sscanf code is beyond my endurance limits. :)
+
+<QUOTE PREVIOUSPOST="
+&gt; Also, after checking in RFC 2516,
+&gt; it appears that the service name is not used during the PPPoE session
+&gt; phase, so it does not matter if it has the wrong value. By the way I
+&gt; wonder why the service name is even passed to pppoe.
+">
+
+Good question!
+
+<QUOTE PREVIOUSPOST="
+&gt; The fact that PPP
+&gt; packets from the peer are received by pppd indicates that the MAC
+&gt; address of the peer was correctly read from the command line.
+">
+
+So I guess pppoe must ignore session frames that don't contain the peer
+MAC from the -e option as the AC MAC.  I hadn't thought of that.
+
+Regards-
+--
+Clifford Kite
+/* 97.3% of all statistics are made up. */
+</POST>
+<POST>
+<POSTER> Clifford Kite &lt;k...@not.available.tld&gt; </POSTER>
+<POSTDATE> 2007-11-24T21:47:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Clifford Kite &lt;k ... @not.available.tld&gt; wrote:
+&gt; So I guess pppoe must ignore session frames that don't contain the peer
+&gt; MAC from the -e option as the AC MAC.  I hadn't thought of that.
+">
+
+And now that I read it I wish I hadn't thought of it.  Session frames
+from the peer should contain the local MAC as the AC MAC, said local
+MAC being supplied by pppoe-server during discovery.  Does pppoe use
+the local MAC from the -e option as the AC MAC in frames it sends?
+It appears to me that it should but I can't be sure.
+
+--
+Clifford Kite
+</POST>
+</TEXT>
+</BODY>
+</DOC>

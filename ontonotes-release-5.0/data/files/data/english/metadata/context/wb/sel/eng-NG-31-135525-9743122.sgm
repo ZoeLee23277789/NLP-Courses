@@ -1,0 +1,76 @@
+<DOC>
+<DOCID> eng-NG-31-135525-9743122 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-31T04:43:00 </DATETIME>
+<BODY>
+<HEADLINE>
+1.1.4: fix memleak in gmp++_int_io.C
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> mabshoff &lt;Michael.Absh...@fsmath.mathematik.uni-dortmund.de&gt; </POSTER>
+<POSTDATE> 2007-10-31T04:43:00 </POSTDATE>
+Hello folks,
+
+First off: congratulations on the 1.1.4 release.
+
+When tracking some memleak in Sage I came across a leak in gmp+
++_int_io.C. Running the following Sage code
+
+for i in range(3):
+get_memory_usage();
+m = ModularSymbols(501,2).decomposition(3);
+del m;
+ModularSymbols_clear_cache();
+get_memory_usage()
+
+leads to
+
+==15811== LEAK SUMMARY:
+==15811==    definitely lost: 406,088 bytes in 5,792 blocks.
+==15811==    indirectly lost: 415,504 bytes in 7,199 blocks.
+==15811==      possibly lost: 382,110 bytes in 1,198 blocks.
+==15811==    still reachable: 93,391,247 bytes in 1,343,745 blocks.
+==15811==         suppressed: 0 bytes in 0 blocks.
+
+After the patch the losses are greatly reduced:
+
+==19741== LEAK SUMMARY:
+==19741==    definitely lost: 11,608 bytes in 352 blocks.
+==19741==    indirectly lost: 286,560 bytes in 390 blocks.
+==19741==      possibly lost: 463,342 bytes in 879 blocks.
+==19741==    still reachable: 71,109,048 bytes in 1,285,713 blocks.
+==19741==         suppressed: 0 bytes in 0 blocks.
+
+The patch is at
+
+http://fsmath.mathematik.uni-dortmund.de/~mabshoff/patches/linbox-1.1...
+
+and applies cleanly against the 1.1.4 release. Please apply or
+complain.
+
+I assume the same patch should also be applied to Givaro's gmp++
+headers/code, but I didn't test that. Ironically the deallocation of
+the temp string was commented out, uncommenting that portion fixed the
+leak :)
+
+The remaining memleaks (the definitely &amp; indirectly lost part) are
+also largely to blame on LinBox (and to some extend Givaro, but that
+might be due to the LinBox leak[s]), specifically the
+MatrixHom::BlasBlackboxMAP code in LinBox. The test in LinBox exposes
+that memleak nicely. I understand why the leak happens, but have been
+so far unable to fix it due to lack of time. I am sure William Stein
+will be very greatful to the person who fixes that leak, because once
+that leak is fixed the modular symbols code in Sage will be next to
+leak free. For details of that leak look at Sage's ticket #563
+available at
+
+http://trac.sagemath.org/sage_trac/ticket/563
+
+Cheers,
+
+Michael
+</POST>
+</TEXT>
+</BODY>
+</DOC>

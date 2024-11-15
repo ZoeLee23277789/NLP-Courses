@@ -1,0 +1,856 @@
+<DOC>
+<DOCID> eng-NG-31-135594-9759528 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-17T08:24:00 </DATETIME>
+<BODY>
+<HEADLINE>
+suitable representation of data in OO programs.
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Tom Forsmo &lt;t...@nospam.org&gt; </POSTER>
+<POSTDATE> 2007-09-17T08:24:00 </POSTDATE>
+I have a question I would like some feedback on:
+
+My basic problem here is that I need to create a configuration module,
+that can parse both a configuration file and a configuration web page.
+The input from the file can be a string or a stream but the input from a
+web page is dependant on the framework used and needs to be converted.
+
+So...
+
+With regards to data beeing passed around in a program, such as
+configuration data or web form data, I cant seem to make up my mind on
+what representation of this data is best. I have seen people creating an
+interface to represent the data in specialised data objects while others
+just use HashMaps.
+
+- The arguments for specialised data objects are that it is more
+object oriented, and it gives benefits such as, single method call and
+no casting of return data.
+- The arguments of HashMap is KISS.
+
+- A negative consequence of specialised data objects is that if the
+dataset changes, you have to change both the interface and the objects
+implementing that interface. This creates more work than needed.
+Additionally this kind of approach to designing an application just
+feeds more complexity into the code.
+- The negative consequenes of a HashMap approach is that one needs to
+convert the data at every use point into the correct data type to be
+able to use it.
+
+I suppose it all depends on the use, so for configuration information I
+would think a Properties object is the best. But for web query data,
+such as a web form, I am not sure which is easier, since you might
+easily change the name of a forms field or add/remove a field.
+
+Anybody have any thoughts?
+</POST>
+<POST>
+<POSTER> Ed Kirwan &lt;IAmFrac...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-17T13:19:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Tom Forsmo wrote:
+
+&gt; I have a question I would like some feedback on:
+
+&gt; My basic problem here is that I need to create a configuration module,
+&gt; that can parse both a configuration file and a configuration web page.
+&gt; The input from the file can be a string or a stream but the input from a
+&gt; web page is dependant on the framework used and needs to be converted.
+
+&gt; So...
+
+&gt; With regards to data beeing passed around in a program, such as
+&gt; configuration data or web form data, I cant seem to make up my mind on
+&gt; what representation of this data is best. I have seen people creating an
+&gt; interface to represent the data in specialised data objects while others
+&gt;   just use HashMaps.
+
+&gt;   - The arguments for specialised data objects are that it is more
+&gt; object oriented, and it gives benefits such as, single method call and
+&gt; no casting of return data.
+">
+
+There are possibly two other benefits here. Firstly, if the arguments are
+encapsulated by their own options, then they can be responsible for drawing
+themselves (some arguments may be checkboxes, some may be radio buttons),
+and so new argument types could be introduced without impacting the
+existing types or their usage throughout the code. For more on this, see:
+http://www.edmundkirwan.com/servlet/fractal/cs1/frac-cs110.html
+
+Second, if each argument is encapsulated, then each one could be responsible
+for validating whichever values to which it is being assigned, again
+without impacting any other code.
+
+<QUOTE PREVIOUSPOST="
+&gt;   - The arguments of HashMap is KISS.
+
+&gt; - A negative consequence of specialised data objects is that if the
+&gt; dataset changes, you have to change both the interface and the objects
+&gt; implementing that interface.
+">
+
+I'm not sure what you mean by, &quot;Dataset,&quot; here. Do you mean new types of
+arguments? Do you mean, for example, that some arguments could now be
+boolean, but next shipment might introduce integer arguments, then floats,
+then strings?
+
+If this is what you mean, then of course you are wise to consider possible
+changes up-front; but will you configuration data really change that much?
+It's difficult to think of configuration data that is not boolean,
+multiple-choice, numbers or strings.
+
+<QUOTE PREVIOUSPOST="
+&gt; This creates more work than needed.
+&gt; Additionally this kind of approach to designing an application just
+&gt; feeds more complexity into the code.
+&gt; - The negative consequenes of a HashMap approach is that one needs to
+&gt; convert the data at every use point into the correct data type to be
+&gt; able to use it.
+
+&gt; I suppose it all depends on the use, so for configuration information I
+&gt; would think a Properties object is the best.
+">
+
+I would not think that your choice of mechanism depends on use: I would
+think it depends on how your your system can be resilient to the very
+dataset changes that I interpretted you meant above. But I'm sure I'm
+misunderstanding something because ...
+
+<QUOTE PREVIOUSPOST="
+&gt; But for web query data,
+&gt; such as a web form, I am not sure which is easier, since you might
+&gt; easily change the name of a forms field or add/remove a field.
+">
+
+... I don't get this. Why would changing the name of a form (essentially
+changing the name of an argument) be different whether using bespoke
+argument classes or a Hashmap of (I presume) basic types?
+
+<QUOTE PREVIOUSPOST="
+&gt; Anybody have any thoughts?
+">
+
+--
+.ed
+
+www.EdmundKirwan.com - Home of The Fractal Class Composition
+</POST>
+<POST>
+<POSTER> Roedy Green &lt;see_webs...@mindprod.com.invalid&gt; </POSTER>
+<POSTDATE> 2007-09-17T14:41:00 </POSTDATE>
+On Mon, 17 Sep 2007 14:24:22 +0200, Tom Forsmo &lt;t ... @nospam.org&gt; wrote,
+quoted or indirectly quoted someone who said :
+
+<QUOTE PREVIOUSPOST="
+&gt;My basic problem here is that I need to create a configuration module,
+&gt;that can parse both a configuration file and a configuration web page.
+&gt;The input from the file can be a string or a stream but the input from a
+&gt;web page is dependant on the framework used and needs to be converted.
+">
+
+I have used two solutions to that.
+
+1. In Bulk at http://mindprod.com/products1.html#BULK
+
+I simply wrote the configuration file in Java and used the Java
+compiler to parse and verify it.  This gives me great flexibility to
+generate values programmatically, fetch them, etc.
+
+2. In the Replicator http://mindprod.com/products1.html#REPLICATOR
+
+I used a variant of a Properties file that allowed each key to have a
+list of values.  See the source for the Multiproperties class. It
+supports String, int, boolean, long etc.
+
+--
+Roedy Green Canadian Mind Products
+The Java Glossary
+http://mindprod.com
+</POST>
+<POST>
+<POSTER> zzant...@gmail.com </POSTER>
+<POSTDATE> 2007-09-17T15:51:00 </POSTDATE>
+On Sep 17, 7:24 am, Tom Forsmo &lt;t ... @nospam.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I have a question I would like some feedback on:
+
+[...]
+
+&gt; With regards to data beeing passed around in a program, such as
+&gt; configuration data or web form data, I cant seem to make up my mind on
+&gt; what representation of this data is best. I have seen people creating an
+&gt; interface to represent the data in specialised data objects while others
+&gt;   just use HashMaps.
+
+[...]
+
+&gt; Anybody have any thoughts?
+">
+
+On representing web form data, certainly yes. I haven't had occasion
+to consider the same question as it applies to configuration data, but
+for web forms, I'll encourage you to go with interfaces all the way
+based on experience.
+
+My team worked on a large java web application for over two years. We
+started out using Struts' DynaBean implementations to carry form data.
+If you're not familiar with them, Struts' DynaBeans offer much the
+same behavior as a Map. Several months later in development, we were
+disgustedly and aggressively stripping out every reference to a
+DynaBean we could find. We replaced them with interfaces specifying
+the methods that needed to be made available to the business layer by
+the web layer. The primary reason, without going into details:
+DynaBean-/Map-like structures make for quick and easy setup at the
+beginning of a project but lead to a maintenance nightmare.
+
+More detailed explanation:
+If you have much experience programming, you'll realize that a quick
+solution up front can lead to serious repercussions later on,
+especially if that solution is a major part of your overall design.
+This is certainly one of those situations. In your post you assert
+that:
+
+&quot;- A negative consequence of specialised data objects is that if the
+dataset changes, you have to change both the interface and the
+objects
+implementing that interface. This creates more work than needed.
+Additionally this kind of approach to designing an application just
+feeds more complexity into the code.
+- The negative consequenes of a HashMap approach is that one needs to
+convert the data at every use point into the correct data type to be
+able to use it.&quot;
+
+While your points seem logical on the surface, and indeed were the
+basis of the very arguments that led us to start our project using
+DynaBeans, our experiences strongly indicate that it is the Map
+approach that adds undue complexity, and that the requirement of
+changing the interface and implementing objects in the event of a
+dataset change is a positive consequence of choosing this approach,
+not a negative one.
+
+First, while using Maps or DynaBeans may not add code, the complexity
+is still there. The main problem with them is the lack of compile-time
+type-safety. You might be surprised how often a change to the dataset
+requires a type change of one of the pieces of data. Suppose you've
+decided to change a particular control from a text field to a select
+box. Most likely, the value representing that input will change from a
+String to an int. If this is being stored in a Map or DynaBean, you
+could make the change to the web page, recompile, and immediately run
+your app again without having any problems until you submit that form
+and see some kind of unexpected behavior. What that behavior is may
+range from 1) no output to 2) a NullPointerException due to the wrong
+request parameter being read through reflection to 3) a
+ClassCastException when taking the data from the Map/DynaBean to 4)
+some other obscure error that is difficult to predict and takes
+several minutes, at least, to trace back to the source. In essence,
+this approach makes it much more difficult to localize problems
+quickly as well as to ensure that all problems related to a change are
+taken care of. With the interface approach, problems like these are
+much more limited (more in a moment).
+
+Now, I have a few things to say about &quot;creating more work&quot; by using
+the interface/implementation approach. First, if it's a big deal for
+you to add/implement a simple method like a getter, you might step
+back and consider your toolset. Any IDE worth its source code (or
+cost) will generate getters and setters and implement abstract methods
+for you. However, if by &quot;create more work&quot; you mean &quot;makes me think
+more&quot;, then this is absolutely a positive effect of this approach.
+When you find that your business layer needs additional information
+from your web layer, your first step is adding the appropriate method
+to the interface that governs interaction between these layers. Then
+you find all implementors of the interface (again a simple process
+with a decent IDE), and generate an empty method to fulfill the
+interface contract...
+
+(To make a quick diversion, if your generated methods throw some
+RuntimeException, as I recommend, then you don't even have to think
+about what to put there right now. You can simply compile and run, and
+when you get to something that invokes that method, the exception will
+be thrown, telling you exactly what your next step in development is.
+I like throw new UnsupportedOperationException(&quot;Write me!&quot;).)
+
+...Then you have to decide where the necessary information will come
+from (this is the &quot;think more&quot; part), figure out how to get it (more
+thinking), and then write the method to have the correct behavior as
+specified by the interface. It wraps the whole process up in a nice,
+tight package that leaves no room for vagaries. Many times it's as
+simple as generating a getter based on a property of the object, and
+again, if this seems like too much work to do in exchange for a very
+stable and understandable interface between layers, you might look
+into other IDEs.
+
+Now, having said all that, I can also suggest that you look into a
+combination of the two approaches. I've referred to various &quot;layers&quot;
+previously. I don't know where you are in your programming life, but
+see if you can look at the &quot;web stuff&quot; as separate from the &quot;business
+stuff&quot;. These should be two discrete layers in any decent webapp. The
+interface we're talking about is used by the business layer, but the
+implementations will live in the web layer since that's the layer that
+deals with the data. If you had one developer on the business side and
+one on the web side, then your business developer writes the interface
+to dictate what information is needed, and the web developer writes
+the implementation to satisy the contract of the interface. Your web
+developer could easily (or not so easily, depending on experience
+level) write some proxying code (&lt; http://java.sun.com/javase/6/docs/
+api/java/lang/reflect/Proxy.html&gt;) to dynamically implement any
+interface and back it with a HashMap, DynaBean, or whatever. Thus, you
+get the best of both worlds: an interface for type-safety, and a
+HashMap so you don't have to write &quot;extra&quot; code.
+
+I'd still go for the pure interface approach with no magic, primarily
+because it's so straightforward. If you do want to play with the proxy
+idea, consider whether the object you're creating will need to be
+stored in an HTTP session. If so, it needs to be Serializable unless
+you don't care about persistent sessions.
+
+I hope this helps and is intelligible. I haven't tried to put this
+stuff down in writing before, and there's a fair bit of complexity to
+it. Please don't hesitate to ask for clarification.
+</POST>
+<POST>
+<POSTER> Wojtek &lt;nowh...@a.com&gt; </POSTER>
+<POSTDATE> 2007-09-17T17:52:00 </POSTDATE>
+zzant ... @gmail.com wrote :
+
+<QUOTE PREVIOUSPOST="
+&gt; Suppose you've
+&gt; decided to change a particular control from a text field to a select
+&gt; box. Most likely, the value representing that input will change from a
+&gt; String to an int.
+">
+
+We also use data objects to pass info around, rather than mapping.
+
+I usually manually change the type (and the method names) in the data
+object, then go through the problem listing to see what needs to be
+changed.
+
+Refactoring does work, but it may mask subtle changes. Your example of
+a text field to a select is a perfect example. Not only do you need to
+change the type, but you also need the input to change from a text
+field to a select, and you need to populate the select, which usually
+needs another database call, which needs changes to ....
+
+--
+Wojtek :-)
+</POST>
+<POST>
+<POSTER> henrik dyrvold &lt;s...@nospam.org&gt; </POSTER>
+<POSTDATE> 2007-09-17T17:22:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Roedy Green wrote:
+&gt; 1. In Bulk at http://mindprod.com/products1.html#BULK
+
+&gt; I simply wrote the configuration file in Java and used the Java
+&gt; compiler to parse and verify it.  This gives me great flexibility to
+&gt; generate values programmatically, fetch them, etc.
+">
+
+I didnt really understand this...
+
+<QUOTE PREVIOUSPOST="
+&gt; 2. In the Replicator http://mindprod.com/products1.html#REPLICATOR
+
+&gt; I used a variant of a Properties file that allowed each key to have a
+&gt; list of values.  See the source for the Multiproperties class. It
+&gt; supports String, int, boolean, long etc.
+">
+
+hmm... interesting idea. I shall have a look at this idea.
+
+tom
+</POST>
+<POST>
+<POSTER> henrik dyrvold &lt;s...@nospam.org&gt; </POSTER>
+<POSTDATE> 2007-09-17T17:56:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+zzant ... @gmail.com wrote:
+&gt; The primary reason, without going into details:
+&gt; DynaBean-/Map-like structures make for quick and easy setup at the
+&gt; beginning of a project but lead to a maintenance nightmare.
+">
+
+Yes I agree it has its limitations. I have used hashmaps in a similar
+situation before, so i know the limitations but its so simple that it
+just almost dazzles me... thats the problem. (So could somebody just
+punch that idea out of my head? now, please... :)
+
+<QUOTE PREVIOUSPOST="
+&gt; Now, I have a few things to say about &quot;creating more work&quot; by using
+&gt; the interface/implementation approach.
+">
+
+What I mean about this is 1) you have to take considerations about
+something you would not have to do when using a hashmap, i.e. hashmaps
+are plug and play, objects are plug, configure interface, configure
+object, and then finally play... Secondly, I mean that by having
+uneccesary interfaces and other abstractions in the code, the code is
+overdesigned and the complexity increases, This makes it more difficult
+to develop and later on maintain the program. (Just so you know, I am a
+minimalistic/pragmatic programmer, meaning I put huge effort into KISS,
+I dont add stuff just because its neat, it needs to have a specific and
+valid purpose, if not, then its something I only play with during my
+spare time.)
+
+<QUOTE PREVIOUSPOST="
+&gt; Now, having said all that, I can also suggest that you look into a
+&gt; combination of the two approaches. I've referred to various &quot;layers&quot;
+&gt; previously. I don't know where you are in your programming life, but
+&gt; see if you can look at the &quot;web stuff&quot; as separate from the &quot;business
+&gt; stuff&quot;. These should be two discrete layers in any decent webapp.
+">
+
+I am programming a server which needs 99.999% uptime, so the servers
+configuration needs to be reloadable during run-time. Hence the need for
+the server to be able to parse and distribute configuration coming from
+different sources. I.e. there is a config file, which is read during
+boot and later on, periodically. There will also be a config web page
+from which the user can reconfigure the application, live.
+
+<QUOTE PREVIOUSPOST="
+&gt; Thus, you
+&gt; get the best of both worlds: an interface for type-safety, and a
+&gt; HashMap so you don't have to write &quot;extra&quot; code.
+">
+
+The interface has a value only if its detailed, a hashmap with a
+detailed interface is the same as a specialised object for all intents
+and purposes.
+
+<QUOTE PREVIOUSPOST="
+&gt; I hope this helps and is intelligible. I haven't tried to put this
+&gt; stuff down in writing before, and there's a fair bit of complexity to
+&gt; it. Please don't hesitate to ask for clarification.
+">
+
+I think I will go for an interface version, it gives a few more benefits
+than I described earlier, such as validation rules in the set methods,
+explicit datatyping of return values, no confusion about what the data
+is (which can be a major headache with hashmaps) and finally its
+extendable if it needs to support other data types than just natives or
+if the data is more complex than just a single value.
+
+But in a sense I dont like the fact that adding or removing just a
+single parameter from the configuration creates extra work, while with a
+hashmap it would just add the extra parameter as it would any other
+parameter, no extra work needed except for in the web page where I would
+have to add an extra field or similar.
+
+tom
+</POST>
+<POST>
+<POSTER> tom forsmo &lt;s...@nospam.org&gt; </POSTER>
+<POSTDATE> 2007-09-17T18:14:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Ed Kirwan wrote:
+&gt; There are possibly two other benefits here. Firstly, if the arguments are
+&gt; encapsulated by their own options, then they can be responsible for drawing
+&gt; themselves (some arguments may be checkboxes, some may be radio buttons),
+&gt; and so new argument types could be introduced without impacting the
+&gt; existing types or their usage throughout the code. For more on this, see:
+&gt; http://www.edmundkirwan.com/servlet/fractal/cs1/frac-cs110.html
+
+&gt; Second, if each argument is encapsulated, then each one could be responsible
+&gt; for validating whichever values to which it is being assigned, again
+&gt; without impacting any other code.
+">
+
+I agree.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;   - The arguments of HashMap is KISS.
+
+&gt;&gt; - A negative consequence of specialised data objects is that if the
+&gt;&gt; dataset changes, you have to change both the interface and the objects
+&gt;&gt; implementing that interface.
+
+&gt; I'm not sure what you mean by, &quot;Dataset,&quot; here. Do you mean new types of
+&gt; arguments? Do you mean, for example, that some arguments could now be
+&gt; boolean, but next shipment might introduce integer arguments, then floats,
+&gt; then strings?
+
+&gt; If this is what you mean, then of course you are wise to consider possible
+&gt; changes up-front;
+">
+
+I know there will be changes, I just dont know which or what they will
+do yet, and that might not be determined until next release.
+
+<QUOTE PREVIOUSPOST="
+&gt; I would not think that your choice of mechanism depends on use: I would
+&gt; think it depends on how your your system can be resilient to the very
+&gt; dataset changes that I interpretted you meant above. But I'm sure I'm
+&gt; misunderstanding something because ...
+">
+
+Yes, thats the primary goal, but the other factor is use.
+
+<QUOTE PREVIOUSPOST="
+&gt; ... I don't get this. Why would changing the name of a form (essentially
+&gt; changing the name of an argument) be different whether using bespoke
+&gt; argument classes or a Hashmap of (I presume) basic types?
+">
+
+I mean, a form have lots of input fields and the task is in adding new
+fields or removing some, which causes you to run about the program to
+add/remove code just because of this change in the web page. With
+hashmaps its plug and play, because it does not care that you add or
+remove, its all the same anyway.
+</POST>
+<POST>
+<POSTER> tom forsmo &lt;s...@nospam.org&gt; </POSTER>
+<POSTDATE> 2007-09-17T17:59:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+henrik dyrvold wrote:
+">
+
+Sorry about the ID clash here, I was using the wrong computer.
+
+tom
+</POST>
+<POST>
+<POSTER> Roedy Green &lt;see_webs...@mindprod.com.invalid&gt; </POSTER>
+<POSTDATE> 2007-09-17T22:15:00 </POSTDATE>
+On Mon, 17 Sep 2007 23:22:57 +0200, henrik dyrvold &lt;s ... @nospam.org&gt;
+wrote, quoted or indirectly quoted someone who said :
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; 1. In Bulk at http://mindprod.com/products1.html#BULK
+
+&gt;&gt; I simply wrote the configuration file in Java and used the Java
+&gt;&gt; compiler to parse and verify it.  This gives me great flexibility to
+&gt;&gt; generate values programmatically, fetch them, etc.
+
+&gt;I didnt really understand this...
+">
+
+I gather you don't want to download.. So here is an example of a
+config file written in Java.
+
+package com.mindprod.bulk;
+
+/**
+* Copy to CustConfig.java and recompile. Configuration constants for
+customer.
+* This file must be customised, then the whole package recompiled.
+Whenever
+* you make any changes to this file, make sure you do a clean
+compile.
+*
+* @author Roedy Green
+*/
+final class CustConfig
+
+{
+
+// ------------------------------ FIELDS
+------------------------------
+
+/**
+* true if want to see voluminous SMTP debugging messages.
+*/
+public static final boolean DEBUGGING = false;
+
+/**
+* Does the send mail server require a password and logon. Usually
+yes.
+*/
+public static final boolean NEED_PASSWORD_TO_SEND = true;
+
+/**
+* Normally this is true, but some IAPs block the bulk emailer
+from talking
+* directly to any mailserver other than ones owned by the IAP.
+The symptom
+* is that all mailservers other than those owned by the IAP
+always appear
+* to be not working. In that case you must turn off email server
+* validation.
+*/
+public static final boolean VALIDATE_EMAIL_SERVERS = false;
+
+/**
+* Where bulk emails are sent to be relayed. RFC822 format. &quot;first
+last
+* &lt;x ... @domain.com&gt;&quot;
+*/
+public static final String BULK_EMAIL_ADDRESS =
+&quot;pollinator &lt;pollina ... @beeswax.com&gt;&quot;;
+
+/**
+* customer abbreviation.  Used in creating filenames.
+*/
+public static final String CUST_ABBREVIATION = &quot;BEE&quot;;
+
+/**
+* Customer name.
+*/
+public static final String CUST_NAME = &quot;Bees's Wax Society&quot;;
+
+/**
+* Encoding for stats message send back to originator usually
+windows-1252,
+* ISO-8859-1, UTF-8 or US-ASCII.
+*/
+public static final String ORIGINATORS_PREFERRED_ENCODING =
+&quot;UTF-8&quot;;
+
+/**
+* Domain to identify as when probing mailservers. It is the DNS
+name
+* associated with your face IP. See
+http://mindprod.com/jgloss/faceip.html
+* e.g. &quot;vc.shawcable.net&quot; or &quot;bchsia.telus.net&quot;
+*/
+public static final String PROBE_DOMAIN = &quot;bchsia.telus.net&quot;;
+
+/**
+* host of the pop3 receive-mail server.
+*/
+public static final String RECEIVE_HOST = &quot;pop3.beeswax.com&quot;;
+
+/**
+* Login id for the bulk email receive account. case sensitive
+Usually this
+* is just the name of the account to the left of the @, but
+sometime the
+* email provider will use a completely separate name.
+*/
+public static final String RECEIVE_LOGIN_ID = &quot;pollinator&quot;;
+
+/**
+* pop3 name for the inbox.
+*/
+public static final String RECEIVE_MBOX = &quot;INBOX&quot;;
+
+/**
+* password for the bulk email receive account. case sensitive
+*/
+public static final String RECEIVE_PASSWORD = &quot;sesame22&quot;;
+
+/**
+* protocol used on the receive mail server. Only pop3 tested.
+Case
+* sensitive.
+*/
+public static final String RECEIVE_PROTOCOL = &quot;pop3&quot;;
+
+/**
+* host of the smtp send mail server.
+*/
+public static final String SEND_HOST = &quot;smtp.beeswax.com&quot;;
+
+/**
+* Login id for the bulk email send account. case sensitive
+Usually this is
+* just the name of the account to the left of the @, but sometime
+the email
+* provider will use a completely separate name.
+*/
+public static final String SEND_LOGIN_ID = &quot;pollinator&quot;;
+
+/**
+* password for the bulk email send account. case sensitive
+*/
+public static final String SEND_PASSWORD = &quot;sesame22&quot;;
+
+/**
+* protocol used on the send mail server. Only pop3 tested. Case
+sensitive.
+*/
+public static final String SEND_PROTOCOL = &quot;smtp&quot;;
+
+/**
+* Minimal quality to accept in email addressos before evven
+testing them.
+* Number 1 .. 9.
+*/
+public static final int EMAIL_ADDRESS_QUALITY = 1;
+
+/**
+* Max emails can send in total, usually the daily limit your ISP
+imposes.
+*/
+public static final int MAX_EMAILS_IN_BATCH = 900;
+
+/**
+* Max emails, each with BCCs can send without logging off and on
+again to
+* the email server. Ideally is the same as MAX_EMAILS_IN_BATCH.
+*/
+public static final int MAX_EMAILS_PER_LOGIN = 15;
+
+/**
+* How long to wait for a mailserver to respond before giving up
+on it.
+*/
+public static final int PROBE_TIMEOUT = 20/* seconds */ * 1000;
+
+/**
+* port of the pop3 receive mail server, usually 110.
+*/
+public static final int RECEIVE_PORT = 110;
+
+/**
+* port of the smtp send mail server, usually 25, sometimes 24..
+*/
+public static final int SEND_PORT = 25;
+
+/**
+* How long to go before culling a domain nobody emails to, in
+milliseconds
+* Also used to cull list of already sent email message ids.
+Advanced.
+* Normally do not change.
+*/
+public static final long CULL_INTERVAL =
+60/* days */ * ( 24 * 60 * 60 * 1000L );
+
+/**
+* How long to go before reprobing after a failed domain in
+milliseconds.
+* Advanced. Normally do not change.
+*/
+public static final long FAILED_PROBE_INTERVAL =
+1/* hours */ * ( 60 * 60 * 1000L );
+
+/**
+* history Mask. Which  historical probes to consider when the
+latest probe
+* was bad. With &lt;B&gt;any&lt;/b&gt; past good history we assume the domain
+is good,
+* just temporarily down, So long as it has good DNS records for
+mailservers
+* as of the most recent probe. High order bit is most recent
+probe,
+* 1=consider 0=ignore. Advanced. Normally do not change.
+*/
+public static final long HISTORY_MASK = 0xff00000000000000L;
+
+/**
+* How long to go before reprobing a good domain, in milliseconds.
+Advanced.
+* Normally do not change.
+*/
+public static final long PASSED_PROBE_INTERVAL =
+7/* days */ * ( 24 * 60 * 60 * 1000L );
+
+/**
+* How long sleep before checking again for incoming email
+Advanced.
+* Normally do not change.
+*/
+public static final long SLEEP_INTERVAL =
+( DEBUGGING ? 15 : 30 )/* seconds */ * 1000L;
+
+/**
+* List of people who get a copy of every bulk email to monitor
+use of the
+* product. If they are senders, they will get only one copy.
+RFC822 format.
+* &quot;first last &lt;x ... @domain.com&gt;&quot;
+*/
+public static final String[] MONITORS = {
+&quot;Roedy Green &lt;roe ... @mindprod.com&gt;&quot;};
+
+/**
+* Domains that despite all evidence, are actually bad.  Don't
+bother to
+* test them, just treat them as bad.
+*/
+public static final String[] TREAT_AS_BAD_DOMAINS = {
+&quot;home.com&quot;, &quot;nowhere.com&quot;, &quot;invalid.com&quot;, &quot;nospam.com&quot;,};
+
+/**
+* Domains that despite all evidence, are actually good.  Don't
+bother to
+* test them, just treat them as good.
+*/
+public static final String[] TREAT_AS_GOOD_DOMAINS = {
+&quot;aol.ca&quot;, &quot;aol.com&quot;, &quot;hotmail.com&quot;, &quot;shaw.ca&quot;,
+&quot;telus.net&quot;,};
+
+/**
+* name of the file containing the list of email addresses to
+forward this
+* email to. case insensitive.
+*/
+public static final String[] VALID_ATTACHMENT_NAMES = {
+
+&quot;emails.txt&quot;,
+&quot;emails1.txt&quot;,
+&quot;emails2.txt&quot;,
+&quot;emails3.txt&quot;,
+&quot;emails4.txt&quot;,
+&quot;emails5.txt&quot;,
+&quot;emails6.txt&quot;,
+&quot;emails7.txt&quot;,
+&quot;emails8.txt&quot;,
+&quot;emails9.txt&quot;,
+&quot;canadanewspapers.txt&quot;,
+&quot;bcnewspapers.txt&quot;,
+&quot;test.csv&quot;,
+&quot;victoriacouncillors.txt&quot;,};
+
+/**
+* List of legal MIME types for the message body.
+*/
+public static final String[] VALID_MIME_TYPES = {&quot;text/plain&quot;,
+&quot;text/html&quot;};
+
+/**
+* Who is allowed to use the bulk mail resender. case sensitive.
+Just the
+* computer xxx@xxxx part.
+*/
+public static final String[] VALID_SENDERS = {
+&quot;lo ... @beeswax.org&quot;,
+&quot;ad ... @beeswax.org&quot;,
+&quot;b ... @beeswax.org&quot;,
+&quot;bees ... @beeswax.org&quot;,
+&quot;i ... @beeswax.org&quot;,
+&quot;sa ... @beeswax.org&quot;,
+&quot;libr ... @beeswax.org&quot;,};
+
+// --------------------------- CONSTRUCTORS
+---------------------------
+
+/**
+* dummy constructor. All fields are static
+*/
+private CustConfig()
+{
+}
+
+<QUOTE PREVIOUSPOST="
+}// end CustConfig
+">
+
+--
+Roedy Green Canadian Mind Products
+The Java Glossary
+http://mindprod.com
+</POST>
+<POST>
+<POSTER> Tom Forsmo &lt;t...@nospam.org&gt; </POSTER>
+<POSTDATE> 2007-09-18T05:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Roedy Green wrote:
+&gt; I gather you don't want to download.. So here is an example of a
+&gt; config file written in Java.
+">
+
+No, what I mean is that, for all possible problems there are all
+possible kinds of solutions and I cant look into the details of all of
+them immediately. So, first and foremost, a succinct and understandable
+description is what I was looking for. That helps me decide whether its
+an approach I want to study in detail or not.
+
+tom
+</POST>
+</TEXT>
+</BODY>
+</DOC>

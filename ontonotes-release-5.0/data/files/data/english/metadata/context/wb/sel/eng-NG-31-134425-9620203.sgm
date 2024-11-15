@@ -1,0 +1,113 @@
+<DOC>
+<DOCID> eng-NG-31-134425-9620203 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-12-03T11:27:00 </DATETIME>
+<BODY>
+<HEADLINE>
+if then else logic in OWL + SWRL
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Andy &lt;cr...@research.ge.com&gt; </POSTER>
+<POSTDATE> 2007-12-03T11:27:00 </POSTDATE>
+While I've been using OWL as a modeling tool for sometime, I'm just
+starting to look at SWRL and reasoners. Perhaps this question is
+better posted to the Pellet list, but I'm actually trying to ask a
+fairly broad question.
+
+I'm looking at how some business logic currently expressed in Excel
+might be moved to OWL+SWRL. The If..Then..Else logic of Excel, which
+maps more or less to a CWA I suppose, it used extensively. It's used
+in a couple of different ways.
+
+1. Default values: sometimes the logic says, &quot;given instance ?inst, if
+we have a value for ?inst hasP ?x, use ?x, else use &lt;something else&gt;&quot;.
+The something else could be a primitive datatype value or it could be
+some property value of some related instance.
+
+2. Precedence ordering of rules: I want the conclusion of some rules
+to be given precedence over others. For example:
+Rule 1: If ?x is a Car and ?x hasProblem EngineKnocks then ?x
+hasAction Overhaul
+Rule 2: If ?x is a Car and ?x hasMilesSinceSevice ?m and
+swrlb:greaterThan(?m, 10,000) then ?x hasAction ChangeOil
+Rule 3: If ... Then ?x hasAction SendToJunkYard
+These rules could both fire. However, I don't want to change the oil
+if the car also needs an overhaul. I've solved this problem by having
+a multi-valued property hasCandiateAction so that al the rules that
+fire can register thier recommended action, and the a set of rules,
+basically one for each candiate action enforces the precedence.
+However, that logic is cumbersome to build and subject matter experts
+would not appreciate the clutter.
+
+So I'm hoping that someone out of their experience can point me to
+reasonably simple and intuitive ways to represent at least these two
+kinds of if/then/else scenarios....
+
+Andy Crapo
+GE Research
+</POST>
+<POST>
+<POSTER> Dean Allemang &lt;dallem...@topquadrant.com&gt; </POSTER>
+<POSTDATE> 2007-12-06T13:33:00 </POSTDATE>
+As you've guessed, this isn't a very OWL-like thing to do, because of
+the CWA nature of the problem.  Usually this is the sort of thing that
+is written up as being unsupportable by a consistent logic (&quot;I lied
+about the trees . . .&quot;).  Rules are a way to get out of OWL to do this
+sort of thing, and the solutions you outline seem as good as any I know
+of.
+
+Of course, if you use a classic rule system like Jess, you can use rule
+precedences or rule packages, but that is a very non-OWL way to go.   If
+you want to stay inside a simple rules system, the sort of reification
+solutions you are talking about (and their variants) are really the best
+solution you've got.
+
+I don't know of any generic solutions to this problem - you are pretty
+much executing the best practice I know of.
+
+Dean
+
+<QUOTE PREVIOUSPOST="
+Andy wrote:
+&gt; While I've been using OWL as a modeling tool for sometime, I'm just
+&gt; starting to look at SWRL and reasoners. Perhaps this question is
+&gt; better posted to the Pellet list, but I'm actually trying to ask a
+&gt; fairly broad question.
+
+&gt; I'm looking at how some business logic currently expressed in Excel
+&gt; might be moved to OWL+SWRL. The If..Then..Else logic of Excel, which
+&gt; maps more or less to a CWA I suppose, it used extensively. It's used
+&gt; in a couple of different ways.
+
+&gt; 1. Default values: sometimes the logic says, &quot;given instance ?inst, if
+&gt; we have a value for ?inst hasP ?x, use ?x, else use &lt;something else&gt;&quot;.
+&gt; The something else could be a primitive datatype value or it could be
+&gt; some property value of some related instance.
+
+&gt; 2. Precedence ordering of rules: I want the conclusion of some rules
+&gt; to be given precedence over others. For example:
+&gt;    Rule 1: If ?x is a Car and ?x hasProblem EngineKnocks then ?x
+&gt; hasAction Overhaul
+&gt;    Rule 2: If ?x is a Car and ?x hasMilesSinceSevice ?m and
+&gt; swrlb:greaterThan(?m, 10,000) then ?x hasAction ChangeOil
+&gt;    Rule 3: If ... Then ?x hasAction SendToJunkYard
+&gt; These rules could both fire. However, I don't want to change the oil
+&gt; if the car also needs an overhaul. I've solved this problem by having
+&gt; a multi-valued property hasCandiateAction so that al the rules that
+&gt; fire can register thier recommended action, and the a set of rules,
+&gt; basically one for each candiate action enforces the precedence.
+&gt; However, that logic is cumbersome to build and subject matter experts
+&gt; would not appreciate the clutter.
+
+&gt; So I'm hoping that someone out of their experience can point me to
+&gt; reasonably simple and intuitive ways to represent at least these two
+&gt; kinds of if/then/else scenarios....
+
+&gt; Andy Crapo
+&gt; GE Research
+">
+</POST>
+</TEXT>
+</BODY>
+</DOC>

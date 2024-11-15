@@ -1,0 +1,191 @@
+<DOC>
+<DOCID> eng-NG-31-146859-8784576 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-24T00:28:00 </DATETIME>
+<BODY>
+<HEADLINE>
+MySQL performance tips
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Vasanth Govind &lt;govivasa...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-24T00:28:00 </POSTDATE>
+MySQL performance tips
+
+LINK: http://forge.mysql.com/wiki/Top10SQLPerformanceTips
+
+1.  Use EXPLAIN to profile the query execution plan
+2. Use Slow Query Log (always have it on!)
+3. Don't use DISTINCT when you have or could use GROUP BY
+4. Insert performance
+1. Batch INSERT and REPLACE
+2. Use LOAD DATA instead of INSERT
+5. LIMIT m,n may not be as fast as it sounds
+6. Don't use ORDER BY RAND() if you have &gt; ~2K records
+7. Use SQL_NO_CACHE when you are SELECTing frequently updated data
+or large sets of data
+8. Avoid wildcards at the start of LIKE queries
+9. Avoid correlated subqueries and in select and where clause (try
+to avoid in)
+10. No calculated comparisons -- isolate indexed columns
+11. ORDER BY and LIMIT work best with equalities and covered indexes
+12. Separate text/blobs from metadata, don't put text/blobs in
+results if you don't need them
+13. Derived tables (subqueries in the FROM clause) can be useful for
+retrieving BLOBs without sorting them. (Self-join can speed up a query
+if 1st part finds the IDs and uses then to fetch the rest)
+14. ALTER TABLE...ORDER BY can take data sorted chronologically and
+re-order it by a different field -- this can make queries on that
+field run faster (maybe this goes in indexing?)
+15. Know when to split a complex query and join smaller ones
+16. Delete small amounts at a time if you can
+17. Make similar queries consistent so cache is used
+18. Have good SQL query standards
+19. Don't use deprecated features
+20. Turning OR on multiple index fields (&lt;5.0) into UNION may speed
+things up (with LIMIT), after 5.0 the index_merge should pick stuff
+up.
+21. Don't use COUNT * on Innodb tables for every search, do it a few
+times and/or summary tables, or if you need it for the total # of
+rows, use SQL_CALC_FOUND_ROWS and SELECT FOUND_ROWS()
+22. Use INSERT ... ON DUPLICATE KEY update (INSERT IGNORE) to avoid
+having to SELECT
+23. use groupwise maximum instead of subqueries
+
+Scaling Performance Tips:
+
+1. Use benchmarking
+2. isolate workloads don't let administrative work interfere with
+customer performance. (ie backups)
+3. Debugging sucks, testing rocks!
+4. As your data grows, indexing may change (cardinality and
+selectivity change). Structuring may want to change. Make your schema
+as modular as your code. Make your code able to scale. Plan and
+embrace change, and get developers to do the same.
+
+Network Performance Tips:
+
+1. Minimize traffic by fetching only what you need.
+1. Paging/chunked data retrieval to limit
+2. Don't use SELECT *
+3. Be wary of lots of small quick queries if a longer query
+can be more efficient
+2. Use multi_query if appropriate to reduce round-trips
+
+OS Performance Tips:
+
+1. Use proper data partitions
+1. For Cluster. Start thinking about Cluster *before* you
+need them
+2. Keep the database host as clean as possible. Do you really need
+a windowing system on that server?
+3. Utilize the strengths of the OS
+4. pare down cron scripts
+5. create a test environment
+6. source control schema and config files
+7. for LVM innodb backups, restore to a different instance of MySQL
+so Innodb can roll forward
+8. partition appropriately
+9. partition your database when you have real data -- do not assume
+you know your dataset until you have real data
+
+MySQL Server Overall Tips:
+
+1. innodb_flush_commit=0 can help slave lag
+2. Optimize for data types, use consistent data types. Use
+PROCEDURE ANALYSE() to help determine the smallest data type for your
+needs.
+3. use optimistic locking, not pessimistic locking. try to use
+shared lock, not exclusive lock. share mode vs. FOR UPDATE
+4. if you can, compress text/blobs
+5. compress static data
+6. don't back up static data as often
+7. enable and increase the query and buffer caches if appropriate
+8. config params -- http://docs.cellblue.nl/2007/03/17/easy-mysql-performance-tweaks/
+is a good reference
+9. Config variables &amp; tips:
+1. use one of the supplied config files
+2. key_buffer, unix cache (leave some RAM free), per-
+connection variables, innodb memory variables
+3. be aware of global vs. per-connection variables
+4. check SHOW STATUS and SHOW VARIABLES (GLOBAL|SESSION in
+5.0 and up)
+5. be aware of swapping esp. with Linux, &quot;swappiness&quot; (bypass
+OS filecache for innodb data files, innodb_flush_method=O_DIRECT if
+possible (this is also OS specific))
+6. defragment tables, rebuild indexes, do table maintenance
+7. If you use innodb_flush_txn_commit=1, use a battery-backed
+hardware cache write controller
+8. more RAM is good so faster disk speed
+9. use 64-bit architectures
+10. --skip-name-resolve
+11. increase myisam_sort_buffer_size to optimize large inserts (this
+is a per-connection variable)
+12. look up memory tuning parameter for on-insert caching
+13. increase temp table size in a data warehousing environment
+(default is 32Mb) so it doesn't write to disk (also constrained by
+max_heap_table_size, default 16Mb)
+14. Run in SQL_MODE=STRICT to help identify warnings
+15. /tmp dir on battery-backed write cache
+16. consider battery-backed RAM for innodb logfiles
+17. use --safe-updates for client
+18. Redundant data is redundant
+
+Storage Engine Performance Tips:
+
+1. InnoDB ALWAYS keeps the primary key as part of each index, so do
+not make the primary key very large
+2. Utilize different storage engines on master/slave ie, if you
+need fulltext indexing on a table.
+3. BLACKHOLE engine and replication is much faster than FEDERATED
+tables for things like logs.
+4. Know your storage engines and what performs best for your needs,
+know that different ones exist.
+1. ie, use MERGE tables ARCHIVE tables for logs
+2. Archive old data -- don't be a pack-rat! 2 common engines
+for this are ARCHIVE tables and MERGE tables
+5. use row-level instead of table-level locking for OLTP workloads
+6. try out a few schemas and storage engines in your test
+environment before picking one.
+
+Database Design Performance Tips:
+
+1. Design sane query schemas. don't be afraid of table joins, often
+they are faster than denormalization
+2. Don't use boolean flags
+3. Use Indexes
+4. Don't Index Everything
+5. Do not duplicate indexes
+6. Do not use large columns in indexes if the ratio of
+SELECTs:INSERTs is low.
+7. be careful of redundant columns in an index or across indexes
+8. Use a clever key and ORDER BY instead of MAX
+9. Normalize first, and denormalize where appropriate.
+10. Databases are not spreadsheets, even though Access really really
+looks like one. Then again, Access isn't a real database
+11. use INET_ATON and INET_NTOA for IP addresses, not char or
+varchar
+12. make it a habit to REVERSE() email addresses, so you can easily
+search domains (this will help avoid wildcards at the start of LIKE
+queries if you want to find everyone whose e-mail is in a certain
+domain)
+13. A NULL data type can take more room to store than NOT NULL
+14. Choose appropriate character sets &amp; collations -- UTF16 will
+store each character in 2 bytes, whether it needs it or not, latin1 is
+faster than UTF8.
+15. Use Triggers wisely
+16. use min_rows and max_rows to specify approximate data size so
+space can be pre-allocated and reference points can be calculated.
+17. Use HASH indexing for indexing across columns with similar data
+prefixes
+18. Use myisam_pack_keys for int data
+19. be able to change your schema without ruining functionality of
+your code
+20. segregate tables/databases that benefit from different
+configuration variables
+
+LINK: http://forge.mysql.com/wiki/Top10SQLPerformanceTips
+</POST>
+</TEXT>
+</BODY>
+</DOC>

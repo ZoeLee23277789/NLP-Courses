@@ -1,0 +1,136 @@
+<DOC>
+<DOCID> eng-NG-31-135294-9651893 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-02T22:49:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Unicode and QuickWiki
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Yannick Gingras &lt;yging...@ygingras.net&gt; </POSTER>
+<POSTDATE> 2007-10-02T22:49:00 </POSTDATE>
+Greetings Pyloneers,
+We see a log of people on #pylons who try to put unicode content in
+QuickWiki and immediately think that Pylons sucks at unicode.  There
+is no reason for that, Pylons is probably the framework with the most
+transparent unicode support out there; it's just that QuickWiki, for
+some reason, makes a special effort to avoid unicode compatibility.
+So I decided to fix QuickWiki; here is my Mercurial branch with the
+fix:
+
+static- http://ygingras.net/files/QuickWiki.hg
+
+But wait before you start to change the tutorial because I ran into
+problems too.  There is some ugly mangling going on in
+
+h.draggable_element()
+
+It might be that stuff gets encoded twice or something like that but
+passing unicode or utf-8 to it result in undecodable garbage.  The
+code in question is in
+
+controllers/page.py line 47
+
+and
+
+templates/list-titles.mako line 3 and 5
+
+It was easy enough to fix by manually encoding to utf-7 but I find
+this kind of ugly in a tutorial that aims to show how easy it is to
+use unicode with Pylons.
+
+Anyone knows why the mangling is happening in h.draggable_element()?
+What do we do with that?  Use unicode only for the page body and not
+for the page title until we have a fix?  That sounds like a good
+compromise; it shows how to use unicode with pylons without spawning a
+long discussion on ugly hacks to work around bug (accidental
+features?) in helpers.
+
+Any ideas on that?
+
+--
+Yannick Gingras
+</POST>
+<POST>
+<POSTER> Ches Martin &lt;ches.mar...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-10T14:46:00 </POSTDATE>
+Sounds reasonable to me. Did you ever get any further with it? I'd
+take a look, but your hg link appears to be broken.
+
+I updated the tutorial for 0.9.6, and I confess to being largely
+Unicode-ignorant, so it'd be great to address that properly. As the
+original tutorial predated much of the Unicode effort in Pylons, I
+guess it's not surprising that it seems to avoid compliance :-)
+
+--
+Ches Martin
+
+On Oct 2, 10:49 pm, Yannick Gingras &lt;yging ... @ygingras.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Greetings Pyloneers,
+&gt;   We see a log of people on #pylons who try to put unicode content in
+&gt; QuickWiki and immediately think that Pylons sucks at unicode.  There
+&gt; is no reason for that, Pylons is probably the framework with the most
+&gt; transparent unicode support out there; it's just that QuickWiki, for
+&gt; some reason, makes a special effort to avoid unicode compatibility.
+&gt; So I decided to fix QuickWiki; here is my Mercurial branch with the
+&gt; fix:
+
+&gt;   static- http://ygingras.net/files/QuickWiki.hg
+
+&gt; But wait before you start to change the tutorial because I ran into
+&gt; problems too.  There is some ugly mangling going on in
+
+&gt;   h.draggable_element()
+
+&gt; It might be that stuff gets encoded twice or something like that but
+&gt; passing unicode or utf-8 to it result in undecodable garbage.  The
+&gt; code in question is in
+
+&gt;   controllers/page.py line 47
+
+&gt; and
+
+&gt;   templates/list-titles.mako line 3 and 5
+
+&gt; It was easy enough to fix by manually encoding to utf-7 but I find
+&gt; this kind of ugly in a tutorial that aims to show how easy it is to
+&gt; use unicode with Pylons.
+
+&gt; Anyone knows why the mangling is happening in h.draggable_element()?
+&gt; What do we do with that?  Use unicode only for the page body and not
+&gt; for the page title until we have a fix?  That sounds like a good
+&gt; compromise; it shows how to use unicode with pylons without spawning a
+&gt; long discussion on ugly hacks to work around bug (accidental
+&gt; features?) in helpers.
+
+&gt; Any ideas on that?
+
+&gt; --
+&gt; Yannick Gingras
+">
+</POST>
+<POST>
+<POSTER> Yannick Gingras &lt;yging...@ygingras.net&gt; </POSTER>
+<POSTDATE> 2007-10-10T19:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Ches Martin &lt;ches.mar ... @gmail.com&gt; writes:
+&gt; Sounds reasonable to me. Did you ever get any further with it? I'd
+&gt; take a look, but your hg link appears to be broken.
+">
+
+I don't run the hgweb CGI so you have to pull it with hg:
+
+hg clone static- http://ygingras.net/files/QuickWiki.hg uniwiki
+
+the &quot;static-&quot; part is important.  My website is a Pylons app, is it
+possible to have it launch the CGI?
+
+--
+Yannick Gingras
+</POST>
+</TEXT>
+</BODY>
+</DOC>

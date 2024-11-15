@@ -1,0 +1,3857 @@
+<DOC>
+<DOCID> eng-NG-31-135019-9637417 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-04T17:24:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Display problems in Vista
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;John A. Byerly&quot; &lt;jbyerly@essDASHqualityDOTcom&gt; </POSTER>
+<POSTDATE> 2007-10-04T17:24:00 </POSTDATE>
+Hi,
+
+I realize that this problem involves Vista, but there is an (equal) OpenGL
+element, so I posted it here.  Sorry if it appears to be off-topic.
+
+I have a simple, single dialog application that displays an OpenGL area with
+a cheesy car drawn on it.  The area is known to my application as an
+instance of a CStatic subclass I created called CTestPane.  When I create
+this CTestPane instance with a rect of 0, 0, 520, 300 (left, top, right,
+bottom), the area, cleared in black, appears with the cheesy red car.  If,
+instead, I use a rect of 20, 20, 520, 300, no image appears at all.
+
+Now, before anyone assumes this is a problem with your humble programmer, I
+want to point out that if I turn off Desktop Composition for the
+application, it works fine.  I know, the problem is probably still me, but I
+just wanted to point that out.
+
+As for some background, I created this app to try to debug a problem we are
+having with our actual product (much more interesting than my sample app!).
+Some of our OpenGL panes have &quot;dead&quot; areas in them (bands of the Windows
+background color), and some panes do not show up at all.  Once again, with
+Desktop Composition turned off, all these problems go away, but this is not
+really a long term option for us.
+
+I have included the implementation for my CTestPane below.  As I mentioned,
+creating this pane with
+
+m_ctrlPane.Create(NULL, WS_VISIBLE | WS_CHILD, CRect(0, 0, 520, 300),
+this);
+
+displays the image as expected.  Making the simple change to
+
+m_ctrlPane.Create(NULL, WS_VISIBLE | WS_CHILD, CRect(20, 20, 520, 300),
+this);
+
+results in nothing being displayed on the main dialog.
+
+More information.  This sample app (and our actual product) works fine on a
+Vista eMachines PC with an NVIDIA GeForce 6100.  Where it is not working is
+on my development laptop with Intel graphics.  We saw similar problems with
+a desktop PC as well, but I don't have the specs for it.
+
+Thanks for any help you can provide!
+
+JAB
+
+// TestPane.cpp : implementation file
+//
+
+#include &quot;stdafx.h&quot;
+#include &quot;OpenGLVistaTestSimple.h&quot;
+#include &quot;TestPane.h&quot;
+
+#include &lt;gl/gl.h&gt;
+#include &lt;gl/glu.h&gt;
+
+#include &lt;math.h&gt;
+
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#undef THIS_FILE
+static char THIS_FILE[] = __FILE__;
+#endif
+
+BOOL CTestPane::m_bWindowClassRegistered = RegisterWindowClass();
+
+/////////////////////////////////////////////////////////////////////////// //
+// CTestPane
+
+CTestPane::CTestPane()
+: m_pDC(NULL)
+{
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+CTestPane::~CTestPane()
+{
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+BEGIN_MESSAGE_MAP(CTestPane, CStatic)
+//{{AFX_MSG_MAP(CTestPane)
+ON_WM_PAINT()
+ON_WM_CREATE()
+ON_WM_ERASEBKGND()
+//}}AFX_MSG_MAP
+END_MESSAGE_MAP()
+
+/////////////////////////////////////////////////////////////////////////// //
+// CTestPane message handlers
+
+void CTestPane::OnPaint()
+{
+CPaintDC dc(this); // device context for painting
+
+if ( m_pDC != NULL )
+{
+BOOL bResult = wglMakeCurrent(m_pDC-&gt;m_hDC, m_hRC);
+if ( bResult )
+{
+glClearColor(0.0, 0.0, 0.0, 1.0);
+glClear(GL_COLOR_BUFFER_BIT);
+
+glClearDepth(1.0f);
+
+CRect rectPane;
+GetClientRect(rectPane);
+
+// Select the projection matrix and reset
+glMatrixMode(GL_PROJECTION);
+glLoadIdentity();
+
+// Set the drawing area
+glViewport(rectPane.left,
+rectPane.top,
+rectPane.Width(),
+rectPane.Height());
+
+gluOrtho2D(0, 1000, 0, 1000.0 * (double)rectPane.Height() /
+(double)rectPane.Width());
+
+glMatrixMode(GL_MODELVIEW);
+glLoadIdentity();
+
+glLineWidth(1.0);
+glColor3d(1.0, 0.0, 0.0);
+
+glBegin(GL_LINES);
+Line(110, 230, 210, 230);
+Arc(210, 230, 260, 230, -180);
+Line(310, 230, 510, 230);
+Arc(510, 230, 560, 230, -180);
+Line(610, 230, 710, 230);
+Line(710, 230, 710, 270);
+Line(710, 270, 630, 300);
+Line(630, 300, 110, 300);
+Line(590, 300, 550, 350);
+Line(550, 350, 250, 350);
+Line(250, 350, 210, 300);
+Line(110, 300, 110, 230);
+
+Line(210, 300, 250, 280);
+Line(310, 240, 510, 240);
+Line(570, 280, 590, 300);
+Line(410, 350, 410, 240);
+
+Arc(215, 230, 260, 230, 360);
+Arc(515, 230, 560, 230, 360);
+glEnd();
+
+SwapBuffers(m_pDC-&gt;m_hDC);
+
+wglMakeCurrent(NULL, NULL);
+}
+}
+
+// Do not call CStatic::OnPaint() for painting messages
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+//***********************************************************************
+void CTestPane::Line(double dXStart, double dYStart, double dXEnd, double
+dYEnd)
+{
+glVertex2d(dXStart, dYStart);
+glVertex2d(dXEnd, dYEnd);
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+//***********************************************************************
+void CTestPane::Arc(double dXStart, double dYStart, double dXCenter, double
+dYCenter, double dDegrees)
+{
+static const double PI = 3.1415926;
+
+double dResolution = 10.0 * PI / 180.0;
+
+double dRadius = sqrt((dXStart - dXCenter) * (dXStart - dXCenter) +
+(dYStart - dYCenter) * (dYStart - dYCenter));
+
+double dStartAngle = atan2(dYStart - dYCenter, dXStart - dXCenter);
+double dEndAngle = dStartAngle + dDegrees * PI / 180.0;
+bool bIncreasing = dDegrees &gt; 0;
+if ( bIncreasing &amp;&amp; dEndAngle &lt; dStartAngle )
+{
+dEndAngle += 2 * PI;
+}
+else if ( !bIncreasing &amp;&amp; dEndAngle &gt; dStartAngle )
+{
+dEndAngle -= 2 * PI;
+}
+
+if ( !bIncreasing )
+{
+dResolution = -dResolution;
+}
+double dAngle = dStartAngle;
+double dXBegin = dXStart;
+double dYBegin = dYStart;
+while ( (bIncreasing &amp;&amp; dAngle &lt; dEndAngle) || (!bIncreasing &amp;&amp; dAngle &gt;
+dEndAngle) )
+{
+double dXEnd = dRadius * cos(dAngle) + dXCenter;
+double dYEnd = dRadius * sin(dAngle) + dYCenter;
+
+glVertex2d(dXBegin, dYBegin);
+glVertex2d(dXEnd, dYEnd);
+
+dAngle += dResolution;
+dXBegin = dXEnd;
+dYBegin = dYEnd;
+}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+//***********************************************************************
+BOOL CTestPane::RegisterWindowClass()
+{
+// Register our Pane window class.  This is necessary because we need
+// to add the class style CS_OWNDC for this window to work with OpenGL
+WNDCLASSEX classInfoPane;
+classInfoPane.cbSize = sizeof(WNDCLASSEX);
+classInfoPane.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+classInfoPane.lpfnWndProc = (WNDPROC)CTestPane::PaneWndProc;
+classInfoPane.cbClsExtra = 0;
+classInfoPane.cbWndExtra = 0;
+classInfoPane.hInstance = GetModuleHandle(NULL);
+classInfoPane.hIcon = NULL;
+classInfoPane.hCursor = NULL;
+classInfoPane.hbrBackground = 0;
+classInfoPane.lpszMenuName = NULL;
+classInfoPane.lpszClassName = _TEXT(&quot;TestClass&quot;);
+classInfoPane.hIconSm = NULL;
+BOOL bResult = RegisterClassEx(&amp;classInfoPane);
+if ( !bResult )
+{
+TRACE(&quot;Unable to register TestClass\n&quot;);
+}
+
+return bResult;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+//***********************************************************************
+long CTestPane::PaneWndProc(HWND hwnd, UINT message, DWORD wParam, LONG
+lParam)
+{
+return ::DefWindowProc(hwnd, message, wParam, lParam);
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+//***********************************************************************
+BOOL CTestPane::PreCreateWindow(CREATESTRUCT&amp; cs)
+{
+cs.lpszClass = _TEXT(&quot;TestClass&quot;);
+
+return CStatic::PreCreateWindow(cs);
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+//***********************************************************************
+int CTestPane::OnCreate(LPCREATESTRUCT lpCreateStruct)
+{
+int iRetVal = CStatic::OnCreate(lpCreateStruct);
+if ( iRetVal != -1 )
+{
+// Set up OpenGL
+// Describe the pixel format
+PIXELFORMATDESCRIPTOR pfd;
+memset(&amp;pfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
+pfd.nSize      = sizeof(PIXELFORMATDESCRIPTOR);
+pfd.nVersion   = 1;
+pfd.dwFlags    = PFD_DOUBLEBUFFER |
+PFD_SUPPORT_OPENGL |
+PFD_DRAW_TO_WINDOW |
+PFD_SWAP_COPY |
+0x00008000;  //PFD_SUPPORT_COMPOSITION;
+pfd.iPixelType = PFD_TYPE_RGBA;
+pfd.cColorBits = 24;
+pfd.cDepthBits = 32;
+pfd.iLayerType = PFD_MAIN_PLANE;
+
+// Resolve the pixel format against the current drivers
+m_pDC = GetDC();
+int nPixelFormat = ChoosePixelFormat(m_pDC-&gt;m_hDC, &amp;pfd);
+if (nPixelFormat == 0)
+{
+TRACE(&quot;ChoosePixelFormat Failed %d\r\n&quot;,GetLastError());
+iRetVal = -1;
+}
+else
+{
+// If we need a palette, punt.  Don't want to mess with this!
+if ( (pfd.dwFlags &amp; PFD_NEED_PALETTE) &gt; 0 )
+{
+TRACE(&quot;We need a palette!!\r\n&quot;);
+iRetVal = -1;
+}
+else
+{
+// Set the pixel format
+BOOL bResult = SetPixelFormat(m_pDC-&gt;m_hDC, nPixelFormat, &amp;pfd);
+if ( bResult )
+{
+// Create a rendering context for OpenGL
+m_hRC = wglCreateContext(m_pDC-&gt;m_hDC);
+if (m_hRC == NULL)
+{
+TRACE(&quot;Unable to create a rendering context: %d\r\n&quot;,GetLastError());
+iRetVal = -1;
+}
+}
+else
+{
+TRACE(&quot;SetPixelFormat Failed %d\r\n&quot;,GetLastError());
+iRetVal = -1;
+}
+}
+}
+}
+
+return iRetVal;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+</POST>
+<POST>
+<POSTER> &quot;NOSPAM&quot; &lt;NeOsSaPcArMe...@SkPnAoMlNoOgSyP.AnMet&gt; </POSTER>
+<POSTDATE> 2007-10-06T09:57:00 </POSTDATE>
+The window creation is missing WS_CLIPCHILDREN   and WS_CLIPSIBLINGS styles.
+OpenGL requires these on Windows.
+
+To use double buffering glDrawBuffer(GL_BACK);  needs to be called before
+the primitives are drawn so that the SwapBuffers call works.  Otherwise, the
+code is drawing to whatever buffer is default (possibly the front one) and
+then swapping the back buffer over the front.  Result:  no picture.
+
+HTH,
+
+Elaine
+
+&quot;John A. Byerly&quot; &lt;jbyerly@essDASHqualityDOTcom&gt; wrote in message
+news:IScNi.5444$6Y5.2084@trnddc07 ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi,
+
+&gt; I realize that this problem involves Vista, but there is an (equal) OpenGL
+&gt; element, so I posted it here.  Sorry if it appears to be off-topic.
+
+&gt; I have a simple, single dialog application that displays an OpenGL area
+&gt; with
+&gt; a cheesy car drawn on it.  The area is known to my application as an
+&gt; instance of a CStatic subclass I created called CTestPane.  When I create
+&gt; this CTestPane instance with a rect of 0, 0, 520, 300 (left, top, right,
+&gt; bottom), the area, cleared in black, appears with the cheesy red car.  If,
+&gt; instead, I use a rect of 20, 20, 520, 300, no image appears at all.
+
+&gt; Now, before anyone assumes this is a problem with your humble programmer,
+&gt; I
+&gt; want to point out that if I turn off Desktop Composition for the
+&gt; application, it works fine.  I know, the problem is probably still me, but
+&gt; I
+&gt; just wanted to point that out.
+
+&gt; As for some background, I created this app to try to debug a problem we
+&gt; are
+&gt; having with our actual product (much more interesting than my sample
+&gt; app!).
+&gt; Some of our OpenGL panes have &quot;dead&quot; areas in them (bands of the Windows
+&gt; background color), and some panes do not show up at all.  Once again, with
+&gt; Desktop Composition turned off, all these problems go away, but this is
+&gt; not
+&gt; really a long term option for us.
+
+&gt; I have included the implementation for my CTestPane below.  As I
+&gt; mentioned,
+&gt; creating this pane with
+
+&gt;      m_ctrlPane.Create(NULL, WS_VISIBLE | WS_CHILD, CRect(0, 0, 520, 300),
+&gt; this);
+
+&gt; displays the image as expected.  Making the simple change to
+
+&gt;     m_ctrlPane.Create(NULL, WS_VISIBLE | WS_CHILD, CRect(20, 20, 520,
+&gt; 300),
+&gt; this);
+
+&gt; results in nothing being displayed on the main dialog.
+
+&gt; More information.  This sample app (and our actual product) works fine on
+&gt; a
+&gt; Vista eMachines PC with an NVIDIA GeForce 6100.  Where it is not working
+&gt; is
+&gt; on my development laptop with Intel graphics.  We saw similar problems
+&gt; with
+&gt; a desktop PC as well, but I don't have the specs for it.
+
+&gt; Thanks for any help you can provide!
+
+&gt; JAB
+
+&gt; // TestPane.cpp : implementation file
+&gt; //
+
+&gt; #include &quot;stdafx.h&quot;
+&gt; #include &quot;OpenGLVistaTestSimple.h&quot;
+&gt; #include &quot;TestPane.h&quot;
+
+&gt; #include &lt;gl/gl.h&gt;
+&gt; #include &lt;gl/glu.h&gt;
+
+&gt; #include &lt;math.h&gt;
+
+&gt; #ifdef _DEBUG
+&gt; #define new DEBUG_NEW
+&gt; #undef THIS_FILE
+&gt; static char THIS_FILE[] = __FILE__;
+&gt; #endif
+
+&gt; BOOL CTestPane::m_bWindowClassRegistered = RegisterWindowClass();
+
+&gt; /////////////////////////////////////////////////////////////////////////// //
+&gt; // CTestPane
+
+&gt; CTestPane::CTestPane()
+&gt; : m_pDC(NULL)
+&gt; {
+&gt; }
+
+&gt; CTestPane::~CTestPane()
+&gt; {
+&gt; }
+
+&gt; BEGIN_MESSAGE_MAP(CTestPane, CStatic)
+&gt; //{{AFX_MSG_MAP(CTestPane)
+&gt; ON_WM_PAINT()
+&gt; ON_WM_CREATE()
+&gt; ON_WM_ERASEBKGND()
+&gt; //}}AFX_MSG_MAP
+&gt; END_MESSAGE_MAP()
+
+&gt; /////////////////////////////////////////////////////////////////////////// //
+&gt; // CTestPane message handlers
+
+&gt; void CTestPane::OnPaint()
+&gt; {
+&gt; CPaintDC dc(this); // device context for painting
+
+&gt; if ( m_pDC != NULL )
+&gt; {
+&gt;  BOOL bResult = wglMakeCurrent(m_pDC-&gt;m_hDC, m_hRC);
+&gt;  if ( bResult )
+&gt;  {
+&gt;   glClearColor(0.0, 0.0, 0.0, 1.0);
+&gt;   glClear(GL_COLOR_BUFFER_BIT);
+
+&gt;   glClearDepth(1.0f);
+
+&gt;   CRect rectPane;
+&gt;   GetClientRect(rectPane);
+
+&gt;   // Select the projection matrix and reset
+&gt;   glMatrixMode(GL_PROJECTION);
+&gt;   glLoadIdentity();
+
+&gt;   // Set the drawing area
+&gt;   glViewport(rectPane.left,
+&gt;        rectPane.top,
+&gt;        rectPane.Width(),
+&gt;        rectPane.Height());
+
+&gt;   gluOrtho2D(0, 1000, 0, 1000.0 * (double)rectPane.Height() /
+&gt; (double)rectPane.Width());
+
+&gt;   glMatrixMode(GL_MODELVIEW);
+&gt;   glLoadIdentity();
+
+&gt;   glLineWidth(1.0);
+&gt;   glColor3d(1.0, 0.0, 0.0);
+
+&gt;   glBegin(GL_LINES);
+&gt;    Line(110, 230, 210, 230);
+&gt;    Arc(210, 230, 260, 230, -180);
+&gt;    Line(310, 230, 510, 230);
+&gt;    Arc(510, 230, 560, 230, -180);
+&gt;    Line(610, 230, 710, 230);
+&gt;    Line(710, 230, 710, 270);
+&gt;    Line(710, 270, 630, 300);
+&gt;    Line(630, 300, 110, 300);
+&gt;    Line(590, 300, 550, 350);
+&gt;    Line(550, 350, 250, 350);
+&gt;    Line(250, 350, 210, 300);
+&gt;    Line(110, 300, 110, 230);
+
+&gt;    Line(210, 300, 250, 280);
+&gt;    Line(310, 240, 510, 240);
+&gt;    Line(570, 280, 590, 300);
+&gt;    Line(410, 350, 410, 240);
+
+&gt;    Arc(215, 230, 260, 230, 360);
+&gt;    Arc(515, 230, 560, 230, 360);
+&gt;   glEnd();
+
+&gt;   SwapBuffers(m_pDC-&gt;m_hDC);
+
+&gt;   wglMakeCurrent(NULL, NULL);
+&gt;  }
+&gt; }
+
+&gt; // Do not call CStatic::OnPaint() for painting messages
+&gt; }
+
+&gt; //***********************************************************************
+&gt; void CTestPane::Line(double dXStart, double dYStart, double dXEnd, double
+&gt; dYEnd)
+&gt; {
+&gt; glVertex2d(dXStart, dYStart);
+&gt; glVertex2d(dXEnd, dYEnd);
+&gt; }
+
+&gt; //***********************************************************************
+&gt; void CTestPane::Arc(double dXStart, double dYStart, double dXCenter,
+&gt; double
+&gt; dYCenter, double dDegrees)
+&gt; {
+&gt; static const double PI = 3.1415926;
+
+&gt; double dResolution = 10.0 * PI / 180.0;
+
+&gt; double dRadius = sqrt((dXStart - dXCenter) * (dXStart - dXCenter) +
+&gt;        (dYStart - dYCenter) * (dYStart - dYCenter));
+
+&gt; double dStartAngle = atan2(dYStart - dYCenter, dXStart - dXCenter);
+&gt; double dEndAngle = dStartAngle + dDegrees * PI / 180.0;
+&gt; bool bIncreasing = dDegrees &gt; 0;
+&gt; if ( bIncreasing &amp;&amp; dEndAngle &lt; dStartAngle )
+&gt; {
+&gt;  dEndAngle += 2 * PI;
+&gt; }
+&gt; else if ( !bIncreasing &amp;&amp; dEndAngle &gt; dStartAngle )
+&gt; {
+&gt;  dEndAngle -= 2 * PI;
+&gt; }
+
+&gt; if ( !bIncreasing )
+&gt; {
+&gt;  dResolution = -dResolution;
+&gt; }
+&gt; double dAngle = dStartAngle;
+&gt; double dXBegin = dXStart;
+&gt; double dYBegin = dYStart;
+&gt; while ( (bIncreasing &amp;&amp; dAngle &lt; dEndAngle) || (!bIncreasing &amp;&amp; dAngle &gt;
+&gt; dEndAngle) )
+&gt; {
+&gt;  double dXEnd = dRadius * cos(dAngle) + dXCenter;
+&gt;  double dYEnd = dRadius * sin(dAngle) + dYCenter;
+
+&gt;  glVertex2d(dXBegin, dYBegin);
+&gt;  glVertex2d(dXEnd, dYEnd);
+
+&gt;  dAngle += dResolution;
+&gt;  dXBegin = dXEnd;
+&gt;  dYBegin = dYEnd;
+&gt; }
+&gt; }
+
+&gt; //***********************************************************************
+&gt; BOOL CTestPane::RegisterWindowClass()
+&gt; {
+&gt; // Register our Pane window class.  This is necessary because we need
+&gt; // to add the class style CS_OWNDC for this window to work with OpenGL
+&gt; WNDCLASSEX classInfoPane;
+&gt; classInfoPane.cbSize = sizeof(WNDCLASSEX);
+&gt; classInfoPane.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+&gt; classInfoPane.lpfnWndProc = (WNDPROC)CTestPane::PaneWndProc;
+&gt; classInfoPane.cbClsExtra = 0;
+&gt; classInfoPane.cbWndExtra = 0;
+&gt; classInfoPane.hInstance = GetModuleHandle(NULL);
+&gt; classInfoPane.hIcon = NULL;
+&gt; classInfoPane.hCursor = NULL;
+&gt; classInfoPane.hbrBackground = 0;
+&gt; classInfoPane.lpszMenuName = NULL;
+&gt; classInfoPane.lpszClassName = _TEXT(&quot;TestClass&quot;);
+&gt; classInfoPane.hIconSm = NULL;
+&gt; BOOL bResult = RegisterClassEx(&amp;classInfoPane);
+&gt; if ( !bResult )
+&gt; {
+&gt;  TRACE(&quot;Unable to register TestClass\n&quot;);
+&gt; }
+
+&gt; return bResult;
+&gt; }
+
+&gt; //***********************************************************************
+&gt; long CTestPane::PaneWndProc(HWND hwnd, UINT message, DWORD wParam, LONG
+&gt; lParam)
+&gt; {
+&gt; return ::DefWindowProc(hwnd, message, wParam, lParam);
+&gt; }
+
+&gt; //***********************************************************************
+&gt; BOOL CTestPane::PreCreateWindow(CREATESTRUCT&amp; cs)
+&gt; {
+&gt; cs.lpszClass = _TEXT(&quot;TestClass&quot;);
+
+&gt; return CStatic::PreCreateWindow(cs);
+&gt; }
+
+&gt; //***********************************************************************
+&gt; int CTestPane::OnCreate(LPCREATESTRUCT lpCreateStruct)
+&gt; {
+&gt; int iRetVal = CStatic::OnCreate(lpCreateStruct);
+&gt; if ( iRetVal != -1 )
+&gt; {
+&gt;  // Set up OpenGL
+&gt;  // Describe the pixel format
+&gt;  PIXELFORMATDESCRIPTOR pfd;
+&gt;  memset(&amp;pfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
+&gt;  pfd.nSize      = sizeof(PIXELFORMATDESCRIPTOR);
+&gt;  pfd.nVersion   = 1;
+&gt;  pfd.dwFlags    = PFD_DOUBLEBUFFER |
+&gt;      PFD_SUPPORT_OPENGL |
+&gt;      PFD_DRAW_TO_WINDOW |
+&gt;      PFD_SWAP_COPY |
+&gt;      0x00008000;  //PFD_SUPPORT_COMPOSITION;
+&gt;  pfd.iPixelType = PFD_TYPE_RGBA;
+&gt;  pfd.cColorBits = 24;
+&gt;  pfd.cDepthBits = 32;
+&gt;  pfd.iLayerType = PFD_MAIN_PLANE;
+
+&gt;  // Resolve the pixel format against the current drivers
+&gt;  m_pDC = GetDC();
+&gt;  int nPixelFormat = ChoosePixelFormat(m_pDC-&gt;m_hDC, &amp;pfd);
+&gt;  if (nPixelFormat == 0)
+&gt;  {
+&gt;   TRACE(&quot;ChoosePixelFormat Failed %d\r\n&quot;,GetLastError());
+&gt;   iRetVal = -1;
+&gt;  }
+&gt;  else
+&gt;  {
+&gt;   // If we need a palette, punt.  Don't want to mess with this!
+&gt;   if ( (pfd.dwFlags &amp; PFD_NEED_PALETTE) &gt; 0 )
+&gt;   {
+&gt;    TRACE(&quot;We need a palette!!\r\n&quot;);
+&gt;    iRetVal = -1;
+&gt;   }
+&gt;   else
+&gt;   {
+&gt;    // Set the pixel format
+&gt;    BOOL bResult = SetPixelFormat(m_pDC-&gt;m_hDC, nPixelFormat, &amp;pfd);
+&gt;    if ( bResult )
+&gt;    {
+&gt;     // Create a rendering context for OpenGL
+&gt;     m_hRC = wglCreateContext(m_pDC-&gt;m_hDC);
+&gt;     if (m_hRC == NULL)
+&gt;     {
+&gt;      TRACE(&quot;Unable to create a rendering context: %d\r\n&quot;,GetLastError());
+&gt;      iRetVal = -1;
+&gt;     }
+&gt;    }
+&gt;    else
+&gt;    {
+&gt;     TRACE(&quot;SetPixelFormat Failed %d\r\n&quot;,GetLastError());
+&gt;     iRetVal = -1;
+&gt;    }
+&gt;   }
+&gt;  }
+&gt; }
+
+&gt; return iRetVal;
+&gt; }
+">
+</POST>
+<POST>
+<POSTER> Wolfgang Draxinger &lt;wdraxin...@darkstargames.de&gt; </POSTER>
+<POSTDATE> 2007-10-06T13:10:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+NOSPAM wrote:
+&gt; To use double buffering glDrawBuffer(GL_BACK);  needs to be
+&gt; called before the primitives are drawn so that the SwapBuffers
+&gt; call works.
+">
+
+Only if you've set it to something else beforehand.
+
+<QUOTE PREVIOUSPOST="
+&gt; Otherwise, the code is drawing to whatever buffer is default
+&gt; (possibly the front one)
+">
+
+By default the back buffer is the drawing target in
+doublebuffered mode.
+
+<QUOTE PREVIOUSPOST="
+&gt; and then swapping the back buffer over the front.  Result: no
+&gt; picture.
+">
+
+Even then you should be able to see a glimpse of the picture
+being rendered. Also the back buffer won't be cleared, so it's
+quite probable that some garbage ends up in the front buffer,
+which YOU CAN SEE.
+
+Wolfgang Draxinger
+--
+E-Mail address works, Jabber: hexar ... @jabber.org, ICQ: 134682867
+</POST>
+<POST>
+<POSTER> &quot;John A. Byerly&quot; &lt;jbye...@essDASHquality.com&gt; </POSTER>
+<POSTDATE> 2007-10-08T10:06:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;NOSPAM&quot; &lt;NeOsSaPcArMe ... @SkPnAoMlNoOgSyP.AnMet&gt; wrote in message
+">
+
+news:65d7a$47079453$18d68279$32637@KNOLOGY.NET ...
+
+<QUOTE PREVIOUSPOST="
+&gt; The window creation is missing WS_CLIPCHILDREN   and WS_CLIPSIBLINGS
+&gt; styles. OpenGL requires these on Windows.
+">
+
+I thought I had tried this before, but I am out of ideas so I added the
+above styles to my call to Create().  There was no effect.
+
+<QUOTE PREVIOUSPOST="
+&gt; To use double buffering glDrawBuffer(GL_BACK);  needs to be called before
+&gt; the primitives are drawn so that the SwapBuffers call works.  Otherwise,
+&gt; the code is drawing to whatever buffer is default (possibly the front one)
+&gt; and then swapping the back buffer over the front.  Result:  no picture.
+">
+
+GL_BACK is the default for double buffering.
+
+It almost appears that the problem may be related to the OpenGL support by
+the video system, but there has to be a way to insulate my app from this.
+
+JAB
+</POST>
+<POST>
+<POSTER> &quot;John A. Byerly&quot; &lt;jbye...@essDASHquality.com&gt; </POSTER>
+<POSTDATE> 2007-10-09T15:32:00 </POSTDATE>
+Hi,
+
+I was able to fix the problem by rendering to a DIB section and then BitBlt
+the rendered bitmap.  This has actually solved a couple of problems we were
+experiencing.
+
+JAB
+
+&quot;John A. Byerly&quot; &lt;jbyerly@essDASHqualityDOTcom&gt; wrote in message
+news:IScNi.5444$6Y5.2084@trnddc07 ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi,
+
+&gt; I realize that this problem involves Vista, but there is an (equal) OpenGL
+&gt; element, so I posted it here.  Sorry if it appears to be off-topic.
+
+&gt; I have a simple, single dialog application that displays an OpenGL area
+&gt; with
+&gt; a cheesy car drawn on it.  The area is known to my application as an
+&gt; instance of a CStatic subclass I created called CTestPane.  When I create
+&gt; this CTestPane instance with a rect of 0, 0, 520, 300 (left, top, right,
+&gt; bottom), the area, cleared in black, appears with the cheesy red car.  If,
+&gt; instead, I use a rect of 20, 20, 520, 300, no image appears at all.
+
+&gt; Now, before anyone assumes this is a problem with your humble programmer,
+&gt; I
+&gt; want to point out that if I turn off Desktop Composition for the
+&gt; application, it works fine.  I know, the problem is probably still me, but
+&gt; I
+&gt; just wanted to point that out.
+
+&gt; As for some background, I created this app to try to debug a problem we
+&gt; are
+&gt; having with our actual product (much more interesting than my sample
+&gt; app!).
+&gt; Some of our OpenGL panes have &quot;dead&quot; areas in them (bands of the Windows
+&gt; background color), and some panes do not show up at all.  Once again, with
+&gt; Desktop Composition turned off, all these problems go away, but this is
+&gt; not
+&gt; really a long term option for us.
+
+&gt; I have included the implementation for my CTestPane below.  As I
+&gt; mentioned,
+&gt; creating this pane with
+
+&gt;      m_ctrlPane.Create(NULL, WS_VISIBLE | WS_CHILD, CRect(0, 0, 520, 300),
+&gt; this);
+
+&gt; displays the image as expected.  Making the simple change to
+
+&gt;     m_ctrlPane.Create(NULL, WS_VISIBLE | WS_CHILD, CRect(20, 20, 520,
+&gt; 300),
+&gt; this);
+
+&gt; results in nothing being displayed on the main dialog.
+
+&gt; More information.  This sample app (and our actual product) works fine on
+&gt; a
+&gt; Vista eMachines PC with an NVIDIA GeForce 6100.  Where it is not working
+&gt; is
+&gt; on my development laptop with Intel graphics.  We saw similar problems
+&gt; with
+&gt; a desktop PC as well, but I don't have the specs for it.
+
+&gt; Thanks for any help you can provide!
+
+&gt; JAB
+
+&gt; // TestPane.cpp : implementation file
+&gt; //
+
+&gt; #include &quot;stdafx.h&quot;
+&gt; #include &quot;OpenGLVistaTestSimple.h&quot;
+&gt; #include &quot;TestPane.h&quot;
+
+&gt; #include &lt;gl/gl.h&gt;
+&gt; #include &lt;gl/glu.h&gt;
+
+&gt; #include &lt;math.h&gt;
+
+&gt; #ifdef _DEBUG
+&gt; #define new DEBUG_NEW
+&gt; #undef THIS_FILE
+&gt; static char THIS_FILE[] = __FILE__;
+&gt; #endif
+
+&gt; BOOL CTestPane::m_bWindowClassRegistered = RegisterWindowClass();
+
+&gt; /////////////////////////////////////////////////////////////////////////// //
+&gt; // CTestPane
+
+&gt; CTestPane::CTestPane()
+&gt; : m_pDC(NULL)
+&gt; {
+&gt; }
+
+&gt; CTestPane::~CTestPane()
+&gt; {
+&gt; }
+
+&gt; BEGIN_MESSAGE_MAP(CTestPane, CStatic)
+&gt; //{{AFX_MSG_MAP(CTestPane)
+&gt; ON_WM_PAINT()
+&gt; ON_WM_CREATE()
+&gt; ON_WM_ERASEBKGND()
+&gt; //}}AFX_MSG_MAP
+&gt; END_MESSAGE_MAP()
+
+&gt; /////////////////////////////////////////////////////////////////////////// //
+&gt; // CTestPane message handlers
+
+&gt; void CTestPane::OnPaint()
+&gt; {
+&gt; CPaintDC dc(this); // device context for painting
+
+&gt; if ( m_pDC != NULL )
+&gt; {
+&gt;  BOOL bResult = wglMakeCurrent(m_pDC-&gt;m_hDC, m_hRC);
+&gt;  if ( bResult )
+&gt;  {
+&gt;   glClearColor(0.0, 0.0, 0.0, 1.0);
+&gt;   glClear(GL_COLOR_BUFFER_BIT);
+
+&gt;   glClearDepth(1.0f);
+
+&gt;   CRect rectPane;
+&gt;   GetClientRect(rectPane);
+
+&gt;   // Select the projection matrix and reset
+&gt;   glMatrixMode(GL_PROJECTION);
+&gt;   glLoadIdentity();
+
+&gt;   // Set the drawing area
+&gt;   glViewport(rectPane.left,
+&gt;        rectPane.top,
+&gt;        rectPane.Width(),
+&gt;        rectPane.Height());
+
+&gt;   gluOrtho2D(0, 1000, 0, 1000.0 * (double)rectPane.Height() /
+&gt; (double)rectPane.Width());
+
+&gt;   glMatrixMode(GL_MODELVIEW);
+&gt;   glLoadIdentity();
+
+&gt;   glLineWidth(1.0);
+&gt;   glColor3d(1.0, 0.0, 0.0);
+
+&gt;   glBegin(GL_LINES);
+&gt;    Line(110, 230, 210, 230);
+&gt;    Arc(210, 230, 260, 230, -180);
+&gt;    Line(310, 230, 510, 230);
+&gt;    Arc(510, 230, 560, 230, -180);
+&gt;    Line(610, 230, 710, 230);
+&gt;    Line(710, 230, 710, 270);
+&gt;    Line(710, 270, 630, 300);
+&gt;    Line(630, 300, 110, 300);
+&gt;    Line(590, 300, 550, 350);
+&gt;    Line(550, 350, 250, 350);
+&gt;    Line(250, 350, 210, 300);
+&gt;    Line(110, 300, 110, 230);
+
+&gt;    Line(210, 300, 250, 280);
+&gt;    Line(310, 240, 510, 240);
+&gt;    Line(570, 280, 590, 300);
+&gt;    Line(410, 350, 410, 240);
+
+&gt;    Arc(215, 230, 260, 230, 360);
+&gt;    Arc(515, 230, 560, 230, 360);
+&gt;   glEnd();
+
+&gt;   SwapBuffers(m_pDC-&gt;m_hDC);
+
+&gt;   wglMakeCurrent(NULL, NULL);
+&gt;  }
+&gt; }
+
+&gt; // Do not call CStatic::OnPaint() for painting messages
+&gt; }
+
+&gt; //***********************************************************************
+&gt; void CTestPane::Line(double dXStart, double dYStart, double dXEnd, double
+&gt; dYEnd)
+&gt; {
+&gt; glVertex2d(dXStart, dYStart);
+&gt; glVertex2d(dXEnd, dYEnd);
+&gt; }
+
+&gt; //***********************************************************************
+&gt; void CTestPane::Arc(double dXStart, double dYStart, double dXCenter,
+&gt; double
+&gt; dYCenter, double dDegrees)
+&gt; {
+&gt; static const double PI = 3.1415926;
+
+&gt; double dResolution = 10.0 * PI / 180.0;
+
+&gt; double dRadius = sqrt((dXStart - dXCenter) * (dXStart - dXCenter) +
+&gt;        (dYStart - dYCenter) * (dYStart - dYCenter));
+
+&gt; double dStartAngle = atan2(dYStart - dYCenter, dXStart - dXCenter);
+&gt; double dEndAngle = dStartAngle + dDegrees * PI / 180.0;
+&gt; bool bIncreasing = dDegrees &gt; 0;
+&gt; if ( bIncreasing &amp;&amp; dEndAngle &lt; dStartAngle )
+&gt; {
+&gt;  dEndAngle += 2 * PI;
+&gt; }
+&gt; else if ( !bIncreasing &amp;&amp; dEndAngle &gt; dStartAngle )
+&gt; {
+&gt;  dEndAngle -= 2 * PI;
+&gt; }
+
+&gt; if ( !bIncreasing )
+&gt; {
+&gt;  dResolution = -dResolution;
+&gt; }
+&gt; double dAngle = dStartAngle;
+&gt; double dXBegin = dXStart;
+&gt; double dYBegin = dYStart;
+&gt; while ( (bIncreasing &amp;&amp; dAngle &lt; dEndAngle) || (!bIncreasing &amp;&amp; dAngle &gt;
+&gt; dEndAngle) )
+&gt; {
+&gt;  double dXEnd = dRadius * cos(dAngle) + dXCenter;
+&gt;  double dYEnd = dRadius * sin(dAngle) + dYCenter;
+
+&gt;  glVertex2d(dXBegin, dYBegin);
+&gt;  glVertex2d(dXEnd, dYEnd);
+
+&gt;  dAngle += dResolution;
+&gt;  dXBegin = dXEnd;
+&gt;  dYBegin = dYEnd;
+&gt; }
+&gt; }
+
+&gt; //***********************************************************************
+&gt; BOOL CTestPane::RegisterWindowClass()
+&gt; {
+&gt; // Register our Pane window class.  This is necessary because we need
+&gt; // to add the class style CS_OWNDC for this window to work with OpenGL
+&gt; WNDCLASSEX classInfoPane;
+&gt; classInfoPane.cbSize = sizeof(WNDCLASSEX);
+&gt; classInfoPane.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+&gt; classInfoPane.lpfnWndProc = (WNDPROC)CTestPane::PaneWndProc;
+&gt; classInfoPane.cbClsExtra = 0;
+&gt; classInfoPane.cbWndExtra = 0;
+&gt; classInfoPane.hInstance = GetModuleHandle(NULL);
+&gt; classInfoPane.hIcon = NULL;
+&gt; classInfoPane.hCursor = NULL;
+&gt; classInfoPane.hbrBackground = 0;
+&gt; classInfoPane.lpszMenuName = NULL;
+&gt; classInfoPane.lpszClassName = _TEXT(&quot;TestClass&quot;);
+&gt; classInfoPane.hIconSm = NULL;
+&gt; BOOL bResult = RegisterClassEx(&amp;classInfoPane);
+&gt; if ( !bResult )
+&gt; {
+&gt;  TRACE(&quot;Unable to register TestClass\n&quot;);
+&gt; }
+
+&gt; return bResult;
+&gt; }
+
+&gt; //***********************************************************************
+&gt; long CTestPane::PaneWndProc(HWND hwnd, UINT message, DWORD wParam, LONG
+&gt; lParam)
+&gt; {
+&gt; return ::DefWindowProc(hwnd, message, wParam, lParam);
+&gt; }
+
+&gt; //***********************************************************************
+&gt; BOOL CTestPane::PreCreateWindow(CREATESTRUCT&amp; cs)
+&gt; {
+&gt; cs.lpszClass = _TEXT(&quot;TestClass&quot;);
+
+&gt; return CStatic::PreCreateWindow(cs);
+&gt; }
+
+&gt; //***********************************************************************
+&gt; int CTestPane::OnCreate(LPCREATESTRUCT lpCreateStruct)
+&gt; {
+&gt; int iRetVal = CStatic::OnCreate(lpCreateStruct);
+&gt; if ( iRetVal != -1 )
+&gt; {
+&gt;  // Set up OpenGL
+&gt;  // Describe the pixel format
+&gt;  PIXELFORMATDESCRIPTOR pfd;
+&gt;  memset(&amp;pfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
+&gt;  pfd.nSize      = sizeof(PIXELFORMATDESCRIPTOR);
+&gt;  pfd.nVersion   = 1;
+&gt;  pfd.dwFlags    = PFD_DOUBLEBUFFER |
+&gt;      PFD_SUPPORT_OPENGL |
+&gt;      PFD_DRAW_TO_WINDOW |
+&gt;      PFD_SWAP_COPY |
+&gt;      0x00008000;  //PFD_SUPPORT_COMPOSITION;
+&gt;  pfd.iPixelType = PFD_TYPE_RGBA;
+&gt;  pfd.cColorBits = 24;
+&gt;  pfd.cDepthBits = 32;
+&gt;  pfd.iLayerType = PFD_MAIN_PLANE;
+
+&gt;  // Resolve the pixel format against the current drivers
+&gt;  m_pDC = GetDC();
+&gt;  int nPixelFormat = ChoosePixelFormat(m_pDC-&gt;m_hDC, &amp;pfd);
+&gt;  if (nPixelFormat == 0)
+&gt;  {
+&gt;   TRACE(&quot;ChoosePixelFormat Failed %d\r\n&quot;,GetLastError());
+&gt;   iRetVal = -1;
+&gt;  }
+&gt;  else
+&gt;  {
+&gt;   // If we need a palette, punt.  Don't want to mess with this!
+&gt;   if ( (pfd.dwFlags &amp; PFD_NEED_PALETTE) &gt; 0 )
+&gt;   {
+&gt;    TRACE(&quot;We need a palette!!\r\n&quot;);
+&gt;    iRetVal = -1;
+&gt;   }
+&gt;   else
+&gt;   {
+&gt;    // Set the pixel format
+&gt;    BOOL bResult = SetPixelFormat(m_pDC-&gt;m_hDC, nPixelFormat, &amp;pfd);
+&gt;    if ( bResult )
+&gt;    {
+&gt;     // Create a rendering context for OpenGL
+&gt;     m_hRC = wglCreateContext(m_pDC-&gt;m_hDC);
+&gt;     if (m_hRC == NULL)
+&gt;     {
+&gt;      TRACE(&quot;Unable to create a rendering context: %d\r\n&quot;,GetLastError());
+&gt;      iRetVal = -1;
+&gt;     }
+&gt;    }
+&gt;    else
+&gt;    {
+&gt;     TRACE(&quot;SetPixelFormat Failed %d\r\n&quot;,GetLastError());
+&gt;     iRetVal = -1;
+&gt;    }
+&gt;   }
+&gt;  }
+&gt; }
+
+&gt; return iRetVal;
+&gt; }
+">
+</POST>
+<POST>
+<POSTER> &quot;jbwest&quot; &lt;jbw...@comcast.net&gt; </POSTER>
+<POSTDATE> 2007-10-09T21:18:00 </POSTDATE>
+&quot;John A. Byerly&quot; &lt;jbye ... @essDASHquality.com&gt; wrote in message
+news:QGQOi.2517$ln.55@trnddc07 ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi,
+
+&gt; I was able to fix the problem by rendering to a DIB section and then
+&gt; BitBlt the rendered bitmap.  This has actually solved a couple of problems
+&gt; we were experiencing.
+
+&gt; JAB
+
+&gt; &quot;John A. Byerly&quot; &lt;jbyerly@essDASHqualityDOTcom&gt; wrote in message
+&gt; news:IScNi.5444$6Y5.2084@trnddc07 ...
+&gt;&gt; Hi,
+
+&gt;&gt; I realize that this problem involves Vista, but there is an (equal)
+&gt;&gt; OpenGL
+&gt;&gt; element, so I posted it here.  Sorry if it appears to be off-topic.
+
+&gt;&gt; I have a simple, single dialog application that displays an OpenGL area
+&gt;&gt; with
+&gt;&gt; a cheesy car drawn on it.  The area is known to my application as an
+&gt;&gt; instance of a CStatic subclass I created called CTestPane.  When I create
+&gt;&gt; this CTestPane instance with a rect of 0, 0, 520, 300 (left, top, right,
+&gt;&gt; bottom), the area, cleared in black, appears with the cheesy red car.
+&gt;&gt; If,
+&gt;&gt; instead, I use a rect of 20, 20, 520, 300, no image appears at all.
+
+&gt;&gt; Now, before anyone assumes this is a problem with your humble programmer,
+&gt;&gt; I
+&gt;&gt; want to point out that if I turn off Desktop Composition for the
+&gt;&gt; application, it works fine.  I know, the problem is probably still me,
+&gt;&gt; but I
+&gt;&gt; just wanted to point that out.
+
+&gt;&gt; As for some background, I created this app to try to debug a problem we
+&gt;&gt; are
+&gt;&gt; having with our actual product (much more interesting than my sample
+&gt;&gt; app!).
+&gt;&gt; Some of our OpenGL panes have &quot;dead&quot; areas in them (bands of the Windows
+&gt;&gt; background color), and some panes do not show up at all.  Once again,
+&gt;&gt; with
+&gt;&gt; Desktop Composition turned off, all these problems go away, but this is
+&gt;&gt; not
+&gt;&gt; really a long term option for us.
+
+&gt;&gt; I have included the implementation for my CTestPane below.  As I
+&gt;&gt; mentioned,
+&gt;&gt; creating this pane with
+
+&gt;&gt;      m_ctrlPane.Create(NULL, WS_VISIBLE | WS_CHILD, CRect(0, 0, 520,
+&gt;&gt; 300),
+&gt;&gt; this);
+
+&gt;&gt; displays the image as expected.  Making the simple change to
+
+&gt;&gt;     m_ctrlPane.Create(NULL, WS_VISIBLE | WS_CHILD, CRect(20, 20, 520,
+&gt;&gt; 300),
+&gt;&gt; this);
+
+&gt;&gt; results in nothing being displayed on the main dialog.
+
+&gt;&gt; More information.  This sample app (and our actual product) works fine on
+&gt;&gt; a
+&gt;&gt; Vista eMachines PC with an NVIDIA GeForce 6100.  Where it is not working
+&gt;&gt; is
+&gt;&gt; on my development laptop with Intel graphics.  We saw similar problems
+&gt;&gt; with
+&gt;&gt; a desktop PC as well, but I don't have the specs for it.
+
+&gt;&gt; Thanks for any help you can provide!
+
+&gt;&gt; JAB
+
+&gt;&gt; // TestPane.cpp : implementation file
+&gt;&gt; //
+
+&gt;&gt; #include &quot;stdafx.h&quot;
+&gt;&gt; #include &quot;OpenGLVistaTestSimple.h&quot;
+&gt;&gt; #include &quot;TestPane.h&quot;
+
+&gt;&gt; #include &lt;gl/gl.h&gt;
+&gt;&gt; #include &lt;gl/glu.h&gt;
+
+&gt;&gt; #include &lt;math.h&gt;
+
+&gt;&gt; #ifdef _DEBUG
+&gt;&gt; #define new DEBUG_NEW
+&gt;&gt; #undef THIS_FILE
+&gt;&gt; static char THIS_FILE[] = __FILE__;
+&gt;&gt; #endif
+
+&gt;&gt; BOOL CTestPane::m_bWindowClassRegistered = RegisterWindowClass();
+
+&gt;&gt; /////////////////////////////////////////////////////////////////////////// //
+&gt;&gt; // CTestPane
+
+&gt;&gt; CTestPane::CTestPane()
+&gt;&gt; : m_pDC(NULL)
+&gt;&gt; {
+&gt;&gt; }
+
+&gt;&gt; CTestPane::~CTestPane()
+&gt;&gt; {
+&gt;&gt; }
+
+&gt;&gt; BEGIN_MESSAGE_MAP(CTestPane, CStatic)
+&gt;&gt; //{{AFX_MSG_MAP(CTestPane)
+&gt;&gt; ON_WM_PAINT()
+&gt;&gt; ON_WM_CREATE()
+&gt;&gt; ON_WM_ERASEBKGND()
+&gt;&gt; //}}AFX_MSG_MAP
+&gt;&gt; END_MESSAGE_MAP()
+
+&gt;&gt; /////////////////////////////////////////////////////////////////////////// //
+&gt;&gt; // CTestPane message handlers
+
+&gt;&gt; void CTestPane::OnPaint()
+&gt;&gt; {
+&gt;&gt; CPaintDC dc(this); // device context for painting
+
+&gt;&gt; if ( m_pDC != NULL )
+&gt;&gt; {
+&gt;&gt;  BOOL bResult = wglMakeCurrent(m_pDC-&gt;m_hDC, m_hRC);
+&gt;&gt;  if ( bResult )
+&gt;&gt;  {
+&gt;&gt;   glClearColor(0.0, 0.0, 0.0, 1.0);
+&gt;&gt;   glClear(GL_COLOR_BUFFER_BIT);
+
+&gt;&gt;   glClearDepth(1.0f);
+
+&gt;&gt;   CRect rectPane;
+&gt;&gt;   GetClientRect(rectPane);
+
+&gt;&gt;   // Select the projection matrix and reset
+&gt;&gt;   glMatrixMode(GL_PROJECTION);
+&gt;&gt;   glLoadIdentity();
+
+&gt;&gt;   // Set the drawing area
+&gt;&gt;   glViewport(rectPane.left,
+&gt;&gt;        rectPane.top,
+&gt;&gt;        rectPane.Width(),
+&gt;&gt;        rectPane.Height());
+
+&gt;&gt;   gluOrtho2D(0, 1000, 0, 1000.0 * (double)rectPane.Height() /
+&gt;&gt; (double)rectPane.Width());
+
+&gt;&gt;   glMatrixMode(GL_MODELVIEW);
+&gt;&gt;   glLoadIdentity();
+
+&gt;&gt;   glLineWidth(1.0);
+&gt;&gt;   glColor3d(1.0, 0.0, 0.0);
+
+&gt;&gt;   glBegin(GL_LINES);
+&gt;&gt;    Line(110, 230, 210, 230);
+&gt;&gt;    Arc(210, 230, 260, 230, -180);
+&gt;&gt;    Line(310, 230, 510, 230);
+&gt;&gt;    Arc(510, 230, 560, 230, -180);
+&gt;&gt;    Line(610, 230, 710, 230);
+&gt;&gt;    Line(710, 230, 710, 270);
+&gt;&gt;    Line(710, 270, 630, 300);
+&gt;&gt;    Line(630, 300, 110, 300);
+&gt;&gt;    Line(590, 300, 550, 350);
+&gt;&gt;    Line(550, 350, 250, 350);
+&gt;&gt;    Line(250, 350, 210, 300);
+&gt;&gt;    Line(110, 300, 110, 230);
+
+&gt;&gt;    Line(210, 300, 250, 280);
+&gt;&gt;    Line(310, 240, 510, 240);
+&gt;&gt;    Line(570, 280, 590, 300);
+&gt;&gt;    Line(410, 350, 410, 240);
+
+&gt;&gt;    Arc(215, 230, 260, 230, 360);
+&gt;&gt;    Arc(515, 230, 560, 230, 360);
+&gt;&gt;   glEnd();
+
+&gt;&gt;   SwapBuffers(m_pDC-&gt;m_hDC);
+
+&gt;&gt;   wglMakeCurrent(NULL, NULL);
+&gt;&gt;  }
+&gt;&gt; }
+
+&gt;&gt; // Do not call CStatic::OnPaint() for painting messages
+&gt;&gt; }
+
+&gt;&gt; //***********************************************************************
+&gt;&gt; void CTestPane::Line(double dXStart, double dYStart, double dXEnd, double
+&gt;&gt; dYEnd)
+&gt;&gt; {
+&gt;&gt; glVertex2d(dXStart, dYStart);
+&gt;&gt; glVertex2d(dXEnd, dYEnd);
+&gt;&gt; }
+
+&gt;&gt; //***********************************************************************
+&gt;&gt; void CTestPane::Arc(double dXStart, double dYStart, double dXCenter,
+&gt;&gt; double
+&gt;&gt; dYCenter, double dDegrees)
+&gt;&gt; {
+&gt;&gt; static const double PI = 3.1415926;
+
+&gt;&gt; double dResolution = 10.0 * PI / 180.0;
+
+&gt;&gt; double dRadius = sqrt((dXStart - dXCenter) * (dXStart - dXCenter) +
+&gt;&gt;        (dYStart - dYCenter) * (dYStart - dYCenter));
+
+&gt;&gt; double dStartAngle = atan2(dYStart - dYCenter, dXStart - dXCenter);
+&gt;&gt; double dEndAngle = dStartAngle + dDegrees * PI / 180.0;
+&gt;&gt; bool bIncreasing = dDegrees &gt; 0;
+&gt;&gt; if ( bIncreasing &amp;&amp; dEndAngle &lt; dStartAngle )
+&gt;&gt; {
+&gt;&gt;  dEndAngle += 2 * PI;
+&gt;&gt; }
+&gt;&gt; else if ( !bIncreasing &amp;&amp; dEndAngle &gt; dStartAngle )
+&gt;&gt; {
+&gt;&gt;  dEndAngle -= 2 * PI;
+&gt;&gt; }
+
+&gt;&gt; if ( !bIncreasing )
+&gt;&gt; {
+&gt;&gt;  dResolution = -dResolution;
+&gt;&gt; }
+&gt;&gt; double dAngle = dStartAngle;
+&gt;&gt; double dXBegin = dXStart;
+&gt;&gt; double dYBegin = dYStart;
+&gt;&gt; while ( (bIncreasing &amp;&amp; dAngle &lt; dEndAngle) || (!bIncreasing &amp;&amp; dAngle &gt;
+&gt;&gt; dEndAngle) )
+&gt;&gt; {
+&gt;&gt;  double dXEnd = dRadius * cos(dAngle) + dXCenter;
+&gt;&gt;  double dYEnd = dRadius * sin(dAngle) + dYCenter;
+
+&gt;&gt;  glVertex2d(dXBegin, dYBegin);
+&gt;&gt;  glVertex2d(dXEnd, dYEnd);
+
+&gt;&gt;  dAngle += dResolution;
+&gt;&gt;  dXBegin = dXEnd;
+&gt;&gt;  dYBegin = dYEnd;
+&gt;&gt; }
+&gt;&gt; }
+
+&gt;&gt; //***********************************************************************
+&gt;&gt; BOOL CTestPane::RegisterWindowClass()
+&gt;&gt; {
+&gt;&gt; // Register our Pane window class.  This is necessary because we need
+&gt;&gt; // to add the class style CS_OWNDC for this window to work with OpenGL
+&gt;&gt; WNDCLASSEX classInfoPane;
+&gt;&gt; classInfoPane.cbSize = sizeof(WNDCLASSEX);
+&gt;&gt; classInfoPane.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+&gt;&gt; classInfoPane.lpfnWndProc = (WNDPROC)CTestPane::PaneWndProc;
+&gt;&gt; classInfoPane.cbClsExtra = 0;
+&gt;&gt; classInfoPane.cbWndExtra = 0;
+&gt;&gt; classInfoPane.hInstance = GetModuleHandle(NULL);
+&gt;&gt; classInfoPane.hIcon = NULL;
+&gt;&gt; classInfoPane.hCursor = NULL;
+&gt;&gt; classInfoPane.hbrBackground = 0;
+&gt;&gt; classInfoPane.lpszMenuName = NULL;
+&gt;&gt; classInfoPane.lpszClassName = _TEXT(&quot;TestClass&quot;);
+&gt;&gt; classInfoPane.hIconSm = NULL;
+&gt;&gt; BOOL bResult = RegisterClassEx(&amp;classInfoPane);
+&gt;&gt; if ( !bResult )
+&gt;&gt; {
+&gt;&gt;  TRACE(&quot;Unable to register TestClass\n&quot;);
+&gt;&gt; }
+
+&gt;&gt; return bResult;
+&gt;&gt; }
+
+&gt;&gt; //***********************************************************************
+&gt;&gt; long CTestPane::PaneWndProc(HWND hwnd, UINT message, DWORD wParam, LONG
+&gt;&gt; lParam)
+&gt;&gt; {
+&gt;&gt; return ::DefWindowProc(hwnd, message, wParam, lParam);
+&gt;&gt; }
+
+&gt;&gt; //***********************************************************************
+&gt;&gt; BOOL CTestPane::PreCreateWindow(CREATESTRUCT&amp; cs)
+&gt;&gt; {
+&gt;&gt; cs.lpszClass = _TEXT(&quot;TestClass&quot;);
+
+&gt;&gt; return CStatic::PreCreateWindow(cs);
+&gt;&gt; }
+
+&gt;&gt; //***********************************************************************
+&gt;&gt; int CTestPane::OnCreate(LPCREATESTRUCT lpCreateStruct)
+&gt;&gt; {
+&gt;&gt; int iRetVal = CStatic::OnCreate(lpCreateStruct);
+&gt;&gt; if ( iRetVal != -1 )
+&gt;&gt; {
+&gt;&gt;  // Set up OpenGL
+&gt;&gt;  // Describe the pixel format
+&gt;&gt;  PIXELFORMATDESCRIPTOR pfd;
+&gt;&gt;  memset(&amp;pfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
+&gt;&gt;  pfd.nSize      = sizeof(PIXELFORMATDESCRIPTOR);
+&gt;&gt;  pfd.nVersion   = 1;
+&gt;&gt;  pfd.dwFlags    = PFD_DOUBLEBUFFER |
+&gt;&gt;      PFD_SUPPORT_OPENGL |
+&gt;&gt;      PFD_DRAW_TO_WINDOW |
+&gt;&gt;      PFD_SWAP_COPY |
+&gt;&gt;      0x00008000;  //PFD_SUPPORT_COMPOSITION;
+&gt;&gt;  pfd.iPixelType = PFD_TYPE_RGBA;
+&gt;&gt;  pfd.cColorBits = 24;
+&gt;&gt;  pfd.cDepthBits = 32;
+&gt;&gt;  pfd.iLayerType = PFD_MAIN_PLANE;
+
+&gt;&gt;  // Resolve the pixel format against the current drivers
+&gt;&gt;  m_pDC = GetDC();
+&gt;&gt;  int nPixelFormat = ChoosePixelFormat(m_pDC-&gt;m_hDC, &amp;pfd);
+&gt;&gt;  if (nPixelFormat == 0)
+&gt;&gt;  {
+&gt;&gt;   TRACE(&quot;ChoosePixelFormat Failed %d\r\n&quot;,GetLastError());
+&gt;&gt;   iRetVal = -1;
+&gt;&gt;  }
+&gt;&gt;  else
+&gt;&gt;  {
+&gt;&gt;   // If we need a palette, punt.  Don't want to mess with this!
+&gt;&gt;   if ( (pfd.dwFlags &amp; PFD_NEED_PALETTE) &gt; 0 )
+&gt;&gt;   {
+&gt;&gt;    TRACE(&quot;We need a palette!!\r\n&quot;);
+&gt;&gt;    iRetVal = -1;
+&gt;&gt;   }
+&gt;&gt;   else
+&gt;&gt;   {
+&gt;&gt;    // Set the pixel format
+&gt;&gt;    BOOL bResult = SetPixelFormat(m_pDC-&gt;m_hDC, nPixelFormat, &amp;pfd);
+&gt;&gt;    if ( bResult )
+&gt;&gt;    {
+&gt;&gt;     // Create a rendering context for OpenGL
+&gt;&gt;     m_hRC = wglCreateContext(m_pDC-&gt;m_hDC);
+&gt;&gt;     if (m_hRC == NULL)
+&gt;&gt;     {
+&gt;&gt;      TRACE(&quot;Unable to create a rendering context:
+&gt;&gt; %d\r\n&quot;,GetLastError());
+&gt;&gt;      iRetVal = -1;
+&gt;&gt;     }
+&gt;&gt;    }
+&gt;&gt;    else
+&gt;&gt;    {
+&gt;&gt;     TRACE(&quot;SetPixelFormat Failed %d\r\n&quot;,GetLastError());
+&gt;&gt;     iRetVal = -1;
+&gt;&gt;    }
+&gt;&gt;   }
+&gt;&gt;  }
+&gt;&gt; }
+
+&gt;&gt; return iRetVal;
+&gt;&gt; }
+">
+
+Well, you solved your problem by shiooting yourself in the foot. Now all
+your rendering is all-software, you have no access to extensions or shaders,
+and you can throw away your opengl hardware as you aren't using it.
+
+bad idea.
+
+jbw
+</POST>
+<POST>
+<POSTER> &quot;John A. Byerly&quot; &lt;jbye...@essDASHquality.com&gt; </POSTER>
+<POSTDATE> 2007-10-10T14:58:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;jbwest&quot; &lt;jbw ... @comcast.net&gt; wrote in message
+">
+
+news:_LKdnc7rBcWwtZHanZ2dnUVZ_hGdnZ2d@comcast.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;John A. Byerly&quot; &lt;jbye ... @essDASHquality.com&gt; wrote in message
+&gt; news:QGQOi.2517$ln.55@trnddc07 ...
+&gt;&gt; Hi,
+
+&gt;&gt; I was able to fix the problem by rendering to a DIB section and then
+&gt;&gt; BitBlt the rendered bitmap.  This has actually solved a couple of
+&gt;&gt; problems we were experiencing.
+
+&gt;&gt; JAB
+
+&gt; Well, you solved your problem by shiooting yourself in the foot. Now all
+&gt; your rendering is all-software, you have no access to extensions or
+&gt; shaders, and you can throw away your opengl hardware as you aren't using
+&gt; it.
+
+&gt; bad idea.
+">
+
+How can you make such a statement?  You don't know my requirements, other
+than it needs to work on Vista.  I am not writing a graphics intensive
+application.
+
+JAB
+</POST>
+<POST>
+<POSTER> Wolfgang Draxinger &lt;wdraxin...@darkstargames.de&gt; </POSTER>
+<POSTDATE> 2007-10-10T16:47:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+John A. Byerly wrote:
+&gt; How can you make such a statement?  You don't know my
+&gt; requirements, other
+&gt; than it needs to work on Vista.  I am not writing a graphics
+&gt; intensive application.
+">
+
+No, he's right. Doing so is really a bad idea. But at least it
+gives us a hint, what might be wrong.
+
+Did you even get a valid PIXELFORMATDESCRIPTOR? Without a proper
+PFD set, you won't even get an OpenGL context.
+
+Getting a PFD for a DIBSECTION almost never fails. And given the
+fact that Vista is quite picky about OpenGL I'd hunt for the bug
+there.
+
+Wolfgang Draxinger
+--
+E-Mail address works, Jabber: hexar ... @jabber.org, ICQ: 134682867
+</POST>
+<POST>
+<POSTER> &quot;jbwest&quot; &lt;jbw...@comcast.net&gt; </POSTER>
+<POSTDATE> 2007-10-10T22:41:00 </POSTDATE>
+&quot;John A. Byerly&quot; &lt;jbye ... @essDASHquality.com&gt; wrote in message
+news:fh9Pi.9166$C2.6625@trnddc02 ...
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;jbwest&quot; &lt;jbw ... @comcast.net&gt; wrote in message
+&gt; news:_LKdnc7rBcWwtZHanZ2dnUVZ_hGdnZ2d@comcast.com ...
+
+&gt;&gt; &quot;John A. Byerly&quot; &lt;jbye ... @essDASHquality.com&gt; wrote in message
+&gt;&gt; news:QGQOi.2517$ln.55@trnddc07 ...
+&gt;&gt;&gt; Hi,
+
+&gt;&gt;&gt; I was able to fix the problem by rendering to a DIB section and then
+&gt;&gt;&gt; BitBlt the rendered bitmap.  This has actually solved a couple of
+&gt;&gt;&gt; problems we were experiencing.
+
+&gt;&gt;&gt; JAB
+
+&gt;&gt; Well, you solved your problem by shiooting yourself in the foot. Now all
+&gt;&gt; your rendering is all-software, you have no access to extensions or
+&gt;&gt; shaders, and you can throw away your opengl hardware as you aren't using
+&gt;&gt; it.
+
+&gt;&gt; bad idea.
+
+&gt; How can you make such a statement?  You don't know my requirements, other
+&gt; than it needs to work on Vista.  I am not writing a graphics intensive
+&gt; application.
+
+&gt; JAB
+">
+
+Because even clearing the viewport is very expensive with software
+rendering, that's why.
+And you are on a non-extensible path. bad code is just plain bad code, IMO,
+whether it fits the purpose or not.
+
+jbw
+</POST>
+<POST>
+<POSTER> Miles Bader &lt;miles.ba...@necel.com&gt; </POSTER>
+<POSTDATE> 2007-10-10T23:49:00 </POSTDATE>
+&quot;John A. Byerly&quot; &lt;jbye ... @essDASHquality.com&gt; writes:
+
+<QUOTE PREVIOUSPOST="
+&gt; How can you make such a statement?  You don't know my requirements,
+&gt; other than it needs to work on Vista.  I am not writing a graphics
+&gt; intensive application.
+">
+
+The thing is though, that the evidence seems to suggest there are
+problems with the way your program is using opengl.  Switching to
+software rendering may hide them (for the time being) but they're still
+there, and could come back to bite you later.
+
+Maybe software rendering _is_ better for your task, but it would be much
+safer if you can figure out the problem first and make an informed
+decision, rather than crossing your fingers and hope everything's really
+OK.
+
+-Miles
+--
+`Suppose Korea goes to the World Cup final against Japan and wins,' Moon said.
+`All the past could be forgiven.'   [NYT]
+</POST>
+<POST>
+<POSTER> &quot;John A. Byerly&quot; &lt;jbye...@essDASHquality.com&gt; </POSTER>
+<POSTDATE> 2007-10-11T11:10:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;jbwest&quot; &lt;jbw ... @comcast.net&gt; wrote in message
+">
+
+news:lYqdneOYt_auEJDanZ2dnUVZ_h2pnZ2d@comcast.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;John A. Byerly&quot; &lt;jbye ... @essDASHquality.com&gt; wrote in message
+&gt; news:fh9Pi.9166$C2.6625@trnddc02 ...
+
+&gt;&gt; &quot;jbwest&quot; &lt;jbw ... @comcast.net&gt; wrote in message
+&gt;&gt; news:_LKdnc7rBcWwtZHanZ2dnUVZ_hGdnZ2d@comcast.com ...
+
+&gt;&gt;&gt; &quot;John A. Byerly&quot; &lt;jbye ... @essDASHquality.com&gt; wrote in message
+&gt;&gt;&gt; news:QGQOi.2517$ln.55@trnddc07 ...
+&gt;&gt;&gt;&gt; Hi,
+
+&gt;&gt;&gt;&gt; I was able to fix the problem by rendering to a DIB section and then
+&gt;&gt;&gt;&gt; BitBlt the rendered bitmap.  This has actually solved a couple of
+&gt;&gt;&gt;&gt; problems we were experiencing.
+
+&gt;&gt;&gt;&gt; JAB
+
+&gt;&gt;&gt; Well, you solved your problem by shiooting yourself in the foot. Now all
+&gt;&gt;&gt; your rendering is all-software, you have no access to extensions or
+&gt;&gt;&gt; shaders, and you can throw away your opengl hardware as you aren't using
+&gt;&gt;&gt; it.
+
+&gt;&gt;&gt; bad idea.
+
+&gt;&gt; How can you make such a statement?  You don't know my requirements, other
+&gt;&gt; than it needs to work on Vista.  I am not writing a graphics intensive
+&gt;&gt; application.
+
+&gt;&gt; JAB
+
+&gt; Because even clearing the viewport is very expensive with software
+&gt; rendering, that's why.
+&gt; And you are on a non-extensible path. bad code is just plain bad code,
+&gt; IMO, whether it fits the purpose or not.
+">
+
+Wow!  I don't know you, you don't know me, and you have not seen my code
+(other than the example I posted).  You have quite the nerve making such a
+judgement.
+
+Nevertheless, if you have any suggestions (rather than just criticism), I am
+all ears.
+
+JAB
+</POST>
+<POST>
+<POSTER> &quot;John A. Byerly&quot; &lt;jbye...@essDASHquality.com&gt; </POSTER>
+<POSTDATE> 2007-10-11T11:22:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Miles Bader&quot; &lt;miles.ba ... @necel.com&gt; wrote in message
+">
+
+news:buoprzml39e.fsf@dhapc248.dev.necel.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;John A. Byerly&quot; &lt;jbye ... @essDASHquality.com&gt; writes:
+&gt;&gt; How can you make such a statement?  You don't know my requirements,
+&gt;&gt; other than it needs to work on Vista.  I am not writing a graphics
+&gt;&gt; intensive application.
+
+&gt; The thing is though, that the evidence seems to suggest there are
+&gt; problems with the way your program is using opengl.
+">
+
+No argument here.
+
+<QUOTE PREVIOUSPOST="
+&gt;                                    Switching to
+&gt; software rendering may hide them (for the time being) but they're still
+&gt; there, and could come back to bite you later.
+">
+
+The thing is, I never switched.  As far as I know, this program has always
+used software rendering.  I just got it to work on Vista.
+
+<QUOTE PREVIOUSPOST="
+&gt; Maybe software rendering _is_ better for your task, but it would be much
+&gt; safer if you can figure out the problem first and make an informed
+&gt; decision, rather than crossing your fingers and hope everything's really
+&gt; OK.
+">
+
+To be honest, I would rather use the method that yields the best
+performance, without having to spend 6 months engineering time to do it.
+And even that would be preferable to staring at VC++ and tearing my hair out
+for 6 months, going nowhere because I can't figure out a way to make
+hardware rendering work.
+
+Right now, the performance is acceptable.  I am currently debugging one
+problem with the animation, but I believe it is a timing problem, due to the
+fact that our application is multithreaded.
+
+I am always open to suggestions, since I am not an expert at this.
+Regarding the problem I was having with Vista, I assumed it was because I
+was setting up OpenGL wrong.  That is why I posted my example.  I tried all
+suggestions submitted.  None worked.  I am willing to entertain any ideas at
+this point, including software rendering.
+
+JAB
+</POST>
+<POST>
+<POSTER> &quot;John A. Byerly&quot; &lt;jbye...@essDASHquality.com&gt; </POSTER>
+<POSTDATE> 2007-10-11T11:27:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Wolfgang Draxinger&quot; &lt;wdraxin ... @darkstargames.de&gt; wrote in message
+">
+
+news:ibqvt4-iba.ln1@darkstargames.dnsalias.net ...
+
+<QUOTE PREVIOUSPOST="
+&gt; John A. Byerly wrote:
+
+&gt;&gt; How can you make such a statement?  You don't know my
+&gt;&gt; requirements, other
+&gt;&gt; than it needs to work on Vista.  I am not writing a graphics
+&gt;&gt; intensive application.
+
+&gt; No, he's right. Doing so is really a bad idea. But at least it
+&gt; gives us a hint, what might be wrong.
+
+&gt; Did you even get a valid PIXELFORMATDESCRIPTOR? Without a proper
+&gt; PFD set, you won't even get an OpenGL context.
+
+&gt; Getting a PFD for a DIBSECTION almost never fails. And given the
+&gt; fact that Vista is quite picky about OpenGL I'd hunt for the bug
+&gt; there.
+">
+
+I don't understand what you are suggesting.  I have never had a problem
+getting an OpenGL context.  This application performs as necessary on every
+2000 and XP box we have tested.  In some cases, we had to disable double
+buffering due to a flickering problem with swapping buffers.  The
+application had the problems I described previously on some Vista machines,
+but when I purchased a low-end eMachines desktop running Vista, it worked
+fine on it.
+
+So I posted my question, and there was little response.  My assumption was
+that people are not seeing this problem, or have no idea how to even suggest
+fixing it.  So, I dug even more and stretched my assumptions.  I found that
+Vista renders the desktop completely differently than previous versions of
+Windows.  That coupled with other research led me to the conclusion that
+rendering offscreen and BitBlt-ing the result might work.
+
+And it did.
+
+Not only that, but it eliminated the problem we were having with the
+flickering when swapping buffers.  And according to my performance tests, it
+is no worse than before.
+
+This idea of rendering offscreen and then blasting the final rendering via
+BitBlt evolved from an idea mentioned elsewhere about rendering offscreen
+and using the result to create a texture.  I liked that idea, but couldn't
+see how I could make use of it.  The performance hit occurs when I have to
+rebuild the image, like for zooming.  I don't think that using a texture
+will help here.  I could be wrong, though.
+
+Now, I am not so arrogant to assume that I have coded this in the same way
+an experienced OpenGL guru would have.  But I will say this:  We are using
+OpenGL in a rather non-standard way.  We don't render any 3-D surfaces
+(actually, we do render a few, but not that many).  All of our images are
+line drawings involving millions of vertices.  I have posted to this
+newsgroup and worked with an OpenGL consultant and was not able to get any
+help from either source as to how to improve our performance.  Probably this
+is due to how we are using OpenGL, but nevertheless, I have been pretty much
+on my own.
+
+I am always open to suggestions as to how to improve my application.
+However, please don't assume that because it uses OpenGL that it uses it in
+a way that you are used to.
+
+JAB
+</POST>
+<POST>
+<POSTER> &quot;Charles E Hardwidge&quot; &lt;bo...@nospam.co.uk&gt; </POSTER>
+<POSTDATE> 2007-10-11T13:36:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; I am always open to suggestions as to how to improve my application.
+&gt; However, please don't assume that because it uses OpenGL that it uses it
+&gt; in a way that you are used to.
+">
+
+Calm down, John. Listen to the guys and try and isolate the fault. Going
+supernova and flailing around achieves nothing. If you have to, work out
+some basics in glut then go from there.
+
+--
+Charles E. Hardwidge
+</POST>
+<POST>
+<POSTER> aku ankka &lt;ju...@liimatta.org&gt; </POSTER>
+<POSTDATE> 2007-10-11T13:59:00 </POSTDATE>
+On Oct 11, 6:10 pm, &quot;John A. Byerly&quot; &lt;jbye ... @essDASHquality.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Nevertheless, if you have any suggestions (rather than just criticism), I am
+&gt; all ears.
+">
+
+You have graphics hardware which has 10-100x more memory bandwidth to
+use, dedicated circuitry drawing the primitives and so on. When you
+use software rendering, the CPU is doing expensive calculations to
+compute color for each fragment.
+
+The whole point of OpenGL is to act as interface to that powerful
+graphics hardware; you're not doing that with the current setup.
+
+Youre' right, we don't know much about your application. But we _do_
+know how to proficiently use OpenGL and put the power into good use.
+Some rules of thumb you, and everyone working with OpenGL should know:
+
+- create render context that is accelerated, ask if you have problems
+with that
+
+- don't do draw command per primitive, the performance is achieved if
+you batch a lot of primitives to one draw command call
+
+- if possible, try to allow the hardware to store the vertices and
+other data in their local memory, in other words, don't use local
+arrays or immediate mode - these are very slow
+
+Just some key points, there are more details but those are few of the
+more important ones.
+</POST>
+<POST>
+<POSTER> aku ankka &lt;ju...@liimatta.org&gt; </POSTER>
+<POSTDATE> 2007-10-11T14:04:00 </POSTDATE>
+On Oct 11, 6:22 pm, &quot;John A. Byerly&quot; &lt;jbye ... @essDASHquality.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Right now, the performance is acceptable.  I am currently debugging one
+&gt; problem with the animation, but I believe it is a timing problem, due to the
+&gt; fact that our application is multithreaded.
+">
+
+Wait, did I hear MULTI-THREADED? Is you application sending OGL
+commands from more than one thread? I hope not, but let's just get
+this possibility eliminated at least.
+</POST>
+<POST>
+<POSTER> &quot;John A. Byerly&quot; &lt;jbye...@essDASHquality.com&gt; </POSTER>
+<POSTDATE> 2007-10-11T14:35:00 </POSTDATE>
+&quot;Charles E Hardwidge&quot; &lt;bo ... @nospam.co.uk&gt; wrote in message
+news:QatPi.29655$c_1.23486@text.news.blueyonder.co.uk ...
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; I am always open to suggestions as to how to improve my application.
+&gt;&gt; However, please don't assume that because it uses OpenGL that it uses it
+&gt;&gt; in a way that you are used to.
+
+&gt; Calm down, John.
+">
+
+What do you mean by that?
+
+<QUOTE PREVIOUSPOST="
+&gt;                             Listen to the guys and try and isolate the
+&gt; fault. Going supernova and flailing around achieves nothing. If you have
+&gt; to, work out some basics in glut then go from there.
+">
+
+Wow.  I don't even know where to start with this remark.
+
+I simply posted a solution to my original problem.  It corrected the issue I
+had, and I was hoping that someone else might be able to use the
+information.  jbwest responds with blind criticism.  When I point this out,
+others jump to his defence.
+
+<QUOTE PREVIOUSPOST="
+jbwest wrote:
+&gt; Well, you solved your problem by shiooting yourself in the foot. Now all
+&gt; your rendering is all-software, you have no access to extensions or
+&gt; shaders, and you can throw away your opengl hardware as you aren't using
+&gt; it.
+
+&gt; bad idea.
+">
+
+jbwest could have written:
+~ I don't know your requirements, but you might want to keep in mind that
+your
+~ solution has locked you into software rendering.  This means that you will
+not
+~ have access to OpenGL extensions or shaders.  In addition, software
+rendering
+~ does not take advantage of the acceleration supported on many graphics
+cards.
+
+Instead, jbwest appears to assume that everyone uses OpenGL the same way and
+has the same software requirements.  I pointed this out in my response.
+
+How would you have preferred that I respond?  I erased several sarcastic and
+un-helpful responses before I posted the one I did.  As for my other
+followups, the same is true.  While initially ticked that jbwest's post was
+defended, I did calm down, removed the sarcasm from my reponse, and posted
+it.
+
+Incidentally, I did use glut when I was learning OpenGL, but since I can't
+use it in my application, &quot;working out some basics in glut&quot; will not help,
+because I suspect the problem is with the setting up of OpenGL, the
+viewport, and the window on which it will be displayed.  That being said,
+one of the first things I did was to run several NeHe example programs on my
+Vista machine, just to make sure the problem wasn't with Vista or my
+graphics driver.  They worked fine, so I was more convinced that the problem
+was with the way I was doing things.  I grabbed the relevant code from our
+application, boiled it down into a simple example, and tried to run it.  I
+got a different problem, but theorized that it had the same cause.  It was
+this example that I originally posted.  I got a response from Elaine which
+contained something I had already tried, but I tried it again, just in case.
+It still didn't work, and there were no more suggestions.  I finally came up
+with a solution, which I posted.
+
+JAB
+</POST>
+<POST>
+<POSTER> &quot;John A. Byerly&quot; &lt;jbye...@essDASHquality.com&gt; </POSTER>
+<POSTDATE> 2007-10-11T15:34:00 </POSTDATE>
+First of all, thanks for your response.  My comments are below.
+
+<QUOTE PREVIOUSPOST="
+&quot;aku ankka&quot; &lt;ju ... @liimatta.org&gt; wrote in message
+">
+
+news:1192125581.873022.250350@v3g2000hsg.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Oct 11, 6:10 pm, &quot;John A. Byerly&quot; &lt;jbye ... @essDASHquality.com&gt;
+&gt; wrote:
+&gt;&gt; Nevertheless, if you have any suggestions (rather than just criticism), I
+&gt;&gt; am
+&gt;&gt; all ears.
+
+&gt; You have graphics hardware which has 10-100x more memory bandwidth to
+&gt; use, dedicated circuitry drawing the primitives and so on. When you
+&gt; use software rendering, the CPU is doing expensive calculations to
+&gt; compute color for each fragment.
+">
+
+But how much computational time is eaten up by telling the system to draw a
+red line, 1 pixel wide, from point A to point B?  That is what I do, times
+10 million.  That is my static image.  My dynamic image is slightly more
+complicated, but not much.  I don't use, nor need, shading, lighting,
+blending, or fog.
+
+<QUOTE PREVIOUSPOST="
+&gt; The whole point of OpenGL is to act as interface to that powerful
+&gt; graphics hardware; you're not doing that with the current setup.
+">
+
+Granted.  To me, the question is whether I need all of that powerful
+graphics hardware.
+
+<QUOTE PREVIOUSPOST="
+&gt; Youre' right, we don't know much about your application. But we _do_
+&gt; know how to proficiently use OpenGL and put the power into good use.
+">
+
+Which is why I posted the question in the first place.  I needed help.  But
+when providing help, one can not assume that everyone uses a particular tool
+the same.  One person uses a hammer to drive nails, another uses the same
+hammer to pull nails.  Which one is the correct use of the hammer?  Just
+because it is most often used to drive nails, doesn't mean the nail pulling
+application of the hammer is a &quot;bad idea&quot;.
+
+<QUOTE PREVIOUSPOST="
+&gt; Some rules of thumb you, and everyone working with OpenGL should know:
+
+&gt; - create render context that is accelerated, ask if you have problems
+&gt; with that
+">
+
+Maybe I am wrong, but I didn't think I could do that since I am rendering to
+an offscreen DC.  The whole business of drawing to a back buffer and
+swapping was one of the problems we were having on some systems.  Some
+worked fine, but on others the image would flicker, apparently alternately
+displaying odd and even drawing calls.  I worked out a means of detecting
+which systems were problematic and implemented a &quot;single-buffering&quot; scheme
+for them.  It worked, but did not perform as well as the double-buffered
+solution.
+
+<QUOTE PREVIOUSPOST="
+&gt; - don't do draw command per primitive, the performance is achieved if
+&gt; you batch a lot of primitives to one draw command call
+">
+
+Does &quot;one draw command&quot; equal one glBegin/glEnd pair?  If so, I am doing
+that as much as I can.  The lines describing the image are fed to the
+viewport and cached in a model class.  When the image is completely loaded,
+the whole model is displayed in the viewport.  That is my static image.
+There is also a dynamic part, which is simply a trace over the static part.
+I cache these updates and draw them at 10 fps.
+
+<QUOTE PREVIOUSPOST="
+&gt; - if possible, try to allow the hardware to store the vertices and
+&gt; other data in their local memory, in other words, don't use local
+&gt; arrays or immediate mode - these are very slow
+">
+
+I am using display lists.  The performance is just too choppy if I don't.  I
+investigated using vertex arrays, but I can't, due to the information I am
+trying to display.  To give you an idea of the problem, in some cases, I
+have to display a line that is x pixels wide at any zoom level.  I can't
+simply store the vertices I use for the thick line (which for the 3D view is
+actually a square tube).  To make matters worse, for some parts of the
+dynamic display the thickness of the line must be insensitive to zoom, but
+in other places it must vary with the zoom.  Display lists don't help with
+this, but seem to be the best solution for all other issues.
+
+Of course, it doesn't stop there.  Because of the huge number of vertices we
+have, I couldn't use a single display list.  The rendering got horribly slow
+as the image got very large.  So I came up with a scheme to break up the
+model into multiple display lists (the static part).  Then I had to do the
+same for the dynamic part, but since it is dynamic, I don't really know how
+many vertices I will have.  I shouldn't have less than the number in the
+static part, but the upper limit is not known.
+
+<QUOTE PREVIOUSPOST="
+&gt; Just some key points, there are more details but those are few of the
+&gt; more important ones.
+">
+
+Thanks for the suggestions.
+
+JAB
+</POST>
+<POST>
+<POSTER> &quot;John A. Byerly&quot; &lt;jbye...@essDASHquality.com&gt; </POSTER>
+<POSTDATE> 2007-10-11T15:36:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;aku ankka&quot; &lt;ju ... @liimatta.org&gt; wrote in message
+">
+
+news:1192125848.602601.174750@o80g2000hse.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Oct 11, 6:22 pm, &quot;John A. Byerly&quot; &lt;jbye ... @essDASHquality.com&gt;
+&gt; wrote:
+
+&gt;&gt; Right now, the performance is acceptable.  I am currently debugging one
+&gt;&gt; problem with the animation, but I believe it is a timing problem, due to
+&gt;&gt; the
+&gt;&gt; fact that our application is multithreaded.
+
+&gt; Wait, did I hear MULTI-THREADED? Is you application sending OGL
+&gt; commands from more than one thread? I hope not, but let's just get
+&gt; this possibility eliminated at least.
+">
+
+Yes, you heard right.  And no, the OpenGL commands come from one thread.
+However, the data come from a different thread (or two or three).
+
+JAB
+</POST>
+<POST>
+<POSTER> aku ankka &lt;ju...@liimatta.org&gt; </POSTER>
+<POSTDATE> 2007-10-11T16:36:00 </POSTDATE>
+On Oct 11, 10:34 pm, &quot;John A. Byerly&quot; &lt;jbye ... @essDASHquality.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; But how much computational time is eaten up by telling the system to draw a
+&gt; red line, 1 pixel wide, from point A to point B?
+">
+
+Not much, processing overhead for a glDrawArrays, glDrawElements and
+similar is in class of thousands of clock cycles (not millions, unless
+updating something).
+
+Example:
+
+glDrawArrays(...)
+
+If you are using VBO, and you should, this mostly chooses which VBO's
+to use (enabled arrays) and creates a packed of data into the command
+buffer. Very small overhead. If the data is in GPU local memory, only
+the command packet needs to be transfered. If your render states
+changed a lot since previous drawing call, this invokes setting
+command packet describing the register writes required to implement
+the state changes in the render context.
+
+This should amount to the &quot;class of thousands of clock cycles&quot;, the
+range jumps into millions when you are transfering large amounts of
+actual vertex data across the bus. Try to avoid it.
+
+The small overhead adds up quickly. If you really do a draw command
+per primitive, you're doing things wrong.
+
+<QUOTE PREVIOUSPOST="
+&gt;That is what I do, times
+&gt; 10 million.  That is my static image.  My dynamic image is slightly more
+&gt; complicated, but not much.  I don't use, nor need, shading, lighting,
+&gt; blending, or fog.
+
+&gt; Granted.  To me, the question is whether I need all of that powerful
+&gt; graphics hardware.
+">
+
+For drawing graphics that is usually a good aproach. :)
+
+<QUOTE PREVIOUSPOST="
+&gt; Does &quot;one draw command&quot; equal one glBegin/glEnd pair?
+">
+
+Yes. If you do that *per line*, no wonder the performance is bad.
+GeForce 8800 GTS for example is able to draw tens of millions of lines
+at 100+ frames per second. I shit you not.
+
+If you get 10 fps with only few million of lines, you are something
+close to 50 times too slow from what this hardware for example could
+do.
+
+You might be interested to know about &quot;shaders&quot;; the OpenGL has
+extensions for nVidia hardware to generate primitives inside the
+graphics processor. The graphics processors these days are
+programmable, if you can afford to target for OpenGL 2.0 or 2.1, you
+can use this functionality. I don't go in too much detail because I
+don't know if you are interested at all.
+
+<QUOTE PREVIOUSPOST="
+&gt; If so, I am doing
+&gt; that as much as I can.  The lines describing the image are fed to the
+&gt; viewport and cached in a model class.  When the image is completely loaded,
+&gt; the whole model is displayed in the viewport.  That is my static image.
+">
+
+OK; so the static data doesn't change, only the view into the data
+changes (eg. you can pan, zoom, rotate etc.) This can be encoded into
+4x4 MVP matrix so that part is alright.
+
+<QUOTE PREVIOUSPOST="
+&gt; I am using display lists.  The performance is just too choppy if I don't.  I
+&gt; investigated using vertex arrays, but I can't, due to the information I am
+&gt; trying to display.  To give you an idea of the problem, in some cases, I
+&gt; have to display a line that is x pixels wide at any zoom level.
+&gt; I can't
+&gt; simply store the vertices I use for the thick line (which for the 3D view is
+&gt; actually a square tube).
+&gt;To make matters worse, for some parts of the
+&gt; dynamic display the thickness of the line must be insensitive to zoom, but
+&gt; in other places it must vary with the zoom.  Display lists don't help with
+&gt; this, but seem to be the best solution for all other issues.
+">
+
+What primitives are you currently using? GL_LINE*, or GL_TRIANGLES..
+or..? I don't understand the problem from your description because
+what you are doing sounds straightforward. The biggest issue from
+technical side is that you might exceed the performance suggestion
+limits for number of vertices, but it isn't the critical detail sounds
+like you have more serious problems somewhere if 2-4 M lines is ~10
+fps.
+</POST>
+<POST>
+<POSTER> aku ankka &lt;ju...@liimatta.org&gt; </POSTER>
+<POSTDATE> 2007-10-11T16:40:00 </POSTDATE>
+On Oct 11, 10:36 pm, &quot;John A. Byerly&quot; &lt;jbye ... @essDASHquality.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;aku ankka&quot; &lt;ju ... @liimatta.org&gt; wrote in message
+
+&gt; news:1192125848.602601.174750@o80g2000hse.googlegroups.com ...
+
+&gt; &gt; On Oct 11, 6:22 pm, &quot;John A. Byerly&quot; &lt;jbye ... @essDASHquality.com&gt;
+&gt; &gt; wrote:
+
+&gt; &gt;&gt; Right now, the performance is acceptable.  I am currently debugging one
+&gt; &gt;&gt; problem with the animation, but I believe it is a timing problem, due to
+&gt; &gt;&gt; the
+&gt; &gt;&gt; fact that our application is multithreaded.
+
+&gt; &gt; Wait, did I hear MULTI-THREADED? Is you application sending OGL
+&gt; &gt; commands from more than one thread? I hope not, but let's just get
+&gt; &gt; this possibility eliminated at least.
+
+&gt; Yes, you heard right.  And no, the OpenGL commands come from one thread.
+&gt; However, the data come from a different thread (or two or three).
+">
+
+OK, then that's fine. OGL doesn't swallow commands coming from
+multiple threads simultaneously very well, we could say that the API
+is single-threaded (implementation internally need not be, of course).
+</POST>
+<POST>
+<POSTER> &quot;John A. Byerly&quot; &lt;jbye...@essDASHquality.com&gt; </POSTER>
+<POSTDATE> 2007-10-11T17:22:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;aku ankka&quot; &lt;ju ... @liimatta.org&gt; wrote in message
+">
+
+news:1192134980.124239.279460@22g2000hsm.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Oct 11, 10:34 pm, &quot;John A. Byerly&quot; &lt;jbye ... @essDASHquality.com&gt;
+&gt; wrote:
+&gt;&gt; But how much computational time is eaten up by telling the system to draw
+&gt;&gt; a
+&gt;&gt; red line, 1 pixel wide, from point A to point B?
+
+&gt; Not much, processing overhead for a glDrawArrays, glDrawElements and
+&gt; similar is in class of thousands of clock cycles (not millions, unless
+&gt; updating something).
+
+&gt; Example:
+
+&gt; glDrawArrays(...)
+
+&gt; If you are using VBO, and you should, this mostly chooses which VBO's
+&gt; to use (enabled arrays) and creates a packed of data into the command
+&gt; buffer. Very small overhead. If the data is in GPU local memory, only
+&gt; the command packet needs to be transfered. If your render states
+&gt; changed a lot since previous drawing call, this invokes setting
+&gt; command packet describing the register writes required to implement
+&gt; the state changes in the render context.
+
+&gt; This should amount to the &quot;class of thousands of clock cycles&quot;, the
+&gt; range jumps into millions when you are transfering large amounts of
+&gt; actual vertex data across the bus. Try to avoid it.
+
+&gt; The small overhead adds up quickly. If you really do a draw command
+&gt; per primitive, you're doing things wrong.
+">
+
+Thanks.  I will look into using VBOs again, but I am not sure if I can.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Does &quot;one draw command&quot; equal one glBegin/glEnd pair?
+
+&gt; Yes. If you do that *per line*, no wonder the performance is bad.
+&gt; GeForce 8800 GTS for example is able to draw tens of millions of lines
+&gt; at 100+ frames per second. I shit you not.
+
+&gt; If you get 10 fps with only few million of lines, you are something
+&gt; close to 50 times too slow from what this hardware for example could
+&gt; do.
+">
+
+I should have been more clear.  I am doing 10 fps because that is all I
+need.  We chose that number because we figured that any system that can run
+our application should be able to handle at least 10 fps.  This is
+configurable, but is limited to 10 fps.  I can actually achieve 50 fps
+without any problem.
+
+<QUOTE PREVIOUSPOST="
+&gt; You might be interested to know about &quot;shaders&quot;; the OpenGL has
+&gt; extensions for nVidia hardware to generate primitives inside the
+&gt; graphics processor. The graphics processors these days are
+&gt; programmable, if you can afford to target for OpenGL 2.0 or 2.1, you
+&gt; can use this functionality. I don't go in too much detail because I
+&gt; don't know if you are interested at all.
+">
+
+I will have to look into it.  However, for every customer of ours with an
+nVidia card are 100 or more with onboard Intel graphics, so I am not sure it
+is worth the effort.  And those customers that have the better cards
+probably got them only because they were already in the system they
+purchased.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; I am using display lists.  The performance is just too choppy if I don't.
+&gt;&gt; I
+&gt;&gt; investigated using vertex arrays, but I can't, due to the information I
+&gt;&gt; am
+&gt;&gt; trying to display.  To give you an idea of the problem, in some cases, I
+&gt;&gt; have to display a line that is x pixels wide at any zoom level.
+&gt;&gt; I can't
+&gt;&gt; simply store the vertices I use for the thick line (which for the 3D view
+&gt;&gt; is
+&gt;&gt; actually a square tube).
+&gt;&gt;To make matters worse, for some parts of the
+&gt;&gt; dynamic display the thickness of the line must be insensitive to zoom,
+&gt;&gt; but
+&gt;&gt; in other places it must vary with the zoom.  Display lists don't help
+&gt;&gt; with
+&gt;&gt; this, but seem to be the best solution for all other issues.
+
+&gt; What primitives are you currently using? GL_LINE*, or GL_TRIANGLES..
+&gt; or..? I don't understand the problem from your description because
+&gt; what you are doing sounds straightforward. The biggest issue from
+&gt; technical side is that you might exceed the performance suggestion
+&gt; limits for number of vertices, but it isn't the critical detail sounds
+&gt; like you have more serious problems somewhere if 2-4 M lines is ~10
+&gt; fps.
+">
+
+Our application displays lines and arcs, so I tend to use GL_LINES.
+
+Wait a second!  I was just checking the code to make sure I didn't say
+anything incorrect.  GL_LINES!  That means that every line I draw is bounded
+by glBegin/glEnd.  Am I correct in assuming that the performance would be
+better if I used GL_LINE_STRIP instead?  I am not sure how easy it would be
+to rewrite this, but I am sure I could do it.  Breaking up the display lists
+could be challenging.  Is there any limit to the number of vertices that can
+be in a line strip?
+
+Anyway, sorry for that outburst.  I use GL_QUADS for the thick lines.  In
+the 2D views, these lines are flat, so I just need 4 vertices.  However, for
+thick lines, they must have a filled circle on each end (thick lines have
+rounded ends).  In the 3D views, the thin lines are drawn the same way as in
+the 2D views, but the thick lines are drawn as a square tube (using
+GL_QUAD_STRIP) so they have dimension at any orientation.
+
+Thanks for your suggestions!
+
+JAB
+</POST>
+<POST>
+<POSTER> John Tsiombikas &lt;nucl...@siggraph.org&gt; </POSTER>
+<POSTDATE> 2007-10-11T18:05:00 </POSTDATE>
+On 2007-10-11, aku ankka &lt;ju ... @liimatta.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; The whole point of OpenGL is to act as interface to that powerful
+&gt; graphics hardware; you're not doing that with the current setup.
+">
+
+No, the whole point of OpenGL is to provide a convenient way to draw
+graphics.
+
+I agree with the original poster on this, most people on this thread
+automatically seem to assume that nobody could possibly use OpenGL
+without the need to draw mindblowing amounts of blended, per-pixel
+shaded polygons per second.
+
+I have used OpenGL in anything from performance-critical realtime
+rendering (games and demos), to just filling in the blanks between the
+rays of a sub-sampling ray tracer, to filling textured and untextued 2D
+rects, and 2D lines for GUI drawing, and anything else in between which
+most people would do with SDL or something.
+Only the first case would require a fast hardware accelerator. For the
+rest, it's just convenient to use the OpenGL API. And performance more
+than that of a modern CPU is of little significance.
+
+Btw, to the original poster:
+If you need software off-screen rendering, try MESA, it's a much better
+OpenGL implementation than the fallback windows driver. Sorry if this
+was already discussed, I skipped a couple of long threads.
+
+--
+John Tsiombikas (Nuclear / Mindlapse)
+http://nuclear.sdf-eu.org/
+</POST>
+<POST>
+<POSTER> aku ankka &lt;ju...@liimatta.org&gt; </POSTER>
+<POSTDATE> 2007-10-12T01:08:00 </POSTDATE>
+On Oct 12, 1:05 am, John Tsiombikas &lt;nucl ... @siggraph.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2007-10-11, aku ankka &lt;ju ... @liimatta.org&gt; wrote:
+
+&gt; &gt; The whole point of OpenGL is to act as interface to that powerful
+&gt; &gt; graphics hardware; you're not doing that with the current setup.
+
+&gt; No, the whole point of OpenGL is to provide a convenient way to draw
+&gt; graphics.
+">
+
+Precisely, isn't it convenient that there is a standard way to draw
+graphics and get hardware acceleration?
+
+Without that convenient feature the OpenGL would have gone the way of
+the DoDo, like most similar things before it. IRIX GL is gone and
+forgotten, it was convenient but locked to one vendor. Byeh. Remember
+the 3Dfx's Glide? Locked to single vendor, where'd ya' go? S3 m3tal?
+Gone. Forgotten. Cya wouldn't want to be'ya! PowerVR's SDK? Huh
+wassat? =)
+
+There is another multi-vendor, even if not as portable API for doing
+graphics. It is also _very_ popular on platforms it exist on. Again,
+it allows to whip the hardware and it isn't even convenient to use!
+*shudder* but once again the *point* of it is that it allows to
+command a lot of hardware.
+
+It isn't so big a feat to design and implement graphics API. Back in
+the old day, everyone and their Uncle Bob had rendering engine
+(software). The trick is to get dozen vendors implementing it in
+hardware and get the performance to the next level. It seems that the
+to have the hardware and design custom API for it is PLAIN WRONG NO
+ONE WILL USE IT. So, meuh, you could design the most convenient
+graphics library in the Universe but if it's slow NO ONE will be
+interested about it for *real-time* rendering. For real-time,
+performance and quality ARE the goals. If you can show how to get both
+with a software renderer, I'm interested. :)
+
+FWIW, AMD Fusion and the coming Intel microarchitecture with 60+ ALU's
+(H1 2008 introduction?) *Might* be steps in the direction of GPGPU
+or.. just means to rip off more money from the consumers, we'll see.
+
+-- wogston / orange
+(I used to be in d demoscene too, ya' know? :)
+</POST>
+<POST>
+<POSTER> &quot;John A. Byerly&quot; &lt;jbye...@essDASHquality.com&gt; </POSTER>
+<POSTDATE> 2007-10-12T10:02:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;John Tsiombikas&quot; &lt;nucl ... @siggraph.org&gt; wrote in message
+">
+
+news:slrnfgt7hg.3rs.nuclear@nuclear.dnsalias.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2007-10-11, aku ankka &lt;ju ... @liimatta.org&gt; wrote:
+
+&gt;&gt; The whole point of OpenGL is to act as interface to that powerful
+&gt;&gt; graphics hardware; you're not doing that with the current setup.
+
+&gt; No, the whole point of OpenGL is to provide a convenient way to draw
+&gt; graphics.
+
+&gt; I agree with the original poster on this, most people on this thread
+&gt; automatically seem to assume that nobody could possibly use OpenGL
+&gt; without the need to draw mindblowing amounts of blended, per-pixel
+&gt; shaded polygons per second.
+">
+
+Thank you.  I was beginning to think I was the only one!
+
+<QUOTE PREVIOUSPOST="
+&gt; Btw, to the original poster:
+&gt; If you need software off-screen rendering, try MESA, it's a much better
+&gt; OpenGL implementation than the fallback windows driver. Sorry if this
+&gt; was already discussed, I skipped a couple of long threads.
+">
+
+Thanks for the tip!  I will definitely check this out.
+
+JAB
+</POST>
+<POST>
+<POSTER> &quot;John A. Byerly&quot; &lt;jbye...@essDASHquality.com&gt; </POSTER>
+<POSTDATE> 2007-10-12T10:48:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;aku ankka&quot; &lt;ju ... @liimatta.org&gt; wrote in message
+">
+
+news:1192165729.373600.148540@v23g2000prn.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Oct 12, 1:05 am, John Tsiombikas &lt;nucl ... @siggraph.org&gt; wrote:
+&gt;&gt; On 2007-10-11, aku ankka &lt;ju ... @liimatta.org&gt; wrote:
+
+&gt;&gt; &gt; The whole point of OpenGL is to act as interface to that powerful
+&gt;&gt; &gt; graphics hardware; you're not doing that with the current setup.
+
+&gt;&gt; No, the whole point of OpenGL is to provide a convenient way to draw
+&gt;&gt; graphics.
+
+&gt; Precisely, isn't it convenient that there is a standard way to draw
+&gt; graphics and get hardware acceleration?
+">
+
+Yes.  Now, just because you get hardware acceleration, does that mean you
+have to use it?  In fact, isn't that one of the strengths of OpenGL, that it
+will software render, but it will use hardware acceleration if it is
+available and you ask really nice?
+
+If my application's viewports are not visible on Vista machines, and I can
+make them visible by using a software rendering technique, why is that a
+&quot;bad idea&quot;?  I will grant you that having the rendering accelerated would be
+nice, but so far I have seen no suggestions as to how I can make this work.
+Software rendering works, the performance is acceptable, requirements are
+satisfied, customers are happy.  What more could a developer want?
+
+JAB
+</POST>
+<POST>
+<POSTER> anon &lt;a...@no.no&gt; </POSTER>
+<POSTDATE> 2007-10-12T12:02:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+John A. Byerly wrote:
+&gt; Yes.  Now, just because you get hardware acceleration, does that mean
+&gt; you have to use it?  In fact, isn't that one of the strengths of OpenGL,
+&gt; that it will software render, but it will use hardware acceleration if
+&gt; it is available and you ask really nice?
+">
+
+Off course you do not have to use it.
+
+<QUOTE PREVIOUSPOST="
+&gt; If my application's viewports are not visible on Vista machines, and I
+&gt; can make them visible by using a software rendering technique, why is
+&gt; that a &quot;bad idea&quot;?  I will grant you that having the rendering
+">
+
+Check your CPU load, and you should know why it is a bad idea. Or try
+googling for reasons to use HW over SW rendering.
+
+<QUOTE PREVIOUSPOST="
+&gt; accelerated would be nice, but so far I have seen no suggestions as to
+">
+
+Have you tried using Mesa as someone suggested?
+
+<QUOTE PREVIOUSPOST="
+&gt; how I can make this work. Software rendering works, the performance is
+&gt; acceptable, requirements are satisfied, customers are happy.  What more
+&gt; could a developer want?
+">
+
+Why continuing the argue if you are happy with it?
+</POST>
+<POST>
+<POSTER> &quot;t0rakka&quot; &lt;t...@akka.org&gt; </POSTER>
+<POSTDATE> 2007-10-12T13:31:00 </POSTDATE>
+From: &quot;John A. Byerly&quot; &lt;jbye ... @essDASHquality.com&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; Yes.  Now, just because you get hardware acceleration, does that mean you
+&gt; have to use it?  In fact, isn't that one of the strengths of OpenGL, that
+&gt; it will software render, but it will use hardware acceleration if it is
+&gt; available and you ask really nice?
+">
+
+It's not a very effective software renderer:
+
+- The Microsoft OpenGL 1.1 renderer is very slow
+
+- The MESA software rendering path is very slow
+
+If you want software rendering, there are much better choises. One that
+lands on the top of my list would be the SwiftShader:
+
+http://www.transgaming.com/products/swiftshader/
+http://www.transgaming.com/products/swiftshader/faq/
+
+Here is how MESA handles depth test and depth write, this isn't a joke:
+
+/*
+* Do depth testing for an array of fragments at assorted locations.
+*/
+static void
+direct_depth_test_pixels16(GLcontext *ctx, GLushort *zStart, GLuint stride,
+GLuint n, const GLint x[], const GLint y[],
+const GLuint z[], GLubyte mask[] )
+{
+/* switch cases ordered from most frequent to less frequent */
+switch (ctx-&gt;Depth.Func) {
+case GL_LESS:
+if (ctx-&gt;Depth.Mask) {
+/* Update Z buffer */
+GLuint i;
+for (i=0; i&lt;n; i++) {
+if (mask[i]) {
+GLushort *zptr = Z_ADDRESS(x[i], y[i]);
+if (z[i] &lt; *zptr) {
+/* pass */
+*zptr = z[i];
+}
+else {
+/* fail */
+mask[i] = 0;
+}
+}
+}
+}
+else {
+/* Don't update Z buffer */
+GLuint i;
+for (i=0; i&lt;n; i++) {
+if (mask[i]) {
+GLushort *zptr = Z_ADDRESS(x[i], y[i]);
+if (z[i] &lt; *zptr) {
+/* pass */
+}
+else {
+/* fail */
+mask[i] = 0;
+}
+}
+}
+}
+break;
+case GL_LEQUAL:
+if (ctx-&gt;Depth.Mask) {
+/* Update Z buffer */
+GLuint i;
+for (i=0; i&lt;n; i++) {
+if (mask[i]) {
+GLushort *zptr = Z_ADDRESS(x[i], y[i]);
+if (z[i] &lt;= *zptr) {
+/* pass */
+*zptr = z[i];
+}
+else {
+/* fail */
+mask[i] = 0;
+}
+}
+}
+}
+else {
+/* Don't update Z buffer */
+GLuint i;
+for (i=0; i&lt;n; i++) {
+if (mask[i]) {
+GLushort *zptr = Z_ADDRESS(x[i], y[i]);
+if (z[i] &lt;= *zptr) {
+/* pass */
+}
+else {
+/* fail */
+mask[i] = 0;
+}
+}
+}
+}
+break;
+case GL_GEQUAL:
+if (ctx-&gt;Depth.Mask) {
+/* Update Z buffer */
+GLuint i;
+for (i=0; i&lt;n; i++) {
+if (mask[i]) {
+GLushort *zptr = Z_ADDRESS(x[i], y[i]);
+if (z[i] &gt;= *zptr) {
+/* pass */
+*zptr = z[i];
+}
+else {
+/* fail */
+mask[i] = 0;
+}
+}
+}
+}
+else {
+/* Don't update Z buffer */
+GLuint i;
+for (i=0; i&lt;n; i++) {
+if (mask[i]) {
+GLushort *zptr = Z_ADDRESS(x[i], y[i]);
+if (z[i] &gt;= *zptr) {
+/* pass */
+}
+else {
+/* fail */
+mask[i] = 0;
+}
+}
+}
+}
+break;
+case GL_GREATER:
+if (ctx-&gt;Depth.Mask) {
+/* Update Z buffer */
+GLuint i;
+for (i=0; i&lt;n; i++) {
+if (mask[i]) {
+GLushort *zptr = Z_ADDRESS(x[i], y[i]);
+if (z[i] &gt; *zptr) {
+/* pass */
+*zptr = z[i];
+}
+else {
+/* fail */
+mask[i] = 0;
+}
+}
+}
+}
+else {
+/* Don't update Z buffer */
+GLuint i;
+for (i=0; i&lt;n; i++) {
+if (mask[i]) {
+GLushort *zptr = Z_ADDRESS(x[i], y[i]);
+if (z[i] &gt; *zptr) {
+/* pass */
+}
+else {
+/* fail */
+mask[i] = 0;
+}
+}
+}
+}
+break;
+case GL_NOTEQUAL:
+if (ctx-&gt;Depth.Mask) {
+/* Update Z buffer */
+GLuint i;
+for (i=0; i&lt;n; i++) {
+if (mask[i]) {
+GLushort *zptr = Z_ADDRESS(x[i], y[i]);
+if (z[i] != *zptr) {
+/* pass */
+*zptr = z[i];
+}
+else {
+/* fail */
+mask[i] = 0;
+}
+}
+}
+}
+else {
+/* Don't update Z buffer */
+GLuint i;
+for (i=0; i&lt;n; i++) {
+if (mask[i]) {
+GLushort *zptr = Z_ADDRESS(x[i], y[i]);
+if (z[i] != *zptr) {
+/* pass */
+}
+else {
+/* fail */
+mask[i] = 0;
+}
+}
+}
+}
+break;
+case GL_EQUAL:
+if (ctx-&gt;Depth.Mask) {
+/* Update Z buffer */
+GLuint i;
+for (i=0; i&lt;n; i++) {
+if (mask[i]) {
+GLushort *zptr = Z_ADDRESS(x[i], y[i]);
+if (z[i] == *zptr) {
+/* pass */
+*zptr = z[i];
+}
+else {
+/* fail */
+mask[i] = 0;
+}
+}
+}
+}
+else {
+/* Don't update Z buffer */
+GLuint i;
+for (i=0; i&lt;n; i++) {
+if (mask[i]) {
+GLushort *zptr = Z_ADDRESS(x[i], y[i]);
+if (z[i] == *zptr) {
+/* pass */
+}
+else {
+/* fail */
+mask[i] = 0;
+}
+}
+}
+}
+break;
+case GL_ALWAYS:
+if (ctx-&gt;Depth.Mask) {
+/* Update Z buffer */
+GLuint i;
+for (i=0; i&lt;n; i++) {
+if (mask[i]) {
+GLushort *zptr = Z_ADDRESS(x[i], y[i]);
+*zptr = z[i];
+}
+}
+}
+else {
+/* Don't update Z buffer or mask */
+}
+break;
+case GL_NEVER:
+/* depth test never passes */
+_mesa_bzero(mask, n * sizeof(GLubyte));
+break;
+default:
+_mesa_problem(ctx, &quot;Bad depth func in direct_depth_test_pixels&quot;);
+}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+....
+
+That's a mouthful. This is something that is executed for every fragment
+when depth test is enabled. This is the straightforward way to implement the
+OpenGL state machine, nice for *reference implementation* when performance
+isn't important but correctness is.
+
+The reason that OpenGL is a state machine makes it inpractical to implement
+in straight C or C++ if you want high performance. The efficient way to do
+things would be to resolve the correct code to call OUTSIDE of the
+time-critical innerloop, like this:
+
+if ( z &lt; zbuffer[x] )
+{
+... process pixel ...
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+The above MESA code, on the other hand, chooses which compare function to
+use (&lt;, &lt;=, !=, ==, &gt;, &gt;=, etc.) while processing the pixels. Why? Because
+if the code was written like above small snip, they would have to have 9
+different snips (9 compare functions in OGL). This is comparable to the MESA
+code, but they do the decision much more frequently (=bad).
+
+Now, the code to &quot;...process pixel...&quot; should also be there &quot;in-line&quot;,
+preferably no function calls per pixel. If everything is in-line, the number
+of different pixel functions or loops would be millions. This can't be done,
+so, what MESA does is it chooses to abstract different computations for
+pixel into separate functions which it then proceeds to call. Horrible
+overhead.
+
+Then, to add to the injury, MESA does write the *result* of the compare into
+array and read back from the very same array later and so on. Lots of extra
+code, and memory reads and writes and so on, even if into L1 and L2 cache.
+
+What really should be going on is the code in the above example ( z &lt;
+zbuffer[x] and so on..).
+
+My wife is interrupting me every other minute so my thoughts are not very
+organized, sorry, let's continue. :)
+
+Doing something like this with off-line compiling is going to generate tons
+of code. Tons. The approach that modern software renderer should be taking
+is to look at the render states, the OpenGL state for example, and
+*generate* the required code when needed.
+
+So, if we have a very simple state machine which has only few states:
+
+- depth compare enable flag (depthEnable)
+- depth compare func (depthFunc)
+- depth write mask (depthMask)
+
+The code generator would handle it like this:
+
+if ( depthEnable )
+{
+// generate the code to do depth testing
+// use the depthFunc to determine what code to generate
+//  .. if this is x86, you can use &quot;JLE&quot; for GL_LEQUAL, &quot;JE&quot; for GL_LESS,
+and so on.
+// GL_ALWAYS would mean always pass, so no code generated
+// GL_NEVER would mean always fail, so no code generated, also, innerloop
+disabled
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+else
+{
+// pixels always pass the depth test, no code have to be generated
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+if ( depthMask )
+{
+// enable writes of current depth value
+}
+else
+{
+// depth value does not need to be written
+
+if ( !depthEnable )
+{
+// we don't need to read from depth buffer either as depth testing
+is disabled, so
+// here we determined that don't need zbuffer pointer at all in the
+innerloop
+}
+}
+
+The result? In x86 binary, would look like this:
+
+depthEnable = true
+depthFunc = GL_LEQUAL
+depthMask = 0xFFFFFFFF
+
+--&gt;
+
+mov ebx, [esi]  ; read from zbuffer
+cmp eax, ebx ; compare
+jg .skip_fragment ; branch depending on depthFunc
+mov [esi], eax ; write to zbuffer
+; fragment processing code is generated here..
+.skip_fragment:
+
+Eg. the states are translated into binary code. The translation process can
+be very straightforward, but also optimizing code generator can be written
+which does register allocation, spilling, constant propagation and other
+translations while generating the binary.
+
+This is wildly off-tangent from your need to &quot;just software render something
+with OpenGL&quot;, but this should outline the basic flaws in MESA software
+renderer, there are much, much faster ones that still do things correctly.
+As far as I know of, MESA is atleast correct and passes OGL conformance
+tests just fine so that's a big plus.
+
+But still, first you step down from hardware to software rendering, and not
+just software rendering but very slow implementation thereof. That's just so
+wrong. But then, I recognize that people have opinions and mine is for me,
+so that's alright. I'm not criticizing your taste, or your opinion, but
+rather putting some facts in the game so that you can make more informed
+decision.
+
+The decision is still yours, and that's fine w/me, of course.
+
+<QUOTE PREVIOUSPOST="
+&gt; If my application's viewports are not visible on Vista machines, and I can
+&gt; make them visible by using a software rendering
+">
+
+...
+read more »
+</POST>
+<POST>
+<POSTER> aku ankka &lt;ju...@liimatta.org&gt; </POSTER>
+<POSTDATE> 2007-10-12T14:31:00 </POSTDATE>
+On Oct 12, 5:48 pm, &quot;John A. Byerly&quot; &lt;jbye ... @essDASHquality.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Yes.  Now, just because you get hardware acceleration, does that mean you
+&gt; have to use it?  In fact, isn't that one of the strengths of OpenGL, that it
+&gt; will software render, but it will use hardware acceleration if it is
+&gt; available and you ask really nice?
+">
+
+The software renderer in OpenGL isn't strength if you compare it to
+any serious software renderer like SwiftShader;
+
+http://www.transgaming.com/products/swiftshader/
+
+The Microsoft OpenGL 1.1 software renderer is slow, and the MESA one
+isn't that good either. If you want software renderking, looking
+elsewhere might be a good start.
+
+If it is fast enough, then great.
+
+<QUOTE PREVIOUSPOST="
+&gt; If my application's viewports are not visible on Vista machines, and I can
+&gt; make them visible by using a software rendering technique, why is that a
+&gt; &quot;bad idea&quot;?  I will grant you that having the rendering accelerated would be
+&gt; nice, but so far I have seen no suggestions as to how I can make this work.
+&gt; Software rendering works, the performance is acceptable, requirements are
+&gt; satisfied, customers are happy.  What more could a developer want?
+">
+
+The developer should want that his/her OpenGL application works on
+hardware with OpenGL ICD. Either the ICD is broken or the application
+is broken. If the ICD is broken, report it to the vendor and move on;
+OpenGL ICD's generally work, that is how things should be.
+
+If you drop hardware rendering for ALL ICD's because one of them has a
+bug, that's your choise. If you drop hardware rendering for ALL ICD's
+because your application has a bug, again your choise. You do what you
+want. I was here sitting and hoping I could help you use the hardware
+most people these days have but if you're not interested then fine
+let's drop it, it's not inconvenient for me. :)
+</POST>
+<POST>
+<POSTER> Wolfgang Draxinger &lt;wdraxin...@darkstargames.de&gt; </POSTER>
+<POSTDATE> 2007-10-12T15:02:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+John A. Byerly wrote:
+&gt; In fact, isn't that one of the strengths of
+&gt; OpenGL, that it will software render, but it will use hardware
+&gt; acceleration if it is available and you ask really nice?
+">
+
+No. That opengl32.dll contains a software renderer is just for
+convenience reasons. Microsoft might as well have not included a
+software renderer, requiring the end user who needs OpenGL to
+either install a 3rd party software renderer, or that the
+graphics driver brings an ICD.
+
+Actually this is the situation on X11/GLX systems. Either you
+install Mesa to get software rendering or as an interface to
+DRI. Or you install the graphic hardware vendor's drivers. Or
+you don't install any OpenGL implementation and all and have no
+OpenGL avaliable on your system.
+
+In short terms: OpenGL doesn't require the system to provide a
+fallback implementation, in case there is no hardware
+acceleration - good if there is one, okay if there's none.
+
+Wolfgang Draxinger
+--
+E-Mail address works, Jabber: hexar ... @jabber.org, ICQ: 134682867
+</POST>
+<POST>
+<POSTER> &quot;John A. Byerly&quot; &lt;jbye...@essDASHquality.com&gt; </POSTER>
+<POSTDATE> 2007-10-12T16:11:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;t0rakka&quot; &lt;t ... @akka.org&gt; wrote in message
+">
+
+news:xcOPi.236699$tN4.35189@reader1.news.saunalahti.fi ...
+
+<QUOTE PREVIOUSPOST="
+&gt; From: &quot;John A. Byerly&quot; &lt;jbye ... @essDASHquality.com&gt;
+&gt;&gt; Yes.  Now, just because you get hardware acceleration, does that mean you
+&gt;&gt; have to use it?  In fact, isn't that one of the strengths of OpenGL, that
+&gt;&gt; it will software render, but it will use hardware acceleration if it is
+&gt;&gt; available and you ask really nice?
+
+&gt; It's not a very effective software renderer:
+">
+
+Efficient or effective?  It works, so I would call it effective.  It is
+slow, so it is probably not efficient.
+
+Right now, I need it to work.  Our customers don't expect 100 fps.  In fact,
+5 fps will probably suffice.  I have been able to achieve 50 fps.  10x what
+is expected/required.  Investing more time/money into a solution that
+already exceeds requirements by 1000% is foolhardy.  There are too many
+other features that our customers are begging for.  I guarantee that they
+will not be happy to wait in favor of 60 - 100 fps.
+
+<QUOTE PREVIOUSPOST="
+&gt; But still, first you step down from hardware to software rendering, and
+&gt; not
+&gt; just software rendering but very slow implementation thereof. That's just
+&gt; so
+&gt; wrong. But then, I recognize that people have opinions and mine is for me,
+&gt; so that's alright. I'm not criticizing your taste, or your opinion, but
+&gt; rather putting some facts in the game so that you can make more informed
+&gt; decision.
+">
+
+As I said, I did not &quot;step down from hardware to software rendering&quot;.  My
+solution was always rendered in software.
+
+Also, this is not an opinion of mine.  Naturally, I would use hardware
+rendering if I could make it work reliably and justify the cost of
+development.  I can't.  And my current solution meets the requirements.
+
+<QUOTE PREVIOUSPOST="
+&gt; The decision is still yours, and that's fine w/me, of course.
+">
+
+Thank you.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; If my application's viewports are not visible on Vista machines, and I
+&gt;&gt; can make them visible by using a software rendering technique, why is
+&gt;&gt; that a &quot;bad idea&quot;?  I will grant you that having the rendering
+&gt;&gt; accelerated would be nice, but so far I have seen no suggestions as to
+&gt;&gt; how I can make this work. Software rendering works, the performance is
+&gt;&gt; acceptable, requirements are satisfied, customers are happy.  What more
+&gt;&gt; could a developer want?
+
+&gt; That the OpenGL ICD you are using works? If it doesn't, it's broken. Send
+&gt; report to the ICD vendor, they might fix it. ATI and NVIDIA have developer
+&gt; programs and such, be active. Or just stay away from broken OGL ICD's if
+&gt; you can affort it. Sounds to me that flickering swap buffers would be high
+&gt; on the list of things to fix for any driver.
+
+&gt; Alternatively, the developer's application is flawed. The developer should
+&gt; want to fix flawed application he is developing. Atleast I would want that
+&gt; very much for any thing I am working on.
+
+&gt; So.. you're dropping the use of ICD because:
+
+&gt; A) Some random ICD is broken
+&gt; (comment: it's not really problem with OGL but one specific ICD, right?)
+
+&gt; B) Your application is broken
+&gt; (comment: so, the ICD is working fine, you can still use it.. or so would
+&gt; I think!)
+
+&gt; C) ???
+&gt; (comment: ???)
+
+&gt; In the case of (A), graphics card you are using is defective. Return it.
+&gt; Get a refund. It's broken. Doesn't work. Etc.
+
+&gt; In the case of (B), as a developer I can't say what you must want, but *I*
+&gt; wouldn't be satisfied with ad-hoc fix like that.
+">
+
+I posted my original question in an effort to get some assistance.  I have
+never believed that the hardware or driver were defective.  It wasn't until
+I posted a solution to my problem that the floodgates have opened with
+criticism of my solution.  That is fine; everyone has his opinion.  But none
+of those people who are yelling about how wrong my solution is have offered
+a solution of their own.  Just a bunch of criticism.  I posted the code.  If
+there is something wrong with it, please tell me.  That is why I posted it.
+Otherwise, we can continue this endless debate.  I will not use something I
+can't get to work. Our customers expect the product to work, first and
+foremost.
+
+JAB
+</POST>
+<POST>
+<POSTER> &quot;John A. Byerly&quot; &lt;jbye...@essDASHquality.com&gt; </POSTER>
+<POSTDATE> 2007-10-12T16:21:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;aku ankka&quot; &lt;ju ... @liimatta.org&gt; wrote in message
+">
+
+news:1192205882.321477.20880@y27g2000pre.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Oct 12, 5:48 pm, &quot;John A. Byerly&quot; &lt;jbye ... @essDASHquality.com&gt;
+&gt; wrote:
+&gt;&gt; If my application's viewports are not visible on Vista machines, and I
+&gt;&gt; can
+&gt;&gt; make them visible by using a software rendering technique, why is that a
+&gt;&gt; &quot;bad idea&quot;?  I will grant you that having the rendering accelerated would
+&gt;&gt; be
+&gt;&gt; nice, but so far I have seen no suggestions as to how I can make this
+&gt;&gt; work.
+&gt;&gt; Software rendering works, the performance is acceptable, requirements are
+&gt;&gt; satisfied, customers are happy.  What more could a developer want?
+
+&gt; The developer should want that his/her OpenGL application works on
+&gt; hardware with OpenGL ICD. Either the ICD is broken or the application
+&gt; is broken. If the ICD is broken, report it to the vendor and move on;
+&gt; OpenGL ICD's generally work, that is how things should be.
+
+&gt; If you drop hardware rendering for ALL ICD's because one of them has a
+&gt; bug, that's your choise. If you drop hardware rendering for ALL ICD's
+&gt; because your application has a bug, again your choise. You do what you
+&gt; want. I was here sitting and hoping I could help you use the hardware
+&gt; most people these days have but if you're not interested then fine
+&gt; let's drop it, it's not inconvenient for me. :)
+">
+
+If you were truly hoping to help, why didn't you point out my mistake(s)?  I
+posted the code.  Someone named Elaine at least took a stab at helping.
+None of the other posters in this thread have offered any suggestions as to
+what is wrong with the code I posted.  Instead, we are mired in a debate
+about &quot;wrongness&quot; of software rendering.
+
+If you have suggestions as to what I have done wrong in my example, let them
+fly.  That is why I posted the code in the first place.
+
+JAB
+</POST>
+<POST>
+<POSTER> &quot;John A. Byerly&quot; &lt;jbye...@essDASHquality.com&gt; </POSTER>
+<POSTDATE> 2007-10-12T16:38:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Wolfgang Draxinger&quot; &lt;wdraxin ... @darkstargames.de&gt; wrote in message
+">
+
+news:jvs4u4-sig.ln1@darkstargames.dnsalias.net ...
+
+<QUOTE PREVIOUSPOST="
+&gt; John A. Byerly wrote:
+
+&gt;&gt; In fact, isn't that one of the strengths of
+&gt;&gt; OpenGL, that it will software render, but it will use hardware
+&gt;&gt; acceleration if it is available and you ask really nice?
+
+&gt; No. That opengl32.dll contains a software renderer is just for
+&gt; convenience reasons. Microsoft might as well have not included a
+&gt; software renderer, requiring the end user who needs OpenGL to
+&gt; either install a 3rd party software renderer, or that the
+&gt; graphics driver brings an ICD.
+">
+
+My point is that whether I use software or hardware rendering, 99% of my
+code stays the same.  That is the whole point of any API.  You code to the
+interface.  You don't have to know about the implementation.
+
+<QUOTE PREVIOUSPOST="
+&gt; Actually this is the situation on X11/GLX systems. Either you
+&gt; install Mesa to get software rendering or as an interface to
+&gt; DRI. Or you install the graphic hardware vendor's drivers. Or
+&gt; you don't install any OpenGL implementation and all and have no
+&gt; OpenGL avaliable on your system.
+
+&gt; In short terms: OpenGL doesn't require the system to provide a
+&gt; fallback implementation, in case there is no hardware
+&gt; acceleration - good if there is one, okay if there's none.
+">
+
+I shouldn't have to care about the implementation, as long as there is one.
+That is the whole point of coding to an API.  If I am using an
+implementation that gets the job done, who cares if it is the
+fastest/best/prettiest/most technically fascinating?
+
+But, in an effort to stay on topic, if you have any suggestions as to how I
+can get hardware rendering to work for the example I posted, I am all ears.
+
+JAB
+</POST>
+<POST>
+<POSTER> &quot;Charles E Hardwidge&quot; &lt;bo...@nospam.co.uk&gt; </POSTER>
+<POSTDATE> 2007-10-12T17:20:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; If you were truly hoping to help, why didn't you point out my mistake(s)?
+&gt; I posted the code.  Someone named Elaine at least took a stab at helping.
+&gt; None of the other posters in this thread have offered any suggestions as
+&gt; to what is wrong with the code I posted.  Instead, we are mired in a
+&gt; debate about &quot;wrongness&quot; of software rendering.
+">
+
+Technical comments are a bit scattered and too much personality is getting
+in the way. That's confusing the issue and dragging in things which don't
+really have a place in the discussion. As I said, calm down.
+
+I've taken a look at your example and run it past the checklist for Vista
+and nothing leaps out, and other people have mentioned coding and ICD
+issues. Focusing on that would be useful.
+
+I wouldn't hard code a frame rate limit or expectation for a particular
+driver. That can create maintenance issues and gothcas if the IHV silently
+updates their driver. Bury this stuff in an options file.
+
+None of this is new. Games have been dealing with this stuff for years, and
+some still do provide software paths. And that's why your going knee-jerk
+over coding and ICD issues looked a bit weird.
+
+--
+Charles E. Hardwidge
+</POST>
+<POST>
+<POSTER> John Tsiombikas &lt;nucl...@siggraph.org&gt; </POSTER>
+<POSTDATE> 2007-10-12T17:42:00 </POSTDATE>
+On 2007-10-12, aku ankka &lt;ju ... @liimatta.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Oct 12, 1:05 am, John Tsiombikas &lt;nucl ... @siggraph.org&gt; wrote:
+&gt;&gt; On 2007-10-11, aku ankka &lt;ju ... @liimatta.org&gt; wrote:
+
+&gt;&gt; &gt; The whole point of OpenGL is to act as interface to that powerful
+&gt;&gt; &gt; graphics hardware; you're not doing that with the current setup.
+
+&gt;&gt; No, the whole point of OpenGL is to provide a convenient way to draw
+&gt;&gt; graphics.
+
+&gt; Precisely, isn't it convenient that there is a standard way to draw
+&gt; graphics and get hardware acceleration?
+
+&gt; Without that convenient feature the OpenGL would have gone the way of
+&gt; the DoDo, like most similar things before it. IRIX GL is gone and
+&gt; forgotten, it was convenient but locked to one vendor. Byeh. Remember
+&gt; the 3Dfx's Glide? Locked to single vendor, where'd ya' go? S3 m3tal?
+&gt; Gone. Forgotten. Cya wouldn't want to be'ya! PowerVR's SDK? Huh
+&gt; wassat? =)
+">
+
+I agree. I for one would have never started using OpenGL if it wasn't
+for the fact that it can be used as an interface to the graphics
+hardware. However, that doesn't mean that's its only use. It's easy to
+use, and you know your code will keep working on hardware or software
+for many years, on any platform that's hooked up to a raster display :)
+and that's incentive enough to use it, even when you don't care that
+much about real-time performance.
+
+Btw all the APIs that you mentioned used to suppport &quot;hardware
+accelaration&quot; one way or another, so there you still had that
+convenience. And others used to be considered &quot;standard&quot; before OpenGL
+(PHIGS for instance), so there's more convenience to go around. But all
+of them where very limited and/or badly designed, and that's why they
+failed in the end, or that's my opinion anyway. Not just performance
+reasons there.
+
+<QUOTE PREVIOUSPOST="
+&gt; -- wogston / orange
+&gt; (I used to be in d demoscene too, ya' know? :)
+">
+
+Heh, always fun to bump into other sceners. Can't say I'm too surprised
+to find one in an OpenGL newsgroup though :)
+
+Used to like orange demos btw, although the last one I saw was a long
+time ago, around 2000 I believe (one boasting about NOT using graphics
+acceleration btw, if I'm not mistaken :)
+
+--
+John Tsiombikas (Nuclear / Mindlapse)
+http://nuclear.sdf-eu.org/
+</POST>
+<POST>
+<POSTER> &quot;John A. Byerly&quot; &lt;jbye...@essDASHquality.com&gt; </POSTER>
+<POSTDATE> 2007-10-12T17:46:00 </POSTDATE>
+&quot;Charles E Hardwidge&quot; &lt;bo ... @nospam.co.uk&gt; wrote in message
+news:myRPi.30330$c_1.17039@text.news.blueyonder.co.uk ...
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; If you were truly hoping to help, why didn't you point out my mistake(s)?
+&gt;&gt; I posted the code.  Someone named Elaine at least took a stab at helping.
+&gt;&gt; None of the other posters in this thread have offered any suggestions as
+&gt;&gt; to what is wrong with the code I posted.  Instead, we are mired in a
+&gt;&gt; debate about &quot;wrongness&quot; of software rendering.
+
+&gt; Technical comments are a bit scattered and too much personality is getting
+&gt; in the way. That's confusing the issue and dragging in things which don't
+&gt; really have a place in the discussion. As I said, calm down.
+">
+
+You puzzle me.  I am calm.  I am passionate about software engineering, but
+I am not riled.  I view much of this debate as indicative of the disconnect
+between software engineers and computer scientists.  I have dealt with this
+for more years that I care to admit, so it comes as no surprise.
+
+That being said, my point was that many people jumped on my solution and
+told me it was a &quot;bad idea&quot;.  However, the whole reason for my solution is
+that no one suggested any alternatives.  It is difficult for me to
+understand how a solution that works and meets requirements is a &quot;bad idea&quot;.
+
+<QUOTE PREVIOUSPOST="
+&gt; I've taken a look at your example and run it past the checklist for Vista
+&gt; and nothing leaps out, and other people have mentioned coding and ICD
+&gt; issues. Focusing on that would be useful.
+">
+
+Thank you for looking at it.  I tend to blame coding (mine) in cases like
+this.  Vista has been out for several months, so I assume the problem is
+with the developer.  I checked for updated drivers, but when the problem
+started appearing on systems other than my own, and on desktop systems and
+laptop systems, I was pretty sure I was doing something wrong.  Added to
+that was the discovery that turning off desktop composition in Vista made
+the problem go away.  That is why I posted the question with the example.  I
+assumed I was doing something wrong.
+
+<QUOTE PREVIOUSPOST="
+&gt; I wouldn't hard code a frame rate limit or expectation for a particular
+&gt; driver. That can create maintenance issues and gothcas if the IHV silently
+&gt; updates their driver. Bury this stuff in an options file.
+">
+
+The frame rate limit exists to avoid support calls of customers complaining
+that their system was slow and their machines were not operating correctly.
+The 10 fps limit was chosen by the people who are most affected by this, not
+me.
+
+<QUOTE PREVIOUSPOST="
+&gt; None of this is new. Games have been dealing with this stuff for years,
+&gt; and
+&gt; some still do provide software paths. And that's why your going knee-jerk
+&gt; over coding and ICD issues looked a bit weird.
+">
+
+Wow.  Sorry I came across that way.
+
+JAB
+</POST>
+<POST>
+<POSTER> aku ankka &lt;ju...@liimatta.org&gt; </POSTER>
+<POSTDATE> 2007-10-12T18:12:00 </POSTDATE>
+On Oct 12, 11:11 pm, &quot;John A. Byerly&quot; &lt;jbye ... @essDASHquality.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I posted my original question in an effort to get some assistance.  I have
+&gt; never believed that the hardware or driver were defective.  It wasn't until
+&gt; I posted a solution to my problem that the floodgates have opened with
+&gt; criticism of my solution.  That is fine; everyone has his opinion.  But none
+&gt; of those people who are yelling about how wrong my solution is have offered
+&gt; a solution of their own.  Just a bunch of criticism.  I posted the code.  If
+&gt; there is something wrong with it, please tell me.  That is why I posted it.
+&gt; Otherwise, we can continue this endless debate.  I will not use something I
+&gt; can't get to work. Our customers expect the product to work, first and
+&gt; foremost.
+">
+
+Can you trim the code into something that actually compiles?
+</POST>
+<POST>
+<POSTER> aku ankka &lt;ju...@liimatta.org&gt; </POSTER>
+<POSTDATE> 2007-10-12T18:26:00 </POSTDATE>
+On Oct 13, 12:42 am, John Tsiombikas &lt;nucl ... @siggraph.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Heh, always fun to bump into other sceners. Can't say I'm too surprised
+&gt; to find one in an OpenGL newsgroup though :)
+
+&gt; Used to like orange demos btw, although the last one I saw was a long
+&gt; time ago, around 2000 I believe (one boasting about NOT using graphics
+&gt; acceleration btw, if I'm not mistaken :)
+">
+
+It's different thing when you already doing it and know it inside out,
+than sneering at something you don't understand. A nice example of
+this was the MS-DOS dinosaurs dissing Windows back in the days: &quot;we
+can code to the bare metal (we just never do)&quot; -mindset. &quot;bare metal&quot;
+for MS-DOS meant pretty much VGA register level compatibility,
+SoundBlaster, GUS and some other minor details. I've never seen those
+boys code &quot;to the metal&quot; for, say, a 3D Graphics chip that were coming
+out at the time.
+
+bare-metal coding is funny, that when there is 100+ different hardware
+you realize it's just too much hardware to handle. Even companies
+making the hardware are having difficulty at times.
+
+The thing is, I *am* banging registers of these chips five days a week
+and most of the work is really data management and control of
+dataflow. HW details are minor issue, except for programmable
+hardware; generating the microcode is a truly monumental task and the
+established practise is still not quite there; we have some things
+that are &quot;solved problem&quot; but most things are not really as good as
+they could be, even if you _know_ what kind of microcode etc. would be
+optimal, it's always tradeoff between various factors and a lot of
+statistics are collected, lot of profiling is done, to measure what
+tradeoffs give best returns and blablablablaaa..
+</POST>
+<POST>
+<POSTER> aku ankka &lt;ju...@liimatta.org&gt; </POSTER>
+<POSTDATE> 2007-10-12T19:02:00 </POSTDATE>
+On Oct 12, 11:21 pm, &quot;John A. Byerly&quot; &lt;jbye ... @essDASHquality.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;aku ankka&quot; &lt;ju ... @liimatta.org&gt; wrote in message
+
+&gt; news:1192205882.321477.20880@y27g2000pre.googlegroups.com ...
+
+&gt; &gt; On Oct 12, 5:48 pm, &quot;John A. Byerly&quot; &lt;jbye ... @essDASHquality.com&gt;
+&gt; &gt; wrote:
+&gt; &gt;&gt; If my application's viewports are not visible on Vista machines, and I
+&gt; &gt;&gt; can
+&gt; &gt;&gt; make them visible by using a software rendering technique, why is that a
+&gt; &gt;&gt; &quot;bad idea&quot;?  I will grant you that having the rendering accelerated would
+&gt; &gt;&gt; be
+&gt; &gt;&gt; nice, but so far I have seen no suggestions as to how I can make this
+&gt; &gt;&gt; work.
+&gt; &gt;&gt; Software rendering works, the performance is acceptable, requirements are
+&gt; &gt;&gt; satisfied, customers are happy.  What more could a developer want?
+
+&gt; &gt; The developer should want that his/her OpenGL application works on
+&gt; &gt; hardware with OpenGL ICD. Either the ICD is broken or the application
+&gt; &gt; is broken. If the ICD is broken, report it to the vendor and move on;
+&gt; &gt; OpenGL ICD's generally work, that is how things should be.
+
+&gt; &gt; If you drop hardware rendering for ALL ICD's because one of them has a
+&gt; &gt; bug, that's your choise. If you drop hardware rendering for ALL ICD's
+&gt; &gt; because your application has a bug, again your choise. You do what you
+&gt; &gt; want. I was here sitting and hoping I could help you use the hardware
+&gt; &gt; most people these days have but if you're not interested then fine
+&gt; &gt; let's drop it, it's not inconvenient for me. :)
+
+&gt; If you were truly hoping to help, why didn't you point out my mistake(s)?  I
+&gt; posted the code.  Someone named Elaine at least took a stab at helping.
+&gt; None of the other posters in this thread have offered any suggestions as to
+&gt; what is wrong with the code I posted.  Instead, we are mired in a debate
+&gt; about &quot;wrongness&quot; of software rendering.
+
+&gt; If you have suggestions as to what I have done wrong in my example, let them
+&gt; fly.  That is why I posted the code in the first place.
+">
+
+It really helps people to help you, if you post simplified version of
+the code, something they can compile and play around with to *fix* the
+problem. You copy pasted some snips here and there, but no idea what
+is in the headers and other parts of the code you kept for yourself,
+so we have to guess and fill-in the blanks and keep fingers crossed
+the problem is every anything in the stuff you posted.
+
+If YOU can compile the simple source, and STILL re-produce the
+problem, fixing it can begin. For now we have no idea if what you
+posted is supposed to bug or what.
+
+But I did create a new solution, I put some of the code there. I got
+smooth visuals. NO flicked. Vista 32-bit Ultimate. GeForce 8800 GTS.
+
+I still had the wglMakeCurrent(hdc, hrc); ... wglMakeCurrent(NULL,
+NULL) in there. Generally that's a bad idea; the current context don't
+change on itself for the current process. It's safe to keep at the
+context you created in the first place, set to NULL dc and rc when
+you're done with the context.
+
+It looks like that works alright with the driver I've got now, but it
+can also be a real performance bottleneck. I wouldn't be surprised if
+that little detail is the culprit. But I am unable to eliminate that
+as possible cause FOR YOU, because I don't even know if the code that
+I've got here locally is supposed to bug or not. &quot;works here&quot; doesn't
+really mean anything unless you know why it works. At best I can tell
+that the code I have in my computer right now works because it's
+correctly written. It has some of your code copy pasted in it to test
+it, because I can't compile your code as-is. So, we don't really have
+the same code here and there do we?
+
+..
+</POST>
+<POST>
+<POSTER> aku ankka &lt;ju...@liimatta.org&gt; </POSTER>
+<POSTDATE> 2007-10-12T19:09:00 </POSTDATE>
+On Oct 12, 11:21 pm, &quot;John A. Byerly&quot; &lt;jbye ... @essDASHquality.com&gt;
+wrote:
+/*
+
+m_ctrlPane.Create(NULL, WS_VISIBLE | WS_CHILD, CRect(0, 0, 520,
+300),
+this);
+
+displays the image as expected.  Making the simple change to
+
+m_ctrlPane.Create(NULL, WS_VISIBLE | WS_CHILD, CRect(20, 20, 520,
+300),
+this);
+
+results in nothing being displayed on the main dialog.
+*/
+
+.. which is child window of which? Main dialog? What's the layout? Do
+these two overlap? In the (20,20,..) case does it mean the GL window
+does NOT overlap with the main dialog, I'm assuming it's on the left
+at (0,0,20,300) or something similar. Too much guessing too few facts.
+
+Overlapping the windows might mix ICD and DIB in ways that the INTEL
+chip you're using can't deal with it --&gt; anomalies in graphics. Just a
+guess. If you use DIB to blit the generated gfx, might be that it goes
+through the same composer and don't flicker. Might not be OGL problem
+at all so all this OGL code you posted could be a red herring.
+
+Complete app that could be compiled would be nice. I know you can't
+give all the gazilling gigabytes of source for (CAD!?) application
+you're developing so a nice small isolated simple program would
+suffice. If you're unable to do that then we can guess, speculate and
+run around calling each other names b/c we have diffrent expectations
+what OpenGL is all about.
+
+$.02
+</POST>
+<POST>
+<POSTER> &quot;Charles E Hardwidge&quot; &lt;bo...@nospam.co.uk&gt; </POSTER>
+<POSTDATE> 2007-10-13T02:17:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Thank you for looking at it.  I tend to blame coding (mine) in cases like
+&gt; this.  Vista has been out for several months, so I assume the problem is
+&gt; with the developer.  I checked for updated drivers, but when the problem
+&gt; started appearing on systems other than my own, and on desktop systems and
+&gt; laptop systems, I was pretty sure I was doing something wrong.  Added to
+&gt; that was the discovery that turning off desktop composition in Vista made
+&gt; the problem go away.  That is why I posted the question with the example.
+&gt; I assumed I was doing something wrong.
+
+&gt; The frame rate limit exists to avoid support calls of customers
+&gt; complaining that their system was slow and their machines were not
+&gt; operating correctly. The 10 fps limit was chosen by the people who are
+&gt; most affected by this, not me.
+">
+
+http://www.opengl.org/pipeline/article/vol003_7/
+
+I was trying to figure out if you had a GDI conflict. The last time I saw
+flickering with double-buffers was nearly ten years ago. I accidentally
+mixed GDI and OpenGL. It didn't show up on Win 9x but Win NT caught it.
+Another issue at the time was a broken hardware texture matrix. The IHV
+never  corrected that in the driver so an alternative had to soft coded.
+
+Faster is usually better but so is consistency, and limiting processing on
+CPU and GPU can help with heat issues on some kit. Pure software rendering
+solutions are available and may be less resource intensive and faster for
+the particular class of problem you're trying to solve. Mostly, OpenGL gets
+the job done but special cases do exist.
+
+Both Quake 2 and 3D Studio Max provide OpenGL and software paths, give you a
+choice of which to use, and store this in a configuration file. It's an old
+problem and customer requirements aren't always the same due to different
+hardware and driver issues, and this remains a good solution. I something
+changes a  minor update to the application or readme should deal with it.
+
+<QUOTE PREVIOUSPOST="
+&gt; Wow.  Sorry I came across that way.
+">
+
+It was just a clash of perspectives. The engineer versus scientist thing was
+a good example but you could fold management and marketing into the mix. It
+broadens out the range of possible views and attitudes. Some people tend to
+be more task and intellectually focused, others are more big picture and
+emotional. It's got me into trouble in the past but calming down helps.
+
+If in doubt, one can always point to the OpenGL specification. It's the
+final arbiter of what is and is not. Whatever any individual or collective
+thinks or feels, the OpenGL specification is the reality we all work to. I
+strongly suspect this is why this newsgroup has remained on topic and
+affable over the years as it tends to help people stay focused.
+
+It looks like some of the guys are getting a grip and focusing on the
+fundamentals. I'm sure you want to produce a sound solution and they would
+feel some pride in being part of that. When something emerges and it's had
+time to sink in it's possible better solutions and ways of working may
+continue to develop, so it will have been useful.
+
+Ooops. Bit of Zen Buddhism creeping in there.
+
+Thanks for the free lesson :-)
+
+--
+Charles E. Hardwidge
+</POST>
+<POST>
+<POSTER> &quot;John A. Byerly&quot; &lt;jbye...@essDASHquality.com&gt; </POSTER>
+<POSTDATE> 2007-10-16T12:43:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;aku ankka&quot; &lt;ju ... @liimatta.org&gt; wrote in message
+">
+
+news:1192230152.153267.42300@q5g2000prf.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Oct 12, 11:21 pm, &quot;John A. Byerly&quot; &lt;jbye ... @essDASHquality.com&gt;
+&gt; wrote:
+&gt;&gt; &quot;aku ankka&quot; &lt;ju ... @liimatta.org&gt; wrote in message
+
+&gt;&gt; news:1192205882.321477.20880@y27g2000pre.googlegroups.com ...
+
+&gt; If YOU can compile the simple source, and STILL re-produce the
+&gt; problem, fixing it can begin. For now we have no idea if what you
+&gt; posted is supposed to bug or what.
+
+&gt; But I did create a new solution, I put some of the code there. I got
+&gt; smooth visuals. NO flicked. Vista 32-bit Ultimate. GeForce 8800 GTS.
+
+&gt; I still had the wglMakeCurrent(hdc, hrc); ... wglMakeCurrent(NULL,
+&gt; NULL) in there. Generally that's a bad idea; the current context don't
+&gt; change on itself for the current process. It's safe to keep at the
+&gt; context you created in the first place, set to NULL dc and rc when
+&gt; you're done with the context.
+
+&gt; It looks like that works alright with the driver I've got now, but it
+&gt; can also be a real performance bottleneck. I wouldn't be surprised if
+&gt; that little detail is the culprit. But I am unable to eliminate that
+&gt; as possible cause FOR YOU, because I don't even know if the code that
+&gt; I've got here locally is supposed to bug or not. &quot;works here&quot; doesn't
+&gt; really mean anything unless you know why it works. At best I can tell
+&gt; that the code I have in my computer right now works because it's
+&gt; correctly written. It has some of your code copy pasted in it to test
+&gt; it, because I can't compile your code as-is. So, we don't really have
+&gt; the same code here and there do we?
+">
+
+I pasted what I did in an effort to save bandwidth.  All I did was create a
+simple dialog app using VC++ 6.0, add my CTestPane class to it, and create
+an instance of the CTestPane on the main (only) dialog as I described in my
+original post.  As I mentioned in the original post, the example app was a
+dialog with an OpenGL area (my CTestPane class).  I suppose I could have
+posted the header file.  I am sorry I didn't.  It appears below.
+
+It doesn't surprise me that you have no problems with a GeForce 8800.  As I
+mentioned in my original post, my example as well as the original app work
+fine on a machine with an nVidia GeForce 6100.  I am experiencing problems
+with the machine that have Intel graphics.
+
+JAB
+
+#if
+!defined(AFX_TESTPANE_H__BEAFD3CE_D321_4479_9401_3A04802B30E2__INCLUDED_)
+#define AFX_TESTPANE_H__BEAFD3CE_D321_4479_9401_3A04802B30E2__INCLUDED_
+
+#if _MSC_VER &gt; 1000
+#pragma once
+#endif // _MSC_VER &gt; 1000
+// TestPane.h : header file
+//
+
+/////////////////////////////////////////////////////////////////////////// //
+// CTestPane window
+
+class CTestPane : public CStatic
+{
+// Construction
+public:
+CTestPane();
+
+// Attributes
+public:
+
+// Operations
+public:
+
+// Overrides
+// ClassWizard generated virtual function overrides
+//{{AFX_VIRTUAL(CTestPane)
+virtual BOOL PreCreateWindow(CREATESTRUCT&amp; cs);
+//}}AFX_VIRTUAL
+
+// Implementation
+public:
+virtual ~CTestPane();
+
+// Generated message map functions
+protected:
+//{{AFX_MSG(CTestPane)
+afx_msg void OnPaint();
+afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+afx_msg void OnSize(UINT nType, int cx, int cy);
+//}}AFX_MSG
+
+void Line(double dXStart, double dYStart, double dXEnd, double dYEnd);
+void Arc(double dXStart, double dYStart, double dXCenter, double dYCenter,
+double dDegrees);
+
+void SetBitmap();
+void Setup();
+void Update();
+
+CDC* m_pDC;
+HGLRC m_hRC;
+HBITMAP m_hBmp;
+
+void* m_pBuffer;
+
+static long PaneWndProc(HWND hwnd, UINT message, DWORD wParam, LONG
+lParam);
+static BOOL RegisterWindowClass();
+
+static BOOL m_bWindowClassRegistered;
+
+DECLARE_MESSAGE_MAP()
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+/////////////////////////////////////////////////////////////////////////// //
+
+//{{AFX_INSERT_LOCATION}}
+// Microsoft Visual C++ will insert additional declarations immediately
+before the previous line.
+
+#endif //
+!defined(AFX_TESTPANE_H__BEAFD3CE_D321_4479_9401_3A04802B30E2__INCLUDED_)
+</POST>
+<POST>
+<POSTER> &quot;John A. Byerly&quot; &lt;jbye...@essDASHquality.com&gt; </POSTER>
+<POSTDATE> 2007-10-16T12:51:00 </POSTDATE>
+&quot;Charles E Hardwidge&quot; &lt;bo ... @nospam.co.uk&gt; wrote in message
+news:ZpZPi.30397$c_1.19203@text.news.blueyonder.co.uk ...
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Thank you for looking at it.  I tend to blame coding (mine) in cases like
+&gt;&gt; this.  Vista has been out for several months, so I assume the problem is
+&gt;&gt; with the developer.  I checked for updated drivers, but when the problem
+&gt;&gt; started appearing on systems other than my own, and on desktop systems
+&gt;&gt; and
+&gt;&gt; laptop systems, I was pretty sure I was doing something wrong.  Added to
+&gt;&gt; that was the discovery that turning off desktop composition in Vista made
+&gt;&gt; the problem go away.  That is why I posted the question with the example.
+&gt;&gt; I assumed I was doing something wrong.
+
+&gt;&gt; The frame rate limit exists to avoid support calls of customers
+&gt;&gt; complaining that their system was slow and their machines were not
+&gt;&gt; operating correctly. The 10 fps limit was chosen by the people who are
+&gt;&gt; most affected by this, not me.
+
+&gt; http://www.opengl.org/pipeline/article/vol003_7/
+">
+
+Thanks.  I read this article during my investigation, and it was what led me
+to the discovery that turning off desktop composition makes the problem go
+away.  The information in that article, along with other information in this
+newsgroup, is what convinced me to try the offscreen rendering.
+
+<QUOTE PREVIOUSPOST="
+&gt; I was trying to figure out if you had a GDI conflict. The last time I saw
+&gt; flickering with double-buffers was nearly ten years ago. I accidentally
+&gt; mixed GDI and OpenGL. It didn't show up on Win 9x but Win NT caught it.
+&gt; Another issue at the time was a broken hardware texture matrix. The IHV
+&gt; never  corrected that in the driver so an alternative had to soft coded.
+">
+
+I would not be a bit surprised if I had a GDI conflict.  I just couldn't
+find it.
+
+<QUOTE PREVIOUSPOST="
+&gt; Faster is usually better but so is consistency, and limiting processing on
+&gt; CPU and GPU can help with heat issues on some kit. Pure software rendering
+&gt; solutions are available and may be less resource intensive and faster for
+&gt; the particular class of problem you're trying to solve. Mostly, OpenGL
+&gt; gets
+&gt; the job done but special cases do exist.
+">
+
+I had considered rewriting all of this using only GDI calls, but decided
+against it.  The performance is acceptable to my superiors (I'd like it to
+be a bit better), and they are unwilling (for good reason) to invest any
+more money in something that most customers couldn't care less about.
+
+Thanks for the help!
+
+JAB
+</POST>
+<POST>
+<POSTER> aku ankka &lt;ju...@liimatta.org&gt; </POSTER>
+<POSTDATE> 2007-10-16T13:07:00 </POSTDATE>
+On Oct 16, 7:43 pm, &quot;John A. Byerly&quot; &lt;jbye ... @essDASHquality.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I pasted what I did in an effort to save bandwidth.  All I did was create a
+&gt; simple dialog app using VC++ 6.0, add my CTestPane class to it, and create
+&gt; an instance of the CTestPane on the main (only) dialog as I described in my
+&gt; original post.  As I mentioned in the original post, the example app was a
+&gt; dialog with an OpenGL area (my CTestPane class).  I suppose I could have
+&gt; posted the header file.  I am sorry I didn't.  It appears below.
+">
+
+By chance, is this dialog clearing itself? The default clear color is
+white or gray, I can't recall as I never really relied on it. If the
+flickering is white, you must disable the clearing. You do this by
+adding custom handler for the ON_WM_ERASEBKGND message. DO NOT call
+the default handler from the custom handler.
+
+The software blit works, because it is using the same DC and going
+through same composer so the most current update is being displayed.
+In the case of HW acceleration, the graphics chip and the GDI are
+updating the same memory simultaneously -&gt; bad. I don't know details
+of NV driver if they have some work-around for mis-behaving
+applications written there on purpose. It could be just blind luck. =)
+
+That isn't OpenGL problem. It is WIN32/MFC programming problem and
+better asked in some Windows programming newsgroup. If you need follow-
+up ask in some more appropriate place.
+</POST>
+<POST>
+<POSTER> &quot;Charles E Hardwidge&quot; &lt;bo...@nospam.co.uk&gt; </POSTER>
+<POSTDATE> 2007-10-16T13:49:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; By chance, is this dialog clearing itself? The default clear color is
+&gt; white or gray, I can't recall as I never really relied on it. If the
+&gt; flickering is white, you must disable the clearing. You do this by
+&gt; adding custom handler for the ON_WM_ERASEBKGND message. DO NOT call
+&gt; the default handler from the custom handler.
+">
+
+I noticed that was missing. As the guidance suggests: &quot;Handle the
+application window's WM_ERASEBKGND by returning non-zero in the message
+handler (this will avoid GDI clearing the OpenGL windows' background).&quot;
+
+--
+Charles E. Hardwidge
+</POST>
+<POST>
+<POSTER> &quot;Charles E Hardwidge&quot; &lt;bo...@nospam.co.uk&gt; </POSTER>
+<POSTDATE> 2007-10-16T13:51:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt;&gt; http://www.opengl.org/pipeline/article/vol003_7/
+
+&gt; Thanks.  I read this article during my investigation, and it was what led
+&gt; me to the discovery that turning off desktop composition makes the problem
+&gt; go away.  The information in that article, along with other information in
+&gt; this newsgroup, is what convinced me to try the offscreen rendering.
+">
+
+I've been wondering if you're mishandling the background clearing. I didn't
+notice any code in your sample to handle it as the guidance suggests.
+
+--
+Charles E. Hardwidge
+</POST>
+</TEXT>
+</BODY>
+</DOC>

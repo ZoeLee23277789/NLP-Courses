@@ -1,0 +1,414 @@
+<DOC>
+<DOCID> eng-NG-31-135458-9739059 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-11-26T07:24:00 </DATETIME>
+<BODY>
+<HEADLINE>
+vista and lilo trouble
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> xspirix &lt;andrea.spital...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-26T07:24:00 </POSTDATE>
+Hi all,
+I am one of the &quot;unlucky&quot; guy having bought a notebook carrying win
+vista installed. I have installed slackware since version 8.0 and this
+is the first time having this kind of problem. Basically, the
+installation goes fine until the installation of lilo on the mbr.
+Afterthat, linux boot normally but vista does not. Gooogling around it
+seems that the new microsoft product does not like write the mbr.
+People is suggesting to write lilo in the root dir and then use
+easybcd software in order to manage both OS. Friends of mine did not
+have problem with ubuntu with another notebook but ubuntu uses grub.
+Any help in order to use lilo on mbr along with vista?
+Thanks in advance,
+
+spirix
+</POST>
+<POST>
+<POSTER> Olive &lt;ol...@tele2allin.be&gt; </POSTER>
+<POSTDATE> 2007-11-26T07:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+xspirix wrote:
+&gt; Hi all,
+&gt; I am one of the &quot;unlucky&quot; guy having bought a notebook carrying win
+&gt; vista installed. I have installed slackware since version 8.0 and this
+&gt; is the first time having this kind of problem. Basically, the
+&gt; installation goes fine until the installation of lilo on the mbr.
+&gt; Afterthat, linux boot normally but vista does not. Gooogling around it
+&gt; seems that the new microsoft product does not like write the mbr.
+&gt; People is suggesting to write lilo in the root dir and then use
+&gt; easybcd software in order to manage both OS. Friends of mine did not
+&gt; have problem with ubuntu with another notebook but ubuntu uses grub.
+&gt; Any help in order to use lilo on mbr along with vista?
+&gt; Thanks in advance,
+">
+
+I am not using vista. But you should be a little more verbose. What's
+your /etc/lilo.conf? what happens when you run lilo and what happens
+exactly when you try to boot Vista?
+
+If you say that it works with grub and Ubuntu; I guess the problem is
+not that Vista does like change to the mbr (because grub do the same).
+(it is possible to install lilo on the root partition and make this
+partition active; provided the mbr is the standard one).
+
+You can use grub on Slackware (it is present in extra, and there is even
+a configuration utility). You can try to see how it is configured on
+Ubuntu and do the same for Slackware.
+
+Good to know: you can uninstall lilo and put a standard mbr with the
+command:
+lilo -M /dev/hda mbr
+(where /dev/hda denote your main disk, it could also be /dev/sda).
+
+Olive
+</POST>
+<POST>
+<POSTER> michales &lt;kor...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-26T08:03:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Mon, 26 Nov 2007 04:24:48 -0800, xspirix wrote:
+&gt; Hi all,
+&gt; I am one of the &quot;unlucky&quot; guy having bought a notebook carrying win
+...
+&gt; installation goes fine until the installation of lilo on the mbr.
+&gt; Afterthat, linux boot normally but vista does not. Gooogling around it
+...
+&gt; spirix
+">
+
+You can install grub, its in &quot;extra&quot; packages.
+
+I *think* that Vista boots like XP, add an entry similar to XP.
+</POST>
+<POST>
+<POSTER> Joost Kremers &lt;joostkrem...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-11-26T12:09:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+xspirix wrote:
+&gt; Any help in order to use lilo on mbr along with vista?
+">
+
+no help to offer, but i can say that my work machine has vista, and
+(although i'm having trouble installing slack 12.0), i've been able to
+install slackware 11 with the 2.4 kernel and lilo in the mbr, and vista
+still boots.
+
+so it's probably not vista that's causing the problem, or at least not
+vista alone. but in order for anyone here to be able to help you, you'll
+need to tell us a bit more. what is your lilo.conf, what is your disk
+configuration (e.g. provide the output of fdisk -l), what happens when you
+try to boot vista, etc.
+
+--
+Joost Kremers                                      joostkrem ... @yahoo.com
+Selbst in die Unterwelt dringt durch Spalten Licht
+EN:SiS(9)
+</POST>
+<POST>
+<POSTER> xspirix &lt;andrea.spital...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-26T18:38:00 </POSTDATE>
+Hi all,
+thanks for the hints.  Basically, I have parted my sda by using
+gparted live (great tool) and installed slacware on the sda3 partion
+(sda1 is recovery and sda2 is vista).  Then I have added the vista
+mount in the fstab (done automatically by slackware during the
+installation) and installed lilo on the mbr as usual using the
+standard options. I rebooted and slackware was running. The next
+reboot, I tried vista *but* it could not boot for some reason. I
+thought that the problem was lilo so I *fixed* the mbr cleaning it by
+using vista tool. No solution. So I recovered vista by the recovery
+partition. I rebooted by dvd mounting the sda3 in order to read the
+previous dmesg and I noticed some serious problem about ntfs
+filesystem mounting.
+so what I have done is to remove the mount for vista in fstab at the
+boot and re-installed lilo in the mbr by lilo -v. no error at all
+(only warning about lba32). surprisingly, this time vista was booting
+in perfect agreement with your opinion. So, the problem was at the
+first linux-boot  mounting the vista partion, probably corrupting the
+ntfs-vista filesystem (I guess). so the problem was not lilo but the
+mount of vista. I don't why.
+
+A silly question: I have 2Gb of ram. Do I need to create a swap of 2Gb
+or 1Gb it is enough? Thinking about the hybernation issue ...
+
+Thanks to all,
+
+Regards
+
+spirix
+</POST>
+<POST>
+<POSTER> Federico Savini &lt;savini.ff...@libero.it&gt; </POSTER>
+<POSTDATE> 2007-11-26T19:22:00 </POSTDATE>
+the safe way is to have swap bigger at least 1 byte than ram,
+on the other hand,
+if you don't worry about crashes, with 2gb of ram
+512mb are sufficent
+
+<QUOTE PREVIOUSPOST="
+On Mon, 26 Nov 2007 15:38:46 -0800, xspirix wrote:
+&gt; A silly question: I have 2Gb of ram. Do I need to create a swap of 2Gb
+&gt; or 1Gb it is enough? Thinking about the hybernation issue ...
+
+&gt; Thanks to all,
+
+&gt; Regards
+
+&gt; spirix
+">
+</POST>
+<POST>
+<POSTER> ~kurt &lt;actinouran...@earthlink.net&gt; </POSTER>
+<POSTDATE> 2007-11-26T20:41:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Joost Kremers &lt;joostkrem ... @yahoo.com&gt; wrote:
+&gt; xspirix wrote:
+&gt;&gt; Any help in order to use lilo on mbr along with vista?
+
+&gt; no help to offer, but i can say that my work machine has vista, and
+&gt; (although i'm having trouble installing slack 12.0), i've been able to
+&gt; install slackware 11 with the 2.4 kernel and lilo in the mbr, and vista
+&gt; still boots.
+
+&gt; so it's probably not vista that's causing the problem, or at least not
+">
+
+I just bought a new computer a couple months ago with Vista - no issues
+at all dual booting with SW 12.0.  I didn't do anything different from when
+I used to have Win95 on the 'puter way back when.  I used the MBR with
+Lilo.
+
+The only hard part was splitting the hard drive.  Even though Vista comes
+with a built in repartitioning capability, the OS likes to plop all sorts of
+unmoveable crap at the very end of my 300 GB drive.  I had to use a special
+defrag program to move it.
+
+- Kurt
+</POST>
+<POST>
+<POSTER> lukaswu &lt;luka...@genesis.makusz.dyn.pl&gt; </POSTER>
+<POSTDATE> 2007-11-27T13:11:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; I am one of the &quot;unlucky&quot; guy having bought a notebook carrying win
+&gt; vista installed. I have installed slackware since version 8.0 and this
+&gt; is the first time having this kind of problem. Basically, the
+&gt; installation goes fine until the installation of lilo on the mbr.
+&gt; Afterthat, linux boot normally but vista does not. Gooogling around it
+&gt; seems that the new microsoft product does not like write the mbr.
+&gt; People is suggesting to write lilo in the root dir and then use
+&gt; easybcd software in order to manage both OS. Friends of mine did not
+&gt; have problem with ubuntu with another notebook but ubuntu uses grub.
+&gt; Any help in order to use lilo on mbr along with vista?
+&gt; Thanks in advance,
+">
+
+Hi,
+
+I bet it is more hardware related, or at leat I had similar problems with
+XP. If this os what i think, your help would be &quot;man lilo.conf&quot; and
+&quot;boot-as&quot; option.
+
+Hope it will help
+
+take care
+
+--
+luk
+</POST>
+<POST>
+<POSTER> Stanislaw Flatto &lt;comp...@brownbear.com.au&gt; </POSTER>
+<POSTDATE> 2007-11-27T20:47:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+lukaswu wrote:
+
+&gt; I bet it is more hardware related, or at leat I had similar problems
+&gt; with XP. If this os what i think, your help would be &quot;man lilo.conf&quot; and
+&gt; &quot;boot-as&quot; option.
+
+&gt; Hope it will help
+
+&gt; take care
+">
+
+The &quot;boot-as&quot; was very convenient on DOS based OS's. The NT variants
+don't need this help.
+
+Have fun
+
+Stanislaw
+Slack user from Ulladulla.
+</POST>
+<POST>
+<POSTER> Ron Gibson &lt;rsgib...@verizon.net&gt; </POSTER>
+<POSTDATE> 2007-11-28T02:01:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Wed, 28 Nov 2007 01:47:24 +0000, Stanislaw Flatto wrote:
+&gt; The &quot;boot-as&quot; was very convenient on DOS based OS's. The NT variants
+&gt; don't need this help.
+">
+
+I fing ity a lot easier to install lilo on the root when I have a
+combination of MS and various distros.
+
+Smart Boot Manager works great or you can even add Slack to NTLDR by
+first installing lilo on the root. In my case Slack11 is /dev/hde17.
+
+From...
+
+http://jaeger.morpheus.net/linux/ntldr.php
+
+You might have to use a live CD or a SBM floppy.
+
+chdir to a convenient spot. Issue...
+
+dd if=/dev/hde17 of=bootsect.lnx bs=512 count=1
+
+Copy the file bootsect.lnx to the root of 2000 or XP.
+
+Add this line to the bottom of c:\boot.ini and not it loos like...
+
+[boot loader]
+timeout=15
+default=multi(0)disk(0)rdisk(0)partition(1)\WINDOWS
+[operating systems]
+multi(0)disk(0)rdisk(0)partition(1)\WINDOWS=&quot;Microsoft Windows 2000 Professional&quot; /fastdetect
+C:\=MS-DOS
+C:\bootsect.lnx=&quot;Slack11&quot;
+
+Now you can boot Slack using NTLDR and lilo never sees the MBR.
+
+--
+Email - rsgib ... @verizon.borg
+Replace borg with net
+</POST>
+<POST>
+<POSTER> lukaswu &lt;luka...@genesis.makusz.dyn.pl&gt; </POSTER>
+<POSTDATE> 2007-11-28T15:00:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; The &quot;boot-as&quot; was very convenient on DOS based OS's. The NT variants don't
+&gt; need this help.
+">
+
+You are wrong which proves my two week ago experience with Win XP. Anyway
+the box had two physical disks with Xp on hdb and XP had problems with
+booting while Slackware and lilo was installed on hda.
+
+If you read man you would know it is BIOS and how it presents disks
+problem.
+
+Regards.
+
+--
+luk
+</POST>
+<POST>
+<POSTER> Stanislaw Flatto &lt;comp...@brownbear.com.au&gt; </POSTER>
+<POSTDATE> 2007-11-28T15:56:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+lukaswu wrote:
+&gt; If you read man you would know it is BIOS and how it presents disks
+&gt; problem.
+">
+
+I would suspect XP (Xrta Problems). If it was installed on primary drive
+and later relegated to secondary position.
+The reading of man pages I did few years ago when playing with lilo to
+boot (on two hard drives) few installs of DOS'es (MS; DR and free all
+with win3.11) and Windows98's (English; Hebrew and Greek)
+Lilo did it's work including hiding and unhiding partitions according to
+menu choices.
+It was a challenge resulting from reading the man pages suggesting that
+it &quot;can be done!&quot;
+So it did it.
+
+<QUOTE PREVIOUSPOST="
+&gt; Regards.
+">
+
+Have fun
+
+Stanislaw
+Slack user from Ulladulla.
+</POST>
+<POST>
+<POSTER> Ayaz Ahmed Khan &lt;a...@dev.null&gt; </POSTER>
+<POSTDATE> 2007-12-01T12:00:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+xspirix wrote:
+&gt; Hi all,
+&gt; I am one of the &quot;unlucky&quot; guy having bought a notebook carrying win
+&gt; vista installed. I have installed slackware since version 8.0 and this
+&gt; is the first time having this kind of problem. Basically, the
+&gt; installation goes fine until the installation of lilo on the mbr.
+&gt; Afterthat, linux boot normally but vista does not. Gooogling around it
+&gt; seems that the new microsoft product does not like write the mbr. People
+&gt; is suggesting to write lilo in the root dir and then use easybcd
+&gt; software in order to manage both OS. Friends of mine did not have
+&gt; problem with ubuntu with another notebook but ubuntu uses grub. Any help
+&gt; in order to use lilo on mbr along with vista? Thanks in advance,
+">
+
+What happens when you try to boot Vista?
+
+I have a Dell Inspiron booting both Vista (which came pre-installed with
+the machine) and Slackware 12 with lilo as the bootloader installed on
+MBR without any issues.
+
+--
+Ayaz Ahmed Khan
+</POST>
+<POST>
+<POSTER> antonio.manue...@alice.it </POSTER>
+<POSTDATE> 2007-12-02T09:52:00 </POSTDATE>
+On 26 Nov, 13:50, Olive &lt;ol ... @tele2allin.be&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; xspirix wrote:
+&gt; &gt; Hi all,
+&gt; &gt; I am one of the &quot;unlucky&quot; guy having bought a notebook carrying win
+&gt; &gt; vista installed. I have installed slackware since version 8.0 and this
+&gt; &gt; is the first time having this kind of problem. Basically, the
+&gt; &gt; installation goes fine until the installation of lilo on the mbr.
+&gt; &gt; Afterthat, linux boot normally but vista does not. Gooogling around it
+&gt; &gt; seems that the new microsoft product does not like write the mbr.
+&gt; &gt; People is suggesting to write lilo in the root dir and then use
+&gt; &gt; easybcd software in order to manage both OS. Friends of mine did not
+&gt; &gt; have problem with ubuntu with another notebook but ubuntu uses grub.
+&gt; &gt; Any help in order to use lilo on mbr along with vista?
+&gt; &gt; Thanks in advance,
+
+&gt; I am not using vista. But you should be a little more verbose. What's
+&gt; your /etc/lilo.conf? what happens when you run lilo and what happens
+&gt; exactly when you try to boot Vista?
+
+&gt; If you say that it works with grub and Ubuntu; I guess the problem is
+&gt; not that Vista does like change to the mbr (because grub do the same).
+&gt; (it is possible to install lilo on the root partition and make this
+&gt; partition active; provided the mbr is the standard one).
+
+&gt; You can use grub on Slackware (it is present in extra, and there is even
+&gt; a configuration utility). You can try to see how it is configured on
+&gt; Ubuntu and do the same for Slackware.
+
+&gt; Good to know: you can uninstall lilo and put a standard mbr with the
+&gt; command:
+&gt; lilo -M /dev/hda mbr
+&gt; (where /dev/hda denote your main disk, it could also be /dev/sda).
+
+&gt; Olive
+">
+
+I know I had to post a new message, but I prove.   ;=)
+is possible to install Slack on a notebook TOSCHIBA with Wire, Blue
+toot, USB, and to mke the O.S. Slack know it ?  ?  ?
+really are ten years I dont use Slak and PC one mount ago I buy a
+otebook toshba with W - XP .
+It ha so many programs that  I use the frtest version in L.x
+distributions.
+sorry for the argoment. But yo were writing about Notebook.
+</POST>
+</TEXT>
+</BODY>
+</DOC>

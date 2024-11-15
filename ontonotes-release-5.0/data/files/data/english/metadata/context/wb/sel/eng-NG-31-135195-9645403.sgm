@@ -1,0 +1,1086 @@
+<DOC>
+<DOCID> eng-NG-31-135195-9645403 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-12-14T18:33:00 </DATETIME>
+<BODY>
+<HEADLINE>
+problem compiling for i586 with new makepkg
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Karolina Lindqvist &lt;karolina.lindqv...@kramnet.se&gt; </POSTER>
+<POSTDATE> 2007-12-14T18:33:00 </POSTDATE>
+There is a problem with compiling with CHOST=&quot;i586&quot; with the new
+pacman/makepkg.
+
+It simply refuses with the message:
+
+pkgname is not available for the 'i586' architecture.
+Note that many packages may need a line added to their PKGBUILD
+such as arch=('i586').
+
+To edit each and every PKGBUILD for each and every package and every update
+appears like quite a big work. And since I could not find any option to turn
+that &quot;feature&quot; off, or any hook to SED it in, I just commented it out in
+makepkg. What was the thought with this?
+The -w option is also taken away from makepkg. Why?
+(I found the alternate solution, but still)
+
+Karolina
+</POST>
+<POST>
+<POSTER> &quot;Aaron Griffin&quot; &lt;aaronmgrif...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-14T18:42:00 </POSTDATE>
+On Dec 14, 2007 5:33 PM, Karolina Lindqvist
+
+<QUOTE PREVIOUSPOST="
+&lt;karolina.lindqv ... @kramnet.se&gt; wrote:
+&gt; There is a problem with compiling with CHOST=&quot;i586&quot; with the new
+&gt; pacman/makepkg.
+
+&gt; It simply refuses with the message:
+
+&gt;         pkgname is not available for the 'i586' architecture.
+&gt;         Note that many packages may need a line added to their PKGBUILD
+&gt;         such as arch=('i586').
+
+&gt; To edit each and every PKGBUILD for each and every package and every update
+&gt; appears like quite a big work. And since I could not find any option to turn
+&gt; that &quot;feature&quot; off, or any hook to SED it in, I just commented it out in
+&gt; makepkg. What was the thought with this?
+">
+
+The official packages are not tested for i586. This means that they
+will not directly compile without intercession by a user.
+
+Why would we put sed hooks in to fix it when you
+can...just...run...sed yourself? Arch _does_ have the whole &quot;helper
+scripts are dumb&quot; type philosophy...
+Why would we provide one command (makepkg) to replace one command (sed)?
+
+<QUOTE PREVIOUSPOST="
+&gt; The -w option is also taken away from makepkg. Why?
+&gt; (I found the alternate solution, but still)
+">
+
+I can't recall what -w did. Regardless, it was removed because Dan and
+I wanted to remove it. These things are usually covered for a while on
+the pacman-dev list, and parties with a vested interest in certain
+things would benefit from joining the discussion there. Perhaps, given
+valid reasons, we would have kept the option (again, I have no idea
+what it did).
+</POST>
+<POST>
+<POSTER> Karolina Lindqvist &lt;karolina.lindqv...@kramnet.se&gt; </POSTER>
+<POSTDATE> 2007-12-15T02:00:00 </POSTDATE>
+lördag 15 december 2007 skrev Aaron Griffin:
+
+<QUOTE PREVIOUSPOST="
+&gt; Why would we put sed hooks in to fix it when you
+&gt; can...just...run...sed yourself? Arch _does_ have the whole &quot;helper
+&gt; scripts are dumb&quot; type philosophy...
+&gt; Why would we provide one command (makepkg) to replace one command (sed)?
+">
+
+Well, because I do a &quot;makeworld&quot;. I can of course patch, which is simple with
+archlinux. The problem is just upgrades, when I need to apply the same
+patches manually again, or the patches disappear.
+
+Then of course, I could do a script that goes through the whole abs tree, and
+inserts &quot;i586&quot; if it is not there. But that makes me wonder what purpose the
+arch= tag have at all?
+
+<QUOTE PREVIOUSPOST="
+&gt; I can't recall what -w did. Regardless, it was removed because Dan and
+&gt; I wanted to remove it. These things are usually covered for a while on
+&gt; the pacman-dev list, and parties with a vested interest in certain
+&gt; things would benefit from joining the discussion there. Perhaps, given
+&gt; valid reasons, we would have kept the option (again, I have no idea
+&gt; what it did).
+">
+
+-w redirects output to somewhere else than the standard place, i.e. overrides
+PKGDEST.
+Now instead I have to comment out PKGDEST=/home/packages in makepkg.conf and
+remember to always set it before makepkg instead. It also works, but I
+thought -w was very convenient and used it a lot.
+
+I guess I am going to maintain this, for my own usage, for quite a while now,
+since I have a machine that is going to run it. It appears that a few others
+also quietly maintain archi586 the same way.
+
+Karolina
+</POST>
+<POST>
+<POSTER> &quot;R. Dale Thomas&quot; &lt;r...@knoppmyth.net&gt; </POSTER>
+<POSTDATE> 2007-12-15T02:59:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Karolina Lindqvist wrote:
+">
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt; -w redirects output to somewhere else than the standard place, i.e. overrides
+&gt; PKGDEST.
+&gt; Now instead I have to comment out PKGDEST=/home/packages in makepkg.conf and
+&gt; remember to always set it before makepkg instead. It also works, but I
+&gt; thought -w was very convenient and used it a lot.
+
+&gt; I guess I am going to maintain this, for my own usage, for quite a while now,
+&gt; since I have a machine that is going to run it. It appears that a few others
+&gt; also quietly maintain archi586 the same way.
+
+&gt; Karolina
+">
+
+I'm with you Karolina, I need to support some VIA machines, too.
+</POST>
+<POST>
+<POSTER> &quot;Dan McGee&quot; &lt;dpmc...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-15T03:15:00 </POSTDATE>
+On Dec 15, 2007 1:00 AM, Karolina Lindqvist
+
+<QUOTE PREVIOUSPOST="
+&lt;karolina.lindqv ... @kramnet.se&gt; wrote:
+&gt; lördag 15 december 2007 skrev Aaron Griffin:
+
+&gt; &gt; Why would we put sed hooks in to fix it when you
+&gt; &gt; can...just...run...sed yourself? Arch _does_ have the whole &quot;helper
+&gt; &gt; scripts are dumb&quot; type philosophy...
+&gt; &gt; Why would we provide one command (makepkg) to replace one command (sed)?
+
+&gt; Well, because I do a &quot;makeworld&quot;. I can of course patch, which is simple with
+&gt; archlinux. The problem is just upgrades, when I need to apply the same
+&gt; patches manually again, or the patches disappear.
+
+&gt; Then of course, I could do a script that goes through the whole abs tree, and
+&gt; inserts &quot;i586&quot; if it is not there. But that makes me wonder what purpose the
+&gt; arch= tag have at all?
+">
+
+The arch= tag indicates that we, as the Arch Linux developers, have
+successfully built a certain package on the given architecture. Since
+we do not build for i586, we cannot make this claim and so do not add
+this architecture to the arch= line.
+
+-Dan
+</POST>
+<POST>
+<POSTER> Karolina Lindqvist &lt;karolina.lindqv...@kramnet.se&gt; </POSTER>
+<POSTDATE> 2007-12-15T03:32:00 </POSTDATE>
+lördag 15 december 2007 skrev R. Dale Thomas:
+
+<QUOTE PREVIOUSPOST="
+&gt;    I'm with you Karolina, I need to support some VIA machines, too.
+">
+
+When I am ready, I will put up a repository of archlinux for VIA i586/C3 that
+I use, so that others can have it too. My VIA machine is my internet server.
+
+I call it i586, although it is not exactly that. i686 is assumed to include
+the optional instruction cmov, which the VIA C3 does not have. So I will
+build i586 assuming that it includes the optional mmx and 3dnow, since the
+VIA has it. Is there anyone who runs a real i586 at all?
+
+Karolina
+</POST>
+<POST>
+<POSTER> JJDaNiMoTh &lt;jjdanim...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-15T03:36:00 </POSTDATE>
+On Sat, 15 Dec 2007 08:00:19 +0100
+
+<QUOTE PREVIOUSPOST="
+Karolina Lindqvist &lt;karolina.lindqv ... @kramnet.se&gt; wrote:
+
+&gt; I guess I am going to maintain this, for my own usage, for quite a while now,
+&gt; since I have a machine that is going to run it. It appears that a few others
+&gt; also quietly maintain archi586 the same way.
+
+&gt; Karolina
+">
+
+Do you want to share these packages? It can be very useful for who have
+a VIA chipset. Ubuntu has break my patience :)
+
+--
+JJDaNiMoTh - ArchLinux Trusted User
+
+application_pgp-signature_part
+1K Download
+</POST>
+<POST>
+<POSTER> Karolina Lindqvist &lt;karolina.lindqv...@kramnet.se&gt; </POSTER>
+<POSTDATE> 2007-12-15T03:43:00 </POSTDATE>
+lördag 15 december 2007 skrev Dan McGee:
+
+<QUOTE PREVIOUSPOST="
+&gt; The arch= tag indicates that we, as the Arch Linux developers, have
+&gt; successfully built a certain package on the given architecture. Since
+&gt; we do not build for i586, we cannot make this claim and so do not add
+&gt; this architecture to the arch= line.
+">
+
+That is allright, but why abort &quot;makepkg&quot; on non-authorized architectures?
+Better to give a warning that this build is unauthorized, unsupported, or
+whatever, instead of aborting. To insert the i586 tag, to make the package
+build, just defeats the purpose as you describe it. Sharing that package
+might make others believe that it it is authorized by the archlinux
+developers.
+
+Karolina
+</POST>
+<POST>
+<POSTER> &quot;Massimiliano Brocchini&quot; &lt;brocch...@netseven.it&gt; </POSTER>
+<POSTDATE> 2007-12-15T05:18:00 </POSTDATE>
+I agree with Karolina.
+Karolina I would like to encourage you to put a repository up for VIA
+C3, I was interested in lowarch http://www.lowarch.org/ and I tested
+it, but it seems dead/dormant.
+I would like to have an archlinux version installable on a C3 so If
+you need help (cpu power for compiling, testing, help with scripting,
+etc) ask me and I'll see what I can do for you.
+
+Massimiliano
+
+On 12/15/07, Karolina Lindqvist &lt;karolina.lindqv ... @kramnet.se&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; lördag 15 december 2007 skrev Dan McGee:
+
+&gt; &gt; The arch= tag indicates that we, as the Arch Linux developers, have
+&gt; &gt; successfully built a certain package on the given architecture. Since
+&gt; &gt; we do not build for i586, we cannot make this claim and so do not add
+&gt; &gt; this architecture to the arch= line.
+
+&gt; That is allright, but why abort &quot;makepkg&quot; on non-authorized architectures?
+&gt; Better to give a warning that this build is unauthorized, unsupported, or
+&gt; whatever, instead of aborting. To insert the i586 tag, to make the package
+&gt; build, just defeats the purpose as you describe it. Sharing that package
+&gt; might make others believe that it it is authorized by the archlinux
+&gt; developers.
+
+&gt; Karolina
+">
+</POST>
+<POST>
+<POSTER> Attila &lt;att...@invalid.invalid&gt; </POSTER>
+<POSTDATE> 2007-12-15T05:54:00 </POSTDATE>
+On Samstag, 15. Dezember 2007 09:43 Karolina Lindqvist wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; That is allright, but why abort &quot;makepkg&quot; on non-authorized architectures?
+">
+
+It seems that makepkg test only right or wrong because a &quot;arch=(aai686
+aax86_64&quot; brings the same break. I'm not a dev but from my view this is too
+strict. On the other side only a warning at the beginning is too simple
+because it can get overseen very easy but i think a warning at the end will
+be read in the most cases. Perhaps everybody can lives with this suggestion
+better than with the actual situation.
+
+See you, Attila
+</POST>
+<POST>
+<POSTER> bardo &lt;ilba...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-15T06:48:00 </POSTDATE>
+2007/12/15, Karolina Lindqvist &lt;karolina.lindqv ... @kramnet.se&gt;:
+
+<QUOTE PREVIOUSPOST="
+&gt; To edit each and every PKGBUILD for each and every package and every update
+&gt; appears like quite a big work.
+">
+
+If you use pacman-git (which a lot of people is using without too much
+hassle, actually it's really stable) you'll find the -A option:
+
+-A, --ignorearch Ignore incomplete arch field in PKGBUILD
+
+Here's the PKGBUILD:
+http://www.archlinux.org/~dan/pacman-git/pacman-git/PKGBUILD
+
+Corrado
+</POST>
+<POST>
+<POSTER> Karolina Lindqvist &lt;karolina.lindqv...@kramnet.se&gt; </POSTER>
+<POSTDATE> 2007-12-15T09:09:00 </POSTDATE>
+lördag 15 december 2007 skrev Massimiliano Brocchini:
+
+<QUOTE PREVIOUSPOST="
+&gt; I agree with Karolina.
+&gt; Karolina I would like to encourage you to put a repository up for VIA
+&gt; C3, I was interested in lowarch http://www.lowarch.org/ and I tested
+&gt; it, but it seems dead/dormant.
+&gt; I would like to have an archlinux version installable on a C3 so If
+&gt; you need help (cpu power for compiling, testing, help with scripting,
+&gt; etc) ask me and I'll see what I can do for you.
+
+&gt; Massimiliano
+">
+
+It is coming. Maybe I have it all up and running in a week or two. I am
+cross-compiling on a faster machine, through nfs and chroot, otherwise it
+would take ages to compile native. I am not sure everything will work like
+that, but it ought to. When plain archlinux is working, it is time to decide
+if something special for the C3 is needed? It is a low-end processor, after
+all, and some things you just don't want to run on it. I will probably
+exclude a lot from &quot;extra&quot; unless I get a good reason not to do it.
+
+Karolina
+</POST>
+<POST>
+<POSTER> &quot;Travis Willard&quot; &lt;tra...@archlinux.org&gt; </POSTER>
+<POSTDATE> 2007-12-15T09:43:00 </POSTDATE>
+Just a hint, since you were looking to add i586 - find and sed are
+your friends. :D
+
+find -name PKGBUILD -exec sed -i '/^arch=/ { /i586/ !{
+s/^arch=(/arch=(i586 / } }' {} \;
+
+That will find every PKGBUILD and add i586 to the packages that don't
+already have it.  Yay!
+</POST>
+<POST>
+<POSTER> Karolina Lindqvist &lt;karolina.lindqv...@kramnet.se&gt; </POSTER>
+<POSTDATE> 2007-12-15T09:59:00 </POSTDATE>
+lördag 15 december 2007 skrev Travis Willard:
+
+<QUOTE PREVIOUSPOST="
+&gt; Just a hint, since you were looking to add i586 - find and sed are
+&gt; your friends. :D
+
+&gt; find -name PKGBUILD -exec sed -i '/^arch=/ { /i586/ !{
+&gt; s/^arch=(/arch=(i586 / } }' {} \;
+
+&gt; That will find every PKGBUILD and add i586 to the packages that don't
+&gt; already have it.  Yay!
+">
+
+Thank you for that one. I am not as good to make such things, and it takes me
+considerable time for me to make something like that work properly.
+
+Karolina
+</POST>
+<POST>
+<POSTER> Mister Dobalina &lt;reebydobal...@yahoo.ca&gt; </POSTER>
+<POSTDATE> 2007-12-16T00:52:00 </POSTDATE>
+--- Travis Willard &lt;tra ... @archlinux.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Just a hint, since you were looking to add i586 -
+&gt; find and sed are
+&gt; your friends. :D
+
+&gt; find -name PKGBUILD -exec sed -i '/^arch=/ { /i586/
+&gt; !{
+&gt; s/^arch=(/arch=(i586 / } }' {} \;
+
+&gt; That will find every PKGBUILD and add i586 to the
+&gt; packages that don't
+&gt; already have it.  Yay!
+">
+
+No good, many PKGBUILDs have stuff like
+
+if [ &quot;$CARCH&quot; = &quot;i686&quot; ]; then
+&lt;&lt; do something &gt;&gt;
+fi
+
+in the build() section, where the something done is
+usually something you want done in the i586 case too.
+
+Better to straight out replace i686 by i586 in the
+whole PKGBUILD.
+
+find /var/abs -name PKGBUILD -exec sed -i -e
+'s|i686|i586|g' '{}' \;
+
+Might also want to do
+
+grep -R i686 /var/abs/*
+
+just to be sure there are no i686's hiding in .install
+files.
+
+cheers.
+
+Be smarter than spam. See how smart SpamGuard is at giving junk email the boot with the All-new Yahoo! Mail.  Click on Options in Mail and switch to New Mail today or register for free at http://mail.yahoo.ca
+</POST>
+<POST>
+<POSTER> Karolina Lindqvist &lt;karolina.lindqv...@kramnet.se&gt; </POSTER>
+<POSTDATE> 2007-12-16T02:01:00 </POSTDATE>
+söndag 16 december 2007 skrev Mister Dobalina:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; That will find every PKGBUILD and add i586 to the
+&gt; &gt; packages that don't
+&gt; &gt; already have it.  Yay!
+
+&gt; No good, many PKGBUILDs have stuff like
+
+&gt; if [ &quot;$CARCH&quot; = &quot;i686&quot; ]; then
+&gt;   &lt;&lt; do something &gt;&gt;
+&gt; fi
+
+&gt; in the build() section, where the something done is
+&gt; usually something you want done in the i586 case too.
+
+&gt; Better to straight out replace i686 by i586 in the
+&gt; whole PKGBUILD.
+">
+
+&lt;&lt;&lt;cut&gt;&gt;&gt;
+Actually, I added i586 when I did it the last time, one year ago, with the
+result that it was practically hopeless to diff with the original, when doing
+an update with &quot;abs&quot;. So this time, I just ignore to put in i586, making it
+easier with upgrades.
+
+I still question the whole purpose of the arch= tag, if it means that it
+is &quot;certified&quot; by the developers. All files downloaded with abs are certified
+by the developers, so what is the big deal? And makeworld does not exclude
+building packages that are not for the architecture.
+And then, what does it mean for AUR, if everyone are forced to put the tag in,
+but now not meaning that it is certified by the developers anymore?
+
+I think a better usage would be that the package is tried and works and is
+meaningful on that architecture.
+
+<QUOTE PREVIOUSPOST="
+&gt; Might also want to do
+
+&gt; grep -R i686 /var/abs/*
+
+&gt; just to be sure there are no i686's hiding in .install
+&gt; files.
+">
+
+I did that, and there is some wierd stuff in some obscure packages in extra
+and community. Like in one case, a patch for an obsolete version of gcc.
+I just leave that out for now.
+
+kernel26 is a special case, since it has conditionals for architecture.
+
+Karolina
+</POST>
+<POST>
+<POSTER> Karolina Lindqvist &lt;karolina.lindqv...@kramnet.se&gt; </POSTER>
+<POSTDATE> 2007-12-16T02:10:00 </POSTDATE>
+lördag 15 december 2007 skrev bardo:
+
+<QUOTE PREVIOUSPOST="
+&gt; 2007/12/15, Karolina Lindqvist &lt;karolina.lindqv ... @kramnet.se&gt;:
+&gt; &gt; To edit each and every PKGBUILD for each and every package and every
+&gt; &gt; update appears like quite a big work.
+
+&gt; If you use pacman-git (which a lot of people is using without too much
+&gt; hassle, actually it's really stable) you'll find the -A option:
+
+&gt;   -A, --ignorearch Ignore incomplete arch field in PKGBUILD
+
+&gt; Here's the PKGBUILD:
+&gt; http://www.archlinux.org/~dan/pacman-git/pacman-git/PKGBUILD
+
+&gt; Corrado
+">
+
+What is pacman-git, can you tell me more about it?
+Would it offer some advantages either in speed, or for other architectures
+than the approved? Is it compatible with normal pacman?
+
+pacman is otherwise one of the packages I don't want to mess with, since it is
+so central to the function of archlinux.
+
+Karolina
+</POST>
+<POST>
+<POSTER> Mister Dobalina &lt;reebydobal...@yahoo.ca&gt; </POSTER>
+<POSTDATE> 2007-12-16T10:18:00 </POSTDATE>
+--- Karolina Lindqvist &lt;karolina.lindqv ... @kramnet.se&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Actually, I added i586 when I did it the last time,
+&gt; one year ago, with the
+&gt; result that it was practically hopeless to diff with
+&gt; the original, when doing
+&gt; an update with &quot;abs&quot;. So this time, I just ignore to
+&gt; put in i586, making it
+&gt; easier with upgrades.
+">
+
+Yes, you will have to do this search-and-replace
+i686-&gt;i586 after every time you update abs.
+
+<QUOTE PREVIOUSPOST="
+&gt; I still question the whole purpose of the arch= tag,
+&gt; if it means that it
+&gt; is &quot;certified&quot; by the developers. All files
+&gt; downloaded with abs are certified
+&gt; by the developers, so what is the big deal? And
+&gt; makeworld does not exclude
+&gt; building packages that are not for the architecture.
+">
+
+The point is that the developers don't want to get a
+bunch of bug reports for things that might be
+i586-specific problems. They are saying &quot;we've tested
+the package that is built using this PKGBUILD on i686
+and/or x86_64, and if you have a problem with it let
+us know, but if you use this PKGBUILD to build for
+some other architecture, you're on your own&quot;. Though I
+agree that makepkg just aborting on i586 is kind of
+pointless, just a nice big warning would suffice. From
+previous posts I assume this will change in future
+versions of makepkg.
+
+<QUOTE PREVIOUSPOST="
+&gt; And then, what does it mean for AUR, if everyone are
+&gt; forced to put the tag in,
+&gt; but now not meaning that it is certified by the
+&gt; developers anymore?
+">
+
+I assume AUR maintainers are free to put whatever they
+like in the arch tag -- it's up to them what
+architectures they want to support for their specific
+package.
+
+<QUOTE PREVIOUSPOST="
+&gt; I think a better usage would be that the package is
+&gt; tried and works and is
+&gt; meaningful on that architecture.
+">
+
+Well, that's exactly what it means now. But the devs
+don't want to go to the work of doing that on i586,
+because arch is an i686/x86_64-optimized distribution,
+and has never claimed to be &quot;tried and working&quot; on
+i586.
+
+Get a sneak peak at messages with a handy reading pane with All new Yahoo! Mail: http://mail.yahoo.ca
+</POST>
+<POST>
+<POSTER> Karolina Lindqvist &lt;karolina.lindqv...@kramnet.se&gt; </POSTER>
+<POSTDATE> 2007-12-16T11:48:00 </POSTDATE>
+söndag 16 december 2007 skrev Mister Dobalina:
+
+<QUOTE PREVIOUSPOST="
+&gt; The point is that the developers don't want to get a
+&gt; bunch of bug reports for things that might be
+&gt; i586-specific problems. They are saying &quot;we've tested
+&gt; the package that is built using this PKGBUILD on i686
+&gt; and/or x86_64, and if you have a problem with it let
+&gt; us know, but if you use this PKGBUILD to build for
+&gt; some other architecture, you're on your own&quot;.
+">
+
+&lt;&lt;&lt;cut&gt;&gt;&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; Well, that's exactly what it means now. But the devs
+&gt; don't want to go to the work of doing that on i586,
+&gt; because arch is an i686/x86_64-optimized distribution,
+&gt; and has never claimed to be &quot;tried and working&quot; on
+&gt; i586.
+">
+
+Is that the opinion of all the developers?
+
+If it is so, I have to consider forking off my own distribution based on
+archlinux. It simplifies some things, since I can deviate and don't have to
+care for policies and so on. But forks can create extra trouble in the
+future, and it always splits up human resources.
+
+Anyway, I already have archi586 running, and currently I am mostly spending
+time with bugs in archlinux, and not so much with the i586 implementation.
+
+Karolina
+</POST>
+<POST>
+<POSTER> &quot;Travis Willard&quot; &lt;tra...@archlinux.org&gt; </POSTER>
+<POSTDATE> 2007-12-16T12:54:00 </POSTDATE>
+On Dec 16, 2007 11:48 AM, Karolina Lindqvist
+
+<QUOTE PREVIOUSPOST="
+&lt;karolina.lindqv ... @kramnet.se&gt; wrote:
+&gt; söndag 16 december 2007 skrev Mister Dobalina:
+
+&gt; &gt; The point is that the developers don't want to get a
+&gt; &gt; bunch of bug reports for things that might be
+&gt; &gt; i586-specific problems. They are saying &quot;we've tested
+&gt; &gt; the package that is built using this PKGBUILD on i686
+&gt; &gt; and/or x86_64, and if you have a problem with it let
+&gt; &gt; us know, but if you use this PKGBUILD to build for
+&gt; &gt; some other architecture, you're on your own&quot;.
+
+&gt; &gt; Well, that's exactly what it means now. But the devs
+&gt; &gt; don't want to go to the work of doing that on i586,
+&gt; &gt; because arch is an i686/x86_64-optimized distribution,
+&gt; &gt; and has never claimed to be &quot;tried and working&quot; on
+&gt; &gt; i586.
+
+&gt; Is that the opinion of all the developers?
+
+&gt; If it is so, I have to consider forking off my own distribution based on
+&gt; archlinux. It simplifies some things, since I can deviate and don't have to
+&gt; care for policies and so on. But forks can create extra trouble in the
+&gt; future, and it always splits up human resources.
+
+&gt; Anyway, I already have archi586 running, and currently I am mostly spending
+&gt; time with bugs in archlinux, and not so much with the i586 implementation.
+">
+
+As far as I know we don't have plans for an i586 port.  There's
+lowarch, which I think was mentioned around this thread already
+(apologies for not reading the backlogs) - if you're that dedicated
+about maintaining i586 then you should get in contact with the lowarch
+people and try to combine efforts, instead of doing it all yourself.
+We encourage ports - we certainly don't have the manpower to maintain
+a ton of architectures, and if others are willing to provide Arch for
+different platforms, we won't stand in the way.
+
+As far as the way Arch currently is, we started out with i686 and
+expanded to include x86_64 when it became a popular choice and we had
+willing volunteers for it.  We don't currently support i586
+&quot;officially&quot; and, as far as I know, have no plan to - partly because
+none of the devs have the need to run Arch on i586 hardware, I
+imagine, although I might be wrong.
+
+So yes, bug reports for problems specifically on i586 (though I doubt
+there would be many differences) will probably be considered
+low-priority.
+
+Our original target was i686 and greater - that was part of the
+distro's selling points, due to the added responsiveness and
+snappiness i686 optimization gave the system.
+
+PKGBUILDs list what architectures we've personally built and tested
+them on.  The fact that makepkg errors out when an architecture isn't
+listed in the arch=(...) array is, IMO, probably not the best
+behaviour, and in pacman 3.1's makepkg there's the option to ignore
+that as a warning instead of refusing to build.
+
+If you want to grab the development (-git) version of pacman, you can
+use Dan's devel repo by adding the following to pacman.conf:
+
+[pacman-git]
+Server = http://www.archlinux.org/~dan/pacman-git/
+
+And install it with pacman -Sy pacman-git.
+</POST>
+<POST>
+<POSTER> Karolina Lindqvist &lt;karolina.lindqv...@kramnet.se&gt; </POSTER>
+<POSTDATE> 2007-12-17T03:49:00 </POSTDATE>
+lördag 15 december 2007 skrev bardo:
+
+<QUOTE PREVIOUSPOST="
+&gt; 2007/12/15, Karolina Lindqvist &lt;karolina.lindqv ... @kramnet.se&gt;:
+&gt; &gt; To edit each and every PKGBUILD for each and every package and every
+&gt; &gt; update appears like quite a big work.
+
+&gt; If you use pacman-git (which a lot of people is using without too much
+&gt; hassle, actually it's really stable) you'll find the -A option:
+
+&gt;   -A, --ignorearch Ignore incomplete arch field in PKGBUILD
+
+&gt; Here's the PKGBUILD:
+&gt; http://www.archlinux.org/~dan/pacman-git/pacman-git/PKGBUILD
+
+&gt; Corrado
+">
+
+Actually, this turned out to be a good advice. Thank you!
+I run into so many problem with ordinary pacman. After fixing some bugs in
+pacman-git, and implementing some extra features that I needed, it works good
+for me.
+
+And this arch thing, after sleeping on it, I found that it can be made to an
+advantage. I modified makeworld so that it only builds if it is in a
+supported arch, unless --ignorearch is specified. That way I can mark all
+files I need with my arch, and the rest will be ignored in build. I would
+call that a &quot;good thing&quot;, since looking in the PKGBUILD files, all archs are
+not included in all packages. Now I just include i586 in the packages that
+are appropriate, and do a &quot;makeworld&quot; to compile only them and ignore the
+rest.
+
+Karolina
+</POST>
+<POST>
+<POSTER> Karolina Lindqvist &lt;karolina.lindqv...@kramnet.se&gt; </POSTER>
+<POSTDATE> 2007-12-17T04:22:00 </POSTDATE>
+söndag 16 december 2007 skrev Travis Willard:
+
+<QUOTE PREVIOUSPOST="
+&gt; As far as I know we don't have plans for an i586 port.  There's
+&gt; lowarch, which I think was mentioned around this thread already
+&gt; (apologies for not reading the backlogs) - if you're that dedicated
+&gt; about maintaining i586 then you should get in contact with the lowarch
+&gt; people and try to combine efforts, instead of doing it all yourself.
+&gt; We encourage ports - we certainly don't have the manpower to maintain
+&gt; a ton of architectures, and if others are willing to provide Arch for
+&gt; different platforms, we won't stand in the way.
+">
+
+I looked at lowarch, but it appears to be not maintained anymore and have a
+different focus than what I have. I instead started out with the partial i586
+port of archlinux that I did a year ago, and go on from there. core is now
+updated to current, and I am proceeding to extra. My repository will go
+on-line, as soon as I have everything needed to make this machine my online
+machine. Which means web-server and firewall software.
+
+The work to make it run on i586 is easy, the time-consuming problem is to fix
+bugs in archlinux as I go. Now, as one year ago, I find that many packages
+just don't build, and a few are so outdated that the source version have been
+retired and is not available.
+
+SUGGESTION 1:
+Have a central repository for all the source files needed by archlinux, and
+modify makepkg so that when the source cannot be found on the original place,
+it is gotten from this backup repository. That way makepkg will always work
+on a package.
+
+SUGGESTION 2:
+Have a spider that goes through the abs tree, and check if every source file
+is available. When a source is found missing on its original place, an email
+is sent to the respective developer for action. Until he fixes the problem,
+the backup source file repository will provide the source.
+
+<QUOTE PREVIOUSPOST="
+&gt; So yes, bug reports for problems specifically on i586 (though I doubt
+&gt; there would be many differences) will probably be considered
+&gt; low-priority.
+">
+
+Ok, I will avoid sending in bug reports that might be related to i586, and
+only if I am really, really sure that it applies to i686.
+
+<QUOTE PREVIOUSPOST="
+&gt; PKGBUILDs list what architectures we've personally built and tested
+&gt; them on.  The fact that makepkg errors out when an architecture isn't
+&gt; listed in the arch=(...) array is, IMO, probably not the best
+&gt; behaviour, and in pacman 3.1's makepkg there's the option to ignore
+&gt; that as a warning instead of refusing to build.
+">
+
+I understand the policy of archlinux, that it should work on the developers
+machines, and that there is no big interest of expanding to anything else.
+About the makepkg erroring out, on second thought I think it is a good idea.
+
+Karolina
+</POST>
+<POST>
+<POSTER> &quot;Travis Willard&quot; &lt;tra...@archlinux.org&gt; </POSTER>
+<POSTDATE> 2007-12-17T06:38:00 </POSTDATE>
+On Dec 17, 2007 4:22 AM, Karolina Lindqvist
+
+<QUOTE PREVIOUSPOST="
+&lt;karolina.lindqv ... @kramnet.se&gt; wrote:
+&gt; SUGGESTION 1:
+&gt; Have a central repository for all the source files needed by archlinux, and
+&gt; modify makepkg so that when the source cannot be found on the original place,
+&gt; it is gotten from this backup repository. That way makepkg will always work
+&gt; on a package.
+
+&gt; SUGGESTION 2:
+&gt; Have a spider that goes through the abs tree, and check if every source file
+&gt; is available. When a source is found missing on its original place, an email
+&gt; is sent to the respective developer for action. Until he fixes the problem,
+&gt; the backup source file repository will provide the source.
+">
+
+We've actually discussed hosting the sources somewhere on our own
+servers, but nothing has come of it yet.
+
+<QUOTE PREVIOUSPOST="
+&gt; I understand the policy of archlinux, that it should work on the developers
+&gt; machines, and that there is no big interest of expanding to anything else.
+&gt; About the makepkg erroring out, on second thought I think it is a good idea.
+">
+
+Well, no, that's not Arch's policy at all. The problem is, we're
+staffed by a handful of volunteer developers.  We made the decision to
+be i686-optimized, and later on the decision to support x86_64, but
+there's only so much we can do, and so we stand by those decisions.
+At current, there are no plans to support i586 officially.
+</POST>
+<POST>
+<POSTER> David Moore &lt;dav...@sjsoft.com&gt; </POSTER>
+<POSTDATE> 2007-12-17T07:30:00 </POSTDATE>
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+<QUOTE PREVIOUSPOST="
+Travis Willard wrote:
+&gt; On Dec 17, 2007 4:22 AM, Karolina Lindqvist
+&gt; &lt;karolina.lindqv ... @kramnet.se&gt; wrote:
+&gt;&gt; SUGGESTION 1:
+&gt;&gt; Have a central repository for all the source files needed by archlinux, and
+&gt;&gt; modify makepkg so that when the source cannot be found on the original place,
+&gt;&gt; it is gotten from this backup repository. That way makepkg will always work
+&gt;&gt; on a package.
+
+&gt;&gt; SUGGESTION 2:
+&gt;&gt; Have a spider that goes through the abs tree, and check if every source file
+&gt;&gt; is available. When a source is found missing on its original place, an email
+&gt;&gt; is sent to the respective developer for action. Until he fixes the problem,
+&gt;&gt; the backup source file repository will provide the source.
+
+&gt; We've actually discussed hosting the sources somewhere on our own
+&gt; servers, but nothing has come of it yet.
+">
+
+It's worth plugging a reminder that Arch's failure to do this so far is a
+violation of the GPL for all GPL-licensed packages.  This should be implemented
+as soon as possible.
+
+David Moore
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.7 (GNU/Linux)
+Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org
+
+iD8DBQFHZmvaOP+t1LlaoiERAmlIAJ485rS0l/D+jSYm8Qa0K8oV6KqUTwCdGy6L
+nn+VI0yfHoDnKlYViex9Ff8=
+=v/1S
+-----END PGP SIGNATURE-----
+</POST>
+<POST>
+<POSTER> Karolina Lindqvist &lt;karolina.lindqv...@kramnet.se&gt; </POSTER>
+<POSTDATE> 2007-12-17T14:43:00 </POSTDATE>
+lördag 15 december 2007 skrev Travis Willard:
+
+<QUOTE PREVIOUSPOST="
+&gt; Just a hint, since you were looking to add i586 - find and sed are
+&gt; your friends. :D
+
+&gt; find -name PKGBUILD -exec sed -i '/^arch=/ { /i586/ !{
+&gt; s/^arch=(/arch=(i586 / } }' {} \;
+
+&gt; That will find every PKGBUILD and add i586 to the packages that don't
+&gt; already have it.  Yay!
+">
+
+Actually it will not, since 749 PKGBUILDs from abs does not have an &quot;arch=&quot;
+line. :-)
+
+But with my friend emacs I fixed that problem in about a minute.
+
+Karolina
+</POST>
+<POST>
+<POSTER> Jan de Groot &lt;j...@jgc.homeip.net&gt; </POSTER>
+<POSTDATE> 2007-12-19T13:07:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sat, 2007-12-15 at 11:54 +0100, Attila wrote:
+&gt; On Samstag, 15. Dezember 2007 09:43 Karolina Lindqvist wrote:
+
+&gt; &gt; That is allright, but why abort &quot;makepkg&quot; on non-authorized architectures?
+
+&gt; It seems that makepkg test only right or wrong because a &quot;arch=(aai686
+&gt; aax86_64&quot; brings the same break. I'm not a dev but from my view this is too
+&gt; strict. On the other side only a warning at the beginning is too simple
+&gt; because it can get overseen very easy but i think a warning at the end will
+&gt; be read in the most cases. Perhaps everybody can lives with this suggestion
+&gt; better than with the actual situation.
+
+&gt; See you, Attila
+">
+
+Why is checking strict wrong? If the official name of an architecture is
+i686, and we make all packages have the i686 extension, why would aai686
+be allowed then?
+
+We could decide to use x86 as architecture, when an x86_64-only package
+doesn't work on 32bit, does that mean that the check should pass because
+x86 is in the architecture name?
+</POST>
+<POST>
+<POSTER> Attila &lt;att...@invalid.invalid&gt; </POSTER>
+<POSTDATE> 2007-12-19T13:53:00 </POSTDATE>
+On Mittwoch, 19. Dezember 2007 19:07 Jan de Groot wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Why is checking strict wrong? If the official name of an architecture is
+&gt; i686, and we make all packages have the i686 extension, why would aai686
+&gt; be allowed then?
+">
+
+Sorry, i want only to show why i586 don't works and i decide to make an
+example with aa686. This was a bad choice of mine.
+
+<QUOTE PREVIOUSPOST="
+&gt; We could decide to use x86 as architecture, when an x86_64-only package
+&gt; doesn't work on 32bit, does that mean that the check should pass because
+&gt; x86 is in the architecture name?
+">
+
+No, you be right and i only want suggest to have 'yes' and 'no' as now and the
+new one 'unsupported'. Perhaps this can stand in the makepkg.conf as at
+example UNSUPPORTED_ARCH=&quot;&quot;. Than people as Karolina can decide to write
+there i586 in this array and makepkg prints an warning on the console but
+don't stop.
+
+Again sorry, if my English is too bad for explaining what i want to say. And
+it is clear that you can't support all possible platforms.
+
+See you, Attila
+</POST>
+<POST>
+<POSTER> &quot;K. Piche&quot; &lt;kpi...@rogers.com&gt; </POSTER>
+<POSTDATE> 2007-12-19T22:36:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sun, 2007-12-16 at 12:54 -0500, Travis Willard wrote:
+&gt; On Dec 16, 2007 11:48 AM, Karolina Lindqvist
+&gt; &lt;karolina.lindqv ... @kramnet.se&gt; wrote:
+&gt; &gt; söndag 16 december 2007 skrev Mister Dobalina:
+
+&gt; As far as the way Arch currently is, we started out with i686 and
+&gt; expanded to include x86_64 when it became a popular choice and we had
+&gt; willing volunteers for it.  We don't currently support i586
+&gt; &quot;officially&quot; and, as far as I know, have no plan to - partly because
+&gt; none of the devs have the need to run Arch on i586 hardware, I
+&gt; imagine, although I might be wrong.
+">
+
+I have a i586 file/print server.  I even have a mini i386 port but it's
+not much fun to use.  :)  However I'm not interested in running an
+official i586 port since the packages are stripped down for file
+serving/printing - as in no X and no optional libraries.
+
+Are you using kernel 2.6 for the VIA port?
+
+k
+
+--
+K. Piche &lt;kpi ... @rogers.com&gt;
+</POST>
+<POST>
+<POSTER> Karolina Lindqvist &lt;karolina.lindqv...@kramnet.se&gt; </POSTER>
+<POSTDATE> 2007-12-20T03:37:00 </POSTDATE>
+torsdag 20 december 2007 skrev K. Piche:
+
+<QUOTE PREVIOUSPOST="
+&gt; I have a i586 file/print server.  I even have a mini i386 port but it's
+&gt; not much fun to use.  :)  However I'm not interested in running an
+&gt; official i586 port since the packages are stripped down for file
+&gt; serving/printing - as in no X and no optional libraries.
+
+&gt; Are you using kernel 2.6 for the VIA port?
+
+&gt; k
+">
+
+I am using the latest kernel 2.6
+
+Karolina
+</POST>
+<POST>
+<POSTER> Karolina Lindqvist &lt;karolina.lindqv...@kramnet.se&gt; </POSTER>
+<POSTDATE> 2007-12-20T12:50:00 </POSTDATE>
+måndag 17 december 2007 skrev David Moore:
+
+<QUOTE PREVIOUSPOST="
+&gt; It's worth plugging a reminder that Arch's failure to do this so far is a
+&gt; violation of the GPL for all GPL-licensed packages.  This should be
+&gt; implemented as soon as possible.
+">
+
+There are quite some packages, mostly in extra, that are not on the source
+location specified, but that you have to hunt the net for. In some cases the
+md5sum does not match, so you don't even know if it is the same source. And
+if something is made for a 5 year old version of linux, I wonder if it still
+works and is doing the same thing, or that the function maybe is not needed
+anymore?
+
+Suggestion: Kick out the obsolete packages, particularly those that have not
+seen any upstreams activity for years. They can be moved to AUR and community
+for those few who still want them.
+
+Karolina
+</POST>
+<POST>
+<POSTER> Karolina Lindqvist &lt;karolina.lindqv...@kramnet.se&gt; </POSTER>
+<POSTDATE> 2007-12-26T06:48:00 </POSTDATE>
+lördag 15 december 2007 skrev JJDaNiMoTh:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sat, 15 Dec 2007 08:00:19 +0100
+
+&gt; Karolina Lindqvist &lt;karolina.lindqv ... @kramnet.se&gt; wrote:
+&gt; &gt; I guess I am going to maintain this, for my own usage, for quite a while
+&gt; &gt; now, since I have a machine that is going to run it. It appears that a
+&gt; &gt; few others also quietly maintain archi586 the same way.
+
+&gt; &gt; Karolina
+
+&gt; Do you want to share these packages? It can be very useful for who have
+&gt; a VIA chipset. Ubuntu has break my patience :)
+">
+
+Yes, now I have them unofficially on ftp://archi586.ath.cx/archi586/
+
+The whole thing is not completely ready and polished yet, and a booting ISO
+USB-stick image will also come a little bit later. But it is working, and the
+server machine runs archi586 on a VIA ITX.
+
+pacman is not there right now, only a slightly bufixed and enhanced
+pacman-git. Pacman just did not work for it.
+
+Karolina
+</POST>
+<POST>
+<POSTER> Mark Constable &lt;ma...@renta.net&gt; </POSTER>
+<POSTDATE> 2007-12-26T10:47:00 </POSTDATE>
+On Wednesday 26 December 2007 21:48:39 Karolina Lindqvist wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Yes, now I have them unofficially on ftp://archi586.ath.cx/archi586/
+
+&gt; The whole thing is not completely ready and polished yet, and a booting ISO
+&gt; USB-stick image will also come a little bit later. But it is working, and the
+&gt; server machine runs archi586 on a VIA ITX.
+">
+
+Excellent effort.
+
+What about the source packages, are they available ?
+
+--markc
+</POST>
+<POST>
+<POSTER> Karolina Lindqvist &lt;karolina.lindqv...@kramnet.se&gt; </POSTER>
+<POSTDATE> 2007-12-26T11:11:00 </POSTDATE>
+onsdag 26 december 2007 skrev Mark Constable:
+
+<QUOTE PREVIOUSPOST="
+&gt; What about the source packages, are they available ?
+
+&gt; --markc
+">
+
+It will come, I just have to figure out how.
+
+Karolina
+</POST>
+<POST>
+<POSTER> Mark Constable &lt;ma...@renta.net&gt; </POSTER>
+<POSTDATE> 2007-12-26T14:32:00 </POSTDATE>
+On Thursday 27 December 2007 02:11:21 Karolina Lindqvist wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; What about the source packages, are they available ?
+
+&gt; It will come, I just have to figure out how.
+">
+
+I find code.google.com is very useful. By pushing the updates
+into a google group every change is documented, an RSS feed
+is automatically available, and you can add other members to
+help keep the source packages up to date. Example...
+
+http://code.google.com/p/proaudio/
+
+--markc
+</POST>
+</TEXT>
+</BODY>
+</DOC>

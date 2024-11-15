@@ -1,0 +1,778 @@
+<DOC>
+<DOCID> eng-NG-31-135590-9751519 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-02T14:14:00 </DATETIME>
+<BODY>
+<HEADLINE>
+AJAX methodology
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> getsanjay.sha...@gmail.com </POSTER>
+<POSTDATE> 2007-10-02T14:14:00 </POSTDATE>
+Hello to all Javascript programmers out there.
+
+I have written a small Ajax module which makes use of Object literals
+to do it's work. It is split into two files, an Ajax.js which contains
+all the ajax related functionality and a 'web page' specific .js file
+which contains the logic required for the page and which makes use of
+'Ajax.js'. Though looking at my implementation I feel as though there
+is a lot of coupling. I would like to get your views regarding this
+approach used by me.
+
+Any suggestions on what changes I would make to this framework to make
+it any better?
+
+AJAX.js
+
+var AJAX =
+{
+xhr: null,
+method: &quot;GET&quot;,
+url: &quot;&quot;,
+createXHRObject : function()
+{
+if(window.ActiveXObject)
+return(new ActiveXObject(&quot;Microsoft.XMLHTTP&quot;));
+else
+return(new XMLHttpRequest());
+},
+
+setParameters: function(url, method)
+{
+if(typeof url != 'undefined' &amp;&amp; url != null) this.url = url;// + &quot;?
+timeStamp=&quot; + new Date().getTime();
+if(typeof method != 'undefined' &amp;&amp; method != null) this.method =
+method;
+},
+
+getResponse : function(url, method, handler)
+{
+alert('h');
+this.setParameters(url, method);
+this.xhr = this.createXHRObject();
+handler['xhr'] = this.xhr;
+this.xhr.onreadystatechange = handler;
+this.xhr.open(this.method, this.url, true);
+this.xhr.send(null);
+}
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+SomeForm.js
+
+var SS =
+{
+setAttributes: function(elem, type, statusId)
+{
+this.handler['elem'] = elem;
+this.handler['type'] = type;
+this.handler['statusElem'] = document.getElementById(statusId);
+},
+
+/** The reason we can't use 'this' inside handler since it would not
+refer to the properties of SS but to the function handler since it is
+used as a callback function and inside callbacks, this refers to the
+function itself.
+*/
+handler : function()
+{
+var XHR = XHR || this['xhr'];
+var elem = elem || this['elem'];
+var type = type || this['type'];
+var statusElem = statusElem || this['statusElem'];
+if(XHR.readyState == 4)
+{
+if(XHR.status == 200)
+{
+var result = XHR.responseText;
+var target = elem.nextSibling;
+statusElem.innerHTML = 'Done';
+if(result === 'true')
+target.innerHTML = &quot;Successful&quot;;
+else
+target.innerHTML = result;
+}
+else
+{
+statusElem.innerHTML = 'Invalid url specified / Resource not
+found';
+}
+}
+},
+
+/* It is necessary to encode all the input which comes from teh user
+since any invalid character will cause the query string to go bad and
+the fetching ofdata from the server fail. In short if you are
+constructing your querystring based on teh data fetched by the user,
+encodeURIComponent is a must!!!  */
+
+validate : function(elem, type, statusId)
+{
+this.setAttributes(elem, type, statusId);
+var url = &quot;?do=validate&amp;type=&quot; + encodeURIComponent(type)
++ &quot;&amp;value=&quot; + encodeURIComponent(elem.value);
+AJAX.getResponse(url, null, this.handler);
+}
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+Any pointers, suggestions to make this better would really be
+appreciated.
+
+Thanks and regards,
+S T S
+</POST>
+<POST>
+<POSTER> Thomas &#39;PointedEars&#39; Lahn &lt;PointedE...@web.de&gt; </POSTER>
+<POSTDATE> 2007-10-02T14:41:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+getsanjay.sha ... @gmail.com wrote:
+&gt; Any suggestions on what changes I would make to this framework to make
+&gt; it any better?
+
+&gt; AJAX.js
+
+&gt; var AJAX =
+">
+
+There is no good reason not to wrap this into a prototype object.
+
+<QUOTE PREVIOUSPOST="
+&gt; {
+&gt;   xhr: null,
+&gt;   method: &quot;GET&quot;,
+&gt;   url: &quot;&quot;,
+&gt;   createXHRObject : function()
+&gt;   {
+&gt;     if(window.ActiveXObject)
+">
+
+Insufficient.  You have to make sure that ActiveXObject can be [[Construct]]ed.
+
+<QUOTE PREVIOUSPOST="
+&gt;      return(new ActiveXObject(&quot;Microsoft.XMLHTTP&quot;));
+">
+
+Insufficient.  You have to handle the case where this throws an exception.
+
+<QUOTE PREVIOUSPOST="
+&gt;     else
+&gt;      return(new XMLHttpRequest());
+">
+
+Insufficient.  Lack of support for window.ActiveXObject does not imply
+support for XMLHttpRequest.  You have to make sure that XMLHttpRequest can
+be [[Construct]]ed.
+
+<QUOTE PREVIOUSPOST="
+&gt;   },
+
+&gt;   setParameters: function(url, method)
+&gt;   {
+&gt;     if(typeof url != 'undefined' &amp;&amp;
+">
+
+Unnecessary.  `url' is declared per the argument list, and
+
+<QUOTE PREVIOUSPOST="
+&gt; url != null)
+">
+
+will also yield `false' if `url' is `undefined'.  Therefore:
+
+if (url &amp;&amp; typeof url == &quot;string&quot;)
+
+<QUOTE PREVIOUSPOST="
+&gt; this.url = url;// + &quot;?
+&gt; timeStamp=&quot; + new Date().getTime();
+">
+
+This is a syntax error.
+
+<QUOTE PREVIOUSPOST="
+&gt;     if(typeof method != 'undefined' &amp;&amp; method != null) this.method =
+&gt; method;
+">
+
+Same here.
+
+<QUOTE PREVIOUSPOST="
+&gt;   },
+
+&gt;   getResponse : function(url, method, handler)
+&gt;   {
+&gt;     alert('h');
+">
+
+That line should only be left from debugging.
+
+<QUOTE PREVIOUSPOST="
+&gt;     this.setParameters(url, method);
+&gt;     this.xhr = this.createXHRObject();
+&gt;     handler['xhr'] = this.xhr;
+">
+
+No need for the bracket the property accessor syntax here.
+
+handler.xhr = this.xhr;
+
+<QUOTE PREVIOUSPOST="
+&gt;     this.xhr.onreadystatechange = handler;
+&gt;     this.xhr.open(this.method, this.url, true);
+&gt;     this.xhr.send(null);
+">
+
+When `this.method' is &quot;POST&quot;, you have to send something here different from
+`null'.
+
+<QUOTE PREVIOUSPOST="
+&gt;   }
+&gt; };
+
+&gt; SomeForm.js
+
+&gt; var SS =
+&gt; {
+&gt;    setAttributes: function(elem, type, statusId)
+&gt;    {
+&gt;            this.handler['elem'] = elem;
+&gt;            this.handler['type'] = type;
+&gt;            this.handler['statusElem'] = document.getElementById(statusId);
+">
+
+You have to make sure that document.getElementById() can be called before
+you call it.
+
+<QUOTE PREVIOUSPOST="
+&gt;    },
+
+&gt;    /** The reason we can't use 'this' inside handler since it would not
+&gt; refer to the properties of SS but to the function handler since it is
+&gt; used as a callback function and inside callbacks, this refers to the
+&gt; function itself.
+&gt;    */
+">
+
+The observation is correct, the reasoning is flawed.
+
+<QUOTE PREVIOUSPOST="
+&gt;    handler : function()
+&gt;    {
+&gt;            var XHR = XHR || this['xhr'];
+">
+
+There is no point in this Boolean expression.  `XHR' will always have the
+value `undefined' (after local variable instantiation), so the above is
+semantically equal to
+
+var XHR = this['xhr'];
+
+<QUOTE PREVIOUSPOST="
+&gt;            var elem = elem || this['elem'];
+&gt;            var type = type || this['type'];
+&gt;            var statusElem = statusElem || this['statusElem'];
+">
+
+Same here.
+
+<QUOTE PREVIOUSPOST="
+&gt;            if(XHR.readyState == 4)
+&gt;            {
+&gt;                    if(XHR.status == 200)
+&gt;                    {
+&gt;                            var result = XHR.responseText;
+&gt;                            var target = elem.nextSibling;
+&gt;                            statusElem.innerHTML = 'Done';
+">
+
+The proprietary `innerHTML' property has been proven also to be error-prone
+and should not be used.  Certainly it should not be hard-coded into a library.
+
+<QUOTE PREVIOUSPOST="
+&gt;                            if(result === 'true')
+">
+
+That is far too specialized for the library, depending on the value of a
+specific response, effectively ruling out all other possible responses.
+
+<QUOTE PREVIOUSPOST="
+&gt; [...]
+&gt; Any pointers, suggestions to make this better would really be
+&gt; appreciated.
+">
+
+HTH
+
+PointedEars
+--
+var bugRiddenCrashPronePieceOfJunk = (
+navigator.userAgent.indexOf('MSIE 5') != -1
+&amp;&amp; navigator.userAgent.indexOf('Mac') != -1
+)  // Plone, register_function.js:16
+</POST>
+<POST>
+<POSTER> getsanjay.sha...@gmail.com </POSTER>
+<POSTDATE> 2007-10-03T14:36:00 </POSTDATE>
+On Oct 2, 11:41 pm, Thomas 'PointedEars' Lahn &lt;PointedE ... @web.de&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; getsanjay.sha ... @gmail.com wrote:
+&gt; &gt; Any suggestions on what changes I would make to this framework to make
+&gt; &gt; it any better?
+
+&gt; &gt; AJAX.js
+
+&gt; &gt; var AJAX =
+
+&gt; There is no good reason not to wrap this into a prototype object.
+">
+
+You mean create a class? I didn't think about a class considering I
+would be using only one AJAX event at a time though when you say it,
+it seems a bit restrictive. So class is it?
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; {
+&gt; &gt;   xhr: null,
+&gt; &gt;   method: &quot;GET&quot;,
+&gt; &gt;   url: &quot;&quot;,
+&gt; &gt;   createXHRObject : function()
+&gt; &gt;   {
+&gt; &gt;     if(window.ActiveXObject)
+
+&gt; Insufficient.  You have to make sure that ActiveXObject can be [[Construct]]ed.
+
+&gt; &gt;      return(new ActiveXObject(&quot;Microsoft.XMLHTTP&quot;));
+
+&gt; Insufficient.  You have to handle the case where this throws an exception.
+
+&gt; &gt;     else
+&gt; &gt;      return(new XMLHttpRequest());
+
+&gt; Insufficient.  Lack of support for window.ActiveXObject does not imply
+&gt; support for XMLHttpRequest.  You have to make sure that XMLHttpRequest can
+&gt; be [[Construct]]ed.
+
+&gt; &gt;   },
+
+&gt; &gt;   setParameters: function(url, method)
+&gt; &gt;   {
+&gt; &gt;     if(typeof url != 'undefined' &amp;&amp;
+
+&gt; Unnecessary.  `url' is declared per the argument list, and
+
+&gt; &gt; url != null)
+
+&gt; will also yield `false' if `url' is `undefined'.  Therefore:
+
+&gt;   if (url &amp;&amp; typeof url == &quot;string&quot;)
+
+&gt; &gt; this.url = url;// + &quot;?
+&gt; &gt; timeStamp=&quot; + new Date().getTime();
+
+&gt; This is a syntax error.
+
+&gt; &gt;     if(typeof method != 'undefined' &amp;&amp; method != null) this.method =
+&gt; &gt; method;
+
+&gt; Same here.
+
+&gt; &gt;   },
+
+&gt; &gt;   getResponse : function(url, method, handler)
+&gt; &gt;   {
+&gt; &gt;     alert('h');
+
+&gt; That line should only be left from debugging.
+
+&gt; &gt;     this.setParameters(url, method);
+&gt; &gt;     this.xhr = this.createXHRObject();
+&gt; &gt;     handler['xhr'] = this.xhr;
+
+&gt; No need for the bracket the property accessor syntax here.
+
+&gt;   handler.xhr = this.xhr;
+
+&gt; &gt;     this.xhr.onreadystatechange = handler;
+&gt; &gt;     this.xhr.open(this.method, this.url, true);
+&gt; &gt;     this.xhr.send(null);
+
+&gt; When `this.method' is &quot;POST&quot;, you have to send something here different from
+&gt; `null'.
+
+&gt; &gt;   }
+&gt; &gt; };
+
+&gt; &gt; SomeForm.js
+
+&gt; &gt; var SS =
+&gt; &gt; {
+&gt; &gt;    setAttributes: function(elem, type, statusId)
+&gt; &gt;    {
+&gt; &gt;            this.handler['elem'] = elem;
+&gt; &gt;            this.handler['type'] = type;
+&gt; &gt;            this.handler['statusElem'] = document.getElementById(statusId);
+
+&gt; You have to make sure that document.getElementById() can be called before
+&gt; you call it.
+
+&gt; &gt;    },
+
+&gt; &gt;    /** The reason we can't use 'this' inside handler since it would not
+&gt; &gt; refer to the properties of SS but to the function handler since it is
+&gt; &gt; used as a callback function and inside callbacks, this refers to the
+&gt; &gt; function itself.
+&gt; &gt;    */
+
+&gt; The observation is correct, the reasoning is flawed.
+">
+
+So what would the correct reasoning be? So inside a callback, doesn't
+this refer to the current function?
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;    handler : function()
+&gt; &gt;    {
+&gt; &gt;            var XHR = XHR || this['xhr'];
+
+&gt; There is no point in this Boolean expression.  `XHR' will always have the
+&gt; value `undefined' (after local variable instantiation), so the above is
+&gt; semantically equal to
+
+&gt;   var XHR = this['xhr'];
+
+&gt; &gt;            var elem = elem || this['elem'];
+&gt; &gt;            var type = type || this['type'];
+&gt; &gt;            var statusElem = statusElem || this['statusElem'];
+
+&gt; Same here.
+
+&gt; &gt;            if(XHR.readyState == 4)
+&gt; &gt;            {
+&gt; &gt;                    if(XHR.status == 200)
+&gt; &gt;                    {
+&gt; &gt;                            var result = XHR.responseText;
+&gt; &gt;                            var target = elem.nextSibling;
+&gt; &gt;                            statusElem.innerHTML = 'Done';
+
+&gt; The proprietary `innerHTML' property has been proven also to be error-prone
+&gt; and should not be used.  Certainly it should not be hard-coded into a library.
+
+&gt; &gt;                            if(result === 'true')
+
+&gt; That is far too specialized for the library, depending on the value of a
+&gt; specific response, effectively ruling out all other possible responses.
+">
+
+I used innerHTML and 'true' literal since the javascript code other
+than Ajax.js is application specific and there has to be some kind of
+hardcoding somewhere.
+
+Here are my updated javascript files.
+
+var AJAX =
+{
+xhr: null,
+method: &quot;GET&quot;,
+url: &quot;&quot;,
+createXHRObject : function()
+{
+try
+{
+if(window.ActiveXObject)
+return(new ActiveXObject(&quot;Microsoft.XMLHTTP&quot;));
+else if(XMLHttpRequest)
+return(new XMLHttpRequest());
+else
+{
+alert(&quot;Your browser doesn't support AJAX&quot;);
+return(null);
+}
+}
+catch(e)
+{
+alert(&quot;An exception has occured!&quot;);
+return(null);
+}
+},
+
+setParameters: function(url, method)
+{
+this.url = url;
+this.method = method;
+},
+
+getResponse : function(url, method, handler, data)
+{
+this.setParameters(url, method);
+this.xhr = this.createXHRObject();
+handler.xhr = this.xhr;
+this.xhr.onreadystatechange = handler;
+this.xhr.open(this.method, this.url, true);
+if(this.method == &quot;POST)
+this.xhr.send(data);
+else
+this.xhr.send(null);
+}
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+=========================================
+
+var SS =
+{
+setAttributes: function(elem, type, statusId)
+{
+//
+this.handler['elem'] = elem;
+this.handler['type'] = type;
+if(document.getElementById(statusId))
+this.handler['statusElem'] = document.getElementById(statusId);
+},
+
+handler : function()
+{
+var XHR = this['xhr'];
+var elem = this['elem'];
+var type = this['type'];
+var statusElem = this['statusElem'];
+if(XHR.readyState == 4)
+{
+if(XHR.status == 200)
+{
+var result = XHR.responseText;
+var target = elem.nextSibling;
+statusElem.innerHTML = 'Done';
+if(result === 'true')
+target.innerHTML = &quot;Successful&quot;;
+else
+target.innerHTML = result;
+}
+else
+{
+statusElem.innerHTML = 'Invalid url specified / Resource not
+found';
+}
+}
+else
+{
+statusElem.innerHTML = 'Loading. Please wait...';
+}
+},
+
+validate : function(elem, type, statusId)
+{
+this.setAttributes(elem, type, statusId);
+var url = &quot;?do=validate&amp;type=&quot; + encodeURIComponent(type)
++ &quot;&amp;value=&quot; + encodeURIComponent(elem.value);
+AJAX.getResponse(url, null, this.handler, null);
+}
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+Any comments on the design and design changes to the same would be
+really appreciated.
+Thanks and regards,
+STS
+</POST>
+<POST>
+<POSTER> Thomas &#39;PointedEars&#39; Lahn &lt;PointedE...@web.de&gt; </POSTER>
+<POSTDATE> 2007-10-03T18:18:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+getsanjay.sha ... @gmail.com wrote:
+&gt; [...] Thomas 'PointedEars' Lahn [...] wrote:
+&gt;&gt; getsanjay.sha ... @gmail.com wrote:
+&gt;&gt;&gt; Any suggestions on what changes I would make to this framework to make
+&gt;&gt;&gt; it any better?
+&gt;&gt;&gt; AJAX.js
+&gt;&gt;&gt; var AJAX =
+&gt;&gt; There is no good reason not to wrap this into a prototype object.
+&gt; You mean create a class? I didn't think about a class considering I
+&gt; would be using only one AJAX event at a time though when you say it,
+&gt; it seems a bit restrictive. So class is it?
+">
+
+Sigh. [psf 10.1]
+
+Of course not.  I meant what I wrote.  The language(s) you are using
+(client-side) has/have no concept of classes, it/they use(s) prototype-based
+inheritance.  The underlying concept is the first thing to know about a
+programming language.
+
+http://javascript.crockford.com/javascript.html
+
+<QUOTE PREVIOUSPOST="
+&gt; [...]
+">
+
+Please trim your quotes as recommended by the http://jibbering.com/faq/
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt;            if(XHR.readyState == 4)
+&gt;&gt;&gt;            {
+&gt;&gt;&gt;                    if(XHR.status == 200)
+&gt;&gt;&gt;                    {
+&gt;&gt;&gt;                            var result = XHR.responseText;
+&gt;&gt;&gt;                            var target = elem.nextSibling;
+&gt;&gt;&gt;                            statusElem.innerHTML = 'Done';
+&gt;&gt; The proprietary `innerHTML' property has been proven also to be error-prone
+&gt;&gt; and should not be used.  Certainly it should not be hard-coded into a library.
+
+&gt;&gt;&gt;                            if(result === 'true')
+&gt;&gt; That is far too specialized for the library, depending on the value of a
+&gt;&gt; specific response, effectively ruling out all other possible responses.
+
+&gt; I used innerHTML and 'true' literal since the javascript code other
+&gt; than Ajax.js is application specific and there has to be some kind of
+&gt; hardcoding somewhere.
+">
+
+But not there.  At that point you should call a user-defined callback method
+instead.
+
+<QUOTE PREVIOUSPOST="
+&gt; Here are my updated javascript files.
+
+&gt; var AJAX =
+&gt; {
+&gt;    xhr: null,
+&gt;    method: &quot;GET&quot;,
+&gt;    url: &quot;&quot;,
+&gt;    createXHRObject : function()
+&gt;    {
+&gt;            try
+&gt;            {
+&gt;                    if(window.ActiveXObject)
+&gt;                            return(new ActiveXObject(&quot;Microsoft.XMLHTTP&quot;));
+">
+
+Nothing has changed here.  You are still not testing properly if generally
+ActiveXObject can be [[Construct]]ed, and you don't handle the exception if
+the construction throws an exception.
+
+<QUOTE PREVIOUSPOST="
+&gt;                    else if(XMLHttpRequest)
+&gt;                            return(new XMLHttpRequest());
+">
+
+Here it only went worse.  If `XMLHttpRequest' is not defined, the code will
+simply break.  It should be something along
+
+if (isMethodType(typeof XMLHttpRequest) &amp;&amp; XMLHttpRequest)
+{
+try
+{
+return new XMLHttpRequest();
+}
+catch (e)
+{
+// ...
+}
+}
+
+As XMLHttpRequest is currently supported more and may continue to be due to
+its being in the process of being standardized by the W3C[1], it should take
+precedence over the use of ActiveXObject.
+
+[1] http://www.w3.org/TR/XMLHttpRequest/
+
+<QUOTE PREVIOUSPOST="
+&gt;                    else
+&gt;                    {
+&gt;                            alert(&quot;Your browser doesn't support AJAX&quot;);
+&gt;                            return(null);
+">
+
+`return' is _not_ a method.  Unless absolutely required (such as for
+multi-line expressions), do not use parentheses for its (optional)
+parameter.  And if you use parens, delimit the parameter from the keyword by
+whitespace, so that it is clearly marked as not being a method call.  (Much
+the same goes for other control statements like `if', `for', `while' aso.)
+
+return null;
+
+or, if you must,
+
+return (null);
+
+The statement in the alert() is wrong, as other browsers support &quot;AJAX&quot;
+differently (IceBrowser uses window.createRequest()).  And this should be
+at least a (silent) exception, not an alert().  Such an error message is
+of exactly no use to the user.
+
+<QUOTE PREVIOUSPOST="
+&gt;                    }
+&gt;            }
+&gt;            catch(e)
+&gt;            {
+&gt;                    alert(&quot;An exception has occured!&quot;);
+&gt;                    return(null);
+">
+
+Same here.
+
+<QUOTE PREVIOUSPOST="
+&gt; [...]
+&gt; var SS =
+&gt; {
+&gt;    setAttributes: function(elem, type, statusId)
+&gt;    {
+&gt;            //
+&gt;            this.handler['elem'] = elem;
+&gt;            this.handler['type'] = type;
+&gt;            if(document.getElementById(statusId))
+&gt;                    this.handler['statusElem'] = document.getElementById(statusId);
+">
+
+You made it worse.  Now document.getElementById() is needlessly called
+twice.  I recommended you should test whether it can be called or not
+instead.  Such as in
+
+if (document.getElementById)
+{
+this.handler['statusElem'] = document.getElementById(statusId);
+}
+
+or better:
+
+if (isMethodType(typeof document.getElementById)
+&amp;&amp; document.getElementById)
+{
+this.handler['statusElem'] = document.getElementById(statusId);
+}
+
+Since that test is always the same, it may suffice to do it only once,
+assuming that the DOM will not be crippled by a script in the meantime.
+
+<QUOTE PREVIOUSPOST="
+&gt; [...]
+&gt; Any comments on the design and design changes to the same would be
+&gt; really appreciated.
+">
+
+You should consider *all* the advice that was given.  If something is not
+clear, you should ask about it.
+
+PointedEars
+--
+&quot;Use any version of Microsoft Frontpage to create your site. (This won't
+prevent people from viewing your source, but no one will want to steal it.)&quot;
+-- from &lt; http://www.vortex-webdesign.com/help/hidesource.htm &gt;
+</POST>
+</TEXT>
+</BODY>
+</DOC>

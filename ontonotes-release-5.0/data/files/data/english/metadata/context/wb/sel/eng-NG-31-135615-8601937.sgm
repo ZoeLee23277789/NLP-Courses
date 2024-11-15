@@ -1,0 +1,1996 @@
+<DOC>
+<DOCID> eng-NG-31-135615-8601937 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-03T08:32:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Maxstring
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Simon&quot; &lt;simon1...@quicknet.nl&gt; </POSTER>
+<POSTDATE> 2007-09-03T08:32:00 </POSTDATE>
+Hi everybody, i've got a relative simple question, i think.
+
+Problem: User get's an maxstring-error from caché
+
+Cause: Too much textinput for single variable.
+
+This is the situation, i got a form with a textarea, a global named PMOFFHIS
+in witch the text must be stored and the index of that global is depended on
+&quot;returns&quot;.
+
+For example:
+Hi, this is the first line of the textarea
+
+this is the third line
+
+Button: Save
+After saving:
+
+^PMOFFHIS(1)=&quot;Hi, this is the first line of the textarea&quot;
+^PMOFFHIS(2)=&quot;&quot;
+^PMOFFHIS(3)=&quot;Hi, this is the first line of the textarea&quot;
+
+When the text increases, it no longer recognises %KEY(&quot;NAMETEXTAREA&quot;). Caché
+divides %KEY into 1 to ... as follows: %KEY&quot;(&quot;NAMETEXTAREA&quot;,1)
+%KEY&quot;(&quot;NAMETEXTAREA&quot;,2)
+%KEY&quot;(&quot;NAMETEXTAREA&quot;,3)
+etc.
+
+The routine does the following:(ta2 is name of the textarea)
+S CRLF=$C(13,10)
+
+S TEXT=$G(%KEY(&quot;TA2&quot;))
+
+S XX=&quot;&quot; F  S XX=$O(%KEY(&quot;TA2&quot;,0,XX)) Q:XX=&quot;&quot;  D
+. S TEXT=$G(TEXT)_$G(%KEY(&quot;TA2&quot;,0,XX))
+
+k ^PMOFFTXT($G(%KEY(&quot;A0&quot;)))
+
+I $G(TEXT)'=&quot;&quot; F I=1:1:$L(TEXT,CRLF) d
+. S ^PMOFFTXT($G(%KEY(&quot;A0&quot;)),(I))=$P(TEXT,CRLF,I)
+
+But this gives the MAXSTRING error, whenever there is too much tekst. The
+variable TEXT gets too large! Now my question, how can I program this
+different so that i don't have to put all data into one variable?
+The reason why i set the variable to the whole %KEY of the textarea is
+because after that i set the global ^PMOFFTXT with a new index (I) after
+each return.
+
+I hope you can help me
+Thanks,
+Simon
+</POST>
+<POST>
+<POSTER> Stefan Schulte Strathaus &lt;Stefan.Schulte-Strath...@InterSystems.com&gt; </POSTER>
+<POSTDATE> 2007-09-03T08:42:00 </POSTDATE>
+Simon.
+
+Since 2007.1 we support Long Strings - 3.6 MB instead
+of 32K.
+
+&lt; http://docs.intersystems.com/cache20071/csp/docbook/DocBook.UI.Page.c... &gt;
+
+HTH
+Stefan
+
+<QUOTE PREVIOUSPOST="
+Simon wrote:
+&gt; Hi everybody, i've got a relative simple question, i think.
+
+&gt; Problem: User get's an maxstring-error from caché
+
+&gt; Cause: Too much textinput for single variable.
+
+&gt; This is the situation, i got a form with a textarea, a global named PMOFFHIS
+&gt; in witch the text must be stored and the index of that global is depended on
+&gt; &quot;returns&quot;.
+
+&gt; For example:
+&gt; Hi, this is the first line of the textarea
+
+&gt; this is the third line
+
+&gt; Button: Save
+&gt; After saving:
+
+&gt; ^PMOFFHIS(1)=&quot;Hi, this is the first line of the textarea&quot;
+&gt; ^PMOFFHIS(2)=&quot;&quot;
+&gt; ^PMOFFHIS(3)=&quot;Hi, this is the first line of the textarea&quot;
+
+&gt; When the text increases, it no longer recognises %KEY(&quot;NAMETEXTAREA&quot;). Caché
+&gt; divides %KEY into 1 to ... as follows: %KEY&quot;(&quot;NAMETEXTAREA&quot;,1)
+&gt;             %KEY&quot;(&quot;NAMETEXTAREA&quot;,2)
+&gt;             %KEY&quot;(&quot;NAMETEXTAREA&quot;,3)
+&gt;             etc.
+
+&gt; The routine does the following:(ta2 is name of the textarea)
+&gt;         S CRLF=$C(13,10)
+
+&gt;          S TEXT=$G(%KEY(&quot;TA2&quot;))
+
+&gt;          S XX=&quot;&quot; F  S XX=$O(%KEY(&quot;TA2&quot;,0,XX)) Q:XX=&quot;&quot;  D
+&gt;          . S TEXT=$G(TEXT)_$G(%KEY(&quot;TA2&quot;,0,XX))
+
+&gt;         k ^PMOFFTXT($G(%KEY(&quot;A0&quot;)))
+
+&gt;          I $G(TEXT)'=&quot;&quot; F I=1:1:$L(TEXT,CRLF) d
+&gt;          . S ^PMOFFTXT($G(%KEY(&quot;A0&quot;)),(I))=$P(TEXT,CRLF,I)
+
+&gt; But this gives the MAXSTRING error, whenever there is too much tekst. The
+&gt; variable TEXT gets too large! Now my question, how can I program this
+&gt; different so that i don't have to put all data into one variable?
+&gt; The reason why i set the variable to the whole %KEY of the textarea is
+&gt; because after that i set the global ^PMOFFTXT with a new index (I) after
+&gt; each return.
+
+&gt; I hope you can help me
+&gt; Thanks,
+&gt; Simon
+">
+</POST>
+<POST>
+<POSTER> Rob Tweed &lt;rtw...@blueyonder.co.uk&gt; </POSTER>
+<POSTDATE> 2007-09-03T10:08:00 </POSTDATE>
+The reason WebLink splits long text into the separate lines is to
+avoid the very problem you're pushing Cache back into again!
+
+Why concatenate the lines together?  Just merge them from the %KEY
+array to your global, eg
+
+m ^PMOFFTXT($G(%KEY(&quot;A0&quot;)))=%KEY(&quot;TA2&quot;)
+
+I'm also surprised you're still manually writing hand-crafted WebLink
+code!
+
+On Mon, 3 Sep 2007 14:32:48 +0200, &quot;Simon&quot; &lt;simon1 ... @quicknet.nl&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;Hi everybody, i've got a relative simple question, i think.
+
+&gt;Problem: User get's an maxstring-error from caché
+
+&gt;Cause: Too much textinput for single variable.
+
+&gt;This is the situation, i got a form with a textarea, a global named PMOFFHIS
+&gt;in witch the text must be stored and the index of that global is depended on
+&gt;&quot;returns&quot;.
+
+&gt;For example:
+&gt;Hi, this is the first line of the textarea
+
+&gt;this is the third line
+
+&gt;Button: Save
+&gt;After saving:
+
+&gt;^PMOFFHIS(1)=&quot;Hi, this is the first line of the textarea&quot;
+&gt;^PMOFFHIS(2)=&quot;&quot;
+&gt;^PMOFFHIS(3)=&quot;Hi, this is the first line of the textarea&quot;
+
+&gt;When the text increases, it no longer recognises %KEY(&quot;NAMETEXTAREA&quot;). Caché
+&gt;divides %KEY into 1 to ... as follows: %KEY&quot;(&quot;NAMETEXTAREA&quot;,1)
+&gt;            %KEY&quot;(&quot;NAMETEXTAREA&quot;,2)
+&gt;            %KEY&quot;(&quot;NAMETEXTAREA&quot;,3)
+&gt;            etc.
+
+&gt;The routine does the following:(ta2 is name of the textarea)
+&gt;        S CRLF=$C(13,10)
+
+&gt;         S TEXT=$G(%KEY(&quot;TA2&quot;))
+
+&gt;         S XX=&quot;&quot; F  S XX=$O(%KEY(&quot;TA2&quot;,0,XX)) Q:XX=&quot;&quot;  D
+&gt;         . S TEXT=$G(TEXT)_$G(%KEY(&quot;TA2&quot;,0,XX))
+
+&gt;        k ^PMOFFTXT($G(%KEY(&quot;A0&quot;)))
+
+&gt;         I $G(TEXT)'=&quot;&quot; F I=1:1:$L(TEXT,CRLF) d
+&gt;         . S ^PMOFFTXT($G(%KEY(&quot;A0&quot;)),(I))=$P(TEXT,CRLF,I)
+
+&gt;But this gives the MAXSTRING error, whenever there is too much tekst. The
+&gt;variable TEXT gets too large! Now my question, how can I program this
+&gt;different so that i don't have to put all data into one variable?
+&gt;The reason why i set the variable to the whole %KEY of the textarea is
+&gt;because after that i set the global ^PMOFFTXT with a new index (I) after
+&gt;each return.
+
+&gt;I hope you can help me
+&gt;Thanks,
+&gt;Simon
+">
+
+---
+Rob Tweed
+M/Gateway Developments Ltd
+
+http://www.mgateway.com
+---
+</POST>
+<POST>
+<POSTER> &quot;Simon&quot; &lt;simon1...@quicknet.nl&gt; </POSTER>
+<POSTDATE> 2007-09-04T04:08:00 </POSTDATE>
+&quot;Why concatenate the lines together&quot;
+Because otherwise I can't divide the whole into &quot;returns&quot;.
+After each linebreak, after each ($C(13,10)), the global PMOFFTXT must make
+a new index.
+(
+I $G(TEXT)'=&quot;&quot; F I=1:1:$L(TEXT,CRLF) d
+. S ^PMOFFTXT($G(%KEY(&quot;A0&quot;)),(I))=$P(TEXT,CRLF,I)
+)
+
+If I don't store it to one variable, i don't recognize a return being ginven
+on the next line.
+
+&quot;Rob Tweed&quot; &lt;rtw ... @blueyonder.co.uk&gt; schreef in bericht
+news:ei4od3hkuor5kfaudelg29tn63abmqq9tr@4ax.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; The reason WebLink splits long text into the separate lines is to
+&gt; avoid the very problem you're pushing Cache back into again!
+
+&gt; Why concatenate the lines together?  Just merge them from the %KEY
+&gt; array to your global, eg
+
+&gt; m ^PMOFFTXT($G(%KEY(&quot;A0&quot;)))=%KEY(&quot;TA2&quot;)
+
+&gt; I'm also surprised you're still manually writing hand-crafted WebLink
+&gt; code!
+
+&gt; On Mon, 3 Sep 2007 14:32:48 +0200, &quot;Simon&quot; &lt;simon1 ... @quicknet.nl&gt;
+&gt; wrote:
+
+&gt;&gt;Hi everybody, i've got a relative simple question, i think.
+
+&gt;&gt;Problem: User get's an maxstring-error from caché
+
+&gt;&gt;Cause: Too much textinput for single variable.
+
+&gt;&gt;This is the situation, i got a form with a textarea, a global named
+&gt;&gt;PMOFFHIS
+&gt;&gt;in witch the text must be stored and the index of that global is depended
+&gt;&gt;on
+&gt;&gt;&quot;returns&quot;.
+
+&gt;&gt;For example:
+&gt;&gt;Hi, this is the first line of the textarea
+
+&gt;&gt;this is the third line
+
+&gt;&gt;Button: Save
+&gt;&gt;After saving:
+
+&gt;&gt;^PMOFFHIS(1)=&quot;Hi, this is the first line of the textarea&quot;
+&gt;&gt;^PMOFFHIS(2)=&quot;&quot;
+&gt;&gt;^PMOFFHIS(3)=&quot;Hi, this is the first line of the textarea&quot;
+
+&gt;&gt;When the text increases, it no longer recognises %KEY(&quot;NAMETEXTAREA&quot;).
+&gt;&gt;Caché
+&gt;&gt;divides %KEY into 1 to ... as follows: %KEY&quot;(&quot;NAMETEXTAREA&quot;,1)
+&gt;&gt;            %KEY&quot;(&quot;NAMETEXTAREA&quot;,2)
+&gt;&gt;            %KEY&quot;(&quot;NAMETEXTAREA&quot;,3)
+&gt;&gt;            etc.
+
+&gt;&gt;The routine does the following:(ta2 is name of the textarea)
+&gt;&gt;        S CRLF=$C(13,10)
+
+&gt;&gt;         S TEXT=$G(%KEY(&quot;TA2&quot;))
+
+&gt;&gt;         S XX=&quot;&quot; F  S XX=$O(%KEY(&quot;TA2&quot;,0,XX)) Q:XX=&quot;&quot;  D
+&gt;&gt;         . S TEXT=$G(TEXT)_$G(%KEY(&quot;TA2&quot;,0,XX))
+
+&gt;&gt;        k ^PMOFFTXT($G(%KEY(&quot;A0&quot;)))
+
+&gt;&gt;         I $G(TEXT)'=&quot;&quot; F I=1:1:$L(TEXT,CRLF) d
+&gt;&gt;         . S ^PMOFFTXT($G(%KEY(&quot;A0&quot;)),(I))=$P(TEXT,CRLF,I)
+
+&gt;&gt;But this gives the MAXSTRING error, whenever there is too much tekst. The
+&gt;&gt;variable TEXT gets too large! Now my question, how can I program this
+&gt;&gt;different so that i don't have to put all data into one variable?
+&gt;&gt;The reason why i set the variable to the whole %KEY of the textarea is
+&gt;&gt;because after that i set the global ^PMOFFTXT with a new index (I) after
+&gt;&gt;each return.
+
+&gt;&gt;I hope you can help me
+&gt;&gt;Thanks,
+&gt;&gt;Simon
+
+&gt; ---
+&gt; Rob Tweed
+&gt; M/Gateway Developments Ltd
+
+&gt; http://www.mgateway.com
+&gt; ---
+">
+</POST>
+<POST>
+<POSTER> Sukesh Hoogan &lt;sukeshhoo...@NOSPAMvsnl.com&gt; </POSTER>
+<POSTDATE> 2007-09-04T05:20:00 </POSTDATE>
+Simon
+
+A workaround save each piece of data separately in globals say,
+^MyTempglobal(1), etc.
+Then read it from any other method/routine
+
+Regards
+Sukesh Hoogan
+Bombay, India
+
+<QUOTE PREVIOUSPOST="
+Simon wrote:
+&gt; &quot;Why concatenate the lines together&quot;
+&gt; Because otherwise I can't divide the whole into &quot;returns&quot;.
+&gt; After each linebreak, after each ($C(13,10)), the global PMOFFTXT must make
+&gt; a new index.
+&gt; (
+&gt; I $G(TEXT)'=&quot;&quot; F I=1:1:$L(TEXT,CRLF) d
+&gt; . S ^PMOFFTXT($G(%KEY(&quot;A0&quot;)),(I))=$P(TEXT,CRLF,I)
+&gt; )
+
+&gt; If I don't store it to one variable, i don't recognize a return being ginven
+&gt; on the next line.
+
+&gt; &quot;Rob Tweed&quot; &lt;rtw ... @blueyonder.co.uk&gt; schreef in bericht
+&gt; news:ei4od3hkuor5kfaudelg29tn63abmqq9tr@4ax.com ...
+&gt;&gt; The reason WebLink splits long text into the separate lines is to
+&gt;&gt; avoid the very problem you're pushing Cache back into again!
+
+&gt;&gt; Why concatenate the lines together?  Just merge them from the %KEY
+&gt;&gt; array to your global, eg
+
+&gt;&gt; m ^PMOFFTXT($G(%KEY(&quot;A0&quot;)))=%KEY(&quot;TA2&quot;)
+
+&gt;&gt; I'm also surprised you're still manually writing hand-crafted WebLink
+&gt;&gt; code!
+
+&gt;&gt; On Mon, 3 Sep 2007 14:32:48 +0200, &quot;Simon&quot; &lt;simon1 ... @quicknet.nl&gt;
+&gt;&gt; wrote:
+
+&gt;&gt;&gt; Hi everybody, i've got a relative simple question, i think.
+
+&gt;&gt;&gt; Problem: User get's an maxstring-error from caché
+
+&gt;&gt;&gt; Cause: Too much textinput for single variable.
+
+&gt;&gt;&gt; This is the situation, i got a form with a textarea, a global named
+&gt;&gt;&gt; PMOFFHIS
+&gt;&gt;&gt; in witch the text must be stored and the index of that global is depended
+&gt;&gt;&gt; on
+&gt;&gt;&gt; &quot;returns&quot;.
+
+&gt;&gt;&gt; For example:
+&gt;&gt;&gt; Hi, this is the first line of the textarea
+
+&gt;&gt;&gt; this is the third line
+
+&gt;&gt;&gt; Button: Save
+&gt;&gt;&gt; After saving:
+
+&gt;&gt;&gt; ^PMOFFHIS(1)=&quot;Hi, this is the first line of the textarea&quot;
+&gt;&gt;&gt; ^PMOFFHIS(2)=&quot;&quot;
+&gt;&gt;&gt; ^PMOFFHIS(3)=&quot;Hi, this is the first line of the textarea&quot;
+
+&gt;&gt;&gt; When the text increases, it no longer recognises %KEY(&quot;NAMETEXTAREA&quot;).
+&gt;&gt;&gt; Caché
+&gt;&gt;&gt; divides %KEY into 1 to ... as follows: %KEY&quot;(&quot;NAMETEXTAREA&quot;,1)
+&gt;&gt;&gt;            %KEY&quot;(&quot;NAMETEXTAREA&quot;,2)
+&gt;&gt;&gt;            %KEY&quot;(&quot;NAMETEXTAREA&quot;,3)
+&gt;&gt;&gt;            etc.
+
+&gt;&gt;&gt; The routine does the following:(ta2 is name of the textarea)
+&gt;&gt;&gt;        S CRLF=$C(13,10)
+
+&gt;&gt;&gt;         S TEXT=$G(%KEY(&quot;TA2&quot;))
+
+&gt;&gt;&gt;         S XX=&quot;&quot; F  S XX=$O(%KEY(&quot;TA2&quot;,0,XX)) Q:XX=&quot;&quot;  D
+&gt;&gt;&gt;         . S TEXT=$G(TEXT)_$G(%KEY(&quot;TA2&quot;,0,XX))
+
+&gt;&gt;&gt;        k ^PMOFFTXT($G(%KEY(&quot;A0&quot;)))
+
+&gt;&gt;&gt;         I $G(TEXT)'=&quot;&quot; F I=1:1:$L(TEXT,CRLF) d
+&gt;&gt;&gt;         . S ^PMOFFTXT($G(%KEY(&quot;A0&quot;)),(I))=$P(TEXT,CRLF,I)
+
+&gt;&gt;&gt; But this gives the MAXSTRING error, whenever there is too much tekst. The
+&gt;&gt;&gt; variable TEXT gets too large! Now my question, how can I program this
+&gt;&gt;&gt; different so that i don't have to put all data into one variable?
+&gt;&gt;&gt; The reason why i set the variable to the whole %KEY of the textarea is
+&gt;&gt;&gt; because after that i set the global ^PMOFFTXT with a new index (I) after
+&gt;&gt;&gt; each return.
+
+&gt;&gt;&gt; I hope you can help me
+&gt;&gt;&gt; Thanks,
+&gt;&gt;&gt; Simon
+
+&gt;&gt; ---
+&gt;&gt; Rob Tweed
+&gt;&gt; M/Gateway Developments Ltd
+
+&gt;&gt; http://www.mgateway.com
+&gt;&gt; ---
+">
+</POST>
+<POST>
+<POSTER> &quot;Simon&quot; &lt;simon1...@quicknet.nl&gt; </POSTER>
+<POSTDATE> 2007-09-04T05:48:00 </POSTDATE>
+And after that?
+
+Let's say, i've got a textarea with 20.000 characters. I recognize the
+linebreaks, they are noted as: &quot;$C(13,10)&quot;
+Now I want to save this to a global, like your MyGlobal(1), etc.After each
+break(&quot;$C(13,10)&quot;) the index of the global rises.
+
+Rough source:(For example)
+&quot;hello my name is simon, i'm 29 yearls old  $C(13,10) and i live in the
+Netherlands, the country of true freedom $C(13,10)$C(13,10), (is it?)&quot;
+
+After saving:
+
+MyGlobal(1)=hello my name is simon, i'm 29 yearls old
+MyGlobal(2)=and i live in the Netherlands, the country of true freedom
+MyGlobal(3)=
+MyGlobal(4)=(is it?)
+
+How would you do this? (Keep in mind that i can't do it my way, because of
+the amount of characters, too large for one variable)
+I would need 2 loops, one to loop through %KEY(&quot;TEXTAREA,X), and one forloop
+through the line.
+
+Thanks,
+Simon
+
+&quot;Sukesh Hoogan&quot; &lt;sukeshhoo ... @NOSPAMvsnl.com&gt; schreef in bericht
+news:46dd21da.0@info2.kinich.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Simon
+
+&gt; A workaround save each piece of data separately in globals say,
+&gt; ^MyTempglobal(1), etc.
+&gt; Then read it from any other method/routine
+
+&gt; Regards
+&gt; Sukesh Hoogan
+&gt; Bombay, India
+
+&gt; Simon wrote:
+&gt;&gt; &quot;Why concatenate the lines together&quot;
+&gt;&gt; Because otherwise I can't divide the whole into &quot;returns&quot;.
+&gt;&gt; After each linebreak, after each ($C(13,10)), the global PMOFFTXT must
+&gt;&gt; make a new index.
+&gt;&gt; (
+&gt;&gt; I $G(TEXT)'=&quot;&quot; F I=1:1:$L(TEXT,CRLF) d
+&gt;&gt; . S ^PMOFFTXT($G(%KEY(&quot;A0&quot;)),(I))=$P(TEXT,CRLF,I)
+&gt;&gt; )
+
+&gt;&gt; If I don't store it to one variable, i don't recognize a return being
+&gt;&gt; ginven on the next line.
+
+&gt;&gt; &quot;Rob Tweed&quot; &lt;rtw ... @blueyonder.co.uk&gt; schreef in bericht
+&gt;&gt; news:ei4od3hkuor5kfaudelg29tn63abmqq9tr@4ax.com ...
+&gt;&gt;&gt; The reason WebLink splits long text into the separate lines is to
+&gt;&gt;&gt; avoid the very problem you're pushing Cache back into again!
+
+&gt;&gt;&gt; Why concatenate the lines together?  Just merge them from the %KEY
+&gt;&gt;&gt; array to your global, eg
+
+&gt;&gt;&gt; m ^PMOFFTXT($G(%KEY(&quot;A0&quot;)))=%KEY(&quot;TA2&quot;)
+
+&gt;&gt;&gt; I'm also surprised you're still manually writing hand-crafted WebLink
+&gt;&gt;&gt; code!
+
+&gt;&gt;&gt; On Mon, 3 Sep 2007 14:32:48 +0200, &quot;Simon&quot; &lt;simon1 ... @quicknet.nl&gt;
+&gt;&gt;&gt; wrote:
+
+&gt;&gt;&gt;&gt; Hi everybody, i've got a relative simple question, i think.
+
+&gt;&gt;&gt;&gt; Problem: User get's an maxstring-error from caché
+
+&gt;&gt;&gt;&gt; Cause: Too much textinput for single variable.
+
+&gt;&gt;&gt;&gt; This is the situation, i got a form with a textarea, a global named
+&gt;&gt;&gt;&gt; PMOFFHIS
+&gt;&gt;&gt;&gt; in witch the text must be stored and the index of that global is
+&gt;&gt;&gt;&gt; depended on
+&gt;&gt;&gt;&gt; &quot;returns&quot;.
+
+&gt;&gt;&gt;&gt; For example:
+&gt;&gt;&gt;&gt; Hi, this is the first line of the textarea
+
+&gt;&gt;&gt;&gt; this is the third line
+
+&gt;&gt;&gt;&gt; Button: Save
+&gt;&gt;&gt;&gt; After saving:
+
+&gt;&gt;&gt;&gt; ^PMOFFHIS(1)=&quot;Hi, this is the first line of the textarea&quot;
+&gt;&gt;&gt;&gt; ^PMOFFHIS(2)=&quot;&quot;
+&gt;&gt;&gt;&gt; ^PMOFFHIS(3)=&quot;Hi, this is the first line of the textarea&quot;
+
+&gt;&gt;&gt;&gt; When the text increases, it no longer recognises %KEY(&quot;NAMETEXTAREA&quot;).
+&gt;&gt;&gt;&gt; Caché
+&gt;&gt;&gt;&gt; divides %KEY into 1 to ... as follows: %KEY&quot;(&quot;NAMETEXTAREA&quot;,1)
+&gt;&gt;&gt;&gt;            %KEY&quot;(&quot;NAMETEXTAREA&quot;,2)
+&gt;&gt;&gt;&gt;            %KEY&quot;(&quot;NAMETEXTAREA&quot;,3)
+&gt;&gt;&gt;&gt;            etc.
+
+&gt;&gt;&gt;&gt; The routine does the following:(ta2 is name of the textarea)
+&gt;&gt;&gt;&gt;        S CRLF=$C(13,10)
+
+&gt;&gt;&gt;&gt;         S TEXT=$G(%KEY(&quot;TA2&quot;))
+
+&gt;&gt;&gt;&gt;         S XX=&quot;&quot; F  S XX=$O(%KEY(&quot;TA2&quot;,0,XX)) Q:XX=&quot;&quot;  D
+&gt;&gt;&gt;&gt;         . S TEXT=$G(TEXT)_$G(%KEY(&quot;TA2&quot;,0,XX))
+
+&gt;&gt;&gt;&gt;        k ^PMOFFTXT($G(%KEY(&quot;A0&quot;)))
+
+&gt;&gt;&gt;&gt;         I $G(TEXT)'=&quot;&quot; F I=1:1:$L(TEXT,CRLF) d
+&gt;&gt;&gt;&gt;         . S ^PMOFFTXT($G(%KEY(&quot;A0&quot;)),(I))=$P(TEXT,CRLF,I)
+
+&gt;&gt;&gt;&gt; But this gives the MAXSTRING error, whenever there is too much tekst.
+&gt;&gt;&gt;&gt; The
+&gt;&gt;&gt;&gt; variable TEXT gets too large! Now my question, how can I program this
+&gt;&gt;&gt;&gt; different so that i don't have to put all data into one variable?
+&gt;&gt;&gt;&gt; The reason why i set the variable to the whole %KEY of the textarea is
+&gt;&gt;&gt;&gt; because after that i set the global ^PMOFFTXT with a new index (I)
+&gt;&gt;&gt;&gt; after
+&gt;&gt;&gt;&gt; each return.
+
+&gt;&gt;&gt;&gt; I hope you can help me
+&gt;&gt;&gt;&gt; Thanks,
+&gt;&gt;&gt;&gt; Simon
+
+&gt;&gt;&gt; ---
+&gt;&gt;&gt; Rob Tweed
+&gt;&gt;&gt; M/Gateway Developments Ltd
+
+&gt;&gt;&gt; http://www.mgateway.com
+&gt;&gt;&gt; ---
+">
+</POST>
+<POST>
+<POSTER> Sukesh Hoogan &lt;sukeshhoo...@NOSPAMvsnl.com&gt; </POSTER>
+<POSTDATE> 2007-09-04T08:26:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Simon wrote:
+&gt; And after that?
+
+&gt; Let's say, i've got a textarea with 20.000 characters. I recognize the
+&gt; linebreaks, they are noted as: &quot;$C(13,10)&quot;
+&gt; Now I want to save this to a global, like your MyGlobal(1), etc.After each
+&gt; break(&quot;$C(13,10)&quot;) the index of the global rises.
+
+&gt; Rough source:(For example)
+&gt; &quot;hello my name is simon, i'm 29 yearls old  $C(13,10) and i live in the
+&gt; Netherlands, the country of true freedom $C(13,10)$C(13,10), (is it?)&quot;
+
+&gt; After saving:
+">
+
+^MyGlobal(1)=hello my name is simon, i'm 29 yearls old
+^MyGlobal(2)=and i live in the Netherlands, the country of true freedom
+^MyGlobal(3)=
+^MyGlobal(4)=(is it?)
+
+When you save, you keep track of the index. In the above case it is 4
+From any other method you read it and do what you wish to it
+For example
+
+MyString=^MyGlobal(1)_&quot;$C(13,10 &quot;_^MyGlobal(2)_&quot;$C(13,10) &quot;...etc.
+
+Of course, remember that MyString cannot be more than 32KB long either.
+If it is then you should concatenate globals of approx. 30KB length each
+
+MyString(1)=^MyGlobal(1)_&quot;$C(13,10) &quot;_^MyGlobal(2)_&quot;$C(13,10) &quot;...etc.
+MyString(2)==^MyGlobal(25)_&quot;$C(13,10) &quot;_^MyGlobal(26)_&quot;$C(13,10)&quot;...etc.
+
+Regards
+Sukesh
+
+<QUOTE PREVIOUSPOST="
+&gt; How would you do this? (Keep in mind that i can't do it my way, because of
+&gt; the amount of characters, too large for one variable)
+&gt; I would need 2 loops, one to loop through %KEY(&quot;TEXTAREA,X), and one forloop
+&gt; through the line.
+
+&gt; Thanks,
+&gt; Simon
+
+&gt; &quot;Sukesh Hoogan&quot; &lt;sukeshhoo ... @NOSPAMvsnl.com&gt; schreef in bericht
+&gt; news:46dd21da.0@info2.kinich.com ...
+&gt;&gt; Simon
+
+&gt;&gt; A workaround save each piece of data separately in globals say,
+&gt;&gt; ^MyTempglobal(1), etc.
+&gt;&gt; Then read it from any other method/routine
+
+&gt;&gt; Regards
+&gt;&gt; Sukesh Hoogan
+&gt;&gt; Bombay, India
+
+&gt;&gt; Simon wrote:
+&gt;&gt;&gt; &quot;Why concatenate the lines together&quot;
+&gt;&gt;&gt; Because otherwise I can't divide the whole into &quot;returns&quot;.
+&gt;&gt;&gt; After each linebreak, after each ($C(13,10)), the global PMOFFTXT must
+&gt;&gt;&gt; make a new index.
+&gt;&gt;&gt; (
+&gt;&gt;&gt; I $G(TEXT)'=&quot;&quot; F I=1:1:$L(TEXT,CRLF) d
+&gt;&gt;&gt; . S ^PMOFFTXT($G(%KEY(&quot;A0&quot;)),(I))=$P(TEXT,CRLF,I)
+&gt;&gt;&gt; )
+
+&gt;&gt;&gt; If I don't store it to one variable, i don't recognize a return being
+&gt;&gt;&gt; ginven on the next line.
+
+&gt;&gt;&gt; &quot;Rob Tweed&quot; &lt;rtw ... @blueyonder.co.uk&gt; schreef in bericht
+&gt;&gt;&gt; news:ei4od3hkuor5kfaudelg29tn63abmqq9tr@4ax.com ...
+&gt;&gt;&gt;&gt; The reason WebLink splits long text into the separate lines is to
+&gt;&gt;&gt;&gt; avoid the very problem you're pushing Cache back into again!
+
+&gt;&gt;&gt;&gt; Why concatenate the lines together?  Just merge them from the %KEY
+&gt;&gt;&gt;&gt; array to your global, eg
+
+&gt;&gt;&gt;&gt; m ^PMOFFTXT($G(%KEY(&quot;A0&quot;)))=%KEY(&quot;TA2&quot;)
+
+&gt;&gt;&gt;&gt; I'm also surprised you're still manually writing hand-crafted WebLink
+&gt;&gt;&gt;&gt; code!
+
+&gt;&gt;&gt;&gt; On Mon, 3 Sep 2007 14:32:48 +0200, &quot;Simon&quot; &lt;simon1 ... @quicknet.nl&gt;
+&gt;&gt;&gt;&gt; wrote:
+
+&gt;&gt;&gt;&gt;&gt; Hi everybody, i've got a relative simple question, i think.
+
+&gt;&gt;&gt;&gt;&gt; Problem: User get's an maxstring-error from caché
+
+&gt;&gt;&gt;&gt;&gt; Cause: Too much textinput for single variable.
+
+&gt;&gt;&gt;&gt;&gt; This is the situation, i got a form with a textarea, a global named
+&gt;&gt;&gt;&gt;&gt; PMOFFHIS
+&gt;&gt;&gt;&gt;&gt; in witch the text must be stored and the index of that global is
+&gt;&gt;&gt;&gt;&gt; depended on
+&gt;&gt;&gt;&gt;&gt; &quot;returns&quot;.
+
+&gt;&gt;&gt;&gt;&gt; For example:
+&gt;&gt;&gt;&gt;&gt; Hi, this is the first line of the textarea
+
+&gt;&gt;&gt;&gt;&gt; this is the third line
+
+&gt;&gt;&gt;&gt;&gt; Button: Save
+&gt;&gt;&gt;&gt;&gt; After saving:
+
+&gt;&gt;&gt;&gt;&gt; ^PMOFFHIS(1)=&quot;Hi, this is the first line of the textarea&quot;
+&gt;&gt;&gt;&gt;&gt; ^PMOFFHIS(2)=&quot;&quot;
+&gt;&gt;&gt;&gt;&gt; ^PMOFFHIS(3)=&quot;Hi, this is the first line of the textarea&quot;
+
+&gt;&gt;&gt;&gt;&gt; When the text increases, it no longer recognises %KEY(&quot;NAMETEXTAREA&quot;).
+&gt;&gt;&gt;&gt;&gt; Caché
+&gt;&gt;&gt;&gt;&gt; divides %KEY into 1 to ... as follows: %KEY&quot;(&quot;NAMETEXTAREA&quot;,1)
+&gt;&gt;&gt;&gt;&gt;            %KEY&quot;(&quot;NAMETEXTAREA&quot;,2)
+&gt;&gt;&gt;&gt;&gt;            %KEY&quot;(&quot;NAMETEXTAREA&quot;,3)
+&gt;&gt;&gt;&gt;&gt;            etc.
+
+&gt;&gt;&gt;&gt;&gt; The routine does the following:(ta2 is name of the textarea)
+&gt;&gt;&gt;&gt;&gt;        S CRLF=$C(13,10)
+
+&gt;&gt;&gt;&gt;&gt;         S TEXT=$G(%KEY(&quot;TA2&quot;))
+
+&gt;&gt;&gt;&gt;&gt;         S XX=&quot;&quot; F  S XX=$O(%KEY(&quot;TA2&quot;,0,XX)) Q:XX=&quot;&quot;  D
+&gt;&gt;&gt;&gt;&gt;         . S TEXT=$G(TEXT)_$G(%KEY(&quot;TA2&quot;,0,XX))
+
+&gt;&gt;&gt;&gt;&gt;        k ^PMOFFTXT($G(%KEY(&quot;A0&quot;)))
+
+&gt;&gt;&gt;&gt;&gt;         I $G(TEXT)'=&quot;&quot; F I=1:1:$L(TEXT,CRLF) d
+&gt;&gt;&gt;&gt;&gt;         . S ^PMOFFTXT($G(%KEY(&quot;A0&quot;)),(I))=$P(TEXT,CRLF,I)
+
+&gt;&gt;&gt;&gt;&gt; But this gives the MAXSTRING error, whenever there is too much tekst.
+&gt;&gt;&gt;&gt;&gt; The
+&gt;&gt;&gt;&gt;&gt; variable TEXT gets too large! Now my question, how can I program this
+&gt;&gt;&gt;&gt;&gt; different so that i don't have to put all data into one variable?
+&gt;&gt;&gt;&gt;&gt; The reason why i set the variable to the whole %KEY of the textarea is
+&gt;&gt;&gt;&gt;&gt; because after that i set the global ^PMOFFTXT with a new index (I)
+&gt;&gt;&gt;&gt;&gt; after
+&gt;&gt;&gt;&gt;&gt; each return.
+
+&gt;&gt;&gt;&gt;&gt; I hope you can help me
+&gt;&gt;&gt;&gt;&gt; Thanks,
+&gt;&gt;&gt;&gt;&gt; Simon
+
+&gt;&gt;&gt;&gt; ---
+&gt;&gt;&gt;&gt; Rob Tweed
+&gt;&gt;&gt;&gt; M/Gateway Developments Ltd
+
+&gt;&gt;&gt;&gt; http://www.mgateway.com
+&gt;&gt;&gt;&gt; ---
+">
+</POST>
+<POST>
+<POSTER> &quot;Simon&quot; &lt;simon1...@quicknet.nl&gt; </POSTER>
+<POSTDATE> 2007-09-04T08:46:00 </POSTDATE>
+I don't think that i'm being clear about my problem. (I know its my fault, i
+have trouble explaining things.)
+But i'm gonna try it another way.
+Forget everthing.
+
+New example: A piece of a global:
+
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;20002MRT009&quot;,1)=150702002 brief gestuurd aan fin. directeur
+zij moeten nu reageren.
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,1)=14082000 ter plaatse kennis gemaakt en de
+dienstverlening gepresenteerd. Men h
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,10)=een en ander. Begin 2001 nogmals contacten
+met de heer Smit
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,11)=09-03-2001 gebeld was niet bereikbaar pas de
+volgende week.
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,12)=13-07-2001 monique de jong 026 4837195 is
+hoofd facilitair bedrijf 15-07 belle
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,13)=13-11-2001 monique ziek lang later op
+terugkomen.
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,14)=17-05-2005 Ben; nieuwe directeur is Hans
+Blauw, lid van MNN en voorheen werkzaam als NS Vastgoed directeur. Ook bij
+McDonalds gewerkt. Er staat een afspraak voor 13 juni 10.00 uur
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,15)=12-06-2005 Ben; gesprek met H. Blaauw
+positief. NOC NSF is eigenaar congreshotel huurder. eigenaar heeft nog niets
+en er is dringend behoefte aan verbetering van inicht en administratieve
+ondersteuning. Mevr. Karin van Williggen is Controller en Mark Steinfelder
+hoofd TD. H.B. zal ikntern overleggen voor een gesprek met mij en een antal
+operationele collega's.
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,16)=22-08-2005 Ben; heeft het doorgegeven aan
+NOC NSF daar moet ni het initiatief vandaan komen.
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,17)=12-01-2006 Ben; gebeld niet bereikbaar belt
+mij terug
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,2)=uurt van NOC/NSF en verricht diverse hand en
+spandiensten in onderhoud. Degene
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,3)= die nu verantwoordelijk is is een doener en
+minder beleidsmatig bezig. Het
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,4)=ontbreekt aan een duidelijk inzicht van
+budgetten en kosten.Is een budgetterin
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,5)=opgesteld.
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,6)=08-09-2000 komt met technische man hier op
+bezoek belt me wk 37
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,7)=19 september afspraak daar gemaakt voor 9
+oktober.
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,8)=12oktober tweede gesprek op locatie gehad nu
+weer even afwachten.
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,9)=04 12 2000 de heer H.Smit comm directeur. de
+heer pieters vertelde mij
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG03&quot;,1)=25 augustus ter plaatse een informatie
+gegeven. Wil in de komende week
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG03&quot;,10)=
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG03&quot;,11)=Na bezoek wederom afgesproken dat ik voor de
+totale groep een presentatie geef. Voorafgaande een aanbieding voor
+gefaseerde in gebruik name van het syeteem.
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG03&quot;,12)=16-01-2002 is dit overeengekomen.
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG03&quot;,13)=4 maart offerte weg voor ltp en multicard
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG03&quot;,14)=6 mei gebeld stukken waren bij collega, gaar
+er weer eens achteraan en belt mij.
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG03&quot;,15)=30-05-2002 de heer v.d. Plas gaf mij de
+kontaktpersoon op het hoofdkantoor. Deze schriftelijke info toegstuurd op 30
+mei.2002  Postbus 355 2130 AJ Hoofddorp 02holhoo3005
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG03&quot;,16)=Zijn H. Kuiper Stokersdorpweg 24 7532 PT
+Enschede. 053 4610710 is vanuit de universiteit een voorstel aan het
+schrijven. Heeft no Borders ontvangen
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG03&quot;,17)=245-06-2003 gebeld en gehoord dat Plas op
+hoofdkantoor werkt 023 5659471
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG03&quot;,2)=voorstel doen aan MT centraal. Nijmegen en
+Utrecht zouden ook mee willen doen.
+^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG03&quot;,3)=FAc. managers krijgen meerdere casino's in
+beheer. Rol TONED en Prevent.
+
+Now, let's say, i want to rebuild this global, to, MyNewGlobal(index) and i
+want to change the index. After every &quot;character &quot;p&quot; a new index must be
+made.
+
+So that i would get the following result:
+MyNewGlobal(1)=150702002 brief gestuurd aan fin. directeur zij moeten nu
+reageren.
+MyNewGlobal(2)=14082000 ter
+MyNewGlobal(3)=laatse kennis gemaakt en de dienstverlening ge
+
+MyNewGlobal(4)=resenteerd. Men heen en ander.
+etc...
+
+As you can see, the character p is used as a delimiter.
+
+But how would you programm this?
+
+&quot;Sukesh Hoogan&quot; &lt;sukeshhoo ... @NOSPAMvsnl.com&gt; schreef in bericht
+news:46dd4d7e.0@info2.kinich.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Simon wrote:
+&gt;&gt; And after that?
+
+&gt;&gt; Let's say, i've got a textarea with 20.000 characters. I recognize the
+&gt;&gt; linebreaks, they are noted as: &quot;$C(13,10)&quot;
+&gt;&gt; Now I want to save this to a global, like your MyGlobal(1), etc.After
+&gt;&gt; each break(&quot;$C(13,10)&quot;) the index of the global rises.
+
+&gt;&gt; Rough source:(For example)
+&gt;&gt; &quot;hello my name is simon, i'm 29 yearls old  $C(13,10) and i live in the
+&gt;&gt; Netherlands, the country of true freedom $C(13,10)$C(13,10), (is it?)&quot;
+
+&gt;&gt; After saving:
+
+&gt;  ^MyGlobal(1)=hello my name is simon, i'm 29 yearls old
+&gt;  ^MyGlobal(2)=and i live in the Netherlands, the country of true freedom
+&gt;  ^MyGlobal(3)=
+&gt;  ^MyGlobal(4)=(is it?)
+
+&gt; When you save, you keep track of the index. In the above case it is 4
+&gt; From any other method you read it and do what you wish to it
+&gt; For example
+
+&gt; MyString=^MyGlobal(1)_&quot;$C(13,10 &quot;_^MyGlobal(2)_&quot;$C(13,10) &quot;...etc.
+
+&gt; Of course, remember that MyString cannot be more than 32KB long either.
+&gt; If it is then you should concatenate globals of approx. 30KB length each
+
+&gt; MyString(1)=^MyGlobal(1)_&quot;$C(13,10) &quot;_^MyGlobal(2)_&quot;$C(13,10) &quot;...etc.
+&gt; MyString(2)==^MyGlobal(25)_&quot;$C(13,10) &quot;_^MyGlobal(26)_&quot;$C(13,10)&quot;...etc.
+
+&gt; Regards
+&gt; Sukesh
+
+&gt;&gt; How would you do this? (Keep in mind that i can't do it my way, because
+&gt;&gt; of the amount of characters, too large for one variable)
+&gt;&gt; I would need 2 loops, one to loop through %KEY(&quot;TEXTAREA,X), and one
+&gt;&gt; forloop through the line.
+
+&gt;&gt; Thanks,
+&gt;&gt; Simon
+
+&gt;&gt; &quot;Sukesh Hoogan&quot; &lt;sukeshhoo ... @NOSPAMvsnl.com&gt; schreef in bericht
+&gt;&gt; news:46dd21da.0@info2.kinich.com ...
+&gt;&gt;&gt; Simon
+
+&gt;&gt;&gt; A workaround save each piece of data separately in globals say,
+&gt;&gt;&gt; ^MyTempglobal(1), etc.
+&gt;&gt;&gt; Then read it from any other method/routine
+
+&gt;&gt;&gt; Regards
+&gt;&gt;&gt; Sukesh Hoogan
+&gt;&gt;&gt; Bombay, India
+
+&gt;&gt;&gt; Simon wrote:
+&gt;&gt;&gt;&gt; &quot;Why concatenate the lines together&quot;
+&gt;&gt;&gt;&gt; Because otherwise I can't divide the whole into &quot;returns&quot;.
+&gt;&gt;&gt;&gt; After each linebreak, after each ($C(13,10)), the global PMOFFTXT must
+&gt;&gt;&gt;&gt; make a new index.
+&gt;&gt;&gt;&gt; (
+&gt;&gt;&gt;&gt; I $G(TEXT)'=&quot;&quot; F I=1:1:$L(TEXT,CRLF) d
+&gt;&gt;&gt;&gt; . S ^PMOFFTXT($G(%KEY(&quot;A0&quot;)),(I))=$P(TEXT,CRLF,I)
+&gt;&gt;&gt;&gt; )
+
+&gt;&gt;&gt;&gt; If I don't store it to one variable, i don't recognize a return being
+&gt;&gt;&gt;&gt; ginven on the next line.
+
+&gt;&gt;&gt;&gt; &quot;Rob Tweed&quot; &lt;rtw ... @blueyonder.co.uk&gt; schreef in bericht
+&gt;&gt;&gt;&gt; news:ei4od3hkuor5kfaudelg29tn63abmqq9tr@4ax.com ...
+&gt;&gt;&gt;&gt;&gt; The reason WebLink splits long text into the separate lines is to
+&gt;&gt;&gt;&gt;&gt; avoid the very problem you're pushing Cache back into again!
+
+&gt;&gt;&gt;&gt;&gt; Why concatenate the lines together?  Just merge them from the %KEY
+&gt;&gt;&gt;&gt;&gt; array to your global, eg
+
+&gt;&gt;&gt;&gt;&gt; m ^PMOFFTXT($G(%KEY(&quot;A0&quot;)))=%KEY(&quot;TA2&quot;)
+
+&gt;&gt;&gt;&gt;&gt; I'm also surprised you're still manually writing hand-crafted WebLink
+&gt;&gt;&gt;&gt;&gt; code!
+
+&gt;&gt;&gt;&gt;&gt; On Mon, 3 Sep 2007 14:32:48 +0200, &quot;Simon&quot; &lt;simon1 ... @quicknet.nl&gt;
+&gt;&gt;&gt;&gt;&gt; wrote:
+
+&gt;&gt;&gt;&gt;&gt;&gt; Hi everybody, i've got a relative simple question, i think.
+
+&gt;&gt;&gt;&gt;&gt;&gt; Problem: User get's an maxstring-error from caché
+
+&gt;&gt;&gt;&gt;&gt;&gt; Cause: Too much textinput for single variable.
+
+&gt;&gt;&gt;&gt;&gt;&gt; This is the situation, i got a form with a textarea, a global named
+&gt;&gt;&gt;&gt;&gt;&gt; PMOFFHIS
+&gt;&gt;&gt;&gt;&gt;&gt; in witch the text must be stored and the index of that global is
+&gt;&gt;&gt;&gt;&gt;&gt; depended on
+&gt;&gt;&gt;&gt;&gt;&gt; &quot;returns&quot;.
+
+&gt;&gt;&gt;&gt;&gt;&gt; For example:
+&gt;&gt;&gt;&gt;&gt;&gt; Hi, this is the first line of the textarea
+
+&gt;&gt;&gt;&gt;&gt;&gt; this is the third line
+
+&gt;&gt;&gt;&gt;&gt;&gt; Button: Save
+&gt;&gt;&gt;&gt;&gt;&gt; After saving:
+
+&gt;&gt;&gt;&gt;&gt;&gt; ^PMOFFHIS(1)=&quot;Hi, this is the first line of the textarea&quot;
+&gt;&gt;&gt;&gt;&gt;&gt; ^PMOFFHIS(2)=&quot;&quot;
+&gt;&gt;&gt;&gt;&gt;&gt; ^PMOFFHIS(3)=&quot;Hi, this is the first line of the textarea&quot;
+
+&gt;&gt;&gt;&gt;&gt;&gt; When the text increases, it no longer recognises
+&gt;&gt;&gt;&gt;&gt;&gt; %KEY(&quot;NAMETEXTAREA&quot;). Caché
+&gt;&gt;&gt;&gt;&gt;&gt; divides %KEY into 1 to ... as follows: %KEY&quot;(&quot;NAMETEXTAREA&quot;,1)
+&gt;&gt;&gt;&gt;&gt;&gt;            %KEY&quot;(&quot;NAMETEXTAREA&quot;,2)
+&gt;&gt;&gt;&gt;&gt;&gt;            %KEY&quot;(&quot;NAMETEXTAREA&quot;,3)
+&gt;&gt;&gt;&gt;&gt;&gt;            etc.
+
+&gt;&gt;&gt;&gt;&gt;&gt; The routine does the following:(ta2 is name of the textarea)
+&gt;&gt;&gt;&gt;&gt;&gt;        S CRLF=$C(13,10)
+
+&gt;&gt;&gt;&gt;&gt;&gt;         S TEXT=$G(%KEY(&quot;TA2&quot;))
+
+&gt;&gt;&gt;&gt;&gt;&gt;         S XX=&quot;&quot; F  S XX=$O(%KEY(&quot;TA2&quot;,0,XX)) Q:XX=&quot;&quot;  D
+&gt;&gt;&gt;&gt;&gt;&gt;         . S TEXT=$G(TEXT)_$G(%KEY(&quot;TA2&quot;,0,XX))
+
+&gt;&gt;&gt;&gt;&gt;&gt;        k ^PMOFFTXT($G(%KEY(&quot;A0&quot;)))
+
+&gt;&gt;&gt;&gt;&gt;&gt;         I $G(TEXT)'=&quot;&quot; F I=1:1:$L(TEXT,CRLF) d
+&gt;&gt;&gt;&gt;&gt;&gt;         . S ^PMOFFTXT($G(%KEY(&quot;A0&quot;)),(I))=$P(TEXT,CRLF,I)
+
+&gt;&gt;&gt;&gt;&gt;&gt; But this gives the MAXSTRING error, whenever there is too much tekst.
+&gt;&gt;&gt;&gt;&gt;&gt; The
+&gt;&gt;&gt;&gt;&gt;&gt; variable TEXT gets too large! Now my question, how can I program this
+&gt;&gt;&gt;&gt;&gt;&gt; different so that i don't have to put all data into one variable?
+&gt;&gt;&gt;&gt;&gt;&gt; The reason why i set the variable to the whole %KEY of the textarea
+&gt;&gt;&gt;&gt;&gt;&gt; is
+&gt;&gt;&gt;&gt;&gt;&gt; because after that i set the global ^PMOFFTXT with a new index (I)
+&gt;&gt;&gt;&gt;&gt;&gt; after
+&gt;&gt;&gt;&gt;&gt;&gt; each return.
+
+&gt;&gt;&gt;&gt;&gt;&gt; I hope you can help me
+&gt;&gt;&gt;&gt;&gt;&gt; Thanks,
+&gt;&gt;&gt;&gt;&gt;&gt; Simon
+
+&gt;&gt;&gt;&gt;&gt; ---
+&gt;&gt;&gt;&gt;&gt; Rob Tweed
+&gt;&gt;&gt;&gt;&gt; M/Gateway Developments Ltd
+
+&gt;&gt;&gt;&gt;&gt; http://www.mgateway.com
+&gt;&gt;&gt;&gt;&gt; ---
+">
+</POST>
+<POST>
+<POSTER> Rob Tweed &lt;rtw...@blueyonder.co.uk&gt; </POSTER>
+<POSTDATE> 2007-09-04T10:48:00 </POSTDATE>
+Well you have to be smart and buffer the splitting and reconstruction
+- start at line one in %KEY and split out the lines with $piece using
+CRLF as the delimiter.  Put the last piece to one side, then move to
+line 2 of %KEY.  Concatenate what you had left over to the first
+piece.
+
+Repeat till the end.  Make the last bit you're left with a line of its
+own
+
+You shouldn't then end up with a maxstring error and you'll have all
+the lines split out.
+
+If you use WebLink Developer or eXtc Web Developer, you find that all
+this kind of parsing gets done for you - what you're trying to do is
+what you normally have to do every time you process a textarea, which
+is why I automated it!
+
+That's why I commented on the fact that you're using manually
+hand-crafted WebLink code... you're doing it the hard way!!
+
+On Tue, 4 Sep 2007 10:08:09 +0200, &quot;Simon&quot; &lt;simon1 ... @quicknet.nl&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&quot;Why concatenate the lines together&quot;
+&gt;Because otherwise I can't divide the whole into &quot;returns&quot;.
+&gt;After each linebreak, after each ($C(13,10)), the global PMOFFTXT must make
+&gt;a new index.
+&gt;(
+&gt;I $G(TEXT)'=&quot;&quot; F I=1:1:$L(TEXT,CRLF) d
+&gt;. S ^PMOFFTXT($G(%KEY(&quot;A0&quot;)),(I))=$P(TEXT,CRLF,I)
+&gt;)
+
+&gt;If I don't store it to one variable, i don't recognize a return being ginven
+&gt;on the next line.
+
+&gt;&quot;Rob Tweed&quot; &lt;rtw ... @blueyonder.co.uk&gt; schreef in bericht
+&gt; news:ei4od3hkuor5kfaudelg29tn63abmqq9tr@4ax.com ...
+&gt;&gt; The reason WebLink splits long text into the separate lines is to
+&gt;&gt; avoid the very problem you're pushing Cache back into again!
+
+&gt;&gt; Why concatenate the lines together?  Just merge them from the %KEY
+&gt;&gt; array to your global, eg
+
+&gt;&gt; m ^PMOFFTXT($G(%KEY(&quot;A0&quot;)))=%KEY(&quot;TA2&quot;)
+
+&gt;&gt; I'm also surprised you're still manually writing hand-crafted WebLink
+&gt;&gt; code!
+
+&gt;&gt; On Mon, 3 Sep 2007 14:32:48 +0200, &quot;Simon&quot; &lt;simon1 ... @quicknet.nl&gt;
+&gt;&gt; wrote:
+
+&gt;&gt;&gt;Hi everybody, i've got a relative simple question, i think.
+
+&gt;&gt;&gt;Problem: User get's an maxstring-error from caché
+
+&gt;&gt;&gt;Cause: Too much textinput for single variable.
+
+&gt;&gt;&gt;This is the situation, i got a form with a textarea, a global named
+&gt;&gt;&gt;PMOFFHIS
+&gt;&gt;&gt;in witch the text must be stored and the index of that global is depended
+&gt;&gt;&gt;on
+&gt;&gt;&gt;&quot;returns&quot;.
+
+&gt;&gt;&gt;For example:
+&gt;&gt;&gt;Hi, this is the first line of the textarea
+
+&gt;&gt;&gt;this is the third line
+
+&gt;&gt;&gt;Button: Save
+&gt;&gt;&gt;After saving:
+
+&gt;&gt;&gt;^PMOFFHIS(1)=&quot;Hi, this is the first line of the textarea&quot;
+&gt;&gt;&gt;^PMOFFHIS(2)=&quot;&quot;
+&gt;&gt;&gt;^PMOFFHIS(3)=&quot;Hi, this is the first line of the textarea&quot;
+
+&gt;&gt;&gt;When the text increases, it no longer recognises %KEY(&quot;NAMETEXTAREA&quot;).
+&gt;&gt;&gt;Caché
+&gt;&gt;&gt;divides %KEY into 1 to ... as follows: %KEY&quot;(&quot;NAMETEXTAREA&quot;,1)
+&gt;&gt;&gt;            %KEY&quot;(&quot;NAMETEXTAREA&quot;,2)
+&gt;&gt;&gt;            %KEY&quot;(&quot;NAMETEXTAREA&quot;,3)
+&gt;&gt;&gt;            etc.
+
+&gt;&gt;&gt;The routine does the following:(ta2 is name of the textarea)
+&gt;&gt;&gt;        S CRLF=$C(13,10)
+
+&gt;&gt;&gt;         S TEXT=$G(%KEY(&quot;TA2&quot;))
+
+&gt;&gt;&gt;         S XX=&quot;&quot; F  S XX=$O(%KEY(&quot;TA2&quot;,0,XX)) Q:XX=&quot;&quot;  D
+&gt;&gt;&gt;         . S TEXT=$G(TEXT)_$G(%KEY(&quot;TA2&quot;,0,XX))
+
+&gt;&gt;&gt;        k ^PMOFFTXT($G(%KEY(&quot;A0&quot;)))
+
+&gt;&gt;&gt;         I $G(TEXT)'=&quot;&quot; F I=1:1:$L(TEXT,CRLF) d
+&gt;&gt;&gt;         . S ^PMOFFTXT($G(%KEY(&quot;A0&quot;)),(I))=$P(TEXT,CRLF,I)
+
+&gt;&gt;&gt;But this gives the MAXSTRING error, whenever there is too much tekst. The
+&gt;&gt;&gt;variable TEXT gets too large! Now my question, how can I program this
+&gt;&gt;&gt;different so that i don't have to put all data into one variable?
+&gt;&gt;&gt;The reason why i set the variable to the whole %KEY of the textarea is
+&gt;&gt;&gt;because after that i set the global ^PMOFFTXT with a new index (I) after
+&gt;&gt;&gt;each return.
+
+&gt;&gt;&gt;I hope you can help me
+&gt;&gt;&gt;Thanks,
+&gt;&gt;&gt;Simon
+
+&gt;&gt; ---
+&gt;&gt; Rob Tweed
+&gt;&gt; M/Gateway Developments Ltd
+
+&gt;&gt; http://www.mgateway.com
+&gt;&gt; ---
+">
+
+---
+Rob Tweed
+M/Gateway Developments Ltd
+
+http://www.mgateway.com
+---
+</POST>
+<POST>
+<POSTER> &quot;Simon&quot; &lt;simon1...@quicknet.nl&gt; </POSTER>
+<POSTDATE> 2007-09-04T11:11:00 </POSTDATE>
+Thanks Rob, i know it's the hard way but i am not familiar with the other
+ways for i only know off  WebLink Version 4.3.
+I'm am curious though, to weblink developer and eXtc Web Developer, as you
+know, but i don't know how to implant it yet.
+Have not found the time to look at it yet.
+But thanks, i had thought of a similar kind of solution and i'm trying to
+make it work.
+
+&quot;Rob Tweed&quot; &lt;rtw ... @blueyonder.co.uk&gt; schreef in bericht
+news:l4qqd315mde8e6rbipvfesdpcgqadgofu7@4ax.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Well you have to be smart and buffer the splitting and reconstruction
+&gt; - start at line one in %KEY and split out the lines with $piece using
+&gt; CRLF as the delimiter.  Put the last piece to one side, then move to
+&gt; line 2 of %KEY.  Concatenate what you had left over to the first
+&gt; piece.
+
+&gt; Repeat till the end.  Make the last bit you're left with a line of its
+&gt; own
+
+&gt; You shouldn't then end up with a maxstring error and you'll have all
+&gt; the lines split out.
+
+&gt; If you use WebLink Developer or eXtc Web Developer, you find that all
+&gt; this kind of parsing gets done for you - what you're trying to do is
+&gt; what you normally have to do every time you process a textarea, which
+&gt; is why I automated it!
+
+&gt; That's why I commented on the fact that you're using manually
+&gt; hand-crafted WebLink code... you're doing it the hard way!!
+
+&gt; On Tue, 4 Sep 2007 10:08:09 +0200, &quot;Simon&quot; &lt;simon1 ... @quicknet.nl&gt;
+&gt; wrote:
+
+&gt;&gt;&quot;Why concatenate the lines together&quot;
+&gt;&gt;Because otherwise I can't divide the whole into &quot;returns&quot;.
+&gt;&gt;After each linebreak, after each ($C(13,10)), the global PMOFFTXT must
+&gt;&gt;make
+&gt;&gt;a new index.
+&gt;&gt;(
+&gt;&gt;I $G(TEXT)'=&quot;&quot; F I=1:1:$L(TEXT,CRLF) d
+&gt;&gt;. S ^PMOFFTXT($G(%KEY(&quot;A0&quot;)),(I))=$P(TEXT,CRLF,I)
+&gt;&gt;)
+
+&gt;&gt;If I don't store it to one variable, i don't recognize a return being
+&gt;&gt;ginven
+&gt;&gt;on the next line.
+
+&gt;&gt;&quot;Rob Tweed&quot; &lt;rtw ... @blueyonder.co.uk&gt; schreef in bericht
+&gt;&gt; news:ei4od3hkuor5kfaudelg29tn63abmqq9tr@4ax.com ...
+&gt;&gt;&gt; The reason WebLink splits long text into the separate lines is to
+&gt;&gt;&gt; avoid the very problem you're pushing Cache back into again!
+
+&gt;&gt;&gt; Why concatenate the lines together?  Just merge them from the %KEY
+&gt;&gt;&gt; array to your global, eg
+
+&gt;&gt;&gt; m ^PMOFFTXT($G(%KEY(&quot;A0&quot;)))=%KEY(&quot;TA2&quot;)
+
+&gt;&gt;&gt; I'm also surprised you're still manually writing hand-crafted WebLink
+&gt;&gt;&gt; code!
+
+&gt;&gt;&gt; On Mon, 3 Sep 2007 14:32:48 +0200, &quot;Simon&quot; &lt;simon1 ... @quicknet.nl&gt;
+&gt;&gt;&gt; wrote:
+
+&gt;&gt;&gt;&gt;Hi everybody, i've got a relative simple question, i think.
+
+&gt;&gt;&gt;&gt;Problem: User get's an maxstring-error from caché
+
+&gt;&gt;&gt;&gt;Cause: Too much textinput for single variable.
+
+&gt;&gt;&gt;&gt;This is the situation, i got a form with a textarea, a global named
+&gt;&gt;&gt;&gt;PMOFFHIS
+&gt;&gt;&gt;&gt;in witch the text must be stored and the index of that global is
+&gt;&gt;&gt;&gt;depended
+&gt;&gt;&gt;&gt;on
+&gt;&gt;&gt;&gt;&quot;returns&quot;.
+
+&gt;&gt;&gt;&gt;For example:
+&gt;&gt;&gt;&gt;Hi, this is the first line of the textarea
+
+&gt;&gt;&gt;&gt;this is the third line
+
+&gt;&gt;&gt;&gt;Button: Save
+&gt;&gt;&gt;&gt;After saving:
+
+&gt;&gt;&gt;&gt;^PMOFFHIS(1)=&quot;Hi, this is the first line of the textarea&quot;
+&gt;&gt;&gt;&gt;^PMOFFHIS(2)=&quot;&quot;
+&gt;&gt;&gt;&gt;^PMOFFHIS(3)=&quot;Hi, this is the first line of the textarea&quot;
+
+&gt;&gt;&gt;&gt;When the text increases, it no longer recognises %KEY(&quot;NAMETEXTAREA&quot;).
+&gt;&gt;&gt;&gt;Caché
+&gt;&gt;&gt;&gt;divides %KEY into 1 to ... as follows: %KEY&quot;(&quot;NAMETEXTAREA&quot;,1)
+&gt;&gt;&gt;&gt;            %KEY&quot;(&quot;NAMETEXTAREA&quot;,2)
+&gt;&gt;&gt;&gt;            %KEY&quot;(&quot;NAMETEXTAREA&quot;,3)
+&gt;&gt;&gt;&gt;            etc.
+
+&gt;&gt;&gt;&gt;The routine does the following:(ta2 is name of the textarea)
+&gt;&gt;&gt;&gt;        S CRLF=$C(13,10)
+
+&gt;&gt;&gt;&gt;         S TEXT=$G(%KEY(&quot;TA2&quot;))
+
+&gt;&gt;&gt;&gt;         S XX=&quot;&quot; F  S XX=$O(%KEY(&quot;TA2&quot;,0,XX)) Q:XX=&quot;&quot;  D
+&gt;&gt;&gt;&gt;         . S TEXT=$G(TEXT)_$G(%KEY(&quot;TA2&quot;,0,XX))
+
+&gt;&gt;&gt;&gt;        k ^PMOFFTXT($G(%KEY(&quot;A0&quot;)))
+
+&gt;&gt;&gt;&gt;         I $G(TEXT)'=&quot;&quot; F I=1:1:$L(TEXT,CRLF) d
+&gt;&gt;&gt;&gt;         . S ^PMOFFTXT($G(%KEY(&quot;A0&quot;)),(I))=$P(TEXT,CRLF,I)
+
+&gt;&gt;&gt;&gt;But this gives the MAXSTRING error, whenever there is too much tekst.
+&gt;&gt;&gt;&gt;The
+&gt;&gt;&gt;&gt;variable TEXT gets too large! Now my question, how can I program this
+&gt;&gt;&gt;&gt;different so that i don't have to put all data into one variable?
+&gt;&gt;&gt;&gt;The reason why i set the variable to the whole %KEY of the textarea is
+&gt;&gt;&gt;&gt;because after that i set the global ^PMOFFTXT with a new index (I) after
+&gt;&gt;&gt;&gt;each return.
+
+&gt;&gt;&gt;&gt;I hope you can help me
+&gt;&gt;&gt;&gt;Thanks,
+&gt;&gt;&gt;&gt;Simon
+
+&gt;&gt;&gt; ---
+&gt;&gt;&gt; Rob Tweed
+&gt;&gt;&gt; M/Gateway Developments Ltd
+
+&gt;&gt;&gt; http://www.mgateway.com
+&gt;&gt;&gt; ---
+
+&gt; ---
+&gt; Rob Tweed
+&gt; M/Gateway Developments Ltd
+
+&gt; http://www.mgateway.com
+&gt; ---
+">
+</POST>
+<POST>
+<POSTER> &quot;Simon&quot; &lt;simon1...@quicknet.nl&gt; </POSTER>
+<POSTDATE> 2007-09-05T04:09:00 </POSTDATE>
+Rob, could you put your words into programlines? Í'm sorry for being such a
+pain..
+S CRLF=$C(13,10)
+S XX=&quot;&quot; F  S XX=$O(%KEY(&quot;TA2&quot;,0,XX)) Q:XX=&quot;&quot;  D
+. S ^TEMP(I)=?
+. ?
+There must be a &quot;for-loop&quot; build in..
+Right?
+
+&quot;Simon&quot; &lt;simon1 ... @quicknet.nl&gt; schreef in bericht
+news:46dd757a.0@info2.kinich.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Thanks Rob, i know it's the hard way but i am not familiar with the other
+&gt; ways for i only know off  WebLink Version 4.3.
+&gt; I'm am curious though, to weblink developer and eXtc Web Developer, as you
+&gt; know, but i don't know how to implant it yet.
+&gt; Have not found the time to look at it yet.
+&gt; But thanks, i had thought of a similar kind of solution and i'm trying to
+&gt; make it work.
+
+&gt; &quot;Rob Tweed&quot; &lt;rtw ... @blueyonder.co.uk&gt; schreef in bericht
+&gt; news:l4qqd315mde8e6rbipvfesdpcgqadgofu7@4ax.com ...
+&gt;&gt; Well you have to be smart and buffer the splitting and reconstruction
+&gt;&gt; - start at line one in %KEY and split out the lines with $piece using
+&gt;&gt; CRLF as the delimiter.  Put the last piece to one side, then move to
+&gt;&gt; line 2 of %KEY.  Concatenate what you had left over to the first
+&gt;&gt; piece.
+
+&gt;&gt; Repeat till the end.  Make the last bit you're left with a line of its
+&gt;&gt; own
+
+&gt;&gt; You shouldn't then end up with a maxstring error and you'll have all
+&gt;&gt; the lines split out.
+
+&gt;&gt; If you use WebLink Developer or eXtc Web Developer, you find that all
+&gt;&gt; this kind of parsing gets done for you - what you're trying to do is
+&gt;&gt; what you normally have to do every time you process a textarea, which
+&gt;&gt; is why I automated it!
+
+&gt;&gt; That's why I commented on the fact that you're using manually
+&gt;&gt; hand-crafted WebLink code... you're doing it the hard way!!
+
+&gt;&gt; On Tue, 4 Sep 2007 10:08:09 +0200, &quot;Simon&quot; &lt;simon1 ... @quicknet.nl&gt;
+&gt;&gt; wrote:
+
+&gt;&gt;&gt;&quot;Why concatenate the lines together&quot;
+&gt;&gt;&gt;Because otherwise I can't divide the whole into &quot;returns&quot;.
+&gt;&gt;&gt;After each linebreak, after each ($C(13,10)), the global PMOFFTXT must
+&gt;&gt;&gt;make
+&gt;&gt;&gt;a new index.
+&gt;&gt;&gt;(
+&gt;&gt;&gt;I $G(TEXT)'=&quot;&quot; F I=1:1:$L(TEXT,CRLF) d
+&gt;&gt;&gt;. S ^PMOFFTXT($G(%KEY(&quot;A0&quot;)),(I))=$P(TEXT,CRLF,I)
+&gt;&gt;&gt;)
+
+&gt;&gt;&gt;If I don't store it to one variable, i don't recognize a return being
+&gt;&gt;&gt;ginven
+&gt;&gt;&gt;on the next line.
+
+&gt;&gt;&gt;&quot;Rob Tweed&quot; &lt;rtw ... @blueyonder.co.uk&gt; schreef in bericht
+&gt;&gt;&gt; news:ei4od3hkuor5kfaudelg29tn63abmqq9tr@4ax.com ...
+&gt;&gt;&gt;&gt; The reason WebLink splits long text into the separate lines is to
+&gt;&gt;&gt;&gt; avoid the very problem you're pushing Cache back into again!
+
+&gt;&gt;&gt;&gt; Why concatenate the lines together?  Just merge them from the %KEY
+&gt;&gt;&gt;&gt; array to your global, eg
+
+&gt;&gt;&gt;&gt; m ^PMOFFTXT($G(%KEY(&quot;A0&quot;)))=%KEY(&quot;TA2&quot;)
+
+&gt;&gt;&gt;&gt; I'm also surprised you're still manually writing hand-crafted WebLink
+&gt;&gt;&gt;&gt; code!
+
+&gt;&gt;&gt;&gt; On Mon, 3 Sep 2007 14:32:48 +0200, &quot;Simon&quot; &lt;simon1 ... @quicknet.nl&gt;
+&gt;&gt;&gt;&gt; wrote:
+
+&gt;&gt;&gt;&gt;&gt;Hi everybody, i've got a relative simple question, i think.
+
+&gt;&gt;&gt;&gt;&gt;Problem: User get's an maxstring-error from caché
+
+&gt;&gt;&gt;&gt;&gt;Cause: Too much textinput for single variable.
+
+&gt;&gt;&gt;&gt;&gt;This is the situation, i got a form with a textarea, a global named
+&gt;&gt;&gt;&gt;&gt;PMOFFHIS
+&gt;&gt;&gt;&gt;&gt;in witch the text must be stored and the index of that global is
+&gt;&gt;&gt;&gt;&gt;depended
+&gt;&gt;&gt;&gt;&gt;on
+&gt;&gt;&gt;&gt;&gt;&quot;returns&quot;.
+
+&gt;&gt;&gt;&gt;&gt;For example:
+&gt;&gt;&gt;&gt;&gt;Hi, this is the first line of the textarea
+
+&gt;&gt;&gt;&gt;&gt;this is the third line
+
+&gt;&gt;&gt;&gt;&gt;Button: Save
+&gt;&gt;&gt;&gt;&gt;After saving:
+
+&gt;&gt;&gt;&gt;&gt;^PMOFFHIS(1)=&quot;Hi, this is the first line of the textarea&quot;
+&gt;&gt;&gt;&gt;&gt;^PMOFFHIS(2)=&quot;&quot;
+&gt;&gt;&gt;&gt;&gt;^PMOFFHIS(3)=&quot;Hi, this is the first line of the textarea&quot;
+
+&gt;&gt;&gt;&gt;&gt;When the text increases, it no longer recognises %KEY(&quot;NAMETEXTAREA&quot;).
+&gt;&gt;&gt;&gt;&gt;Caché
+&gt;&gt;&gt;&gt;&gt;divides %KEY into 1 to ... as follows: %KEY&quot;(&quot;NAMETEXTAREA&quot;,1)
+&gt;&gt;&gt;&gt;&gt;            %KEY&quot;(&quot;NAMETEXTAREA&quot;,2)
+&gt;&gt;&gt;&gt;&gt;            %KEY&quot;(&quot;NAMETEXTAREA&quot;,3)
+&gt;&gt;&gt;&gt;&gt;            etc.
+
+&gt;&gt;&gt;&gt;&gt;The routine does the following:(ta2 is name of the textarea)
+&gt;&gt;&gt;&gt;&gt;        S CRLF=$C(13,10)
+
+&gt;&gt;&gt;&gt;&gt;         S TEXT=$G(%KEY(&quot;TA2&quot;))
+
+&gt;&gt;&gt;&gt;&gt;         S XX=&quot;&quot; F  S XX=$O(%KEY(&quot;TA2&quot;,0,XX)) Q:XX=&quot;&quot;  D
+&gt;&gt;&gt;&gt;&gt;         . S TEXT=$G(TEXT)_$G(%KEY(&quot;TA2&quot;,0,XX))
+
+&gt;&gt;&gt;&gt;&gt;        k ^PMOFFTXT($G(%KEY(&quot;A0&quot;)))
+
+&gt;&gt;&gt;&gt;&gt;         I $G(TEXT)'=&quot;&quot; F I=1:1:$L(TEXT,CRLF) d
+&gt;&gt;&gt;&gt;&gt;         . S ^PMOFFTXT($G(%KEY(&quot;A0&quot;)),(I))=$P(TEXT,CRLF,I)
+
+&gt;&gt;&gt;&gt;&gt;But this gives the MAXSTRING error, whenever there is too much tekst.
+&gt;&gt;&gt;&gt;&gt;The
+&gt;&gt;&gt;&gt;&gt;variable TEXT gets too large! Now my question, how can I program this
+&gt;&gt;&gt;&gt;&gt;different so that i don't have to put all data into one variable?
+&gt;&gt;&gt;&gt;&gt;The reason why i set the variable to the whole %KEY of the textarea is
+&gt;&gt;&gt;&gt;&gt;because after that i set the global ^PMOFFTXT with a new index (I)
+&gt;&gt;&gt;&gt;&gt;after
+&gt;&gt;&gt;&gt;&gt;each return.
+
+&gt;&gt;&gt;&gt;&gt;I hope you can help me
+&gt;&gt;&gt;&gt;&gt;Thanks,
+&gt;&gt;&gt;&gt;&gt;Simon
+
+&gt;&gt;&gt;&gt; ---
+&gt;&gt;&gt;&gt; Rob Tweed
+&gt;&gt;&gt;&gt; M/Gateway Developments Ltd
+
+&gt;&gt;&gt;&gt; http://www.mgateway.com
+&gt;&gt;&gt;&gt; ---
+
+&gt;&gt; ---
+&gt;&gt; Rob Tweed
+&gt;&gt; M/Gateway Developments Ltd
+
+&gt;&gt; http://www.mgateway.com
+&gt;&gt; ---
+">
+</POST>
+<POST>
+<POSTER> &quot;Simon&quot; &lt;simon1...@quicknet.nl&gt; </POSTER>
+<POSTDATE> 2007-09-05T06:27:00 </POSTDATE>
+Sorry, I think i managed it already..
+S CRLF=$C(13,10)
+S AI=1
+K ^TEMP
+S XX=&quot;&quot; F  S XX=$O(%KEY(&quot;TA2&quot;,0,XX)) Q:XX=&quot;&quot;  D
+. S TEL=0
+. f I=1:1:($L(%KEY(&quot;TA2&quot;,0,XX),CRLF)-1) D
+.. S ^TEMP(AI)=$G(^TEMP(AI))_$P(%KEY(&quot;TA2&quot;,0,XX),CRLF,I)
+.. S TEL=$G(TEL)+1,AI=AI+1
+. I $G(TEL)'=0 s
+^TEMP(AI)=$G(^TEMP(AI))_$P(%KEY(&quot;TA2&quot;,0,XX),CRLF,(TEL+1)) Q
+. S ^TEMP(AI)=$G(^TEMP(AI))_%KEY(&quot;TA2&quot;,0,XX)
+
+Looks good, doesn't it? :)
+
+&quot;Simon&quot; &lt;simon1 ... @quicknet.nl&gt; schreef in bericht
+news:46dd5365.0@info2.kinich.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt;I don't think that i'm being clear about my problem. (I know its my fault,
+&gt;i have trouble explaining things.)
+&gt; But i'm gonna try it another way.
+&gt; Forget everthing.
+
+&gt; New example: A piece of a global:
+
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;20002MRT009&quot;,1)=150702002 brief gestuurd aan fin.
+&gt; directeur zij moeten nu reageren.
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,1)=14082000 ter plaatse kennis gemaakt en de
+&gt; dienstverlening gepresenteerd. Men h
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,10)=een en ander. Begin 2001 nogmals contacten
+&gt; met de heer Smit
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,11)=09-03-2001 gebeld was niet bereikbaar pas
+&gt; de volgende week.
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,12)=13-07-2001 monique de jong 026 4837195 is
+&gt; hoofd facilitair bedrijf 15-07 belle
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,13)=13-11-2001 monique ziek lang later op
+&gt; terugkomen.
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,14)=17-05-2005 Ben; nieuwe directeur is Hans
+&gt; Blauw, lid van MNN en voorheen werkzaam als NS Vastgoed directeur. Ook bij
+&gt; McDonalds gewerkt. Er staat een afspraak voor 13 juni 10.00 uur
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,15)=12-06-2005 Ben; gesprek met H. Blaauw
+&gt; positief. NOC NSF is eigenaar congreshotel huurder. eigenaar heeft nog
+&gt; niets en er is dringend behoefte aan verbetering van inicht en
+&gt; administratieve ondersteuning. Mevr. Karin van Williggen is Controller en
+&gt; Mark Steinfelder hoofd TD. H.B. zal ikntern overleggen voor een gesprek
+&gt; met mij en een antal operationele collega's.
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,16)=22-08-2005 Ben; heeft het doorgegeven aan
+&gt; NOC NSF daar moet ni het initiatief vandaan komen.
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,17)=12-01-2006 Ben; gebeld niet bereikbaar
+&gt; belt mij terug
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,2)=uurt van NOC/NSF en verricht diverse hand
+&gt; en spandiensten in onderhoud. Degene
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,3)= die nu verantwoordelijk is is een doener
+&gt; en minder beleidsmatig bezig. Het
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,4)=ontbreekt aan een duidelijk inzicht van
+&gt; budgetten en kosten.Is een budgetterin
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,5)=opgesteld.
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,6)=08-09-2000 komt met technische man hier op
+&gt; bezoek belt me wk 37
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,7)=19 september afspraak daar gemaakt voor 9
+&gt; oktober.
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,8)=12oktober tweede gesprek op locatie gehad
+&gt; nu weer even afwachten.
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG01&quot;,9)=04 12 2000 de heer H.Smit comm directeur.
+&gt; de heer pieters vertelde mij
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG03&quot;,1)=25 augustus ter plaatse een informatie
+&gt; gegeven. Wil in de komende week
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG03&quot;,10)=
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG03&quot;,11)=Na bezoek wederom afgesproken dat ik voor
+&gt; de totale groep een presentatie geef. Voorafgaande een aanbieding voor
+&gt; gefaseerde in gebruik name van het syeteem.
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG03&quot;,12)=16-01-2002 is dit overeengekomen.
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG03&quot;,13)=4 maart offerte weg voor ltp en multicard
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG03&quot;,14)=6 mei gebeld stukken waren bij collega,
+&gt; gaar er weer eens achteraan en belt mij.
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG03&quot;,15)=30-05-2002 de heer v.d. Plas gaf mij de
+&gt; kontaktpersoon op het hoofdkantoor. Deze schriftelijke info toegstuurd op
+&gt; 30 mei.2002  Postbus 355 2130 AJ Hoofddorp 02holhoo3005
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG03&quot;,16)=Zijn H. Kuiper Stokersdorpweg 24 7532 PT
+&gt; Enschede. 053 4610710 is vanuit de universiteit een voorstel aan het
+&gt; schrijven. Heeft no Borders ontvangen
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG03&quot;,17)=245-06-2003 gebeld en gehoord dat Plas op
+&gt; hoofdkantoor werkt 023 5659471
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG03&quot;,2)=voorstel doen aan MT centraal. Nijmegen en
+&gt; Utrecht zouden ook mee willen doen.
+&gt; ^KTAT(&quot;VB&quot;,&quot;AI&quot;,&quot;2000AUG03&quot;,3)=FAc. managers krijgen meerdere casino's in
+&gt; beheer. Rol TONED en Prevent.
+
+&gt; Now, let's say, i want to rebuild this global, to, MyNewGlobal(index) and
+&gt; i want to change the index. After every &quot;character &quot;p&quot; a new index must be
+&gt; made.
+
+&gt; So that i would get the following result:
+&gt; MyNewGlobal(1)=150702002 brief gestuurd aan fin. directeur zij moeten nu
+&gt; reageren.
+&gt; MyNewGlobal(2)=14082000 ter
+&gt; MyNewGlobal(3)=laatse kennis gemaakt en de dienstverlening ge
+
+&gt; MyNewGlobal(4)=resenteerd. Men heen en ander.
+&gt; etc...
+
+&gt; As you can see, the character p is used as a delimiter.
+
+&gt; But how would you programm this?
+
+&gt; &quot;Sukesh Hoogan&quot; &lt;sukeshhoo ... @NOSPAMvsnl.com&gt; schreef in bericht
+&gt; news:46dd4d7e.0@info2.kinich.com ...
+&gt;&gt; Simon wrote:
+&gt;&gt;&gt; And after that?
+
+&gt;&gt;&gt; Let's say, i've got a textarea with 20.000 characters. I recognize the
+&gt;&gt;&gt; linebreaks, they are noted as: &quot;$C(13,10)&quot;
+&gt;&gt;&gt; Now I want to save this to a global, like your MyGlobal(1), etc.After
+&gt;&gt;&gt; each break(&quot;$C(13,10)&quot;) the index of the global rises.
+
+&gt;&gt;&gt; Rough source:(For example)
+&gt;&gt;&gt; &quot;hello my name is simon, i'm 29 yearls old  $C(13,10) and i live in the
+&gt;&gt;&gt; Netherlands, the country of true freedom $C(13,10)$C(13,10), (is it?)&quot;
+
+&gt;&gt;&gt; After saving:
+
+&gt;&gt;  ^MyGlobal(1)=hello my name is simon, i'm 29 yearls old
+&gt;&gt;  ^MyGlobal(2)=and i live in the Netherlands, the country of true freedom
+&gt;&gt;  ^MyGlobal(3)=
+&gt;&gt;  ^MyGlobal(4)=(is it?)
+
+&gt;&gt; When you save, you keep track of the index. In the above case it is 4
+&gt;&gt; From any other method you read it and do what you wish to it
+&gt;&gt; For example
+
+&gt;&gt; MyString=^MyGlobal(1)_&quot;$C(13,10 &quot;_^MyGlobal(2)_&quot;$C(13,10) &quot;...etc.
+
+&gt;&gt; Of course, remember that MyString cannot be more than 32KB long either.
+&gt;&gt; If it is then you should concatenate globals of approx. 30KB length each
+
+&gt;&gt; MyString(1)=^MyGlobal(1)_&quot;$C(13,10) &quot;_^MyGlobal(2)_&quot;$C(13,10) &quot;...etc.
+&gt;&gt; MyString(2)==^MyGlobal(25)_&quot;$C(13,10) &quot;_^MyGlobal(26)_&quot;$C(13,10)&quot;...etc.
+
+&gt;&gt; Regards
+&gt;&gt; Sukesh
+
+&gt;&gt;&gt; How would you do this? (Keep in mind that i can't do it my way, because
+&gt;&gt;&gt; of the amount of characters, too large for one variable)
+&gt;&gt;&gt; I would need 2 loops, one to loop through %KEY(&quot;TEXTAREA,X), and one
+&gt;&gt;&gt; forloop through the line.
+
+&gt;&gt;&gt; Thanks,
+&gt;&gt;&gt; Simon
+
+&gt;&gt;&gt; &quot;Sukesh Hoogan&quot; &lt;sukeshhoo ... @NOSPAMvsnl.com&gt; schreef in bericht
+&gt;&gt;&gt; news:46dd21da.0@info2.kinich.com ...
+&gt;&gt;&gt;&gt; Simon
+
+&gt;&gt;&gt;&gt; A workaround save each piece of data separately in globals say,
+&gt;&gt;&gt;&gt; ^MyTempglobal(1), etc.
+&gt;&gt;&gt;&gt; Then read it from any other method/routine
+
+&gt;&gt;&gt;&gt; Regards
+&gt;&gt;&gt;&gt; Sukesh Hoogan
+&gt;&gt;&gt;&gt; Bombay, India
+
+&gt;&gt;&gt;&gt; Simon wrote:
+&gt;&gt;&gt;&gt;&gt; &quot;Why concatenate the lines together&quot;
+&gt;&gt;&gt;&gt;&gt; Because otherwise I can't divide the whole into &quot;returns&quot;.
+&gt;&gt;&gt;&gt;&gt; After each linebreak, after each ($C(13,10)), the global PMOFFTXT must
+&gt;&gt;&gt;&gt;&gt; make a new index.
+&gt;&gt;&gt;&gt;&gt; (
+&gt;&gt;&gt;&gt;&gt; I $G(TEXT)'=&quot;&quot; F I=1:1:$L(TEXT,CRLF) d
+&gt;&gt;&gt;&gt;&gt; . S ^PMOFFTXT($G(%KEY(&quot;A0&quot;)),(I))=$P(TEXT,CRLF,I)
+&gt;&gt;&gt;&gt;&gt; )
+
+&gt;&gt;&gt;&gt;&gt; If I don't store it to one variable, i don't recognize a return being
+&gt;&gt;&gt;&gt;&gt; ginven on the next line.
+
+&gt;&gt;&gt;&gt;&gt; &quot;Rob Tweed&quot; &lt;rtw ... @blueyonder.co.uk&gt; schreef in bericht
+&gt;&gt;&gt;&gt;&gt; news:ei4od3hkuor5kfaudelg29tn63abmqq9tr@4ax.com ...
+&gt;&gt;&gt;&gt;&gt;&gt; The reason WebLink splits long text into the separate lines is to
+&gt;&gt;&gt;&gt;&gt;&gt; avoid the very problem you're pushing Cache back into again!
+
+&gt;&gt;&gt;&gt;&gt;&gt; Why concatenate the lines together?  Just merge them from the %KEY
+&gt;&gt;&gt;&gt;&gt;&gt; array to your global, eg
+
+&gt;&gt;&gt;&gt;&gt;&gt; m ^PMOFFTXT($G(%KEY(&quot;A0&quot;)))=%KEY(&quot;TA2&quot;)
+
+&gt;&gt;&gt;&gt;&gt;&gt; I'm also surprised you're still manually writing hand-crafted WebLink
+&gt;&gt;&gt;&gt;&gt;&gt; code!
+
+&gt;&gt;&gt;&gt;&gt;&gt; On Mon, 3 Sep 2007 14:32:48 +0200, &quot;Simon&quot; &lt;simon1 ... @quicknet.nl&gt;
+&gt;&gt;&gt;&gt;&gt;&gt; wrote:
+
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; Hi everybody, i've got a relative simple question, i think.
+
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; Problem: User get's an maxstring-error from caché
+
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; Cause: Too much textinput for single variable.
+
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; This is the situation, i got a form with a textarea, a global named
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; PMOFFHIS
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; in witch the text must be stored and the index of that global is
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; depended on
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; &quot;returns&quot;.
+
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; For example:
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; Hi, this is the first line of the textarea
+
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; this is the third line
+
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; Button: Save
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; After saving:
+
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; ^PMOFFHIS(1)=&quot;Hi, this is the first line of the textarea&quot;
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; ^PMOFFHIS(2)=&quot;&quot;
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; ^PMOFFHIS(3)=&quot;Hi, this is the first line of the textarea&quot;
+
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; When the text increases, it no longer recognises
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; %KEY(&quot;NAMETEXTAREA&quot;). Caché
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; divides %KEY into 1 to ... as follows: %KEY&quot;(&quot;NAMETEXTAREA&quot;,1)
+&gt;&gt;&gt;&gt;&gt;&gt;&gt;            %KEY&quot;(&quot;NAMETEXTAREA&quot;,2)
+&gt;&gt;&gt;&gt;&gt;&gt;&gt;            %KEY&quot;(&quot;NAMETEXTAREA&quot;,3)
+&gt;&gt;&gt;&gt;&gt;&gt;&gt;            etc.
+
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; The routine does the following:(ta2 is name of the textarea)
+&gt;&gt;&gt;&gt;&gt;&gt;&gt;        S CRLF=$C(13,10)
+
+&gt;&gt;&gt;&gt;&gt;&gt;&gt;         S TEXT=$G(%KEY(&quot;TA2&quot;))
+
+&gt;&gt;&gt;&gt;&gt;&gt;&gt;         S XX=&quot;&quot; F  S XX=$O(%KEY(&quot;TA2&quot;,0,XX)) Q:XX=&quot;&quot;  D
+&gt;&gt;&gt;&gt;&gt;&gt;&gt;         . S TEXT=$G(TEXT)_$G(%KEY(&quot;TA2&quot;,0,XX))
+
+&gt;&gt;&gt;&gt;&gt;&gt;&gt;        k ^PMOFFTXT($G(%KEY(&quot;A0&quot;)))
+
+&gt;&gt;&gt;&gt;&gt;&gt;&gt;         I $G(TEXT)'=&quot;&quot; F I=1:1:$L(TEXT,CRLF) d
+&gt;&gt;&gt;&gt;&gt;&gt;&gt;         . S ^PMOFFTXT($G(%KEY(&quot;A0&quot;)),(I))=$P(TEXT,CRLF,I)
+
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; But this gives the MAXSTRING error, whenever there is too much
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; tekst. The
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; variable TEXT gets too large! Now my question, how can I program
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; this
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; different so that i don't have to put all data into one variable?
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; The reason why i set the variable to the whole %KEY of the textarea
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; is
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; because after that i set the global ^PMOFFTXT with a new index (I)
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; after
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; each return.
+
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; I hope you can help me
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; Thanks,
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; Simon
+">
+
+...
+read more »
+</POST>
+<POST>
+<POSTER> Sukesh Hoogan &lt;sukeshhoo...@NOSPAMvsnl.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T10:28:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Simon wrote:
+&gt; Sorry, I think i managed it already..
+&gt;     S CRLF=$C(13,10)
+&gt;     S AI=1
+&gt;     K ^TEMP
+&gt;      S XX=&quot;&quot; F  S XX=$O(%KEY(&quot;TA2&quot;,0,XX)) Q:XX=&quot;&quot;  D
+&gt;    . S TEL=0
+&gt;    . f I=1:1:($L(%KEY(&quot;TA2&quot;,0,XX),CRLF)-1) D
+&gt;    .. S ^TEMP(AI)=$G(^TEMP(AI))_$P(%KEY(&quot;TA2&quot;,0,XX),CRLF,I)
+&gt;    .. S TEL=$G(TEL)+1,AI=AI+1
+&gt;    . I $G(TEL)'=0 s
+&gt; ^TEMP(AI)=$G(^TEMP(AI))_$P(%KEY(&quot;TA2&quot;,0,XX),CRLF,(TEL+1)) Q
+&gt;    . S ^TEMP(AI)=$G(^TEMP(AI))_%KEY(&quot;TA2&quot;,0,XX)
+
+&gt; Looks good, doesn't it? :)
+">
+
+Simon
+
+Yes it does. Well done.
+
+Regards
+Sukesh Hoogan
+Bombay, India
+</POST>
+<POST>
+<POSTER> Rob Tweed &lt;rtw...@blueyonder.co.uk&gt; </POSTER>
+<POSTDATE> 2007-09-05T14:12:00 </POSTDATE>
+Simon
+
+For eXtc Web Developer see www.mgateway.com .  The site is now updated
+(some parts will access old pages for a while but the EWD section is
+completely rewritten) and should give you all the information you
+need.
+
+For those interested in a bit of background on the technology used for
+the new site, see my blog at www.outoftheslipstream.com
+
+Rob
+
+On Tue, 4 Sep 2007 17:11:35 +0200, &quot;Simon&quot; &lt;simon1 ... @quicknet.nl&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;Thanks Rob, i know it's the hard way but i am not familiar with the other
+&gt;ways for i only know off  WebLink Version 4.3.
+&gt;I'm am curious though, to weblink developer and eXtc Web Developer, as you
+&gt;know, but i don't know how to implant it yet.
+&gt;Have not found the time to look at it yet.
+&gt;But thanks, i had thought of a similar kind of solution and i'm trying to
+&gt;make it work.
+
+&gt;&quot;Rob Tweed&quot; &lt;rtw ... @blueyonder.co.uk&gt; schreef in bericht
+&gt; news:l4qqd315mde8e6rbipvfesdpcgqadgofu7@4ax.com ...
+&gt;&gt; Well you have to be smart and buffer the splitting and reconstruction
+&gt;&gt; - start at line one in %KEY and split out the lines with $piece using
+&gt;&gt; CRLF as the delimiter.  Put the last piece to one side, then move to
+&gt;&gt; line 2 of %KEY.  Concatenate what you had left over to the first
+&gt;&gt; piece.
+
+&gt;&gt; Repeat till the end.  Make the last bit you're left with a line of its
+&gt;&gt; own
+
+&gt;&gt; You shouldn't then end up with a maxstring error and you'll have all
+&gt;&gt; the lines split out.
+
+&gt;&gt; If you use WebLink Developer or eXtc Web Developer, you find that all
+&gt;&gt; this kind of parsing gets done for you - what you're trying to do is
+&gt;&gt; what you normally have to do every time you process a textarea, which
+&gt;&gt; is why I automated it!
+
+&gt;&gt; That's why I commented on the fact that you're using manually
+&gt;&gt; hand-crafted WebLink code... you're doing it the hard way!!
+
+&gt;&gt; On Tue, 4 Sep 2007 10:08:09 +0200, &quot;Simon&quot; &lt;simon1 ... @quicknet.nl&gt;
+&gt;&gt; wrote:
+
+&gt;&gt;&gt;&quot;Why concatenate the lines together&quot;
+&gt;&gt;&gt;Because otherwise I can't divide the whole into &quot;returns&quot;.
+&gt;&gt;&gt;After each linebreak, after each ($C(13,10)), the global PMOFFTXT must
+&gt;&gt;&gt;make
+&gt;&gt;&gt;a new index.
+&gt;&gt;&gt;(
+&gt;&gt;&gt;I $G(TEXT)'=&quot;&quot; F I=1:1:$L(TEXT,CRLF) d
+&gt;&gt;&gt;. S ^PMOFFTXT($G(%KEY(&quot;A0&quot;)),(I))=$P(TEXT,CRLF,I)
+&gt;&gt;&gt;)
+
+&gt;&gt;&gt;If I don't store it to one variable, i don't recognize a return being
+&gt;&gt;&gt;ginven
+&gt;&gt;&gt;on the next line.
+
+&gt;&gt;&gt;&quot;Rob Tweed&quot; &lt;rtw ... @blueyonder.co.uk&gt; schreef in bericht
+&gt;&gt;&gt; news:ei4od3hkuor5kfaudelg29tn63abmqq9tr@4ax.com ...
+&gt;&gt;&gt;&gt; The reason WebLink splits long text into the separate lines is to
+&gt;&gt;&gt;&gt; avoid the very problem you're pushing Cache back into again!
+
+&gt;&gt;&gt;&gt; Why concatenate the lines together?  Just merge them from the %KEY
+&gt;&gt;&gt;&gt; array to your global, eg
+
+&gt;&gt;&gt;&gt; m ^PMOFFTXT($G(%KEY(&quot;A0&quot;)))=%KEY(&quot;TA2&quot;)
+
+&gt;&gt;&gt;&gt; I'm also surprised you're still manually writing hand-crafted WebLink
+&gt;&gt;&gt;&gt; code!
+
+&gt;&gt;&gt;&gt; On Mon, 3 Sep 2007 14:32:48 +0200, &quot;Simon&quot; &lt;simon1 ... @quicknet.nl&gt;
+&gt;&gt;&gt;&gt; wrote:
+
+&gt;&gt;&gt;&gt;&gt;Hi everybody, i've got a relative simple question, i think.
+
+&gt;&gt;&gt;&gt;&gt;Problem: User get's an maxstring-error from caché
+
+&gt;&gt;&gt;&gt;&gt;Cause: Too much textinput for single variable.
+
+&gt;&gt;&gt;&gt;&gt;This is the situation, i got a form with a textarea, a global named
+&gt;&gt;&gt;&gt;&gt;PMOFFHIS
+&gt;&gt;&gt;&gt;&gt;in witch the text must be stored and the index of that global is
+&gt;&gt;&gt;&gt;&gt;depended
+&gt;&gt;&gt;&gt;&gt;on
+&gt;&gt;&gt;&gt;&gt;&quot;returns&quot;.
+
+&gt;&gt;&gt;&gt;&gt;For example:
+&gt;&gt;&gt;&gt;&gt;Hi, this is the first line of the textarea
+
+&gt;&gt;&gt;&gt;&gt;this is the third line
+
+&gt;&gt;&gt;&gt;&gt;Button: Save
+&gt;&gt;&gt;&gt;&gt;After saving:
+
+&gt;&gt;&gt;&gt;&gt;^PMOFFHIS(1)=&quot;Hi, this is the first line of the textarea&quot;
+&gt;&gt;&gt;&gt;&gt;^PMOFFHIS(2)=&quot;&quot;
+&gt;&gt;&gt;&gt;&gt;^PMOFFHIS(3)=&quot;Hi, this is the first line of the textarea&quot;
+
+&gt;&gt;&gt;&gt;&gt;When the text increases, it no longer recognises %KEY(&quot;NAMETEXTAREA&quot;).
+&gt;&gt;&gt;&gt;&gt;Caché
+&gt;&gt;&gt;&gt;&gt;divides %KEY into 1 to ... as follows: %KEY&quot;(&quot;NAMETEXTAREA&quot;,1)
+&gt;&gt;&gt;&gt;&gt;            %KEY&quot;(&quot;NAMETEXTAREA&quot;,2)
+&gt;&gt;&gt;&gt;&gt;            %KEY&quot;(&quot;NAMETEXTAREA&quot;,3)
+&gt;&gt;&gt;&gt;&gt;            etc.
+
+&gt;&gt;&gt;&gt;&gt;The routine does the following:(ta2 is name of the textarea)
+&gt;&gt;&gt;&gt;&gt;        S CRLF=$C(13,10)
+
+&gt;&gt;&gt;&gt;&gt;         S TEXT=$G(%KEY(&quot;TA2&quot;))
+
+&gt;&gt;&gt;&gt;&gt;         S XX=&quot;&quot; F  S XX=$O(%KEY(&quot;TA2&quot;,0,XX)) Q:XX=&quot;&quot;  D
+&gt;&gt;&gt;&gt;&gt;         . S TEXT=$G(TEXT)_$G(%KEY(&quot;TA2&quot;,0,XX))
+
+&gt;&gt;&gt;&gt;&gt;        k ^PMOFFTXT($G(%KEY(&quot;A0&quot;)))
+
+&gt;&gt;&gt;&gt;&gt;         I $G(TEXT)'=&quot;&quot; F I=1:1:$L(TEXT,CRLF) d
+&gt;&gt;&gt;&gt;&gt;         . S ^PMOFFTXT($G(%KEY(&quot;A0&quot;)),(I))=$P(TEXT,CRLF,I)
+
+&gt;&gt;&gt;&gt;&gt;But this gives the MAXSTRING error, whenever there is too much tekst.
+&gt;&gt;&gt;&gt;&gt;The
+&gt;&gt;&gt;&gt;&gt;variable TEXT gets too large! Now my question, how can I program this
+&gt;&gt;&gt;&gt;&gt;different so that i don't have to put all data into one variable?
+&gt;&gt;&gt;&gt;&gt;The reason why i set the variable to the whole %KEY of the textarea is
+&gt;&gt;&gt;&gt;&gt;because after that i set the global ^PMOFFTXT with a new index (I) after
+&gt;&gt;&gt;&gt;&gt;each return.
+
+&gt;&gt;&gt;&gt;&gt;I hope you can help me
+&gt;&gt;&gt;&gt;&gt;Thanks,
+&gt;&gt;&gt;&gt;&gt;Simon
+
+&gt;&gt;&gt;&gt; ---
+&gt;&gt;&gt;&gt; Rob Tweed
+&gt;&gt;&gt;&gt; M/Gateway Developments Ltd
+
+&gt;&gt;&gt;&gt; http://www.mgateway.com
+&gt;&gt;&gt;&gt; ---
+
+&gt;&gt; ---
+&gt;&gt; Rob Tweed
+&gt;&gt; M/Gateway Developments Ltd
+
+&gt;&gt; http://www.mgateway.com
+&gt;&gt; ---
+">
+
+---
+Rob Tweed
+M/Gateway Developments Ltd
+
+http://www.mgateway.com
+---
+</POST>
+<POST>
+<POSTER> &quot;Mike Minor&quot; &lt;mminor...@earthlink.net&gt; </POSTER>
+<POSTDATE> 2007-09-06T13:51:00 </POSTDATE>
+Rob,
+
+I just reviewed the new EWD section on your Mgateway site, and noticed the
+mention of some fixes to what I think were the problems I had loading and
+using the EWD VA. I'm excited about that and plan on revisiting this soon.
+The new information on how to use EWD that you have on your new website goes
+a long way in explaining how to utilize EWD.
+
+Good work. I look forward to giving this another try.
+
+Cheers!
+
+Mike Minor
+Z-Code Systems, Inc,
+
+<QUOTE PREVIOUSPOST="
+&quot;Rob Tweed&quot; &lt;rtw ... @blueyonder.co.uk&gt; wrote in message
+">
+
+news:57std3dfv9ieqgo2g2mid1jhuroolqhiol@4ax.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Simon
+
+&gt; For eXtc Web Developer see www.mgateway.com .  The site is now updated
+&gt; (some parts will access old pages for a while but the EWD section is
+&gt; completely rewritten) and should give you all the information you
+&gt; need.
+
+&gt; For those interested in a bit of background on the technology used for
+&gt; the new site, see my blog at www.outoftheslipstream.com
+
+&gt; Rob
+
+&gt; On Tue, 4 Sep 2007 17:11:35 +0200, &quot;Simon&quot; &lt;simon1 ... @quicknet.nl&gt;
+&gt; wrote:
+
+&gt;&gt;Thanks Rob, i know it's the hard way but i am not familiar with the other
+&gt;&gt;ways for i only know off  WebLink Version 4.3.
+&gt;&gt;I'm am curious though, to weblink developer and eXtc Web Developer, as you
+&gt;&gt;know, but i don't know how to implant it yet.
+&gt;&gt;Have not found the time to look at it yet.
+&gt;&gt;But thanks, i had thought of a similar kind of solution and i'm trying to
+&gt;&gt;make it work.
+
+&gt;&gt;&quot;Rob Tweed&quot; &lt;rtw ... @blueyonder.co.uk&gt; schreef in bericht
+&gt;&gt; news:l4qqd315mde8e6rbipvfesdpcgqadgofu7@4ax.com ...
+&gt;&gt;&gt; Well you have to be smart and buffer the splitting and reconstruction
+&gt;&gt;&gt; - start at line one in %KEY and split out the lines with $piece using
+&gt;&gt;&gt; CRLF as the delimiter.  Put the last piece to one side, then move to
+&gt;&gt;&gt; line 2 of %KEY.  Concatenate what you had left over to the first
+&gt;&gt;&gt; piece.
+
+&gt;&gt;&gt; Repeat till the end.  Make the last bit you're left with a line of its
+&gt;&gt;&gt; own
+
+&gt;&gt;&gt; You shouldn't then end up with a maxstring error and you'll have all
+&gt;&gt;&gt; the lines split out.
+
+&gt;&gt;&gt; If you use WebLink Developer or eXtc Web Developer, you find that all
+&gt;&gt;&gt; this kind of parsing gets done for you - what you're trying to do is
+&gt;&gt;&gt; what you normally have to do every time you process a textarea, which
+&gt;&gt;&gt; is why I automated it!
+
+&gt;&gt;&gt; That's why I commented on the fact that you're using manually
+&gt;&gt;&gt; hand-crafted WebLink code... you're doing it the hard way!!
+
+&gt;&gt;&gt; On Tue, 4 Sep 2007 10:08:09 +0200, &quot;Simon&quot; &lt;simon1 ... @quicknet.nl&gt;
+&gt;&gt;&gt; wrote:
+
+&gt;&gt;&gt;&gt;&quot;Why concatenate the lines together&quot;
+&gt;&gt;&gt;&gt;Because otherwise I can't divide the whole into &quot;returns&quot;.
+&gt;&gt;&gt;&gt;After each linebreak, after each ($C(13,10)), the global PMOFFTXT must
+&gt;&gt;&gt;&gt;make
+&gt;&gt;&gt;&gt;a new index.
+&gt;&gt;&gt;&gt;(
+&gt;&gt;&gt;&gt;I $G(TEXT)'=&quot;&quot; F I=1:1:$L(TEXT,CRLF) d
+&gt;&gt;&gt;&gt;. S ^PMOFFTXT($G(%KEY(&quot;A0&quot;)),(I))=$P(TEXT,CRLF,I)
+&gt;&gt;&gt;&gt;)
+
+&gt;&gt;&gt;&gt;If I don't store it to one variable, i don't recognize a return being
+&gt;&gt;&gt;&gt;ginven
+&gt;&gt;&gt;&gt;on the next line.
+
+&gt;&gt;&gt;&gt;&quot;Rob Tweed&quot; &lt;rtw ... @blueyonder.co.uk&gt; schreef in bericht
+&gt;&gt;&gt;&gt; news:ei4od3hkuor5kfaudelg29tn63abmqq9tr@4ax.com ...
+&gt;&gt;&gt;&gt;&gt; The reason WebLink splits long text into the separate lines is to
+&gt;&gt;&gt;&gt;&gt; avoid the very problem you're pushing Cache back into again!
+
+&gt;&gt;&gt;&gt;&gt; Why concatenate the lines together?  Just merge them from the %KEY
+&gt;&gt;&gt;&gt;&gt; array to your global, eg
+
+&gt;&gt;&gt;&gt;&gt; m ^PMOFFTXT($G(%KEY(&quot;A0&quot;)))=%KEY(&quot;TA2&quot;)
+
+&gt;&gt;&gt;&gt;&gt; I'm also surprised you're still manually writing hand-crafted WebLink
+&gt;&gt;&gt;&gt;&gt; code!
+
+&gt;&gt;&gt;&gt;&gt; On Mon, 3 Sep 2007 14:32:48 +0200, &quot;Simon&quot; &lt;simon1 ... @quicknet.nl&gt;
+&gt;&gt;&gt;&gt;&gt; wrote:
+
+&gt;&gt;&gt;&gt;&gt;&gt;Hi everybody, i've got a relative simple question, i think.
+
+&gt;&gt;&gt;&gt;&gt;&gt;Problem: User get's an maxstring-error from caché
+
+&gt;&gt;&gt;&gt;&gt;&gt;Cause: Too much textinput for single variable.
+
+&gt;&gt;&gt;&gt;&gt;&gt;This is the situation, i got a form with a textarea, a global named
+&gt;&gt;&gt;&gt;&gt;&gt;PMOFFHIS
+&gt;&gt;&gt;&gt;&gt;&gt;in witch the text must be stored and the index of that global is
+&gt;&gt;&gt;&gt;&gt;&gt;depended
+&gt;&gt;&gt;&gt;&gt;&gt;on
+&gt;&gt;&gt;&gt;&gt;&gt;&quot;returns&quot;.
+
+&gt;&gt;&gt;&gt;&gt;&gt;For example:
+&gt;&gt;&gt;&gt;&gt;&gt;Hi, this is the first line of the textarea
+
+&gt;&gt;&gt;&gt;&gt;&gt;this is the third line
+
+&gt;&gt;&gt;&gt;&gt;&gt;Button: Save
+&gt;&gt;&gt;&gt;&gt;&gt;After saving:
+
+&gt;&gt;&gt;&gt;&gt;&gt;^PMOFFHIS(1)=&quot;Hi, this is the first line of the textarea&quot;
+&gt;&gt;&gt;&gt;&gt;&gt;^PMOFFHIS(2)=&quot;&quot;
+&gt;&gt;&gt;&gt;&gt;&gt;^PMOFFHIS(3)=&quot;Hi, this is the first line of the textarea&quot;
+
+&gt;&gt;&gt;&gt;&gt;&gt;When the text increases, it no longer recognises %KEY(&quot;NAMETEXTAREA&quot;).
+&gt;&gt;&gt;&gt;&gt;&gt;Caché
+&gt;&gt;&gt;&gt;&gt;&gt;divides %KEY into 1 to ... as follows: %KEY&quot;(&quot;NAMETEXTAREA&quot;,1)
+&gt;&gt;&gt;&gt;&gt;&gt;            %KEY&quot;(&quot;NAMETEXTAREA&quot;,2)
+&gt;&gt;&gt;&gt;&gt;&gt;            %KEY&quot;(&quot;NAMETEXTAREA&quot;,3)
+&gt;&gt;&gt;&gt;&gt;&gt;            etc.
+
+&gt;&gt;&gt;&gt;&gt;&gt;The routine does the following:(ta2 is name of the textarea)
+&gt;&gt;&gt;&gt;&gt;&gt;        S CRLF=$C(13,10)
+
+&gt;&gt;&gt;&gt;&gt;&gt;         S TEXT=$G(%KEY(&quot;TA2&quot;))
+
+&gt;&gt;&gt;&gt;&gt;&gt;         S XX=&quot;&quot; F  S XX=$O(%KEY(&quot;TA2&quot;,0,XX)) Q:XX=&quot;&quot;  D
+&gt;&gt;&gt;&gt;&gt;&gt;         . S TEXT=$G(TEXT)_$G(%KEY(&quot;TA2&quot;,0,XX))
+
+&gt;&gt;&gt;&gt;&gt;&gt;        k ^PMOFFTXT($G(%KEY(&quot;A0&quot;)))
+
+&gt;&gt;&gt;&gt;&gt;&gt;         I $G(TEXT)'=&quot;&quot; F I=1:1:$L(TEXT,CRLF) d
+&gt;&gt;&gt;&gt;&gt;&gt;         . S ^PMOFFTXT($G(%KEY(&quot;A0&quot;)),(I))=$P(TEXT,CRLF,I)
+
+&gt;&gt;&gt;&gt;&gt;&gt;But this gives the MAXSTRING error, whenever there is too much tekst.
+&gt;&gt;&gt;&gt;&gt;&gt;The
+&gt;&gt;&gt;&gt;&gt;&gt;variable TEXT gets too large! Now my question, how can I program this
+&gt;&gt;&gt;&gt;&gt;&gt;different so that i don't have to put all data into one variable?
+&gt;&gt;&gt;&gt;&gt;&gt;The reason why i set the variable to the whole %KEY of the textarea is
+&gt;&gt;&gt;&gt;&gt;&gt;because after that i set the global ^PMOFFTXT with a new index (I)
+&gt;&gt;&gt;&gt;&gt;&gt;after
+&gt;&gt;&gt;&gt;&gt;&gt;each return.
+
+&gt;&gt;&gt;&gt;&gt;&gt;I hope you can help me
+&gt;&gt;&gt;&gt;&gt;&gt;Thanks,
+&gt;&gt;&gt;&gt;&gt;&gt;Simon
+
+&gt;&gt;&gt;&gt;&gt; ---
+&gt;&gt;&gt;&gt;&gt; Rob Tweed
+&gt;&gt;&gt;&gt;&gt; M/Gateway Developments Ltd
+
+&gt;&gt;&gt;&gt;&gt; http://www.mgateway.com
+&gt;&gt;&gt;&gt;&gt; ---
+
+&gt;&gt;&gt; ---
+&gt;&gt;&gt; Rob Tweed
+&gt;&gt;&gt; M/Gateway Developments Ltd
+
+&gt;&gt;&gt; http://www.mgateway.com
+&gt;&gt;&gt; ---
+
+&gt; ---
+&gt; Rob Tweed
+&gt; M/Gateway Developments Ltd
+
+&gt; http://www.mgateway.com
+&gt; ---
+">
+</POST>
+</TEXT>
+</BODY>
+</DOC>

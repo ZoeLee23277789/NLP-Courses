@@ -1,0 +1,303 @@
+<DOC>
+<DOCID> eng-NG-31-104294-8878247 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-16T00:29:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Problems geocoding addresses that I know work
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> lrice648 &lt;lrice...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-16T00:29:00 </POSTDATE>
+I have a strange problem that I don't know if anyone else has
+experienced. I've searched around and not found something similar.
+
+Im pulling information from a postgres database, using PHP to turn it
+into XML and then plotting that info with google maps.
+
+The problem I'm having is this: I seem to be getting almost a 50%
+rejection rate on addresses that I know otherwise I can geocode. It
+was hard at first for me to tell because my data pool is relatively
+large, but using an error display I see a lot of perfectly fine
+addresses that are failing to geocode.
+
+To test it, I also along with the dynamic plotting a static plot
+(basically just an example plugged into the page) whereby you can just
+plot a single point with a single textbox input, I can copy the
+address into it and it will plot the address, or any variation of it.
+I even messed it up by putting in apt numbers and garbled stuff and it
+works like a charm.
+
+The function I use to plot the points is somewhat different, it has
+some extra arguments but for the most part its exactly the same syntax
+for geocoding.
+
+I can post the code if that would help, but is there some obvious tip
+about this that I might be missing?
+
+If this has been posted before I apologize, and thanks in advance for
+any help.
+</POST>
+<POST>
+<POSTER> &quot;Mike Williams [Maps API Guru]&quot; &lt;nos...@econym.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2007-10-16T01:48:00 </POSTDATE>
+The behaviour of the geocoder changed a short while ago. If you're
+throwing lots of requests without delays, then many of them will be
+rejected with error 620 G_GEO_TOO_MANY_QUERIES.
+
+If that is your problem, the easiest and best solution is to store the
+coordinates in your database and use those instead of regeocoding the
+addresses every time you use them.
+
+If that's not possible, then:
+
+Add a delay between requests (I recommend 100ms but other people
+have suggested 25ms or 250ms)
+
+Use .getLocations instead of .getLatLng
+
+Check the response code for error 620 and retry the request
+after a delay.
+
+Apart from the fact that that's more work to code, it's also going to
+run noticeably slower than using stored coordinates.
+
+--
+http://econym.googlepages.com/index.htm
+The Blackpool Community Church Javascript Team
+</POST>
+<POST>
+<POSTER> lrice648 &lt;lrice...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-18T02:30:00 </POSTDATE>
+Thanks a lot for your help. I looked at some of the examples you have
+on you're webpage (which are great by the way), and used one of your
+geocoding examples that implements getLocation() along with some great
+errorchecking/reporting, and Im getting an error &quot;Too many queries:
+the daily geocoding quota for this site has been exceeded&quot;, which is
+strange because after going through several points not plotting, it
+then plots them later, it also plots probably 10-15 before it says
+this.
+
+You mentioned putting a delay, I'm not highly experienced with
+javascript but there seems to be a debate as to implement delays. Some
+seem to advocate using setTimeout(), while others have made custom
+functions to do this. It seemed to me that the argument was wether
+these custom functions really worked, or did they just delay the
+display of something while not actually delaying the actual processing
+of code (which is what I need). How would you recommend adding a
+delay?
+
+Im trying to read lines from a XML document, and as it reads a line it
+sends the address to the function that geocodes and displays the
+point  - which seems to not work well with setTimeout(), do I need to
+totally rethink the way I have my script organized?
+
+Do you have an example on your site that illustrates this? (I looked
+and couldn't really find one).
+
+Thanks again for the help!
+
+On Oct 16, 1:48 am, &quot;Mike Williams [Maps API Guru]&quot;
+
+<QUOTE PREVIOUSPOST="
+&lt;nos ... @econym.demon.co.uk&gt; wrote:
+&gt; The behaviour of the geocoder changed a short while ago. If you're
+&gt; throwing lots of requests without delays, then many of them will be
+&gt; rejected with error 620 G_GEO_TOO_MANY_QUERIES.
+
+&gt; If that is your problem, the easiest and best solution is to store the
+&gt; coordinates in your database and use those instead of regeocoding the
+&gt; addresses every time you use them.
+
+&gt; If that's not possible, then:
+
+&gt;         Add a delay between requests (I recommend 100ms but other people
+&gt;         have suggested 25ms or 250ms)
+
+&gt;         Use .getLocations instead of .getLatLng
+
+&gt;         Check the response code for error 620 and retry the request
+&gt;         after a delay.
+
+&gt; Apart from the fact that that's more work to code, it's also going to
+&gt; run noticeably slower than using stored coordinates.
+
+&gt; -- http://econym.googlepages.com/index.htm
+&gt; The Blackpool Community Church Javascript Team
+">
+</POST>
+<POST>
+<POSTER> &quot;mapp...@googlemail.com&quot; &lt;mapp...@googlemail.com&gt; </POSTER>
+<POSTDATE> 2007-10-18T05:33:00 </POSTDATE>
+http://gmaps-samples.googlecode.com/svn/trunk/geocoder/delayed.html
+
+This geocodes 9 locations with a half second delay per request (500
+milliseconds)
+
+Mapperz
+http://mapperz.blogspot.com/
+
+On Oct 18, 7:30 am, lrice648 &lt;lrice ... @hotmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Thanks a lot for your help. I looked at some of the examples you have
+&gt; on you're webpage (which are great by the way), and used one of your
+&gt; geocoding examples that implements getLocation() along with some great
+&gt; errorchecking/reporting, and Im getting an error &quot;Too many queries:
+&gt; the daily geocoding quota for this site has been exceeded&quot;, which is
+&gt; strange because after going through several points not plotting, it
+&gt; then plots them later, it also plots probably 10-15 before it says
+&gt; this.
+
+&gt; You mentioned putting a delay, I'm not highly experienced with
+&gt; javascript but there seems to be a debate as to implement delays. Some
+&gt; seem to advocate using setTimeout(), while others have made custom
+&gt; functions to do this. It seemed to me that the argument was wether
+&gt; these custom functions really worked, or did they just delay the
+&gt; display of something while not actually delaying the actual processing
+&gt; of code (which is what I need). How would you recommend adding a
+&gt; delay?
+
+&gt; Im trying to read lines from a XML document, and as it reads a line it
+&gt; sends the address to the function that geocodes and displays the
+&gt; point  - which seems to not work well with setTimeout(), do I need to
+&gt; totally rethink the way I have my script organized?
+
+&gt; Do you have an example on your site that illustrates this? (I looked
+&gt; and couldn't really find one).
+
+&gt; Thanks again for the help!
+
+&gt; On Oct 16, 1:48 am, &quot;Mike Williams [Maps API Guru]&quot;
+
+&gt; &lt;nos ... @econym.demon.co.uk&gt; wrote:
+&gt; &gt; The behaviour of the geocoder changed a short while ago. If you're
+&gt; &gt; throwing lots of requests without delays, then many of them will be
+&gt; &gt; rejected with error 620 G_GEO_TOO_MANY_QUERIES.
+
+&gt; &gt; If that is your problem, the easiest and best solution is to store the
+&gt; &gt; coordinates in your database and use those instead of regeocoding the
+&gt; &gt; addresses every time you use them.
+
+&gt; &gt; If that's not possible, then:
+
+&gt; &gt;         Add a delay between requests (I recommend 100ms but other people
+&gt; &gt;         have suggested 25ms or 250ms)
+
+&gt; &gt;         Use .getLocations instead of .getLatLng
+
+&gt; &gt;         Check the response code for error 620 and retry the request
+&gt; &gt;         after a delay.
+
+&gt; &gt; Apart from the fact that that's more work to code, it's also going to
+&gt; &gt; run noticeably slower than using stored coordinates.
+
+&gt; &gt; -- http://econym.googlepages.com/index.htm
+&gt; &gt; The Blackpool Community Church Javascript Team
+">
+</POST>
+<POST>
+<POSTER> Mike Williams &lt;nos...@econym.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2007-10-18T06:03:00 </POSTDATE>
+The message gets to your server, and your server outputs
+
+You posted:
+
+I don't do PHP, so I can't advise you on how to get the data from
+$_REQUEST[&quot;lat&quot;]   $_REQUEST[&quot;lng&quot;]   $_REQUEST[&quot;details&quot;]
+into your database.
+
+Now that we know that the client side is working, you can test your
+server directly by using the URL directly, so that you can see the
+output. E.g.
+
+http://www.bkdesign.ca/advanced/myserver.php?lat=43.675&amp;lng;=-79.398&amp;deta;
+ils=This%20is%20a%20test
+
+E.g. if you start by doing something like
+
+$lat = $_REQUEST[&quot;lat&quot;];
+$lng = $_REQUEST[&quot;lng&quot;];
+$details = $_REQUEST[&quot;details&quot;];
+
+You can then check that you're getting the info by doing
+
+echo 'You posted: ' . $lat . ',' . $lng . ':' . $details;
+
+Or something like that. I don't do PHP.
+
+Once you've got the data into PHP variables in your server, then I
+really can't help any more. Perhaps some of this stuff might give you a
+clue:
+
+http://groups.google.com/group/Google-Maps-API/web/using-databases-with-
+gmaps-apps
+
+--
+http://econym.googlepages.com/index.htm
+The Blackpool Community Church Javascript Team
+</POST>
+<POST>
+<POSTER> lrice648 &lt;lrice...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-18T11:59:00 </POSTDATE>
+Thanks mapperz, I actually had been looking at that example
+previously. The reason I was wondering if there was any easier way for
+me to implement it is that my current setup is a lot different than
+that, and it works just fine except for the overload problem, but I
+might just have to reprogram it the way you have it.
+
+@Mike: I'm not real sure what you are talking about. My PHP code is
+fine, all it does is pull data from a database and turn it into XML,
+it does what it is supposed to. The problem was getting my google maps
+page to map all the points that I knew it had.
+
+So I guess I know more or less what to do, I just need to figure out
+how to do it.
+
+Thanks a lot for the help guys!
+
+On Oct 18, 6:03 am, Mike Williams &lt;nos ... @econym.demon.co.uk&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; The message gets to your server, and your server outputs
+
+&gt;         You posted:
+
+&gt; I don't do PHP, so I can't advise you on how to get the data from
+&gt;   $_REQUEST[&quot;lat&quot;]   $_REQUEST[&quot;lng&quot;]   $_REQUEST[&quot;details&quot;]
+&gt; into your database.
+
+&gt; Now that we know that the client side is working, you can test your
+&gt; server directly by using the URL directly, so that you can see the
+&gt; output. E.g.
+
+&gt; http://www.bkdesign.ca/advanced/myserver.php?lat=43.675&amp;lng;=-79.398&amp;deta;
+&gt; ils=This%20is%20a%20test
+
+&gt; E.g. if you start by doing something like
+
+&gt;   $lat = $_REQUEST[&quot;lat&quot;];
+&gt;   $lng = $_REQUEST[&quot;lng&quot;];
+&gt;   $details = $_REQUEST[&quot;details&quot;];
+
+&gt; You can then check that you're getting the info by doing
+
+&gt;   echo 'You posted: ' . $lat . ',' . $lng . ':' . $details;
+
+&gt; Or something like that. I don't do PHP.
+
+&gt; Once you've got the data into PHP variables in your server, then I
+&gt; really can't help any more. Perhaps some of this stuff might give you a
+&gt; clue:
+
+&gt; http://groups.google.com/group/Google-Maps-API/web/using-databases-with-
+&gt; gmaps-apps
+
+&gt; -- http://econym.googlepages.com/index.htm
+&gt; The Blackpool Community Church Javascript Team
+">
+</POST>
+</TEXT>
+</BODY>
+</DOC>

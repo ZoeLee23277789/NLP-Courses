@@ -1,0 +1,467 @@
+<DOC>
+<DOCID> groups.google.com_GoogleMapsAPI_477559bbd2463f6c_ENG_20050716_211100 </DOCID>
+<DOCTYPE SOURCE="usenet">USENET TEXT</DOCTYPE>
+<DATETIME>2005-07-16T21:11:00</DATETIME>
+<BODY>
+<HEADLINE>
+Watch a route by uploading an XML file
+</HEADLINE>
+<TEXT>
+
+<POST>
+<POSTER> nfessel </POSTER>
+<POSTDATE> 2005-07-16T21:11:00 </POSTDATE>
+
+Check this out:
+
+Make sure to upload a valid XML document. Just read the info on the
+page. There is also a demo xml file to test the site. The site works
+best by uploading a route such as a bike ride/drive/hike/walk/etc.
+
+Thanks to all the people here at Google Groups. I couldn't have
+accomplished this without your help.
+
+-Nick
+
+P.S. Please let me know if you want the source.
+
+The site was tested and is known to work fine on these browsers:
+
+Firefox version v1.05
+Internet Explorer v6.0.29
+Netscape v8.0.2
+
+Have fun!! :)
+
+</POST>
+
+
+
+<POST>
+<POSTER> nfessel </POSTER>
+<POSTDATE> 2005-07-16T21:12:00 </POSTDATE>
+
+*Please* be sure that the file upload is a valid XML file. :)
+
+</POST>
+
+
+
+<POST>
+<POSTER> bodyvisual </POSTER>
+<POSTDATE> 2005-07-16T22:32:00 </POSTDATE>
+
+spiffy! it just seems like it'd be a pain to actually make the xml
+document by hand.
+
+</POST>
+
+
+
+<POST>
+<POSTER> Kumar Mettu </POSTER>
+<POSTDATE> 2005-07-16T23:03:00 </POSTDATE>
+
+Could you please provide the source? I am perticularly interested in
+the way routes are drawn with delay to appear like animation
+
+</POST>
+
+
+
+<POST>
+<POSTER> maps.huge.info </POSTER>
+<POSTDATE> 2005-07-16T23:17:00 </POSTDATE>
+
+Clever. I like how you plotted the first half of the points in red, the
+second in black.
+
+I used a zip code boundry file with 60 points...
+
+-John
+
+
+</POST>
+
+
+
+<POST>
+<POSTER> nfessel </POSTER>
+<POSTDATE> 2005-07-17T12:42:00 </POSTDATE>
+
+Kumar,
+
+The delay effect is created by setting a timeout on the draw polyline
+function.
+I found the delay effect at
+workoutTracker.php I added the file upload capability and it all came
+together. Here is most of the code including plotPoint(), the
+function for the polylines. I tried to annotate it so it makes sense.
+
+//Some of the code here was provided by the folks at
+. //Thanks. :)
+
+function plotPoint() {
+if (i &lt; markers.length) {
+var Lat = markers[i].getAttribute(&quot;lat&quot;);
+var Lng = markers[i].getAttribute(&quot;lng&quot;);
+var point = new GPoint(Lng, Lat);
+
+if (i &lt; markers.length &amp;&amp; i !=0 ){
+var Lat1 = markers[i-1].getAttribute(&quot;lat&quot;);
+var Lng1 = markers[i-1].getAttribute(&quot;lng&quot;);
+var point1 = new GPoint(Lng1, Lat1);
+var points=[point, point1];
+
+//Recenters the map after every ten points for a nice effect
+if (i%10==0){map.recenterOrPanToLatLng(point, 2000);}
+
+//If we are still more than half-way through the number of
+markers, draw a blue line
+//This renders black in Firefox and blue in Internet
+Explorer. ?
+if (i &lt; markers.length/2){
+map.addOverlay(new GPolyline(points, &quot;#00000ff&quot;,3,1));
+}
+//Ok, we have drawn more than half of the points, so render
+a red line.
+else{
+map.addOverlay(new GPolyline(points, &quot;#ff0000&quot;,3,1));
+}
+}
+if (i &lt; markers.length-1) {
+window.setTimeout(plotPoint,100);
+} else {}
+}
+i++;
+}
+
+//The php (a simple file upload)
+//Grabs the uploaded file and drops it into the directory
+&lt;?php
+$uploadfilename =
+basename($HTTP_POST_FILES['userfile']['name']);
+$uploaddir = '../ADIR/';
+$uploadfile = $uploaddir .
+basename($HTTP_POST_FILES['userfile']['name']);
+if (move_uploaded_file($HTTP_POST_FILES['userfile']['tmp_name'],
+$uploadfile)) {
+//Call to the Javascript function to begin drawing the polylines
+echo &quot;loadInfo('&quot;.$uploadfile.&quot;');&quot;;
+}
+?&gt;
+
+//This function simply grabs the filename from the php function
+and then loads the file and calls plotPoint()
+//to start the rendering
+
+//Loads the marker info from the XML doc. &quot;filename&quot; is the
+filename
+//that is passed from the php below and into this function
+function loadInfo(filename) {
+var request = GXmlHttp.create();
+request.open(&quot;GET&quot;, filename, true);
+request.onreadystatechange = function() {
+if (request.readyState == 4) {
+var xmlDoc = request.responseXML;
+markers=
+xmlDoc.documentElement.getElementsByTagName(&quot;marker&quot;);
+//Start plotting the points
+plotPoint();
+}
+}
+request.send(null);
+}
+
+</POST>
+
+
+
+<POST>
+<POSTER> nfessel </POSTER>
+<POSTDATE> 2005-07-17T12:46:00 </POSTDATE>
+
+Well, I think I've found why the colors are weird between IE and FF. I
+spec'd #00000ff for a color. Oops.
+
+</POST>
+
+
+
+<POST>
+<POSTER> nfessel </POSTER>
+<POSTDATE> 2005-07-17T01:06:00 </POSTDATE>
+
+I added a links to the newly uploaded routes. This isn't dynamically
+generated, but that could be easily done, I just need some more time.
+
+I'd like to dynamically generate the xml files in some manner, maybe
+have a route generator map on the side that users can edit and plot
+points and then save to xml. So many ideas.
+
+Nick
+
+</POST>
+
+
+
+<POST>
+<POSTER> nfessel </POSTER>
+<POSTDATE> 2005-07-17T01:22:00 </POSTDATE>
+
+bodyvisual,
+
+I have a GPS that I use which can log lat/lon of a trip. I then upload
+the points to my pc and generate the XML doc. It's a lot easier than
+typing all those points, for sure.
+
+Nick
+
+</POST>
+
+
+
+<POST>
+<POSTER> Ryan Langseth </POSTER>
+<POSTDATE> 2005-07-17T03:22:00 </POSTDATE>
+
+
+<QUOTE PREVIOUSPOST="
+&gt; I'd like to dynamically generate the xml files in some manner, maybe
+&gt; have a route generator map on the side that users can edit and plot
+&gt; points and then save to xml. So many ideas.
+
+&gt; Nick
+
+"/>
+
+...so many ideas, I know the feeling...
+
+-Ryan
+
+</POST>
+
+
+
+<POST>
+<POSTER> Billy </POSTER>
+<POSTDATE> 2005-07-17T07:18:00 </POSTDATE>
+
+
+<QUOTE PREVIOUSPOST="
+&gt; Check this out:  http://www.nickfessel.com/php_uploads/dynaRender.php
+
+"/>
+
+I already saw this announcement via another thread but didn't wanna go
+thru the trouble of downloading the XML file, maybe when I get more
+time...
+
+--
+BeachComputers.biz (FF &amp; IE... so far, now if Dell starts selling
+those Apple boxes lol)
+
+</POST>
+
+
+
+<POST>
+<POSTER> MattPF </POSTER>
+<POSTDATE> 2005-07-17T10:53:00 </POSTDATE>
+
+This would be awesome if you could double click to a bunch of 'legs' to
+create your own route. Then save it and play it back.
+
+</POST>
+
+
+
+<POST>
+<POSTER> nfessel </POSTER>
+<POSTDATE> 2005-07-17T11:27:00 </POSTDATE>
+
+I've made some enhancements to the site. I've zoomed out the map
+further so the routes are eaily viewable. I've cleaned up some logic
+errors, namely so that when clicking a different route, the polylines
+from the previous route are removed.
+
+I've also added links to 8 more routes that were uploaded. Just click
+on the links and watch the show. :) Thank you all for checking it out.
+
+Nick
+
+P.S. the Shelters link (link 4) may cause Firefox to go into
+conniptions (sp?). It has a huge number of back and forth points. In
+IE it's fine thanks to VML.
+
+</POST>
+
+
+
+<POST>
+<POSTER> nfessel </POSTER>
+<POSTDATE> 2005-07-17T11:45:00 </POSTDATE>
+
+I had to pull the Shelters xml files from the links list. They were
+soaking up my virtual memory like a sponge. I think it's because the
+points in that file are so far apart from one another. I'll need to put
+something in to check the distance between the points and then render
+accordingly (i.e. render points slower if the distance between the
+points is far).
+
+</POST>
+
+
+
+<POST>
+<POSTER> Billy </POSTER>
+<POSTDATE> 2005-07-17T24:03:00 </POSTDATE>
+
+no joy in FF, and I always wanted to go to Palo Alto
+
+--
+BeachComputers.biz (FF &amp; IE so far, now if Dell starts selling those
+Apple boxes... lol)
+
+</POST>
+
+
+
+<POST>
+<POSTER> Billy </POSTER>
+<POSTDATE> 2005-07-17T24:06:00 </POSTDATE>
+
+came right up in I.E, nice work Nick
+
+--
+BeachComputers.biz (FF &amp; IE so far, now if Dell starts selling those
+Apple boxes... lol)
+
+</POST>
+
+
+
+<POST>
+<POSTER> Brooks Bennett </POSTER>
+<POSTDATE> 2005-07-17T24:06:00 </POSTDATE>
+
+Crashing my browser in Safari 2.0 on OS X 10.4.2...
+
+Love to see it at some point...
+
+</POST>
+
+
+
+<POST>
+<POSTER> nfessel </POSTER>
+<POSTDATE> 2005-07-17T13:59:00 </POSTDATE>
+
+MattPF,
+
+Check this out:
+
+Sorry about that Brooks. I don't have a Mac to test any of my
+projects.
+
+-Nick
+
+</POST>
+
+
+
+<POST>
+<POSTER> Billy </POSTER>
+<POSTDATE> 2005-07-17T14:43:00 </POSTDATE>
+
+Hey Nick, screw you buddy! lol
+
+</POST>
+
+
+
+<POST>
+<POSTER> MattPF </POSTER>
+<POSTDATE> 2005-07-17T15:03:00 </POSTDATE>
+
+Nick,
+
+That's absolutely awesome. Please leave that up so I can mess with it
+more at work on Monday :)
+
+</POST>
+
+
+
+<POST>
+<POSTER> Brooks Bennett </POSTER>
+<POSTDATE> 2005-07-17T20:18:00 </POSTDATE>
+
+Nick,
+
+The page at:
+
+Render2.html
+
+Works badass on Safari! Awesome stuff!
+
+</POST>
+
+
+
+<POST>
+<POSTER> chadlupkes </POSTER>
+<POSTDATE> 2005-07-17T23:22:00 </POSTDATE>
+
+I think this might be what I've been looking for for my own project. I
+want to draw boundaries with datasets up to 1500 points, and it causes
+the page to load v.e.r.y. slowly. If I draw the map first, then use
+your script to draw the lines based on the dataset, the page will load
+quicker, and people can jump off the page without crashing their
+system.
+
+Question on the XML. Does it matter if it is a generated php file as
+long as the resulting format is correct?
+
+</POST>
+
+
+
+<POST>
+<POSTER> nfessel </POSTER>
+<POSTDATE> 2005-07-17T23:30:00 </POSTDATE>
+
+&quot;Question on the XML. Does it matter if it is a generated php file as
+long as the resulting format is correct? &quot;
+
+chadlupkes,
+
+As long as the resulting format is correct. An XML document is an XML
+document, regardless of how it is created. Just make sure the XML doc
+is well formed and you should be set. PHP is simply my preferred
+method.
+
+</POST>
+
+
+
+<POST>
+<POSTER> chadlupkes </POSTER>
+<POSTDATE> 2005-07-17T23:49:00 </POSTDATE>
+
+Ok, great. That means I can load the data from a php array or a
+database and export it dynamically into XML format, calling only the
+datapoint sets I need for whatever area I want to draw.
+
+Thanks!
+
+Chad Lupkes
+46dems.com/pco/googlemaps.php
+
+</POST>
+
+
+
+</TEXT>
+</BODY>
+</DOC>

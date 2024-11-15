@@ -1,0 +1,755 @@
+<DOC>
+<DOCID> eng-NG-31-126399-9141493 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-11-03T15:45:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Low-overhead GUI toolkit for Linux w/o X11?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Grant Edwards &lt;gra...@visi.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T15:45:00 </POSTDATE>
+I'm looking for GUI toolkits that work with directly with the
+Linux frambuffer (no X11).  It's an embedded device with
+limited resources, and getting X out of the picture would be a
+big plus.
+
+The toolkit needs to be free and open-source.
+
+So far, I've found two options that will work without X11:
+
+1) QTopia (nee QT/Embedded).  I assume that I can probably get
+PyQT to work with the embedded version of QT?
+
+2) PySDL or PyGame. I'm not really sure what the differences
+are between those two.  The latter seems to be a little
+more active.  Are there any traditional GUI &quot;widgets&quot;
+available for these two?
+
+I've heard good things about PyFLTK, but it appears to depend
+on X11 on the Linux platform.
+
+Google found me this thread from a few years ago:
+
+http://groups.google.com/group/comp.lang.python/browse_thread/thread/...
+
+Which mentions the same two choices and confirms that PyQt at
+worked at one time with Qt/E (which would lead one to believe
+it could be made to work with QTopia).
+
+That thread also mentions Pico-GUI and Nano-X.  Has anybody had
+any experience using those with Python?  Both of those seem to
+have stalled.  Neither has released anything since 2003.
+
+--
+Grant Edwards                   grante             Yow!  .. I
+at               feel... JUGULAR...
+visi.com
+</POST>
+<POST>
+<POSTER> David Bolen &lt;db3l....@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T16:55:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Grant Edwards &lt;gra ... @visi.com&gt; writes:
+&gt; I'm looking for GUI toolkits that work with directly with the
+&gt; Linux frambuffer (no X11).  It's an embedded device with
+&gt; limited resources, and getting X out of the picture would be a
+&gt; big plus.
+">
+
+Sounds like a reasonably modern &quot;embedded&quot; system since traditionally
+neither X (nor Python) would likely have even been plausible in such
+environments.  Depending on the higher level GUI functionality you
+require and how tight the resources really are, you might want to
+consider investigating pure drawing libraries and then implement any
+missing GUI elements (widgets and mouse handling) you need yourself.
+
+When I was looking for an embedded graphics library for a prior
+platform (ELAN 486, 2MB flash, 6MB RAM) under DOS, we took a look at
+these:
+
+* GRX ( http://grx.gnu.de/index.html )
+* Allegro ( http://alleg.sourceforge.net/ )
+
+We ended up using GRX, primarily because it was the simplest to
+develop a custom video driver for to match our platform, along with
+having a simpler core.  We were under DOS but also used it with a
+later generation of the platform under Linux.  Both libraries support
+operation over the framebuffer in Linux.  Our app was in C++ (Python
+wasn't an option), and we implemented our own buttons and text
+widgets (in our case we never needed any scrolling widgets).
+
+There aren't any Python wrappers for GRX, but the library is straight
+C which should be easy to wrap (manually or with something like SWIG).
+No built-in widget support at all (some sample button processing code
+in a demo module), but easy enough to implement your own if your needs
+are modest.
+
+Although we didn't end up using it, Allegro is more fully featured
+(actually with some non-GUI cruft too since it targets games), and
+also appears to have two work-in-progress Python bindings.  Some basic
+widget support in dialog processing routines.
+
+-- David
+</POST>
+<POST>
+<POSTER> David Bolen &lt;db3l....@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T17:08:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+David Bolen &lt;db3l. ... @gmail.com&gt; writes:
+&gt; When I was looking for an embedded graphics library for a prior
+&gt; platform (ELAN 486, 2MB flash, 6MB RAM) under DOS, we took a look at
+&gt; these:
+
+&gt;   * GRX ( http://grx.gnu.de/index.html )
+(...)
+&gt; There aren't any Python wrappers for GRX, but the library is straight
+&gt; C which should be easy to wrap (manually or with something like SWIG).
+&gt; No built-in widget support at all (some sample button processing code
+&gt; in a demo module), but easy enough to implement your own if your needs
+&gt; are modest.
+">
+
+I had forgotten, since we didn't use it, but there is an external mGui
+library ( http://web.tiscalinet.it/morello/MGui/index.html ) that can
+layer on top of GRX to provide higher level functionality.  Of course,
+it would also have to be wrapped for use from Python.
+
+-- David
+</POST>
+<POST>
+<POSTER> Grant Edwards &lt;gra...@visi.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T19:06:00 </POSTDATE>
+On 2007-11-03, David Bolen &lt;db3l. ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Grant Edwards &lt;gra ... @visi.com&gt; writes:
+
+&gt;&gt; I'm looking for GUI toolkits that work with directly with the
+&gt;&gt; Linux frambuffer (no X11).  It's an embedded device with
+&gt;&gt; limited resources, and getting X out of the picture would be a
+&gt;&gt; big plus.
+
+&gt; Sounds like a reasonably modern &quot;embedded&quot; system since traditionally
+&gt; neither X (nor Python) would likely have even been plausible in such
+&gt; environments.
+">
+
+Yes, it's &quot;modern&quot; enough to run Linux/X11 -- horsepower-wise
+it's sort of in the PDA class of devices.  wxWidgets has been
+tried, but it's pretty sluggish. Hence the search for something
+a littler lighter weight.  Using Python is probably going to be
+a little bit of a stretch, but using open-source libraries and
+something like Python for the application langauge seems to be
+an important part of the business model.
+
+<QUOTE PREVIOUSPOST="
+&gt; Depending on the higher level GUI functionality you require
+">
+
+That's still a bit up in the air.  Routines to render text
+would be nice, as would sprite graphics.  I don't think text
+entry or much in the way of windowing is required.
+
+<QUOTE PREVIOUSPOST="
+&gt; and how tight the resources really are, you might want to
+&gt; consider investigating pure drawing libraries and then
+&gt; implement any missing GUI elements (widgets and mouse
+&gt; handling) you need yourself.
+">
+
+There is no mouse.  I'm not sure how many &quot;widgets&quot; are
+required.  Probably not very many.
+
+<QUOTE PREVIOUSPOST="
+&gt; When I was looking for an embedded graphics library for a prior
+&gt; platform (ELAN 486, 2MB flash, 6MB RAM) under DOS, we took a look at
+&gt; these:
+
+&gt;   * GRX ( http://grx.gnu.de/index.html )
+&gt;   * Allegro ( http://alleg.sourceforge.net/ )
+
+&gt; We ended up using GRX, primarily because it was the simplest
+&gt; to develop a custom video driver for to match our platform,
+&gt; along with having a simpler core.  We were under DOS but also
+&gt; used it with a later generation of the platform under Linux.
+&gt; Both libraries support operation over the framebuffer in
+&gt; Linux.  Our app was in C++ (Python wasn't an option), and we
+&gt; implemented our own buttons and text widgets (in our case we
+&gt; never needed any scrolling widgets).
+
+&gt; There aren't any Python wrappers for GRX, but the library is
+&gt; straight C which should be easy to wrap (manually or with
+&gt; something like SWIG). No built-in widget support at all (some
+&gt; sample button processing code in a demo module), but easy
+&gt; enough to implement your own if your needs are modest.
+
+&gt; Although we didn't end up using it, Allegro is more fully
+&gt; featured (actually with some non-GUI cruft too since it
+&gt; targets games), and also appears to have two work-in-progress
+&gt; Python bindings.  Some basic widget support in dialog
+&gt; processing routines.
+">
+
+Thanks for the pointers.
+
+--
+Grant
+</POST>
+<POST>
+<POSTER> Bjoern Schliessmann &lt;usenet-mail-0306.20.chr0n...@spamgourmet.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T20:59:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Grant Edwards wrote:
+&gt; Yes, it's &quot;modern&quot; enough to run Linux/X11 -- horsepower-wise
+&gt; it's sort of in the PDA class of devices.  wxWidgets has been
+&gt; tried, but it's pretty sluggish. Hence the search for something
+&gt; a littler lighter weight.
+">
+
+Erm, wxWidgets is implemented in C++ and wxPython is just a wrapper.
+I don't think the &quot;sluggishness&quot; comes from wxWidgets. PyQt and
+PySDL are AFAIK not much &quot;less weight&quot;.
+
+Regards,
+
+Björn
+
+--
+BOFH excuse #245:
+
+The Borg tried to assimilate your system. Resistance is futile.
+</POST>
+<POST>
+<POSTER> Grant Edwards &lt;gra...@visi.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T22:03:00 </POSTDATE>
+On 2007-11-04, Bjoern Schliessmann &lt;usenet-mail-0306.20.chr0n ... @spamgourmet.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Grant Edwards wrote:
+&gt;&gt; Yes, it's &quot;modern&quot; enough to run Linux/X11 -- horsepower-wise
+&gt;&gt; it's sort of in the PDA class of devices.  wxWidgets has been
+&gt;&gt; tried, but it's pretty sluggish. Hence the search for something
+&gt;&gt; a littler lighter weight.
+
+&gt; Erm, wxWidgets is implemented in C++
+">
+
+Are you saying C++ software can't be large and slow?
+
+<QUOTE PREVIOUSPOST="
+&gt; and wxPython is just a wrapper.
+">
+
+Yes, I know.  If we though Python was the problem, I wouldn't
+be asking about other toolkits that had Python bindings.
+
+<QUOTE PREVIOUSPOST="
+&gt; I don't think the &quot;sluggishness&quot; comes from wxWidgets.
+">
+
+wxWidgets and GTK+ are both pretty large, and X11 is huge.
+
+<QUOTE PREVIOUSPOST="
+&gt; PyQt and PySDL are AFAIK not much &quot;less weight&quot;.
+">
+
+They don't use X11.  That's a _lot_ &quot;less weight&quot;.
+
+--
+</POST>
+<POST>
+<POSTER> David Boddie &lt;da...@boddie.org.uk&gt; </POSTER>
+<POSTDATE> 2007-11-03T22:03:00 </POSTDATE>
+On Sat Nov 3 20:45:54 CET 2007, Grant Edwards wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I'm looking for GUI toolkits that work with directly with the
+&gt; Linux frambuffer (no X11).  It's an embedded device with
+&gt; limited resources, and getting X out of the picture would be a
+&gt; big plus.
+
+&gt; The toolkit needs to be free and open-source.
+
+&gt; So far, I've found two options that will work without X11:
+
+&gt;  1) QTopia (nee QT/Embedded).  I assume that I can probably get
+&gt;     PyQT to work with the embedded version of QT?
+">
+
+Qtopia Core (formerly known as Qt/Embedded) should be fairly painless to get
+working, though the embedded-specific features aren't supported by a plain
+PyQt4 build.
+
+However, it is possible to get bindings for it up and running - I've done it
+twice for different versions of Qtopia Core
+
+http://www.diotavelli.net/PyQtWiki/PyQt4_on_the_Qtopia_Greenphone
+
+so it should be possible to get something working for the latest version.
+
+You don't really have to worry too much about having all the bells and
+whistles wrapped for use from Python, anyway.
+
+<QUOTE PREVIOUSPOST="
+&gt;  2) PySDL or PyGame. I'm not really sure what the differences
+&gt;     are between those two.  The latter seems to be a little
+&gt;     more active.  Are there any traditional GUI &quot;widgets&quot;
+&gt;     available for these two?
+">
+
+PyGame is definitely more visible than PySDL. You might find something you
+can use in the list of libraries for PyGame:
+
+http://www.pygame.org/tags/libraries
+
+There's also a list of &quot;gui&quot; tagged projects:
+
+http://www.pygame.org/tags/gui
+
+<QUOTE PREVIOUSPOST="
+&gt; Google found me this thread from a few years ago:
+">
+
+[...]
+
+<QUOTE PREVIOUSPOST="
+&gt; Which mentions the same two choices and confirms that PyQt at
+&gt; worked at one time with Qt/E (which would lead one to believe
+&gt; it could be made to work with QTopia).
+">
+
+I guess I should be pushing my patches for PyQt4 back upstream, or at least
+publishing them somewhere. I suppose it would also be useful if I looked at
+making them work with a recent version of PyQt4 and made sure that any new
+widgets in Qtopia Core 4.3 are handled by the configuration system. This
+lets you exclude features you don't need in order to reduce library sizes.
+
+If you're interested in using PyQt4, I'll add an item for these changes near
+the top of my &quot;to do&quot; list. If not, I'll probably get around to doing it,
+but it might not happen soon.
+
+David
+</POST>
+<POST>
+<POSTER> Grant Edwards &lt;gra...@visi.com&gt; </POSTER>
+<POSTDATE> 2007-11-03T22:22:00 </POSTDATE>
+On 2007-11-04, David Boddie &lt;da ... @boddie.org.uk&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;  1) QTopia (nee QT/Embedded).  I assume that I can probably get
+&gt;&gt;     PyQT to work with the embedded version of QT?
+
+&gt; Qtopia Core (formerly known as Qt/Embedded) should be fairly
+&gt; painless to get working, though the embedded-specific features
+&gt; aren't supported by a plain PyQt4 build.
+
+&gt; However, it is possible to get bindings for it up and running
+&gt; - I've done it twice for different versions of Qtopia Core
+
+&gt; http://www.diotavelli.net/PyQtWiki/PyQt4_on_the_Qtopia_Greenphone
+
+&gt; so it should be possible to get something working for the
+&gt; latest version.
+">
+
+That's good to hear.
+
+<QUOTE PREVIOUSPOST="
+&gt; You don't really have to worry too much about having all the
+&gt; bells and whistles wrapped for use from Python, anyway.
+">
+
+Right, Python has it's own versions of a lot of the &quot;extra&quot;
+stuff provided by a framework like Qt.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;  2) PySDL or PyGame. I'm not really sure what the differences
+&gt;&gt;     are between those two.  The latter seems to be a little
+&gt;&gt;     more active.  Are there any traditional GUI &quot;widgets&quot;
+&gt;&gt;     available for these two?
+
+&gt; PyGame is definitely more visible than PySDL. You might find
+&gt; something you can use in the list of libraries for PyGame:
+
+&gt; http://www.pygame.org/tags/libraries
+
+&gt; There's also a list of &quot;gui&quot; tagged projects:
+
+&gt; http://www.pygame.org/tags/gui
+">
+
+Cool.  Hadn't found that yet.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Which mentions the same two choices and confirms that PyQt at
+&gt;&gt; worked at one time with Qt/E (which would lead one to believe
+&gt;&gt; it could be made to work with QTopia).
+
+&gt; I guess I should be pushing my patches for PyQt4 back
+&gt; upstream, or at least publishing them somewhere. I suppose it
+&gt; would also be useful if I looked at making them work with a
+&gt; recent version of PyQt4 and made sure that any new widgets in
+&gt; Qtopia Core 4.3 are handled by the configuration system. This
+&gt; lets you exclude features you don't need in order to reduce
+&gt; library sizes.
+
+&gt; If you're interested in using PyQt4, I'll add an item for
+&gt; these changes near the top of my &quot;to do&quot; list. If not, I'll
+&gt; probably get around to doing it, but it might not happen soon.
+">
+
+I think we're definitely going to try to evaluate Qtopia on our
+platform to see if it's any quicker and smaller than
+wxWidgets/GTK+/X11.  I guess that evaluation doesn't need to
+use Python -- in theory we sould be able to compare performance
+of &quot;equivalent&quot; C/C++ apps running on wxWidgets/GTK+/X11 and on
+QTopia.
+
+--
+Grant
+</POST>
+<POST>
+<POSTER> David Boddie &lt;da...@boddie.org.uk&gt; </POSTER>
+<POSTDATE> 2007-11-03T22:37:00 </POSTDATE>
+On Sun Nov 4 03:22:27 CET 2007, Grant Edwards wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I think we're definitely going to try to evaluate Qtopia on our
+&gt; platform to see if it's any quicker and smaller than
+&gt; wxWidgets/GTK+/X11.  I guess that evaluation doesn't need to
+&gt; use Python -- in theory we sould be able to compare performance
+&gt; of &quot;equivalent&quot; C/C++ apps running on wxWidgets/GTK+/X11 and on
+&gt; QTopia.
+">
+
+Good luck with that. Just remember to read the guide to configuring features
+in Qtopia Core so you don't build in things you don't need:
+
+http://doc.trolltech.com/4.3/qtopiacore-features.html
+
+The overview page might also be useful to you:
+
+http://doc.trolltech.com/4.3/qtopiacore.html
+
+David
+</POST>
+<POST>
+<POSTER> Paul Rubin &lt;http://phr...@NOSPAM.invalid&gt; </POSTER>
+<POSTDATE> 2007-11-04T01:39:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Grant Edwards &lt;gra ... @visi.com&gt; writes:
+&gt; There is no mouse.  I'm not sure how many &quot;widgets&quot; are
+&gt; required.  Probably not very many.
+">
+
+Back in the old days there were some lightweight toolkits for doing
+text mode GUI's using ANSI graphic characters for MS-DOS.  I did a few
+of them.  You could do quite usable and attractive gui's that way, as
+long as you didn't require too much bling.
+</POST>
+<POST>
+<POSTER> Bjoern Schliessmann &lt;usenet-mail-0306.20.chr0n...@spamgourmet.com&gt; </POSTER>
+<POSTDATE> 2007-11-04T06:45:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Grant Edwards wrote:
+&gt; On 2007-11-04, Bjoern Schliessmann
+&gt;&gt; Erm, wxWidgets is implemented in C++
+
+&gt; Are you saying C++ software can't be large and slow?
+">
+
+No, but wxWidgets is quite mature and my experience is that it's
+faster than Qt (partly, I think, because it always uses the native
+widgets).
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; and wxPython is just a wrapper.
+
+&gt; Yes, I know.  If we though Python was the problem, I wouldn't
+&gt; be asking about other toolkits that had Python bindings.
+">
+
+Ah, you know more than you wrote? If you've done measurements, I'd
+find them quite interesting to see.
+
+Regards,
+
+Björn
+
+--
+BOFH excuse #295:
+
+The Token fell out of the ring. Call us when you find it.
+</POST>
+<POST>
+<POSTER> Grant Edwards &lt;gra...@visi.com&gt; </POSTER>
+<POSTDATE> 2007-11-04T09:34:00 </POSTDATE>
+On 2007-11-04, Paul Rubin &lt;http&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Grant Edwards &lt;gra ... @visi.com&gt; writes:
+&gt;&gt; There is no mouse.  I'm not sure how many &quot;widgets&quot; are
+&gt;&gt; required.  Probably not very many.
+
+&gt; Back in the old days there were some lightweight toolkits for
+&gt; doing text mode GUI's using ANSI graphic characters for
+&gt; MS-DOS.  I did a few of them.  You could do quite usable and
+&gt; attractive gui's that way, as long as you didn't require too
+&gt; much bling.
+">
+
+I do require graphics.
+
+--
+Grant Edwards                   grante             Yow!  Join the PLUMBER'S
+at               UNION!!
+visi.com
+</POST>
+<POST>
+<POSTER> Grant Edwards &lt;gra...@visi.com&gt; </POSTER>
+<POSTDATE> 2007-11-04T09:35:00 </POSTDATE>
+On 2007-11-04, Bjoern Schliessmann &lt;usenet-mail-0306.20.chr0n ... @spamgourmet.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; and wxPython is just a wrapper.
+
+&gt;&gt; Yes, I know.  If we though Python was the problem, I wouldn't
+&gt;&gt; be asking about other toolkits that had Python bindings.
+
+&gt; Ah, you know more than you wrote? If you've done measurements,
+&gt; I'd find them quite interesting to see.
+">
+
+We know that wxWidgets is slow.  That's why we're looking for
+alternatives.
+
+--
+Grant Edwards                   grante             Yow!  Did you find a
+at               DIGITAL WATCH in YOUR box
+visi.com            of VELVEETA??
+</POST>
+<POST>
+<POSTER> Nick Craig-Wood &lt;n...@craig-wood.com&gt; </POSTER>
+<POSTDATE> 2007-11-04T18:30:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Grant Edwards &lt;gra ... @visi.com&gt; wrote:
+&gt;  I'm looking for GUI toolkits that work with directly with the
+&gt;  Linux frambuffer (no X11).  It's an embedded device with
+&gt;  limited resources, and getting X out of the picture would be a
+&gt;  big plus.
+
+&gt;  The toolkit needs to be free and open-source.
+
+&gt;  So far, I've found two options that will work without X11:
+
+&gt;   1) QTopia (nee QT/Embedded).  I assume that I can probably get
+&gt;      PyQT to work with the embedded version of QT?
+
+&gt;   2) PySDL or PyGame.
+">
+
+We did a similar project recently.  We ended up using pygame and
+writing our own GUI.  For an embedded device you don't really want a
+general purpose GUI which needs a mouse, you want something specific
+which knows how many buttons the device has, what resolution the
+screen is etc.  It is not too difficult to make your own GUI in pygame
+to do exactly what you want for your embedded device.
+
+<QUOTE PREVIOUSPOST="
+&gt; I'm not really sure what the differences are between those two.  The
+&gt; latter seems to be a little more active.
+">
+
+Pygame is the way I've always done SDL stuff in python - never even
+heard of PySDL!
+
+--
+Nick Craig-Wood &lt;n ... @craig-wood.com&gt; -- http://www.craig-wood.com/nick
+</POST>
+<POST>
+<POSTER> Grant Edwards &lt;gra...@visi.com&gt; </POSTER>
+<POSTDATE> 2007-11-04T18:56:00 </POSTDATE>
+On 2007-11-04, Nick Craig-Wood &lt;n ... @craig-wood.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;  So far, I've found two options that will work without X11:
+
+&gt;&gt;   1) QTopia (nee QT/Embedded).  I assume that I can probably get
+&gt;&gt;      PyQT to work with the embedded version of QT?
+
+&gt;&gt;   2) PySDL or PyGame.
+
+&gt; We did a similar project recently.  We ended up using pygame
+&gt; and writing our own GUI.  For an embedded device you don't
+&gt; really want a general purpose GUI which needs a mouse, you
+&gt; want something specific which knows how many buttons the
+&gt; device has, what resolution the screen is etc.  It is not too
+&gt; difficult to make your own GUI in pygame to do exactly what
+&gt; you want for your embedded device.
+">
+
+Thanks for the pointer.  I'm starting to like pygame for this
+project.  One of the application features needs to support some
+simple animated graphics, and pygame's sprite support looks
+like it might be a decent fit. I've been looking at the
+different libraries listed on the pygame web site, and it looks
+like there might be several that could make good starting GUI
+points.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; I'm not really sure what the differences are between those
+&gt;&gt; two.  The latter seems to be a little more active.
+
+&gt; Pygame is the way I've always done SDL stuff in python - never
+&gt; even heard of PySDL!
+">
+
+PySDL doesn't seem to be nearly as active or high-profile as
+pygame.
+
+--
+Grant Edwards
+gra ... @visi.com
+</POST>
+<POST>
+<POSTER> &quot;Chris Mellon&quot; &lt;arka...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-05T10:39:00 </POSTDATE>
+On Nov 3, 2007 6:06 PM, Grant Edwards &lt;gra ... @visi.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2007-11-03, David Bolen &lt;db3l. ... @gmail.com&gt; wrote:
+&gt; &gt; Grant Edwards &lt;gra ... @visi.com&gt; writes:
+
+&gt; &gt;&gt; I'm looking for GUI toolkits that work with directly with the
+&gt; &gt;&gt; Linux frambuffer (no X11).  It's an embedded device with
+&gt; &gt;&gt; limited resources, and getting X out of the picture would be a
+&gt; &gt;&gt; big plus.
+
+&gt; &gt; Sounds like a reasonably modern &quot;embedded&quot; system since traditionally
+&gt; &gt; neither X (nor Python) would likely have even been plausible in such
+&gt; &gt; environments.
+
+&gt; Yes, it's &quot;modern&quot; enough to run Linux/X11 -- horsepower-wise
+&gt; it's sort of in the PDA class of devices.  wxWidgets has been
+&gt; tried, but it's pretty sluggish. Hence the search for something
+&gt; a littler lighter weight.  Using Python is probably going to be
+&gt; a little bit of a stretch, but using open-source libraries and
+&gt; something like Python for the application langauge seems to be
+&gt; an important part of the business model.
+">
+
+There's a DFB port of wx, although I'm not sure how much attention
+it's received lately. I know it's been actually used for at least one
+application. Gtk can also run directly on a framebuffer - that's what
+openmoko does, for example.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Depending on the higher level GUI functionality you require
+
+&gt; That's still a bit up in the air.  Routines to render text
+&gt; would be nice, as would sprite graphics.  I don't think text
+&gt; entry or much in the way of windowing is required.
+">
+
+Sounds like a full scale widget toolkit is quite a bit heavier than
+you need, though.
+</POST>
+<POST>
+<POSTER> Grant Edwards &lt;gra...@visi.com&gt; </POSTER>
+<POSTDATE> 2007-11-05T11:36:00 </POSTDATE>
+On 2007-11-05, Chris Mellon &lt;arka ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Yes, it's &quot;modern&quot; enough to run Linux/X11 -- horsepower-wise
+&gt;&gt; it's sort of in the PDA class of devices.  wxWidgets has been
+&gt;&gt; tried, but it's pretty sluggish. Hence the search for
+&gt;&gt; something a little lighter weight.  Using Python is probably
+&gt;&gt; going to be a little bit of a stretch, but using open-source
+&gt;&gt; libraries and something like Python for the application
+&gt;&gt; langauge seems to be an important part of the business model.
+
+&gt; There's a DFB port of wx,
+">
+
+One where wx draws it's own widgets?  I hadn't found that. I'll
+have to take a look at that as well.
+
+<QUOTE PREVIOUSPOST="
+&gt; although I'm not sure how much attention it's received lately.
+&gt; I know it's been actually used for at least one application.
+&gt; Gtk can also run directly on a framebuffer - that's what
+&gt; openmoko does, for example.
+">
+
+Yup, I just found the GtkFB project yesterday.  That might be
+an option as well.  Persumably one could run wxWidgets on top
+of that -- I'm not sure if the sluggishness of the wxWidgets
+based stuff was due to wx/gtk or X11 (or a combination of
+both).
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; Depending on the higher level GUI functionality you require
+
+&gt;&gt; That's still a bit up in the air.  Routines to render text
+&gt;&gt; would be nice, as would sprite graphics.  I don't think text
+&gt;&gt; entry or much in the way of windowing is required.
+
+&gt; Sounds like a full scale widget toolkit is quite a bit heavier
+&gt; than you need, though.
+">
+
+Probably.  The only UI input device is a set a half-dozen hard
+buttons next to the display, so a lot of the mouse/keyboard
+dependant features in GUI toolkits won't be of any benefit.
+
+--
+Grant Edwards                   grante             Yow! HUGH BEAUMONT died
+at               in 1982!!
+visi.com
+</POST>
+<POST>
+<POSTER> Damjan &lt;gdam...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-06T12:07:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt;&gt; PyQt and PySDL are AFAIK not much &quot;less weight&quot;.
+
+&gt; They don't use X11.  That's a _lot_ &quot;less weight&quot;.
+">
+
+Do you mean the X11 server or the libraries? The kdrive server should be
+fairly small (depending on features). I think it builds from the main xorg
+source today?? Isn't that what maemo uses.
+
+I don't know about the X11 libraries, but the xcb libraries are pretty much
+small too (126kb on i386 here) - there are additional libraries depending
+on which features you want: render, shape, screensaver, shm, randr, dri
+etc.. Shame the toolkits still don't use it directly.
+
+--
+damjan
+</POST>
+<POST>
+<POSTER> Grant Edwards &lt;gra...@visi.com&gt; </POSTER>
+<POSTDATE> 2007-11-06T13:04:00 </POSTDATE>
+On 2007-11-06, Damjan &lt;gdam ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; PyQt and PySDL are AFAIK not much &quot;less weight&quot;.
+
+&gt;&gt; They don't use X11.  That's a _lot_ &quot;less weight&quot;.
+
+&gt; Do you mean the X11 server or the libraries?
+">
+
+Both.
+
+--
+Grant Edwards                   grante             Yow! Bo Derek ruined
+at               my life!
+visi.com
+</POST>
+</TEXT>
+</BODY>
+</DOC>

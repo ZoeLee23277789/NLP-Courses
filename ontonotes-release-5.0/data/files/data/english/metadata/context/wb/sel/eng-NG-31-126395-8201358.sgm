@@ -1,0 +1,662 @@
+<DOC>
+<DOCID> eng-NG-31-126395-8201358 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-12T09:40:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Improving read/write/close system call reliability when used with pthreads
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Fredrik Noring &lt;nor...@nocrew.org&gt; </POSTER>
+<POSTDATE> 2007-08-12T09:40:00 </POSTDATE>
+Hello!
+
+The attached patch attempts to improve read/write/close system call
+reliability when used with pthreads and pipes. At least two issues
+are handled:
+
+1. Read/write system calls hanging indefinitely when the fd is closed
+by another thread.
+
+2. Read/write fd (reuse) alias problems in combination with -
+ERESTARTSYS.
+
+For (1), a simple scenario has two threads: a reader and a watchdog.
+The reader thread is stuck in a blocking read of an unreliable pipe.
+The watchdog thread is designed to cancel the blocking read using
+close on the reader's fd.
+
+Unfortunately, with the current kernel, the reader thread does not
+wake up by the close call issued by the watchdog. Instead, the reader
+thread remains stuck unless some unrelated signal happens to arrive,
+in which case it wakes up and terminates with -EBADF. This is also
+the current workaround: have the process signal itself after the
+close call in the watchdog thread.
+
+For (2), the scenario can be as (1) above, adding an open system call
+between the close and signal events. Since the read fd has been
+closed it's now reused by open for a completely unrelated file, and
+when read finally wakes up by the signal it starts reading it.
+
+In both of these cases, I believe it would be desirable to have read
+terminate immediately with -EBADF. Similar scenarios can be made for
+the write system call (and perhaps others as well).
+
+The attached sample programs (watchdog.c and aliasing.c) demonstrate
+the effects.
+
+Please regard the attached patch as proof-of-concept to trying to
+solve these problems. The FIXME certainly needs more thought, as do
+locking schemes, performance impact, related fd issues, and the
+approach taken in general. I'd be delighted if it would be possible
+to sort out. :-)
+
+Many thanks,
+Fredrik
+
+Notes regarding the patch:
+
+The patch adds a required_fds list to task_struct. System calls such
+as read and write register their fd respectively in this list, as the
+fd:s are required for successful completion of the calls. When close
+is called, it scans the required_fds lists and marks closed fd:s with
+-EBADF, as well as notifies the file with the new file-&gt;f_op-
+&gt;closing_fd file operation. This allows files to wake up waiting
+read/write calls. When read/write wakes up, it checks its
+required_fds list and cancels if its fd has been marked -EBADF.
+
+fs/open.c                 |   63 +++++++++++++++++++++++++++++++++++++
++++++++++
+fs/pipe.c                 |   28 ++++++++++++++++++++
+fs/read_write.c           |    6 ++++
+include/linux/fs.h        |    5 +++
+include/linux/init_task.h |    1
+include/linux/sched.h     |   13 ++++++++-
+kernel/fork.c             |    1
+7 files changed, 115 insertions(+), 2 deletions(-)
+
+Notes regarding POSIX:
+
+Whether or not close may cancel I/O operations appears to be
+implementation-defined if I interpret the following section
+correctly, unless anyone knows more specific details?
+
+The Open Group Base Specifications Issue 6
+IEEE Std 1003.1, 2004 Edition
+Copyright 2001-2004 The IEEE and The Open Group, All Rights reserved.
+
+When there is an outstanding cancelable asynchronous I/O operation
+against fildes when close() is called, that I/O operation may be
+canceled. An I/O operation that is not canceled completes as if the
+close() operation had not yet occurred. All operations that are not
+canceled shall complete as if the close() blocked until the
+operations completed. The close() operation itself need not block
+awaiting such I/O completion. Whether any I/O operation is canceled,
+and which I/O operation may be canceled upon close(), is
+implementation-defined.
+
+watchdog.c:
+
+#include &lt;sys/types.h&gt;
+#include &lt;sys/uio.h&gt;
+#include &lt;pthread.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;signal.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;errno.h&gt;
+
+int inout[2] = { -1, -1 };
+
+void *watchdog(void *arg)
+{
+fprintf(stderr, &quot;Sleeping...\n&quot;);
+sleep(1);
+fprintf(stderr, &quot;Closing...\n&quot;);
+close(inout[0]);
+fprintf(stderr, &quot;Closed.\n&quot;);
+return NULL;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+void wakeup(int sig)
+{
+fprintf(stderr, &quot;Alarmed.\n&quot;);
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+int main(int argc, char *argv[])
+{
+pthread_t th;
+char buf[1];
+ssize_t r;
+
+pipe(inout);
+pthread_create(&amp;th, NULL, watchdog, NULL);
+signal(SIGALRM, wakeup);
+alarm(5);
+
+fprintf(stderr, &quot;Reading...\n&quot;);
+r = read(inout[0], buf, sizeof(buf));
+if (r == -1)
+perror(&quot;read&quot;);
+fprintf(stderr, &quot;Read done.\n&quot;);
+
+pthread_join(th, NULL);
+fprintf(stderr, &quot;Exit.\n&quot;);
+
+return 0;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+aliasing.c:
+
+#include &lt;sys/types.h&gt;
+#include &lt;sys/stat.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;sys/uio.h&gt;
+#include &lt;pthread.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;signal.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;errno.h&gt;
+
+int inout[2] = { -1, -1 };
+
+void *aliasing(void *arg)
+{
+fprintf(stderr, &quot;Sleeping...\n&quot;);
+sleep(1);
+fprintf(stderr, &quot;Closing...\n&quot;);
+close(inout[0]);
+fprintf(stderr, &quot;Closed.\n&quot;);
+fprintf(stderr, &quot;Opening...\n&quot;);
+open(__FILE__, O_RDONLY);
+fprintf(stderr, &quot;Opened.\n&quot;);
+return NULL;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+void wakeup(int sig)
+{
+fprintf(stderr, &quot;Alarmed.\n&quot;);
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+int main(int argc, char *argv[])
+{
+pthread_t th;
+char buf[1];
+ssize_t r;
+
+pipe(inout);
+pthread_create(&amp;th, NULL, aliasing, NULL);
+signal(SIGALRM, wakeup);
+alarm(5);
+
+fprintf(stderr, &quot;Reading...\n&quot;);
+r = read(inout[0], buf, 1);
+if (r == -1)
+perror(&quot;read&quot;);
+else
+fprintf(stderr, &quot;Alias read!\n&quot;);
+fprintf(stderr, &quot;Read done.\n&quot;);
+
+pthread_join(th, NULL);
+fprintf(stderr, &quot;Exit.\n&quot;);
+
+return 0;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+required-fds.patch (not sure Apple Mail can handle this properly
+though...):
+
+--- linux-2.6.19-gentoo-r5/include/linux/init_task.h    2007-07-12
+22:03:14.000000000 +0200
++++ linux-2.6.19-required-fds/include/linux/init_task.h 2007-08-12
+03:51:34.000000000 +0200
+@@ -126,6 +126,7 @@
+.thread         = INIT_THREAD,                                  \
+.fs             = &amp;init_fs,                                 \
+.files          = &amp;init_files,                                      \
++       .required_fds   = LIST_HEAD_INIT(tsk.required_fds),             \
+.signal         = &amp;init_signals,                            \
+.sighand        = &amp;init_sighand,                            \
+.nsproxy        = &amp;init_nsproxy,                            \
+--- linux-2.6.19-gentoo-r5/include/linux/sched.h        2007-07-12
+22:03:14.000000000 +0200
++++ linux-2.6.19-required-fds/include/linux/sched.h     2007-08-12
+13:47:44.000000000 +0200
+@@ -907,6 +907,8 @@
+struct fs_struct *fs;
+/* open file information */
+struct files_struct *files;
++/* file descriptors required to complete current I/O operation
+successfully */
++       struct list_head required_fds;
+/* namespaces */
+struct nsproxy *nsproxy;
+/* signal handlers */
+@@ -930,7 +932,7 @@
+/* Thread group tracking */
+u32 parent_exec_id;
+u32 self_exec_id;
+-/* Protection of (de-)allocation: mm, files, fs, tty, keyrings */
++/* Protection of (de-)allocation: mm, files, required_fds, fs, tty,
+keyrings */
+spinlock_t alloc_lock;
+/* Protection of the PI data structures: */
+@@ -1025,6 +1027,13 @@
+#endif
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
++#define REQUIRED_FD_INIT(fd) { .fd = fd }
++
++struct required_fd {
++       struct list_head list;
++       int fd;
++};
++
+static inline pid_t process_group(struct task_struct *tsk)
+{
+return tsk-&gt;signal-&gt;pgrp;
+@@ -1429,7 +1438,7 @@
+(thread_group_leader(p) &amp;&amp; !thread_group_empty(p))
+/*
+- * Protects -&gt;fs, -&gt;files, -&gt;mm, -&gt;group_info, -&gt;comm, keyring
++ * Protects -&gt;fs, -&gt;files, -&gt;mm, -&gt;group_info, -&gt;comm, -
+&gt;required_fds, keyring
+* subscriptions and synchronises with wait4().  Also used in
+procfs.  Also
+* pins the final release of task.io_context.  Also protects -&gt;cpuset.
+*
+--- linux-2.6.19-gentoo-r5/include/linux/fs.h   2007-07-12
+22:03:14.000000000 +0200
++++ linux-2.6.19-required-fds/include/linux/fs.h        2007-08-12
+13:27:02.000000000 +0200
+@@ -1120,6 +1120,7 @@
+int (*mmap) (struct file *, struct vm_area_struct *);
+int (*open) (struct inode *, struct file *);
+int (*flush) (struct file *, fl_owner_t id);
++       void (*closing_fd) (struct inode *, struct file *, struct
+files_struct *files, unsigned int fd);
+int (*release) (struct inode *, struct file *);
+int (*fsync) (struct file *, struct dentry *, int datasync);
+int (*aio_fsync) (struct kiocb *, int datasync);
+@@ -1497,6 +1498,10 @@
+int mode);
+extern struct file *filp_open(const char *, int, int);
+extern struct file * dentry_open(struct dentry *, struct vfsmount *,
+int);
++extern int required_fds_are_bad(struct task_struct *task);
++extern void add_required_fd(struct task_struct *task,
++                           struct required_fd *req_fd);
++extern void del_required_fds(struct task_struct *task);
+extern int filp_close(struct file *, fl_owner_t id);
+extern char * getname(const char __user *);
+--- linux-2.6.19-gentoo-r5/kernel/fork.c        2007-07-12
+22:03:14.000000000 +0200
++++ linux-2.6.19-required-fds/kernel/fork.c     2007-08-12
+13:12:59.000000000 +0200
+@@ -1156,6 +1156,7 @@
+retval = copy_thread(0, clone_flags, stack_start, stack_size, p, regs);
+if (retval)
+goto bad_fork_cleanup_namespaces;
++       INIT_LIST_HEAD(&amp;p-&gt;required_fds);
+p-&gt;set_child_tid = (clone_flags &amp; CLONE_CHILD_SETTID) ?
+child_tidptr : NULL;
+/*
+--- linux-2.6.19-gentoo-r5/fs/read_write.c      2007-07-12
+22:03:14.000000000 +0200
++++ linux-2.6.19-required-fds/fs/read_write.c   2007-08-12
+13:19:59.000000000 +0200
+@@ -355,10 +355,12 @@
+asmlinkage ssize_t sys_read(unsigned int fd, char __user * buf,
+size_t count)
+{
++       struct required_fd req_fd = REQUIRED_FD_INIT(fd);
+struct file *file;
+ssize_t ret = -EBADF;
+int fput_needed;
++       add_required_fd(current, &amp;req_fd);
+file = fget_light(fd, &amp;fput_needed);
+if (file) {
+loff_t pos = file_pos_read(file);
+@@ -366,6 +368,7 @@
+file_pos_write(file, pos);
+fput_light(file, fput_needed);
+}
++       del_required_fds(current);
+return ret;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+@@ -373,10 +376,12 @@
+asmlinkage ssize_t sys_write(unsigned int fd, const char __user *
+buf, size_t count)
+{
++       struct required_fd req_fd = REQUIRED_FD_INIT(fd);
+struct file *file;
+ssize_t ret = -EBADF;
+int fput_needed;
++       add_required_fd(current, &amp;req_fd);
+file = fget_light(fd, &amp;fput_needed);
+if (file) {
+loff_t pos = file_pos_read(file);
+@@ -384,6 +389,7 @@
+file_pos_write(file, pos);
+fput_light(file, fput_needed);
+}
++       del_required_fds(current);
+return ret;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+---
+...
+read more »
+</POST>
+<POST>
+<POSTER> Paul Jackson &lt;p...@sgi.com&gt; </POSTER>
+<POSTDATE> 2007-08-12T10:20:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Fredrik wrote:
+&gt; required-fds.patch (not sure Apple Mail can handle this properly
+&gt; though...):
+">
+
+You suspected correctly - Apple Mail line wrapped it at 72 columns
+(added newlines in any line going past column 72.)  This makes it
+impossible to apply the patch without alot of hand editing.
+
+As you probably also suspect (correctly, again), given the volume of
+patches we handle on lkml, the burden is on the submitter to get the
+patch format correct, so it applies cleanly.
+
+You will have to experiment some, sending the patch to yourself and
+being sure that it applies cleanly.  I'm not an Apple Mail expert, so
+can't help; sorry.  Perhaps some other email program ...?
+
+For example, this line wrapped:
+
+fs/open.c                 |   63 +++++++++++++++++++++++++++++++++++++
++++++++++
+
+and more critically, in the patch, many lines, such as:
+
++/* file descriptors required to complete current I/O operation
+successfully */
++       struct list_head required_fds;
+
+--
+I won't rest till it's the best ...
+Programmer, Linux Scalability
+Paul Jackson &lt;p ... @sgi.com&gt; 1.925.600.0401
+-
+To unsubscribe from this list: send the line &quot;unsubscribe linux-kernel&quot; in
+the body of a message to majord ... @vger.kernel.org
+More majordomo info at http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at http://www.tux.org/lkml/
+</POST>
+<POST>
+<POSTER> Alan Cox &lt;a...@lxorguk.ukuu.org.uk&gt; </POSTER>
+<POSTDATE> 2007-08-12T11:10:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; For (1), a simple scenario has two threads: a reader and a watchdog.
+&gt; The reader thread is stuck in a blocking read of an unreliable pipe.
+&gt; The watchdog thread is designed to cancel the blocking read using
+&gt; close on the reader's fd.
+">
+
+The reader still has the fd open so the fd is not yet closed. This seems
+completely sane to me. Closing the *writer* fd would create an EOF which
+is the proper response.
+
+Alan
+-
+To unsubscribe from this list: send the line &quot;unsubscribe linux-kernel&quot; in
+the body of a message to majord ... @vger.kernel.org
+More majordomo info at http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at http://www.tux.org/lkml/
+</POST>
+<POST>
+<POSTER> Fredrik Noring &lt;nor...@nocrew.org&gt; </POSTER>
+<POSTDATE> 2007-08-12T12:40:00 </POSTDATE>
+Alan,
+
+<QUOTE PREVIOUSPOST="
+Alan Cox wrote:
+&gt; The reader still has the fd open so the fd is not yet closed. This
+&gt; seems
+&gt; completely sane to me. Closing the *writer* fd would create an EOF
+&gt; which
+&gt; is the proper response.
+">
+
+The fd is removed from the file descriptor table, but sure the file
+(as in the kernel struct file * pointer) is still valid. The problem
+is that the fd used when entering the system call, as an alias for
+the file pointer, is no longer valid. As a consequence, -ERESTARTSYS
+no longer works reliably.
+
+Second problem is that a process may not always have access to the
+writer fd and therefore may not be able to close it. So when closing
+the reader fd the process has to rely on the following:
+
+- Having a signal such as SIGALRM wake up the reader (in case the
+writer misbehaves indefinitely). This results in -EBADF returned,
+provided:
+
+- Hope that the fd has not been reused meanwhile (in which case the
+reader likely will begin reading the wrong file when it wakes up).
+
+Applications can take either of two approaches:
+
+1) Never close reader fd, but wouldn't it be practical to be able to
+make things like a threaded watchdog?
+
+2) Do close reader fd, but what results can then applications
+reliably expect? What would be the sane intention of applications
+closing reader fd? Do programmers expect all of the current results?
+
+POSIX appears to leave it &quot;implementation-defined&quot; provided I
+interpret this correctly, of course. So wouldn't it be great to make
+one of the current results a reliable feature?
+
+(A &quot;reader&quot; could be a &quot;writer&quot; above for similar cases.)
+
+All the best,
+Fredrik
+
+-
+To unsubscribe from this list: send the line &quot;unsubscribe linux-kernel&quot; in
+the body of a message to majord ... @vger.kernel.org
+More majordomo info at http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at http://www.tux.org/lkml/
+</POST>
+<POST>
+<POSTER> Fredrik Noring &lt;nor...@nocrew.org&gt; </POSTER>
+<POSTDATE> 2007-08-12T14:40:00 </POSTDATE>
+Paul,
+
+<QUOTE PREVIOUSPOST="
+Paul Jackson wrote:
+&gt; You suspected correctly - Apple Mail line wrapped it at 72 columns
+&gt; (added newlines in any line going past column 72.)  This makes it
+&gt; impossible to apply the patch without alot of hand editing.
+">
+
+Of course, sorry about that. New try!
+
+Regarding the FIXME: Marking bad fd:s in close currently walks all
+tasks, but it ought to be possible to do this much more efficiently.
+For example only tasks that actually use the file table in question.
+Alternatively, only tasks that are waiters in the pipe_inode_info-
+&gt;wait queue (they are the ones that are woken up to handle the close
+anyway; the wake up btw can perhaps also be more fine-grained).
+
+I have a feeling that the latter is the most efficient, but perhaps a
+bit more tricky regarding races. Plus, this puts the burden of
+marking bad fd:s onto all the implementations of the f_op-&gt;closing_fd
+file operation.
+
+The rest of the bookkeeping to handle required_fds should be
+efficient, I believe.
+
+Regarding generality: For maximum benefit of being able to close all
+kinds even non-pipe fd:s reliably, a lot of places need to be
+updated. This is not a requirement though, as current behaviour is
+maintained otherwise. (It might however be worthwhile to have
+sys_read/sys_write etc. refuse -ERESTARTSYS when its fd apparently is
+bad.)
+
+Cheers,
+Fredrik
+
+required-fds.patch
+8K Download
+</POST>
+<POST>
+<POSTER> Alan Cox &lt;a...@lxorguk.ukuu.org.uk&gt; </POSTER>
+<POSTDATE> 2007-08-12T14:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; POSIX appears to leave it &quot;implementation-defined&quot; provided I
+&gt; interpret this correctly, of course. So wouldn't it be great to make
+&gt; one of the current results a reliable feature?
+">
+
+Given that 99.99% of programs don't appear to care and you materially
+slow down a critical path for every read and write I'm skeptical.
+
+Teaching the pipe code specifically to behave more nicely in this case
+might be worthwhile (and as it happens with sockets in the same case you
+can use shutdown() before close to get your preferred behaviour)
+
+Alan
+-
+To unsubscribe from this list: send the line &quot;unsubscribe linux-kernel&quot; in
+the body of a message to majord ... @vger.kernel.org
+More majordomo info at http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at http://www.tux.org/lkml/
+</POST>
+<POST>
+<POSTER> Fredrik Noring &lt;nor...@nocrew.org&gt; </POSTER>
+<POSTDATE> 2007-08-12T15:30:00 </POSTDATE>
+Alan,
+
+<QUOTE PREVIOUSPOST="
+Alan Cox wrote:
+&gt; Given that 99.99% of programs don't appear to care and you materially
+&gt; slow down a critical path for every read and write I'm skeptical.
+">
+
+I've made required_fds a struct list_head list to accommodate for
+multiple fd:s (not sure that's absolutely needed though), so a couple
+of pointers need to be updated in sys_read/write. However, if that's
+too slow, and we only care about bookkeeping a single fd which is the
+case with sys_read/write, that can be changed into a single fd
+integer assignment.
+
+Would that be fast enough?
+
+Fredrik
+
+-
+To unsubscribe from this list: send the line &quot;unsubscribe linux-kernel&quot; in
+the body of a message to majord ... @vger.kernel.org
+More majordomo info at http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at http://www.tux.org/lkml/
+</POST>
+<POST>
+<POSTER> &quot;David Schwartz&quot; &lt;dav...@webmaster.com&gt; </POSTER>
+<POSTDATE> 2007-08-12T23:20:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; 2) Do close reader fd, but what results can then applications
+&gt; reliably expect? What would be the sane intention of applications
+&gt; closing reader fd? Do programmers expect all of the current results?
+&gt; Fredrik
+">
+
+Since there's no atomic &quot;unlock and read&quot; function, any code that could ever
+close a socket in one thread while another thread is blocked on read might
+call close just before another thread blocks in read. Nothing stops another
+thread from opening something, getting the same file descriptor, and then
+allowing the thread to call &quot;read&quot; on the wrong file descriptor entirely.
+
+Since this can never be made sane in general, I see little point in making
+one variation of what can go wrong a bit saner. It is still irresponsible to
+code like this.
+
+DS
+
+-
+To unsubscribe from this list: send the line &quot;unsubscribe linux-kernel&quot; in
+the body of a message to majord ... @vger.kernel.org
+More majordomo info at http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at http://www.tux.org/lkml/
+</POST>
+<POST>
+<POSTER> Fredrik Noring &lt;nor...@nocrew.org&gt; </POSTER>
+<POSTDATE> 2007-08-13T08:30:00 </POSTDATE>
+David,
+
+True. Even though there is a point in making the kernel detect and
+behave consistently in this case applications (often) end up with
+their own mess they cannot easily handle. A few more use cases would
+now work OK but probably not enough to make the improvement worthwhile.
+
+Thanks,
+Fredrik
+
+13 aug 2007 kl. 05.14 skrev David Schwartz:
+
+<QUOTE PREVIOUSPOST="
+&gt; Since there's no atomic &quot;unlock and read&quot; function, any code that
+&gt; could ever
+&gt; close a socket in one thread while another thread is blocked on
+&gt; read might
+&gt; call close just before another thread blocks in read. Nothing stops
+&gt; another
+&gt; thread from opening something, getting the same file descriptor,
+&gt; and then
+&gt; allowing the thread to call &quot;read&quot; on the wrong file descriptor
+&gt; entirely.
+
+&gt; Since this can never be made sane in general, I see little point in
+&gt; making
+&gt; one variation of what can go wrong a bit saner. It is still
+&gt; irresponsible to
+&gt; code like this.
+
+&gt; DS
+">
+
+-
+To unsubscribe from this list: send the line &quot;unsubscribe linux-kernel&quot; in
+the body of a message to majord ... @vger.kernel.org
+More majordomo info at http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at http://www.tux.org/lkml/
+</POST>
+</TEXT>
+</BODY>
+</DOC>

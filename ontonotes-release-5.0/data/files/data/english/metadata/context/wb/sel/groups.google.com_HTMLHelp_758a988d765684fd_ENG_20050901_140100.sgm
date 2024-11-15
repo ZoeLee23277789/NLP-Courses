@@ -1,0 +1,180 @@
+<DOC>
+<DOCID> groups.google.com_HTMLHelp_758a988d765684fd_ENG_20050901_140100 </DOCID>
+<DOCTYPE SOURCE="usenet">USENET TEXT</DOCTYPE>
+<DATETIME>2005-09-01T14:01:00</DATETIME>
+<BODY>
+<HEADLINE>
+onsubmit
+</HEADLINE>
+<TEXT>
+
+<POST>
+<POSTER> larry </POSTER>
+<POSTDATE> 2005-09-01T14:01:00 </POSTDATE>
+
+Hi,
+
+I am a newbie. I am programming in Perl and dynamically generating
+html. I want to call two functions to be called on the click the
+submit button, first javascript function and then a Perl script. I
+have been advised a way to do this but I can't get it to work.
+
+I have been advised to use the following format:
+&lt;form action=&quot;myPerlScript.pl&quot; onsubmit=&quot;return
+someJavaScriptFuncti­on()&quot;&gt;
+and to set certain hidden fields using the DOM of the Javascript.
+However, I have tried this technique and the JavaScript function does
+not run, it simply calls the Perl script.I have an inkling that I have
+not setup my html forms, code to make this work. This is an example I
+have seen which works.
+
+some Javascript function (not the literal code)
+&lt;FORM
+ACTION=&quot;../cgi-bin/mycgi.pl&quot;
+NAME=&quot;testform&quot;
+onSubmit=&quot;return TestDataCheck()&quot;
+&gt;
+units tested: &lt;INPUT NAME=&quot;qtytested&quot; SIZE=3&gt;&lt;BR&gt;
+units passed: &lt;INPUT NAME=&quot;qtypassed&quot; SIZE=3&gt;&lt;P&gt;
+&lt;INPUT TYPE=SUBMIT VALUE=&quot;Submit&quot;&gt;
+&lt;/FORM&gt;
+
+However, I don't understand. There is no &lt;html&gt; tag or &lt;body&gt;
+tag.
+
+The script that I am working deviates completely from this example.
+The full script is contained under one form. Essentially the code
+progression is the following. It is shorthand and not literal code
+obviosuly:
+
+0)html tags &lt;html&gt;&lt;body&gt;&lt;table&gt;&lt;form action=&quot;proceed.pl&quot;
+onsubmit=&quot;return do_processForm()&quot;&gt;
+1)read from the database
+2)create the form based on the database results
+3)declare JavaScript function which sets values to hidden fields
+4)call JavaScript function
+5)submit button
+6)close table, form, body, html
+
+I realize that this posting in lengthy and I may be missing some key
+concepts, but I'd appreciate it if someone could point in the direction
+on how to organize my &lt;forms&gt;, code so I when I press submit the
+JavaScript function will run and then the perl script.
+
+</POST>
+
+
+
+<POST>
+<POSTER> woody </POSTER>
+<POSTDATE> 2005-09-19T08:42:00 </POSTDATE>
+
+im sry i can't help ya... :-| &lt;blank stare...
+this is HTML Help, btw...
+
+</POST>
+
+
+
+<POST>
+<POSTER> mikefolcher@gmail.com </POSTER>
+<POSTDATE> 2005-09-30T15:59:00 </POSTDATE>
+
+This example should get you started:
+
+HTML file:
+
+&lt;HTML&gt;
+&lt;HEAD&gt;
+&lt;SCRIPT language=&quot;javascript&quot;&gt;
+function myQuestion() { return confirm(&quot;Do you want to submit
+your name?&quot;); }
+&lt;/SCRIPT&gt;
+&lt;/HEAD&gt;
+&lt;BODY&gt;
+&lt;FORM ACTION=&quot;../cgi-bin/printmyname.pl&quot; NAME=&quot;testform&quot;
+onSubmit=&quot;return myQuestion();&quot;&gt;
+&lt;INPUT TYPE=EDIT NAME=&quot;myname&quot;/&gt;
+&lt;INPUT TYPE=SUBMIT VALUE=&quot;Submit&quot;/&gt;
+&lt;/FORM&gt;
+&lt;/BODY&gt;
+&lt;/HTML&gt;
+
+Perl CGI File (printmyname.pl):
+#!/usr/bin/perl -w
+use strict;
+use CGI qw(:standard);
+use CGI::Carp qw(warningsToBrowser fatalsToBrowser);
+print &quot;Content-type: text/html\n\n&quot;;
+start_html(&quot;Print Name&quot;);
+print &quot;My name is &lt;b&gt;&quot; . param('myname') . &quot;&lt;/b&gt;&quot;;
+end_html;
+
+The &quot;return myQuestion()&quot; value for the onsubmit event allows you to
+control whether or not the page is submitted. The page is only
+submitted if myQuestion is true.
+
+I hope that helps.
+Mike
+
+<QUOTE PREVIOUSPOST="
+larry wrote:
+&gt; Hi,
+
+&gt; I am a newbie. I am programming in Perl and dynamically generating
+&gt; html. I want to call two functions to be called on the click the
+&gt; submit button, first javascript function and then a Perl script. I
+&gt; have been advised a way to do this but I can't get it to work.
+
+&gt; I have been advised to use the following format:
+&gt;&lt;form action=&quot;myPerlScript.pl&quot; onsubmit=&quot;return
+&gt; someJavaScriptFuncti­on()&quot;&gt;
+&gt; and to set certain hidden fields using the DOM of the Javascript.
+&gt; However, I have tried this technique and the JavaScript function does
+&gt; not run, it simply calls the Perl script.I have an inkling that I have
+&gt; not setup my html forms, code to make this work. This is an example I
+&gt; have seen which works.
+
+&gt; some Javascript function (not the literal code)
+&gt;&lt;FORM
+&gt; ACTION=&quot;../cgi-bin/mycgi.pl&quot;
+&gt; NAME=&quot;testform&quot;
+&gt; onSubmit=&quot;return TestDataCheck()&quot;
+
+&gt; units tested: &lt;INPUT NAME=&quot;qtytested&quot; SIZE=3&gt;&lt;BR&gt;
+&gt; units passed: &lt;INPUT NAME=&quot;qtypassed&quot; SIZE=3&gt;&lt;P&gt;
+&gt;&lt;INPUT TYPE=SUBMIT VALUE=&quot;Submit&quot;&gt;
+&gt;&lt;/FORM&gt;
+
+&gt; However, I don't understand. There is no &lt;html&gt; tag or &lt;body&gt;
+&gt; tag.
+
+&gt; The script that I am working deviates completely from this example.
+&gt; The full script is contained under one form. Essentially the code
+&gt; progression is the following. It is shorthand and not literal code
+&gt; obviosuly:
+
+&gt; 0)html tags &lt;html&gt;&lt;body&gt;&lt;table&gt;&lt;form action=&quot;proceed.pl&quot;
+&gt; onsubmit=&quot;return do_processForm()&quot;&gt;
+&gt; 1)read from the database
+&gt; 2)create the form based on the database results
+&gt; 3)declare JavaScript function which sets values to hidden fields
+&gt; 4)call JavaScript function
+&gt; 5)submit button
+&gt; 6)close table, form, body, html
+
+&gt; I realize that this posting in lengthy and I may be missing some key
+&gt; concepts, but I'd appreciate it if someone could point in the direction
+&gt; on how to organize my &lt;forms&gt;, code so I when I press submit the
+&gt; JavaScript function will run and then the perl script.
+
+"/>
+
+
+</POST>
+
+
+
+</TEXT>
+</BODY>
+</DOC>

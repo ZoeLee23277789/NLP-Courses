@@ -1,0 +1,909 @@
+<DOC>
+<DOCID> eng-NG-31-135019-9637126 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-11-26T08:32:00 </DATETIME>
+<BODY>
+<HEADLINE>
+glColor
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Joris Deboris &lt;joris.debo...@doesnot.exist&gt; </POSTER>
+<POSTDATE> 2007-11-26T08:32:00 </POSTDATE>
+Hello group,
+
+I'm a complete OpenGL newbie and I need some help.
+
+I want to change the color of some points I'm drawing according to their
+distance in the field. I've already tried it with GlFog but that didn't
+work to well so now I want to change the color with glColor.
+
+But how do I compute the depth of the points I'm drawing and how do I
+change their color? Eg. the points that are nearby (the camera
+viewpoint) are drawn in yellow and the points that are the furthest are
+drawn in blue.
+
+Thanks,
+
+Joris
+</POST>
+<POST>
+<POSTER> fungus &lt;openglMYSO...@artlum.com&gt; </POSTER>
+<POSTDATE> 2007-11-26T08:39:00 </POSTDATE>
+On Nov 26, 2:32 pm, Joris Deboris &lt;joris.debo ... @doesnot.exist&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I want to change the color of some points I'm drawing according to their
+&gt; distance in the field. I've already tried it with GlFog but that didn't
+&gt; work to well so now I want to change the color with glColor.
+
+&gt; But how do I compute the depth of the points I'm drawing and how do I
+&gt; change their color? Eg. the points that are nearby (the camera
+&gt; viewpoint) are drawn in yellow and the points that are the furthest are
+&gt; drawn in blue.
+">
+
+It's very basic math - how do you calculate the distance
+between two points? (i.e. The viewer and the visible point)
+
+--
+&lt;\___/&gt;
+/ O O \
+\_____/  FTB.     Remove my socks for email address.
+</POST>
+<POST>
+<POSTER> RumbaDancer &lt;i_l...@latin.pl&gt; </POSTER>
+<POSTDATE> 2007-11-26T08:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Joris Deboris wrote:
+&gt; Hello group,
+
+&gt; I'm a complete OpenGL newbie and I need some help.
+
+&gt; I want to change the color of some points I'm drawing according to their
+&gt; distance in the field. I've already tried it with GlFog but that didn't
+&gt; work to well so now I want to change the color with glColor.
+
+&gt; But how do I compute the depth of the points I'm drawing and how do I
+&gt; change their color? Eg. the points that are nearby (the camera
+&gt; viewpoint) are drawn in yellow and the points that are the furthest are
+&gt; drawn in blue.
+
+&gt; Thanks,
+
+&gt; Joris
+">
+
+thing is opengl does not give ANYTHING besides graphics in API. You have to
+do it by yourself. Color in opengl (old-school system) is done by calling
+glColor*()
+
+if there is simple camera on 0.0f, 0.0f, 0.0f and looking at 0.0 0.0 -1.0f
+all you need to do is to check 'z' coordinte nad draw like this
+
+float * check_z(z_coord)
+{
+float tab[3];
+// some if statements
+// far polygon
+if(z &lt; -2.0f &amp;&amp; z &gt; -4.0f)
+{
+tab[0] = 0.0f;
+tab[1] = 0.0f
+tab[2] = 1.0f;
+}
+// not so far :-)
+if(z &gt; -2.0f)
+{
+tab[0] = 0.0f;
+tab[1] = 1.0f
+tab[2] = 1.0f;
+}
+return tab;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+float sth[3];
+glBegin(GL_POINT);
+sth = check_z(your_z_coord);
+glColor3f(sth[0], sth[1], sth[2]);
+glVertex(bla..bla..bla);
+glEnd();
+
+But again this is old-school (fixed pipeline) system. Noone is writing
+without shaders now.
+--
+Don't Stop Dancing.....
+</POST>
+<POST>
+<POSTER> John Tsiombikas &lt;nucl...@siggraph.org&gt; </POSTER>
+<POSTDATE> 2007-11-26T08:56:00 </POSTDATE>
+On 2007-11-26, fungus &lt;openglMYSO ... @artlum.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Nov 26, 2:32 pm, Joris Deboris &lt;joris.debo ... @doesnot.exist&gt; wrote:
+&gt;&gt; I want to change the color of some points I'm drawing according to their
+&gt;&gt; distance in the field. I've already tried it with GlFog but that didn't
+&gt;&gt; work to well so now I want to change the color with glColor.
+
+&gt;&gt; But how do I compute the depth of the points I'm drawing and how do I
+&gt;&gt; change their color? Eg. the points that are nearby (the camera
+&gt;&gt; viewpoint) are drawn in yellow and the points that are the furthest are
+&gt;&gt; drawn in blue.
+
+&gt; It's very basic math - how do you calculate the distance
+&gt; between two points? (i.e. The viewer and the visible point)
+">
+
+Also, if you don't need exact distance from the viewer, you can just use
+the -Z coordinate of your points in view space, and spare yourself the
+square root. Although for your purpose, most likely the squared distance
+from the viewer would also do.
+
+--
+John Tsiombikas (Nuclear / Mindlapse)
+http://nuclear.sdf-eu.org/
+</POST>
+<POST>
+<POSTER> John Tsiombikas &lt;nucl...@siggraph.org&gt; </POSTER>
+<POSTDATE> 2007-11-26T14:35:00 </POSTDATE>
+On 2007-11-26, RumbaDancer &lt;i_l ... @latin.pl&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; But again this is old-school (fixed pipeline) system. Noone is writing
+&gt; without shaders now.
+">
+
+Noone? That's quite an assertion! :)
+I know a lot of OpenGL programs that don't use shaders, in fact most of
+them don't.
+
+There's nothing wrong with the fixed function pipeline. In fact I avoid
+using shaders when there's no need to do so, or I try make their use
+conditional.
+
+In fact I use 3 computers regulary, and only one of them is capable of
+running OpenGL programs that use shaders. Not all uses of OpenGL target
+hardware-hungry gamers :)
+
+--
+John Tsiombikas (Nuclear / Mindlapse)
+http://nuclear.sdf-eu.org/
+</POST>
+<POST>
+<POSTER> Wolfgang Draxinger &lt;wdraxin...@darkstargames.de&gt; </POSTER>
+<POSTDATE> 2007-11-26T15:08:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+John Tsiombikas wrote:
+&gt; There's nothing wrong with the fixed function pipeline. In fact
+&gt; I avoid using shaders when there's no need to do so, or I try
+&gt; make their use conditional.
+">
+
+On SM &gt;=3 capable hardware you can bet, that also the fixed
+function pipeline is done with shaders. Only that the OpenGL
+driver provides default ones and loads them, if shaders have
+been &quot;diabled&quot;.
+
+And OpenGL 3 will abandon the fixed function pipeline completely
+and do everything with shaders.
+
+Wolfgang Draxinger
+--
+E-Mail address works, Jabber: hexar ... @jabber.org, ICQ: 134682867
+</POST>
+<POST>
+<POSTER> fungus &lt;openglMYSO...@artlum.com&gt; </POSTER>
+<POSTDATE> 2007-11-27T03:13:00 </POSTDATE>
+On Nov 26, 2:50 pm, RumbaDancer &lt;i_l ... @latin.pl&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; But again this is old-school (fixed pipeline) system. Noone is writing
+&gt; without shaders now.
+">
+
+I've never written a shader, not even for fun.
+
+All my work so far is fixed pipeline.
+
+--
+&lt;\___/&gt;
+/ O O \
+\_____/  FTB.     Remove my socks for email address.
+</POST>
+<POST>
+<POSTER> fungus &lt;openglMYSO...@artlum.com&gt; </POSTER>
+<POSTDATE> 2007-11-27T03:15:00 </POSTDATE>
+On Nov 26, 9:08 pm, Wolfgang Draxinger &lt;wdraxin ... @darkstargames.de&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On SM &gt;=3 capable hardware you can bet, that also the fixed
+&gt; function pipeline is done with shaders. Only that the OpenGL
+&gt; driver provides default ones and loads them, if shaders have
+&gt; been &quot;diabled&quot;.
+">
+
+Of course...
+
+<QUOTE PREVIOUSPOST="
+&gt; And OpenGL 3 will abandon the fixed function pipeline completely
+&gt; and do everything with shaders.
+">
+
+I hope they have a lot of built-in shaders for people to
+use or it will raise the OpenGL learning curve a *lot*.
+
+--
+&lt;\___/&gt;
+/ O O \
+\_____/  FTB.     Remove my socks for email address.
+</POST>
+<POST>
+<POSTER> Wolfgang Draxinger &lt;wdraxin...@darkstargames.de&gt; </POSTER>
+<POSTDATE> 2007-11-27T04:24:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+fungus wrote:
+&gt; I hope they have a lot of built-in shaders for people to
+&gt; use or it will raise the OpenGL learning curve a *lot*.
+">
+
+The main idea behind this is, that instead of setting a lot of
+parameters for the fixed function pipeline (like texture
+environment, lighting, etc.) you just supply a short shader
+string in GLSL describing all that.
+
+The standard operations (modelview and projection transformation,
+and lighting) are supplied with convenient functions you just
+have to call in the shader.
+
+I could even imagine, that there's always a standard shader
+loaded (like texture object with ID 0 in current OpenGL),
+probably with ID 0, too, doing exactly what the fixed function
+pipeline does now. But if you want to change things like texture
+enviroment, texture coordinate generation and stuff like that,
+you'll have to supply some shader.
+
+But I don't see a convenience problem with that: Either you do
+20+ OpenGL function calls to set everything, or you initialize
+some shaders at the beginning, and just select the shader you
+want, when you need it. OpenGL3 API will not be backwards
+compatible, and IMHO that's OK, there will be probably wrappers
+for older programs. No problems with library version on *nix
+systems (instead of libGL.so it's libGL3.so or libGL.3.so then),
+Windows will require a new opengl32.dll (LOL, someone might
+mistake the 32 for a version string), MacOS X - I don't know,
+never worked with it yet on a close distance.
+
+Wolfgang Draxinger
+--
+E-Mail address works, Jabber: hexar ... @jabber.org, ICQ: 134682867
+</POST>
+<POST>
+<POSTER> &quot;Gernot Frisch&quot; &lt;M...@Privacy.net&gt; </POSTER>
+<POSTDATE> 2007-11-27T04:57:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; I've never written a shader, not even for fun.
+&gt; All my work so far is fixed pipeline.
+">
+
+I second that
+</POST>
+<POST>
+<POSTER> fungus &lt;openglMYSO...@artlum.com&gt; </POSTER>
+<POSTDATE> 2007-11-27T08:22:00 </POSTDATE>
+On Nov 27, 10:24 am, Wolfgang Draxinger &lt;wdraxin ... @darkstargames.de&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; The main idea behind this is...
+">
+
+I can see how it makes sense and will be more efficient
+on newer cards, it's just that I've never done it yet...
+
+I expect I'll switch over to shaders sometime next year.
+
+--
+&lt;\___/&gt;
+/ O O \
+\_____/  FTB.     Remove my socks for email address.
+</POST>
+<POST>
+<POSTER> &quot;Dave Eberly&quot; &lt;dNOSPAMebe...@usemydomain.com&gt; </POSTER>
+<POSTDATE> 2007-11-27T09:49:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;fungus&quot; &lt;openglMYSO ... @artlum.com&gt; wrote in message
+">
+
+news:79824667-0f51-4da6-a2b5-989a9680d088@w28g2000hsf.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; I've never written a shader, not even for fun.
+
+&gt; All my work so far is fixed pipeline.
+">
+
+Are you kidding?
+
+In my opinion, the time it takes to go from a high-level description
+of a special effect to implementing it as a shader is greatly reduced
+from that of having to figure out how to set up the fixed-function
+pipeline calls.
+
+In the game I am working on, we have a high-level tool that lets
+artists create special effects that are as complex as they desire.
+The tool stores what they do in an intermediate language that is
+then compiled to *.fx files (for HLSL and for Cg).  These in turn
+are compiled by fxc and cg for loading by the game.  No
+programmer intervention is needed.  The intermediate-to-fx
+compiler is fairly simple because of the shader program aspect.
+If we had to generate fixed-function pipeline code, that tool
+would take a lot longer to create and maintain.
+
+I am really looking forward to OpenGL 3.  And not having
+multiple varieties of &quot;buffer&quot; objects.  May fixed-function
+pipelines die swiftly :)
+
+--
+Dave Eberly
+http://www.geometrictools.com
+</POST>
+<POST>
+<POSTER> &quot;jbwest&quot; &lt;jbw...@comcast.net&gt; </POSTER>
+<POSTDATE> 2007-11-26T12:21:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Dave Eberly&quot; &lt;dNOSPAMebe ... @usemydomain.com&gt; wrote in message
+">
+
+news:48W2j.28928$L15.12382@newsfe08.phx ...
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;fungus&quot; &lt;openglMYSO ... @artlum.com&gt; wrote in message
+&gt; news:79824667-0f51-4da6-a2b5-989a9680d088@w28g2000hsf.googlegroups.com ...
+&gt;&gt; I've never written a shader, not even for fun.
+
+&gt;&gt; All my work so far is fixed pipeline.
+
+&gt; Are you kidding?
+
+&gt; In my opinion, the time it takes to go from a high-level description
+&gt; of a special effect to implementing it as a shader is greatly reduced
+&gt; from that of having to figure out how to set up the fixed-function
+&gt; pipeline calls.
+
+&gt; In the game I am working on, we have a high-level tool that lets
+&gt; artists create special effects that are as complex as they desire.
+&gt; The tool stores what they do in an intermediate language that is
+&gt; then compiled to *.fx files (for HLSL and for Cg).  These in turn
+&gt; are compiled by fxc and cg for loading by the game.  No
+&gt; programmer intervention is needed.  The intermediate-to-fx
+&gt; compiler is fairly simple because of the shader program aspect.
+&gt; If we had to generate fixed-function pipeline code, that tool
+&gt; would take a lot longer to create and maintain.
+
+&gt; I am really looking forward to OpenGL 3.  And not having
+&gt; multiple varieties of &quot;buffer&quot; objects.  May fixed-function
+&gt; pipelines die swiftly :)
+
+&gt; --
+&gt; Dave Eberly
+&gt; http://www.geometrictools.com
+">
+
+I suppose it's what you get used to. However, in complex systems I've so far
+found shaders to be a pain.
+I have something like a dozen shaders to implement one thing -- a dependent
+texture read. All sorts of branchiness to load the right optimized shader
+depending on
+
+Lighting on/off
+I want alpha or not
+single or multi textures
+1d, 2d or 3d
+
+(all combinations &amp; permutations thereof).
+
+Since I do *all* of these in a single frame, it's a pain. The &quot;take over
+(sortof) everything&quot; model for shaders means that its an inevitable
+consequence that you have to do this, right? A giant case statement to load
+the right shader -- poor programming practice IMO. And in reality a huge
+number of shaders for all possible combinations &amp; permutations. As opposed
+to the fixed pipeline orthogonality of functions. If there's a better way,
+I'd love to hear it.
+
+For example,
+
+dependent texture read, 1 2d texture
+dependent texture read, 1 2d texture blended with a 2nd 2d texture.
+
+How can I do this w/o 2 shaders ?
+
+jbw
+
+jbw
+</POST>
+<POST>
+<POSTER> John Tsiombikas &lt;nucl...@siggraph.org&gt; </POSTER>
+<POSTDATE> 2007-11-27T21:44:00 </POSTDATE>
+On 2007-11-26, Wolfgang Draxinger &lt;wdraxin ... @darkstargames.de&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; John Tsiombikas wrote:
+
+&gt;&gt; There's nothing wrong with the fixed function pipeline. In fact
+&gt;&gt; I avoid using shaders when there's no need to do so, or I try
+&gt;&gt; make their use conditional.
+
+&gt; On SM &gt;=3 capable hardware you can bet, that also the fixed
+&gt; function pipeline is done with shaders. Only that the OpenGL
+&gt; driver provides default ones and loads them, if shaders have
+&gt; been &quot;diabled&quot;.
+">
+
+I think you missed my point. The reason I don't use shaders unless I
+really have to has nothing to do with expected performance with and
+without shaders. It has to do with compatibility, and ease of use.
+
+That's why I mentioned the fact that 2 out of 3 computers I use
+regularly *can't run shaders*.
+
+It's easy to get carried away with assumptions of cutting-edge 3D
+hardware if you're into the games industry, where the target audience
+(gamers) continuously buy new graphics cards. But that doesn't
+necessarily hold in other areas.
+
+And as far as ease of use goes, it's true that some things are easier to
+do with shaders, especially in one-off specialized programs. However as
+jbwest pointed out elsewhere in this thread, handling many different
+rendering paths at once becomes rather complicated. I won't go into this
+now as he explains the problem very well.
+
+<QUOTE PREVIOUSPOST="
+&gt; And OpenGL 3 will abandon the fixed function pipeline completely
+&gt; and do everything with shaders.
+">
+
+Yes, so I keep hearing. If that's the case, I have my doubts about the
+rate of adoption of OpenGL 3. But it's a bit too early for such a
+discussion yet.
+
+Don't get me wrong, I love shaders, and the power they give me to do
+many wonderful things like deferred shading, parallax mapping,
+and multitudes of illumination models at will. However, I just can't see
+the reason to abandon the simplicity of the fixed function pipeline for
+most cases where these things aren't necessary.
+
+--
+John Tsiombikas (Nuclear / Mindlapse)
+http://nuclear.sdf-eu.org/
+</POST>
+<POST>
+<POSTER> Wolfgang Draxinger &lt;wdraxin...@darkstargames.de&gt; </POSTER>
+<POSTDATE> 2007-11-28T02:48:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+John Tsiombikas wrote:
+&gt; On 2007-11-26, Wolfgang Draxinger &lt;wdraxin ... @darkstargames.de&gt;
+&gt; wrote:
+
+&gt;&gt; John Tsiombikas wrote:
+
+&gt;&gt;&gt; There's nothing wrong with the fixed function pipeline. In
+&gt;&gt;&gt; fact I avoid using shaders when there's no need to do so, or
+&gt;&gt;&gt; I try make their use conditional.
+
+&gt;&gt; On SM &gt;=3 capable hardware you can bet, that also the fixed
+&gt;&gt; function pipeline is done with shaders. Only that the OpenGL
+&gt;&gt; driver provides default ones and loads them, if shaders have
+&gt;&gt; been &quot;diabled&quot;.
+
+&gt; I think you missed my point. The reason I don't use shaders
+&gt; unless I really have to has nothing to do with expected
+&gt; performance with and without shaders. It has to do with
+&gt; compatibility, and ease of use.
+
+&gt; That's why I mentioned the fact that 2 out of 3 computers I use
+&gt; regularly *can't run shaders*.
+
+&gt; It's easy to get carried away with assumptions of cutting-edge
+&gt; 3D hardware if you're into the games industry, where the target
+&gt; audience (gamers) continuously buy new graphics cards. But that
+&gt; doesn't necessarily hold in other areas.
+">
+
+There was a time, when I was so concerned about the minimum
+hardware needs of my programs, that I implemented up to 4
+different rendering paths, to gain similair visual results with
+different hardware. I did a really nice water effect, looking
+like the water of the Source Engine, with a GeForce 2, which has
+no programmable shaders, around 2001.
+
+But at some point I realized, that instead of just trying to aim
+for maximum compatibility with older hardware, it's better to
+aim, for what may be considered a standard setup at the release
+date and just write &quot;you need at least that kind of HW to run
+this program, deal with it&quot; in the specs. One can expect that a
+program, that makes vast use of shaders also requires some
+recent CPU (thinking of SIMD instructions here).
+
+<QUOTE PREVIOUSPOST="
+&gt; However, I just can't see the reason to abandon the simplicity
+&gt; of the fixed function pipeline for most cases where these
+&gt; things aren't necessary.
+">
+
+Eventually to unleash the true power of the hardware, or just to
+put into the developers heads, what's really going on. Oh, and
+if you're one of the old league of software renderer coders:
+When doing software rendering, you practically had shaders.
+They, needed to be highly efficient coded, but you could do
+tricks like water, bump mapping and all that &quot;modern&quot; stuff.
+With the advent of the early HW rasterizers those possibilities
+got lost, and since a few years we regain them.
+
+So you still own a copy of Half-Life 1 of 1998? Besides the
+OpenGL and DirectX mode it also has a &quot;Software Renderer&quot; mode.
+Well, the ordinary map geometry might not look so good with it,
+but the water looks really cool.
+
+Oh, and before I forget it: In DirectX 10 you can't go without
+shaders, too. But that's not really an argument. Just see it
+this way: OpenGL3 will be focused on fully programmable graphics
+hardware, thus is breaks with all its fixed function pipeline
+legacy. If you want to do fixed function pipeline stuff: Just
+stay with OpenGL2, I doubt, that this will not be supported by
+OpenGL3 drivers.
+
+Wolfgang Draxinger
+--
+E-Mail address works, Jabber: hexar ... @jabber.org, ICQ: 134682867
+</POST>
+<POST>
+<POSTER> Wolfgang Draxinger &lt;wdraxin...@darkstargames.de&gt; </POSTER>
+<POSTDATE> 2007-11-28T02:30:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+jbwest wrote:
+&gt; For example,
+
+&gt; dependent texture read, 1 2d texture
+&gt; dependent texture read, 1 2d texture blended with a 2nd 2d
+&gt; texture.
+
+&gt; How can I do this w/o 2 shaders ?
+">
+
+Reimplement the fixed function pipeline with a shader and set the
+parameters through uniforms. For each step you want to
+enable/disable calculate the intermediate results of both
+branches and LERP it with the setting uniform, then pass it on.
+
+Or you build some sort of code generator, which creates the
+shader(s) for you, and by setting the paramters the right shader
+is selected from the cache.
+
+And you can mix both techniques of course.
+
+Wolfgang Draxinger
+--
+E-Mail address works, Jabber: hexar ... @jabber.org, ICQ: 134682867
+</POST>
+<POST>
+<POSTER> aku ankka &lt;ju...@liimatta.org&gt; </POSTER>
+<POSTDATE> 2007-11-28T04:00:00 </POSTDATE>
+On Nov 26, 7:21 pm, &quot;jbwest&quot; &lt;jbw ... @comcast.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Dave Eberly&quot; &lt;dNOSPAMebe ... @usemydomain.com&gt; wrote in message
+
+&gt; news:48W2j.28928$L15.12382@newsfe08.phx ...
+
+&gt; &gt; &quot;fungus&quot; &lt;openglMYSO ... @artlum.com&gt; wrote in message
+&gt; &gt; news:79824667-0f51-4da6-a2b5-989a9680d088@w28g2000hsf.googlegroups.com ...
+&gt; &gt;&gt; I've never written a shader, not even for fun.
+
+&gt; &gt;&gt; All my work so far is fixed pipeline.
+
+&gt; &gt; Are you kidding?
+
+&gt; &gt; In my opinion, the time it takes to go from a high-level description
+&gt; &gt; of a special effect to implementing it as a shader is greatly reduced
+&gt; &gt; from that of having to figure out how to set up the fixed-function
+&gt; &gt; pipeline calls.
+
+&gt; &gt; In the game I am working on, we have a high-level tool that lets
+&gt; &gt; artists create special effects that are as complex as they desire.
+&gt; &gt; The tool stores what they do in an intermediate language that is
+&gt; &gt; then compiled to *.fx files (for HLSL and for Cg).  These in turn
+&gt; &gt; are compiled by fxc and cg for loading by the game.  No
+&gt; &gt; programmer intervention is needed.  The intermediate-to-fx
+&gt; &gt; compiler is fairly simple because of the shader program aspect.
+&gt; &gt; If we had to generate fixed-function pipeline code, that tool
+&gt; &gt; would take a lot longer to create and maintain.
+
+&gt; &gt; I am really looking forward to OpenGL 3.  And not having
+&gt; &gt; multiple varieties of &quot;buffer&quot; objects.  May fixed-function
+&gt; &gt; pipelines die swiftly :)
+
+&gt; &gt; --
+&gt; &gt; Dave Eberly
+&gt; &gt; http://www.geometrictools.com
+
+&gt; I suppose it's what you get used to. However, in complex systems I've so far
+&gt; found shaders to be a pain.
+&gt; I have something like a dozen shaders to implement one thing -- a dependent
+&gt; texture read. All sorts of branchiness to load the right optimized shader
+&gt; depending on
+
+&gt; Lighting on/off
+&gt; I want alpha or not
+&gt; single or multi textures
+&gt; 1d, 2d or 3d
+
+&gt; (all combinations &amp; permutations thereof).
+
+&gt; Since I do *all* of these in a single frame, it's a pain. The &quot;take over
+&gt; (sortof) everything&quot; model for shaders means that its an inevitable
+&gt; consequence that you have to do this, right? A giant case statement to load
+&gt; the right shader -- poor programming practice IMO. And in reality a huge
+&gt; number of shaders for all possible combinations &amp; permutations. As opposed
+&gt; to the fixed pipeline orthogonality of functions. If there's a better way,
+&gt; I'd love to hear it.
+
+&gt; For example,
+
+&gt; dependent texture read, 1 2d texture
+&gt; dependent texture read, 1 2d texture blended with a 2nd 2d texture.
+
+&gt; How can I do this w/o 2 shaders ?
+
+&gt; jbw
+
+&gt; jbw
+">
+
+The nice thing about shaders is that they are programmable. You can
+generate the code when you need it and pass it to the OGL
+implementation to compile and link. You don't need to have the source
+text you give the driver to be fixed text.
+
+Of course, you need to program the logic for the case you presented
+above. You do it for a while like that. Then you make it a little bit
+more generic and after a while, you got a scripting system in place. I
+noticed that the scripting always evolves more or less to be data
+driven.. you got some mechanism to create data that you want to
+render, be it Blender, 3DSMAX, Maya, Lightwave, you name it.
+
+Commonly the data is in fixed format, like here we got position and
+texcoord0 and color, normal and so on, following the fixed pipe
+conventions. That works. But it becomes more flexible when you remove
+arbitrary rules like that.. you want to have code, and then some way
+to connect inputs to the code.. and from this kind of requirement good
+designs begin to form.
+
+If you make it really generic, the implementation is much simpler than
+compared to system where you have countless special cases to cater.
+
+I admit it is quite a bit of work to design and implement something
+that is really good, and you might not have any use whatsoever for
+something like that. If that is the case, don't. Keep it simple. It
+all depends on your requirements, but I emphasized the data-driven
+approach for years, because, well, Artists are what make the stuff
+look good, give them better tools and you get better graphics. It's
+that simple (in my opinion).
+</POST>
+<POST>
+<POSTER> fungus &lt;openglMYSO...@artlum.com&gt; </POSTER>
+<POSTDATE> 2007-11-28T04:36:00 </POSTDATE>
+On Nov 27, 3:49 pm, &quot;Dave Eberly&quot; &lt;dNOSPAMebe ... @usemydomain.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;fungus&quot; &lt;openglMYSO ... @artlum.com&gt; wrote in message
+
+&gt; news:79824667-0f51-4da6-a2b5-989a9680d088@w28g2000hsf.googlegroups.com ...
+
+&gt; &gt; I've never written a shader, not even for fun.
+
+&gt; &gt; All my work so far is fixed pipeline.
+
+&gt; Are you kidding?
+
+&gt; In my opinion, the time it takes to go from a high-level description
+&gt; of a special effect to implementing it as a shader is greatly reduced
+">
+
+Call me when Intel chips can do them
+
+(you know, the leading graphics chip maker...)
+
+--
+&lt;\___/&gt;
+/ O O \
+\_____/  FTB.     Remove my socks for email address.
+</POST>
+<POST>
+<POSTER> Wolfgang Draxinger &lt;wdraxin...@darkstargames.de&gt; </POSTER>
+<POSTDATE> 2007-11-28T05:15:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+aku ankka wrote:
+&gt; If you make it really generic, the implementation is much
+&gt; simpler than compared to system where you have countless
+&gt; special cases to cater.
+">
+
+Oh BTW: http://libsh.org if you like C++ template generic
+programming.
+
+I'm currently working on a high level shading language, that has
+been inspired by Lisp. IMHO shaders are best described in terms
+of functional programming, as effectively a shader is a function
+(in the mathematical sense), i.e. you always want the same input
+produce the same output (that is unlike the e.g. rand(), or
+functions in an imperative language meaning). That's also the
+reason, one uses Perlin Noise and not a /dev/random for
+procedural materials.
+
+Wolfgang Draxinger
+--
+E-Mail address works, Jabber: hexar ... @jabber.org, ICQ: 134682867
+</POST>
+<POST>
+<POSTER> Lord Crc &lt;lord...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-28T06:08:00 </POSTDATE>
+On Mon, 26 Nov 2007 09:21:44 -0800, &quot;jbwest&quot; &lt;jbw ... @comcast.net&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;Since I do *all* of these in a single frame, it's a pain.
+">
+
+If you haven't, I recommend reading
+http://www2.ati.com/developer/gdc/D3DTutorial10_Half-Life2_Shading.pdf
+
+Perhaps it can give you some inspiration.
+
+Cheers
+- Asbjørn
+</POST>
+<POST>
+<POSTER> John Tsiombikas &lt;nucl...@siggraph.org&gt; </POSTER>
+<POSTDATE> 2007-11-28T06:10:00 </POSTDATE>
+On 2007-11-28, Wolfgang Draxinger &lt;wdraxin ... @darkstargames.de&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I'm currently working on a high level shading language, that has
+&gt; been inspired by Lisp. IMHO shaders are best described in terms
+&gt; of functional programming, as effectively a shader is a function
+&gt; (in the mathematical sense)
+">
+
+That's a very interesting concept. Do you have a website up for that
+project or something? I'd like to try it out when it's &quot;done&quot;.
+
+I was considering using scheme as a shading language for a raytracer I
+was writing at some point, but changed my mind later and didn't
+implement that.
+
+--
+John Tsiombikas (Nuclear / Mindlapse)
+http://nuclear.sdf-eu.org/
+</POST>
+<POST>
+<POSTER> &quot;Gernot Frisch&quot; &lt;M...@Privacy.net&gt; </POSTER>
+<POSTDATE> 2007-11-28T07:26:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Oh BTW: http://libsh.org if you like C++ template generic
+&gt; programming.
+">
+
+O_O! Did I get this right? They created a class set that instead
+records runtime-calls to a string and provides a GLSL output program
+from what you wrote in C++?
+Insane, but very interesting.
+</POST>
+<POST>
+<POSTER> &quot;Dave Eberly&quot; &lt;dNOSPAMebe...@usemydomain.com&gt; </POSTER>
+<POSTDATE> 2007-11-29T04:16:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;fungus&quot; &lt;openglMYSO ... @artlum.com&gt; wrote in message
+">
+
+news:8667b173-0256-47d4-a9f6-aa7b3e6180e2@i29g2000prf.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Call me when Intel chips can do them
+">
+
+Why stop there?  You should write programs for folks who still
+use slide rules :)
+
+--
+Dave Eberly
+http://www.geometrictools.com
+</POST>
+<POST>
+<POSTER> Diego &lt;jose.di...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-04T14:43:00 </POSTDATE>
+On Nov 26, 11:50 am, RumbaDancer &lt;i_l ... @latin.pl&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Joris Deboris wrote:
+&gt; &gt; Hello group,
+
+&gt; &gt; I'm a complete OpenGL newbie and I need some help.
+
+&gt; &gt; I want to change the color of some points I'm drawing according to their
+&gt; &gt; distance in the field. I've already tried it with GlFog but that didn't
+&gt; &gt; work to well so now I want to change the color with glColor.
+
+&gt; &gt; But how do I compute the depth of the points I'm drawing and how do I
+&gt; &gt; change their color? Eg. the points that are nearby (the camera
+&gt; &gt; viewpoint) are drawn in yellow and the points that are the furthest are
+&gt; &gt; drawn in blue.
+
+&gt; &gt; Thanks,
+
+&gt; &gt; Joris
+
+&gt; thing is opengl does not give ANYTHING besides graphics in API. You have to
+&gt; do it by yourself. Color in opengl (old-school system) is done by calling
+&gt; glColor*()
+
+&gt; if there is simple camera on 0.0f, 0.0f, 0.0f and looking at 0.0 0.0 -1.0f
+&gt; all you need to do is to check 'z' coordinte nad draw like this
+
+&gt; float * check_z(z_coord)
+&gt; {
+&gt;         float tab[3];
+&gt;         // some if statements
+&gt;         // far polygon
+&gt;         if(z &lt; -2.0f &amp;&amp; z &gt; -4.0f)
+&gt;         {
+&gt;                 tab[0] = 0.0f;
+&gt;                 tab[1] = 0.0f
+&gt;                 tab[2] = 1.0f;
+&gt;         }
+&gt;         // not so far :-)
+&gt;         if(z &gt; -2.0f)
+&gt;         {
+&gt;                 tab[0] = 0.0f;
+&gt;                 tab[1] = 1.0f
+&gt;                 tab[2] = 1.0f;
+&gt;         }
+&gt;         return tab;}
+
+&gt; float sth[3];
+&gt; glBegin(GL_POINT);
+&gt;         sth = check_z(your_z_coord);
+&gt;         glColor3f(sth[0], sth[1], sth[2]);
+&gt;         glVertex(bla..bla..bla);
+&gt; glEnd();
+">
+
+you have a bug
+you return a pointer to the stack in check_z() function
+arrays aren't assignable :(
+</POST>
+<POST>
+<POSTER> Joris Deboris &lt;joris.debo...@doesnot.exist&gt; </POSTER>
+<POSTDATE> 2007-12-08T01:52:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Diego wrote:
+">
+
+&lt;...smip...&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; you have a bug
+&gt; you return a pointer to the stack in check_z() function
+&gt; arrays aren't assignable :(
+">
+
+I don't think he really checked his code before submitting but that he
+just wanted to give a hint. His hint worked for me :)
+</POST>
+</TEXT>
+</BODY>
+</DOC>

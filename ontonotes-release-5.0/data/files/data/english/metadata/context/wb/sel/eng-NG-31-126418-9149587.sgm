@@ -1,0 +1,282 @@
+<DOC>
+<DOCID> eng-NG-31-126418-9149587 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-11-08T00:54:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Using models with plugins in CakePHP 1.2
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Aaron  Shafovaloff &lt;aarons...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-08T00:54:00 </POSTDATE>
+I have a plugin which has two models of its own. I've followed the
+directions to creating a plugin to the T.
+
+In the plugin's own app_controller file I have the following:
+
+class PluginNameAppController extends AppController ...
+
+This creates a problem. The main AppController file &quot;uses&quot; some
+models, like User. But I get a missing model error because it attempts
+to load models used by AppController in the plugin's models
+subdirectory. The User model is in the main models directory, though.
+
+Any thoughts? Is this just a deficiency of CakePHP 1.2 I'll have to
+live with? Why can't I use models in the main app models directory?
+</POST>
+<POST>
+<POSTER> rtconner &lt;rtcon...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-08T01:59:00 </POSTDATE>
+I think you have to do..
+
+$uses = array('Pluginname.Modelname');
+
+On Nov 7, 10:54 pm, Aaron  Shafovaloff &lt;aarons ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I have a plugin which has two models of its own. I've followed the
+&gt; directions to creating a plugin to the T.
+
+&gt; In the plugin's own app_controller file I have the following:
+
+&gt; class PluginNameAppController extends AppController ...
+
+&gt; This creates a problem. The main AppController file &quot;uses&quot; some
+&gt; models, like User. But I get a missing model error because it attempts
+&gt; to load models used by AppController in the plugin's models
+&gt; subdirectory. The User model is in the main models directory, though.
+
+&gt; Any thoughts? Is this just a deficiency of CakePHP 1.2 I'll have to
+&gt; live with? Why can't I use models in the main app models directory?
+">
+</POST>
+<POST>
+<POSTER> Aaron  Shafovaloff &lt;aarons...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-08T13:03:00 </POSTDATE>
+Thanks, but what if it's part of the main app? That's my particular
+problem.
+
+On Nov 7, 11:59 pm, rtconner &lt;rtcon ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I think you have to do..
+
+&gt; $uses = array('Pluginname.Modelname');
+
+&gt; On Nov 7, 10:54 pm, Aaron  Shafovaloff &lt;aarons ... @gmail.com&gt; wrote:
+
+&gt; &gt; I have a plugin which has two models of its own. I've followed the
+&gt; &gt; directions to creating a plugin to the T.
+
+&gt; &gt; In the plugin's own app_controller file I have the following:
+
+&gt; &gt; class PluginNameAppController extends AppController ...
+
+&gt; &gt; This creates a problem. The main AppController file &quot;uses&quot; some
+&gt; &gt; models, like User. But I get a missing model error because it attempts
+&gt; &gt; to load models used by AppController in the plugin's models
+&gt; &gt; subdirectory. The User model is in the main models directory, though.
+
+&gt; &gt; Any thoughts? Is this just a deficiency of CakePHP 1.2 I'll have to
+&gt; &gt; live with? Why can't I use models in the main app models directory?
+">
+</POST>
+<POST>
+<POSTER> Gwoo &lt;gwoo.cake...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-08T13:21:00 </POSTDATE>
+Plugins should not access models from application. If you think about
+&quot;plugin&quot; for a second you can understand why. There are other ways to
+organize your models, see /app/config/bootstrap.php
+</POST>
+<POST>
+<POSTER> Aaron  Shafovaloff &lt;aarons...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-08T13:37:00 </POSTDATE>
+I guess it makes sense for me that plugins could inherit models.
+Plugins plug into the existing applications, i.e. have connection to
+beyond the simple routing.
+
+On Nov 8, 11:21 am, Gwoo &lt;gwoo.cake ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Plugins should not access models from application. If you think about
+&gt; &quot;plugin&quot; for a second you can understand why. There are other ways to
+&gt; organize your models, see /app/config/bootstrap.php
+">
+</POST>
+<POST>
+<POSTER> &quot;Dr. Tarique Sani&quot; &lt;tariques...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-15T03:51:00 </POSTDATE>
+On 11/9/07, Aaron Shafovaloff &lt;aarons ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I guess it makes sense for me that plugins could inherit models.
+&gt; Plugins plug into the existing applications, i.e. have connection to
+&gt; beyond the simple routing.
+">
+
+I agree whole heartedly with the above. Plugins are meant for existing
+apps, they can be app specific if the plugin developer wants to
+
+@Gwoo - I am stupid and I can't understand why but please bear with me
+and elaborate why....
+
+Thanks in advance
+
+Tarique
+
+--
+=============================================================
+Cheesecake-Photoblog: http://cheesecake-photoblog.org
+PHP for E-Biz: http://sanisoft.com
+=============================================================
+</POST>
+<POST>
+<POSTER> Gwoo &lt;gwoo.cake...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-15T04:38:00 </POSTDATE>
+Quoting the intro of the plugins section of the manual, &quot;CakePHP
+allows you to set up a combination of controllers, models, and views
+and release them as a packaged application plugin that others can use
+in their CakePHP applications...Package it as a CakePHP plugin so you
+can pop it into other applications.&quot;
+
+This pretty much sums up the original intent of a plugin as a
+portable, distributed, mini app. As such, Plugins would have no
+knowledge of the main application, so they can be easy added to an
+existing application without requiring any extra configuration or the
+addition of other classes. Essentially, what you are talking about
+would be creating dependencies that were not intended.
+
+Correct me if I am wrong, but it seems some are using plugins to
+organize parts of a larger application. To me, you are on a slippery
+slope here to basically negating the whole benefit of a plugin and
+just making it more work on yourself. Using the config/bootstrap.php
+to organize your MVC requires a lot less code and should yield the
+same benefits.
+
+That said, there are some changes in the works that may allow this
+functionality. So time will tell, but at least you know why it works
+the way it does right now.
+</POST>
+<POST>
+<POSTER> &quot;Dr. Tarique Sani&quot; &lt;tariques...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-15T05:05:00 </POSTDATE>
+On 11/15/07, Gwoo &lt;gwoo.cake ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Correct me if I am wrong, but it seems some are using plugins to
+&gt; organize parts of a larger application.
+">
+
+Not exactly - I am trying to add more functionality to an existing app.
+
+Basically trying to provide addon/plugin features to an core app - Cheesecake 2
+
+What I am trying to solve is essentially non techie users wanting to
+plugin functionality - asking end users to edit code or for that
+matter asking them to upload parts in several different directories
+does not work very well
+
+Plugin offers a simple upload in single folder - add to it a dashboard
+to install/uninstall activate/deactivate these in your core app and
+you are rolling great.
+
+<QUOTE PREVIOUSPOST="
+&gt; To me, you are on a slippery
+&gt; slope here to basically negating the whole benefit of a plugin
+">
+
+Again no - a major benefit of a pulgin for me is allowing users to
+choose features and prevent bloat in core of the app
+
+<QUOTE PREVIOUSPOST="
+&gt;and
+&gt; just making it more work on yourself. Using the config/bootstrap.php
+&gt; to organize your MVC requires a lot less code and should yield the
+&gt; same benefits.
+">
+
+For a end developer/commercial product perhaps yes
+
+All that said I guess a simple combination of ClassRegistry::getObject
+and loadModel will still work from within a plugin controller ;)
+
+Cheers
+Tarique
+
+--
+=============================================================
+Cheesecake-Photoblog: http://cheesecake-photoblog.org
+PHP for E-Biz: http://sanisoft.com
+=============================================================
+</POST>
+<POST>
+<POSTER> Gwoo &lt;gwoo.cake...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-15T11:22:00 </POSTDATE>
+This is all about you isnt it?
+</POST>
+<POST>
+<POSTER> &quot;Christopher E. Franklin, Sr.&quot; &lt;christopher.e.frank...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-15T11:56:00 </POSTDATE>
+I was trying to do something earlier with plugins in 1.1 and
+everything seemed to work fine until the larger application wanted to
+access the plugin, then things went downhill.
+I made a plugin that controlled all the authentication, registering,
+logging in and out of users.  The idea for this was that, why do I
+have to copy the same models, views and controllers between every app
+when I can just drop it in the plugin dir and have app_controller load
+it?
+
+To me, that's my idea of a plugin but, I wanted the app to be able to
+access some of the data or functionality and was told that it wouldn't
+work like that. I could have used an rA() call but, at that time, the
+slow down for me was unbearable. Dunno if it was ever fixed but, just
+as a warning.  Look carefully at your plugin, what it does, how it
+interacts with the larger app.  For now, if your plugin requires
+anything from your app or you app wants to hook into your plugin, then
+it may be wise to forgo the plugin altogether. (At least until plugins
+work the way I envision them! =D).
+
+On Nov 15, 1:38 am, Gwoo &lt;gwoo.cake ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Quoting the intro of the plugins section of the manual, &quot;CakePHP
+&gt; allows you to set up a combination of controllers, models, and views
+&gt; and release them as a packaged application plugin that others can use
+&gt; in their CakePHP applications...Package it as a CakePHP plugin so you
+&gt; can pop it into other applications.&quot;
+
+&gt; This pretty much sums up the original intent of a plugin as a
+&gt; portable, distributed, mini app. As such, Plugins would have no
+&gt; knowledge of the main application, so they can be easy added to an
+&gt; existing application without requiring any extra configuration or the
+&gt; addition of other classes. Essentially, what you are talking about
+&gt; would be creating dependencies that were not intended.
+
+&gt; Correct me if I am wrong, but it seems some are using plugins to
+&gt; organize parts of a larger application. To me, you are on a slippery
+&gt; slope here to basically negating the whole benefit of a plugin and
+&gt; just making it more work on yourself. Using the config/bootstrap.php
+&gt; to organize your MVC requires a lot less code and should yield the
+&gt; same benefits.
+
+&gt; That said, there are some changes in the works that may allow this
+&gt; functionality. So time will tell, but at least you know why it works
+&gt; the way it does right now.
+">
+</POST>
+<POST>
+<POSTER> Aaron  Shafovaloff &lt;aarons...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-17T13:00:00 </POSTDATE>
+I'd have to agree with some folks here---it'd be great if plugins
+could &quot;plugin&quot; into the existing application and have access to the
+main app's models, etc.
+
+Perhaps plugins could be split into two types? One of the reasons
+Wordpress is so popular is its plugin system (which tap into the
+larger app). It'd be nice if CakePHP made it easy for us to set up our
+apps this way.
+</POST>
+</TEXT>
+</BODY>
+</DOC>

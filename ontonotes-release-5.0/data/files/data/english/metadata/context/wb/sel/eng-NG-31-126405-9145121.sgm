@@ -1,0 +1,1306 @@
+<DOC>
+<DOCID> eng-NG-31-126405-9145121 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-12T00:02:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Gigabit Ethernet, and Linux -- first observations
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Ignoramus26973 &lt;ignoramus26...@NOSPAM.26973.invalid&gt; </POSTER>
+<POSTDATE> 2007-09-12T00:02:00 </POSTDATE>
+I installed a gigabit network switch and a gigabit enabled laptop wifi
+adapter (with gigabit, obviously, available on ethernet ports only) in
+my house.
+
+Two computers in my home are connected to the switch and one (laptop)
+to the wifi adaptor.
+
+The highest possible speed of a gigabit connection is about 111
+megabytes per second.
+
+Naturally, I did some tests with a noncompressible 1 gigabyte long
+file (fragment of some gzipped file exactly one GB long).
+
+My first test was to scp files from one computer on the switch to
+another. Here, I was disappointed as the highest speed was only 22
+megabytes per second one way and 46 another way. About 20 and 40
+percent of maximum.
+
+Then I tried using HTTP to transfer the same file (both computers are
+webservers). To my huge surprise, it made a world of difference and
+the transfer speed was 111 or so megabytes per second.
+
+So, now I have a dilemma, I have a fast pipe, but scp is not fast
+enough (given my CPU) to encrypt/decrypt so much data.
+
+I tried something else, which is doing wc -l on a NFS mounted drive
+(same two computers). It was UNBELIEVABLY slow and the load average on
+the NFS server shot WAY up. Transferring a 336 MB file took 157
+seconds, or about e megabytes per second (vs 111 mbps that I achieved
+with HTTP).
+
+So, the conclusion is, HTTP is fast (no wonder), SSH is &quot;medium&quot;,
+and NFS is &quot;slow, very bad&quot;.
+
+The connection to laptop is a disappointment in its own right, since
+even with all-ethernet connection, I get about 3 megabytes per
+second. I think that I need to pull a new wire in the wall.
+
+So, the short of it is that there is much work to be done.
+
+i
+</POST>
+<POST>
+<POSTER> Michael Mol &lt;mike...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-12T01:14:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Ignoramus26973 wrote:
+&gt; I installed a gigabit network switch and a gigabit enabled laptop wifi
+&gt; adapter (with gigabit, obviously, available on ethernet ports only) in
+&gt; my house.
+
+&gt; Two computers in my home are connected to the switch and one (laptop)
+&gt; to the wifi adaptor.
+
+&gt; The highest possible speed of a gigabit connection is about 111
+&gt; megabytes per second.
+
+&gt; Naturally, I did some tests with a noncompressible 1 gigabyte long
+&gt; file (fragment of some gzipped file exactly one GB long).
+
+&gt; My first test was to scp files from one computer on the switch to
+&gt; another. Here, I was disappointed as the highest speed was only 22
+&gt; megabytes per second one way and 46 another way. About 20 and 40
+&gt; percent of maximum.
+
+&gt; Then I tried using HTTP to transfer the same file (both computers are
+&gt; webservers). To my huge surprise, it made a world of difference and
+&gt; the transfer speed was 111 or so megabytes per second.
+
+&gt; So, now I have a dilemma, I have a fast pipe, but scp is not fast
+&gt; enough (given my CPU) to encrypt/decrypt so much data.
+
+&gt; I tried something else, which is doing wc -l on a NFS mounted drive
+&gt; (same two computers). It was UNBELIEVABLY slow and the load average on
+&gt; the NFS server shot WAY up. Transferring a 336 MB file took 157
+&gt; seconds, or about e megabytes per second (vs 111 mbps that I achieved
+&gt; with HTTP).
+">
+
+So, about 2.7 MB/s? :-)
+
+<QUOTE PREVIOUSPOST="
+&gt; So, the conclusion is, HTTP is fast (no wonder), SSH is &quot;medium&quot;,
+&gt; and NFS is &quot;slow, very bad&quot;.
+">
+
+I ran into a similar problem with NFS ages back.  Turns out you can
+largely fix it by configuring NFS to increase the packet size.  Been a
+few years since I did anything with NFS, though, so you'll have to look
+through the docs.  I hear they use it in computer clusters, so it can't
+be slow in *all* cases.
+
+Around the same time, I also noticed that rsync can have similar speed
+issues to SCP for a first copy, owing to it insisting on using SSH for RSH.
+</POST>
+<POST>
+<POSTER> General Schvantzkoph &lt;schvantzk...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-09-12T08:52:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Wed, 12 Sep 2007 01:14:07 -0400, Michael Mol wrote:
+&gt; Ignoramus26973 wrote:
+&gt;&gt; I installed a gigabit network switch and a gigabit enabled laptop wifi
+&gt;&gt; adapter (with gigabit, obviously, available on ethernet ports only) in
+&gt;&gt; my house.
+
+&gt;&gt; Two computers in my home are connected to the switch and one (laptop)
+&gt;&gt; to the wifi adaptor.
+
+&gt;&gt; The highest possible speed of a gigabit connection is about 111
+&gt;&gt; megabytes per second.
+
+&gt;&gt; Naturally, I did some tests with a noncompressible 1 gigabyte long file
+&gt;&gt; (fragment of some gzipped file exactly one GB long).
+
+&gt;&gt; My first test was to scp files from one computer on the switch to
+&gt;&gt; another. Here, I was disappointed as the highest speed was only 22
+&gt;&gt; megabytes per second one way and 46 another way. About 20 and 40
+&gt;&gt; percent of maximum.
+
+&gt;&gt; Then I tried using HTTP to transfer the same file (both computers are
+&gt;&gt; webservers). To my huge surprise, it made a world of difference and the
+&gt;&gt; transfer speed was 111 or so megabytes per second.
+
+&gt;&gt; So, now I have a dilemma, I have a fast pipe, but scp is not fast
+&gt;&gt; enough (given my CPU) to encrypt/decrypt so much data.
+
+&gt;&gt; I tried something else, which is doing wc -l on a NFS mounted drive
+&gt;&gt; (same two computers). It was UNBELIEVABLY slow and the load average on
+&gt;&gt; the NFS server shot WAY up. Transferring a 336 MB file took 157
+&gt;&gt; seconds, or about e megabytes per second (vs 111 mbps that I achieved
+&gt;&gt; with HTTP).
+
+&gt; So, about 2.7 MB/s? :-)
+
+&gt;&gt; So, the conclusion is, HTTP is fast (no wonder), SSH is &quot;medium&quot;, and
+&gt;&gt; NFS is &quot;slow, very bad&quot;.
+
+&gt; I ran into a similar problem with NFS ages back.  Turns out you can
+&gt; largely fix it by configuring NFS to increase the packet size.  Been a
+&gt; few years since I did anything with NFS, though, so you'll have to look
+&gt; through the docs.  I hear they use it in computer clusters, so it can't
+&gt; be slow in *all* cases.
+">
+
+How do you configure NFS to increase the packet size? Also are you
+talking about NFS V4 or V3?
+</POST>
+<POST>
+<POSTER> AZ Nomad &lt;aznoma...@PremoveOBthisOX.COM&gt; </POSTER>
+<POSTDATE> 2007-09-12T09:08:00 </POSTDATE>
+On 12 Sep 2007 12:52:09 GMT, General Schvantzkoph &lt;schvantzk ... @yahoo.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;On Wed, 12 Sep 2007 01:14:07 -0400, Michael Mol wrote:
+&gt;&gt; Ignoramus26973 wrote:
+&gt;&gt;&gt; I installed a gigabit network switch and a gigabit enabled laptop wifi
+&gt;&gt;&gt; adapter (with gigabit, obviously, available on ethernet ports only) in
+&gt;&gt;&gt; my house.
+
+&gt;&gt;&gt; Two computers in my home are connected to the switch and one (laptop)
+&gt;&gt;&gt; to the wifi adaptor.
+
+&gt;&gt;&gt; The highest possible speed of a gigabit connection is about 111
+&gt;&gt;&gt; megabytes per second.
+
+&gt;&gt;&gt; Naturally, I did some tests with a noncompressible 1 gigabyte long file
+&gt;&gt;&gt; (fragment of some gzipped file exactly one GB long).
+
+&gt;&gt;&gt; My first test was to scp files from one computer on the switch to
+&gt;&gt;&gt; another. Here, I was disappointed as the highest speed was only 22
+&gt;&gt;&gt; megabytes per second one way and 46 another way. About 20 and 40
+&gt;&gt;&gt; percent of maximum.
+
+&gt;&gt;&gt; Then I tried using HTTP to transfer the same file (both computers are
+&gt;&gt;&gt; webservers). To my huge surprise, it made a world of difference and the
+&gt;&gt;&gt; transfer speed was 111 or so megabytes per second.
+
+&gt;&gt;&gt; So, now I have a dilemma, I have a fast pipe, but scp is not fast
+&gt;&gt;&gt; enough (given my CPU) to encrypt/decrypt so much data.
+
+&gt;&gt;&gt; I tried something else, which is doing wc -l on a NFS mounted drive
+&gt;&gt;&gt; (same two computers). It was UNBELIEVABLY slow and the load average on
+&gt;&gt;&gt; the NFS server shot WAY up. Transferring a 336 MB file took 157
+&gt;&gt;&gt; seconds, or about e megabytes per second (vs 111 mbps that I achieved
+&gt;&gt;&gt; with HTTP).
+
+&gt;&gt; So, about 2.7 MB/s? :-)
+
+&gt;&gt;&gt; So, the conclusion is, HTTP is fast (no wonder), SSH is &quot;medium&quot;, and
+&gt;&gt;&gt; NFS is &quot;slow, very bad&quot;.
+
+&gt;&gt; I ran into a similar problem with NFS ages back.  Turns out you can
+&gt;&gt; largely fix it by configuring NFS to increase the packet size.  Been a
+&gt;&gt; few years since I did anything with NFS, though, so you'll have to look
+&gt;&gt; through the docs.  I hear they use it in computer clusters, so it can't
+&gt;&gt; be slow in *all* cases.
+&gt;How do you configure NFS to increase the packet size? Also are you
+&gt;talking about NFS V4 or V3?
+">
+
+when you mount it.  Why didn't you just google for &quot;nfs packet size&quot;?
+</POST>
+<POST>
+<POSTER> Jack Snodgrass &lt;jacks_temp_id_bf2...@verizon.net&gt; </POSTER>
+<POSTDATE> 2007-09-12T09:32:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Tue, 11 Sep 2007 23:02:37 -0500, Ignoramus26973 wrote:
+&gt; I installed a gigabit network switch and a gigabit enabled laptop wifi
+&gt; adapter (with gigabit, obviously, available on ethernet ports only) in
+&gt; my house.
+
+&gt; Two computers in my home are connected to the switch and one (laptop)
+&gt; to the wifi adaptor.
+
+&gt; The highest possible speed of a gigabit connection is about 111
+&gt; megabytes per second.
+
+&gt; Naturally, I did some tests with a noncompressible 1 gigabyte long
+&gt; file (fragment of some gzipped file exactly one GB long).
+
+&gt; My first test was to scp files from one computer on the switch to
+&gt; another. Here, I was disappointed as the highest speed was only 22
+&gt; megabytes per second one way and 46 another way. About 20 and 40
+&gt; percent of maximum.
+
+&gt; Then I tried using HTTP to transfer the same file (both computers are
+&gt; webservers). To my huge surprise, it made a world of difference and
+&gt; the transfer speed was 111 or so megabytes per second.
+
+&gt; So, now I have a dilemma, I have a fast pipe, but scp is not fast
+&gt; enough (given my CPU) to encrypt/decrypt so much data.
+
+&gt; I tried something else, which is doing wc -l on a NFS mounted drive
+&gt; (same two computers). It was UNBELIEVABLY slow and the load average on
+&gt; the NFS server shot WAY up. Transferring a 336 MB file took 157
+&gt; seconds, or about e megabytes per second (vs 111 mbps that I achieved
+&gt; with HTTP).
+
+&gt; So, the conclusion is, HTTP is fast (no wonder), SSH is &quot;medium&quot;,
+&gt; and NFS is &quot;slow, very bad&quot;.
+
+&gt; The connection to laptop is a disappointment in its own right, since
+&gt; even with all-ethernet connection, I get about 3 megabytes per
+&gt; second. I think that I need to pull a new wire in the wall.
+
+&gt; So, the short of it is that there is much work to be done.
+
+&gt; i
+">
+
+you didn't mention Jumbo Frames.
+
+IF ( BIG IF ) your Gigabit hardware supports 9K MTUs, you can get
+a big boost if you set your MTU to 9000 on your nics.
+
+I'll post some numbers from my setup in the next couple of days.
+
+jack
+
+--
+D.A.M. - Mothers Against Dyslexia
+
+see http://www.jacksnodgrass.com for my contact info.
+
+jack - Grapevine/Richardson
+</POST>
+<POST>
+<POSTER> Ignoramus19897 &lt;ignoramus19...@NOSPAM.19897.invalid&gt; </POSTER>
+<POSTDATE> 2007-09-12T09:48:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Wed, 12 Sep 2007 13:32:12 GMT, Jack Snodgrass &lt;jacks_temp_id_bf2 ... @verizon.net&gt; wrote:
+&gt; On Tue, 11 Sep 2007 23:02:37 -0500, Ignoramus26973 wrote:
+
+&gt;&gt; I installed a gigabit network switch and a gigabit enabled laptop wifi
+&gt;&gt; adapter (with gigabit, obviously, available on ethernet ports only) in
+&gt;&gt; my house.
+
+&gt;&gt; Two computers in my home are connected to the switch and one (laptop)
+&gt;&gt; to the wifi adaptor.
+
+&gt;&gt; The highest possible speed of a gigabit connection is about 111
+&gt;&gt; megabytes per second.
+
+&gt;&gt; Naturally, I did some tests with a noncompressible 1 gigabyte long
+&gt;&gt; file (fragment of some gzipped file exactly one GB long).
+
+&gt;&gt; My first test was to scp files from one computer on the switch to
+&gt;&gt; another. Here, I was disappointed as the highest speed was only 22
+&gt;&gt; megabytes per second one way and 46 another way. About 20 and 40
+&gt;&gt; percent of maximum.
+
+&gt;&gt; Then I tried using HTTP to transfer the same file (both computers are
+&gt;&gt; webservers). To my huge surprise, it made a world of difference and
+&gt;&gt; the transfer speed was 111 or so megabytes per second.
+
+&gt;&gt; So, now I have a dilemma, I have a fast pipe, but scp is not fast
+&gt;&gt; enough (given my CPU) to encrypt/decrypt so much data.
+
+&gt;&gt; I tried something else, which is doing wc -l on a NFS mounted drive
+&gt;&gt; (same two computers). It was UNBELIEVABLY slow and the load average on
+&gt;&gt; the NFS server shot WAY up. Transferring a 336 MB file took 157
+&gt;&gt; seconds, or about e megabytes per second (vs 111 mbps that I achieved
+&gt;&gt; with HTTP).
+
+&gt;&gt; So, the conclusion is, HTTP is fast (no wonder), SSH is &quot;medium&quot;,
+&gt;&gt; and NFS is &quot;slow, very bad&quot;.
+
+&gt;&gt; The connection to laptop is a disappointment in its own right, since
+&gt;&gt; even with all-ethernet connection, I get about 3 megabytes per
+&gt;&gt; second. I think that I need to pull a new wire in the wall.
+
+&gt;&gt; So, the short of it is that there is much work to be done.
+
+&gt;&gt; i
+
+&gt; you didn't mention Jumbo Frames.
+
+&gt; IF ( BIG IF ) your Gigabit hardware supports 9K MTUs, you can get
+&gt; a big boost if you set your MTU to 9000 on your nics.
+">
+
+I think that it does support jumbo frames.
+
+<QUOTE PREVIOUSPOST="
+&gt; I'll post some numbers from my setup in the next couple of days.
+">
+
+How do you set MTU? That would only work for local destinations,
+right? It would not work for connections outside of my home LAN?
+
+i
+</POST>
+<POST>
+<POSTER> Ignoramus19897 &lt;ignoramus19...@NOSPAM.19897.invalid&gt; </POSTER>
+<POSTDATE> 2007-09-12T10:07:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Wed, 12 Sep 2007 13:08:06 GMT, AZ Nomad &lt;aznoma ... @PremoveOBthisOX.COM&gt; wrote:
+&gt; On 12 Sep 2007 12:52:09 GMT, General Schvantzkoph &lt;schvantzk ... @yahoo.com&gt; wrote:
+
+&gt;&gt;On Wed, 12 Sep 2007 01:14:07 -0400, Michael Mol wrote:
+
+&gt;&gt;&gt; Ignoramus26973 wrote:
+&gt;&gt;&gt;&gt; I installed a gigabit network switch and a gigabit enabled laptop wifi
+&gt;&gt;&gt;&gt; adapter (with gigabit, obviously, available on ethernet ports only) in
+&gt;&gt;&gt;&gt; my house.
+
+&gt;&gt;&gt;&gt; Two computers in my home are connected to the switch and one (laptop)
+&gt;&gt;&gt;&gt; to the wifi adaptor.
+
+&gt;&gt;&gt;&gt; The highest possible speed of a gigabit connection is about 111
+&gt;&gt;&gt;&gt; megabytes per second.
+
+&gt;&gt;&gt;&gt; Naturally, I did some tests with a noncompressible 1 gigabyte long file
+&gt;&gt;&gt;&gt; (fragment of some gzipped file exactly one GB long).
+
+&gt;&gt;&gt;&gt; My first test was to scp files from one computer on the switch to
+&gt;&gt;&gt;&gt; another. Here, I was disappointed as the highest speed was only 22
+&gt;&gt;&gt;&gt; megabytes per second one way and 46 another way. About 20 and 40
+&gt;&gt;&gt;&gt; percent of maximum.
+
+&gt;&gt;&gt;&gt; Then I tried using HTTP to transfer the same file (both computers are
+&gt;&gt;&gt;&gt; webservers). To my huge surprise, it made a world of difference and the
+&gt;&gt;&gt;&gt; transfer speed was 111 or so megabytes per second.
+
+&gt;&gt;&gt;&gt; So, now I have a dilemma, I have a fast pipe, but scp is not fast
+&gt;&gt;&gt;&gt; enough (given my CPU) to encrypt/decrypt so much data.
+
+&gt;&gt;&gt;&gt; I tried something else, which is doing wc -l on a NFS mounted drive
+&gt;&gt;&gt;&gt; (same two computers). It was UNBELIEVABLY slow and the load average on
+&gt;&gt;&gt;&gt; the NFS server shot WAY up. Transferring a 336 MB file took 157
+&gt;&gt;&gt;&gt; seconds, or about e megabytes per second (vs 111 mbps that I achieved
+&gt;&gt;&gt;&gt; with HTTP).
+
+&gt;&gt;&gt; So, about 2.7 MB/s? :-)
+
+&gt;&gt;&gt;&gt; So, the conclusion is, HTTP is fast (no wonder), SSH is &quot;medium&quot;, and
+&gt;&gt;&gt;&gt; NFS is &quot;slow, very bad&quot;.
+
+&gt;&gt;&gt; I ran into a similar problem with NFS ages back.  Turns out you can
+&gt;&gt;&gt; largely fix it by configuring NFS to increase the packet size.  Been a
+&gt;&gt;&gt; few years since I did anything with NFS, though, so you'll have to look
+&gt;&gt;&gt; through the docs.  I hear they use it in computer clusters, so it can't
+&gt;&gt;&gt; be slow in *all* cases.
+
+&gt;&gt;How do you configure NFS to increase the packet size? Also are you
+&gt;&gt;talking about NFS V4 or V3?
+
+&gt; when you mount it.  Why didn't you just google for &quot;nfs packet size&quot;?
+">
+
+When I configure rsize and wsize, the mount fails for some reason, it
+does not like these options, even if set at 4192. Client is Fedore 7,
+server is Fedora Core 6.
+
+i
+</POST>
+<POST>
+<POSTER> b...@pu.net (Mark Hittinger) </POSTER>
+<POSTDATE> 2007-09-12T11:54:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Ignoramus26973 &lt;ignoramus26 ... @NOSPAM.26973.invalid&gt; writes:
+&gt;So, now I have a dilemma, I have a fast pipe, but scp is not fast
+&gt;enough (given my CPU) to encrypt/decrypt so much data.
+">
+
+Using a different cipher like blowfish will speed this up a bit but http
+or ftp will still be faster.
+
+Later
+
+Mark Hittinger
+b ... @pu.net
+</POST>
+<POST>
+<POSTER> Jack Snodgrass &lt;jacks_temp_id_bf2...@verizon.net&gt; </POSTER>
+<POSTDATE> 2007-09-12T12:41:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Wed, 12 Sep 2007 08:48:04 -0500, Ignoramus19897 wrote:
+">
+
+... trimmed....
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; So, the short of it is that there is much work to be done.
+
+&gt;&gt;&gt; i
+
+&gt;&gt; you didn't mention Jumbo Frames.
+
+&gt;&gt; IF ( BIG IF ) your Gigabit hardware supports 9K MTUs, you can get
+&gt;&gt; a big boost if you set your MTU to 9000 on your nics.
+
+&gt; I think that it does support jumbo frames.
+">
+
+... there is 'think' and 'does'....  say that you have 2 computers
+connected via a switch... all 3 network devices have to support
+jumbo frames. Until fairly recently, home network switches did NOT.
+I don't think any of the NetGear nics support 9K jumbo frames...
+some manuafactures claim jumbo frame support, but they are smaller
+jumbo frames... 4.5K or 7K. I find it best when all the equipment
+supports 9K Jumbo Frames.  Some 'versions' of switches support
+jumbo frames and other versions of the same switch do not. You really
+need to look at the specs of the equipment you have to figure out if
+this will work or not.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; I'll post some numbers from my setup in the next couple of days.
+
+&gt; How do you set MTU? That would only work for local destinations,
+&gt; right? It would not work for connections outside of my home LAN?
+">
+
+ifconfig eth0 down
+ifconfig eth0 mtu 9000
+ifconfig eth0 up
+ifconfig eth0 | grep MTU
+should then show:
+UP BROADCAST RUNNING MULTICAST  MTU:9000  Metric:1
+
+if your 9K Jumbo Frame MTU is not working... you'll get something like
+ssh remote_host
+prompt# dmesg
+...about 1500 bytes of output from the command
+...
+and then the session will hang.....  you'll have to kill the session and
+set the MTU back to the default ( 1500 )
+
+jack
+
+<QUOTE PREVIOUSPOST="
+&gt; i
+">
+
+--
+D.A.M. - Mothers Against Dyslexia
+
+see http://www.jacksnodgrass.com for my contact info.
+
+jack - Grapevine/Richardson
+</POST>
+<POST>
+<POSTER> General Schvantzkoph &lt;schvantzk...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-09-12T12:48:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Wed, 12 Sep 2007 13:08:06 +0000, AZ Nomad wrote:
+&gt; On 12 Sep 2007 12:52:09 GMT, General Schvantzkoph
+&gt; &lt;schvantzk ... @yahoo.com&gt; wrote:
+
+&gt;&gt;On Wed, 12 Sep 2007 01:14:07 -0400, Michael Mol wrote:
+
+&gt;&gt;&gt; Ignoramus26973 wrote:
+&gt;&gt;&gt;&gt; I installed a gigabit network switch and a gigabit enabled laptop
+&gt;&gt;&gt;&gt; wifi adapter (with gigabit, obviously, available on ethernet ports
+&gt;&gt;&gt;&gt; only) in my house.
+
+&gt;&gt;&gt;&gt; Two computers in my home are connected to the switch and one (laptop)
+&gt;&gt;&gt;&gt; to the wifi adaptor.
+
+&gt;&gt;&gt;&gt; The highest possible speed of a gigabit connection is about 111
+&gt;&gt;&gt;&gt; megabytes per second.
+
+&gt;&gt;&gt;&gt; Naturally, I did some tests with a noncompressible 1 gigabyte long
+&gt;&gt;&gt;&gt; file (fragment of some gzipped file exactly one GB long).
+
+&gt;&gt;&gt;&gt; My first test was to scp files from one computer on the switch to
+&gt;&gt;&gt;&gt; another. Here, I was disappointed as the highest speed was only 22
+&gt;&gt;&gt;&gt; megabytes per second one way and 46 another way. About 20 and 40
+&gt;&gt;&gt;&gt; percent of maximum.
+
+&gt;&gt;&gt;&gt; Then I tried using HTTP to transfer the same file (both computers are
+&gt;&gt;&gt;&gt; webservers). To my huge surprise, it made a world of difference and
+&gt;&gt;&gt;&gt; the transfer speed was 111 or so megabytes per second.
+
+&gt;&gt;&gt;&gt; So, now I have a dilemma, I have a fast pipe, but scp is not fast
+&gt;&gt;&gt;&gt; enough (given my CPU) to encrypt/decrypt so much data.
+
+&gt;&gt;&gt;&gt; I tried something else, which is doing wc -l on a NFS mounted drive
+&gt;&gt;&gt;&gt; (same two computers). It was UNBELIEVABLY slow and the load average
+&gt;&gt;&gt;&gt; on the NFS server shot WAY up. Transferring a 336 MB file took 157
+&gt;&gt;&gt;&gt; seconds, or about e megabytes per second (vs 111 mbps that I achieved
+&gt;&gt;&gt;&gt; with HTTP).
+
+&gt;&gt;&gt; So, about 2.7 MB/s? :-)
+
+&gt;&gt;&gt;&gt; So, the conclusion is, HTTP is fast (no wonder), SSH is &quot;medium&quot;, and
+&gt;&gt;&gt;&gt; NFS is &quot;slow, very bad&quot;.
+
+&gt;&gt;&gt; I ran into a similar problem with NFS ages back.  Turns out you can
+&gt;&gt;&gt; largely fix it by configuring NFS to increase the packet size.  Been a
+&gt;&gt;&gt; few years since I did anything with NFS, though, so you'll have to
+&gt;&gt;&gt; look through the docs.  I hear they use it in computer clusters, so it
+&gt;&gt;&gt; can't be slow in *all* cases.
+
+&gt;&gt;How do you configure NFS to increase the packet size? Also are you
+&gt;&gt;talking about NFS V4 or V3?
+
+&gt; when you mount it.  Why didn't you just google for &quot;nfs packet size&quot;?
+">
+
+Thanks. I was looking at the NFS server configuration in Webmin, it
+didn't occur to me that it was a client parameter. I'm going to run some
+experiments with different read and write buffer sizes to see how they
+effect performance.
+</POST>
+<POST>
+<POSTER> Ignoramus19897 &lt;ignoramus19...@NOSPAM.19897.invalid&gt; </POSTER>
+<POSTDATE> 2007-09-12T12:56:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Wed, 12 Sep 2007 16:41:40 GMT, Jack Snodgrass &lt;jacks_temp_id_bf2 ... @verizon.net&gt; wrote:
+&gt; On Wed, 12 Sep 2007 08:48:04 -0500, Ignoramus19897 wrote:
+
+&gt; ... trimmed....
+
+&gt;&gt;&gt;&gt; So, the short of it is that there is much work to be done.
+
+&gt;&gt;&gt;&gt; i
+
+&gt;&gt;&gt; you didn't mention Jumbo Frames.
+
+&gt;&gt;&gt; IF ( BIG IF ) your Gigabit hardware supports 9K MTUs, you can get
+&gt;&gt;&gt; a big boost if you set your MTU to 9000 on your nics.
+
+&gt;&gt; I think that it does support jumbo frames.
+
+&gt; ... there is 'think' and 'does'....  say that you have 2 computers
+&gt; connected via a switch... all 3 network devices have to support
+&gt; jumbo frames. Until fairly recently, home network switches did
+&gt; NOT. I don't think any of the NetGear nics support 9K jumbo
+&gt; frames... some manuafactures claim jumbo frame support, but they are
+&gt; smaller jumbo frames... 4.5K or 7K. I find it best when all the
+&gt; equipment supports 9K Jumbo Frames.  Some 'versions' of switches
+&gt; support jumbo frames and other versions of the same switch do
+&gt; not. You really need to look at the specs of the equipment you have
+&gt; to figure out if this will work or not.
+">
+
+My switch does support it:
+
+http://www.newegg.com/Product/Product.asp?Item=N82E16833124130
+
+LINKSYS SR2016 10/100/1000Mbps Gigabit Switch
+Jumbo Frames    9K bytes
+
+What I do not understand is, who needs to set 9k MTU? Both computers
+involved?
+
+How about regular Internet traffic, between one of these computers and
+a server elsewhere? Would the 9k MTU screw that up if the other
+computers on the Internet do not support jumbo frames??
+
+i
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; I'll post some numbers from my setup in the next couple of days.
+
+&gt;&gt; How do you set MTU? That would only work for local destinations,
+&gt;&gt; right? It would not work for connections outside of my home LAN?
+
+&gt; ifconfig eth0 down
+&gt; ifconfig eth0 mtu 9000
+&gt; ifconfig eth0 up
+&gt; ifconfig eth0 | grep MTU
+&gt; should then show:
+&gt; UP BROADCAST RUNNING MULTICAST  MTU:9000  Metric:1
+
+&gt; if your 9K Jumbo Frame MTU is not working... you'll get something like
+&gt; ssh remote_host
+&gt; prompt# dmesg
+&gt; ...about 1500 bytes of output from the command
+&gt; ...
+&gt; and then the session will hang.....  you'll have to kill the session and
+&gt; set the MTU back to the default ( 1500 )
+
+&gt; jack
+
+&gt;&gt; i
+">
+</POST>
+<POST>
+<POSTER> Ignoramus19897 &lt;ignoramus19...@NOSPAM.19897.invalid&gt; </POSTER>
+<POSTDATE> 2007-09-12T13:02:00 </POSTDATE>
+As a second thought, I am not sure what is the point of setting 9k
+bytes MTU. Even with my regular 1492 MTU, I get 111-112 megabytes per
+second speed with HTTP.
+
+The problem is squarely with NFS. When I do NFS copy
+
+time cp /nfsdir/sharedfile /dev/null
+
+from server to client, the load average on the SERVER shots up to
+hell, and the transfer is very slow. This is a read only share. Thia
+is an NFS problem, not a MTU problem?
+
+i
+</POST>
+<POST>
+<POSTER> Rick Jones &lt;rick.jon...@hp.com&gt; </POSTER>
+<POSTDATE> 2007-09-12T13:11:00 </POSTDATE>
+In comp.os.linux.networking Ignoramus26973 &lt;ignoramus26 ... @nospam.26973.invalid&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Then I tried using HTTP to transfer the same file (both computers are
+&gt; webservers). To my huge surprise, it made a world of difference and
+&gt; the transfer speed was 111 or so megabytes per second.
+">
+
+So much for suggesting you run netperf TCP_STREAM between the two
+systems :)
+
+WRT NFS, NFS is not a bulk transfer protocol.  It is a
+request/response protocol, which means even for the file copies, there
+is a greater sensitivity to latency than with HTTP or FTP or whatnot.
+The suggestions to increase mount size are likely all good.  I'm not
+sure that 4192 is a proper mount size, but 4096 or 8192 would be.
+Probably want something larger.  You can get a feel for latency either
+with ping, or with a netperf TCP_RR test.
+
+WRT Jumbo Frames...  You need to enable it at both ends, and through
+the middle - that means both your systems, _and_ the switch.  For
+Linux hosts the ifconfig &lt;interface&gt; mtu &lt;size&gt; has already been
+mentioned.  If the switch requires configuration then that will be in
+the switch's docs.
+
+For TCP traffic, you don't have to worry about communication with the
+rest of the internet, nor the rest of the nodes (if any) in your LAN.
+The TCP MSS exchange will ensure that when speaking with a system with
+a smaller MTU a suitable TCP MSS is selected.
+
+For things using UDP though, you will have problems.  Your systems
+with Jumbo Frames enabled will only fragment to ~9000 bytes, which
+will hit your switch, which will not be able to pass that along to
+other hosts on the LAN because switches, which operate at layer-2, do
+not (should not) fragment IP datagrams.
+
+rick jones
+--
+The computing industry isn't as much a game of &quot;Follow The Leader&quot; as
+it is one of &quot;Ring Around the Rosy&quot; or perhaps &quot;Duck Duck Goose.&quot;
+- Rick Jones
+these opinions are mine, all mine; HP might not want them anyway... :)
+feel free to post, OR email to rick.jones2 in hp.com but NOT BOTH...
+</POST>
+<POST>
+<POSTER> Ignoramus19897 &lt;ignoramus19...@NOSPAM.19897.invalid&gt; </POSTER>
+<POSTDATE> 2007-09-12T13:19:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Wed, 12 Sep 2007 17:11:10 +0000 (UTC), Rick Jones &lt;rick.jon ... @hp.com&gt; wrote:
+&gt; In comp.os.linux.networking Ignoramus26973 &lt;ignoramus26 ... @nospam.26973.invalid&gt; wrote:
+
+&gt;&gt; Then I tried using HTTP to transfer the same file (both computers are
+&gt;&gt; webservers). To my huge surprise, it made a world of difference and
+&gt;&gt; the transfer speed was 111 or so megabytes per second.
+
+&gt; So much for suggesting you run netperf TCP_STREAM between the two
+&gt; systems :)
+
+&gt; WRT NFS, NFS is not a bulk transfer protocol.  It is a
+&gt; request/response protocol, which means even for the file copies, there
+&gt; is a greater sensitivity to latency than with HTTP or FTP or whatnot.
+&gt; The suggestions to increase mount size are likely all good.  I'm not
+&gt; sure that 4192 is a proper mount size, but 4096 or 8192 would be.
+&gt; Probably want something larger.  You can get a feel for latency either
+&gt; with ping, or with a netperf TCP_RR test.
+">
+
+OK, I spent a long time messing with NFS today and I am very
+confused. Specifying rsize and wsize does not work. I cannot mount if
+I specify rsize and wsize in fstab:
+
+DOES NOT WORK: manifold:/home/ichudov/tmp/incoming/torrent /torrents      nfs    ro,auto,rsize=8192,wsize=8192  0 0
+WORKS FINE:    manifold:/home/ichudov/tmp/incoming/torrent /torrents      nfs    ro,auto   0 0
+
+Both systems are recent linux computers.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; WRT Jumbo Frames...  You need to enable it at both ends, and through
+&gt; the middle - that means both your systems, _and_ the switch.  For
+&gt; Linux hosts the ifconfig &lt;interface&gt; mtu &lt;size&gt; has already been
+&gt; mentioned.  If the switch requires configuration then that will be in
+&gt; the switch's docs.
+
+&gt; For TCP traffic, you don't have to worry about communication with the
+&gt; rest of the internet, nor the rest of the nodes (if any) in your LAN.
+&gt; The TCP MSS exchange will ensure that when speaking with a system with
+&gt; a smaller MTU a suitable TCP MSS is selected.
+
+&gt; For things using UDP though, you will have problems.  Your systems
+&gt; with Jumbo Frames enabled will only fragment to ~9000 bytes, which
+&gt; will hit your switch, which will not be able to pass that along to
+&gt; other hosts on the LAN because switches, which operate at layer-2, do
+&gt; not (should not) fragment IP datagrams.
+">
+
+I have a feeling that MTU is not what I should be working on at the
+moment, since HTTP is fine with 1492 MTU. Plus I cannot seem able to
+set MTU on one of the computers.
+
+i
+</POST>
+<POST>
+<POSTER> Rick Jones &lt;rick.jon...@hp.com&gt; </POSTER>
+<POSTDATE> 2007-09-12T14:35:00 </POSTDATE>
+In comp.os.linux.networking Ignoramus19897 &lt;ignoramus19 ... @nospam.19897.invalid&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; As a second thought, I am not sure what is the point of setting 9k
+&gt; bytes MTU. Even with my regular 1492 MTU, I get 111-112 megabytes per
+&gt; second speed with HTTP.
+">
+
+CPU utilization.  Under Linux your NIC(s) may have support for TSO,
+which will be comparable to using a 9K MTU (a bit of handwaving), but
+will do nothing for the receive side.  On the receive side LRO (Large
+Receive Offload) is something still evolving.
+
+rick jones
+--
+denial, anger, bargaining, depression, acceptance, rebirth...
+where do you want to be today?
+these opinions are mine, all mine; HP might not want them anyway... :)
+feel free to post, OR email to rick.jones2 in hp.com  but NOT BOTH...
+</POST>
+<POST>
+<POSTER> Ignoramus19897 &lt;ignoramus19...@NOSPAM.19897.invalid&gt; </POSTER>
+<POSTDATE> 2007-09-12T14:37:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Wed, 12 Sep 2007 18:35:16 +0000 (UTC), Rick Jones &lt;rick.jon ... @hp.com&gt; wrote:
+&gt; In comp.os.linux.networking Ignoramus19897 &lt;ignoramus19 ... @nospam.19897.invalid&gt; wrote:
+&gt;&gt; As a second thought, I am not sure what is the point of setting 9k
+&gt;&gt; bytes MTU. Even with my regular 1492 MTU, I get 111-112 megabytes per
+&gt;&gt; second speed with HTTP.
+
+&gt; CPU utilization.  Under Linux your NIC(s) may have support for TSO,
+&gt; which will be comparable to using a 9K MTU (a bit of handwaving), but
+&gt; will do nothing for the receive side.  On the receive side LRO (Large
+&gt; Receive Offload) is something still evolving.
+">
+
+Yes. Makes sense.
+
+Rick, what about NFS, I feel totally stuck with that one. I suppose
+(though I am not sure) that I use NFSv4. It already uses 32767 byte
+buffers by default, and TCP, IIRC. And yet it is impossibly slow and
+load average goes to hell when copying.
+
+i
+</POST>
+<POST>
+<POSTER> Rick Jones &lt;rick.jon...@hp.com&gt; </POSTER>
+<POSTDATE> 2007-09-12T15:48:00 </POSTDATE>
+In comp.os.linux.networking Ignoramus19897 &lt;ignoramus19 ... @nospam.19897.invalid&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Rick, what about NFS, I feel totally stuck with that one. I suppose
+&gt; (though I am not sure) that I use NFSv4. It already uses 32767 byte
+&gt; buffers by default, and TCP, IIRC. And yet it is impossibly slow and
+&gt; load average goes to hell when copying.
+">
+
+I'm not fully Linux NFS literate.  Starting with the nfsstat stats on
+client and server might be a good thing.  Also, did you really mean to
+say 32767?  I would have expected a default mount of 32768 bytes.  I
+could see 32767 not &quot;meshing&quot; well with say disc I/O sizes.
+
+I'm not sure if iostat et al break-out disc writes from reads, but
+looking at that sort of thing while stuff is on-going would be useful.
+
+IIRC you were using cp to do the file copy - how about if you use dd
+and alter the block size it does?  ISTR that cp might use mmap()'ed
+files so doing something else would be an interesting experiment.
+
+rick jones
+--
+Process shall set you free from the need for rational thought.
+these opinions are mine, all mine; HP might not want them anyway... :)
+feel free to post, OR email to rick.jones2 in hp.com but NOT BOTH...
+</POST>
+<POST>
+<POSTER> mlel...@serpens.de (Michael van Elst) </POSTER>
+<POSTDATE> 2007-09-12T15:55:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Ignoramus19897 &lt;ignoramus19 ... @NOSPAM.19897.invalid&gt; writes:
+&gt;What I do not understand is, who needs to set 9k MTU? Both computers
+&gt;involved?
+">
+
+Both computers and possibly the switch.
+
+<QUOTE PREVIOUSPOST="
+&gt;How about regular Internet traffic, between one of these computers and
+&gt;a server elsewhere? Would the 9k MTU screw that up if the other
+&gt;computers on the Internet do not support jumbo frames??
+">
+
+The MTU depends on the route, for the default route to the internet
+you usually get an MTU of 512, maybe more if PMTUD is used. This
+also means that all computers on the local network need to support
+Jumbo frames.
+
+In any case, the advantage of using Jumbo frames is overestimated.
+It's usually not worth the effort.
+
+--
+--
+Michael van Elst
+Internet: mlel ... @serpens.de
+&quot;A potential Snark may lurk in every tree.&quot;
+</POST>
+<POST>
+<POSTER> Ignoramus19897 &lt;ignoramus19...@NOSPAM.19897.invalid&gt; </POSTER>
+<POSTDATE> 2007-09-12T16:32:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Wed, 12 Sep 2007 19:48:29 +0000 (UTC), Rick Jones &lt;rick.jon ... @hp.com&gt; wrote:
+&gt; In comp.os.linux.networking Ignoramus19897 &lt;ignoramus19 ... @nospam.19897.invalid&gt; wrote:
+&gt;&gt; Rick, what about NFS, I feel totally stuck with that one. I suppose
+&gt;&gt; (though I am not sure) that I use NFSv4. It already uses 32767 byte
+&gt;&gt; buffers by default, and TCP, IIRC. And yet it is impossibly slow and
+&gt;&gt; load average goes to hell when copying.
+
+&gt; I'm not fully Linux NFS literate.  Starting with the nfsstat stats on
+&gt; client and server might be a good thing.  Also, did you really mean to
+&gt; say 32767?  I would have expected a default mount of 32768 bytes.  I
+&gt; could see 32767 not &quot;meshing&quot; well with say disc I/O sizes.
+">
+
+You are right, it is 32768.
+
+<QUOTE PREVIOUSPOST="
+&gt; I'm not sure if iostat et al break-out disc writes from reads, but
+&gt; looking at that sort of thing while stuff is on-going would be useful.
+
+&gt; IIRC you were using cp to do the file copy - how about if you use dd
+&gt; and alter the block size it does?  ISTR that cp might use mmap()'ed
+&gt; files so doing something else would be an interesting experiment.
+">
+
+Using dd seems to result in a marked improvement. The speed was 22
+megabytes per second on a 80 MB file (test #1), 5 megabytes/s on a 730 MB
+file (test #2). Very strange.
+
+time dd ibs=32768 of=/dev/null if=Tayna_Borta_1.avi
+
+I then did wget after that, with speed gradually improviing from 20
+megabytes per second to 1111 megabytes per second. Looks as though the
+speed &quot;dipped&quot; during the second 730 MB dd.
+
+i
+</POST>
+<POST>
+<POSTER> Rick Jones &lt;rick.jon...@hp.com&gt; </POSTER>
+<POSTDATE> 2007-09-12T17:45:00 </POSTDATE>
+In comp.os.linux.networking Ignoramus19897 &lt;ignoramus19 ... @nospam.19897.invalid&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Using dd seems to result in a marked improvement. The speed was 22
+&gt; megabytes per second on a 80 MB file (test #1), 5 megabytes/s on a
+&gt; 730 MB file (test #2). Very strange.
+&gt; time dd ibs=32768 of=/dev/null if=Tayna_Borta_1.avi
+&gt; I then did wget after that, with speed gradually improviing from 20
+&gt; megabytes per second to 1111 megabytes per second. Looks as though
+&gt; the speed &quot;dipped&quot; during the second 730 MB dd.
+">
+
+Probably a question of room for file caching.
+
+Now, if cp is indeed using mmap() (an strace might show the relevant
+system calls) then the question might become one of page size versus
+mount size and what affect, if any that has on the NFS transfer.  I'm
+going to guess that the page size is 4KB, but what the virtual memory
+stuff will do wrt pageahead and how that interacts with NFS is
+anyone's guess, short of reading lots of source code :)
+
+With the cp version I would either take a snapshot of the nfsstats
+before the cp, or zero the nfsstats (IIRC one can zero them), then do
+the cp of a known size file, then snap the nfsstats again and look at
+how many NFS operations were done and compare that to the size of the
+file.
+
+You can then do the same sort of thing with the dd and compare.
+
+rick jones
+--
+oxymoron n, Hummer H2 with California Save Our Coasts and Oceans plates
+these opinions are mine, all mine; HP might not want them anyway... :)
+feel free to post, OR email to rick.jones2 in hp.com but NOT BOTH...
+</POST>
+<POST>
+<POSTER> Steve Thompson &lt;s...@vgersoft.com&gt; </POSTER>
+<POSTDATE> 2007-09-12T17:52:00 </POSTDATE>
+Just as a data point, I tried copying a 17 GB file between two systems;
+one has 3.0 GHz Core 2 Duo processors and the other 2.6 GHz Opterons (both
+quads). Both systems were pretty heavily loaded at the time. Network is
+gigabit ethernet with MTU=1500. Using scp, I get 65 MB/sec, and NFS (&quot;cp&quot;)
+gives 77 MB/sec.
+
+-steve
+</POST>
+<POST>
+<POSTER> The Natural Philosopher &lt;a...@b.c&gt; </POSTER>
+<POSTDATE> 2007-09-12T17:57:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Ignoramus19897 wrote:
+&gt; As a second thought, I am not sure what is the point of setting 9k
+&gt; bytes MTU. Even with my regular 1492 MTU, I get 111-112 megabytes per
+&gt; second speed with HTTP.
+
+&gt; The problem is squarely with NFS. When I do NFS copy
+
+&gt;     time cp /nfsdir/sharedfile /dev/null
+
+&gt; from server to client, the load average on the SERVER shots up to
+&gt; hell, and the transfer is very slow. This is a read only share. Thia
+&gt; is an NFS problem, not a MTU problem?
+">
+
+May be packet size. NFS is s stateless UDP protocol, and transit delays
+affect throughput a lot..i.e. a TCP connection may transmit large
+windows of several data packets before expecting an ACK..UDP just sends
+the packet, and the ACK goes back generally before the next packet gets
+sent. Bigger packets therefore help a lOT.
+
+<QUOTE PREVIOUSPOST="
+&gt; i
+">
+</POST>
+<POST>
+<POSTER> Rick Jones &lt;rick.jon...@hp.com&gt; </POSTER>
+<POSTDATE> 2007-09-12T18:15:00 </POSTDATE>
+In comp.os.linux.networking The Natural Philosopher &lt;a ... @b.c&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; May be packet size. NFS is s stateless UDP protocol, and transit
+">
+
+NFS is (or at least was) ostensibly stateless, but it can and does
+(for some time now) run over TCP in addition to UDP.
+
+<QUOTE PREVIOUSPOST="
+&gt; delays affect throughput a lot..i.e. a TCP connection may transmit
+&gt; large windows of several data packets before expecting an ACK..UDP
+&gt; just sends the packet, and the ACK goes back generally before the
+&gt; next packet gets sent. Bigger packets therefore help a lOT.
+">
+
+Although a 'decent' NFS over UDP implementation should be able to have
+multiple NFS requests in flight at one time.  Larger mount sizes can
+still be helpful, but shouldn't be a hard requirement.  The downside
+to larger mount sizes with a UDP mount is that the IP fragmentation of
+the large UDP datagrams magnifies the underlying packet loss rate into
+a rather larger &quot;message loss rate.&quot;
+
+I slept too often in probstats, so I may get some things a little off
+here but...
+
+All fragments of an IP datagram fragment must make it to the receiver
+to be any good.  So, if the probability of packet loss is p, the
+probability of packet &quot;non-loss&quot; is (1-p).  Since all fragments must
+arrive, the probability of all fragments arriving becomes (1-p)^N
+where N is the number of fragments.  For a 32KB mount size and a 1500
+byte MTU N is something like 22 or 23.
+
+On a LAN that may not be a big deal - p will generally be really
+small.  For something else, p will be large enough that (1-p)^23 will
+be rather small.
+
+Of course, that is why so many NFS implementations today do NFS over
+TCP...  When TCP _segments_ that same 32KB read/write, each of the
+resulting 22 or 23 TCP segments can be retransmitted individually.
+
+rick jones
+--
+oxymoron n, Hummer H2 with California Save Our Coasts and Oceans plates
+these opinions are mine, all mine; HP might not want them anyway... :)
+feel free to post, OR email to rick.jones2 in hp.com but NOT BOTH...
+</POST>
+<POST>
+<POSTER> Steve Thompson &lt;s...@vgersoft.com&gt; </POSTER>
+<POSTDATE> 2007-09-12T18:35:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Wed, 12 Sep 2007, Steve Thompson wrote:
+&gt; Just as a data point, I tried copying a 17 GB file between two systems; one
+&gt; has 3.0 GHz Core 2 Duo processors and the other 2.6 GHz Opterons (both
+&gt; quads). Both systems were pretty heavily loaded at the time. Network is
+&gt; gigabit ethernet with MTU=1500. Using scp, I get 65 MB/sec, and NFS (&quot;cp&quot;)
+&gt; gives 77 MB/sec.
+">
+
+Agh. Managed to send that before finishing it. O/S was CentOS 4.5, NFS
+rsize and wsize were 32768. First system was a Dell PE2900 w/16GB memory;
+second was a white-box Opteron w/8GB memory.
+
+-s
+</POST>
+<POST>
+<POSTER> da...@dagon.net (Mark Rafn) </POSTER>
+<POSTDATE> 2007-09-12T18:26:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Mark Hittinger &lt;b ... @pu.net&gt; wrote:
+&gt;&gt;So, now I have a dilemma, I have a fast pipe, but scp is not fast
+&gt;&gt;enough (given my CPU) to encrypt/decrypt so much data.
+&gt;Using a different cipher like blowfish will speed this up a bit but http
+&gt;or ftp will still be faster.
+">
+
+You're measuring two different things: encryption speed and transmission speed.
+If you want encryption, you should compare with https, not http.  Or if you
+don't want encryption, use the &quot;none&quot; cipher for ssh/scp.
+--
+Mark Rafn    da ... @dagon.net    &lt; http://www.dagon.net/ &gt;
+</POST>
+<POST>
+<POSTER> &quot;Robert M. Riches Jr.&quot; &lt;spamtra...@verizon.net&gt; </POSTER>
+<POSTDATE> 2007-09-12T19:39:00 </POSTDATE>
+On 2007-09-12, Mark Rafn &lt;da ... @dagon.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Mark Hittinger &lt;b ... @pu.net&gt; wrote:
+&gt;&gt;&gt;So, now I have a dilemma, I have a fast pipe, but scp is not fast
+&gt;&gt;&gt;enough (given my CPU) to encrypt/decrypt so much data.
+
+&gt;&gt;Using a different cipher like blowfish will speed this up a bit but http
+&gt;&gt;or ftp will still be faster.
+
+&gt; You're measuring two different things: encryption speed and transmission speed.
+&gt; If you want encryption, you should compare with https, not http.  Or if you
+&gt; don't want encryption, use the &quot;none&quot; cipher for ssh/scp.
+">
+
+The &quot;none&quot; cipher may not be available.
+
+With Mandriva 2007.0, openssh-clients-4.5p1-0.1mdv2007.0,
+the scp man page says the -c option and its argument are
+passed from scp to ssh, and the ssh man page does not
+mention a 'none' argument.  An attempt to do &quot;ssh -c none
+...&quot; returns the following error message:
+
+No valid ciphers for protocol version 2 given, using defaults.
+
+--
+Robert Riches
+spamtra ... @verizon.net
+(Yes, that is one of my email addresses.)
+</POST>
+<POST>
+<POSTER> Ignoramus3635 &lt;ignoramus3...@NOSPAM.3635.invalid&gt; </POSTER>
+<POSTDATE> 2007-09-12T19:52:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Wed, 12 Sep 2007 21:45:39 +0000 (UTC), Rick Jones &lt;rick.jon ... @hp.com&gt; wrote:
+&gt; In comp.os.linux.networking Ignoramus19897 &lt;ignoramus19 ... @nospam.19897.invalid&gt; wrote:
+&gt;&gt; Using dd seems to result in a marked improvement. The speed was 22
+&gt;&gt; megabytes per second on a 80 MB file (test #1), 5 megabytes/s on a
+&gt;&gt; 730 MB file (test #2). Very strange.
+
+&gt;&gt; time dd ibs=32768 of=/dev/null if=Tayna_Borta_1.avi
+
+&gt;&gt; I then did wget after that, with speed gradually improviing from 20
+&gt;&gt; megabytes per second to 1111 megabytes per second. Looks as though
+&gt;&gt; the speed &quot;dipped&quot; during the second 730 MB dd.
+
+&gt; Probably a question of room for file caching.
+">
+
+Could not be. I picked files that were not cached by the server. On
+the client, they are sent to /dev/null/
+
+<QUOTE PREVIOUSPOST="
+&gt; Now, if cp is indeed using mmap() (an strace might show the relevant
+&gt; system calls) then the question might become one of page size versus
+&gt; mount size and what affect, if any that has on the NFS transfer.  I'm
+&gt; going to guess that the page size is 4KB, but what the virtual memory
+&gt; stuff will do wrt pageahead and how that interacts with NFS is
+&gt; anyone's guess, short of reading lots of source code :)
+">
+
+How could cp use mmap to copy multi-gig files?
+
+<QUOTE PREVIOUSPOST="
+&gt; With the cp version I would either take a snapshot of the nfsstats
+&gt; before the cp, or zero the nfsstats (IIRC one can zero them), then do
+&gt; the cp of a known size file, then snap the nfsstats again and look at
+&gt; how many NFS operations were done and compare that to the size of the
+&gt; file.
+">
+
+Very nice idea, I will try tonight.
+
+i
+</POST>
+<POST>
+<POSTER> Ignoramus3635 &lt;ignoramus3...@NOSPAM.3635.invalid&gt; </POSTER>
+<POSTDATE> 2007-09-12T19:55:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Wed, 12 Sep 2007 15:26:26 -0700, Mark Rafn &lt;da ... @dagon.net&gt; wrote:
+&gt; Mark Hittinger &lt;b ... @pu.net&gt; wrote:
+&gt;&gt;&gt;So, now I have a dilemma, I have a fast pipe, but scp is not fast
+&gt;&gt;&gt;enough (given my CPU) to encrypt/decrypt so much data.
+
+&gt;&gt;Using a different cipher like blowfish will speed this up a bit but http
+&gt;&gt;or ftp will still be faster.
+
+&gt; You're measuring two different things: encryption speed and transmission speed.
+&gt; If you want encryption, you should compare with https, not http.  Or if you
+&gt; don't want encryption, use the &quot;none&quot; cipher for ssh/scp.
+">
+
+Does not work for me, scp says that &quot;none&quot; is not a valid cipher:
+
+::~==&gt;scp -c none hollywood:1gig /dev/null
+No valid ciphers for protocol version 2 given, using defaults.
+1gig 11%  118MB  32.1MB/s   00:28 ETA
+Killed by signal 2.
+BEAR::~==&gt;
+</POST>
+<POST>
+<POSTER> lath...@us.ibm.com (Richard D. Latham) </POSTER>
+<POSTDATE> 2007-09-12T21:57:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Ignoramus26973 &lt;ignoramus26 ... @NOSPAM.26973.invalid&gt; writes:
+&gt; I installed a gigabit network switch and a gigabit enabled laptop wifi
+&gt; adapter (with gigabit, obviously, available on ethernet ports only) in
+&gt; my house.
+
+&gt; Two computers in my home are connected to the switch and one (laptop)
+&gt; to the wifi adaptor.
+
+&gt; The highest possible speed of a gigabit connection is about 111
+&gt; megabytes per second.
+
+&gt; Naturally, I did some tests with a noncompressible 1 gigabyte long
+&gt; file (fragment of some gzipped file exactly one GB long).
+
+&gt; My first test was to scp files from one computer on the switch to
+&gt; another. Here, I was disappointed as the highest speed was only 22
+&gt; megabytes per second one way and 46 another way. About 20 and 40
+&gt; percent of maximum.
+">
+
+&lt;snip&gt;
+
+A visit to http://www.psc.edu/networking/projects/hpn-ssh/ is in order.
+
+--
+#include  &lt;disclaimer.std&gt;    /* I don't speak for IBM ...           */
+/* Heck, I don't even speak for myself */
+/* Don't believe me ? Ask my wife :-)  */
+Richard D. Latham   lath ... @us.ibm.com
+</POST>
+<POST>
+<POSTER> Ignoramus19897 &lt;ignoramus19...@NOSPAM.19897.invalid&gt; </POSTER>
+<POSTDATE> 2007-09-12T22:13:00 </POSTDATE>
+On Wed, 12 Sep 2007 21:57:17 -0400, Richard D. Latham &lt;lath ... @us.ibm.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Ignoramus26973 &lt;ignoramus26 ... @NOSPAM.26973.invalid&gt; writes:
+
+&gt;&gt; I installed a gigabit network switch and a gigabit enabled laptop wifi
+&gt;&gt; adapter (with gigabit, obviously, available on ethernet ports only) in
+&gt;&gt; my house.
+
+&gt;&gt; Two computers in my home are connected to the switch and one (laptop)
+&gt;&gt; to the wifi adaptor.
+
+&gt;&gt; The highest possible speed of a gigabit connection is about 111
+&gt;&gt; megabytes per second.
+
+&gt;&gt; Naturally, I did some tests with a noncompressible 1 gigabyte long
+&gt;&gt; file (fragment of some gzipped file exactly one GB long).
+
+&gt;&gt; My first test was to scp files from one computer on the switch to
+&gt;&gt; another. Here, I was disappointed as the highest speed was only 22
+&gt;&gt; megabytes per second one way and 46 another way. About 20 and 40
+&gt;&gt; percent of maximum.
+
+&gt;&lt;snip&gt;
+
+&gt; A visit to http://www.psc.edu/networking/projects/hpn-ssh/ is in order.
+">
+
+Looks *VERY* interesting, I am reading it right now!
+
+i
+</POST>
+<POST>
+<POSTER> da...@dagon.net (Mark Rafn) </POSTER>
+<POSTDATE> 2007-09-13T01:02:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt;On Wed, 12 Sep 2007 15:26:26 -0700, Mark Rafn &lt;da ... @dagon.net&gt; wrote:
+&gt;&gt; You're measuring two different things: encryption speed and
+&gt;&gt; transmission speed.
+&gt;&gt; If you want encryption, you should compare with https, not http.  Or if you
+&gt;&gt; don't want encryption, use the &quot;none&quot; cipher for ssh/scp.
+Ignoramus3635  &lt;ignoramus3 ... @NOSPAM.3635.invalid&gt; wrote:
+&gt;Does not work for me, scp says that &quot;none&quot; is not a valid cipher:
+">
+
+Interesting.  Seems OpenSSH doesn't have this without a patch, but some
+other implementations do.
+--
+Mark Rafn    da ... @dagon.net    &lt; http://www.dagon.net/ &gt;
+</POST>
+<POST>
+<POSTER> Darren Tucker &lt;dtuc...@gate.dtucker.net&gt; </POSTER>
+<POSTDATE> 2007-09-13T05:00:00 </POSTDATE>
+On 2007-09-13, Richard D. Latham &lt;lath ... @us.ibm.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Ignoramus26973 &lt;ignoramus26 ... @NOSPAM.26973.invalid&gt; writes:
+
+&gt;&gt; I installed a gigabit network switch and a gigabit enabled laptop wifi
+&gt;&gt; adapter (with gigabit, obviously, available on ethernet ports only) in
+&gt;&gt; my house.
+[...]
+&gt; A visit to http://www.psc.edu/networking/projects/hpn-ssh/ is in order.
+">
+
+Try it by all means, but don't be surprised if it makes little difference
+on a LAN.  The HPN patch gets most of it performance boost from increasing
+the SSH channel window size, but that only helps if that's the limiting
+factor.  There are some other things that help (eg the scp IO buffer
+size bump gets around 3% more throughput) but the bulk probably won't
+apply to a LAN hop.  If it does make a significant difference then I
+would be interested in understanding why.
+
+If you haven't already, try a few different ciphers.  Of the standard
+ones, arcfour or blowfish-cbc will usually be the fastest but this
+depends on many things including your hardware, compiler and direction
+of the prevailing wind.
+
+You may also want to try OpenSSH 4.7 or newer if you haven't already.
+There are some performance improvements including reuse of the MAC
+contexts (less hash calls per packet, gives ~15% reduction in CPU usage)
+and a faster MAC algorithm (umac ... @openssh.com, maybe 15-20% faster than
+the default hmac-md5).   It also has a channel window bump which is not
+as big as the HPN one and not dynamic (but unless your gigabit network has
+10s of ms of end-to-end delay then you probably won't see a difference).
+
+--
+Darren Tucker (dtucker at zip.com.au)
+GPG key 8FF4FA69 / D9A3 86E9 7EEE AF4B B2D4  37C9 C982 80C7 8FF4 FA69
+Good judgement comes with experience. Unfortunately, the experience
+usually comes from bad judgement.
+</POST>
+</TEXT>
+</BODY>
+</DOC>

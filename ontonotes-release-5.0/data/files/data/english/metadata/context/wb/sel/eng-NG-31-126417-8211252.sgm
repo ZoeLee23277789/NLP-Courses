@@ -1,0 +1,268 @@
+<DOC>
+<DOCID> eng-NG-31-126417-8211252 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-07-02T21:35:00 </DATETIME>
+<BODY>
+<HEADLINE>
+How do I override a model method?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Michael Lake &lt;Mike.L...@uts.edu.au&gt; </POSTER>
+<POSTDATE> 2007-07-02T21:35:00 </POSTDATE>
+Hi all
+
+I'm having problems overriding a method in a model.
+I have seen how to override the save and delete methods and overriding a save works
+fine http://www.djangoproject.com/documentation/model-api/
+But I'm trying to override other automatically generated methods.
+
+Currently if I create a procedure object 'p' I can get its description (a text field)
+via p.description but I want to do some munging of the description before it is sent
+to any of the views that use it.
+
+class Procedure(models.Model):
+''' Stores information about a procedure.
+
+name = models.CharField(maxlength=255, blank=True )
+description = models.TextField()
+
+# Override the automatically generated description method.
+def description(self):
+lines = self.description.split('\n')
+new_description = ''
+for line in lines:
+# do something if a line matches a pattern
+# and append to new_description
+
+return new_description # &lt;-- TODO this is what I want to return
+# return super(Procedure, self).description() # I tried this
+# return self.description()                   # I tried this
+
+What happens is that if 'def description' is defined I get nothing returned from
+p.description - and no errors. It appears as if the description method is not called
+at all.
+
+--
+Mike
+</POST>
+<POST>
+<POSTER> Malcolm Tredinnick &lt;malc...@pointy-stick.com&gt; </POSTER>
+<POSTDATE> 2007-07-02T22:12:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Tue, 2007-07-03 at 11:35 +1000, Michael Lake wrote:
+&gt; Hi all
+
+&gt; I'm having problems overriding a method in a model.
+&gt; I have seen how to override the save and delete methods and overriding a save works
+&gt; fine http://www.djangoproject.com/documentation/model-api/
+&gt; But I'm trying to override other automatically generated methods.
+
+&gt; Currently if I create a procedure object 'p' I can get its description (a text field)
+&gt; via p.description but I want to do some munging of the description before it is sent
+&gt; to any of the views that use it.
+
+&gt; class Procedure(models.Model):
+&gt;      ''' Stores information about a procedure.
+
+&gt;      name = models.CharField(maxlength=255, blank=True )
+&gt;      description = models.TextField()
+
+&gt;      # Override the automatically generated description method.
+">
+
+There is no &quot;description&quot; method automatically defined. There is a
+&quot;description&quot; attribute that will hold a Python string in this
+particular case, but it isn't a method (method == bound function).
+
+<QUOTE PREVIOUSPOST="
+&gt;      def description(self):
+">
+
+Having two attributes called 'description' (your method here and the
+earlier models.TextField object) is not going to work at all. The second
+one will completely override the first definition, since they are
+defined in the same scope. So whatever problems there might be here, the
+train has already run off the rails.
+
+You can't completely hide a field attribute in a model like this. You
+can do it in Python using properties or the descriptor protocol, but
+because Django uses introspection on the attributes of the model to work
+out which are the database-backed fields, you can't do it there (all the
+Field subclasses need to be in the attributes dictionary passed to the
+__new__ method.
+
+What you can do, though, is define a utility method that is what you
+will access during views (instead of calling the field directly). So
+maybe call your TextField _description and then define a description()
+method (even as a property if you don't want to call it as a method all
+the time) that does whatever munging you want.
+
+Regards,
+Malcolm
+
+--
+Why can't you be a non-conformist like everyone else?
+http://www.pointy-stick.com/blog/
+</POST>
+<POST>
+<POSTER> Michael Lake &lt;Mike.L...@uts.edu.au&gt; </POSTER>
+<POSTDATE> 2007-07-02T23:02:00 </POSTDATE>
+Hi
+
+<QUOTE PREVIOUSPOST="
+&gt; On Tue, 2007-07-03 at 11:35 +1000, Michael Lake wrote:
+&gt;&gt;I'm having problems overriding a method in a model.
+&gt;&gt;I have seen how to override the save and delete methods and overriding a save works
+&gt;&gt;fine http://www.djangoproject.com/documentation/model-api/
+&gt;&gt;But I'm trying to override other automatically generated methods.
+
+&gt;&gt;Currently if I create a procedure object 'p' I can get its description (a text field)
+&gt;&gt;via p.description but I want to do some munging of the description before it is sent
+&gt;&gt;to any of the views that use it.
+
+&gt;&gt;class Procedure(models.Model):
+&gt;&gt;     ''' Stores information about a procedure.
+
+&gt;&gt;     name = models.CharField(maxlength=255, blank=True )
+&gt;&gt;     description = models.TextField()
+
+&gt;&gt;     # Override the automatically generated description method.
+Malcolm Tredinnick wrote:
+&gt; There is no &quot;description&quot; method automatically defined. There is a
+&gt; &quot;description&quot; attribute that will hold a Python string in this
+&gt; particular case, but it isn't a method (method == bound function).
+
+&gt;&gt;     def description(self):
+
+&gt; Having two attributes called 'description' (your method here and the
+&gt; earlier models.TextField object) is not going to work at all. The second
+&gt; one will completely override the first definition, since they are
+&gt; defined in the same scope. So whatever problems there might be here, the
+&gt; train has already run off the rails.
+">
+
+I didn't realise I was dealing with both attributes and methods and they were
+different. I see the Django docs say &quot;Each field is specified as a class attribute,
+and each attribute maps to a database column.&quot; I'll have to do some more reading on
+methods and attributes.
+
+.....
+
+<QUOTE PREVIOUSPOST="
+&gt; What you can do, though, is define a utility method that is what you
+&gt; will access during views (instead of calling the field directly). So
+&gt; maybe call your TextField _description and then define a description()
+&gt; method (even as a property if you don't want to call it as a method all
+&gt; the time) that does whatever munging you want.
+">
+
+What I have now in models is a 'def description_munged(self)' METHOD and it uses
+p.description ATTRIBUTE to get the string which it then munges and returns the new
+string. If then in my views I call the METHOD p.description_munged() it all works.
+
+I can see that if I use p.description_munged i.e. as an attrinbute I get nothing but
+calling p.description_munged() as a function works. Its easy to forget what's an
+attribute and a method.
+
+Thanks. Much appreciated.
+
+--
+Michael
+</POST>
+<POST>
+<POSTER> Malcolm Tredinnick &lt;malc...@pointy-stick.com&gt; </POSTER>
+<POSTDATE> 2007-07-02T23:23:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Tue, 2007-07-03 at 13:02 +1000, Michael Lake wrote:
+">
+
+[...]
+
+<QUOTE PREVIOUSPOST="
+&gt; I didn't realise I was dealing with both attributes and methods and they were
+&gt; different. I see the Django docs say &quot;Each field is specified as a class attribute,
+&gt; and each attribute maps to a database column.&quot; I'll have to do some more reading on
+&gt; methods and attributes.
+">
+
+Just to confuse the issue even more (but it might help in your
+background reading): attributes are just a &quot;names assigned to things&quot; in
+a Python object. The things can be ints, strings, other classes,
+functions or methods. So don't get stuck on thinking that methods and
+attributes or disjoint classes.
+
+A method is one type of Python object (a function that is given
+information about the instance it acts on, to be very loose with terms).
+An attribute is the name given to any Python object when it is part of
+another object so that you can refer to it later. The same method can be
+referred to by different names (i.e. appear as multiple attributes) for
+example. It's not uncommon to see something like
+
+__contains__ = has_key
+
+in a class that has already defined the has_key() method. Now the same
+method (code) is assigned to both attributes (names).
+
+Regards,
+Malcolm
+
+--
+I've got a mind like a... a... what's that thing called?
+http://www.pointy-stick.com/blog/
+</POST>
+<POST>
+<POSTER> Michael Lake &lt;Mike.L...@uts.edu.au&gt; </POSTER>
+<POSTDATE> 2007-07-03T00:03:00 </POSTDATE>
+Hi
+
+Thanks, I'll try and follow it better by re-reading it in conjuction with my Python
+books. But aleady it's changed my view of Python. Instead of visualising a large
+thick Python snake I now see a writing mass of pythons, Medusa like, as I concentrate
+on my Django project :-)
+
+&quot;Near them their sisters three, the Gorgons, winged
+With snakes for hair— hated of mortal man—&quot;
+Aeschylus
+
+<QUOTE PREVIOUSPOST="
+Malcolm Tredinnick wrote:
+&gt; On Tue, 2007-07-03 at 13:02 +1000, Michael Lake wrote:
+&gt; [...]
+
+&gt;&gt;I didn't realise I was dealing with both attributes and methods and they were
+&gt;&gt;different. I see the Django docs say &quot;Each field is specified as a class attribute,
+&gt;&gt;and each attribute maps to a database column.&quot; I'll have to do some more reading on
+&gt;&gt;methods and attributes.
+
+&gt; Just to confuse the issue even more (but it might help in your
+&gt; background reading): attributes are just a &quot;names assigned to things&quot; in
+&gt; a Python object. The things can be ints, strings, other classes,
+&gt; functions or methods. So don't get stuck on thinking that methods and
+&gt; attributes or disjoint classes.
+
+&gt; A method is one type of Python object (a function that is given
+&gt; information about the instance it acts on, to be very loose with terms).
+&gt; An attribute is the name given to any Python object when it is part of
+&gt; another object so that you can refer to it later. The same method can be
+&gt; referred to by different names (i.e. appear as multiple attributes) for
+&gt; example. It's not uncommon to see something like
+
+&gt;         __contains__ = has_key
+
+&gt; in a class that has already defined the has_key() method. Now the same
+&gt; method (code) is assigned to both attributes (names).
+
+&gt; Regards,
+&gt; Malcolm
+">
+
+--
+Michael Lake
+Computational Research Support Unit
+Science Faculty, UTS
+Ph: 9514 2238
+</POST>
+</TEXT>
+</BODY>
+</DOC>

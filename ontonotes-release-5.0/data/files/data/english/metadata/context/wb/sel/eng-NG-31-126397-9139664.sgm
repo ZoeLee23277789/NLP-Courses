@@ -1,0 +1,949 @@
+<DOC>
+<DOCID> eng-NG-31-126397-9139664 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-30T13:19:00 </DATETIME>
+<BODY>
+<HEADLINE>
+REAL SSCCE of my graphical interface with memory leaks
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Sal &lt;sal...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-30T13:19:00 </POSTDATE>
+Hi All!
+I've some problems with a java program and memory leaks.
+I Export the classes in a jar file (with eclipse) and i run it with:
+java -jar app.jar
+
+If i see the memory occupation of the program  (CTRL+ALT+CANC
+java.exe application) i can see that the memory start from 14.600 KB
+and then grows up...
+
+Why it appends?
+
+Best Regards
+
+Sal
+
+&lt;MAIN CLASS&gt;
+package inter;
+
+public class Principale {
+
+public static void main(String[] args) {
+
+try {
+Interfaccia2 app = new Interfaccia2();
+
+<QUOTE PREVIOUSPOST="
+} catch (NullPointerException e) {}
+}
+}
+">
+
+&lt;/MAIN CLASS&gt;
+
+&lt;INTERFACE CLASS&gt;
+package inter;
+
+import javax.swing.*;
+import java.util.*;
+import java.awt.*;
+import java.awt.event.*;
+
+public class Interfaccia2 extends JFrame
+{
+JFrame f;
+JLabel timeField;
+int day = 0;
+int mese = 0;
+int anno = 0;
+int h = 0;
+int m = 0;
+int s = 0;
+Font fontlabel = new Font( &quot;Verdana&quot;,Font.PLAIN,14);
+Dimension screenSize =Toolkit.getDefaultToolkit().getScreenSize();
+public Interfaccia2()
+{
+timeField = new JLabel(&quot;&quot;);
+javax.swing.Timer t = new javax.swing.Timer(1000,
+new ActionListener() {
+public void actionPerformed(ActionEvent e) {
+Calendar now = Calendar.getInstance();
+day = now.get(Calendar.DAY_OF_MONTH);
+mese = now.get(Calendar.MONTH)+1;
+anno = now.get(Calendar.YEAR);
+h = now.get(Calendar.HOUR_OF_DAY);
+m = now.get(Calendar.MINUTE);
+s = now.get(Calendar.SECOND);
+timeField.setText(&quot;Data: &quot;+ day + &quot;-&quot;  + mese + &quot;-&quot; + anno + &quot;
+Ore: &quot;  + h + &quot;:&quot; + m + &quot;:&quot; + s);
+
+<QUOTE PREVIOUSPOST="
+}
+});
+">
+
+t.start();  // Start the timer
+timeField.setFont(fontlabel);
+JPanel Panel_principale = new JPanel();
+Panel_principale.setPreferredSize (new Dimension (screenSize.width-10,
+screenSize.height-65));
+Panel_principale.add (timeField);
+f = new JFrame (&quot;TK Data&quot;);
+f.setDefaultCloseOperation (JFrame.EXIT_ON_CLOSE);
+f.getContentPane().add (Panel_principale);
+f.pack();
+f.setVisible (true);
+f.repaint();
+
+<QUOTE PREVIOUSPOST="
+}
+}
+">
+
+&lt;/INTERFACE CLASS&gt;
+</POST>
+<POST>
+<POSTER> Mark Space &lt;marksp...@sbc.global.net&gt; </POSTER>
+<POSTDATE> 2007-10-30T14:29:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Sal wrote:
+&gt; Dimension screenSize =Toolkit.getDefaultToolkit().getScreenSize();
+">
+
+The whole screen?  Please don't do this.  I changed it to:
+
+//    Dimension screenSize =
+//Toolkit.getDefaultToolkit().getScreenSize();
+Dimension screenSize = new Dimension( 300, 300 );
+
+<QUOTE PREVIOUSPOST="
+&gt; timeField.setText(&quot;Data: &quot;+ day + &quot;-&quot;  + mese + &quot;-&quot; + anno + &quot;
+&gt; Ore: &quot;  + h + &quot;:&quot; + m + &quot;:&quot; + s);
+">
+
+The String here is broken, doesn't compile. I fixed it, but please watch
+this when you are posting code.
+
+&gt; If i see the memory occupation of the program  (CTRL+ALT+CANC
+&gt; java.exe application) i can see that the memory start from 14.600 KB
+&gt; and then grows up...
+&gt;
+&gt; Why it appends?
+
+Mine grows up to 60MB up from 55MB, then goes back down to 54MB and
+starts growing again.  This is normal for the JVM garbage collection.
+Are you sure you have a leak?
+
+Also:
+public void actionPerformed(ActionEvent e) {
+Calendar now = Calendar.getInstance();
+day = now.get(Calendar.DAY_OF_MONTH);
+mese = now.get(Calendar.MONTH) + 1;
+anno = now.get(Calendar.YEAR);
+h = now.get(Calendar.HOUR_OF_DAY);
+m = now.get(Calendar.MINUTE);
+s = now.get(Calendar.SECOND);
+timeField.setText(&quot;Data: &quot; + day + &quot;-&quot; + mese
++ &quot;-&quot; + anno
++ &quot;Ore: &quot; + h + &quot;:&quot; + m + &quot;:&quot; + s);
+}
+
+This strikes me as a really good way to have a serious problem.  You're
+updating a JComponent (&quot;timeField&quot;) on a thread that is not the AWT
+event thread.  I think you should dump this whole method into an
+invokeLater() method.
+</POST>
+<POST>
+<POSTER> Roedy Green &lt;see_webs...@mindprod.com.invalid&gt; </POSTER>
+<POSTDATE> 2007-10-30T15:04:00 </POSTDATE>
+On Tue, 30 Oct 2007 10:19:22 -0700, Sal &lt;sal ... @gmail.com&gt; wrote,
+quoted or indirectly quoted someone who said :
+
+<QUOTE PREVIOUSPOST="
+&gt;public class Principale {
+">
+
+You could have easily made this one class. Just move the main method
+to intefaccia2.  The fewer the classes the easier SSCCEs are to deal
+with.
+
+There is a stylistic problem with your code. Your constructor is full
+of code nothing to do with constructing the Frame  object.  Even if
+you called such code from the constructor, application logic sort of
+code belongs in its own method.
+
+The following code is traditionally never put in a constructor.
+f.pack();
+f.setVisible (true);
+f.repaint(); /* not necessary */
+You are supposed to do it in the code that calls new.
+I am not sure if this is just considered good style, or if something
+terrible happens if you do it your way.  Consistent style is
+sufficient reason for me to avoid doing what you did.
+
+I consider it dangerous to set up a timer inside an partially
+constructed frame.  You want to wait until the frame is realised. This
+timer-starting code then belongs in addNotify.
+
+See http://mindprod.com/jgloss/addnotify.html
+
+--
+Roedy Green Canadian Mind Products
+The Java Glossary
+http://mindprod.com
+</POST>
+<POST>
+<POSTER> Roedy Green &lt;see_webs...@mindprod.com.invalid&gt; </POSTER>
+<POSTDATE> 2007-10-30T15:08:00 </POSTDATE>
+Calendar now = Calendar.getInstance();
+day =
+now.get(Calendar.DAY_OF_MONTH);
+mese =
+now.get(Calendar.MONTH)+1;
+anno =
+now.get(Calendar.YEAR);
+h =
+now.get(Calendar.HOUR_OF_DAY);
+m =
+now.get(Calendar.MINUTE);
+s =
+now.get(Calendar.SECOND);
+timeField.setText(&quot;Data: &quot;+ day + &quot;-&quot;  + mese + &quot;-&quot; + anno + &quot;Ore: &quot;
++ h + &quot;:&quot; + m + &quot;:&quot; + s);
+
+This chunk of code is more slickly handled with a SimpleDateFormat.
+See http://mindprod.com/jgloss/calendar.html#PRECISE
+or with locale-dependence with DateFormat df =
+DateFormat.getDateInstance();
+--
+Roedy Green Canadian Mind Products
+The Java Glossary
+http://mindprod.com
+</POST>
+<POST>
+<POSTER> Roedy Green &lt;see_webs...@mindprod.com.invalid&gt; </POSTER>
+<POSTDATE> 2007-10-30T15:48:00 </POSTDATE>
+On Tue, 30 Oct 2007 19:08:08 GMT, Roedy Green
+&lt;see_webs ... @mindprod.com.invalid&gt; wrote, quoted or indirectly quoted
+someone who said :
+
+<QUOTE PREVIOUSPOST="
+&gt;This chunk of code is more slickly handled with a SimpleDateFormat.
+&gt;See http://mindprod.com/jgloss/calendar.html#PRECISE
+&gt;or with locale-dependence with DateFormat df =
+&gt;DateFormat.getDateInstance();
+">
+
+The idea is to trim the code to the bone and still have it demonstrate
+the problem. You can replace this with
+
+setText( &quot;Dummy&quot; ); and see if it still fails.
+--
+Roedy Green Canadian Mind Products
+The Java Glossary
+http://mindprod.com
+</POST>
+<POST>
+<POSTER> Roedy Green &lt;see_webs...@mindprod.com.invalid&gt; </POSTER>
+<POSTDATE> 2007-10-30T18:06:00 </POSTDATE>
+On Tue, 30 Oct 2007 18:29:20 GMT, Mark Space
+&lt;marksp ... @sbc.global.net&gt; wrote, quoted or indirectly quoted someone
+who said :
+
+<QUOTE PREVIOUSPOST="
+&gt;This strikes me as a really good way to have a serious problem.  You're
+&gt;updating a JComponent (&quot;timeField&quot;) on a thread that is not the AWT
+&gt;event thread.  I think you should dump this whole method into an
+&gt;invokeLater() method.
+">
+
+He is ok. That is unnecessary because he used a Swing Timer not an
+ordinary Timer.
+
+quoting from the docs
+&quot;Although all Timers perform their waiting using a single, shared
+thread (created by the first Timer object that executes), the action
+event handlers for Timers execute on another thread -- the
+event-dispatching thread. This means that the action handlers for
+Timers can safely perform operations on Swing components. However, it
+also means that the handlers must execute quickly to keep the GUI
+responsive.&quot;
+
+see http://mindprod.com/jgloss/timer.html
+--
+Roedy Green Canadian Mind Products
+The Java Glossary
+http://mindprod.com
+</POST>
+<POST>
+<POSTER> Mark Space &lt;marksp...@sbc.global.net&gt; </POSTER>
+<POSTDATE> 2007-10-30T18:18:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Roedy Green wrote:
+&gt;  He is ok. That is unnecessary because he used a Swing Timer not an
+&gt; ordinary Timer.
+">
+
+Cool!  I didn' know about Swing timers, thanks for the info.
+</POST>
+<POST>
+<POSTER> Sal &lt;sal...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-30T19:17:00 </POSTDATE>
+first of all thanks to all!
+
+<QUOTE PREVIOUSPOST="
+&gt;Mine grows up to 60MB up from 55MB, then goes back down to 54MB and
+&gt;starts growing again.  This is normal for the JVM garbage collection.
+&gt;Are you sure you have a leak?
+">
+
+This is a program that run for 24h and after some days i have this
+problem of memory!
+
+... and what about the occupation memory of the others?
+Have you seen it?
+I use WinXP and you?
+
+Sal
+</POST>
+<POST>
+<POSTER> Lew &lt;l...@lewscanon.com&gt; </POSTER>
+<POSTDATE> 2007-10-30T19:42:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Sal wrote:
+&gt; This is a program that run for 24h and after some days i [sic] have this
+&gt; problem of memory!
+">
+
+What is the actual problem?  In other words, what harm are you seeing?
+
+<QUOTE PREVIOUSPOST="
+&gt; .... and what about the occupation memory of the others?
+&gt; Have you seen it?
+&gt; I use WinXP and you?
+">
+
+Are you certain that you have a problem?  What evidence besides seeing a
+number in the Task Manager do you have that there is a problem?
+
+--
+Lew
+</POST>
+<POST>
+<POSTER> Lew &lt;l...@lewscanon.com&gt; </POSTER>
+<POSTDATE> 2007-10-30T19:44:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Roedy Green wrote:
+&gt; The following code is traditionally never put in a constructor.
+&gt;  f.pack();
+&gt;  f.setVisible (true);
+&gt;  f.repaint(); /* not necessary */
+&gt; You are supposed to do it in the code that calls new.
+&gt; I am not sure if this is just considered good style, or if something
+&gt; terrible happens if you do it your way.  Consistent style is
+&gt; sufficient reason for me to avoid doing what you did.
+">
+
+It is actually dangerous, not just stylistically.  All that Swing stuff should
+happen on the EDT, and you're not supposed to let thready things happen from
+the constructor.
+
+In general, there can be severe bugs from putting non-construction logic in a
+constructor, especially where multi-threading is involved.
+
+--
+Lew
+</POST>
+<POST>
+<POSTER> Mark Space &lt;marksp...@sbc.global.net&gt; </POSTER>
+<POSTDATE> 2007-10-30T23:09:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Sal wrote:
+&gt; first of all thanks to all!
+
+&gt;&gt; Mine grows up to 60MB up from 55MB, then goes back down to 54MB and
+&gt;&gt; starts growing again.  This is normal for the JVM garbage collection.
+&gt;&gt; Are you sure you have a leak?
+
+&gt; This is a program that run for 24h and after some days i have this
+&gt; problem of memory!
+
+&gt; ... and what about the occupation memory of the others?
+&gt; Have you seen it?
+&gt; I use WinXP and you?
+">
+
+I'm using Windows Vista ultimate and Java 1.6.something.  I can't, or
+won't, run you program for several days.  I did let it run for several
+hours in the morning as I did other things.  I saw no evidence of a leak.
+
+I used NetBeans and the profiler that is available for it.  Sang Shin
+has posted an excellent resource on his website on how to use the
+NetBeans profiler:
+
+http://www.javapassion.com/handsonlabs/5116_nbprofilermemory.zip
+
+In short, I saw no Generations number above 8.
+</POST>
+<POST>
+<POSTER> Sal &lt;sal...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T04:03:00 </POSTDATE>
+On 31 Ott, 00:42, Lew &lt;l ... @lewscanon.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Are you certain that you have a problem?  What evidence besides seeing a
+&gt; number in the Task Manager do you have that there is a problem?
+
+&gt; --
+&gt; Lew
+">
+
+Yes I'm sure that I've a memory leak, after some day running this
+program the memory grows up to 250Mb, i try to resolve it with this
+command:
+java -Xms32m -Xmx512m -jar TD3-1.jar
+
+but it isn't sufficient :(
+
+Thanks
+
+Sal
+</POST>
+<POST>
+<POSTER> Sal &lt;sal...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T04:04:00 </POSTDATE>
+On 31 Ott, 00:44, Lew &lt;l ... @lewscanon.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Roedy Green wrote:
+&gt; It is actually dangerous, not just stylistically.  All that Swing stuff should
+&gt; happen on the EDT, and you're not supposed to let thready things happen from
+&gt; the constructor.
+
+&gt; In general, there can be severe bugs from putting non-construction logic in a
+&gt; constructor, especially where multi-threading is involved.
+
+&gt; --
+&gt; Lew
+">
+
+Please, can you post an example of correct Swing programming?
+I'm not sure to understand the problem...
+
+Thanks
+
+Sal
+</POST>
+<POST>
+<POSTER> Patricia Shanahan &lt;p...@acm.org&gt; </POSTER>
+<POSTDATE> 2007-10-31T06:59:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Sal wrote:
+&gt; On 31 Ott, 00:42, Lew &lt;l ... @lewscanon.com&gt; wrote:
+
+&gt;&gt; Are you certain that you have a problem?  What evidence besides seeing a
+&gt;&gt; number in the Task Manager do you have that there is a problem?
+
+&gt;&gt; --
+&gt;&gt; Lew
+
+&gt; Yes I'm sure that I've a memory leak, after some day running this
+&gt; program the memory grows up to 250Mb, i try to resolve it with this
+&gt; command:
+&gt; java -Xms32m -Xmx512m -jar TD3-1.jar
+">
+
+I'm confused. You are complaining that the JVM is using 250 MB, but you
+try to cure the problem by telling it that it is OK to use up to 512 MB
+for its heap?
+
+Have you tested setting the -Xmx parameter to amount of heap space you
+think is reasonable for you job? Did you get a Java OutOfMemoryError?
+
+Patricia
+</POST>
+<POST>
+<POSTER> &quot;Andrew Thompson&quot; &lt;u32984@uwe&gt; </POSTER>
+<POSTDATE> 2007-10-31T08:10:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Sal wrote:
+&gt;Hi All!
+">
+
+G'day!
+
+I ran 'your'* code for 8 hours on Win XP Pro using
+Java 1.6.0_02**.  Besides that, I also ran jconsole
+(part of the 1.6 SDK, not sure of earlier versions).
+
+Here is screenshots of the results.
+&lt; http://www.physci.org/test/gc/ &gt;
+
+* You code was horrible.  Besides the wrapped long line
+that broke compilation, and the fact the main could be
+included within the one public class, there were a number
+of other things about the code I simply 'could not abide'.
+I changed those aspects of the code, but I believe the version
+I used was substantively the same as yours, and will
+*demonstrate the same behaviour on your testing PC.*
+
+The code I used is linked from the page.
+
+*Please run it and confirm the same behaviour you
+reported as a 'memory leak'.*
+
+OTOH, given you obviously put a lot of effort into that
+example, and barring the single broken line, it was an
+SSCCE (or a close facsimile thereof***), so I thought it
+deserved a little more attenetion.
+
+** Yes yes, I know.. _03 is the only safe version,
+I am evil for using _02 blah-de-blah..
+
+*** Given it failed to satisfy the 'E' in that it was
+not an example of a memory leak.
+
+&lt;bottom-line&gt;
+I agree with pretty much every comment made by
+each person who has replied to this thread.  I think
+you are failing to understand the nature of Java GC
+(and just how 'lazy' it can be).
+
+There is no 'memory leak' in the code shown.
+
+I am just hoping these screenshots can convince you
+that your fears are unfounded.
+
+OTOH, if your app. actually hits OutOfMemoryErrors,
+we need to look more closely at what it is doing, and
+(if my addled memory serves me well) what is happening
+with any Image's and ImageIcon's..
+&lt;/bottom-line&gt;
+
+&lt;sscce&gt;
+import java.awt.Font;
+
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
+
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.Timer;
+import javax.swing.SwingUtilities;
+
+import java.util.Calendar;
+
+public class Interfaccia2 extends JFrame
+{
+/** Used to update the timeField label. */
+Timer timer;
+/** Original Timer was set for a 1000 ms delay.
+The delay used here, in ms, is.. */
+int delay = 10;
+
+public Interfaccia2()
+{
+super(&quot;TK Data&quot;);
+setDefaultCloseOperation (JFrame.EXIT_ON_CLOSE);
+
+final JLabel timeField = new JLabel(&quot;&quot;);
+timeField.setFont(
+new Font(&quot;Verdana&quot;,Font.PLAIN,14));
+timer = new Timer(
+delay,
+new ActionListener()
+{
+public void actionPerformed(ActionEvent e)
+{
+Calendar now = Calendar.getInstance();
+int day = now.get(Calendar.DAY_OF_MONTH);
+int mese = now.get(Calendar.MONTH)+1;
+int anno = now.get(Calendar.YEAR);
+int h = now.get(Calendar.HOUR_OF_DAY);
+int m = now.get(Calendar.MINUTE);
+int s = now.get(Calendar.SECOND);
+timeField.setText(
+&quot;Data: &quot; + day +
+&quot;-&quot; + mese +
+&quot;-&quot; + anno +
+&quot;  Ore: &quot; + h +
+&quot;:&quot; + m +
+&quot;:&quot; + s);
+}
+});
+
+JPanel panelPrincipale = new JPanel();
+panelPrincipale.add (timeField);
+
+getContentPane().add (panelPrincipale);
+pack();
+setSize(500,100);
+}
+
+/** Start the timer */
+public void start()
+{
+timer.start();
+}
+
+public static void main(String[] args)
+{
+Runnable r = new Runnable()
+{
+public void run()
+{
+Interfaccia2 app = new Interfaccia2();
+app.setVisible (true);
+app.start();
+}
+};
+SwingUtilities.invokeLater(r);
+}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+&lt;/sscce&gt;
+
+--
+Andrew Thompson
+http://www.athompson.info/andrew/
+
+Message posted via JavaKB.com
+http://www.javakb.com/Uwe/Forums.aspx/java-general/200710/1
+</POST>
+<POST>
+<POSTER> Lew &lt;l...@lewscanon.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T08:43:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Patricia Shanahan wrote:
+&gt; Sal wrote:
+&gt;&gt; On 31 Ott, 00:42, Lew &lt;l ... @lewscanon.com&gt; wrote:
+
+&gt;&gt;&gt; Are you certain that you have a problem?  What evidence besides seeing a
+&gt;&gt;&gt; number in the Task Manager do you have that there is a problem?
+
+&gt;&gt;&gt; --
+&gt;&gt;&gt; Lew
+
+&gt;&gt; Yes I'm sure that I've a memory leak, after some day running this
+&gt;&gt; program the memory grows up to 250Mb, i try to resolve it with this
+&gt;&gt; command:
+&gt;&gt; java -Xms32m -Xmx512m -jar TD3-1.jar
+">
+
+Again, are you checking the memory with any tool other than Task Manager?
+
+The memory allocated will often grow to the maximum allowed even without a
+memory leak.  The presence of a large memory allocation is /not/ proof, or
+even evidence, that you have a memory leak.
+
+That's important enough to repeat: you have /not/ shown any evidence, much
+less proof, to us that you actually have a memory leak.
+
+What proof do you have that there is a memory leak?
+
+--
+Lew
+</POST>
+<POST>
+<POSTER> Lew &lt;l...@lewscanon.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T08:44:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Sal wrote:
+&gt; Please, can you post an example of correct Swing programming?
+&gt; I'm not sure to understand the problem...
+">
+
+Sure:
+&lt; http://java.sun.com/docs/books/tutorial/ui/index.html &gt;
+
+There ya go.
+
+--
+Lew
+</POST>
+<POST>
+<POSTER> RedGrittyBrick &lt;RedGrittyBr...@SpamWeary.foo&gt; </POSTER>
+<POSTDATE> 2007-10-31T11:11:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Lew wrote:
+&gt; Sal wrote:
+
+&gt;&gt; Please, can you post an example of correct Swing programming?
+&gt;&gt; I'm not sure to understand the problem...
+
+&gt; Sure:
+&gt; &lt; http://java.sun.com/docs/books/tutorial/ui/index.html &gt;
+
+&gt; There ya go.
+">
+
+I too am interested in Lew's rules of thumb:
+* All that Swing stuff should happen on the EDT.
+* Don't let thready things happen from the constructor.
+* Don't put non-construction logic in a constructor.
+
+The following article might address some of Lew's points ...
+http://weblogs.java.net/blog/zixle/archive/2006/01/architecting_ap_1....
+There's an earlier article that should really be read first.
+
+which I reached from
+http://weblogs.java.net/mt/search?IncludeBlogs=234&amp;search;=passwordstore
+
+which I reached from
+http://java.sun.com/docs/books/tutorial/ui/overview/demo.html
+
+which I reached from
+http://java.sun.com/docs/books/tutorial/reallybigindex.html
+</POST>
+<POST>
+<POSTER> Sal &lt;sal...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T11:41:00 </POSTDATE>
+On 31 Ott, 13:10, &quot;Andrew Thompson&quot; &lt;u32984@uwe&gt; wrote:
+[...]
+
+<QUOTE PREVIOUSPOST="
+&gt; I ran 'your'* code for 8 hours on Win XP Pro using
+&gt; Java 1.6.0_02**.  Besides that, I also ran jconsole
+&gt; (part of the 1.6 SDK, not sure of earlier versions).
+">
+
+GREAT!!
+
+<QUOTE PREVIOUSPOST="
+&gt; * You code was horrible.
+">
+
+Ehm... now i think that you are right.
+
+<QUOTE PREVIOUSPOST="
+&gt; *Please run it and confirm the same behaviour you
+&gt; reported as a 'memory leak'.*
+">
+
+Yes I ran it for two hour and the memory grows up to 15.824 KB (Task
+Manager Windows)
+
+<QUOTE PREVIOUSPOST="
+&gt; OTOH, if your app. actually hits OutOfMemoryErrors,
+&gt; we need to look more closely at what it is doing, and
+&gt; (if my addled memory serves me well) what is happening
+&gt; with any Image's and ImageIcon's..
+">
+
+Yes I've to look in another place the problem of my memory error
+(probably a memory leak ;), but i'm not a specialist i written this
+program day by day not looking to the correct code but looking to make
+it runs.
+
+Now i have a program of 1300 lines of graphical interface and many
+more to control it and i don't know where i have to look!
+I need a tool that help me to find the problem, can you advice me a
+freeware one?
+
+Another time Thanks to all person that use time to help me
+
+Sal
+</POST>
+<POST>
+<POSTER> &quot;Daniel Dyer&quot; &lt;&quot;You don&#39;t need it&quot;&gt; </POSTER>
+<POSTDATE> 2007-10-31T12:05:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Wed, 31 Oct 2007 15:41:12 -0000, Sal &lt;sal ... @gmail.com&gt; wrote:
+&gt; On 31 Ott, 13:10, &quot;Andrew Thompson&quot; &lt;u32984@uwe&gt; wrote:
+&gt; [...]
+&gt;&gt; I ran 'your'* code for 8 hours on Win XP Pro using
+&gt;&gt; Java 1.6.0_02**.  Besides that, I also ran jconsole
+&gt;&gt; (part of the 1.6 SDK, not sure of earlier versions).
+
+&gt; GREAT!!
+
+&gt;&gt; * You code was horrible.
+
+&gt; Ehm... now i think that you are right.
+
+&gt;&gt; *Please run it and confirm the same behaviour you
+&gt;&gt; reported as a 'memory leak'.*
+
+&gt; Yes I ran it for two hour and the memory grows up to 15.824 KB (Task
+&gt; Manager Windows)
+">
+
+Forget about the Windows Task Manager, it's next to useless for these kind
+of measurements (as an aside, you'll notice that if you minimize the
+application window and restore it, the size will drop dramatically).
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; OTOH, if your app. actually hits OutOfMemoryErrors,
+&gt;&gt; we need to look more closely at what it is doing, and
+&gt;&gt; (if my addled memory serves me well) what is happening
+&gt;&gt; with any Image's and ImageIcon's..
+
+&gt; Yes I've to look in another place the problem of my memory error
+&gt; (probably a memory leak ;), but i'm not a specialist i written this
+&gt; program day by day not looking to the correct code but looking to make
+&gt; it runs.
+">
+
+Follow Patricia's advice, set the maximum heap size to be just big enough
+(from Andrew's JConsole screenshots, it looks like even 3mb would be
+enough, certainly no more than 6mb).  If you can't get the application to
+throw an OutOfMemoryError then you almost certainly don't have a memory
+leak.  Of course, if you set it too low initially it will throw this error
+immediately.  I'm assuming 3mb is enough to get it up and running.
+
+Dan.
+
+--
+Daniel Dyer
+http://www.uncommons.org
+</POST>
+<POST>
+<POSTER> Patricia Shanahan &lt;p...@acm.org&gt; </POSTER>
+<POSTDATE> 2007-10-31T17:43:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Sal wrote:
+&gt; On 31 Ott, 13:10, &quot;Andrew Thompson&quot; &lt;u32984@uwe&gt; wrote:
+&gt; [...]
+&gt;&gt; I ran 'your'* code for 8 hours on Win XP Pro using
+&gt;&gt; Java 1.6.0_02**.  Besides that, I also ran jconsole
+&gt;&gt; (part of the 1.6 SDK, not sure of earlier versions).
+
+&gt; GREAT!!
+
+&gt;&gt; * You code was horrible.
+
+&gt; Ehm... now i think that you are right.
+
+&gt;&gt; *Please run it and confirm the same behaviour you
+&gt;&gt; reported as a 'memory leak'.*
+
+&gt; Yes I ran it for two hour and the memory grows up to 15.824 KB (Task
+&gt; Manager Windows)
+
+&gt;&gt; OTOH, if your app. actually hits OutOfMemoryErrors,
+&gt;&gt; we need to look more closely at what it is doing, and
+&gt;&gt; (if my addled memory serves me well) what is happening
+&gt;&gt; with any Image's and ImageIcon's..
+
+&gt; Yes I've to look in another place the problem of my memory error
+&gt; (probably a memory leak ;), but i'm not a specialist i written this
+&gt; program day by day not looking to the correct code but looking to make
+&gt; it runs.
+
+&gt; Now i have a program of 1300 lines of graphical interface and many
+&gt; more to control it and i don't know where i have to look!
+&gt; I need a tool that help me to find the problem, can you advice me a
+&gt; freeware one?
+">
+
+...
+
+Maybe it is time for some refactoring, with the objective of making the
+program cleaner and easier to decompose, as well as ensuring all GUI
+work is done in the event handling thread.
+
+It is entirely possible that the refactoring will itself remove the
+problem. If it does not, you will have a better base for SSCCE
+construction. The SSCCE approach can be a good way of tracking down
+problems, even if you never post them to a newsgroup. The idea is to
+progressively simplify the program, removing everything that is not
+essential to reproducing the bug.
+
+In your case, the test should be whether you get an OutOfMemoryError if
+you run the program with -Xmx set to a reasonable value. Any time you
+remove something, and the bug goes away, you have a new clue about what
+is going wrong.
+
+Patricia
+</POST>
+<POST>
+<POSTER> Lew &lt;l...@lewscanon.com&gt; </POSTER>
+<POSTDATE> 2007-10-31T18:22:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Sal wrote:
+&gt;&gt; Yes I ran it for two hour and the memory grows up to 15.824 KB (Task
+&gt;&gt; Manager Windows)
+">
+
+This is not evidence of a memory leak.  You have shown us NO evidence that
+there is a leak.
+
+--
+Lew
+</POST>
+<POST>
+<POSTER> Mark Space &lt;marksp...@sbc.global.net&gt; </POSTER>
+<POSTDATE> 2007-10-31T19:25:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Sal wrote:
+&gt; On 31 Ott, 13:10, &quot;Andrew Thompson&quot; &lt;u32984@uwe&gt; wrote:
+&gt;&gt; *Please run it and confirm the same behaviour you
+&gt;&gt; reported as a 'memory leak'.*
+
+&gt; Yes I ran it for two hour and the memory grows up to 15.824 KB (Task
+&gt; Manager Windows)
+">
+
+Just to re-iterate, you should reduce the heap size as much as possible,
+and run until you get an out of memory exception.  Then copy the stack
+trace here so we can see it.  Can't help you much until we see that error.
+</POST>
+<POST>
+<POSTER> &quot;Andrew Thompson&quot; &lt;u32984@uwe&gt; </POSTER>
+<POSTDATE> 2007-10-31T22:56:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Daniel Dyer wrote:
+&gt;&gt; [...]
+&gt;&gt;&gt; I ran 'your'* code for 8 hours on Win XP Pro using
+..
+&gt;&gt; Yes I ran it for two hour and the memory grows up to 15.824 KB (Task
+&gt;&gt; Manager Windows) ...
+
+&gt;Forget about the Windows Task Manager, it's next to useless for these kind
+&gt;of measurements ...
+">
+
+Lew mentioned that earlier.  Daniel mentioned it again,
+and I will add my agreement to both.
+
+Don't use the Windows Task Manager as any sort of indication
+of what is happening to your app.  How Windows goes about
+assigning memory to the JVM that runs your app., is a separate
+matter.
+
+If the size of the JVM in the task manager actually grows
+too big to handle, that will cause a crash in Windows, but
+there is nothing that a Java application can do about that -
+it is a matter between Sun and Microsoft.
+
+The tool I pointed you too earlier, jconsole, is one simple
+way to get a view into the memory used by a Java app.
+(somebody also pointed out the NetBeans Profiler, earlier,
+but I suspect jconsole is every bit good enough for this job).
+jconsole.exe should also be available on your local machine,
+assuming it has a recent JDK installed (I see it came with
+1.5 as well).  jconsole can be found in the bin directory of
+the JDK location.
+
+Also, as suggested - severely limit the memory of the app.
+in testing, so that if a memory leak really exists, it will
+cause problems much sooner.
+
+Until you can say you have seen *OutOfMemoryErrors,*
+I am inclined to believe there is *no memory leak.*
+
+--
+Andrew Thompson
+http://www.athompson.info/andrew/
+
+Message posted via http://www.javakb.com
+</POST>
+</TEXT>
+</BODY>
+</DOC>

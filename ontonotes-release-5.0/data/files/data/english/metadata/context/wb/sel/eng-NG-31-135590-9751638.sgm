@@ -1,0 +1,1907 @@
+<DOC>
+<DOCID> eng-NG-31-135590-9751638 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-26T10:21:00 </DATETIME>
+<BODY>
+<HEADLINE>
+AJAJS - thin client web app using mainly XMLHTTPRequest and eval()
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> timsamshuij...@gmail.com </POSTER>
+<POSTDATE> 2007-09-26T10:21:00 </POSTDATE>
+I was wandering what the Javascript/Ajax community think of a rather
+unusual
+method I am using to develop my new web app. At least I think it is
+unusual
+because I have not yet found much about this exact method on the
+internet.
+My web app uses no HTML templates and neither does it use any CSS
+files.
+It is totally JS/Ajax driven, and there are totally no page fetches/
+reloads
+(single page interface). My initial page looks a bit like this (the
+only html
+code in my whole app!):
+
+&lt;html&gt;
+&lt;head&gt;
+&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=utf-8&quot;/&gt;
+&lt;title&gt;&lt;/title&gt;
+&lt;script type=&quot;text/javascript&quot; src=&quot;./js/init.js&quot;&gt;&lt;/script&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;/body&gt;
+&lt;html&gt;
+
+The init.js is a small script that starts it all up. It does a
+XMLHTTPRequest
+to a server-side application that only outputs JS code. ALL returned
+content
+is passed into eval() (I actually do not need to call eval() directly
+because
+the Content-type is &quot;text/javascript&quot;). The first JS code that is
+returned
+builds up the whole page, loads some simple libraries, and registers
+some
+events to observe. From then on, ALL events (except for simple things
+like
+resizing) are sent to my server application which then outputs more JS
+code
+that get executed back on the client. For example, a user clicks on a
+button,
+the request is sent to the server which then returns some JS code to
+build
+a message dialog and register the corresponding message handlers, and
+so on.
+
+Therefore, for every event, the browser &quot;asks&quot; the server what to do,
+and the
+server tells the browser directly what to do with a snippet of
+Javascript.
+
+This has great advantages for me as I now have all my layout, model,
+business
+logic, etc. in one place. It is like &quot;lazy loading&quot;, but an extreme
+form.
+One might think that it could run quite slow because it connects to
+the server
+for every user-action, but the returned pieces of code are small
+pieces of
+code, so the speed is actually quite impressive. This setup results in
+an
+extremely thin-client. I am very pleased with the first results, and
+it makes
+the whole development experience much like my original profession:
+building
+client/server desktop applications.
+
+This is probably a sort of controversial method because I noticed that
+there
+are mixed opinions about using the eval() function to execute code.
+Ofcourse,
+the returned code comes from my own server (same origin policy), so no
+major
+reasons for concern. Another point of criticism is possibly the fact
+that I
+do not use any (X)HTML templates or CSS files. This aspect is
+something I
+actually like very much, as I can now build and position all
+components with
+code, instead of looking all these things up in HTML and CSS files
+(great
+for website design, but not for desktop-like application development).
+
+So, my questions to you all are:
+
+- what do you think of this strategy?
+- If this strategy has already been discussed before, then what is it
+called?
+(I am calling it AJAJS for the time being (not AJAJ which is JSON
+oriented)).
+- Where can I find more information about this?
+- Are there already existing frameworks based on this?
+- Do you think that browsers will continue to support eval(), and not
+depreciate
+it in the future for security reasons?
+</POST>
+<POST>
+<POSTER> timsamshuij...@gmail.com </POSTER>
+<POSTDATE> 2007-09-26T10:26:00 </POSTDATE>
+(Oops, sorry for the messy layout of my message. I now know that I
+should not wrap the texts myself when posting here.)
+</POST>
+<POST>
+<POSTER> Captain Paralytic &lt;paul_laut...@yahoo.com&gt; </POSTER>
+<POSTDATE> 2007-09-26T10:40:00 </POSTDATE>
+On 26 Sep, 15:21, timsamshuij ... @gmail.com wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I was wandering what the Javascript/Ajax community think of a rather
+&gt; unusual
+&gt; method I am using to develop my new web app. At least I think it is
+&gt; unusual
+&gt; because I have not yet found much about this exact method on the
+&gt; internet.
+&gt; My web app uses no HTML templates and neither does it use any CSS
+&gt; files.
+&gt; It is totally JS/Ajax driven, and there are totally no page fetches/
+&gt; reloads
+&gt; (single page interface). My initial page looks a bit like this (the
+&gt; only html
+&gt; code in my whole app!):
+
+&gt; &lt;html&gt;
+&gt; &lt;head&gt;
+&gt; &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=utf-8&quot;/&gt;
+&gt; &lt;title&gt;&lt;/title&gt;
+&gt; &lt;script type=&quot;text/javascript&quot; src=&quot;./js/init.js&quot;&gt;&lt;/script&gt;
+&gt; &lt;/head&gt;
+&gt; &lt;body&gt;
+&gt; &lt;/body&gt;
+&gt; &lt;html&gt;
+
+&gt; The init.js is a small script that starts it all up. It does a
+&gt; XMLHTTPRequest
+&gt; to a server-side application that only outputs JS code. ALL returned
+&gt; content
+&gt; is passed into eval() (I actually do not need to call eval() directly
+&gt; because
+&gt; the Content-type is &quot;text/javascript&quot;). The first JS code that is
+&gt; returned
+&gt; builds up the whole page, loads some simple libraries, and registers
+&gt; some
+&gt; events to observe. From then on, ALL events (except for simple things
+&gt; like
+&gt; resizing) are sent to my server application which then outputs more JS
+&gt; code
+&gt; that get executed back on the client. For example, a user clicks on a
+&gt; button,
+&gt; the request is sent to the server which then returns some JS code to
+&gt; build
+&gt; a message dialog and register the corresponding message handlers, and
+&gt; so on.
+
+&gt; Therefore, for every event, the browser &quot;asks&quot; the server what to do,
+&gt; and the
+&gt; server tells the browser directly what to do with a snippet of
+&gt; Javascript.
+
+&gt; This has great advantages for me as I now have all my layout, model,
+&gt; business
+&gt; logic, etc. in one place. It is like &quot;lazy loading&quot;, but an extreme
+&gt; form.
+&gt; One might think that it could run quite slow because it connects to
+&gt; the server
+&gt; for every user-action, but the returned pieces of code are small
+&gt; pieces of
+&gt; code, so the speed is actually quite impressive. This setup results in
+&gt; an
+&gt; extremely thin-client. I am very pleased with the first results, and
+&gt; it makes
+&gt; the whole development experience much like my original profession:
+&gt; building
+&gt; client/server desktop applications.
+
+&gt; This is probably a sort of controversial method because I noticed that
+&gt; there
+&gt; are mixed opinions about using the eval() function to execute code.
+&gt; Ofcourse,
+&gt; the returned code comes from my own server (same origin policy), so no
+&gt; major
+&gt; reasons for concern. Another point of criticism is possibly the fact
+&gt; that I
+&gt; do not use any (X)HTML templates or CSS files. This aspect is
+&gt; something I
+&gt; actually like very much, as I can now build and position all
+&gt; components with
+&gt; code, instead of looking all these things up in HTML and CSS files
+&gt; (great
+&gt; for website design, but not for desktop-like application development).
+
+&gt; So, my questions to you all are:
+
+&gt; - what do you think of this strategy?
+&gt; - If this strategy has already been discussed before, then what is it
+&gt; called?
+&gt;   (I am calling it AJAJS for the time being (not AJAJ which is JSON
+&gt; oriented)).
+&gt; - Where can I find more information about this?
+&gt; - Are there already existing frameworks based on this?
+&gt; - Do you think that browsers will continue to support eval(), and not
+&gt; depreciate
+&gt;   it in the future for security reasons?
+">
+
+This strategy looks very similar to XAJAX and also to the way that
+Google Mail works.
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-26T18:05:00 </POSTDATE>
+Hi,
+
+On Sep 26, 7:21 am, timsamshuij ... @gmail.com wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I was wandering what the Javascript/Ajax community think of a rather
+&gt; unusual
+&gt; method I am using to develop my new web app. At least I think it is
+&gt; unusual
+&gt; because I have not yet found much about this exact method on the
+&gt; internet.
+&gt; My web app uses no HTML templates and neither does it use any CSS
+&gt; files.
+&gt; It is totally JS/Ajax driven, and there are totally no page fetches/
+&gt; reloads
+&gt; (single page interface). My initial page looks a bit like this (the
+&gt; only html
+&gt; code in my whole app!):
+
+&gt; &lt;html&gt;
+&gt; &lt;head&gt;
+&gt; &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=utf-8&quot;/&gt;
+&gt; &lt;title&gt;&lt;/title&gt;
+&gt; &lt;script type=&quot;text/javascript&quot; src=&quot;./js/init.js&quot;&gt;&lt;/script&gt;
+&gt; &lt;/head&gt;
+&gt; &lt;body&gt;
+&gt; &lt;/body&gt;
+&gt; &lt;html&gt;
+">
+
+On request, I'm writing one of these sort of pages now (and it is a
+lot of fun!) It is for a back-end tool that requires login for IE6+/
+FF2+/O9+/S2+ only with images, CSS, and JavaScript enabled.
+
+The page I am writing is _not_ something for general Web consumption
+where users may/may not have images/CSS/JavaScript and may have
+various levels of support for each of these.
+
+<QUOTE PREVIOUSPOST="
+&gt; The init.js is a small script that starts it all up. It does a
+&gt; XMLHTTPRequest
+&gt; to a server-side application that only outputs JS code.
+">
+
+This means the JS code is probably not cachable. That's bad for
+performance. Better to have a build system that just puts the
+JavaScript init.js call directly in init.js itself. Then you can play
+caching games like name the file init-23456436.js where the number is
+a timestamp of the last build. You can have the server set far-future
+cache expiration.
+
+<QUOTE PREVIOUSPOST="
+&gt; ALL returned
+&gt; content
+&gt; is passed into eval() (I actually do not need to call eval() directly
+&gt; because
+&gt; the Content-type is &quot;text/javascript&quot;).
+">
+
+Ajax doesn't autatically call eval() if the Content-type is &quot;text/
+javascript&quot;. Who calls eval() for you? Are you using a JavaScirpt Ajax
+library like Prototype? If so that is something to change pronto.
+
+<QUOTE PREVIOUSPOST="
+&gt; The first JS code that is
+&gt; returned
+&gt; builds up the whole page, loads some simple libraries, and registers
+&gt; some
+&gt; events to observe. From then on, ALL events (except for simple things
+&gt; like
+&gt; resizing) are sent to my server application which then outputs more JS
+&gt; code
+&gt; that get executed back on the client. For example, a user clicks on a
+&gt; button,
+&gt; the request is sent to the server which then returns some JS code to
+&gt; build
+&gt; a message dialog and register the corresponding message handlers, and
+&gt; so on.
+">
+
+This sounds like Rails RJS. This style is fine for some applications
+but some folks here will say that this tight coupling by using
+language response is bad and a data response is better. If the server
+never reuses the templates that build up the JavaScript response, then
+it may be more flexible to send the data back to the client and the
+client decides what to do with that data.
+
+<QUOTE PREVIOUSPOST="
+&gt; Therefore, for every event, the browser &quot;asks&quot; the server what to do,
+&gt; and the
+&gt; server tells the browser directly what to do with a snippet of
+&gt; Javascript.
+">
+
+If these events need to interact with the database then you must
+contact the server. Only pester the server if there is the event
+handler needs some information you can't reasonably load into the
+browser. Looking up phone number, for example. You can't load the
+phone book into the browser in a reasonable time period.
+
+<QUOTE PREVIOUSPOST="
+&gt; This has great advantages for me as I now have all my layout, model,
+&gt; business
+&gt; logic, etc. in one place.
+">
+
+&quot;One place&quot; isn't the important concept in the DRY principle. If you
+write your server-side in JavaScript then you can share code with the
+client, have a thicker client and still be DRY. This is what I'm
+shooting for eventually.
+
+<QUOTE PREVIOUSPOST="
+&gt; It is like &quot;lazy loading&quot;, but an extreme
+&gt; form.
+&gt; One might think that it could run quite slow because it connects to
+&gt; the server
+&gt; for every user-action, but the returned pieces of code are small
+&gt; pieces of
+&gt; code, so the speed is actually quite impressive. This setup results in
+&gt; an
+&gt; extremely thin-client. I am very pleased with the first results, and
+&gt; it makes
+&gt; the whole development experience much like my original profession:
+&gt; building
+&gt; client/server desktop applications.
+">
+
+With caching tricks you can make the second load of the page very
+fast. I wouldn't worry so much about how thick the client is because
+even a relatively thick client like GMail loads sufficiently fast for
+me given how long I keep the application open.
+
+<QUOTE PREVIOUSPOST="
+&gt; This is probably a sort of controversial method because I noticed that
+&gt; there
+&gt; are mixed opinions about using the eval() function to execute code.
+">
+
+A lot of fuss is made here about that. The recent comp.lang.javascript
+archives are full of discussions. Search for &quot;Randy Webb script
+insertion&quot; or similar.
+
+<QUOTE PREVIOUSPOST="
+&gt; Ofcourse,
+&gt; the returned code comes from my own server (same origin policy), so no
+&gt; major
+&gt; reasons for concern. Another point of criticism is possibly the fact
+&gt; that I
+&gt; do not use any (X)HTML templates or CSS files.
+">
+
+Don't use XHTML for the Web if Internet Explorer is involved.
+
+http://www.thewebcreator.net/2007/04/16/why-you-should-be-using-html-...
+
+http://www.webdevout.net/articles/beware-of-xhtml
+
+<QUOTE PREVIOUSPOST="
+&gt; This aspect is
+&gt; something I
+&gt; actually like very much, as I can now build and position all
+&gt; components with
+&gt; code, instead of looking all these things up in HTML and CSS files
+&gt; (great
+&gt; for website design, but not for desktop-like application development).
+
+&gt; So, my questions to you all are:
+
+&gt; - what do you think of this strategy?
+">
+
+I think having empty body tags and building the whole thing with
+JavaScript is fine.
+
+I only transmit data to and from the server.
+
+Make sure you take advantage of browser caching to make second page
+loads fast.
+
+Use JavaScript on the server-side so you can share code and stay DRY.
+Using JavaScript server-side is something I'm just starting to explore
+now.
+
+<QUOTE PREVIOUSPOST="
+&gt; - If this strategy has already been discussed before, then what is it
+&gt; called?
+&gt;   (I am calling it AJAJS for the time being (not AJAJ which is JSON
+&gt; oriented)).
+&gt; - Where can I find more information about this?
+&gt; - Are there already existing frameworks based on this?
+">
+
+In the Rails world it is RJS. Also search google for &quot;Dan Webb ejs&quot;.
+
+<QUOTE PREVIOUSPOST="
+&gt; - Do you think that browsers will continue to support eval(), and not
+&gt; depreciate
+&gt;   it in the future for security reasons?
+">
+
+I'd guess eval() is not going away since it is part of the ECMAScript
+standard. There are other options that you'll find in the &quot;Randy Webb&quot;
+threads.
+
+Peter
+</POST>
+<POST>
+<POSTER> David Mark &lt;dmark.cins...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-26T18:55:00 </POSTDATE>
+On Sep 26, 10:21 am, timsamshuij ... @gmail.com wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I was wandering what the Javascript/Ajax community think of a rather
+&gt; unusual
+&gt; method I am using to develop my new web app. At least I think it is
+&gt; unusual
+">
+
+It is unusual.
+
+<QUOTE PREVIOUSPOST="
+&gt; because I have not yet found much about this exact method on the
+&gt; internet.
+&gt; My web app uses no HTML templates and neither does it use any CSS
+&gt; files.
+">
+
+That's an odd approach for a Web-based application.
+
+<QUOTE PREVIOUSPOST="
+&gt; It is totally JS/Ajax driven, and there are totally no page fetches/
+&gt; reloads
+">
+
+But lots of script fetches.
+
+<QUOTE PREVIOUSPOST="
+&gt; (single page interface). My initial page looks a bit like this (the
+&gt; only html
+&gt; code in my whole app!):
+
+&gt; &lt;html&gt;
+&gt; &lt;head&gt;
+&gt; &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=utf-8&quot;/&gt;
+&gt; &lt;title&gt;&lt;/title&gt;
+&gt; &lt;script type=&quot;text/javascript&quot; src=&quot;./js/init.js&quot;&gt;&lt;/script&gt;
+&gt; &lt;/head&gt;
+&gt; &lt;body&gt;
+&gt; &lt;/body&gt;
+&gt; &lt;html&gt;
+">
+
+I assume that last line is actually &lt;/html&gt;.  Anyway, a user without
+scripting enabled will see nothing.  I understand that your app
+requires scripting, but you need an explicit disclaimer in the page.
+
+<QUOTE PREVIOUSPOST="
+&gt; The init.js is a small script that starts it all up. It does a
+&gt; XMLHTTPRequest
+&gt; to a server-side application that only outputs JS code. ALL returned
+&gt; content
+&gt; is passed into eval() (I actually do not need to call eval() directly
+&gt; because
+&gt; the Content-type is &quot;text/javascript&quot;). The first JS code that
+">
+
+I don't know what you mean by that.  The script doesn't evaluate
+itself.  Is Prototype or the like mixed up in this thing?
+
+is
+
+<QUOTE PREVIOUSPOST="
+&gt; returned
+&gt; builds up the whole page, loads some simple libraries, and
+registers
+&gt; some
+&gt; events to observe. From then on, ALL events (except for simple
+">
+
+Why wouldn't this code be in init.js?
+
+things
+
+<QUOTE PREVIOUSPOST="
+&gt; like
+&gt; resizing) are sent to my server application which then outputs more JS
+&gt; code
+&gt; that get executed back on the client. For example, a user clicks on a
+&gt; button,
+&gt; the request is sent to the server which then returns some JS code to
+&gt; build
+&gt; a message dialog and register the corresponding message handlers, and
+&gt; so on.
+">
+
+You've turned browsers into dumb terminals.
+
+<QUOTE PREVIOUSPOST="
+&gt; Therefore, for every event, the browser &quot;asks&quot; the server what to do,
+&gt; and the
+&gt; server tells the browser directly what to do with a snippet of
+&gt; Javascript.
+">
+
+You shouldn't query the server unless you need data from the server.
+The presentation logic should be downloaded once and run on the
+client.
+
+<QUOTE PREVIOUSPOST="
+&gt; This has great advantages for me as I now have all my layout, model,
+&gt; business
+&gt; logic, etc. in one place. It is like &quot;lazy loading&quot;, but an
+">
+
+Why would you want your business rules mixed up in your presentation
+layer.  Whether you mean logically or physically in one place, this
+makes no sense to me.
+
+extreme
+
+<QUOTE PREVIOUSPOST="
+&gt; form.
+&gt; One might think that it could run quite slow because it connects to
+&gt; the server
+&gt; for every user-action, but the returned pieces of code are small
+&gt; pieces of
+&gt; code, so the speed is actually quite impressive. This setup
+">
+
+Not nearly as impressive as it would be with the presentation logic
+running on the client.
+
+results in
+
+<QUOTE PREVIOUSPOST="
+&gt; an
+&gt; extremely thin-client. I am very pleased with the first
+">
+
+An extremely thin client makes sense for an app that runs on a cell
+phone, but is wasteful on a PC.  Why not leverage the power of PC
+browsers instead of turning them into dumb terminals?
+
+results, and
+
+<QUOTE PREVIOUSPOST="
+&gt; it makes
+&gt; the whole development experience much like my original profession:
+&gt; building
+&gt; client/server desktop applications.
+">
+
+Don't take this the wrong way, but what decade was this in?
+
+<QUOTE PREVIOUSPOST="
+&gt; This is probably a sort of controversial method because I noticed that
+&gt; there
+&gt; are mixed opinions about using the eval() function to execute code.
+">
+
+Not really.  It leads to all sorts of headaches and is practically
+never needed.  Why invite trouble?
+
+<QUOTE PREVIOUSPOST="
+&gt; Ofcourse,
+&gt; the returned code comes from my own server (same origin policy), so no
+&gt; major
+&gt; reasons for concern. Another point of criticism is possibly the fact
+&gt; that I
+&gt; do not use any (X)HTML templates or CSS files. This aspect is
+&gt; something I
+&gt; actually like very much, as I can now build and position all
+&gt; components with
+&gt; code, instead of looking all these things up in HTML and CSS files
+&gt; (great
+&gt; for website design, but not for desktop-like application development).
+">
+
+Why not use CSS files?  Why would you want to lump appearance in with
+business rules and presentation logic.  If you need to change the
+appearance of your app, you modify your CSS file(s).  If you need to
+change your business rules you modify your server-side scripts.  If
+you need to modify your presentation logic, you modify your client-
+side scripts.  This would seem a lot easier than having everything in
+one place.
+
+<QUOTE PREVIOUSPOST="
+&gt; So, my questions to you all are:
+
+&gt; - what do you think of this strategy?
+">
+
+Not much.
+
+<QUOTE PREVIOUSPOST="
+&gt; - If this strategy has already been discussed before, then what is it
+&gt; called?
+&gt;   (I am calling it AJAJS for the time being (not AJAJ which is JSON
+&gt; oriented)).
+&gt; - Where can I find more information about this?
+">
+
+Google for &quot;thin client&quot;, &quot;dumb terminal&quot;, &quot;mainframe computers&quot;, etc.
+
+<QUOTE PREVIOUSPOST="
+&gt; - Are there already existing frameworks based on this?
+">
+
+Probably, but that doesn't make it a good idea.
+
+<QUOTE PREVIOUSPOST="
+&gt; - Do you think that browsers will continue to support eval(), and not
+&gt; depreciate
+&gt;   it in the future for security reasons?
+">
+
+As for depreciation, it's already been written off for general use,
+but it isn't likely to be deprecated as it is occasionally useful.
+</POST>
+<POST>
+<POSTER> timsamshuij...@gmail.com </POSTER>
+<POSTDATE> 2007-09-27T04:30:00 </POSTDATE>
+Thank you all for your comments. They are most usefull. I will use
+this in evaluating the current architecture. Maybe I will eventually
+choose to make the client a bit &quot;thicker&quot;,  I am not sure yet. It
+depends on the limitations I will encounter during development. For
+the time being I like the idea of the thin client, and that the server
+&quot;knows&quot; what the client is doing.
+As for database connections, at the moment the database connections
+are handled by my server app, and the results are returned as a set of
+JS instructions that show the results in the browser. No problems
+there.
+
+And for those commenting on &quot;Content-type text/javascript&quot;, yes I
+indeed use Prototype (which I did not show in the HTML code of my
+first post). It was quite a useless piece of information I gave there
+that is not related to this subject. (BTW. In the meantime I have
+switched back to a simple eval(). )
+
+Cheers,
+
+Tim
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-27T11:39:00 </POSTDATE>
+On Sep 27, 1:30 am, timsamshuij ... @gmail.com wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Thank you all for your comments. They are most usefull. I will use
+&gt; this in evaluating the current architecture. Maybe I will eventually
+&gt; choose to make the client a bit &quot;thicker&quot;,  I am not sure yet. It
+&gt; depends on the limitations I will encounter during development. For
+&gt; the time being I like the idea of the thin client, and that the server
+&gt; &quot;knows&quot; what the client is doing.
+&gt; As for database connections, at the moment the database connections
+&gt; are handled by my server app, and the results are returned as a set of
+&gt; JS instructions that show the results in the browser. No problems
+&gt; there.
+
+&gt; And for those commenting on &quot;Content-type text/javascript&quot;, yes I
+&gt; indeed use Prototype (which I did not show in the HTML code of my
+&gt; first post). It was quite a useless piece of information I gave there
+&gt; that is not related to this subject. (BTW. In the meantime I have
+&gt; switched back to a simple eval(). )
+">
+
+It doesn't matter if you do the eval() or Prototype does the eval().
+It is the same eval(). What matters is you get Prototype out of your
+program all together. Read the comp.lang.javascript archives for many
+reasons why Prototype is regarded as poor quality and will lead to
+headaches.
+
+Peter
+</POST>
+<POST>
+<POSTER> timsamshuij...@gmail.com </POSTER>
+<POSTDATE> 2007-09-28T07:56:00 </POSTDATE>
+On 27 sep, 17:39, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; ...What matters is you get Prototype out of your
+&gt; program all together. Read the comp.lang.javascript archives for many
+&gt; reasons why Prototype is regarded as poor quality and will lead to
+&gt; headaches.
+">
+
+I understand from many posts that Prototype.js is not the preferred
+library. I would however like to make use of some kind of (basic)
+library (for DOM/Ajax/Events) to save me a lot of boring work in
+making functions that work in most browsers. It is a shame that many
+people here say that they have not found a very good library for
+general use. Do I understand correctly that Yahoo!'s YUI is the better
+choice (if any)? Thanks in advance for any advice.
+
+Tim
+</POST>
+<POST>
+<POSTER> David Mark &lt;dmark.cins...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-28T14:57:00 </POSTDATE>
+On Sep 28, 7:56 am, timsamshuij ... @gmail.com wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 27 sep, 17:39, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+&gt; &gt; ...What matters is you get Prototype out of your
+&gt; &gt; program all together. Read the comp.lang.javascript archives for many
+&gt; &gt; reasons why Prototype is regarded as poor quality and will lead to
+&gt; &gt; headaches.
+
+&gt; I understand from many posts that Prototype.js is not the preferred
+&gt; library. I would however like to make use of some kind of (basic)
+&gt; library (for DOM/Ajax/Events) to save me a lot of boring work in
+&gt; making functions that work in most browsers. It is a shame that many
+">
+
+I am currently working on just that.  More like DOM || Events || Ajax,
+etc. as applications don't always need all three.
+
+<QUOTE PREVIOUSPOST="
+&gt; people here say that they have not found a very good library for
+&gt; general use. Do I understand correctly that Yahoo!'s YUI is the better
+&gt; choice (if any)? Thanks in advance for any advice.
+">
+
+Better in what way?  I haven't looked too deeply into it, but it seems
+to be better code than Prototype, jQuery and the like (which isn't
+saying much.)  However, it looks like overkill for basic Web
+applications.
+</POST>
+<POST>
+<POSTER> timsamshuij...@gmail.com </POSTER>
+<POSTDATE> 2007-09-28T16:27:00 </POSTDATE>
+I got busy today and wrote my own library for DOM || Events || Ajax.
+quirksmode.org was a very useful reference while making this. Writing
+the functionality for the events was the most work (passing on &quot;object
+scope&quot; by means of binding, etc.) and it eventually turned out nice
+and compact. This version makes it much easier to remove/detach the
+events than with Prototype. I am quite pleased with the result and it
+was a very educational experience. My app now runs without any other
+libraries and I aim to keep it that way (except for maybe a WYSIWYG
+editor). The next sub-project will be to make a GUI lib.
+If anyone is interested in the code for the event stuff, just let me
+know and I will post it here.
+
+Thanks again for the good advice.
+
+Tim
+</POST>
+<POST>
+<POSTER> Thomas &#39;PointedEars&#39; Lahn &lt;PointedE...@web.de&gt; </POSTER>
+<POSTDATE> 2007-09-28T16:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+timsamshuij ... @gmail.com wrote:
+&gt; I got busy today and wrote my own library for DOM || Events || Ajax.
+">
+
+Wheel model 42.
+
+PointedEars
+--
+&quot;Use any version of Microsoft Frontpage to create your site. (This won't
+prevent people from viewing your source, but no one will want to steal it.)&quot;
+-- from &lt; http://www.vortex-webdesign.com/help/hidesource.htm &gt;
+</POST>
+<POST>
+<POSTER> David Mark &lt;dmark.cins...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-28T17:08:00 </POSTDATE>
+On Sep 28, 4:27 pm, timsamshuij ... @gmail.com wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I got busy today and wrote my own library for DOM || Events || Ajax.
+">
+
+Good idea.
+
+<QUOTE PREVIOUSPOST="
+&gt; quirksmode.org was a very useful reference while making this.
+">
+
+Yes, that site is very helpful.
+
+Writing
+
+<QUOTE PREVIOUSPOST="
+&gt; the functionality for the events was the most work (passing on &quot;object
+&gt; scope&quot; by means of binding, etc.) and it eventually turned out nice
+&gt; and compact. This version makes it much easier to remove/detach the
+&gt; events than with Prototype. I am quite pleased with the result and it
+">
+
+The trouble with event processing in most of the libs out there is
+inefficiency.  This is most easily observed when using features built
+atop them like drag and drop.
+
+<QUOTE PREVIOUSPOST="
+&gt; was a very educational experience. My app now runs without any other
+&gt; libraries and I aim to keep it that way (except for maybe a WYSIWYG
+">
+
+I've looked at lots of WYSIWYG editor scripts and couldn't recommend a
+single one.
+
+<QUOTE PREVIOUSPOST="
+&gt; editor). The next sub-project will be to make a GUI lib.
+">
+
+The biggest pain in writing a framework for widgets is positioning.
+The second biggest is sizing.  The quirksmode site has a lot of good
+information on these subjects, but it is just raw data.  Drawing
+meaningful conclusions and implementing reliable feature tests is a
+time-consuming and often agonizing process.
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-28T20:38:00 </POSTDATE>
+On Sep 28, 4:56 am, timsamshuij ... @gmail.com wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 27 sep, 17:39, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+&gt; &gt; ...What matters is you get Prototype out of your
+&gt; &gt; program all together. Read the comp.lang.javascript archives for many
+&gt; &gt; reasons why Prototype is regarded as poor quality and will lead to
+&gt; &gt; headaches.
+
+&gt; I understand from many posts that Prototype.js is not the preferred
+&gt; library. I would however like to make use of some kind of (basic)
+&gt; library (for DOM/Ajax/Events) to save me a lot of boring work in
+&gt; making functions that work in most browsers. It is a shame that many
+&gt; people here say that they have not found a very good library for
+&gt; general use. Do I understand correctly that Yahoo!'s YUI is the better
+&gt; choice (if any)? Thanks in advance for any advice.
+">
+
+I started with the YUI libraries and tried to fix at least everything
+that was wrong/less than optimal in my eyes.
+
+http://forkjavascript.org
+
+Peter
+</POST>
+<POST>
+<POSTER> timsamshuij...@gmail.com </POSTER>
+<POSTDATE> 2007-09-29T05:43:00 </POSTDATE>
+On Sep 28, 11:08 pm, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; The biggest pain in writing a framework for widgets is positioning.
+&gt; The second biggest is sizing.
+">
+
+I am not experiencing any difficulties here yet. This is probably
+because I am not writing any general widgets that can be used
+anywhere. My widgets are used in my app environment where all elements
+are positioned absolute. My sizing, resizing, and drag routines are
+working fine, no pain yet. Or maybe you are referring to some
+difficulties that I have not yet encountered.
+
+On Sep 29, 2:38 am, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I started with the YUI libraries and tried to fix at least everything
+&gt; that was wrong/less than optimal in my eyes.
+
+&gt; http://forkjavascript.org
+
+&gt; Peter
+">
+
+I had a look at your code - great stuff! I had a look at your event
+routines to check whether my code is up to scratch (I am new to JS). I
+actually found your code &quot;quite&quot; similar to mine, which serves as a
+confirmation to me that I am on the right track. If I would have
+looked at your code previously then it would have saved me quite some
+work yesterday ;-) On the other had, in my opinion it is good to have
+written such stuff totally from scratch so that one fully understands
+the issues
+involved.
+
+For those interested, here is my (stripped) version of a simple event
+handler:
+(Comments, questions and suggestions are welcome)
+
+var TVSEvent = {
+Handlers: [],
+IndexOfHandler: function(aHandler) {
+var hidx = -1;
+for(var i = 0, length = this.Handlers.length; i &lt; length; i++) {
+var hob = this.Handlers[i];
+if((hob.Handler == aHandler) || (hob.DOMHandler == aHandler)) {
+hidx = i;
+break;
+}
+}
+return hidx;
+},
+Add: function(aNode, aType, aHandler, aScope) {
+var domh = aHandler;
+if(arguments.length &gt;= 4) {
+domh = function() {
+return aHandler.apply(aScope, arguments);
+}
+}
+this.Handlers[this.Handlers.length] = {
+Handler: aHandler,
+DOMHandler: domh
+}
+if(aNode.addEventListener) {
+aNode.addEventListener(aType, domh, false);
+} else if(aNode.attachEvent) {
+aNode.attachEvent('on' + aType, domh);
+}
+return domh;
+},
+Remove: function(aNode, aType, aHandler) {
+var domh = aHandler;
+var eidx = this.IndexOfHandler(domh);
+if(eidx &gt;= 0) {
+domh = this.Handlers[eidx].DOMHandler;
+this.Handlers.splice(eidx, 1);
+}
+if(aNode.removeEventListener) {
+aNode.removeEventListener(aType, domh, false);
+} else if(aNode.detachEvent) {
+aNode.detachEvent('on' + aType, domh);
+}
+}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+</POST>
+<POST>
+<POSTER> Randy Webb &lt;HikksNotAtH...@aol.com&gt; </POSTER>
+<POSTDATE> 2007-09-29T07:45:00 </POSTDATE>
+timsamshuij ... @gmail.com said the following on 9/29/2007 5:43 AM:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 28, 11:08 pm, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+&gt;&gt; The biggest pain in writing a framework for widgets is positioning.
+&gt;&gt; The second biggest is sizing.
+
+&gt; I am not experiencing any difficulties here yet.
+">
+
+Are you using wheel model 42 or wheel model 43?
+
+&lt;URL: http://www.ajaxtoolbox.com &gt;
+
+--
+Randy
+Chance Favors The Prepared Mind
+comp.lang.javascript FAQ - http://jibbering.com/faq/index.html
+Javascript Best Practices - http://www.JavascriptToolbox.com/bestpractices/
+</POST>
+<POST>
+<POSTER> timsamshuij...@gmail.com </POSTER>
+<POSTDATE> 2007-09-29T09:30:00 </POSTDATE>
+On Sep 29, 1:45 pm, Randy Webb &lt;HikksNotAtH ... @aol.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Are you using wheel model 42 or wheel model 43?
+
+&gt; &lt;URL: http://www.ajaxtoolbox.com &gt;
+">
+
+Wheel model 3.000
+(My wheel is currently six-sided, but while the version is iterating
+toward Pi my wheel is getting rounder and rounder.)
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-29T17:59:00 </POSTDATE>
+On Sep 29, 2:43 am, timsamshuij ... @gmail.com wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 28, 11:08 pm, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+
+&gt; &gt; The biggest pain in writing a framework for widgets is positioning.
+&gt; &gt; The second biggest is sizing.
+
+&gt; I am not experiencing any difficulties here yet. This is probably
+&gt; because I am not writing any general widgets that can be used
+&gt; anywhere. My widgets are used in my app environment where all elements
+&gt; are positioned absolute. My sizing, resizing, and drag routines are
+&gt; working fine, no pain yet. Or maybe you are referring to some
+&gt; difficulties that I have not yet encountered.
+
+&gt; On Sep 29, 2:38 am, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+&gt; &gt; I started with the YUI libraries and tried to fix at least everything
+&gt; &gt; that was wrong/less than optimal in my eyes.
+
+&gt; &gt; http://forkjavascript.org
+
+&gt; &gt; Peter
+
+&gt; I had a look at your code - great stuff! I had a look at your event
+&gt; routines to check whether my code is up to scratch (I am new to JS). I
+&gt; actually found your code &quot;quite&quot; similar to mine, which serves as a
+&gt; confirmation to me that I am on the right track. If I would have
+&gt; looked at your code previously then it would have saved me quite some
+&gt; work yesterday ;-) On the other had, in my opinion it is good to have
+&gt; written such stuff totally from scratch so that one fully understands
+&gt; the issues
+&gt; involved.
+">
+
+Yes it is good to know all the issues involved.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; For those interested, here is my (stripped) version of a simple event
+&gt; handler:
+&gt; (Comments, questions and suggestions are welcome)
+
+&gt; var TVSEvent = {
+&gt;   Handlers: [],
+&gt;   IndexOfHandler: function(aHandler) {
+&gt;     var hidx = -1;
+&gt;     for(var i = 0, length = this.Handlers.length; i &lt; length; i++) {
+&gt;       var hob = this.Handlers[i];
+&gt;       if((hob.Handler == aHandler) || (hob.DOMHandler == aHandler)) {
+&gt;         hidx = i;
+&gt;         break;
+&gt;       }
+&gt;     }
+&gt;     return hidx;
+&gt;   },
+&gt;   Add: function(aNode, aType, aHandler, aScope) {
+&gt;     var domh = aHandler;
+&gt;     if(arguments.length &gt;= 4) {
+&gt;       domh = function() {
+&gt;         return aHandler.apply(aScope, arguments);
+&gt;       }
+&gt;     }
+&gt;     this.Handlers[this.Handlers.length] = {
+&gt;       Handler: aHandler,
+&gt;       DOMHandler: domh
+&gt;     }
+&gt;     if(aNode.addEventListener) {
+&gt;       aNode.addEventListener(aType, domh, false);
+&gt;     } else if(aNode.attachEvent) {
+&gt;       aNode.attachEvent('on' + aType, domh);
+&gt;     }
+&gt;     return domh;
+&gt;   },
+&gt;   Remove: function(aNode, aType, aHandler) {
+&gt;     var domh = aHandler;
+&gt;     var eidx = this.IndexOfHandler(domh);
+&gt;     if(eidx &gt;= 0) {
+&gt;       domh = this.Handlers[eidx].DOMHandler;
+&gt;       this.Handlers.splice(eidx, 1);
+&gt;     }
+&gt;     if(aNode.removeEventListener) {
+&gt;       aNode.removeEventListener(aType, domh, false);
+&gt;     } else if(aNode.detachEvent) {
+&gt;       aNode.detachEvent('on' + aType, domh);
+&gt;     }
+&gt;   }
+
+&gt; }
+">
+
+It looks like you don't need to &quot;prevent default&quot; for click and double
+click events in Safari. That restriction removes a mighty ugly
+workaround I've included in my code.
+
+Peter
+</POST>
+<POST>
+<POSTER> &quot;Richard Maher&quot; &lt;maher...@hotspamnotmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-29T19:42:00 </POSTDATE>
+Hi David,
+
+<QUOTE PREVIOUSPOST="
+&gt; You shouldn't query the server unless you need data from the server.
+&gt; The presentation logic should be downloaded once and run on the
+&gt; client.
+:     :    :
+&gt; Why would you want your business rules mixed up in your presentation
+&gt; layer.  Whether you mean logically or physically in one place, this
+&gt; makes no sense to me.
+:     :   :
+&gt; Not nearly as impressive as it would be with the presentation logic
+&gt; running on the client.
+
+:   :    :
+&gt; results, and
+&gt; &gt; it makes
+&gt; &gt; the whole development experience much like my original profession:
+&gt; &gt; building
+&gt; &gt; client/server desktop applications.
+
+&gt; Don't take this the wrong way, but what decade was this in?
+">
+
+I agree with all of the above but to be fair to the OP hasn't technology
+such as AJAX, in some ways, turned the clock back and created a hybrid by
+merging the web and client/server paradigms? There are people, certainly
+within this group, who'll contend that if it doesn't have a SUBMIT button
+then it's not a browser application. Others, myself included, can see
+browsers as the run-time environment for a genre of &quot;new&quot; lightweight
+client/server applications.
+
+Anyway FWIW here is how I'd do it (HTTP is great for serving up web-pages
+and images, but is it really the best tool in the box for a secure,
+high-performance, middleware communications back-bone? The browser *is* the
+GUI, but is a Web-Server really an Application Server?)
+
+http://manson.vistech.net/t3$examples/demo_client_web.html
+
+All of the HTML, Javascript, and Java Applet sources can be viewed at: -
+
+http://manson.vistech.net/t3$examples/
+
+To see the example sucessfully you will need:-
+
+1) Javascript enabled
+2) Java Applets enabled
+3) Can't be behind a Firewall that forbids all unknown outgoing connections
+(otherwise open-up 5255)
+4) Must be running SUN's JRE 1.4.2_13 or later (1.6 is advised)
+5) Must be running Internet Explorer (6 or later) or Firefox (Haven't tested
+other browsers) I'm told it works with Safari Version 2.0.4 (419.3) Java
+Plug-in 1.5.0 Using JRE version 1.5.0_07 Java HotSpot(TM) Client VM.
+
+All things being equal you should then be prompted (via Java modal dialogue
+box) for:-
+
+Username: TIER3_DEMO
+Password: QUEUE
+
+Here's some of the functionality-catwalk highlights from the example: -
+
+1) Full, one-time, context-specific, VMS User Authentication. No Cookies,
+Session IDs, Password Caching or generic Work-Station or Browser
+credentials! When you load the demo_client_web.html page into your browser,
+a Java Applet is automatically activated that prompts the user for their VMS
+Username and Password via a modal dialogue box. If authorization fails, the
+&quot;Access Denied&quot; page will be displayed and VMS Intrusion Detection (in
+accordance with the policy set out by your System Manager) will be enforced,
+and Login-Failures is incremented in SYSUAF. Alternatively, if authorization
+is successful (and you left the &quot;Display Logon Confirmation&quot; box ticked)
+then a Welcome dialog box will be displayed detailing last login times and
+the number of unsuccessful login attempts (if any). Login-Failures is now
+set to zero and last non-interactive login time is set to the current time.
+
+If you refresh this page, or move to a different page, then the server
+connection is broken and you must be re-authorised before continuing to
+access the Demo Queue Manager application.
+
+2) A Hot-Abort button! After you have pressed the &quot;Get Job Info&quot; button
+you'll notice that the &quot;Abort Request&quot; button becomes active and turns red.
+(Actually you probably won't notice 'cos this query completes too quickly
+:-) You can edit the DEMO_UARS.COB code and change the value of the
+DEBUG_DELAY field if you want to see your 3GL Interrupt routine in action.)
+In this case the cancel-flag I've set in the AST routine is picked up in the
+mainline code, resulting in the graceful termination of the loop that
+controls &quot;next queue&quot; (or &quot;next row&quot;) retrieval.
+
+Also, if you look at the getResponse() function in query_lookup.html, you
+will see how the chan.setTimeout() method has been deployed to provide an
+erstwhile &quot;blocking&quot; socket Read with the ability to surrender the
+event-thread for things like processing the Abort button and ticking over
+the clock. (all of this, and much more, &quot;infrastructure-code&quot; is already
+there and doesn't have to be re-invented)
+
+3) Predictive text on the Queue Name field so that all matching VMS queues
+are retrieved on-demand as the user types. As is now common-place with many
+websites, a drop down select list of matching options is automatically
+retrieved from the server and made available for the user to select from.
+
+4) Result-set drill-down. Many database queries return a result-set of rows
+for the user to scan through and possibly drill-down into for more detail.
+I've provided a reasonably generic example of this, where all matching Job
+Entries have been populated into a dynamic HTML select list. Once again the
+user was able to see the select-list grow, the scroll-bar diminish, and
+&quot;Jobs Found&quot; field tick over in real-time, whilst continually being
+empowered (by the Abort button) to curtail the results at any time!
+
+If you click on an entry in the Select List then the &lt;frame&gt; changes and the
+entry_details.html page appears. See the parent.entry_details.getReady()
+call in queue_lookup.html to see how the handover to the new frame takes
+place. (Also see goBack() in entry_details.html to see how simply that
+operation is reversed.)
+
+The user is now free to move forward, back, first, last, refresh, and delete
+queue entries, or return to the previous frame. (Thanks to the deployment of
+the VMS Persona functionality, the user is only permitted to see those queue
+entries that the Username they signed in under is permitted to see. They can
+also *only* delete those entries that this username is allowed to delete.)
+
+5) Floating &lt;div&gt;s. You'll see that any queue names are highlighted in bold
+and italics; if you mouseover any of these fields when they are not blank
+then the current status information for that queue will be retrieved from
+the server and displayed in a quasi-popup DIV.
+
+6) Local Result-Set Sort. If you click on the &quot;header&quot; or &quot;first&quot; row in the
+Select List of queues, you will get a popup prompting you for a sort key. If
+you select one, the contents of the Select List are sorted in the chosen
+order. (Try enter &quot;*&quot; for the Queue Name and then clicking &quot;Get Job Info&quot; to
+get some data worth sorting)
+
+Regards Richard Maher
+
+PS. The server code can be in any 3GL but, for this example, I chose COBOL;
+&quot;What century are we in&quot; :-)
+
+<QUOTE PREVIOUSPOST="
+&quot;David Mark&quot; &lt;dmark.cins ... @gmail.com&gt; wrote in message
+">
+
+news:1190847359.085150.110400@g4g2000hsf.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 26, 10:21 am, timsamshuij ... @gmail.com wrote:
+&gt; &gt; I was wandering what the Javascript/Ajax community think of a rather
+&gt; &gt; unusual
+&gt; &gt; method I am using to develop my new web app. At least I think it is
+&gt; &gt; unusual
+
+&gt; It is unusual.
+
+&gt; &gt; because I have not yet found much about this exact method on the
+&gt; &gt; internet.
+&gt; &gt; My web app uses no HTML templates and neither does it use any CSS
+&gt; &gt; files.
+
+&gt; That's an odd approach for a Web-based application.
+
+&gt; &gt; It is totally JS/Ajax driven, and there are totally no page fetches/
+&gt; &gt; reloads
+
+&gt; But lots of script fetches.
+
+&gt; &gt; (single page interface). My initial page looks a bit like this (the
+&gt; &gt; only html
+&gt; &gt; code in my whole app!):
+
+&gt; &gt; &lt;html&gt;
+&gt; &gt; &lt;head&gt;
+&gt; &gt; &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=utf-8&quot;/&gt;
+&gt; &gt; &lt;title&gt;&lt;/title&gt;
+&gt; &gt; &lt;script type=&quot;text/javascript&quot; src=&quot;./js/init.js&quot;&gt;&lt;/script&gt;
+&gt; &gt; &lt;/head&gt;
+&gt; &gt; &lt;body&gt;
+&gt; &gt; &lt;/body&gt;
+&gt; &gt; &lt;html&gt;
+
+&gt; I assume that last line is actually &lt;/html&gt;.  Anyway, a user without
+&gt; scripting enabled will see nothing.  I understand that your app
+&gt; requires scripting, but you need an explicit disclaimer in the page.
+
+&gt; &gt; The init.js is a small script that starts it all up. It does a
+&gt; &gt; XMLHTTPRequest
+&gt; &gt; to a server-side application that only outputs JS code. ALL returned
+&gt; &gt; content
+&gt; &gt; is passed into eval() (I actually do not need to call eval() directly
+&gt; &gt; because
+&gt; &gt; the Content-type is &quot;text/javascript&quot;). The first JS code that
+
+&gt; I don't know what you mean by that.  The script doesn't evaluate
+&gt; itself.  Is Prototype or the like mixed up in this thing?
+
+&gt; is
+&gt; &gt; returned
+&gt; &gt; builds up the whole page, loads some simple libraries, and
+&gt; registers
+&gt; &gt; some
+&gt; &gt; events to observe. From then on, ALL events (except for simple
+
+&gt; Why wouldn't this code be in init.js?
+
+&gt; things
+&gt; &gt; like
+&gt; &gt; resizing) are sent to my server application which then outputs more JS
+&gt; &gt; code
+&gt; &gt; that get executed back on the client. For example, a user clicks on a
+&gt; &gt; button,
+&gt; &gt; the request is sent to the server which then returns some JS code to
+&gt; &gt; build
+&gt; &gt; a message dialog and register the corresponding message handlers, and
+&gt; &gt; so on.
+
+&gt; You've turned browsers into dumb terminals.
+
+&gt; &gt; Therefore, for every event, the browser &quot;asks&quot; the server what to do,
+&gt; &gt; and the
+&gt; &gt; server tells the browser directly what to do with a snippet of
+&gt; &gt; Javascript.
+
+&gt; You shouldn't query the server unless you need data from the server.
+&gt; The presentation logic should be downloaded once and run on the
+&gt; client.
+
+&gt; &gt; This has great advantages for me as I now have all my layout, model,
+&gt; &gt; business
+&gt; &gt; logic, etc. in one place. It is like &quot;lazy loading&quot;, but an
+
+&gt; Why would you want your business rules mixed up in your presentation
+&gt; layer.  Whether you mean logically or physically in one place, this
+&gt; makes no sense to me.
+
+&gt; extreme
+&gt; &gt; form.
+&gt; &gt; One might think that it could run quite slow because it connects to
+&gt; &gt; the server
+&gt; &gt; for every user-action, but the returned pieces of code are small
+&gt; &gt; pieces of
+&gt; &gt; code, so the speed is actually quite impressive. This setup
+
+&gt; Not nearly as impressive as it would be with the presentation logic
+&gt; running on the client.
+
+&gt; results in
+&gt; &gt; an
+&gt; &gt; extremely thin-client. I am very pleased with the first
+
+&gt; An extremely thin client
+">
+
+...
+read more »
+</POST>
+<POST>
+<POSTER> David Mark &lt;dmark.cins...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-29T20:46:00 </POSTDATE>
+On Sep 29, 7:42 pm, &quot;Richard Maher&quot; &lt;maher ... @hotspamnotmail.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi David,
+">
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt; I agree with all of the above but to be fair to the OP hasn't technology
+&gt; such as AJAX, in some ways, turned the clock back and created a hybrid by
+&gt; merging the web and client/server paradigms? There are people, certainly
+&gt; within this group, who'll contend that if it doesn't have a SUBMIT button
+&gt; then it's not a browser application. Others, myself
+">
+
+I'm not sure I follow, but a form without a submit button is a bad
+idea.
+
+included, can see
+
+<QUOTE PREVIOUSPOST="
+&gt; browsers as the run-time environment for a genre of &quot;new&quot; lightweight
+&gt; client/server applications.
+">
+
+Yes, but light is relative.  The OP proposal is too light, wasting the
+capabilities of the browser and PC.
+
+<QUOTE PREVIOUSPOST="
+&gt; Anyway FWIW here is how I'd do it (HTTP is great for serving up web-pages
+&gt; and images, but is it really the best tool in the box for a secure,
+&gt; high-performance, middleware communications back-bone? The browser *is* the
+&gt; GUI, but is a Web-Server really an Application Server?)
+">
+
+The Web server is just a conveyance between the presentation and
+middleware layers.
+
+<QUOTE PREVIOUSPOST="
+&gt; http://manson.vistech.net/t3$examples/demo_client_web.html
+">
+
+That didn't work too hot for me in IE7.  I got a message saying the
+Java runtime environment couldn't be loaded (and little else.)  I
+don't think your app caused the error, but it didn't recover from it
+very gracefully.  In other words, it degraded to a virtually blank and
+unusable page.
+
+<QUOTE PREVIOUSPOST="
+&gt; All of the HTML, Javascript, and Java Applet sources can be viewed at: -
+
+&gt; http://manson.vistech.net/t3$examples/
+
+&gt; To see the example sucessfully you will need:-
+
+&gt; 1) Javascript enabled
+">
+
+Check.
+
+<QUOTE PREVIOUSPOST="
+&gt; 2) Java Applets enabled
+">
+
+Check.
+
+<QUOTE PREVIOUSPOST="
+&gt; 3) Can't be behind a Firewall that forbids all unknown outgoing connections
+">
+
+Check.
+
+<QUOTE PREVIOUSPOST="
+&gt; (otherwise open-up 5255)
+&gt; 4) Must be running SUN's JRE 1.4.2_13 or later (1.6 is advised)
+">
+
+No idea.
+
+<QUOTE PREVIOUSPOST="
+&gt; 5) Must be running Internet Explorer (6 or later) or Firefox (Haven't tested
+&gt; other browsers) I'm told it works with Safari Version 2.0.4 (419.3) Java
+&gt; Plug-in 1.5.0 Using JRE version 1.5.0_07 Java HotSpot(TM) Client VM.
+
+&gt; All things being equal you should then be prompted (via Java modal dialogue
+&gt; box) for:-
+
+&gt; Username: TIER3_DEMO
+&gt; Password: QUEUE
+">
+
+Never got this far.
+
+<QUOTE PREVIOUSPOST="
+&gt; Here's some of the functionality-catwalk highlights from the example: -
+
+&gt; 1) Full, one-time, context-specific, VMS User Authentication. No Cookies,
+&gt; Session IDs, Password Caching or generic Work-Station or Browser
+&gt; credentials! When you load the demo_client_web.html page into your browser,
+&gt; a Java Applet is automatically activated that prompts the user for their VMS
+&gt; Username and Password via a modal dialogue box. If authorization fails, the
+&gt; &quot;Access Denied&quot; page will be displayed and VMS Intrusion Detection (in
+&gt; accordance with the policy set out by your System Manager) will be enforced,
+&gt; and Login-Failures is incremented in SYSUAF. Alternatively, if authorization
+&gt; is successful (and you left the &quot;Display Logon Confirmation&quot; box ticked)
+&gt; then a Welcome dialog box will be displayed detailing last login times and
+&gt; the number of unsuccessful login attempts (if any). Login-Failures is now
+&gt; set to zero and last non-interactive login time is set to the current time.
+
+&gt; If you refresh this page, or move to a different page, then the server
+&gt; connection is broken and you must be re-authorised before continuing to
+&gt; access the Demo Queue Manager application.
+">
+
+Right.  I take it it's one application per page.
+
+[snip]
+
+Clearly Ajax isn't appropriate this application, so Java is required.
+But what sort of practical Web application would you build with this?
+I guess it would make sense if you need remote access to a mainframe.
+
+<QUOTE PREVIOUSPOST="
+&gt; Regards Richard Maher
+
+&gt; PS. The server code can be in any 3GL but, for this example, I chose COBOL;
+">
+
+Since I didn't see the example, I really can't comment on it, other
+than to say that COBOL is an odd choice.
+
+Thanks for sharing.
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-29T22:07:00 </POSTDATE>
+On Sep 29, 5:46 pm, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 29, 7:42 pm, &quot;Richard Maher&quot; &lt;maher ... @hotspamnotmail.com&gt;
+&gt; &gt; I agree with all of the above but to be fair to the OP hasn't technology
+&gt; &gt; such as AJAX, in some ways, turned the clock back and created a hybrid by
+&gt; &gt; merging the web and client/server paradigms? There are people, certainly
+&gt; &gt; within this group, who'll contend that if it doesn't have a SUBMIT button
+&gt; &gt; then it's not a browser application. Others, myself
+
+&gt; I'm not sure I follow, but a form without a submit button is a bad
+&gt; idea.
+">
+
+Are you sure it is *always* a bad idea?
+
+<QUOTE PREVIOUSPOST="
+&gt; included, can see
+
+&gt; &gt; browsers as the run-time environment for a genre of &quot;new&quot; lightweight
+&gt; &gt; client/server applications.
+
+&gt; Yes, but light is relative.  The OP proposal is too light, wasting the
+&gt; capabilities of the browser and PC.
+">
+
+Ironically, &quot;too&quot; light is also relative.
+
+I'm not sure how you can make such categorical statements with such
+confidence. Different situations require different approaches and to
+throw away options a priori seems like a less-than-optimal choice.
+
+Peter
+</POST>
+<POST>
+<POSTER> &quot;Richard Maher&quot; &lt;maher...@hotspamnotmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-29T23:26:00 </POSTDATE>
+Hi David,
+
+<QUOTE PREVIOUSPOST="
+&gt; I'm not sure I follow, but a form without a submit button is a bad
+&gt; idea.
+">
+
+Not if you never submit anything.
+
+<QUOTE PREVIOUSPOST="
+&gt; Yes, but light is relative.  The OP proposal is too light, wasting the
+&gt; capabilities of the browser and PC.
+">
+
+I would agree with you here, but others may be happy with it.
+
+<QUOTE PREVIOUSPOST="
+&gt; The Web server is just a conveyance between the presentation and
+&gt; middleware layers.
+">
+
+Yes it is convenient and ubiquitous - and (I contend) demonstrably a square
+peg in the middleware hole.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; (otherwise open-up 5255)
+&gt; &gt; 4) Must be running SUN's JRE 1.4.2_13 or later (1.6 is advised)
+
+&gt; No idea.
+">
+
+As Microsoft does not support a JVM for recent versions of Windows you need
+to install a copy of SUN's JRE which can be downloaded from
+http://java.sun.com/javase/downloads/index.jsp
+
+To see what (if any) version you've currently got installed you should look
+for &quot;Java Plug-In&quot; in your Control Panel.
+
+<QUOTE PREVIOUSPOST="
+&gt; Right.  I take it it's one application per page.
+">
+
+Currently I use Framesets and load new page(s) into an off-screen and then
+&quot;grow&quot; it when it's ready. Having said that, it would be extremely easy to
+have the Socket survive page transitions but I haven't had the time to test
+whether that Socket could then be the subject of a Socket-Hijacking attack
+as much as Session-Hijacking is a gaping hole in other architectures.
+Therefore I currently tear it down via the Applet's (CornuCopiae.java)
+destroy() method which calls the Socket's (Tier3Socket.java) close() method.
+
+<QUOTE PREVIOUSPOST="
+&gt; But what sort of practical Web application would you build with this?
+">
+
+Any and all! OK, it may not be for your normal shopping-trolley web-app or
+usual Web-Browser look and feel, but just think of rolling out new versions
+of an organizations internal application(s) without having to upgrade the
+software on the client PCs. Pretty much all &quot;known user&quot; applications such
+as branch-office to head-office, bank customer access, or travel agent to
+wholesaler etc etc
+
+<QUOTE PREVIOUSPOST="
+&gt; I guess it would make sense if you need remote access to a mainframe.
+">
+
+Exactly! High-performance, secure, context-rich client access to your
+mainframe resources.
+
+<QUOTE PREVIOUSPOST="
+&gt; than to say that COBOL is an odd choice.
+">
+
+As I said, it could be any 3GL that can produce a Shareable Image/DLL.
+
+<QUOTE PREVIOUSPOST="
+&gt; Thanks for sharing.
+">
+
+Thanks for giving it a go! I hope you get the time to download the JRE and
+give it another go. IMHO, It's definitely worth the few minutes effort and
+having a recent JVM on your box is always handy!
+
+Cheers Richard Maher
+
+<QUOTE PREVIOUSPOST="
+&quot;David Mark&quot; &lt;dmark.cins ... @gmail.com&gt; wrote in message
+">
+
+news:1191113187.449848.273060@o80g2000hse.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 29, 7:42 pm, &quot;Richard Maher&quot; &lt;maher ... @hotspamnotmail.com&gt;
+&gt; wrote:
+&gt; &gt; Hi David,
+
+&gt; [snip]
+
+&gt; &gt; I agree with all of the above but to be fair to the OP hasn't technology
+&gt; &gt; such as AJAX, in some ways, turned the clock back and created a hybrid
+by
+&gt; &gt; merging the web and client/server paradigms? There are people, certainly
+&gt; &gt; within this group, who'll contend that if it doesn't have a SUBMIT
+button
+&gt; &gt; then it's not a browser application. Others, myself
+
+&gt; I'm not sure I follow, but a form without a submit button is a bad
+&gt; idea.
+
+&gt; included, can see
+&gt; &gt; browsers as the run-time environment for a genre of &quot;new&quot; lightweight
+&gt; &gt; client/server applications.
+
+&gt; Yes, but light is relative.  The OP proposal is too light, wasting the
+&gt; capabilities of the browser and PC.
+
+&gt; &gt; Anyway FWIW here is how I'd do it (HTTP is great for serving up
+web-pages
+&gt; &gt; and images, but is it really the best tool in the box for a secure,
+&gt; &gt; high-performance, middleware communications back-bone? The browser *is*
+the
+&gt; &gt; GUI, but is a Web-Server really an Application Server?)
+
+&gt; The Web server is just a conveyance between the presentation and
+&gt; middleware layers.
+
+&gt; &gt; http://manson.vistech.net/t3$examples/demo_client_web.html
+
+&gt; That didn't work too hot for me in IE7.  I got a message saying the
+&gt; Java runtime environment couldn't be loaded (and little else.)  I
+&gt; don't think your app caused the error, but it didn't recover from it
+&gt; very gracefully.  In other words, it degraded to a virtually blank and
+&gt; unusable page.
+
+&gt; &gt; All of the HTML, Javascript, and Java Applet sources can be viewed at: -
+
+&gt; &gt; http://manson.vistech.net/t3$examples/
+
+&gt; &gt; To see the example sucessfully you will need:-
+
+&gt; &gt; 1) Javascript enabled
+
+&gt; Check.
+
+&gt; &gt; 2) Java Applets enabled
+
+&gt; Check.
+
+&gt; &gt; 3) Can't be behind a Firewall that forbids all unknown outgoing
+connections
+
+&gt; Check.
+
+&gt; &gt; (otherwise open-up 5255)
+&gt; &gt; 4) Must be running SUN's JRE 1.4.2_13 or later (1.6 is advised)
+
+&gt; No idea.
+
+&gt; &gt; 5) Must be running Internet Explorer (6 or later) or Firefox (Haven't
+tested
+&gt; &gt; other browsers) I'm told it works with Safari Version 2.0.4 (419.3) Java
+&gt; &gt; Plug-in 1.5.0 Using JRE version 1.5.0_07 Java HotSpot(TM) Client VM.
+
+&gt; &gt; All things being equal you should then be prompted (via Java modal
+dialogue
+&gt; &gt; box) for:-
+
+&gt; &gt; Username: TIER3_DEMO
+&gt; &gt; Password: QUEUE
+
+&gt; Never got this far.
+
+&gt; &gt; Here's some of the functionality-catwalk highlights from the example: -
+
+&gt; &gt; 1) Full, one-time, context-specific, VMS User Authentication. No
+Cookies,
+&gt; &gt; Session IDs, Password Caching or generic Work-Station or Browser
+&gt; &gt; credentials! When you load the demo_client_web.html page into your
+browser,
+&gt; &gt; a Java Applet is automatically activated that prompts the user for their
+VMS
+&gt; &gt; Username and Password via a modal dialogue box. If authorization fails,
+the
+&gt; &gt; &quot;Access Denied&quot; page will be displayed and VMS Intrusion Detection (in
+&gt; &gt; accordance with the policy set out by your System Manager) will be
+enforced,
+&gt; &gt; and Login-Failures is incremented in SYSUAF. Alternatively, if
+authorization
+&gt; &gt; is successful (and you left the &quot;Display Logon Confirmation&quot; box ticked)
+&gt; &gt; then a Welcome dialog box will be displayed detailing last login times
+and
+&gt; &gt; the number of unsuccessful login attempts (if any). Login-Failures is
+now
+&gt; &gt; set to zero and last non-interactive login time is set to the current
+time.
+
+&gt; &gt; If you refresh this page, or move to a different page, then the server
+&gt; &gt; connection is broken and you must be re-authorised before continuing to
+&gt; &gt; access the Demo Queue Manager application.
+
+&gt; Right.  I take it it's one application per page.
+
+&gt; [snip]
+
+&gt; Clearly Ajax isn't appropriate this application, so Java is required.
+&gt; But what sort of practical Web application would you build with this?
+&gt; I guess it would make sense if you need remote access to a mainframe.
+
+&gt; &gt; Regards Richard Maher
+
+&gt; &gt; PS. The server code can be in any 3GL but, for this example, I chose
+COBOL;
+
+&gt; Since I didn't see the example, I really can't comment on it, other
+&gt; than to say that COBOL is an odd choice.
+
+&gt; Thanks for sharing.
+">
+</POST>
+<POST>
+<POSTER> David Mark &lt;dmark.cins...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-30T02:21:00 </POSTDATE>
+On Sep 29, 5:43 am, timsamshuij ... @gmail.com wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 28, 11:08 pm, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+
+&gt; &gt; The biggest pain in writing a framework for widgets is positioning.
+&gt; &gt; The second biggest is sizing.
+
+&gt; I am not experiencing any difficulties here yet. This is probably
+&gt; because I am not writing any general widgets that can be used
+&gt; anywhere. My widgets are used in my app environment where all elements
+&gt; are positioned absolute. My sizing, resizing, and drag routines are
+&gt; working fine, no pain yet. Or maybe you are referring to some
+&gt; difficulties that I have not yet encountered.
+">
+
+Try adding borders to the body or html elements.  To compound the
+problem, add margins to the html element.  Then try to compute the
+position of an absolute element in just the major browsers in
+standards mode.  I imagine you will need the viewport rectangle at
+some point as well.  Have fun with that.
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 29, 2:38 am, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+&gt; &gt; I started with the YUI libraries and tried to fix at least everything
+&gt; &gt; that was wrong/less than optimal in my eyes.
+
+&gt; &gt; http://forkjavascript.org
+
+&gt; &gt; Peter
+
+&gt; I had a look at your code - great stuff! I had a look at your event
+&gt; routines to check whether my code is up to scratch (I am new to JS). I
+&gt; actually found your code &quot;quite&quot; similar to mine, which serves as a
+&gt; confirmation to me that I am on the right track. If I would have
+&gt; looked at your code previously then it would have saved me quite some
+&gt; work yesterday ;-) On the other had, in my opinion it is good to have
+&gt; written such stuff totally from scratch so that one fully understands
+&gt; the issues
+&gt; involved.
+
+&gt; For those interested, here is my (stripped) version of a simple event
+&gt; handler:
+&gt; (Comments, questions and suggestions are welcome)
+
+&gt; var TVSEvent = {
+&gt;   Handlers: [],
+&gt;   IndexOfHandler: function(aHandler) {
+&gt;     var hidx = -1;
+&gt;     for(var i = 0, length = this.Handlers.length; i &lt; length; i++) {
+&gt;       var hob = this.Handlers[i];
+&gt;       if((hob.Handler == aHandler) || (hob.DOMHandler == aHandler)) {
+&gt;         hidx = i;
+&gt;         break;
+&gt;       }
+&gt;     }
+&gt;     return hidx;
+&gt;   },
+&gt;   Add: function(aNode, aType, aHandler, aScope) {
+&gt;     var domh = aHandler;
+&gt;     if(arguments.length &gt;= 4) {
+&gt;       domh = function() {
+&gt;         return aHandler.apply(aScope, arguments);
+&gt;       }
+&gt;     }
+&gt;     this.Handlers[this.Handlers.length] = {
+&gt;       Handler: aHandler,
+&gt;       DOMHandler: domh
+&gt;     }
+&gt;     if(aNode.addEventListener) {
+&gt;       aNode.addEventListener(aType, domh, false);
+&gt;     } else if(aNode.attachEvent) {
+&gt;       aNode.attachEvent('on' + aType, domh);
+&gt;     }
+&gt;     return domh;
+&gt;   },
+&gt;   Remove: function(aNode, aType, aHandler) {
+&gt;     var domh = aHandler;
+&gt;     var eidx = this.IndexOfHandler(domh);
+&gt;     if(eidx &gt;= 0) {
+&gt;       domh = this.Handlers[eidx].DOMHandler;
+&gt;       this.Handlers.splice(eidx, 1);
+&gt;     }
+&gt;     if(aNode.removeEventListener) {
+&gt;       aNode.removeEventListener(aType, domh, false);
+&gt;     } else if(aNode.detachEvent) {
+&gt;       aNode.detachEvent('on' + aType, domh);
+&gt;     }
+&gt;   }
+">
+
+You should feature detect once and be done with it.  And if you are
+going to write a wrapper for event handling, you should smooth out the
+basic differences between the two models.  It doesn't make sense to
+normalize everything for every event (like most libs do), but at least
+pass along the event object and fix &quot;this&quot; handling for IE.
+</POST>
+<POST>
+<POSTER> David Mark &lt;dmark.cins...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-30T02:28:00 </POSTDATE>
+On Sep 29, 10:07 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 29, 5:46 pm, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+
+&gt; &gt; On Sep 29, 7:42 pm, &quot;Richard Maher&quot; &lt;maher ... @hotspamnotmail.com&gt;
+&gt; &gt; &gt; I agree with all of the above but to be fair to the OP hasn't technology
+&gt; &gt; &gt; such as AJAX, in some ways, turned the clock back and created a hybrid by
+&gt; &gt; &gt; merging the web and client/server paradigms? There are people, certainly
+&gt; &gt; &gt; within this group, who'll contend that if it doesn't have a SUBMIT button
+&gt; &gt; &gt; then it's not a browser application. Others, myself
+
+&gt; &gt; I'm not sure I follow, but a form without a submit button is a bad
+&gt; &gt; idea.
+
+&gt; Are you sure it is *always* a bad idea?
+">
+
+Unless it isn't really a form (eg input elements that never submit
+anything), in which case you can remove the form element, or if the
+form is hidden for use with Ajax, IFrames, etc.  I was talking about
+forms that are used as forms by users.  No submit button means that
+some browsers will never submit the data (no matter how many times you
+hit the enter key.)
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; included, can see
+
+&gt; &gt; &gt; browsers as the run-time environment for a genre of &quot;new&quot; lightweight
+&gt; &gt; &gt; client/server applications.
+
+&gt; &gt; Yes, but light is relative.  The OP proposal is too light, wasting the
+&gt; &gt; capabilities of the browser and PC.
+
+&gt; Ironically, &quot;too&quot; light is also relative.
+">
+
+That's the point.  The method described is relatively lighter than
+Ajax applications.
+
+<QUOTE PREVIOUSPOST="
+&gt; I'm not sure how you can make such categorical statements with such
+&gt; confidence. Different situations require different approaches and to
+&gt; throw away options a priori seems like a less-than-optimal choice.
+">
+
+What occasion requires turning a browser into a dumb terminal?  Makes
+no sense to me.  Most of the world threw away dumb terminals decades
+ago.
+</POST>
+</TEXT>
+</BODY>
+</DOC>

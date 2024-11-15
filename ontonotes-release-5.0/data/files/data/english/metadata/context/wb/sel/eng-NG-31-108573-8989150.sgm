@@ -1,0 +1,255 @@
+<DOC>
+<DOCID> eng-NG-31-108573-8989150 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-23T16:26:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Double-checking a Program
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> widmar &lt;j...@sdynamix.com&gt; </POSTER>
+<POSTDATE> 2007-08-23T16:26:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+mecej4 wrote:
+
+&gt; &gt; The program is a polynomial root-finding algorithm from the NETLIB
+&gt; &gt; website:
+
+&gt; &gt; http://www.netlib.org/toms/493
+
+&gt; &gt; The test data is of low degree (polynomials of degree 3 and 4) and is
+&gt; &gt; pretty simple. More complicated data has been used and runs were
+&gt; &gt; successful, yet at least five of my test data sets have returned a &quot;No
+&gt; &gt; Roots Found&quot; result...
+
+&gt; As with many routines from NETLIB, you have to enter proper values for
+&gt; machine constants. For IEEE-32, use this in the subroutine (in place of
+&gt; the ones for the Burroughs B6xxx -- RIP).
+
+&gt;        DATA INFIN/'7F800000'X/,SMALNO/'00800000'X/
+&gt;        BASE = 2.
+&gt;        ETA =    BASE**(-24)
+">
+
+Right, except that one also needs to read the instructions a bit more
+carefully, &quot;rpoly&quot; says:
+
+c the following statements set machine constants used
+c in various parts of the program. the meaning of the
+c four constants are...
+c eta     the maximum relative representation error
+c         which can be described as the smallest
+c         positive floating point number such that
+c         1.d0+eta is greater than 1.
+c infin   the largest floating-point number.
+c smalno  the smallest positive floating-point number
+c         if the exponent range differs in single and
+c         double precision then smalno and infin
+c         should indicate the smaller range.
+c base    the base of the floating-point number
+c         system used.
+
+You were probably lucky that none of the OP cases tripped the bounds,
+however some of those supplied with &quot;cpoly&quot; (toms/419) might be less
+forgiving of your - improperly defined - constants.
+
+---
+sdx - modeling, simulation.
+http://www.sdynamix.com
+</POST>
+<POST>
+<POSTER> widmar &lt;j...@sdynamix.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T20:27:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+mecej4 wrote:
+
+&gt; I get with Watcom 1.5:
+&gt; s:\&gt;rpoly
+&gt; 3,1,0,-2,-5
+&gt;      2.095E+00 0.000E+00  -1.047E+00 1.136E+00  -1.047E+00-1.136E+00
+
+&gt; which is in agreement with what Matlab zeros() gives.
+">
+
+Actually this doesn't mean much considering the origins of Matlab code -
+for all you know they made the same mistake (translating a mixture of
+sp/dp machine constants) as you did. It could be worse, awhile back an
+academic cited some theory in trying to explain Matlab's faulty roots...
+try his case,
+
+p(x) = x^7 - 7*x^6 + 21*x^5 - 35*x^4 + 35*x^3 - 21*x^2 + 7*x - 1
+
+to see if that theory still holds!? Note, that validation should start
+with solving a known case - only then can you assume you're not
+comparing the *same* algorithm renamed by different commercial brands.
+&quot;cpoly&quot; (predecessor to &quot;rpoly&quot;) does just that - provides a number of
+nontrivial cases to verify if any particular *port* passes the grade.
+
+---
+sdx - modeling, simulation.
+http://www.sdynamix.com
+</POST>
+<POST>
+<POSTER> &quot;Steven Lord&quot; &lt;sl...@mathworks.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T23:58:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;widmar&quot; &lt;j ... @sdynamix.com&gt; wrote in message
+">
+
+news:46DF4957.F6D18C79@sdynamix.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; mecej4 wrote:
+
+&gt;&gt; I get with Watcom 1.5:
+&gt;&gt; s:\&gt;rpoly
+&gt;&gt; 3,1,0,-2,-5
+&gt;&gt;      2.095E+00 0.000E+00  -1.047E+00 1.136E+00  -1.047E+00-1.136E+00
+
+&gt;&gt; which is in agreement with what Matlab zeros() gives.
+&gt;&gt; polynomial = [1 0 -2 -5];
+&gt;&gt; theroots = roots(polynomial)
+">
+
+theroots =
+2.09455148154233
+-1.04727574077116 +      1.13593988908893i
+-1.04727574077116 -      1.13593988908893i
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; values = polyval(polynomial, theroots)
+">
+
+values =
+1.95399252334028e-014
+-1.77635683940025e-015 - 1.77635683940025e-015i
+-1.77635683940025e-015 + 1.77635683940025e-015i
+
+Looks pretty reasonable to me.
+
+<QUOTE PREVIOUSPOST="
+&gt; Actually this doesn't mean much considering the origins of Matlab code -
+&gt; for all you know they made the same mistake (translating a mixture of
+&gt; sp/dp machine constants) as you did. It could be worse, awhile back an
+&gt; academic cited some theory in trying to explain Matlab's faulty roots...
+&gt; try his case,
+">
+
+The ROOTS function is an M-file, you can edit it and read it if you want, or
+you can look at the Algorithm section of the reference page for the function
+for a description of basically what it's doing:
+
+http://www.mathworks.com/access/helpdesk/help/techdoc/index.html?/acc...
+
+By the way, is the &quot;academic&quot; you're referring to perhaps Cleve Moler, who
+is the original author of MATLAB and one of the authors of LINPACK and
+EISPACK?
+
+http://www.mathworks.com/company/aboutus/founders/clevemoler.html
+
+The reason I ask is because ...
+
+<QUOTE PREVIOUSPOST="
+&gt;  p(x) = x^7 - 7*x^6 + 21*x^5 - 35*x^4 + 35*x^3 - 21*x^2 + 7*x - 1
+">
+
+Cleve used this example in one of his Cleve's Corner articles:
+
+http://www.mathworks.com/company/newsletters/news_notes/pdf/Fall96Cle...
+
+<QUOTE PREVIOUSPOST="
+&gt; to see if that theory still holds!? Note, that validation should start
+&gt; with solving a known case - only then can you assume you're not
+&gt; comparing the *same* algorithm renamed by different commercial brands.
+&gt; &quot;cpoly&quot; (predecessor to &quot;rpoly&quot;) does just that - provides a number of
+&gt; nontrivial cases to verify if any particular *port* passes the grade.
+">
+
+You can also try substituting the roots generated by the program back into
+the original expression and see if you get essentially 0 as a result.  While
+that's not guaranteed to always work (see the last column of Cleve's article
+above, but think about a case with larger roots, higher order polynomials,
+and more cancellation) it's still a pretty useful check.
+
+--
+Steve Lord
+sl ... @mathworks.com
+</POST>
+<POST>
+<POSTER> widmar &lt;j...@sdynamix.com&gt; </POSTER>
+<POSTDATE> 2007-09-12T20:16:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Steven Lord wrote:
+
+&gt; By the way, is the &quot;academic&quot; you're referring to perhaps Cleve Moler, who
+&gt; is the original author of MATLAB and one of the authors of LINPACK and
+&gt; EISPACK?
+
+&gt; The reason I ask is because ...
+
+&gt; &gt;  p(x) = x^7 - 7*x^6 + 21*x^5 - 35*x^4 + 35*x^3 - 21*x^2 + 7*x - 1
+
+&gt; Cleve used this example in one of his Cleve's Corner articles:
+
+&gt; http://www.mathworks.com/company/newsletters/news_notes/pdf/Fall96Cle...
+">
+
+This looks like an origin of another urban myth, the &quot;academic&quot; I was
+referring to was from a Canadian university some four years latter. It
+seems a retraction would probably be in order for both. Perhaps you can
+post what a current Matlab does with the above polynomial.
+
+There can be numerical difficulties, as you noted, with matters
+concerning polynomials. However, it is not reasonable to expect that an
+algorithm, such as Jenkins &amp; Traub, would have difficulties with the
+above by virtue of its moderately valued coefficients alone.
+
+---
+sdx - modeling, simulation.
+http://www.sdynamix.com
+</POST>
+<POST>
+<POSTER> widmar &lt;j...@sdynamix.com&gt; </POSTER>
+<POSTDATE> 2007-09-21T19:43:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Steven Lord wrote:
+
+&gt; By the way, is the &quot;academic&quot; you're referring to perhaps Cleve Moler
+
+&gt; The reason I ask is because ...
+
+&gt; &gt;  p(x) = x^7 - 7*x^6 + 21*x^5 - 35*x^4 + 35*x^3 - 21*x^2 + 7*x - 1
+
+&gt; Cleve used this example in one of his Cleve's Corner articles
+">
+
+I checked (search for &quot;root finding methods&quot;) and it turns out they used
+the same polynomial to substantiate their respective propositions. i.e.
+quote,
+
+&quot; MATLAB's &quot;roots&quot; routine returns
+
+1.00609591491435 + 0.00291762675386i
+1.00609591491435 - 0.00291762675386i
+1.00154356667825 + 0.00660599221344i
+1.00154356667825 - 0.00660599221344i
+0.99577294367089 + 0.00534306983874i
+0.99577294367089 - 0.00534306983874i
+0.99317514947301
+
+distributed close to vertices of a regular heptagon, just as theory
+predicted, and it is not MATLAB's fault.&quot;
+
+The problem here is not the problem but the method used, in this case
+Matlab's &quot;roots&quot; - &quot;rpoly&quot; correctly identifies all seven roots - and
+Mathworks needs to notify its users of known defect(s), albeit many
+years after its discovery.
+
+---
+sdx - modeling, simulation.
+http://www.sdynamix.com
+</POST>
+</TEXT>
+</BODY>
+</DOC>

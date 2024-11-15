@@ -1,0 +1,857 @@
+<DOC>
+<DOCID> eng-NG-31-127288-8272019 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-07-17T10:33:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Packaging Sage
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;William Stein&quot; &lt;wst...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-17T10:33:00 </POSTDATE>
+On 7/17/07, Georges Khaznadar &lt;georges.khazna ... @free.fr&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hello, I would like to make a Debian package of Sage.
+
+&gt; I recently attended a talk of Professor Tsai who uses it in Taiwan, and
+&gt; it was pretty convincing.
+
+&gt; Apparently, Sage depends on other software which should be packaged
+&gt; separately, according to the &quot;Debian way&quot;. With the source packages, the
+&gt; dependencies were solved by including the other software's sources in
+&gt; the tree. I already noticed such habits in other upstrean packages I
+&gt; have &quot;debianised&quot; recently.
+
+&gt; Please have you any hint of interesting informations about the relations
+&gt; between the development of Sage and the other packages it depends on?
+">
+
+Creating a .deb for SAGE has been discussed a few times on sage-devel,
+so there is definitely strong interest in doing it.  Probably people have
+attempted it 4 times now, but everybody has failed, except Bobby Moretti
+one year ago (who unfortunately didn't maintain what he did).  If you want
+to succeed at making a SAGE .deb, here is what you'll likely do:
+
+(1) Create a monolothic .deb, which installs everything SAGE currently
+distributes in /opt/sage/, along with a run script  /usr/bin/sage.  Basically
+this involves modifying the make file in the SAGE source
+distribution so that it works with the Debian packaging tools.  Bobby
+(who I've cc'd), might be kind enough to give you further tips.
+
+(2) Only after having completely mastering (1), move on to considering
+breaking up SAGE into smaller packages and installing into the standard
+Debian environment.
+
+Most people are extremely reluctant to do (1), because it violates the
+&quot;Debian way&quot;.
+It is however, *definitely* the right first thing to do, and has substantial
+benefits over the tarball/source distribution we are currently distributing,
+so it is well worth doing.
+
+Note that in (1), creating the .deb package
+should be so easy that any user with SAGE installed from source and
+all the appropriate
+Debian package tools should be able to just type &quot;sage -pkg_deb foo.deb&quot;
+and get a Debian package.  This ease is critical for long term maintainability.
+
+Doing (2) is probably way way too much work for anybody who couldn't easily
+do (1), which is another argument for doing (1) first.  Anybody who could do (2)
+could easily do (1), and doing (1) would actually work and have great benefit
+to SAGE users; most typical mathematicians wouldn't
+notice any difference between (1) and (2), even though (2) is vastly more
+difficult.
+
+Thanks for any help!!
+
+-- William
+</POST>
+<POST>
+<POSTER> &quot;Michael Abshoff&quot; &lt;Michael.Absh...@fsmath.mathematik.uni-dortmund.de&gt; </POSTER>
+<POSTDATE> 2007-07-17T11:09:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+William Stein wrote:
+
+&gt; On 7/17/07, Georges Khaznadar &lt;georges.khazna ... @free.fr&gt; wrote:
+&gt;&gt; Hello, I would like to make a Debian package of Sage.
+
+&gt;&gt; I recently attended a talk of Professor Tsai who uses it in Taiwan, and
+&gt;&gt; it was pretty convincing.
+
+&gt;&gt; Apparently, Sage depends on other software which should be packaged
+&gt;&gt; separately, according to the &quot;Debian way&quot;. With the source packages, the
+&gt;&gt; dependencies were solved by including the other software's sources in
+&gt;&gt; the tree. I already noticed such habits in other upstrean packages I
+&gt;&gt; have &quot;debianised&quot; recently.
+
+&gt;&gt; Please have you any hint of interesting informations about the relations
+&gt;&gt; between the development of Sage and the other packages it depends on?
+
+&gt; Creating a .deb for SAGE has been discussed a few times on sage-devel,
+&gt; so there is definitely strong interest in doing it.  Probably people have
+&gt; attempted it 4 times now, but everybody has failed, except Bobby Moretti
+&gt; one year ago (who unfortunately didn't maintain what he did).  If you want
+&gt; to succeed at making a SAGE .deb, here is what you'll likely do:
+
+&gt; (1) Create a monolothic .deb, which installs everything SAGE currently
+&gt; distributes in /opt/sage/, along with a run script  /usr/bin/sage.
+&gt; Basically
+&gt; this involves modifying the make file in the SAGE source
+&gt; distribution so that it works with the Debian packaging tools.  Bobby
+&gt; (who I've cc'd), might be kind enough to give you further tips.
+">
+
+I looked into (1) (also for rpm) a while ago and came up with pkgwrite -
+see http://ffem.org/daveb/pkgwrite/ - this is a perl script that creates
+debs or rpms from the same config file. I mostly lurk on sage-devel these
+days because work barely leaves me time to play around with sage :(
+
+While solution (1) is against the &quot;Debian Way&quot; (2) is next to impossible
+from a debugging standpoint, i.e. which version of libSingular, g++ and
+clisp are you using? I don't think anybody intends to get Sage into the
+official Debian distribution because maintaining a stable branch release
+has some rather unpleasant limitations. You can't just bump up to the
+current stable release on a whim, so I think getting Sage into Ubuntu is a
+much more reachable goal. It also seems that Ubuntu is getting a lot more
+mindshare in the *desktop* these days (compared to Debian unstable).
+
+Cheers,
+
+Michael
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; (2) Only after having completely mastering (1), move on to considering
+&gt; breaking up SAGE into smaller packages and installing into the standard
+&gt; Debian environment.
+
+&gt; Most people are extremely reluctant to do (1), because it violates the
+&gt; &quot;Debian way&quot;.
+&gt; It is however, *definitely* the right first thing to do, and has
+&gt; substantial
+&gt; benefits over the tarball/source distribution we are currently
+&gt; distributing,
+&gt; so it is well worth doing.
+
+&gt; Note that in (1), creating the .deb package
+&gt; should be so easy that any user with SAGE installed from source and
+&gt; all the appropriate
+&gt; Debian package tools should be able to just type &quot;sage -pkg_deb foo.deb&quot;
+&gt; and get a Debian package.  This ease is critical for long term
+&gt; maintainability.
+
+&gt; Doing (2) is probably way way too much work for anybody who couldn't
+&gt; easily
+&gt; do (1), which is another argument for doing (1) first.  Anybody who could
+&gt; do (2)
+&gt; could easily do (1), and doing (1) would actually work and have great
+&gt; benefit
+&gt; to SAGE users; most typical mathematicians wouldn't
+&gt; notice any difference between (1) and (2), even though (2) is vastly more
+&gt; difficult.
+
+&gt; Thanks for any help!!
+
+&gt;   -- William
+">
+</POST>
+<POST>
+<POSTER> &quot;Ondrej Certik&quot; &lt;ondrej.cer...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-17T12:16:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; While solution (1) is against the &quot;Debian Way&quot; (2) is next to impossible
+&gt; from a debugging standpoint, i.e. which version of libSingular, g++ and
+&gt; clisp are you using? I don't think anybody intends to get Sage into the
+&gt; official Debian distribution because maintaining a stable branch release
+&gt; has some rather unpleasant limitations. You can't just bump up to the
+&gt; current stable release on a whim, so I think getting Sage into Ubuntu is a
+&gt; much more reachable goal. It also seems that Ubuntu is getting a lot more
+&gt; mindshare in the *desktop* these days (compared to Debian unstable).
+">
+
+Could you please elaborate more on what limitations there are in
+Debian to maintain the package in the stable branch? It seems to me,
+that getting the package to unstable is the same work as getting it to
+Ubuntu. It actually has the advantage of being both in Debian and
+Ubuntu as it gets to Ubuntu automatically. And as to the propagation
+to the stable release of either Debian or Ubuntu, it seems to me it is
+the same in both distributions - only Ubuntu releases three times more
+often.
+
+Ondrej
+</POST>
+<POST>
+<POSTER> &quot;Michael Abshoff&quot; &lt;Michael.Absh...@fsmath.mathematik.uni-dortmund.de&gt; </POSTER>
+<POSTDATE> 2007-07-17T13:23:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Ondrej Certik wrote:
+
+&gt;&gt; While solution (1) is against the &quot;Debian Way&quot; (2) is next to impossible
+&gt;&gt; from a debugging standpoint, i.e. which version of libSingular, g++ and
+&gt;&gt; clisp are you using? I don't think anybody intends to get Sage into the
+&gt;&gt; official Debian distribution because maintaining a stable branch release
+&gt;&gt; has some rather unpleasant limitations. You can't just bump up to the
+&gt;&gt; current stable release on a whim, so I think getting Sage into Ubuntu is
+&gt;&gt; a
+&gt;&gt; much more reachable goal. It also seems that Ubuntu is getting a lot
+&gt;&gt; more
+&gt;&gt; mindshare in the *desktop* these days (compared to Debian unstable).
+">
+
+I meant Debian *stable* in the end, not *unstable*
+
+<QUOTE PREVIOUSPOST="
+
+">
+
+Hello
+
+<QUOTE PREVIOUSPOST="
+&gt; Could you please elaborate more on what limitations there are in
+&gt; Debian to maintain the package in the stable branch?
+">
+
+Disclaimer: I can only describe from what I saw happening on the LyX and
+ATLAS mailing lists. I have never been a Debian packager/developer nor
+have I ever applied to be one, so I might be mistaken about several
+issues.
+
+<QUOTE PREVIOUSPOST="
+&gt; It seems to me,
+&gt; that getting the package to unstable is the same work as getting it to
+&gt; Ubuntu.
+">
+
+Well, Debian supports a lot more architectures and from what I know it is
+discouraged to limit the architecture due to non-technical reasons. Sage
+is widely used on Linux and x86, x86-64 and to some extend on PPC and
+Itanic, but what about the other 9 or so architectures Debian supports?
+They provide build infrastructure, but who would care about Sage on
+Linux/ARM?
+
+The other issue I have seen was that in stable you had to patch bugs, not
+add features. Specfically: When LyX 1.4.4 came out the Debian stable
+package was still 1.4.2, so instead of upgrading to 1.4.4 wholesale the
+maintainer had to pick the patches out that fixed bugs and to apply them.
+It might be possible to update to a new minor version in stable, but it
+seems to be discouraged. Now LyX isn't exactly moving fast, but can you
+imagine that with Sage's release frequence? (Potshot: Not at the moment
+;))
+
+<QUOTE PREVIOUSPOST="
+&gt; It actually has the advantage of being both in Debian and
+&gt; Ubuntu as it gets to Ubuntu automatically.
+">
+
+That is certainly true, but I do not believe that William's scenario (2)
+will happen anytime soon. I believe that Sage can live just fine with
+scenario (1).
+
+<QUOTE PREVIOUSPOST="
+&gt; And as to the propagation
+&gt; to the stable release of either Debian or Ubuntu, it seems to me it is
+&gt; the same in both distributions - only Ubuntu releases three times more
+&gt; often.
+">
+
+And looking at the pace of Sage releases: Who would want to work with the
+Sage released 1.5 years ago? Who would maintain such old releases? That
+and the (more or less) reliable 6 months release time frame of Ubuntu
+could make the (potential) synchronisation of Sage releases a lot more
+plannable, because who knows when the next Debian stable will come. I use
+to admin some boxes with Debian stable a long time ago and the neverending
+wait for Woody (finally released in 2002) made me switch distributions.
+Sarge came along nearly 3 years later, so the release frequency of Ubuntu
+has been higher than 3 times that of Debian stable.
+
+And some of the discussion regarding the removal on non-free documentation
+out of debian (I believe it was the glibc doc among other things) makes my
+head spin. The issue was postponed to get Sarge out of the door, but
+still.  Alas, I don't want to start a flame war about Linux distributions,
+so anybody who feels offended please correct me offlist or put me in your
+kill file :)
+
+<QUOTE PREVIOUSPOST="
+&gt; Ondrej
+">
+
+Cheers,
+
+Michael
+</POST>
+<POST>
+<POSTER> &quot;Ondrej Certik&quot; &lt;ondrej.cer...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-17T14:32:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; &gt;&gt; current stable release on a whim, so I think getting Sage into Ubuntu is
+&gt; &gt;&gt; a
+&gt; &gt;&gt; much more reachable goal. It also seems that Ubuntu is getting a lot
+&gt; &gt;&gt; more
+&gt; &gt;&gt; mindshare in the *desktop* these days (compared to Debian unstable).
+
+&gt; I meant Debian *stable* in the end, not *unstable*
+">
+
+That is certainly true.
+
+<QUOTE PREVIOUSPOST="
+&gt; Disclaimer: I can only describe from what I saw happening on the LyX and
+&gt; ATLAS mailing lists. I have never been a Debian packager/developer nor
+&gt; have I ever applied to be one, so I might be mistaken about several
+&gt; issues.
+">
+
+I am also not a DD (Debian Developer), but I created and got around 5
+packages to Debian unstable already.
+
+<QUOTE PREVIOUSPOST="
+&gt; Well, Debian supports a lot more architectures and from what I know it is
+&gt; discouraged to limit the architecture due to non-technical reasons. Sage
+&gt; is widely used on Linux and x86, x86-64 and to some extend on PPC and
+&gt; Itanic, but what about the other 9 or so architectures Debian supports?
+&gt; They provide build infrastructure, but who would care about Sage on
+&gt; Linux/ARM?
+">
+
+If noone is using it, than no bugs will be filled against it I guess.
+And if it doesn't even build, that's of course another issue. But that
+usually signals that something is wrong.
+
+<QUOTE PREVIOUSPOST="
+&gt; The other issue I have seen was that in stable you had to patch bugs, not
+&gt; add features. Specfically: When LyX 1.4.4 came out the Debian stable
+&gt; package was still 1.4.2, so instead of upgrading to 1.4.4 wholesale the
+&gt; maintainer had to pick the patches out that fixed bugs and to apply them.
+">
+
+I thought only the vulnerability bugs are fixed in the stable
+distribution. Well, that of course is an issue. But isn't the same
+problem in Ubuntu then?
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; It actually has the advantage of being both in Debian and
+&gt; &gt; Ubuntu as it gets to Ubuntu automatically.
+
+&gt; That is certainly true, but I do not believe that William's scenario (2)
+&gt; will happen anytime soon. I believe that Sage can live just fine with
+&gt; scenario (1).
+">
+
+Debian doesn't allow the scenario (1) (officially), but I thought
+Ubuntu also doesn't.
+
+<QUOTE PREVIOUSPOST="
+&gt; And looking at the pace of Sage releases: Who would want to work with the
+&gt; Sage released 1.5 years ago? Who would maintain such old releases? That
+&gt; and the (more or less) reliable 6 months release time frame of Ubuntu
+&gt; could make the (potential) synchronisation of Sage releases a lot more
+&gt; plannable, because who knows when the next Debian stable will come. I use
+&gt; to admin some boxes with Debian stable a long time ago and the neverending
+&gt; wait for Woody (finally released in 2002) made me switch distributions.
+&gt; Sarge came along nearly 3 years later, so the release frequency of Ubuntu
+&gt; has been higher than 3 times that of Debian stable.
+">
+
+I really thought only the security bugs are fixed in the stable,
+otherwise the packages are untouched. But I've been only using
+unstable for last couple of years... Of course it doesn't make sense
+to maintain old releases, but I think it is not necessary. So please
+correct me if I am wrong.
+
+<QUOTE PREVIOUSPOST="
+&gt; And some of the discussion regarding the removal on non-free documentation
+&gt; out of debian (I believe it was the glibc doc among other things) makes my
+&gt; head spin. The issue was postponed to get Sarge out of the door, but
+&gt; still.  Alas, I don't want to start a flame war about Linux distributions,
+&gt; so anybody who feels offended please correct me offlist or put me in your
+&gt; kill file :)
+">
+
+I think the flamewar only happens when people don't know how (or don't
+want) to discuss. I think it's very good that Debian distinguishes
+main and non-free, because I am always sure that when I install main,
+I have all the rights are described in the Debian Free Software
+Guidelines (DFSG). And the non-free is there  for things that I need
+(like wireless things, some documentation, google earth, ...) -- but
+it reminds me that those programs are not free and thus I should be
+aware that if I depend on them too much, I could easily get stuck
+depending on something that I am not allowed to fix or use freely. I
+think it's very cleverly invented. The only problem is that because
+Debian is only developed by volunteers, some things are quite slow,
+and that's where Ubuntu comes in.
+
+Ondrej
+</POST>
+<POST>
+<POSTER> &quot;William Stein&quot; &lt;wst...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-17T14:39:00 </POSTDATE>
+On 7/17/07, Ondrej Certik &lt;ondrej.cer ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Well, Debian supports a lot more architectures and from what I know it is
+&gt; &gt; discouraged to limit the architecture due to non-technical reasons. Sage
+&gt; &gt; is widely used on Linux and x86, x86-64 and to some extend on PPC and
+&gt; &gt; Itanic, but what about the other 9 or so architectures Debian supports?
+&gt; &gt; They provide build infrastructure, but who would care about Sage on
+&gt; &gt; Linux/ARM?
+
+&gt; If noone is using it, than no bugs will be filled against it I guess.
+&gt; And if it doesn't even build, that's of course another issue. But that
+&gt; usually signals that something is wrong.
+">
+
+Building SAGE on Linux/ARM at all is likely a major project.  SAGE is quite
+large and probably nobody has every compiled some of the key components
+on Linux/ARM before.  Because many of those components are very tightly coded
+C (and sometimes assembly) mathematics libraries, there could be nontrivial
+problems.    Even getting SAGE to run on Linux Itanium is pretty
+challenging; last time
+I tried, I ran into a major bug in Python, where any use of readline immediately
+crashed Python.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; &gt; It actually has the advantage of being both in Debian and
+&gt; &gt; &gt; Ubuntu as it gets to Ubuntu automatically.
+
+&gt; &gt; That is certainly true, but I do not believe that William's scenario (2)
+&gt; &gt; will happen anytime soon. I believe that Sage can live just fine with
+&gt; &gt; scenario (1).
+
+&gt; Debian doesn't allow the scenario (1) (officially), but I thought
+&gt; Ubuntu also doesn't.
+">
+
+Good point/question.   When suggesting (1) I only meant that the
+.deb would be distributed from sagemath mirrors, or an apt repository
+that we setup.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; And some of the discussion regarding the removal on non-free documentation
+&gt; &gt; out of debian (I believe it was the glibc doc among other things) makes my
+&gt; &gt; head spin. The issue was postponed to get Sarge out of the door, but
+&gt; &gt; still.  Alas, I don't want to start a flame war about Linux distributions,
+&gt; &gt; so anybody who feels offended please correct me offlist or put me in your
+&gt; &gt; kill file :)
+
+&gt; I think the flamewar only happens when people don't know how (or don't
+&gt; want) to discuss. I think it's very good that Debian distinguishes
+&gt; main and non-free, because I am always sure that when I install main,
+&gt; I have all the rights are described in the Debian Free Software
+&gt; Guidelines (DFSG). And the non-free is there  for things that I need
+&gt; (like wireless things, some documentation, google earth, ...) -- but
+&gt; it reminds me that those programs are not free and thus I should be
+&gt; aware that if I depend on them too much, I could easily get stuck
+&gt; depending on something that I am not allowed to fix or use freely. I
+&gt; think it's very cleverly invented.
+">
+
+I completely agree that there is huge longterm value in how careful
+Debian is in distinguishing free/non-free.
+
+William
+</POST>
+<POST>
+<POSTER> &quot;Michael Abshoff&quot; &lt;Michael.Absh...@fsmath.mathematik.uni-dortmund.de&gt; </POSTER>
+<POSTDATE> 2007-07-17T15:10:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Ondrej Certik wrote:
+">
+
+Hello,
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; &gt;&gt; current stable release on a whim, so I think getting Sage into Ubuntu
+&gt;&gt; is
+&gt;&gt; &gt;&gt; a
+&gt;&gt; &gt;&gt; much more reachable goal. It also seems that Ubuntu is getting a lot
+&gt;&gt; &gt;&gt; more
+&gt;&gt; &gt;&gt; mindshare in the *desktop* these days (compared to Debian unstable).
+
+&gt;&gt; I meant Debian *stable* in the end, not *unstable*
+
+&gt; That is certainly true.
+
+&gt;&gt; Disclaimer: I can only describe from what I saw happening on the LyX and
+&gt;&gt; ATLAS mailing lists. I have never been a Debian packager/developer nor
+&gt;&gt; have I ever applied to be one, so I might be mistaken about several
+&gt;&gt; issues.
+
+&gt; I am also not a DD (Debian Developer), but I created and got around 5
+&gt; packages to Debian unstable already.
+">
+
+But do you still need a sponsor?
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Well, Debian supports a lot more architectures and from what I know it
+&gt;&gt; is
+&gt;&gt; discouraged to limit the architecture due to non-technical reasons. Sage
+&gt;&gt; is widely used on Linux and x86, x86-64 and to some extend on PPC and
+&gt;&gt; Itanic, but what about the other 9 or so architectures Debian supports?
+&gt;&gt; They provide build infrastructure, but who would care about Sage on
+&gt;&gt; Linux/ARM?
+
+&gt; If noone is using it, than no bugs will be filled against it I guess.
+&gt; And if it doesn't even build, that's of course another issue. But that
+&gt; usually signals that something is wrong.
+
+&gt;&gt; The other issue I have seen was that in stable you had to patch bugs,
+&gt;&gt; not
+&gt;&gt; add features. Specfically: When LyX 1.4.4 came out the Debian stable
+&gt;&gt; package was still 1.4.2, so instead of upgrading to 1.4.4 wholesale the
+&gt;&gt; maintainer had to pick the patches out that fixed bugs and to apply
+&gt;&gt; them.
+
+&gt; I thought only the vulnerability bugs are fixed in the stable
+&gt; distribution. Well, that of course is an issue. But isn't the same
+&gt; problem in Ubuntu then?
+">
+
+Yes, I believe so, but the greater release frequency would compensate to
+some extent. Overall the question whether Sage should be part of the
+distribution or whether there should be packages provided for
+distributions. I think that external packages just provide more
+flexibility and it is a prerequisite for distribution packages (in
+monolithic form or whatever) anyway.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; &gt; It actually has the advantage of being both in Debian and
+&gt;&gt; &gt; Ubuntu as it gets to Ubuntu automatically.
+
+&gt;&gt; That is certainly true, but I do not believe that William's scenario (2)
+&gt;&gt; will happen anytime soon. I believe that Sage can live just fine with
+&gt;&gt; scenario (1).
+
+&gt; Debian doesn't allow the scenario (1) (officially), but I thought
+&gt; Ubuntu also doesn't.
+">
+
+Probably not, I would be surprised íf they did. A 150MB package that would
+be considered non-essential by most users probably wouldn't be on the disc
+images anyway, so providing it someplace else for download wouldn't make
+much of a difference.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; And looking at the pace of Sage releases: Who would want to work with
+&gt;&gt; the
+&gt;&gt; Sage released 1.5 years ago? Who would maintain such old releases? That
+&gt;&gt; and the (more or less) reliable 6 months release time frame of Ubuntu
+&gt;&gt; could make the (potential) synchronisation of Sage releases a lot more
+&gt;&gt; plannable, because who knows when the next Debian stable will come. I
+&gt;&gt; use
+&gt;&gt; to admin some boxes with Debian stable a long time ago and the
+&gt;&gt; neverending
+&gt;&gt; wait for Woody (finally released in 2002) made me switch distributions.
+&gt;&gt; Sarge came along nearly 3 years later, so the release frequency of
+&gt;&gt; Ubuntu
+&gt;&gt; has been higher than 3 times that of Debian stable.
+
+&gt; I really thought only the security bugs are fixed in the stable,
+&gt; otherwise the packages are untouched. But I've been only using
+&gt; unstable for last couple of years... Of course it doesn't make sense
+&gt; to maintain old releases, but I think it is not necessary. So please
+&gt; correct me if I am wrong.
+">
+
+It is more than security bugs, but overall the Debian people prefer
+stability over features in stable. And that is certainly a valid choice
+for many people.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; And some of the discussion regarding the removal on non-free
+&gt;&gt; documentation
+&gt;&gt; out of debian (I believe it was the glibc doc among other things) makes
+&gt;&gt; my
+&gt;&gt; head spin. The issue was postponed to get Sarge out of the door, but
+&gt;&gt; still.  Alas, I don't want to start a flame war about Linux
+&gt;&gt; distributions,
+&gt;&gt; so anybody who feels offended please correct me offlist or put me in
+&gt;&gt; your
+&gt;&gt; kill file :)
+
+&gt; I think the flamewar only happens when people don't know how (or don't
+&gt; want) to discuss. I think it's very good that Debian distinguishes
+&gt; main and non-free, because I am always sure that when I install main,
+&gt; I have all the rights are described in the Debian Free Software
+&gt; Guidelines (DFSG). And the non-free is there  for things that I need
+&gt; (like wireless things, some documentation, google earth, ...) -- but
+&gt; it reminds me that those programs are not free and thus I should be
+&gt; aware that if I depend on them too much, I could easily get stuck
+&gt; depending on something that I am not allowed to fix or use freely. I
+&gt; think it's very cleverly invented.
+">
+
+I agree, but (at least it seems to me personally) too much politics has
+not always served the Debian project well. I can understand the arguments
+about non-free kernel modules (and I don't run them, because I avoid
+buying that hardware), but (and this is only an example) the discussion of
+stripping all non-free firmware (and not non-redistributable) out of the
+kernel just lets me shake my head with wonders. In a similar matter it
+boils down to &quot;free software&quot; vs. &quot;open source&quot; - to the outsider it
+appears the same, but for the insider ...
+
+It reminds me of an old User Friendly the comic strip where after the
+techies have been allowed to install Linux the management assumes that
+they are happy, while it is revealed in the next pane that they are having
+an argument which Linux distribution to install.
+
+<QUOTE PREVIOUSPOST="
+&gt; The only problem is that because
+&gt; Debian is only developed by volunteers, some things are quite slow,
+&gt; and that's where Ubuntu comes in.
+">
+
+Well, you can certainly make that argument, but other volunteer driven
+distributions do not have that problem. I use Gentoo (besides OpenSuSE,
+Fedora Core, and a couple more) and even though they all have their
+problems  Gentoo is community driven and releases 4 times a year. It isn't
+always a smooth ride, but in life there are always tradeoffs. Debian has
+profited immensely from Ubuntu (for example the KDE and Gnome packages
+shipped in Sarge were pushed by Ubuntu developers) and lots of former
+Debian developers nowadays work for and get paid by Ubuntu. And those
+packages they work on end up in Debian unstable/testing, so Debian
+certainly profits from Ubuntu, even though the general Slashdot tenor has
+been for some time that Ubuntu is bleeding Debian dry.
+
+To get back on topic: It seems certainly possible to get a deb working on
+the current Ubuntu distribution as well as Debian testing. Is nobody has
+tried by this weekend I will give it a shot at least on x86. Depending on
+when 2.7 is planned it might be even worthwhile to do so now :)
+
+<QUOTE PREVIOUSPOST="
+&gt; Ondrej
+">
+
+Cheers,
+
+Michael
+</POST>
+<POST>
+<POSTER> &quot;Ondrej Certik&quot; &lt;ondrej.cer...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-17T18:01:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Building SAGE on Linux/ARM at all is likely a major project.  SAGE is quite
+&gt; large and probably nobody has every compiled some of the key components
+&gt; on Linux/ARM before.  Because many of those components are very tightly coded
+&gt; C (and sometimes assembly) mathematics libraries, there could be nontrivial
+&gt; problems.    Even getting SAGE to run on Linux Itanium is pretty
+&gt; challenging; last time
+&gt; I tried, I ran into a major bug in Python, where any use of readline immediately
+&gt; crashed Python.
+">
+
+Debian packages don't have to be available on all architectures, see
+for example openoffice:
+
+http://packages.debian.org/unstable/editors/openoffice.org
+
+which is only available for amd64, i386, powerpc and sparc. So SAGE
+would be available only on those architectures it actually builds on.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; I am also not a DD (Debian Developer), but I created and got around 5
+&gt; &gt; packages to Debian unstable already.
+
+&gt; But do you still need a sponsor?
+">
+
+Yes, for every upload. But once you find one, it is usually very fast,
+because it only takes him a couple of seconds to upload a new version
+of the package.
+
+<QUOTE PREVIOUSPOST="
+&gt; It is more than security bugs, but overall the Debian people prefer
+&gt; stability over features in stable. And that is certainly a valid choice
+&gt; for many people.
+">
+
+So what is a problem with maintaining a package in the stable? If SAGE
+doesn't have security issues, the maintainer doesn't have to fix
+anything.
+
+<QUOTE PREVIOUSPOST="
+&gt; I agree, but (at least it seems to me personally) too much politics has
+&gt; not always served the Debian project well. I can understand the arguments
+&gt; about non-free kernel modules (and I don't run them, because I avoid
+&gt; buying that hardware), but (and this is only an example) the discussion of
+&gt; stripping all non-free firmware (and not non-redistributable) out of the
+&gt; kernel just lets me shake my head with wonders. In a similar matter it
+&gt; boils down to &quot;free software&quot; vs. &quot;open source&quot; - to the outsider it
+&gt; appears the same, but for the insider ...
+">
+
+Well, I don't see this as a question of some idealism or whatsoever,
+but as a very practical question - am I allowed to fix bugs, see the
+sources, redistribute things etc (the main section), or not (non-free
+section). So I am glad they are very strict about this.
+
+The same with Firefox/Iceweasel - first I thought they went crazy, but
+when I thought about it, it is the right thing to do - if they cannot
+fix the sources of Firefox (without renaming it), then it cannot be in
+main, so they renamed it.
+
+<QUOTE PREVIOUSPOST="
+&gt; It reminds me of an old User Friendly the comic strip where after the
+&gt; techies have been allowed to install Linux the management assumes that
+&gt; they are happy, while it is revealed in the next pane that they are having
+&gt; an argument which Linux distribution to install.
+">
+
+Well, everyone his favourite.
+
+<QUOTE PREVIOUSPOST="
+&gt; Well, you can certainly make that argument, but other volunteer driven
+&gt; distributions do not have that problem. I use Gentoo (besides OpenSuSE,
+&gt; Fedora Core, and a couple more) and even though they all have their
+&gt; problems  Gentoo is community driven and releases 4 times a year. It isn't
+">
+
+That's true. So where do you think the problem is? I am sorry it's a
+little off topic, but I am curious. It is actually not that much
+offtopic, because SAGE is in fact a distribution with a really
+formidable goal of working on all linuxes (and wmware). I myself just
+use the infrastructure of Debian, because all I do is to put sources
+for the package and Debian takes care of everything else -
+distribution, compilation, download, advertisement. Plus it has more
+than 1000 developers and many more people like me, so it is very
+convenient and powerful to &quot;use&quot; them, instead of doing things on my
+own.
+
+<QUOTE PREVIOUSPOST="
+&gt; always a smooth ride, but in life there are always tradeoffs. Debian has
+&gt; profited immensely from Ubuntu (for example the KDE and Gnome packages
+&gt; shipped in Sarge were pushed by Ubuntu developers) and lots of former
+&gt; Debian developers nowadays work for and get paid by Ubuntu. And those
+&gt; packages they work on end up in Debian unstable/testing, so Debian
+&gt; certainly profits from Ubuntu, even though the general Slashdot tenor has
+&gt; been for some time that Ubuntu is bleeding Debian dry.
+">
+
+There is no doubt that Ubuntu helps Debian (and vice versa) and linux
+in general.
+
+Ondrej
+</POST>
+<POST>
+<POSTER> &quot;William Stein&quot; &lt;wst...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-07-22T20:07:00 </POSTDATE>
+On 7/19/07, Georges Khaznadar &lt;georges.khazna ... @free.fr&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; William Stein a écrit :
+&gt; &gt; (1) Create a monolothic .deb, which installs everything SAGE currently
+&gt; &gt; distributes in /opt/sage/, along with a run script  /usr/bin/sage.
+
+&gt; This stage is OK : the debian package was built finely, but it is done
+&gt; using a brutal technique: everything is distributed, even .o files and
+&gt; many other useless stuff. The resulting package is bloated (255
+&gt; megaBytes!)
+">
+
+Why is it so big?  It should be possible to make that package but have
+it be about 150MB.
+
+<QUOTE PREVIOUSPOST="
+&gt; I don't wish to uplod it anywhere, and prefer going on with stage 2 as
+&gt; soon as possible.
+">
+
+I would greatly appreciate it if we could finish stage 1 first, and really
+have it something that works well, can be distributed, etc.  This would
+really be beneficial to many people, and as you have already demonstrated
+shouldn't be too difficult.
+
+<QUOTE PREVIOUSPOST="
+&gt; S I would like to ask you some questions in order to
+&gt; save time and unnecessary trials:
+
+&gt; There must be some glue between Sage's core and the other packages like
+&gt; Gap et Maxima, etc. As I aim to replace every part of Sage's current
+&gt; package which was already packaged independently, by some modification of
+&gt; the relevant glue component, so I would like to have some advice about it
+&gt; if you can write it.
+
+&gt; For example, when I packaged Wims, which is now a package of Debian
+&gt; Stable, I had to check that the file
+&gt; /var/lib/wims/public_html/bin/maxima which is the wrapper used by Wims
+&gt; to call Maxima was compatible with the current debian package already
+&gt; existing. Fortunately, there were very few modifications to do inside
+&gt; these glue components. Hopefully it may be similar for Sage?
+">
+
+That's unlikely.  Usually just using *anything* but the current
+version of maxima causes
+tons of problems, since they frequently make substantial changes to precision,
+special functions, etc.  It's a surprisingly actively developed
+package.  Mathematics
+software that wasn't meant to be used in library mode has a very very
+complicated
+interface that is often not very stable between versions of the
+software.  That SAGE
+packages everything else in a monolithic fashion is perhaps the main technical
+reason SAGE is possible at all.
+
+That said, since you're unstoppable :-), each SAGE package (.spkg) is a tar.bz2
+ball that has a file spkg-install in it, and a directory &quot;patches&quot;
+with all patches
+we make against the standard source tarball (actually, patches usually contains
+whole files instead of patches -- use diff to get an actual diff if
+you want one).
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; (2) Only after having completely mastering (1), move on to considering
+&gt; &gt; breaking up SAGE into smaller packages and installing into the standard
+&gt; &gt; Debian environment.
+
+&gt; So I consider it now. If you want I can release the files
+&gt; sage_2.6.orig.tar.gz (105557191 Bytes) and
+&gt; sage_2.6-1.diff.gz   (     7633 Bytes)
+
+&gt; As you can see, the modification to debianise unproprely sage is very
+&gt; lightweight. However I should make a more complete diff file to do it
+&gt; following &quot;the debian way&quot; and make these sources yeld a more reasonably
+&gt; sized binary package. Hence the call for your advice.
+">
+
+Unfortunately (for your project) at the moment the SAGE distribution itself is
+undergoing some fairly extreme modifications as a result of several of the
+coding sprint projects at SAGE Days 4.  We've added numerous new packages,
+and Didier Deshome did a bunch of great work designing a better structure
+for SAGE spkg's.  The next version of SAGE (2.7.1), which I'll release tomorrow,
+will have all spkg's repackaged using this new structure.  Also, it will have,
+hopefully, build much more reliably than SAGE-2.7, due to switching to
+g95 fortran.
+
+I would be extremely grateful if you could download sage-2.7.1 when I release it
+tomorrow, or look at
+http://sage.math.washington.edu/home/was/sage2.7.1/
+which will be pretty close to what sage-2.7.1 will be.  If nothing else, I would
+like any information about making a Debian SAGE package that you've
+come up with so far and would be willing to share.  Thanks!
+
+By the way, would you like an account on sage.math.washington.edu? It's
+basically a big 16-core 64GB RAM server on which most sage developers
+have accounts.  It helps greatly with sharing work.  If so, write to
+me off-list.
+
+-- William
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,551 @@
+<DOC>
+<DOCID> eng-NG-31-135019-9636843 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2008-01-15T15:32:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Are VBO's the answer to my speed problem ?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Lynton Towler&quot; &lt;lyn...@linux-guru.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2008-01-15T15:32:00 </POSTDATE>
+Hi,
+As you will realize by my earlier postings to this NG I'm an OGL newbie,
+however I'm learning fast.
+I'm developing an Interactive Earth program similar to Google Earth. Of
+course it'll never be as good as that though so I'm just doing it as a
+learning project.
+I am using a nice earth texture on the sphere along with latitude and
+longitude data from the CIA World Databank II for the coastlines, rivers and
+national boundaries.
+I've converted the CIA text files to my own binary format which I read into
+the following C structs and am happily rendering the coastlines using
+GL_LINE_STRIP and glVertex3fv inside two for loops. The inner loop just goes
+round and round until each latitude/longitude pair in the segment is drawn.
+The outer loop counts the segments. Each time the outer loop goes round a
+glBegin(GL_LINE_STRIP) is executed. This system works OK apart from the
+speed due to there being some 5718314 lat/lon pairs to deal with. I'm only
+getting about 4 frames per second on a GeForce 6200 PCI card. When I switch
+off the rendering of the CIA data I get around 50FPS.
+
+Maybe a tiny bit of code and some data would help demonstrate this:-
+
+segment 1  rank 1  points 991
+31.646944 25.151389
+31.646111 25.148056
+31.643056 25.143333
+31.640278 25.138889
+31.637222 25.134167
+31.634444 25.129722
+....
+....
+segment 2  rank 1  points 618            &lt;-- 618 Lat/Lon pairs
+21.999722 25.002222
+21.999444 25.003611
+21.999444 25.008889
+21.999444 25.015556
+22.000000 25.021667
+21.999722 25.028333
+21.999444 25.035000
+22.000000 25.041111
+
+struct Vector {
+float x, y, z;
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+struct Segment {
+int nSegment;
+int nRank;
+int nPoints;
+Vector *ptrPoints;
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+struct CIAData {
+int nTotalSegments;
+Segment *ptrSegments;
+
+<QUOTE PREVIOUSPOST="
+};
+">
+
+From the above you can hopefully see how I have my data structured.
+I think converting this little lot to VBO's is the answer to my speed
+problems ?
+What's the best way to approach this bearing in mind each segment must be
+dealt with separately, that's the bit that's confusing the VBO issue for me.
+If say I could just go ahead and plot 5718314 points (lines) one after
+another with no breaks by calling glBegin(GL_LINE_STRIP) then I think I'd be
+OK.
+I can't have a VBO for each segment that would just be daft so what's the
+way to deal with this please ?
+Do I need to restructure my data to make things easier ?
+
+Thanks in advance for any help you can offer
+
+Lynton
+</POST>
+<POST>
+<POSTER> Maik Wagner &lt;maik-wag...@web.de&gt; </POSTER>
+<POSTDATE> 2008-01-15T16:16:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; What's the best way to approach this bearing in mind each segment must
+&gt; be dealt with separately, that's the bit that's confusing the VBO issue
+&gt; for me.
+&gt; If say I could just go ahead and plot 5718314 points (lines) one after
+&gt; another with no breaks by calling glBegin(GL_LINE_STRIP) then I think
+&gt; I'd be OK.
+">
+
+You can use VBOs or Displaylists for that. (I'm not quite sure but
+Displaylist might even be a bit faster then, just not appropriate for
+dynamic data). Anyway you spend less time for bus transfer. (By the way
+there is no glBegin/glEnd for VBOs)
+Both ways you can render huge line strips if you want, but i wouldn't
+suggest that (*1). It looks like you could use one DisplayList/VBO for
+every one of your segments. And if they are connected somehow, you can
+put them together to a greater strip if you want to (which seems not to
+be the case, so you cant build just one strip out of it).
+No matter what you prefer, getting away from immediate mode might be a
+needed step :)
+
+(*1)
+Thats because you might want to implement some culling algorithms later
+to improve performance some more. Therefor you should make sure your
+data is organized in packages not to large.
+And to make it even more confusing you might keep in mind that some sort
+of Level of Detail can be used later (In your case maybe just some
+projective texturing with precalculated textures when getting far away
+from the ground).
+Well alright the last two things have nothing to do with VBOs directly,
+but they can gain you some performance, and it might be hard to achieve
+on a very late state within your implementation.
+</POST>
+<POST>
+<POSTER> fungus &lt;openglMYSO...@artlum.com&gt; </POSTER>
+<POSTDATE> 2008-01-15T19:03:00 </POSTDATE>
+On Jan 15, 9:32 pm, &quot;Lynton Towler&quot; &lt;lyn ... @linux-guru.demon.co.uk&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I think converting this little lot to VBO's is the answer to my speed
+&gt; problems ?
+">
+
+Yes.
+
+<QUOTE PREVIOUSPOST="
+&gt; What's the best way to approach this bearing in mind each segment must be
+&gt; dealt with separately, that's the bit that's confusing the VBO issue for me.
+">
+
+Indexed VBOS with GL_LINES.
+
+nb. Use 16 bit indices. This limits you to 65536 vertices in each
+VBO but it's much faster.
+
+Actually, make it 65534 vertices, that's even faster... :-)
+
+--
+&lt;\___/&gt;
+/ O O \
+\_____/  FTB.     Remove my socks for email address.
+</POST>
+<POST>
+<POSTER> &quot;jbwest&quot; &lt;jbw...@comcast.net&gt; </POSTER>
+<POSTDATE> 2008-01-14T21:56:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Lynton Towler&quot; &lt;lyn ... @linux-guru.demon.co.uk&gt; wrote in message
+">
+
+news:fmj58m$9to$1$8300dec7@news.demon.co.uk ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi,
+&gt;    As you will realize by my earlier postings to this NG I'm an OGL
+&gt; newbie, however I'm learning fast.
+&gt; I'm developing an Interactive Earth program similar to Google Earth. Of
+&gt; course it'll never be as good as that though so I'm just doing it as a
+&gt; learning project.
+&gt; I am using a nice earth texture on the sphere along with latitude and
+&gt; longitude data from the CIA World Databank II for the coastlines, rivers
+&gt; and national boundaries.
+&gt; I've converted the CIA text files to my own binary format which I read
+&gt; into the following C structs and am happily rendering the coastlines using
+&gt; GL_LINE_STRIP and glVertex3fv inside two for loops. The inner loop just
+&gt; goes round and round until each latitude/longitude pair in the segment is
+&gt; drawn. The outer loop counts the segments. Each time the outer loop goes
+&gt; round a glBegin(GL_LINE_STRIP) is executed. This system works OK apart
+&gt; from the speed due to there being some 5718314 lat/lon pairs to deal with.
+&gt; I'm only getting about 4 frames per second on a GeForce 6200 PCI card.
+&gt; When I switch off the rendering of the CIA data I get around 50FPS.
+
+&gt; Maybe a tiny bit of code and some data would help demonstrate this:-
+
+&gt; segment 1  rank 1  points 991
+&gt; 31.646944 25.151389
+&gt; 31.646111 25.148056
+&gt; 31.643056 25.143333
+&gt; 31.640278 25.138889
+&gt; 31.637222 25.134167
+&gt; 31.634444 25.129722
+&gt; ....
+&gt; ....
+&gt; segment 2  rank 1  points 618            &lt;-- 618 Lat/Lon pairs
+&gt; 21.999722 25.002222
+&gt; 21.999444 25.003611
+&gt; 21.999444 25.008889
+&gt; 21.999444 25.015556
+&gt; 22.000000 25.021667
+&gt; 21.999722 25.028333
+&gt; 21.999444 25.035000
+&gt; 22.000000 25.041111
+
+&gt; struct Vector {
+&gt; float x, y, z;
+&gt; };
+
+&gt; struct Segment {
+&gt; int nSegment;
+&gt; int nRank;
+&gt; int nPoints;
+&gt; Vector *ptrPoints;
+&gt; };
+
+&gt; struct CIAData {
+&gt; int nTotalSegments;
+&gt; Segment *ptrSegments;
+&gt; };
+
+&gt; From the above you can hopefully see how I have my data structured.
+&gt; I think converting this little lot to VBO's is the answer to my speed
+&gt; problems ?
+&gt; What's the best way to approach this bearing in mind each segment must be
+&gt; dealt with separately, that's the bit that's confusing the VBO issue for
+&gt; me.
+&gt; If say I could just go ahead and plot 5718314 points (lines) one after
+&gt; another with no breaks by calling glBegin(GL_LINE_STRIP) then I think I'd
+&gt; be OK.
+&gt; I can't have a VBO for each segment that would just be daft so what's the
+&gt; way to deal with this please ?
+&gt; Do I need to restructure my data to make things easier ?
+
+&gt; Thanks in advance for any help you can offer
+
+&gt; Lynton
+">
+
+One Display list for the world render will give you a big speedup --
+probably +/- the same speedup as VBO and a whole lot simpler to implement.
+I'd try that first &amp; see if that meets your needs. Just stuff all the
+begin/end loops into a display list create, and the call that display list
+from thenceforth. Also, turn on backface culling since you can see only 1/2
+the world at a time, if you haven't already. If those 2 don't do it
+perfmance - wise, we'll need to implement more tricks. BTW, you're drawing
+too fine a detail, there's no way you need ~ 6m quads to draw the world. you
+only have a million or so pixels to light up, right ? (When zoomed out).
+PS, you may find that a display list gets incredibly faster as you zoom in.
+View culling on Display Lists is extraordinarily fast, at least on NV Quadro
+cards.
+
+jbw
+
+jbw
+</POST>
+<POST>
+<POSTER> folays &lt;fol...@folays.net&gt; </POSTER>
+<POSTDATE> 2008-01-15T21:12:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+fungus &lt;openglMYSO ... @artlum.com&gt; writes:
+&gt; On Jan 15, 9:32 pm, &quot;Lynton Towler&quot; &lt;lyn ... @linux-guru.demon.co.uk&gt;
+&gt; wrote:
+
+&gt; &gt; I think converting this little lot to VBO's is the answer to my speed
+&gt; &gt; problems ?
+
+&gt; Yes.
+
+&gt; &gt; What's the best way to approach this bearing in mind each segment must be
+&gt; &gt; dealt with separately, that's the bit that's confusing the VBO issue for
+&gt; &gt; me.
+
+&gt; Indexed VBOS with GL_LINES.
+
+&gt; nb. Use 16 bit indices. This limits you to 65536 vertices in each
+&gt; VBO but it's much faster.
+">
+
+Indeed, i've read that 32 bit indices for VBOs aren't optimized on some
+hardware, whereas 16 bits are.
+
+Some further references:
+http://www.gamedev.net/community/forums/topic.asp?topic_id=191418
+http://ati.amd.com/developer/SDK/AMD_SDK_Samples_May2007/Documentations/
+ATI_OpenGL_Programming_and_Optimization_Guide.pdf
+
+<QUOTE PREVIOUSPOST="
+&gt; Actually, make it 65534 vertices, that's even faster... :-)
+">
+
+--
+folays
+</POST>
+<POST>
+<POSTER> &quot;Lynton Towler&quot; &lt;lyn...@linux-guru.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2008-01-19T15:00:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;jbwest&quot; &lt;jbw ... @comcast.net&gt; wrote in message
+">
+
+news:iaWdnR2ny6rx7BDanZ2dnUVZ_uOmnZ2d@comcast.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; One Display list for the world render will give you a big speedup --
+&gt; probably +/- the same speedup as VBO and a whole lot simpler to implement.
+&gt; I'd try that first &amp; see if that meets your needs. Just stuff all the
+&gt; begin/end loops into a display list create, and the call that display list
+&gt; from thenceforth. Also, turn on backface culling since you can see only
+&gt; 1/2 the world at a time, if you haven't already. If those 2 don't do it
+&gt; perfmance - wise, we'll need to implement more tricks. BTW, you're drawing
+&gt; too fine a detail, there's no way you need ~ 6m quads to draw the world.
+&gt; you only have a million or so pixels to light up, right ? (When zoomed
+&gt; out). PS, you may find that a display list gets incredibly faster as you
+&gt; zoom in. View culling on Display Lists is extraordinarily fast, at least
+&gt; on NV Quadro cards.
+
+&gt; jbw
+
+&gt; jbw
+">
+
+OK I'll give the display list a try, its something I haven't really looked
+at until now so I'll go away and do a bit of reading.
+From what I have seen so far it looks quite easy to implement and if the
+potential speedup is in the same ballpark as VBO then that's great.
+I've turned on backface culling as it was only a few lines of code. I
+haven't noticed any improvement with that but it sure isn't going to hurt to
+have for the reasons you stated.
+The lat/lon pairs generate country boundaries etc rather like the yellow
+lines on Google Earth so yes I guess I am drawing far too much detail.
+I did notice the segments have a so called ranking which can be used to
+determine whether or not to draw a segment depending on the zoom level so
+maybe that's something else to consider.
+
+Thanks for your help.
+
+Lynton
+</POST>
+<POST>
+<POSTER> &quot;Lynton Towler&quot; &lt;lyn...@linux-guru.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2008-01-19T15:09:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Maik Wagner&quot; &lt;maik-wag ... @web.de&gt; wrote in message
+">
+
+news:fmj7ri$gai$1@anderson.hrz.tu-chemnitz.de ...
+
+<QUOTE PREVIOUSPOST="
+&gt; You can use VBOs or Displaylists for that. (I'm not quite sure but
+&gt; Displaylist might even be a bit faster then, just not appropriate for
+&gt; dynamic data). Anyway you spend less time for bus transfer. (By the way
+&gt; there is no glBegin/glEnd for VBOs)
+&gt; Both ways you can render huge line strips if you want, but i wouldn't
+&gt; suggest that (*1). It looks like you could use one DisplayList/VBO for
+&gt; every one of your segments. And if they are connected somehow, you can put
+&gt; them together to a greater strip if you want to (which seems not to be the
+&gt; case, so you cant build just one strip out of it).
+&gt; No matter what you prefer, getting away from immediate mode might be a
+&gt; needed step :)
+
+&gt; (*1)
+&gt; Thats because you might want to implement some culling algorithms later to
+&gt; improve performance some more. Therefor you should make sure your data is
+&gt; organized in packages not to large.
+&gt; And to make it even more confusing you might keep in mind that some sort
+&gt; of Level of Detail can be used later (In your case maybe just some
+&gt; projective texturing with precalculated textures when getting far away
+&gt; from the ground).
+&gt; Well alright the last two things have nothing to do with VBOs directly,
+&gt; but they can gain you some performance, and it might be hard to achieve on
+&gt; a very late state within your implementation.
+">
+
+OK Maik I need to go away and do some reading up on Display Lists before
+attempting to implement them.
+It may well be I need to reorganize my data at some point to make it easier
+to handle during the rendering process.
+The data is composed of lots of disconnected segments, so for example a
+complete segment may be the border around Iceland for example.
+That segment is obviously in no way connected with the border around the USA
+so effectively I have been treating them separately by effectively executing
+a glBegin(GL_LINE_STRIP); to break the flow of the strip. This is done in
+the outer loop as shown below.
+
+for (int i=0; i&lt;cia-&gt;nTotalSegments; i++) {
+glBegin(GL_LINE_STRIP);
+glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
+
+for (int j=0; j&lt;cia-&gt;ptrSegments[i].nPoints; j++) {  /* Do all vertices in
+this feature */
+if (cia-&gt;ptrSegments[i].nRank == 1) {
+glVertex3fv((float*)&amp;cia-&gt;ptrSegments[i].ptrPoints[j]);
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+}
+glEnd();
+}
+
+I'm going to look at both Display Lists and VBO as part of the learning
+process so I still need to figure out how I can handle the data in one VBO
+or Display list but still retain the separate segments if you see what I
+mean.
+
+Thanks for your help.
+
+Lynton
+</POST>
+<POST>
+<POSTER> &quot;Lynton Towler&quot; &lt;lyn...@linux-guru.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2008-01-19T15:12:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;fungus&quot; &lt;openglMYSO ... @artlum.com&gt; wrote in message
+">
+
+news:c11dc531-b197-4bbd-8edf-0da0ea8bf9ea@e23g2000prf.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 15, 9:32 pm, &quot;Lynton Towler&quot; &lt;lyn ... @linux-guru.demon.co.uk&gt;
+&gt; wrote:
+
+&gt;&gt; I think converting this little lot to VBO's is the answer to my speed
+&gt;&gt; problems ?
+
+&gt; Yes.
+
+&gt;&gt; What's the best way to approach this bearing in mind each segment must be
+&gt;&gt; dealt with separately, that's the bit that's confusing the VBO issue for
+&gt;&gt; me.
+
+&gt; Indexed VBOS with GL_LINES.
+
+&gt; nb. Use 16 bit indices. This limits you to 65536 vertices in each
+&gt; VBO but it's much faster.
+
+&gt; Actually, make it 65534 vertices, that's even faster... :-)
+
+&gt; --
+&gt; &lt;\___/&gt;
+&gt; / O O \
+&gt; \_____/  FTB.     Remove my socks for email address.
+">
+
+OK thanks for the reply. There seems to be a common theme here. I either
+need to switch to VBOs or Display Lists.
+I'm going to try both because it'll be a useful learning exercise and I'll
+report back to the group on my successes and or failures :-)
+
+Thanks for your help.
+
+Lynton
+</POST>
+<POST>
+<POSTER> &quot;Lynton Towler&quot; &lt;lyn...@linux-guru.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2008-01-19T15:13:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;folays&quot; &lt;fol ... @folays.net&gt; wrote in message
+">
+
+news:87k5ma7c3l.fsf@knight.folays.net ...
+
+<QUOTE PREVIOUSPOST="
+&gt; fungus &lt;openglMYSO ... @artlum.com&gt; writes:
+
+&gt;&gt; On Jan 15, 9:32 pm, &quot;Lynton Towler&quot; &lt;lyn ... @linux-guru.demon.co.uk&gt;
+&gt;&gt; wrote:
+
+&gt;&gt; &gt; I think converting this little lot to VBO's is the answer to my speed
+&gt;&gt; &gt; problems ?
+
+&gt;&gt; Yes.
+
+&gt;&gt; &gt; What's the best way to approach this bearing in mind each segment must
+&gt;&gt; &gt; be
+&gt;&gt; &gt; dealt with separately, that's the bit that's confusing the VBO issue
+&gt;&gt; &gt; for
+&gt;&gt; &gt; me.
+
+&gt;&gt; Indexed VBOS with GL_LINES.
+
+&gt;&gt; nb. Use 16 bit indices. This limits you to 65536 vertices in each
+&gt;&gt; VBO but it's much faster.
+
+&gt; Indeed, i've read that 32 bit indices for VBOs aren't optimized on some
+&gt; hardware, whereas 16 bits are.
+
+&gt; Some further references:
+&gt; http://www.gamedev.net/community/forums/topic.asp?topic_id=191418
+&gt; http://ati.amd.com/developer/SDK/AMD_SDK_Samples_May2007/Documentations/
+&gt; ATI_OpenGL_Programming_and_Optimization_Guide.pdf
+
+&gt;&gt; Actually, make it 65534 vertices, that's even faster... :-)
+
+&gt; --
+&gt; folays
+">
+
+Hmm thats a good point. Especially taking into consideration the number of
+vertices I'm drawing.
+
+Thanks for the advice.
+
+Lynton
+</POST>
+<POST>
+<POSTER> &quot;Lynton Towler&quot; &lt;lyn...@linux-guru.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2008-01-23T17:03:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Lynton Towler&quot; &lt;lyn ... @linux-guru.demon.co.uk&gt; wrote in message
+">
+
+news:fmj58m$9to$1$8300dec7@news.demon.co.uk ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi,
+&gt;    As you will realize by my earlier postings to this NG I'm an OGL
+&gt; newbie, however I'm learning fast.
+">
+
+I've actually managed to make quite a lot of progress with this over the
+past few days but still one thing remains unclear in my mind.
+I have coded a basic program using VBO's and its working OK but I have a
+question.
+Rather than being too project specific I'll try to ask the question in a
+general manner.
+I'm drawing lines using  glDrawArrays(GL_LINE_STRIP, a, b) and I have a
+structure with point locations and colour information.
+Its easy to simply draw each point in turn so building up a continuous line
+that has a start and end, however I have a need to draw several lines each
+with a number of points, followed by another line made up of a number of
+points that is disconnected from the first if that makes sense.
+There are potentially hundreds of these disconnected lines or
+segments...................
+I know how many points make up each continuous segment as that is stored in
+my struct but whats the best way to make use of that figure in the VBO code
+to break up my line as its drawn?
+
+Regards
+
+Lynton
+</POST>
+</TEXT>
+</BODY>
+</DOC>

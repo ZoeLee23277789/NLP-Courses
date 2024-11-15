@@ -1,0 +1,418 @@
+<DOC>
+<DOCID> eng-NG-31-135591-9755364 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-27T18:05:00 </DATETIME>
+<BODY>
+<HEADLINE>
+is there to invoke 'previous' in Find? (or refresh the current path?)
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;dtow...@gmail.com&quot; &lt;dtow...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-27T18:05:00 </POSTDATE>
+I am writing a small script which recursively goes down a dir
+hierarchy, and when it reaches a set of files, it applies a 3rd party
+application which modifies those files, and prepends the name with
+&quot;Mod-&quot;.
+
+So for example, if i had a directory with only 1 file: C:\myDir
+\myFile.txt, and I ran the app, I would end up with the following
+files in c:\myDir
+
+myFile.txt
+Mod-myFile.txt
+
+Basically, what i want to do is traverse down the hierarchy, when i
+reach a set of files, call the app on that directory, then delete the
+original, and rename the new file so that the &quot;Mod-&quot; is removed.
+Unfortunately, the Find function doesnt see the newly created file,
+and thus i cant delete &amp; rename. My code looks something like this:
+
+Find.find(startingDir) do |path|
+if File.directory?(path)
+next
+else
+system(&quot;myapp #{path}&quot;)
+puts path
+if File.basename(path) =~ /^Mod-/
+if File.exists?(path.sub('Mod-', ''))
+File.delete(path.sub('Mod-', ''))
+end
+File.rename(path, path.sub('Mod-', ''))
+end
+end
+end
+
+I was wondering if there was a way to reset the path one level up
+(i.e. where &quot;puts path&quot; is above), that way the current directory
+would be refreshed, and the new files would be recognized.
+
+thanks!
+</POST>
+<POST>
+<POSTER> &quot;dtow...@gmail.com&quot; &lt;dtow...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-28T12:36:00 </POSTDATE>
+*bump*
+</POST>
+<POST>
+<POSTER> &quot;Logan Capaldo&quot; &lt;logancapa...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-28T12:50:00 </POSTDATE>
+On 9/28/07, dtow ... @gmail.com &lt;dtow ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; *bump*
+">
+
+This is unacceptable. One does not &quot;bump&quot; a mailing list, especially
+if one's original mail was sent less that 24 hours ago. Sending a
+wasteful message with no content will not incline anyone to answer
+your question more quickly. Please do not do it again.
+</POST>
+<POST>
+<POSTER> &quot;dtow...@gmail.com&quot; &lt;dtow...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-28T14:02:00 </POSTDATE>
+sorry for that...generally i post on forums, and i have never felt
+that bumping a thread on a forum was a no no...but i can understand
+why it would be so on a mailing list.
+
+i am just a bit eager to solve this problem...
+</POST>
+<POST>
+<POSTER> Daniel Berger &lt;djber...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-28T15:12:00 </POSTDATE>
+On Sep 27, 4:10 pm, &quot;dtow ... @gmail.com&quot; &lt;dtow ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I am writing a small script which recursively goes down a dir
+&gt; hierarchy, and when it reaches a set of files, it applies a 3rd party
+&gt; application which modifies those files, and prepends the name with
+&gt; &quot;Mod-&quot;.
+
+&gt; So for example, if i had a directory with only 1 file: C:\myDir
+&gt; \myFile.txt, and I ran the app, I would end up with the following
+&gt; files in c:\myDir
+
+&gt; myFile.txt
+&gt; Mod-myFile.txt
+
+&gt; Basically, what i want to do is traverse down the hierarchy, when i
+&gt; reach a set of files, call the app on that directory, then delete the
+&gt; original, and rename the new file so that the &quot;Mod-&quot; is removed.
+&gt; Unfortunately, the Find function doesnt see the newly created file,
+&gt; and thus i cant delete &amp; rename. My code looks something like this:
+
+&gt; Find.find(startingDir) do |path|
+&gt;   if File.directory?(path)
+&gt;         next
+&gt;   else
+&gt;         system(&quot;myapp #{path}&quot;)
+&gt;         puts path
+&gt;         if File.basename(path) =~ /^Mod-/
+&gt;           if File.exists?(path.sub('Mod-', ''))
+&gt;                 File.delete(path.sub('Mod-', ''))
+&gt;           end
+&gt;         File.rename(path, path.sub('Mod-', ''))
+&gt;         end
+&gt;   end
+&gt; end
+
+&gt; I was wondering if there was a way to reset the path one level up
+&gt; (i.e. where &quot;puts path&quot; is above), that way the current directory
+&gt; would be refreshed, and the new files would be recognized.
+">
+
+I don't think so. You'll probably have to use Dir.glob, keep a
+separate array of paths already visited and manually rewind back to
+your queue.
+
+You post does give me some devilish ideas for my file-find library,
+and made me reconsider the implementation in general. I think I should
+use Dir.new (instead of Dir.foreach) and iterate over the file list
+using the returned handle. That way I can use Dir#rewind, and &quot;fast
+forward&quot; to a given point in an array of already visited paths. You
+may want to consider that approach as well.
+
+I'll also post what I come up with for file-find. :)
+
+Regards,
+
+Dan
+</POST>
+<POST>
+<POSTER> Daniel Berger &lt;djber...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-28T17:24:00 </POSTDATE>
+On Sep 28, 1:12 pm, Daniel Berger &lt;djber ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 27, 4:10 pm, &quot;dtow ... @gmail.com&quot; &lt;dtow ... @gmail.com&gt; wrote:
+
+&gt; &gt; I am writing a small script which recursively goes down a dir
+&gt; &gt; hierarchy, and when it reaches a set of files, it applies a 3rd party
+&gt; &gt; application which modifies those files, and prepends the name with
+&gt; &gt; &quot;Mod-&quot;.
+
+&gt; &gt; So for example, if i had a directory with only 1 file: C:\myDir
+&gt; &gt; \myFile.txt, and I ran the app, I would end up with the following
+&gt; &gt; files in c:\myDir
+
+&gt; &gt; myFile.txt
+&gt; &gt; Mod-myFile.txt
+
+&gt; &gt; Basically, what i want to do is traverse down the hierarchy, when i
+&gt; &gt; reach a set of files, call the app on that directory, then delete the
+&gt; &gt; original, and rename the new file so that the &quot;Mod-&quot; is removed.
+&gt; &gt; Unfortunately, the Find function doesnt see the newly created file,
+&gt; &gt; and thus i cant delete &amp; rename. My code looks something like this:
+
+&gt; &gt; Find.find(startingDir) do |path|
+&gt; &gt;   if File.directory?(path)
+&gt; &gt;         next
+&gt; &gt;   else
+&gt; &gt;         system(&quot;myapp #{path}&quot;)
+&gt; &gt;         puts path
+&gt; &gt;         if File.basename(path) =~ /^Mod-/
+&gt; &gt;           if File.exists?(path.sub('Mod-', ''))
+&gt; &gt;                 File.delete(path.sub('Mod-', ''))
+&gt; &gt;           end
+&gt; &gt;         File.rename(path, path.sub('Mod-', ''))
+&gt; &gt;         end
+&gt; &gt;   end
+&gt; &gt; end
+
+&gt; &gt; I was wondering if there was a way to reset the path one level up
+&gt; &gt; (i.e. where &quot;puts path&quot; is above), that way the current directory
+&gt; &gt; would be refreshed, and the new files would be recognized.
+
+&gt; I don't think so. You'll probably have to use Dir.glob, keep a
+&gt; separate array of paths already visited and manually rewind back to
+&gt; your queue.
+
+&gt; You post does give me some devilish ideas for my file-find library
+">
+
+&lt;snip&gt;
+
+Ok, here's what I came up with. First, I added a Rule#previous method,
+which shows you the file you iterated over previously (or nil, if it's
+the first match). With this in place you can do something like this:
+
+require 'file/find'
+
+rule = File::Find.new(
+:name =&gt; &quot;z*.h&quot;,
+:path =&gt; &quot;/my/include/sys&quot;
+)
+
+rule.find{ |file|
+if file == 'zone.h'
+# Rename zone.h
+rule.rewind(rule.previous)
+else
+puts file
+end
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+The rewind code isn't the zippiest thing, but it works.
+
+How does that look?
+
+Regards,
+
+Dan
+</POST>
+<POST>
+<POSTER> &quot;dtow...@gmail.com&quot; &lt;dtow...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-28T17:43:00 </POSTDATE>
+Hi Dan,
+
+I'm guessing 'file/find' is a gem of yours? I wasnt able to find it
+using the gem command.
+</POST>
+<POST>
+<POSTER> &quot;ara.t.howard&quot; &lt;ara.t.how...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-28T17:45:00 </POSTDATE>
+On Sep 27, 2007, at 4:10 PM, dtow ... @gmail.com wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; myFile.txt
+&gt; Mod-myFile.txt
+
+&gt; Basically, what i want to do is traverse down the hierarchy, when i
+&gt; reach a set of files, call the app on that directory, then delete the
+&gt; original, and rename the new file so that the &quot;Mod-&quot; is removed.
+&gt; Unfortunately, the Find function doesnt see the newly created file,
+&gt; and thus i cant delete &amp; rename. My code looks something like this:
+
+&gt; Find.find(startingDir) do |path|
+&gt;   if File.directory?(path)
+&gt;    next
+&gt;   else
+&gt;    system(&quot;myapp #{path}&quot;)
+&gt;    puts path
+&gt;    if File.basename(path) =~ /^Mod-/
+&gt;      if File.exists?(path.sub('Mod-', ''))
+&gt;            File.delete(path.sub('Mod-', ''))
+&gt;      end
+&gt;         File.rename(path, path.sub('Mod-', ''))
+&gt;    end
+&gt;   end
+&gt; end
+">
+
+this makes no sense at all - you *know* that the file is created -
+you don't *care* if find sees it.  all you need to do is
+
+require  'fileutils'
+
+Dir.glob('**/**') do |src|
+next if test ?d, src
+
+dst = &quot;Mod-#{ src }&quot;
+
+cmd = &quot;app #{ src }&quot;
+system cmd
+
+abort &quot;&lt;#{ cmd }&gt; failed with &lt;#{ $?.inspect }&gt;&quot; unless
+$?.exitstatus.zero? and test ?e, dst
+
+FileUtils.rm_f src
+FileUtils.mv dst, src
+end
+
+or am i missing something here?
+
+cheers.
+
+a @ http://drawohara.com/
+--
+we can deny everything, except that we have the possibility of being
+better. simply reflect on that.
+h.h. the 14th dalai lama
+</POST>
+<POST>
+<POSTER> &quot;dtow...@gmail.com&quot; &lt;dtow...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-28T18:00:00 </POSTDATE>
+Hi ara,
+
+I don't necessarily know that the file is created, since I provide the
+directory containing the files to the 3rd party app, and it make not
+have successfully modified all the of the files.
+
+My thought process is something like this:
+
+1. traverse down the directory tree, when i reach a specified file
+type, i know i have found one of the many directories which contain
+the files i want to modify,
+2. pass the directory to the 3rd party app, and it does its thing, and
+hopefully the files are modified correctly (even if some or not, i do
+not want to stop the script, i would like it to continue on, modifying
+and renaming
+3. refresh the current directory, go through each of the files, if the
+original file exists, and the modified one, delete the original, and
+rename the modified.
+4. back to step 1
+
+Hope this clears things up a bit
+</POST>
+<POST>
+<POSTER> &quot;ara.t.howard&quot; &lt;ara.t.how...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-28T18:33:00 </POSTDATE>
+On Sep 28, 2007, at 4:05 PM, dtow ... @gmail.com wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi ara,
+
+&gt; I don't necessarily know that the file is created, since I provide the
+&gt; directory containing the files to the 3rd party app, and it make not
+&gt; have successfully modified all the of the files.
+">
+
+sure but if
+
+- it modified correctly you can do the move yourself
+- it did not then simply do nothing or blow up
+
+either way it does not seem essential that find picks this file up
+since you are clobber a file it already found right?
+
+<QUOTE PREVIOUSPOST="
+&gt; My thought process is something like this:
+
+&gt; 1. traverse down the directory tree, when i reach a specified file
+&gt; type, i know i have found one of the many directories which contain
+&gt; the files i want to modify,
+&gt; 2. pass the directory to the 3rd party app, and it does its thing, and
+&gt; hopefully the files are modified correctly (even if some or not, i do
+&gt; not want to stop the script, i would like it to continue on, modifying
+&gt; and renaming
+&gt; 3. refresh the current directory, go through each of the files, if the
+&gt; original file exists, and the modified one, delete the original, and
+&gt; rename the modified.
+&gt; 4. back to step 1
+
+&gt; Hope this clears things up a bit
+">
+
+hmmm i'm not following, you say 'pass the directory to the 3rd party
+app' but your code reads
+
+Find.find(startingDir) do |path|
+if File.directory?(path)
+next
+else
+system(&quot;myapp #{path}&quot;)
+puts path
+if File.basename(path) =~ /^Mod-/
+if File.exists?(path.sub('Mod-', ''))
+File.delete(path.sub('Mod-', ''))
+end
+File.rename(path, path.sub('Mod-', ''))
+end
+end
+end
+
+so you skip over all directories and only process files?  let's
+assume the app actually does process directories at a time.  then the
+problem is pretty each
+
+def has_the_right_kind_of_files entries
+entries.detect{|entry| entry =~ %r/whatever/}
+end
+
+def scour pathname = '.'
+if test ?d, pathname
+glob = File.join pathname, '*'
+entries = Dir.glob glob
+
+if has_the_right_kind_files(entries)
+system &quot;app #{ pathname }&quot;
+entries = Dir.glob glob
+end
+
+entries.each{|entry| scour entry}
+else
+dirname, basename = File.split pathname
+match, src = %r/^Mod-(.*)$/.match(basename).to_a
+if match
+FileUtils.mv pathname, File.join(dirname, src)
+end
+end
+end
+
+not that the above code will work first shot - but you get the idea:
+simply process the directories *before* recursing into them.
+
+cheers.
+
+a @ http://drawohara.com/
+--
+we can deny everything, except that we have the possibility of being
+better. simply reflect on that.
+h.h. the 14th dalai lama
+</POST>
+</TEXT>
+</BODY>
+</DOC>

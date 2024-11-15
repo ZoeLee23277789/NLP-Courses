@@ -1,0 +1,643 @@
+<DOC>
+<DOCID> eng-NG-31-135019-9637446 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-28T21:18:00 </DATETIME>
+<BODY>
+<HEADLINE>
+rendering clouds ...
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Russell Potter &lt;&quot;russellpotter AT optusnet DOT com DOT au&quot;&gt; </POSTER>
+<POSTDATE> 2007-09-28T21:18:00 </POSTDATE>
+I want to be able to render objects such as clouds,
+in which each of its parts have varying amounts
+of quite fine-grained transparency.
+
+In terms of rendering such an artifact in
+&quot;OpenGL&quot; (I'm only concerned at this point with
+how it might be rendered, rather than the -
+probably quite complex - generation algorithm,
+which I'll leave for later inspiration :-): from
+what I've seen of &quot;glFog&quot; and friends, the types
+of fog involved seem to be far too coarse-
+grained for such a situation, so I thought perhaps
+&quot;glBendFunc&quot; might better suit my purposes but,
+being a relative newcomer to &quot;OpenGL&quot;, I don't
+have much idea of the context in which to call it
+(in terms of, say, sample code)
+
+I was thinking, at this stage, that I might
+intersperse calls to &quot;glVertex&quot; (to specify the
+location within the cloud) and &quot;glBlendFunc&quot;
+(to specify the density of the cloud at that
+location ...
+
+Could someone please tell me if I'm barking up
+the wrong tree, perhaps with a bit of sample
+code showing how this might be otherwise
+correctly done?
+
+Thanks,
+Russell
+</POST>
+<POST>
+<POSTER> John Tsiombikas &lt;nucl...@siggraph.org&gt; </POSTER>
+<POSTDATE> 2007-09-28T22:20:00 </POSTDATE>
+On 2007-09-29, Russell Potter &lt;&quot;russellpotter AT optusnet DOT com DOT
+
+<QUOTE PREVIOUSPOST="
+au&quot;&gt; wrote:
+
+&gt; I want to be able to render objects such as clouds,
+&gt; in which each of its parts have varying amounts
+&gt; of quite fine-grained transparency.
+">
+
+Cloud rendering is a very involved topic, and open to research.
+You will find that it's especially difficult to render conveincing
+clouds, especially with the polygon rasterization algorithm, used in
+realtime graphics, and employed by OpenGL.
+
+Simplest is the rendering of distant clouds as seen from the ground,
+for which, texturing sky-domes with photographs of real clouds can be
+realistic enough for most applications.
+
+Otherwise, I'd start by looking into volume rendering (which is mostly
+done with ray tracing, but can be approximated with OpenGL).
+
+<QUOTE PREVIOUSPOST="
+&gt; what I've seen of &quot;glFog&quot; and friends, the types
+&gt; of fog involved seem to be far too coarse-
+">
+
+glFog is not anywhere near what you want. It just adjusts the color of
+the vertices, as a function of distance from the viewer.
+
+<QUOTE PREVIOUSPOST="
+&gt; I was thinking, at this stage, that I might
+&gt; intersperse calls to &quot;glVertex&quot; (to specify the
+&gt; location within the cloud) and &quot;glBlendFunc&quot;
+&gt; (to specify the density of the cloud at that
+&gt; location ...
+">
+
+To further refine that idea, look into &quot;particle systems&quot;.
+
+--
+John Tsiombikas (Nuclear / Mindlapse)
+http://nuclear.sdf-eu.org/
+</POST>
+<POST>
+<POSTER> fungus &lt;openglMYSO...@artlum.com&gt; </POSTER>
+<POSTDATE> 2007-09-29T02:26:00 </POSTDATE>
+On Sep 29, 3:18 am, Russell Potter &lt;&quot;russellpotter AT optusnet DOT com
+
+<QUOTE PREVIOUSPOST="
+DOT au&quot;&gt; wrote:
+&gt; I want to be able to render objects such as clouds,
+&gt; in which each of its parts have varying amounts
+&gt; of quite fine-grained transparency.
+
+&gt; what I've seen of &quot;glFog&quot; and friends, the types
+&gt; of fog involved seem to be far too coarse-
+&gt; grained for such a situation
+">
+
+Yes, glFog is useless for this.
+
+There's a lot of ways to simulate clouds, none are perfect.
+
+Use google...
+
+--
+&lt;\___/&gt;
+/ O O \
+\_____/  FTB.     Remove my socks for email address.
+</POST>
+<POST>
+<POSTER> Russell Potter &lt;&quot;russellpotter AT optusnet DOT com DOT au&quot;&gt; </POSTER>
+<POSTDATE> 2007-09-29T03:48:00 </POSTDATE>
+John,
+
+<QUOTE PREVIOUSPOST="
+&gt; Cloud rendering is a very involved topic, and open to research.
+&gt; You will find that it's especially difficult to render conveincing
+&gt; clouds, especially with the polygon rasterization algorithm, used in
+&gt; realtime graphics, and employed by OpenGL.
+">
+
+As I wrote in my original posting, at this
+stage I'm really only interested in the
+mechanics of how/whether it's possible to
+specify a level of fog within just a
+particular volume, which is, I would
+imagine, the most natural way to render
+a cloud.
+
+The geometrical arrangement of this fog
+(that is, the shape of a realistic cloud)
+was really a topic I was going to leave
+for later research and analysis.
+
+I was, however, thinking of doing this
+stuff in real-time, so do you have any
+pointers to further reading I should
+perhaps be doing on &quot;the polygon
+rasterization algorithm&quot; if that's a good
+place place to start?
+
+<QUOTE PREVIOUSPOST="
+&gt; Simplest is the rendering of distant clouds as seen from the ground,
+&gt; for which, texturing sky-domes with photographs of real clouds can be
+&gt; realistic enough for most applications.
+">
+
+But this image would, I can only presume,
+remain totally static over time and
+wouldn't be able to cope very well with
+changes in viewer location ... I really
+think that a rough approximation to a
+real cloud's shape us all that's needed
+for most situations, since I would think
+that any good level of detail in clouds
+is only necessary in those nearly overhead,
+with vastly less detail required for more
+distant clouds.
+
+<QUOTE PREVIOUSPOST="
+&gt; Otherwise, I'd start by looking into volume rendering (which is mostly
+&gt; done with ray tracing, but can be approximated with OpenGL).
+">
+
+Mmm ..., I'd imagined that just raising the fog
+levels here the cloud cloud is located and at the
+appropriate altitude (which just simulates how
+a real cloud is put together, after all) would
+automatically generate some semblance of a
+cloud's appearance, without having to manually
+ray-trace anything ... unless I'm, once again,
+barking up the wrong tree :-) ...
+
+<QUOTE PREVIOUSPOST="
+&gt; glFog is not anywhere near what you want. It just adjusts the color of
+&gt; the vertices, as a function of distance from the viewer.
+">
+
+Yes, that's what I had thought unless, as I've
+been asking, it's possible to raise the level of
+fog within a restricted volume ...
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; I was thinking, at this stage, that I might
+&gt;&gt; intersperse calls to &quot;glVertex&quot; (to specify the
+&gt;&gt; location within the cloud) and &quot;glBlendFunc&quot;
+&gt;&gt; (to specify the density of the cloud at that
+&gt;&gt; location ...
+
+&gt; To further refine that idea, look into &quot;particle systems&quot;.
+">
+
+So, from you reply I only presume that the above-
+mentioned two commands *are* the right
+approach to use but, in the above situation,
+could you tell me the correct constants to use
+for the two parameters to &quot;glBlendFunc&quot; to
+generate the desired effect?
+
+Thanks,
+Russell
+</POST>
+<POST>
+<POSTER> Russell Potter &lt;&quot;russellpotter AT optusnet DOT com DOT au&quot;&gt; </POSTER>
+<POSTDATE> 2007-09-29T04:16:00 </POSTDATE>
+fungus,
+
+<QUOTE PREVIOUSPOST="
+&gt; Yes, glFog is useless for this.
+
+&gt; There's a lot of ways to simulate clouds, none are perfect.
+">
+
+As I said in my original posting I
+understand &quot;glFog&quot; isn't what I
+was looking for, but what I
+*really* want to know iswhether
+it's possible to and, if so, how
+to use &quot;glFog&quot;  in a restricted
+volume, or can this only be done
+for the whole scene at once,
+and whether &quot;glBlendFunc&quot; is at all
+useful abs, id so, how it might be
+used in thus situation...
+
+<QUOTE PREVIOUSPOST="
+&gt; Use google...
+">
+
+I'm a bit confused: are you saying there
+is a &quot;Google clouds&quot;-type application
+with relevant formation on clouds, that
+I should just try searching for cloud
+information on &quot;Google&quot;, or that
+I should be looking to &quot;Google Earth&quot;
+for a demonstration of cloud rendering?
+
+Russell
+</POST>
+<POST>
+<POSTER> John Tsiombikas &lt;nucl...@siggraph.org&gt; </POSTER>
+<POSTDATE> 2007-09-29T04:21:00 </POSTDATE>
+On 2007-09-29, Russell Potter &lt;&quot;russellpotter AT optusnet DOT com DOT au&quot;&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Cloud rendering is a very involved topic, and open to research.
+&gt;&gt; You will find that it's especially difficult to render conveincing
+&gt;&gt; clouds, especially with the polygon rasterization algorithm, used in
+&gt;&gt; realtime graphics, and employed by OpenGL.
+
+&gt; As I wrote in my original posting, at this
+&gt; stage I'm really only interested in the
+&gt; mechanics of how/whether it's possible to
+&gt; specify a level of fog within just a
+&gt; particular volume, which is, I would
+&gt; imagine, the most natural way to render
+&gt; a cloud.
+">
+
+You can't you must really gain a better understanding of how OpenGL
+operates. It doesn't do any magic, it just draws polygons. I won't
+explain it here, get a good graphics book and the red book as well.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Simplest is the rendering of distant clouds as seen from the ground,
+&gt;&gt; for which, texturing sky-domes with photographs of real clouds can be
+&gt;&gt; realistic enough for most applications.
+
+&gt; But this image would, I can only presume,
+&gt; remain totally static over time and
+&gt; wouldn't be able to cope very well with
+&gt; changes in viewer location ... I really
+&gt; think that a rough approximation to a
+&gt; real cloud's shape us all that's needed
+">
+
+You might use procedural textures, even better calculate procedural
+cloud textures in the pixel shader, to be able to make clouds that
+change shape. However, it is extremely difficult, if at all possible, to
+shade such clouds conviencingly, if that is needed.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; glFog is not anywhere near what you want. It just adjusts the color of
+&gt;&gt; the vertices, as a function of distance from the viewer.
+
+&gt; Yes, that's what I had thought unless, as I've
+&gt; been asking, it's possible to raise the level of
+&gt; fog within a restricted volume ...
+">
+
+As fungus said, you can't use glFog for rendering clouds, it doesn't
+work that way.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; To further refine that idea, look into &quot;particle systems&quot;.
+
+&gt; So, from you reply I only presume that the above-
+&gt; mentioned two commands *are* the right
+&gt; approach to use but, in the above situation,
+&gt; could you tell me the correct constants to use
+&gt; for the two parameters to &quot;glBlendFunc&quot; to
+&gt; generate the desired effect?
+">
+
+It's not that simple... you might or might not use particle systems for
+that. It wouldn't be my first choice, but it certainly is a choice. The
+reason I mentioned the name is to make you have a closer look. It's not
+something that is done with &quot;appropriate parameters to glBlendFunc&quot;,
+it's much more involved.
+
+--
+John Tsiombikas (Nuclear / Mindlapse)
+http://nuclear.sdf-eu.org/
+</POST>
+<POST>
+<POSTER> Russell Potter &lt;&quot;russellpotter AT optusnet DOT com DOT au&quot;&gt; </POSTER>
+<POSTDATE> 2007-09-29T08:12:00 </POSTDATE>
+John,
+
+<QUOTE PREVIOUSPOST="
+&gt; You can't you must really gain a better understanding of how OpenGL
+&gt; operates. It doesn't do any magic, it just draws polygons. I won't
+&gt; explain it here, get a good graphics book and the red book as well.
+">
+
+Believe it or not, I *do* have a *basic* understanding
+of OpenGL's operation, but my reasoning in an additional
+posting is that an implication of OpenGL documentation
+such as the &quot;Red Book&quot; is that more functionality
+is possible than just strictly that explicitly related
+so, just because such documentation doesn't mention my
+specific scenario doesn't mean it isn't possible
+
+.. As for the &quot;Red Book&quot; itself, having just had
+a look at what it has to say on fog, I can say that it
+really skims over the topic to such a degree as to not
+shed any light at all ... :-)
+
+The only reason I mention both &quot;glFog&quot; and
+&quot;glBlendFunc&quot; at all is that they're about the only
+two function the &quot;Red Book&quot; talks mentions in that
+area.
+
+<QUOTE PREVIOUSPOST="
+&gt; You might use procedural textures, even better calculate procedural
+&gt; cloud textures in the pixel shader, to be able to make clouds that
+&gt; change shape. However, it is extremely difficult, if at all possible, to
+&gt; shade such clouds conviencingly, if that is needed.
+">
+
+I'm a bit confused: you just earlier told me,
+quite flatly, that what I wanted couldn't be
+done, but now you're saying it *can* be done,
+even if, in you're opinion, it'll be difficult:
+but all I asked was *whether* it could be done,
+*not* whether anyone thought it was so hard
+to do that I should just throw in the towel
+before I even start :-(
+
+And perhaps at thus point I should mention
+that I'm only in the planning stage of my
+OpenGL application, and so only looking at
+which OpenGL calls to make yo achieve my
+desired ends: the exact details of
+implementing the correct algorithms will
+be rightly left to a much later stage
+
+Well, either way, perhaps I should use such
+a shader (whether pixel or procedural): but,
+as I asked &quot;fungus&quot;, how to I install such
+a creature into my rendering pipe-line (if
+that's the right terminology :-)?
+
+<QUOTE PREVIOUSPOST="
+&gt; It's not that simple...
+">
+
+So you keep saying :-( ... but, as I keep
+asking in turn, though seemingly to no
+avail, even a smidgen of sample code on your
+part to illustrate how it might *be* done
+would go a long, long, way ...
+
+<QUOTE PREVIOUSPOST="
+&gt; you might or might not use particle systems for
+&gt; that. It wouldn't be my first choice, but it certainly is a choice. The
+&gt; reason I mentioned the name is to make you have a closer look. It's not
+&gt; something that is done with &quot;appropriate parameters to glBlendFunc&quot;,
+&gt; it's much more involved.
+">
+
+Well, the reason I pursued the
+&quot;glVertex/glBlendFunc&quot; possibility
+was that, when I originally brought
+the subject up, you replied that I
+should &quot;pursue the idea&quot; by
+&quot;looking into particle systems&quot; -
+implying, in my mind, anyway, that
+I was on the right track - although
+here the implication seems to be that
+I'm not
+
+Russell
+</POST>
+<POST>
+<POSTER> Wolfgang Draxinger &lt;wdraxin...@darkstargames.de&gt; </POSTER>
+<POSTDATE> 2007-09-29T09:17:00 </POSTDATE>
+Russell Potter &lt;&quot;russellpotter AT optusnet DOT com DOT au&quot;&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I want to be able to render objects such as clouds,
+&gt; in which each of its parts have varying amounts
+&gt; of quite fine-grained transparency.
+">
+
+One of the toughest subjects there is...
+
+I think this thread on gamedev.net
+&lt; http://www.gamedev.net/community/forums/topic.asp?whichpage=2&amp;pagesiz...; &gt;
+is one of the best on that topic (it was a long time public,
+since a few months you've got to have a gamedev.net login to
+read it).
+
+There are also some interesting links in that thread, that are
+really worth reading, though you can easily spend 3 weeks in a
+row doing so.
+
+Wolfgang Draxinger
+--
+E-Mail address works, Jabber: hexar ... @jabber.org, ICQ: 134682867
+</POST>
+<POST>
+<POSTER> fungus &lt;openglMYSO...@artlum.com&gt; </POSTER>
+<POSTDATE> 2007-09-29T16:59:00 </POSTDATE>
+On Sep 29, 10:16 am, Russell Potter &lt;&quot;russellpotter AT optusnet DOT
+
+<QUOTE PREVIOUSPOST="
+com DOT au&quot;&gt; wrote:
+
+&gt; &gt; Use google...
+
+&gt; I'm a bit confused: are you saying there
+&gt; is a &quot;Google clouds&quot;-type application
+&gt; with relevant formation on clouds, that
+&gt; I should just try searching for cloud
+&gt; information on &quot;Google&quot;, or that
+&gt; I should be looking to &quot;Google Earth&quot;
+&gt; for a demonstration of cloud rendering?
+">
+
+I mean you should go to google and type
+&quot;cloud rendering&quot; into the little box.
+
+--
+&lt;\___/&gt;
+/ O O \
+\_____/  FTB.     Remove my socks for email address.
+</POST>
+<POST>
+<POSTER> John Tsiombikas &lt;nucl...@siggraph.org&gt; </POSTER>
+<POSTDATE> 2007-09-29T17:05:00 </POSTDATE>
+On 2007-09-29, Russell Potter &lt;&quot;russellpotter AT optusnet DOT com DOT
+
+<QUOTE PREVIOUSPOST="
+au&quot;&gt; wrote:
+&gt;&gt; It's not that simple...
+
+&gt; So you keep saying :-( ... but, as I keep
+&gt; asking in turn, though seemingly to no
+&gt; avail, even a smidgen of sample code on your
+&gt; part to illustrate how it might *be* done
+&gt; would go a long, long, way ...
+">
+
+I will not even try to teach you how to use OpenGL, or how to render
+clouds through OpenGL, or write your program for you. I have better ways
+to spend my time.
+
+However, I've given you a fair number of hints and references to topics
+that might help you, should you pursue them further. I told you to look
+into volume rendering, and how it can be approximated with OpenGL. I
+told you to look into procedural textures and about mapping them to a
+skydome. And I even told you that your blended vertices idea is close to
+what we call &quot;particle systems&quot; which is one way of approximating fuzzy
+objects, and might be an idea to try. And most importantly I told you
+that cloud rendering is a pretty open research topic, and thus you
+should do well to study the relevant bibliography.
+
+Now YOU have to take all these, and study them, and see what helps you
+and what doesn't. Try searching in google for articles and tutorials,
+try searching in the ACM digital library for SIGGRAPH papers, try
+finding the terms we mentioned in wikipedia... but don't expect anyone
+to do that for you and then write you a &quot;sample code&quot;.
+
+P.S. What you are trying to do *IS* difficult, that means there are many
+ways to do it, with conflicting pros and cons. Noone knows exactly what
+is right for your case, you must decide amongs the possibilities that we
+here mentioned, or those that you find by searching around.
+
+--
+John Tsiombikas (Nuclear / Mindlapse)
+http://nuclear.sdf-eu.org/
+</POST>
+<POST>
+<POSTER> forkazoo &lt;wrosecr...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-29T17:50:00 </POSTDATE>
+On Sep 29, 6:12 am, Russell Potter &lt;&quot;russellpotter AT optusnet DOT com
+
+<QUOTE PREVIOUSPOST="
+DOT au&quot;&gt; wrote:
+&gt; And perhaps at thus point I should mention
+&gt; that I'm only in the planning stage of my
+&gt; OpenGL application, and so only looking at
+&gt; which OpenGL calls to make yo achieve my
+&gt; desired ends: the exact details of
+&gt; implementing the correct algorithms will
+&gt; be rightly left to a much later stage
+">
+
+You have it pretty much backwards.  Figure out what exactly you want
+to accomplish, and the minor details of specific OpenGL calls will be
+quickly apparent.  Otherwise, it's like a builder trying to go nail
+and screw shopping before he decides if he is building a house or a
+boat.  Cloud rendering has no right answer, so it's impossible to say
+&quot;just do XYZ.&quot;  Do you need to viewer to be able to enter the clouds?
+Can visible objects enter the clouds?  How far will you be from the
+clouds?  Do you need to show animated cloud formation?  Do the clouds
+need to cast shadows?  Do things need to be able to cast shadows on
+the clouds?  It's all very different if you are making a flight
+simulator where you and your wingman can fly right into the clouds,
+versus a first person shooter where you can only see clouds far above
+you.  And, that is different again from a space sim where you will
+only ever see clouds from above.  Do a little research on some of what
+has already been published about clouds, smoke, and volume rendering
+(there is a ton of stuff available for free if you just take a little
+time to poke around!) and see what suits you.  You may even find
+something implimented in OpenGL that is just what you are after to use
+as a guide for implimenting something similar.
+
+<QUOTE PREVIOUSPOST="
+&gt; Well, either way, perhaps I should use such
+&gt; a shader (whether pixel or procedural): but,
+&gt; as I asked &quot;fungus&quot;, how to I install such
+&gt; a creature into my rendering pipe-line (if
+&gt; that's the right terminology :-)?
+">
+
+All shaders are procedural.  Again, there is a ton of stuff available
+online that you can read.  It'll be much more convenient for all of us
+if you do so.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; It's not that simple...
+
+&gt; So you keep saying :-( ... but, as I keep
+&gt; asking in turn, though seemingly to no
+&gt; avail, even a smidgen of sample code on your
+&gt; part to illustrate how it might *be* done
+&gt; would go a long, long, way ...
+">
+
+Honestly, a convenient smidgen of sample code probably wouldn't be
+very useful to you.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; you might or might not use particle systems for
+&gt; &gt; that. It wouldn't be my first choice, but it certainly is a choice. The
+&gt; &gt; reason I mentioned the name is to make you have a closer look. It's not
+&gt; &gt; something that is done with &quot;appropriate parameters to glBlendFunc&quot;,
+&gt; &gt; it's much more involved.
+
+&gt; Well, the reason I pursued the
+&gt; &quot;glVertex/glBlendFunc&quot; possibility
+&gt; was that, when I originally brought
+&gt; the subject up, you replied that I
+&gt; should &quot;pursue the idea&quot; by
+&gt; &quot;looking into particle systems&quot; -
+&gt; implying, in my mind, anyway, that
+&gt; I was on the right track - although
+&gt; here the implication seems to be that
+&gt; I'm not
+
+&gt; Russell
+">
+
+I seriously considered spending a bunch of time writing up a few
+potential strategies for cloud rendering, but seriously the very first
+hit on googling for &quot;cloud rendering&quot; was a page with some lovely
+sample images and links to articles and papers explaining how they
+were made.  Glancing at the next few hits, they also seem extremely
+informative on the subject.
+</POST>
+<POST>
+<POSTER> &quot;Charles E Hardwidge&quot; &lt;nos...@nospam.co.uk&gt; </POSTER>
+<POSTDATE> 2007-10-02T04:33:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; As I wrote in my original posting, at this
+&gt; stage I'm really only interested in the
+&gt; mechanics of how/whether it's possible to
+&gt; specify a level of fog within just a
+&gt; particular volume, which is, I would
+&gt; imagine, the most natural way to render
+&gt; a cloud.
+">
+
+Look up volumetric fog.
+
+<QUOTE PREVIOUSPOST="
+&gt;  The geometrical arrangement of this fog
+&gt; (that is, the shape of a realistic cloud)
+&gt; was really a topic I was going to leave
+&gt; for later research and analysis.
+">
+
+Louds of stuff here:
+http://www.vterrain.org/Atmosphere/Clouds/
+
+--
+Charles E Hardwidge
+</POST>
+<POST>
+<POSTER> Russell Potter &lt;&quot;russellpotter AT optusnet DOT com DOT au&quot;&gt; </POSTER>
+<POSTDATE> 2007-10-04T18:40:00 </POSTDATE>
+John,
+
+I've just discovered the &quot;glFogCoord&quot;
+command: do you think that would help
+in my situation?
+
+Russell
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,478 @@
+<DOC>
+<DOCID> eng-NG-31-134970-9635060 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-11-27T11:45:00 </DATETIME>
+<BODY>
+<HEADLINE>
+hugin-trunk save and stitch does not work
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Pedro Venda &lt;pjve...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-27T11:45:00 </POSTDATE>
+Hi everyone,
+
+I have been trying to get around a very annoying problem but I have
+not been getting any success...
+I am trying to use hugin-trunk because it includes the
+align_image_stack and because of the photometric alignment and
+vignetting correction.
+
+Although I got hugin to compile file and optimize my panoramas, it
+does not stitch them.
+
+When clicking &quot;3. Create Panorama...&quot; on the &quot;Assistant&quot; tab or &quot;Save
+project and Stitch&quot; on the &quot;Stitcher&quot; tab, an error pops up saying
+&quot;Error while executing process&quot; and the stitching process does not
+start.
+
+I am using the svn trunk version, last updated today (2007-11-27 at
+about 13h30). Version 0.7b4 stitches panoramas as usual. This problem
+always happened with hugin-trunk on my 2 linux hosts - one ubuntu 7.10
+amd64 and one Gentoo 32bit.
+
+I figure that hugin may not be finding a binary whether external or
+compiled with hugin. I can also replicate the problem using
+hugin_stitch_project directly.
+
+Any help or clues of what might be going wrong?
+
+P.S.: I submitted this here ( http://sourceforge.net/tracker/index.php?
+func=detail&amp;aid=1839501&amp;group_id=77506&amp;atid=550441) but as the
+activity on hugin's bug tracker is rather low, I decided to ask for
+help here as well.
+</POST>
+<POST>
+<POSTER> Bruno Postle &lt;br...@postle.net&gt; </POSTER>
+<POSTDATE> 2007-11-27T17:59:00 </POSTDATE>
+On Tue 27-Nov-2007 at 08:45 -0800, Pedro Venda wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;When clicking &quot;3. Create Panorama...&quot; on the &quot;Assistant&quot; tab or &quot;Save
+&gt;project and Stitch&quot; on the &quot;Stitcher&quot; tab, an error pops up saying
+&gt;&quot;Error while executing process&quot; and the stitching process does not
+&gt;start.
+">
+
+I haven't built hugin for a week (2007-11-19), but all this code was
+updated since then, so it is possible this is a bug in the current
+trunk.
+
+<QUOTE PREVIOUSPOST="
+&gt;I am using the svn trunk version, last updated today (2007-11-27 at
+&gt;about 13h30). Version 0.7b4 stitches panoramas as usual.
+&gt;I figure that hugin may not be finding a binary whether external or
+&gt;compiled with hugin. I can also replicate the problem using
+&gt;hugin_stitch_project directly.
+">
+
+Do you get any error messages when running hugin_stitch_project?
+
+You can also stitch the project directly on the command-line with
+'make'.  Current SVN hugin produces a makefile whenever you save,
+just run it like so:
+
+make -f foo1234_foo5678.pto.mk
+
+This will stitch and blend everything and should report any errors
+during the process.
+
+--
+Bruno
+</POST>
+<POST>
+<POSTER> Pedro Venda &lt;pjve...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-28T05:03:00 </POSTDATE>
+Hi Bruno,
+
+Thanks for the quick reply. Let's go through your comments:
+
+On Nov 27, 10:59 pm, Bruno Postle &lt;br ... @postle.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Tue 27-Nov-2007 at 08:45 -0800, Pedro Venda wrote:
+&gt; &gt;When clicking &quot;3. Create Panorama...&quot; on the &quot;Assistant&quot; tab or &quot;Save
+&gt; &gt;project and Stitch&quot; on the &quot;Stitcher&quot; tab, an error pops up saying
+&gt; &gt;&quot;Error while executing process&quot; and the stitching process does not
+&gt; &gt;start.
+">
+
+Here is a screen shot of the error:
+http://img527.imageshack.us/img527/7512/huginerrorsd4.png
+
+<QUOTE PREVIOUSPOST="
+&gt; I haven't built hugin for a week (2007-11-19), but all this code was
+&gt; updated since then, so it is possible this is a bug in the current
+&gt; trunk.
+">
+
+Possibly, but I doubt it. I believe the problem lies somewhere else on
+some other binary...
+But no proof of this yet.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt;I am using the svn trunk version, last updated today (2007-11-27 at
+&gt; &gt;about 13h30). Version 0.7b4 stitches panoramas as usual.
+&gt; &gt;I figure that hugin may not be finding a binary whether external or
+&gt; &gt;compiled with hugin. I can also replicate the problem using
+&gt; &gt;hugin_stitch_project directly.
+
+&gt; Do you get any error messages when running hugin_stitch_project?
+">
+
+Running hugin_stitch_project works just as if I clicked the &quot;Save
+project and stitch&quot; button. I believe this is the intended behaviour.
+hugin_stitch_project opens a dialog box asking for the project file.
+After that, it replies with the same error as I get from the hugin
+gui.
+
+<QUOTE PREVIOUSPOST="
+&gt; You can also stitch the project directly on the command-line with
+&gt; 'make'.  Current SVN hugin produces a makefile whenever you save,
+&gt; just run it like so:
+
+&gt;    make -f foo1234_foo5678.pto.mk
+
+&gt; This will stitch and blend everything and should report any errors
+&gt; during the process.
+">
+
+Here's what comes out:
+-----------------------------------------------------------------
+$ make -f 20070210T114428-20070210T114451.pto.mk
+nona -r ldr -m TIFF_m -o 20070210T114428-20070210T114451 -i 0 /home/
+pedro/Pictures/pano-01/./20070210T114428-20070210T114451.pto
+nona: stitch a panorama image
+
+It uses the transform function from PanoTools, the stitching itself
+is quite simple, no seam feathering is done.
+all interpolators of panotools are supported
+
+The following output formats (n option of panotools p script line)
+are supported:
+
+JPG, TIFF, PNG  : Single image formats without feathered blending:
+TIFF_m          : multiple tiff files
+TIFF_multilayer : Multilayer tiff files, readable by The Gimp 2.0
+
+Usage: nona [options] -o output project_file (image files)
+Options:
+-c  create coordinate images (only TIFF_m output)
+make: *** [20070210T114428-20070210T1144510000.tif] Error 1
+-----------------------------------------------------------------
+
+It really seems that nona is misbehaving...
+
+What I found is that nona does not like the parameters '-m TIFF_m' or
+'-r ldr' or even '-i 0'.
+Not being a C++ coder, I found in hugin1/tools/nona.cpp, the getopt
+string &quot;cho:t:&quot; (line 73) meaning that nona does not accept any of the
+i, r or m switches that come from the makefile written by hugin. So
+there is a clear mismatch here.
+
+Is nona not being updated in the code repository?
+
+Cheers,
+Pedro Venda.
+</POST>
+<POST>
+<POSTER> Pedro Venda &lt;pjve...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-28T05:48:00 </POSTDATE>
+Something that might be relevant...
+
+hugin-trunk is not actually compiling after checking out. Cmake
+complains that it does not find src/hugin1/hugin/
+NonaOptionsDialog.cpp, so I changed src/hugin1/hugin/CMakeLists.txt to
+remove the dependency of NonaOptionsDialog.cpp. Hugin and nona
+compiled fine now.
+
+At the time, it seemed that someone had just deleted the file and
+forgot to change CMakeLists.txt, but somehow it seems less accidental
+now...
+
+Cheers,
+
+On Nov 28, 10:03 am, Pedro Venda &lt;pjve ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi Bruno,
+
+&gt; Thanks for the quick reply. Let's go through your comments:
+
+&gt; On Nov 27, 10:59 pm, Bruno Postle &lt;br ... @postle.net&gt; wrote:
+
+&gt; &gt; On Tue 27-Nov-2007 at 08:45 -0800, Pedro Venda wrote:
+&gt; &gt; &gt;When clicking &quot;3. Create Panorama...&quot; on the &quot;Assistant&quot; tab or &quot;Save
+&gt; &gt; &gt;project and Stitch&quot; on the &quot;Stitcher&quot; tab, an error pops up saying
+&gt; &gt; &gt;&quot;Error while executing process&quot; and the stitching process does not
+&gt; &gt; &gt;start.
+
+&gt; Here is a screen shot of the error: http://img527.imageshack.us/img527/7512/huginerrorsd4.png
+
+&gt; &gt; I haven't built hugin for a week (2007-11-19), but all this code was
+&gt; &gt; updated since then, so it is possible this is a bug in the current
+&gt; &gt; trunk.
+
+&gt; Possibly, but I doubt it. I believe the problem lies somewhere else on
+&gt; some other binary...
+&gt; But no proof of this yet.
+
+&gt; &gt; &gt;I am using the svn trunk version, last updated today (2007-11-27 at
+&gt; &gt; &gt;about 13h30). Version 0.7b4 stitches panoramas as usual.
+&gt; &gt; &gt;I figure that hugin may not be finding a binary whether external or
+&gt; &gt; &gt;compiled with hugin. I can also replicate the problem using
+&gt; &gt; &gt;hugin_stitch_project directly.
+
+&gt; &gt; Do you get any error messages when running hugin_stitch_project?
+
+&gt; Running hugin_stitch_project works just as if I clicked the &quot;Save
+&gt; project and stitch&quot; button. I believe this is the intended behaviour.
+&gt; hugin_stitch_project opens a dialog box asking for the project file.
+&gt; After that, it replies with the same error as I get from the hugin
+&gt; gui.
+
+&gt; &gt; You can also stitch the project directly on the command-line with
+&gt; &gt; 'make'.  Current SVN hugin produces a makefile whenever you save,
+&gt; &gt; just run it like so:
+
+&gt; &gt;    make -f foo1234_foo5678.pto.mk
+
+&gt; &gt; This will stitch and blend everything and should report any errors
+&gt; &gt; during the process.
+
+&gt; Here's what comes out:
+&gt; -----------------------------------------------------------------
+&gt; $ make -f 20070210T114428-20070210T114451.pto.mk
+&gt; nona -r ldr -m TIFF_m -o 20070210T114428-20070210T114451 -i 0 /home/
+&gt; pedro/Pictures/pano-01/./20070210T114428-20070210T114451.pto
+&gt; nona: stitch a panorama image
+
+&gt;  It uses the transform function from PanoTools, the stitching itself
+&gt;  is quite simple, no seam feathering is done.
+&gt;  all interpolators of panotools are supported
+
+&gt;  The following output formats (n option of panotools p script line)
+&gt;  are supported:
+
+&gt;   JPG, TIFF, PNG  : Single image formats without feathered blending:
+&gt;   TIFF_m          : multiple tiff files
+&gt;   TIFF_multilayer : Multilayer tiff files, readable by The Gimp 2.0
+
+&gt; Usage: nona [options] -o output project_file (image files)
+&gt;   Options:
+&gt;       -c  create coordinate images (only TIFF_m output)
+&gt; make: *** [20070210T114428-20070210T1144510000.tif] Error 1
+&gt; -----------------------------------------------------------------
+
+&gt; It really seems that nona is misbehaving...
+
+&gt; What I found is that nona does not like the parameters '-m TIFF_m' or
+&gt; '-r ldr' or even '-i 0'.
+&gt; Not being a C++ coder, I found in hugin1/tools/nona.cpp, the getopt
+&gt; string &quot;cho:t:&quot; (line 73) meaning that nona does not accept any of the
+&gt; i, r or m switches that come from the makefile written by hugin. So
+&gt; there is a clear mismatch here.
+
+&gt; Is nona not being updated in the code repository?
+
+&gt; Cheers,
+&gt; Pedro Venda.
+">
+</POST>
+<POST>
+<POSTER> Bruno Postle &lt;br...@postle.net&gt; </POSTER>
+<POSTDATE> 2007-11-28T10:10:00 </POSTDATE>
+On Wed 28-Nov-2007 at 02:03 -0800, Pedro Venda wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; You can also stitch the project directly on the command-line with
+&gt;&gt; 'make'.  Current SVN hugin produces a makefile whenever you save,
+&gt;$ make -f 20070210T114428-20070210T114451.pto.mk
+&gt;nona -r ldr -m TIFF_m -o 20070210T114428-20070210T114451 -i 0 /home/pedro/Pictures/pano-01/./20070210T114428-20070210T114451.pto
+&gt;nona: stitch a panorama image
+&gt;It really seems that nona is misbehaving...
+">
+
+I think so, the nona parameters look fine, but nona is behaving as
+if it wasn't given any input.
+
+If this is the case, reverting to a version before the commits on
+the 22nd or 24th should fix it.
+
+--
+Bruno
+</POST>
+<POST>
+<POSTER> Pedro Venda &lt;pjve...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-28T17:07:00 </POSTDATE>
+Hi,
+
+I followed your advice and compiled hugin-trunk revision 2539. It
+worked!
+nona output is very different now:
+--------------------------------------------------------------
+nona: stitch a panorama image
+
+It uses the transform function from PanoTools, the stitching itself
+is quite simple, no seam feathering is done.
+all interpolators of panotools are supported
+
+The following output formats (n option of panotools p script line)
+are supported:
+
+JPG, TIFF, PNG  : Single image formats without feathered blending:
+TIFF_m          : multiple tiff files
+TIFF_multilayer : Multilayer tiff files, readable by The Gimp 2.0
+
+Usage: nona [options] -o output project_file (image files)
+Options:
+-c         create coordinate images (only TIFF_m output)
+-v         verbose, output progress indicators
+-t num     number of thread to be used (default 1))
+
+The following options can be used to override settings in the
+project file:
+-i num     remap only image with number num
+(can be specified multiple times)
+-m str     set output file format (TIFF, TIFF_m,
+TIFF_multilayer, EXR, EXR_m)
+-r ldr/hdr set output mode.
+ldr  keep original bit depth and response
+hdr  merge to hdr
+-e exposure set exposure for ldr mode
+-p TYPE    pixel type of the output. Can be one of:
+UINT8   8 bit unsigned integer
+UINT16  16 bit unsigned integer
+INT16   16 bit signed integer
+UINT32  32 bit unsigned integer
+INT32   32 bit signed integer
+FLOAT   32 bit floating point
+-z         set compression type.
+Possible options for tiff output:
+NONE      no compression
+LZW       lzw compression
+DEFLATE   deflate compression
+---------------------------------------------------------------------------
+
+So, something is wrong when compiling the latest revision of hugin-
+trunk and it reflects into a defective nona binary.
+It is probably related to the recent problems with
+NonaOptionParser.cpp referenced by CMakeLists.txt in src/hugin1/hugin.
+Do you have an idea of what might be wrong?
+
+Cheers,
+
+On Nov 28, 3:10 pm, Bruno Postle &lt;br ... @postle.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Wed 28-Nov-2007 at 02:03 -0800, Pedro Venda wrote:
+
+&gt; &gt;&gt; You can also stitch the project directly on the command-line with
+&gt; &gt;&gt; 'make'.  Current SVN hugin produces a makefile whenever you save,
+&gt; &gt;$ make -f 20070210T114428-20070210T114451.pto.mk
+&gt; &gt;nona -r ldr -m TIFF_m -o 20070210T114428-20070210T114451 -i 0 /home/pedro/Pictures/pano-01/./20070210T114428-20070210T114451.pto
+&gt; &gt;nona: stitch a panorama image
+&gt; &gt;It really seems that nona is misbehaving...
+
+&gt; I think so, the nona parameters look fine, but nona is behaving as
+&gt; if it wasn't given any input.
+
+&gt; If this is the case, reverting to a version before the commits on
+&gt; the 22nd or 24th should fix it.
+
+&gt; --
+&gt; Bruno
+">
+</POST>
+<POST>
+<POSTER> Bruno Postle &lt;br...@postle.net&gt; </POSTER>
+<POSTDATE> 2007-11-28T17:43:00 </POSTDATE>
+On Wed 28-Nov-2007 at 14:07 -0800, Pedro Venda wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;So, something is wrong when compiling the latest revision of hugin-
+&gt;trunk and it reflects into a defective nona binary.
+&gt;It is probably related to the recent problems with
+&gt;NonaOptionParser.cpp referenced by CMakeLists.txt in src/hugin1/hugin.
+">
+
+Pablo just commited this missing file, so you should try the latest
+trunk again.
+
+--
+Bruno
+</POST>
+<POST>
+<POSTER> Franck Barbenoire &lt;fbarbeno...@yahoo.fr&gt; </POSTER>
+<POSTDATE> 2007-11-28T17:51:00 </POSTDATE>
+Hi,
+
+there's an error in the Italian translation, line 1033 : msgid and msgstr not
+terminated with \n
+
+Franck Barbenoire
+
+Le Wednesday 28 November 2007 23:43:47 Bruno Postle, vous avez écrit :
+
+<QUOTE PREVIOUSPOST="
+&gt; On Wed 28-Nov-2007 at 14:07 -0800, Pedro Venda wrote:
+&gt; &gt;So, something is wrong when compiling the latest revision of hugin-
+&gt; &gt;trunk and it reflects into a defective nona binary.
+&gt; &gt;It is probably related to the recent problems with
+&gt; &gt;NonaOptionParser.cpp referenced by CMakeLists.txt in src/hugin1/hugin.
+
+&gt; Pablo just commited this missing file, so you should try the latest
+&gt; trunk again.
+">
+</POST>
+<POST>
+<POSTER> Bruno Postle &lt;br...@postle.net&gt; </POSTER>
+<POSTDATE> 2007-11-28T18:45:00 </POSTDATE>
+On Wed 28-Nov-2007 at 23:51 +0100, Franck Barbenoire wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;there's an error in the Italian translation, line 1033 : msgid and
+&gt;msgstr not terminated with \n
+">
+
+Try again, this should be fixed now.
+
+--
+Bruno
+</POST>
+<POST>
+<POSTER> Pedro Venda &lt;pjve...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-29T12:46:00 </POSTDATE>
+Revision 2545 compiles and works well.
+
+I found what I was doing wrong - I enabled the compilation of the
+tools in src/hugin1/tools/ to make it produce an align_hdr_images
+binary. There is another copy of the nona tool in that folder and, as
+a side effect, this one was being installed instead of the right one
+from tools/.
+
+The latest versions of hugin are so good, with the photometric
+adjustment algorithms that I am remaking all my panoramas.
+
+A big thank you for all your hard work!
+
+Cheers,
+Pedro Venda.
+
+On Nov 28, 11:45 pm, Bruno Postle &lt;br ... @postle.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Wed 28-Nov-2007 at 23:51 +0100, Franck Barbenoire wrote:
+
+&gt; &gt;there's an error in the Italian translation, line 1033 : msgid and
+&gt; &gt;msgstr not terminated with \n
+
+&gt; Try again, this should be fixed now.
+
+&gt; --
+&gt; Bruno
+">
+</POST>
+</TEXT>
+</BODY>
+</DOC>

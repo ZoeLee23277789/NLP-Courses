@@ -1,0 +1,617 @@
+<DOC>
+<DOCID> eng-NG-31-135861-8604556 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-21T10:56:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Modifications Since Last Build Not Showing
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Matt &lt;mtrutle...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-21T10:56:00 </POSTDATE>
+I have set up cruise control .net 1.3 and now my modifications since
+last build are not showing in the latest build report. Am I missing
+something? Here is the configuration for my project
+
+&lt;project name=&quot;Quadrate Security Server&quot;
+queue=&quot;DataWorkbenchBuildQueue&quot; queuePriority=&quot;4&quot;&gt;
+&lt;workingDirectory&gt;C:\Quadrate\QuadrateSecurityServer.Enterprise&lt;/
+workingDirectory&gt;
+&lt;artifactDirectory&gt;C:\BuildArtifacts
+\QuadrateSecurityServer.Enterprise&lt;/artifactDirectory&gt;
+&lt;modificationDelaySeconds&gt;10&lt;/modificationDelaySeconds&gt;
+&lt;sourcecontrol type=&quot;filtered&quot;&gt;
+&lt;sourceControlProvider type=&quot;vault&quot;&gt;
+&lt;executable&gt;c:\program files\sourcegear\vault client\vault.exe&lt;/
+executable&gt;
+&lt;username&gt;builduser&lt;/username&gt;
+&lt;password&gt;build&lt;/password&gt;
+&lt;host&gt;buildserver&lt;/host&gt;
+&lt;repository&gt;Quadrate&lt;/repository&gt;
+&lt;folder&gt;$/Development/QuadrateSecurityServer.Enterprise&lt;/folder&gt;
+&lt;autoGetSource&gt;True&lt;/autoGetSource&gt;
+&lt;applyLabel&gt;True&lt;/applyLabel&gt;
+&lt;useWorkingDirectory&gt;True&lt;/useWorkingDirectory&gt;
+&lt;/sourceControlProvider&gt;
+&lt;inclusionFilters&gt;
+&lt;pathFilter&gt;
+&lt;pattern&gt;$/Development/QuadrateSecurityServer.Enterprise/**/*.*&lt;/
+pattern&gt;
+&lt;/pathFilter&gt;
+&lt;/inclusionFilters&gt;
+&lt;exclusionFilters&gt;
+&lt;pathFilter&gt;
+&lt;pattern&gt;$/Development/QuadrateSecurityServer.Enterprise/**/
+AssemblyInfo.cs&lt;/pattern&gt;
+&lt;/pathFilter&gt;
+&lt;/exclusionFilters&gt;
+&lt;/sourcecontrol&gt;
+&lt;triggers&gt;
+&lt;multiTrigger operator=&quot;And&quot;&gt;
+&lt;triggers&gt;
+&lt;filterTrigger startTime=&quot;23:00:00&quot; endTime=&quot;05:00:00&quot;&gt;
+&lt;trigger type=&quot;intervalTrigger&quot; seconds=&quot;60&quot; /&gt;
+&lt;weekDays&gt;
+&lt;weekDay&gt;Monday&lt;/weekDay&gt;
+&lt;weekDay&gt;Tuesday&lt;/weekDay&gt;
+&lt;weekDay&gt;Wednesday&lt;/weekDay&gt;
+&lt;weekDay&gt;Thursday&lt;/weekDay&gt;
+&lt;weekDay&gt;Friday&lt;/weekDay&gt;
+&lt;/weekDays&gt;
+&lt;/filterTrigger&gt;
+&lt;intervalTrigger name=&quot;continuous&quot; seconds=&quot;10800&quot;
+buildCondition=&quot;IfModificationExists&quot; /&gt;
+&lt;/triggers&gt;
+&lt;/multiTrigger&gt;
+&lt;/triggers&gt;
+&lt;tasks&gt;
+&lt;msbuild&gt;
+&lt;workingDirectory&gt;C:\Quadrate\QuadrateSecurityServer.Enterprise&lt;/
+workingDirectory&gt;
+&lt;projectFile&gt;QSS.msbuild.xml&lt;/projectFile&gt;
+&lt;buildArgs&gt;/v:n /noconsolelogger /p:Configuration=Release&lt;/
+buildArgs&gt;
+&lt;logger&gt;ThoughtWorks.CruiseControl.MsBuild.XmlLogger,C:\Program
+Files\CruiseControl.NET\server\ThoughtWorks.CruiseControl.MsBuild.dll&lt;/
+logger&gt;
+&lt;/msbuild&gt;
+&lt;/tasks&gt;
+&lt;publishers&gt;
+&lt;merge&gt;
+&lt;files&gt;
+&lt;file&gt;c:\BuildArtifacts\QuadrateSecurityServer.Enterprise\*-
+results.xml&lt;/file&gt;
+&lt;/files&gt;
+&lt;/merge&gt;
+&lt;xmllogger logDir=&quot;C:\BuildArtifacts
+\QuadrateSecurityServer.Enterprise\buildlogs&quot;/&gt;
+&lt;email from=&quot;buildmas ... @quadrate.com&quot; mailhost=&quot;quad-us-dns01&quot;
+includeDetails=&quot;True&quot;&gt;
+&lt;users&gt;
+&lt;user name=&quot;Matt Rutledge&quot; address=&quot;mrutle ... @quadrate.com&quot;
+group=&quot;developers&quot; /&gt;
+&lt;user name=&quot;Charles Evans&quot; address=&quot;cev ... @quadrate.com&quot;
+group=&quot;managers&quot; /&gt;
+&lt;/users&gt;
+&lt;groups&gt;
+&lt;group name=&quot;developers&quot; notification=&quot;Failed&quot; /&gt;
+&lt;group name=&quot;managers&quot; notification=&quot;Change&quot; /&gt;
+&lt;/groups&gt;
+&lt;/email&gt;
+&lt;/publishers&gt;
+&lt;state type=&quot;state&quot; directory=&quot;C:\Quadrate
+\QuadrateSecurityServer.Enterprise&quot; /&gt;
+&lt;labeller type=&quot;defaultlabeller&quot;&gt;
+&lt;prefix&gt;1.0.&lt;/prefix&gt;
+&lt;incrementOnFailure&gt;False&lt;/incrementOnFailure&gt;
+&lt;/labeller&gt;
+&lt;/project&gt;
+</POST>
+<POST>
+<POSTER> &quot;Ross Patterson&quot; &lt;RPatter...@qknow.com&gt; </POSTER>
+<POSTDATE> 2007-08-21T11:19:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Matt writes:
+&gt;I have set up cruise control .net 1.3 and now my modifications since
+&gt;last build are not showing in the latest build report. Am I missing
+&gt;something? Here is the configuration for my project
+&gt;            &lt;sourcecontrol type=&quot;filtered&quot;&gt;
+&gt;                    &lt;sourceControlProvider type=&quot;vault&quot;&gt;
+...
+&gt;                            &lt;pathFilter&gt;
+">
+
+&lt;pattern&gt;$/Development/QuadrateSecurityServer.Enterprise/**/*.*&lt;/
+pattern&gt;
+
+Someone else reported problems with path-filtering of Vault
+modifications recently.  Check out the thread at
+http://groups.google.com/group/ccnet-user/browse_thread/thread/e0d2c9923
+1f46f3/22b23ae627eb7b55?lnk=st&amp;q=ccnet+vault+filter&amp;rnum=1#22b23ae627eb7
+b55 and see if it helps.
+
+I'd like to see this fixed, but we're not a Vault user, so I need some
+test data.  Anyone having this problem should check out problem report
+CCNET-947 ( http://jira.public.thoughtworks.org/browse/CCNET-947 ) and
+attach sample output so we can get this fixed.
+
+Ross
+________________________________
+
+Ross A. Patterson, CISSP
+Sr. Director, Development
+Tel:  +1 703-390-0865
+RPatter ... @QKnow.com
+
+Q.Know Technologies, Inc.
+11600 Sunrise Valley Drive, Suite 300
+Reston, VA  20191
+www.QKnow.com
+</POST>
+<POST>
+<POSTER> Matt &lt;mtrutle...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-21T12:17:00 </POSTDATE>
+I attached my log file and filter section to the bug that you
+provided. Hopefully it helps. I also looked at the other thread and
+that didnt really help. Do you know of any workarounds I can do to get
+the Last Modifications to show up in the build report for now?
+
+On Aug 21, 11:19 am, &quot;Ross Patterson&quot; &lt;RPatter ... @qknow.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Matt writes:
+&gt; &gt;I have set up cruise control .net 1.3 and now my modifications since
+&gt; &gt;last build are not showing in the latest build report. Am I missing
+&gt; &gt;something? Here is the configuration for my project
+&gt; &gt;            &lt;sourcecontrol type=&quot;filtered&quot;&gt;
+&gt; &gt;                    &lt;sourceControlProvider type=&quot;vault&quot;&gt;
+&gt; ...
+&gt; &gt;                            &lt;pathFilter&gt;
+
+&gt; &lt;pattern&gt;$/Development/QuadrateSecurityServer.Enterprise/**/*.*&lt;/
+&gt; pattern&gt;
+
+&gt; Someone else reported problems with path-filtering of Vault
+&gt; modifications recently.  Check out the thread at http://groups.google.com/group/ccnet-user/browse_thread/thread/e0d2c9923
+&gt; 1f46f3/22b23ae627eb7b55?lnk=st&amp;q=ccnet+vault+filter&amp;rnum=1#22b23ae627eb7
+&gt; b55 and see if it helps.
+
+&gt; I'd like to see this fixed, but we're not a Vault user, so I need some
+&gt; test data.  Anyone having this problem should check out problem report
+&gt; CCNET-947 ( http://jira.public.thoughtworks.org/browse/CCNET-947 ) and
+&gt; attach sample output so we can get this fixed.
+
+&gt; Ross
+&gt; ________________________________
+
+&gt; Ross A. Patterson, CISSP
+&gt; Sr. Director, Development
+&gt; Tel:  +1 703-390-0865
+&gt; RPatter ... @QKnow.com
+
+&gt; Q.Know Technologies, Inc.
+&gt; 11600 Sunrise Valley Drive, Suite 300
+&gt; Reston, VA  20191 www.QKnow.com
+">
+</POST>
+<POST>
+<POSTER> &quot;Ross Patterson&quot; &lt;RPatter...@qknow.com&gt; </POSTER>
+<POSTDATE> 2007-08-21T14:44:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Matt writes:
+&gt;I attached my log file and filter section to the bug that you
+&gt;provided. Hopefully it helps. I also looked at the other thread and
+&gt;that didnt really help. Do you know of any workarounds I can do to get
+&gt;the Last Modifications to show up in the build report for now?
+">
+
+Looking at the CCNet log you posted, it appears that Vault is returning
+the following to describe the modifications from the &quot;vault history&quot;
+command (&quot;vault history $/Development/QuadrateSecurityServer.Enterprise
+-excludeactions label,obliterate -rowlimit 0 -begindate
+2007-08-21T10:32:22 -enddate 2007-08-21T10:39:49 -host quad-us-dns01
+-user build -password ...deleted... -repository Quadrate&quot; in your
+specific case):
+
+&lt;vault&gt;
+
+&lt;history&gt;
+
+&lt;item txid=&quot;43754&quot; date=&quot;8/21/2007 10:34:07 AM&quot;
+name=&quot;QuadrateSecurityServer.Enterprise/QuadrateSecurityServer.BusinessL
+ayer/Message.cs&quot; type=&quot;60&quot; version=&quot;6&quot; user=&quot;mrutledge&quot; comment=&quot;update
+length&quot; actionString=&quot;Checked In&quot; /&gt;
+
+&lt;item txid=&quot;43753&quot; date=&quot;8/21/2007 10:33:46 AM&quot;
+name=&quot;QuadrateSecurityServer.Enterprise/DataWorkbenchMessageCenter/Prope
+rties/AssemblyInfo.cs&quot; type=&quot;60&quot; version=&quot;6&quot; user=&quot;admin&quot;
+comment=&quot;Updated Version to 1.0.4&quot; actionString=&quot;Checked In&quot; /&gt;
+
+&lt;item txid=&quot;43752&quot; date=&quot;8/21/2007 10:33:41 AM&quot;
+name=&quot;QuadrateSecurityServer.Enterprise/QSSAdministrator/Properties/Asse
+mblyInfo.cs&quot; type=&quot;60&quot; version=&quot;6&quot; user=&quot;admin&quot; comment=&quot;Updated Version
+to 1.0.4&quot; actionString=&quot;Checked In&quot; /&gt;
+
+&lt;item txid=&quot;43751&quot; date=&quot;8/21/2007 10:33:36 AM&quot;
+name=&quot;QuadrateSecurityServer.Enterprise/QuadrateSecurityServer.Tester/Pr
+operties/AssemblyInfo.cs&quot; type=&quot;60&quot; version=&quot;8&quot; user=&quot;admin&quot;
+comment=&quot;Updated Version to 1.0.4&quot; actionString=&quot;Checked In&quot; /&gt;
+
+&lt;item txid=&quot;43750&quot; date=&quot;8/21/2007 10:33:30 AM&quot;
+name=&quot;QuadrateSecurityServer.Enterprise/QuadrateSecurityServer.WebServic
+e/Properties/AssemblyInfo.cs&quot; type=&quot;60&quot; version=&quot;9&quot; user=&quot;admin&quot;
+comment=&quot;Updated Version to 1.0.4&quot; actionString=&quot;Checked In&quot; /&gt;
+
+&lt;item txid=&quot;43749&quot; date=&quot;8/21/2007 10:33:25 AM&quot;
+name=&quot;QuadrateSecurityServer.Enterprise/QuadrateSecurityServer.DataLayer
+/Properties/AssemblyInfo.cs&quot; type=&quot;60&quot; version=&quot;8&quot; user=&quot;admin&quot;
+comment=&quot;Updated Version to 1.0.4&quot; actionString=&quot;Checked In&quot; /&gt;
+
+&lt;item txid=&quot;43748&quot; date=&quot;8/21/2007 10:33:18 AM&quot;
+name=&quot;QuadrateSecurityServer.Enterprise/QuadrateSecurityServer.BusinessL
+ayer/Properties/AssemblyInfo.cs&quot; type=&quot;60&quot; version=&quot;8&quot; user=&quot;admin&quot;
+comment=&quot;Updated Version to 1.0.4&quot; actionString=&quot;Checked In&quot; /&gt;
+
+&lt;/history&gt;
+
+&lt;result success=&quot;yes&quot; /&gt;
+
+&lt;/vault&gt;
+
+Your project configuration says:
+
+&lt;sourcecontrol type=&quot;filtered&quot;&gt;
+
+&lt;sourceControlProvider type=&quot;vault&quot;&gt;
+
+...
+
+&lt;/sourceControlProvider&gt;
+
+&lt;inclusionFilters&gt;
+
+&lt;pathFilter&gt;
+
+&lt;pattern&gt;$/Development/QuadrateSecurityServer.Enterprise/**/*.*&lt;/
+
+pattern&gt;
+
+&lt;/pathFilter&gt;
+
+&lt;/inclusionFilters&gt;
+
+&lt;exclusionFilters&gt;
+
+&lt;pathFilter&gt;
+
+&lt;pattern&gt;$/Development/QuadrateSecurityServer.Enterprise/**/
+
+AssemblyInfo.cs&lt;/pattern&gt;
+
+&lt;/pathFilter&gt;
+
+&lt;/exclusionFilters&gt;
+
+&lt;/sourcecontrol&gt;
+
+Note that the pathnames reported by Vault do not begin with
+&quot;$/Development/&quot;.  That's why your pathfillter patterns aren't matching,
+and why CCNet isn't reporting any modifications.  Changing your filters
+to start with &quot;QuadrateSecurityServer.Enterprise/&quot; should make CCNet
+work for you.
+
+I don't know anything about Vault, but I wonder if the output of the
+&quot;vault history&quot; command has changed recently, such that it doesn't begin
+with &quot;$/...&quot;?
+
+Ross
+
+________________________________
+
+Ross A. Patterson, CISSP
+
+Sr. Director, Development
+
+Tel:  +1 703-390-0865
+
+RPatter ... @QKnow.com
+
+Q.Know Technologies, Inc.
+
+11600 Sunrise Valley Drive, Suite 300
+
+Reston, VA  20191
+
+www.QKnow.com
+</POST>
+<POST>
+<POSTER> Ian Olsen &lt;i...@sourcegear.com&gt; </POSTER>
+<POSTDATE> 2007-08-21T15:26:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Ross Patterson wrote:
+&gt; I don’t know anything about Vault, but I wonder if the output of the
+&gt; “vault history” command has changed recently, such that it doesn’t begin
+&gt; with “$/...”?
+">
+
+The paths returned by Vault's history were always relative to the
+request.  Using relative paths in the filter should clear things up.
+
+---
+Ian Olsen
+Developer
+SourceGear
+</POST>
+<POST>
+<POSTER> &quot;Matt Rutledge&quot; &lt;mtrutle...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-21T15:29:00 </POSTDATE>
+Thanks Ross. I will try that out and see what happens.
+
+On 8/21/07, Ross Patterson &lt;RPatter ... @qknow.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;  Matt writes:
+&gt; &gt;I attached my log file and filter section to the bug that you
+
+&gt; &gt;provided. Hopefully it helps. I also looked at the other thread and
+
+&gt; &gt;that didnt really help. Do you know of any workarounds I can do to get
+
+&gt; &gt;the Last Modifications to show up in the build report for now?
+
+&gt; Looking at the CCNet log you posted, it appears that Vault is returning
+&gt; the following to describe the modifications from the &quot;vault history&quot; command
+&gt; (&quot;vault history $/Development/QuadrateSecurityServer.Enterprise
+&gt; -excludeactions label,obliterate -rowlimit 0 -begindate 2007-08-21T10:32:22
+&gt; -enddate 2007-08-21T10:39:49 -host quad-us-dns01 -user build -password
+&gt; ...deleted... -repository Quadrate&quot; in your specific case):
+
+&gt; &lt;vault&gt;
+
+&gt; &lt;history&gt;
+
+&gt;  &lt;item txid=&quot;43754&quot; date=&quot;8/21/2007 10:34:07 AM&quot; name=&quot;
+&gt; QuadrateSecurityServer.Enterprise/QuadrateSecurityServer.BusinessLayer/Mess age.cs&quot;
+&gt; type=&quot;60&quot; version=&quot;6&quot; user=&quot;mrutledge&quot; comment=&quot;update length&quot;
+&gt; actionString=&quot;Checked In&quot; /&gt;
+
+&gt;  &lt;item txid=&quot;43753&quot; date=&quot;8/21/2007 10:33:46 AM&quot; name=&quot;
+&gt; QuadrateSecurityServer.Enterprise/DataWorkbenchMessageCenter/Properties/Ass emblyInfo.cs&quot;
+&gt; type=&quot;60&quot; version=&quot;6&quot; user=&quot;admin&quot; comment=&quot;Updated Version to 1.0.4&quot;
+&gt; actionString=&quot;Checked In&quot; /&gt;
+
+&gt;  &lt;item txid=&quot;43752&quot; date=&quot;8/21/2007 10:33:41 AM&quot; name=&quot;
+&gt; QuadrateSecurityServer.Enterprise/QSSAdministrator/Properties/AssemblyInfo. cs&quot;
+&gt; type=&quot;60&quot; version=&quot;6&quot; user=&quot;admin&quot; comment=&quot;Updated Version to 1.0.4&quot;
+&gt; actionString=&quot;Checked In&quot; /&gt;
+
+&gt;  &lt;item txid=&quot;43751&quot; date=&quot;8/21/2007 10:33:36 AM&quot; name=&quot;
+&gt; QuadrateSecurityServer.Enterprise/QuadrateSecurityServer.Tester/Properties/ AssemblyInfo.cs&quot;
+&gt; type=&quot;60&quot; version=&quot;8&quot; user=&quot;admin&quot; comment=&quot;Updated Version to 1.0.4&quot;
+&gt; actionString=&quot;Checked In&quot; /&gt;
+
+&gt;  &lt;item txid=&quot;43750&quot; date=&quot;8/21/2007 10:33:30 AM&quot; name=&quot;
+&gt; QuadrateSecurityServer.Enterprise/QuadrateSecurityServer.WebService/Propert ies/AssemblyInfo.cs&quot;
+&gt; type=&quot;60&quot; version=&quot;9&quot; user=&quot;admin&quot; comment=&quot;Updated Version to 1.0.4&quot;
+&gt; actionString=&quot;Checked In&quot; /&gt;
+
+&gt;  &lt;item txid=&quot;43749&quot; date=&quot;8/21/2007 10:33:25 AM&quot; name=&quot;
+&gt; QuadrateSecurityServer.Enterprise/QuadrateSecurityServer.DataLayer/Properti es/AssemblyInfo.cs&quot;
+&gt; type=&quot;60&quot; version=&quot;8&quot; user=&quot;admin&quot; comment=&quot;Updated Version to 1.0.4&quot;
+&gt; actionString=&quot;Checked In&quot; /&gt;
+
+&gt;  &lt;item txid=&quot;43748&quot; date=&quot;8/21/2007 10:33:18 AM&quot; name=&quot;
+&gt; QuadrateSecurityServer.Enterprise/QuadrateSecurityServer.BusinessLayer/Prop erties/AssemblyInfo.cs&quot;
+&gt; type=&quot;60&quot; version=&quot;8&quot; user=&quot;admin&quot; comment=&quot;Updated Version to 1.0.4&quot;
+&gt; actionString=&quot;Checked In&quot; /&gt;
+
+&gt; &lt;/history&gt;
+
+&gt; &lt;result success=&quot;yes&quot; /&gt;
+
+&gt; &lt;/vault&gt;
+
+&gt; Your project configuration says:
+
+&gt; &lt;sourcecontrol type=&quot;filtered&quot;&gt;
+
+&gt;       &lt;sourceControlProvider type=&quot;vault&quot;&gt;
+
+&gt;             ...
+
+&gt;       &lt;/sourceControlProvider&gt;
+
+&gt;       &lt;inclusionFilters&gt;
+
+&gt;             &lt;pathFilter&gt;
+
+&gt; &lt;pattern&gt;$/Development/QuadrateSecurityServer.Enterprise/**/*.*&lt;/
+
+&gt; pattern&gt;
+
+&gt;             &lt;/pathFilter&gt;
+
+&gt;       &lt;/inclusionFilters&gt;
+
+&gt;       &lt;exclusionFilters&gt;
+
+&gt;             &lt;pathFilter&gt;
+
+&gt; &lt;pattern&gt;$/Development/QuadrateSecurityServer.Enterprise/**/
+
+&gt; AssemblyInfo.cs&lt;/pattern&gt;
+
+&gt;             &lt;/pathFilter&gt;
+
+&gt;       &lt;/exclusionFilters&gt;
+
+&gt; &lt;/sourcecontrol&gt;
+
+&gt; Note that the pathnames reported by Vault do not begin with
+&gt; &quot;$/Development/&quot;.  That's why your pathfillter patterns aren't matching, and
+&gt; why CCNet isn't reporting any modifications.  Changing your filters to start
+&gt; with &quot;QuadrateSecurityServer.Enterprise/&quot; should make CCNet work for you.
+
+&gt; I don't know anything about Vault, but I wonder if the output of the
+&gt; &quot;vault history&quot; command has changed recently, such that it doesn't begin
+&gt; with &quot;$/...&quot;?
+
+&gt; Ross
+
+&gt; ________________________________
+
+&gt; Ross A. Patterson, CISSP
+
+&gt; Sr. Director, Development
+
+&gt; Tel:  +1 703-390-0865
+
+&gt; RPatter ... @QKnow.com
+
+&gt; Q.Know Technologies, Inc.
+
+&gt; 11600 Sunrise Valley Drive, Suite 300
+
+&gt; Reston, VA  20191
+
+&gt; www.QKnow.com
+">
+</POST>
+<POST>
+<POSTER> Matt &lt;mtrutle...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-21T17:11:00 </POSTDATE>
+That fixed the issue. Thanks!
+
+On Aug 21, 2:44 pm, &quot;Ross Patterson&quot; &lt;RPatter ... @qknow.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Matt writes:
+&gt; &gt;I attached my log file and filter section to the bug that you
+&gt; &gt;provided. Hopefully it helps. I also looked at the other thread and
+&gt; &gt;that didnt really help. Do you know of any workarounds I can do to get
+&gt; &gt;the Last Modifications to show up in the build report for now?
+
+&gt; Looking at the CCNet log you posted, it appears that Vault is returning
+&gt; the following to describe the modifications from the &quot;vault history&quot;
+&gt; command (&quot;vault history $/Development/QuadrateSecurityServer.Enterprise
+&gt; -excludeactions label,obliterate -rowlimit 0 -begindate
+&gt; 2007-08-21T10:32:22 -enddate 2007-08-21T10:39:49 -host quad-us-dns01
+&gt; -user build -password ...deleted... -repository Quadrate&quot; in your
+&gt; specific case):
+
+&gt; &lt;vault&gt;
+
+&gt; &lt;history&gt;
+
+&gt;  &lt;item txid=&quot;43754&quot; date=&quot;8/21/2007 10:34:07 AM&quot;
+&gt; name=&quot;QuadrateSecurityServer.Enterprise/QuadrateSecurityServer.BusinessL
+&gt; ayer/Message.cs&quot; type=&quot;60&quot; version=&quot;6&quot; user=&quot;mrutledge&quot; comment=&quot;update
+&gt; length&quot; actionString=&quot;Checked In&quot; /&gt;
+
+&gt;  &lt;item txid=&quot;43753&quot; date=&quot;8/21/2007 10:33:46 AM&quot;
+&gt; name=&quot;QuadrateSecurityServer.Enterprise/DataWorkbenchMessageCenter/Prope
+&gt; rties/AssemblyInfo.cs&quot; type=&quot;60&quot; version=&quot;6&quot; user=&quot;admin&quot;
+&gt; comment=&quot;Updated Version to 1.0.4&quot; actionString=&quot;Checked In&quot; /&gt;
+
+&gt;  &lt;item txid=&quot;43752&quot; date=&quot;8/21/2007 10:33:41 AM&quot;
+&gt; name=&quot;QuadrateSecurityServer.Enterprise/QSSAdministrator/Properties/Asse
+&gt; mblyInfo.cs&quot; type=&quot;60&quot; version=&quot;6&quot; user=&quot;admin&quot; comment=&quot;Updated Version
+&gt; to 1.0.4&quot; actionString=&quot;Checked In&quot; /&gt;
+
+&gt;  &lt;item txid=&quot;43751&quot; date=&quot;8/21/2007 10:33:36 AM&quot;
+&gt; name=&quot;QuadrateSecurityServer.Enterprise/QuadrateSecurityServer.Tester/Pr
+&gt; operties/AssemblyInfo.cs&quot; type=&quot;60&quot; version=&quot;8&quot; user=&quot;admin&quot;
+&gt; comment=&quot;Updated Version to 1.0.4&quot; actionString=&quot;Checked In&quot; /&gt;
+
+&gt;  &lt;item txid=&quot;43750&quot; date=&quot;8/21/2007 10:33:30 AM&quot;
+&gt; name=&quot;QuadrateSecurityServer.Enterprise/QuadrateSecurityServer.WebServic
+&gt; e/Properties/AssemblyInfo.cs&quot; type=&quot;60&quot; version=&quot;9&quot; user=&quot;admin&quot;
+&gt; comment=&quot;Updated Version to 1.0.4&quot; actionString=&quot;Checked In&quot; /&gt;
+
+&gt;  &lt;item txid=&quot;43749&quot; date=&quot;8/21/2007 10:33:25 AM&quot;
+&gt; name=&quot;QuadrateSecurityServer.Enterprise/QuadrateSecurityServer.DataLayer
+&gt; /Properties/AssemblyInfo.cs&quot; type=&quot;60&quot; version=&quot;8&quot; user=&quot;admin&quot;
+&gt; comment=&quot;Updated Version to 1.0.4&quot; actionString=&quot;Checked In&quot; /&gt;
+
+&gt;  &lt;item txid=&quot;43748&quot; date=&quot;8/21/2007 10:33:18 AM&quot;
+&gt; name=&quot;QuadrateSecurityServer.Enterprise/QuadrateSecurityServer.BusinessL
+&gt; ayer/Properties/AssemblyInfo.cs&quot; type=&quot;60&quot; version=&quot;8&quot; user=&quot;admin&quot;
+&gt; comment=&quot;Updated Version to 1.0.4&quot; actionString=&quot;Checked In&quot; /&gt;
+
+&gt; &lt;/history&gt;
+
+&gt; &lt;result success=&quot;yes&quot; /&gt;
+
+&gt; &lt;/vault&gt;
+
+&gt; Your project configuration says:
+
+&gt; &lt;sourcecontrol type=&quot;filtered&quot;&gt;
+
+&gt;       &lt;sourceControlProvider type=&quot;vault&quot;&gt;
+
+&gt;             ...
+
+&gt;       &lt;/sourceControlProvider&gt;
+
+&gt;       &lt;inclusionFilters&gt;
+
+&gt;             &lt;pathFilter&gt;
+
+&gt; &lt;pattern&gt;$/Development/QuadrateSecurityServer.Enterprise/**/*.*&lt;/
+
+&gt; pattern&gt;
+
+&gt;             &lt;/pathFilter&gt;
+
+&gt;       &lt;/inclusionFilters&gt;
+
+&gt;       &lt;exclusionFilters&gt;
+
+&gt;             &lt;pathFilter&gt;
+
+&gt; &lt;pattern&gt;$/Development/QuadrateSecurityServer.Enterprise/**/
+
+&gt; AssemblyInfo.cs&lt;/pattern&gt;
+
+&gt;             &lt;/pathFilter&gt;
+
+&gt;       &lt;/exclusionFilters&gt;
+
+&gt; &lt;/sourcecontrol&gt;
+
+&gt; Note that the pathnames reported by Vault do not begin with
+&gt; &quot;$/Development/&quot;.  That's why your pathfillter patterns aren't matching,
+&gt; and why CCNet isn't reporting any modifications.  Changing your filters
+&gt; to start with &quot;QuadrateSecurityServer.Enterprise/&quot; should make CCNet
+&gt; work for you.
+
+&gt; I don't know anything about Vault, but I wonder if the output of the
+&gt; &quot;vault history&quot; command has changed recently, such that it doesn't begin
+&gt; with &quot;$/...&quot;?
+
+&gt; Ross
+
+&gt; ________________________________
+
+&gt; Ross A. Patterson, CISSP
+
+&gt; Sr. Director, Development
+
+&gt; Tel:  +1 703-390-0865
+
+&gt; RPatter ... @QKnow.com
+
+&gt; Q.Know Technologies, Inc.
+
+&gt; 11600 Sunrise Valley Drive, Suite 300
+
+&gt; Reston, VA  20191
+
+&gt; www.QKnow.com
+">
+</POST>
+</TEXT>
+</BODY>
+</DOC>

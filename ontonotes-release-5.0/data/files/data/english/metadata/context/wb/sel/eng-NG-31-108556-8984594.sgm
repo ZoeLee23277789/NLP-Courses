@@ -1,0 +1,190 @@
+<DOC>
+<DOCID> eng-NG-31-108556-8984594 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-12T19:39:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Scaling A Pots Voltage
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Michael&quot; &lt;mQiQcQhQaQe...@QmQhQiQmQsQ.QcQoQ.QuQkQ&gt; </POSTER>
+<POSTDATE> 2007-10-12T19:39:00 </POSTDATE>
+Hi,
+
+I have a motor controller board that uses a 5K pot for speed
+control/setting.
+
+The problem I have is that my joystick only moves the pot 20% either side of
+center so I only have 40% of the total range.
+
+Is there anyway to scale this voltage up to the full range? I was thinking
+about using an amplifier but don't know of one that will increase a voltage
+above a certain point and decrease it below another.
+
+Can anyone suggest something suitable?
+
+Thanks in advance,
+
+Michael
+</POST>
+<POST>
+<POSTER> &quot;Ninja&quot; &lt;Wanna...@NoSpam.adelphia.net&gt; </POSTER>
+<POSTDATE> 2007-10-12T22:41:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Michael&quot; &lt;mQiQcQhQaQe ... @QmQhQiQmQsQ.QcQoQ.QuQkQ&gt; wrote in message
+">
+
+news:QATPi.148160$BW4.3510@fe1.news.blueyonder.co.uk ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi,
+
+&gt; I have a motor controller board that uses a 5K pot for speed
+&gt; control/setting.
+
+&gt; The problem I have is that my joystick only moves the pot 20% either side
+&gt; of center so I only have 40% of the total range.
+
+&gt; Is there anyway to scale this voltage up to the full range? I was thinking
+&gt; about using an amplifier but don't know of one that will increase a
+&gt; voltage above a certain point and decrease it below another.
+
+&gt; Can anyone suggest something suitable?
+
+&gt; Thanks in advance,
+
+&gt; Michael
+">
+
+If the amplifier approach appeals to you, it's simply gain and offset that
+you need to do the job. See http://focus.ti.com/lit/an/sloa097/sloa097.pdf
+for an application note on how to design the amplifier.
+</POST>
+<POST>
+<POSTER> &quot;Stephen J. Rush&quot; &lt;sjr...@comcast.net&gt; </POSTER>
+<POSTDATE> 2007-10-13T00:53:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Fri, 12 Oct 2007 23:39:28 +0000, Michael wrote:
+&gt; Hi,
+
+&gt; I have a motor controller board that uses a 5K pot for speed
+&gt; control/setting.
+
+&gt; The problem I have is that my joystick only moves the pot 20% either side of
+&gt; center so I only have 40% of the total range.
+">
+
+An op-amp circuit would be easier to adjust, but there is an old trick
+used by early R/C model builders back when they had to build their own
+joysticks: get a wirewound pot and bypass part of the element with silver
+paint.  The paint was a General Cement product intended for repairing
+printed circuit boards.  I suspect that getting it right would take as
+long as building an op-amp scaler with trimpots for gain and offset.
+</POST>
+<POST>
+<POSTER> John Fields &lt;jfie...@austininstruments.com&gt; </POSTER>
+<POSTDATE> 2007-10-13T11:35:00 </POSTDATE>
+On Fri, 12 Oct 2007 23:39:28 GMT, &quot;Michael&quot;
+
+<QUOTE PREVIOUSPOST="
+&lt;mQiQcQhQaQe ... @QmQhQiQmQsQ.QcQoQ.QuQkQ&gt; wrote:
+&gt;Hi,
+
+&gt;I have a motor controller board that uses a 5K pot for speed
+&gt;control/setting.
+
+&gt;The problem I have is that my joystick only moves the pot 20% either side of
+&gt;center so I only have 40% of the total range.
+
+&gt;Is there anyway to scale this voltage up to the full range? I was thinking
+&gt;about using an amplifier but don't know of one that will increase a voltage
+&gt;above a certain point and decrease it below another.
+
+&gt;Can anyone suggest something suitable?
+">
+
+---
+The brute-force way would be to use two supplies: (View in Courier)
+
+.         E1
+.         |
+.        [R1]
+.         |
+.     E2--+
+.         |
+.        [R2]&lt;--- EOUT
+.         |
+.     E3--+
+.         |
+.        [R3]
+.         |
+.         E4
+
+E1 and E4 are the supply voltages, EOUT is the wiper voltage (which
+can vary from E2 to E3), R1 and R3 are the inaccessible regions of
+the pot, and R2 is the 40% of the total resistance of the pot you
+can access.
+
+Since you have a 5k pot and you can only use 40% of it, that
+resistance is:
+
+R2 = 0.4 Rt = 0.4 * 5000R = 2000 ohms.
+
+That makes:
+
+Rt - 2000R     3000R
+R1 = R3 = ------------ = ------- = 1500 ohms
+2            2
+
+Let's say that your motor control voltage needs to be 0 to 10V.
+
+Then that means your circuit now looks like this:
+
+.         E1
+.         |
+.      [1500R] R1
+.         |
+.     E2--+---10V
+.         |
+.   R2 [2000R]&lt;--- EOUT
+.         |
+.     E3--+---0V
+.         |
+.      [1500R] R3]
+.         |
+.         E4
+
+Since you want 10V across 5k, that means (with no load on the wiper)
+that the current through the pot will be:
+
+E2 - E3      10V
+I = --------- = ------- = 0.005A = 5 milliamperes.
+R2        2000R
+
+Now, since the current in a series circuit is everywhere the same,
+R1 and R3 will also have 5mA through them and the voltages they will
+each drop will be:
+
+E = IR = 0.005A * 1500R = 7.5V
+
+So, E1 needs to be 7.5V more positive than E2 and E4 needs to be
+7.5V more negative than E3, reducing the circuit to:
+
+.       17.5V
+.         |
+.        [R1]&lt;--- EOUT
+.         |
+.       -7.5V
+
+Finally, since there's 25V across the pot and 5mA through it, it'll
+be dissipating:
+
+P = IE 0.005A * 25V = 0.125 watt, which is very little.
+
+--
+JF
+</POST>
+</TEXT>
+</BODY>
+</DOC>

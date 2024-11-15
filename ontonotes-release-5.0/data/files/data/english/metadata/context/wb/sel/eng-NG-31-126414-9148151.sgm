@@ -1,0 +1,165 @@
+<DOC>
+<DOCID> eng-NG-31-126414-9148151 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-05T20:14:00 </DATETIME>
+<BODY>
+<HEADLINE>
+racoon or pipsecd?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> swun2...@gmail.com </POSTER>
+<POSTDATE> 2007-09-05T20:14:00 </POSTDATE>
+Hi,
+
+I found there is  a port called pipsecd in freebsd 6.2.
+But it seems this program is written at 1999. Suprisingly I still can
+have it compliled with only some warnings. May be this port is
+constantly under development..
+
+I am wondering if ipsec-tools( for racoon) is better than pipsecd. It
+seems pipsecd does not have pre-shared key and x509 stuff I want to
+use. The current problem I have with racoon (in ipsec-tools) is I
+can't get the pre-shared key working - the remote router has 2 SA
+entries, while the home router has only 1 SA entry.
+
+Your suggestion is much appreciated.
+
+Thanks
+S
+</POST>
+<POST>
+<POSTER> swun2...@gmail.com </POSTER>
+<POSTDATE> 2007-09-05T22:08:00 </POSTDATE>
+On Sep 6, 10:14 am, swun2 ... @gmail.com wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi,
+
+&gt; I found there is  a port called pipsecd in freebsd 6.2.
+&gt; But it seems this program is written at 1999. Suprisingly I still can
+&gt; have it compliled with only some warnings. May be this port is
+&gt; constantly under development..
+
+&gt; I am wondering if ipsec-tools( for racoon) is better than pipsecd. It
+&gt; seems pipsecd does not have pre-shared key and x509 stuff I want to
+&gt; use. The current problem I have with racoon (in ipsec-tools) is I
+&gt; can't get the pre-shared key working - the remote router has 2 SA
+&gt; entries, while the home router has only 1 SA entry.
+
+&gt; Your suggestion is much appreciated.
+
+&gt; Thanks
+&gt; S
+">
+
+Hi, I found the home router (having problem with - only with one SA
+entry) has no enc0 interface, while the remote vpn router (with 2 SA
+entries) has enc0 interface built in the kernel. Is this the problem
+causing racoon failed to accept ISKAMP key from the remote vpn router?
+
+Thanks
+S
+</POST>
+<POST>
+<POSTER> &quot;Matthew X. Economou&quot; &lt;xenophon+use...@irtnog.org&gt; </POSTER>
+<POSTDATE> 2007-09-06T15:20:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt;&gt;&gt; &quot;swun2010&quot; == swun2010  &lt;swun2 ... @gmail.com&gt; writes:
+">
+
+swun2010&gt; Hi, I found the home router (having problem with - only
+swun2010&gt; with one SA entry) has no enc0 interface, while the
+swun2010&gt; remote vpn router (with 2 SA entries) has enc0 interface
+swun2010&gt; built in the kernel. Is this the problem causing racoon
+swun2010&gt; failed to accept ISKAMP key from the remote vpn router?
+
+Might be.  Note that up to at least RELENG_6_2, the GENERIC kernel
+does not include IPSEC support by default.  If you are running FreeBSD
+6.2 or older on your home router, you'll need to build a custom
+kernel.  See src/sys/conf/NOTES or ipsec(4)/fast_ipsec(4) for more
+information.
+
+I would also recommend that you first test connectivity by configuring
+the necessary IPSEC security associations manually.  As for your
+choice of IKE daemon, you should probably stick with racoon2 once you
+know IPSEC works. The isakmpd port is based on an outdated OpenBSD
+snapshot, and pipsecd is old enough that it may predate some important
+revisions to the IPSEC protocol suite and API.
+
+I'm not terribly happy with the IPSEC configuration documented in the
+FreeBSD handbook, but you should read through it (if you haven't
+already) and try the example configuration that it outlines
+( http://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/ipsec.html ).
+
+If I may put forward a slice of personal philosophy, I feel that IPSEC
+has ruled the VPN world as an confusing and overly complicated
+tunneling protocol long enough.  If interoperability with dedicated
+routing hardware is not a business requirement and secure tunneling
+your only goal, I strongly recommend that you use OpenVPN instead of
+IPSEC.
+
+Best wishes,
+Matthew
+
+--
+A: Because it messes up the order in which people normally read text.
+Q: Why is top-posting such a bad thing?
+</POST>
+<POST>
+<POSTER> pp &lt;p...@mm.org&gt; </POSTER>
+<POSTDATE> 2007-09-06T17:30:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Matthew X. Economou wrote:
+&gt;&gt;&gt;&gt;&gt;&gt; &quot;swun2010&quot; == swun2010  &lt;swun2 ... @gmail.com&gt; writes:
+
+&gt; Might be.  Note that up to at least RELENG_6_2, the GENERIC kernel
+&gt; does not include IPSEC support by default.  If you are running FreeBSD
+&gt; 6.2 or older on your home router, you'll need to build a custom
+&gt; kernel.  See src/sys/conf/NOTES or ipsec(4)/fast_ipsec(4) for more
+&gt; information.
+">
+
+I  have built the ipsec kernel following many online info including
+freebsd hankbook.
+
+<QUOTE PREVIOUSPOST="
+&gt; I would also recommend that you first test connectivity by configuring
+&gt; the necessary IPSEC security associations manually.  As for your
+&gt; choice of IKE daemon, you should probably stick with racoon2 once you
+&gt; know IPSEC works. The isakmpd port is based on an outdated OpenBSD
+&gt; snapshot, and pipsecd is old enough that it may predate some important
+&gt; revisions to the IPSEC protocol suite and API.
+">
+
+The manually key with this ipsec connection had been tested
+successfully, that is why I moved to ipsec-tools (racoon).
+I have downloaded the new version of ipsec-tools from sourceforge.net,
+it is just released last month. May be I should try racoon2 instead.
+
+Thanks
+
+<QUOTE PREVIOUSPOST="
+&gt; I'm not terribly happy with the IPSEC configuration documented in the
+&gt; FreeBSD handbook, but you should read through it (if you haven't
+&gt; already) and try the example configuration that it outlines
+&gt; ( http://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/ipsec.html ).
+">
+
+Yeah, I have.
+
+<QUOTE PREVIOUSPOST="
+&gt; If I may put forward a slice of personal philosophy, I feel that IPSEC
+&gt; has ruled the VPN world as an confusing and overly complicated
+&gt; tunneling protocol long enough.  If interoperability with dedicated
+&gt; routing hardware is not a business requirement and secure tunneling
+&gt; your only goal, I strongly recommend that you use OpenVPN instead of
+&gt; IPSEC.
+
+&gt; Best wishes,
+&gt; Matthew
+">
+</POST>
+</TEXT>
+</BODY>
+</DOC>

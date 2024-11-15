@@ -1,0 +1,481 @@
+<DOC>
+<DOCID> eng-NG-31-135457-8593252 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-05T00:20:00 </DATETIME>
+<BODY>
+<HEADLINE>
+EMERGE USE PHP additional options problem
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Pablo Murillo&quot; &lt;p...@rednetgroup.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T00:20:00 </POSTDATE>
+Hi
+
+I'm VERY new on GENTOO
+I'm from Argentine, my english (and my spanish too), is very poor
+I was using RedHat until 6.2, I allways made all configuration, compilation,
+etc, etc by hand
+I have scripts to install a complete RH 6.2 server with more than 1000 lines
+Now, I'm trying to understand how work the portage system, and I'm very lost
+I'm trying to do something that I believe is VERY stupid, but I can't make
+it work
+
+I want to configure PHP with &quot;ZIP&quot; and other things. The others thinhs
+works, but &quot;with-zip&quot;, don't
+
+I'm doing the next:
+
+USE=&quot; -X -gtk -gnome -kde -xpm -gpm -alsa -qt -java -ipv6 -berkdb -gdbm -pdo
+-pdo-external -posix -cgi -force-cgi-redirect cli apache2 ctype fastbuild
+ftp gd hash iconv mysql nls pcre pic reflection session simplexml soap
+sockets spl ssl sqlite tokenizer truetype xml xmlrpc xmlreader xmlwriter xsl
+zlib zip unicode imap snmp&quot; emerge -a php-5.1.4.ebuild
+
+All looks good, BUT, I restart apache and the new php_info don't have
+--enable-zip
+
+what am I doing wrong ?
+
+Thanks, in advance
+Pablo M.
+
+--
+gentoo-u ... @gentoo.org mailing list
+</POST>
+<POST>
+<POSTER> Benno Schulenberg &lt;benno.schulenb...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T08:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Pablo Murillo wrote:
+&gt; USE=&quot; -X -gtk -gnome -kde -xpm -gpm -alsa -qt -java -ipv6 -berkdb
+&gt; -gdbm -pdo -pdo-external -posix -cgi -force-cgi-redirect cli
+&gt; apache2 ctype fastbuild ftp gd hash iconv mysql nls pcre pic
+&gt; reflection session simplexml soap sockets spl ssl sqlite
+&gt; tokenizer truetype xml xmlrpc xmlreader xmlwriter xsl zlib zip
+&gt; unicode imap snmp&quot; emerge -a php-5.1.4.ebuild
+">
+
+Don't set all these USE flags on the command line.  Set the ones you
+want to be valid for your whole system in /etc/make.conf.  Set the
+ones that should be valid only for php in /etc/portage/package.use,
+by putting a line like 'dev-lang/php  zip' in that file.
+
+Further, you can't use the word &quot;ebuild&quot; in an emerge command like
+that.  Please show us the actual output of 'emerge -pv php'.
+
+Benno
+--
+gentoo-u ... @gentoo.org mailing list
+</POST>
+<POST>
+<POSTER> &quot;Dan Cowsill&quot; &lt;danthe...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T09:30:00 </POSTDATE>
+On 9/5/07, Benno Schulenberg &lt;benno.schulenb ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Pablo Murillo wrote:
+&gt; &gt; USE=&quot; -X -gtk -gnome -kde -xpm -gpm -alsa -qt -java -ipv6 -berkdb
+&gt; &gt; -gdbm -pdo -pdo-external -posix -cgi -force-cgi-redirect cli
+&gt; &gt; apache2 ctype fastbuild ftp gd hash iconv mysql nls pcre pic
+&gt; &gt; reflection session simplexml soap sockets spl ssl sqlite
+&gt; &gt; tokenizer truetype xml xmlrpc xmlreader xmlwriter xsl zlib zip
+&gt; &gt; unicode imap snmp&quot; emerge -a php-5.1.4.ebuild
+
+&gt; Don't set all these USE flags on the command line.  Set the ones you
+&gt; want to be valid for your whole system in /etc/make.conf.  Set the
+&gt; ones that should be valid only for php in /etc/portage/package.use,
+&gt; by putting a line like 'dev-lang/php  zip' in that file.
+
+&gt; Further, you can't use the word &quot;ebuild&quot; in an emerge command like
+&gt; that.  Please show us the actual output of 'emerge -pv php'.
+
+&gt; Benno
+&gt; --
+&gt; gentoo-u ... @gentoo.org mailing list
+">
+
+It looks like he's trying to emerge from an ebuild file directly.
+Also not a good idea.
+--
+Dan Cowsill
+http://www.danthehat.net
+--
+gentoo-u ... @gentoo.org mailing list
+</POST>
+<POST>
+<POSTER> &quot;Pablo Murillo&quot; &lt;p...@rednetgroup.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T09:50:00 </POSTDATE>
+now I'm worse :(
+
+I update de portage, and now I have a biger problem
+--------------------------------------------------------------------------- ------
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] dev-db/mysql-init-scripts-1.2
+[ebuild  N    ] mail-mta/ssmtp-2.61-r2  USE=&quot;ssl -ipv6 -mailwrapper -md5sum&quot;
+[ebuild     U ] dev-db/mysql-5.0.44 [4.1.21] USE=&quot;-max-idx-128%&quot;
+[ebuild  N    ] virtual/mysql-5.0
+[ebuild     U ] dev-lang/php-5.2.3-r3 [5.1.4]
+USE=&quot;-fastbuild* -filter% -ftp* -hash* -imap* -json% -ldap-sasl% -pic* -snmp*
+-sockets* -spell* -sqlite* -suhosin% -tokenizer* -xmlreader* -xmlrpc* -xmlwriter*
+-zip* -zip-external%&quot;
+[blocks B     ] mail-mta/ssmtp (is blocking mail-mta/qmail-1.03-r16)
+[blocks B     ] mail-mta/qmail (is blocking mail-mta/ssmtp-2.61-r2)
+--------------------------------------------------------------------------- ------
+
+I don't want to REinstall qmail or ssmtp, everything is working fine
+What can I do ?
+
+<QUOTE PREVIOUSPOST="
+----- Original Message -----
+From: &quot;Benno Schulenberg&quot; &lt;benno.schulenb ... @gmail.com&gt;
+To: &lt;gentoo-u ... @lists.gentoo.org&gt;
+Sent: Wednesday, September 05, 2007 9:29 AM
+Subject: Re: [gentoo-user] EMERGE USE PHP additional options problem
+
+&gt; Pablo Murillo wrote:
+&gt;&gt; USE=&quot; -X -gtk -gnome -kde -xpm -gpm -alsa -qt -java -ipv6 -berkdb
+&gt;&gt; -gdbm -pdo -pdo-external -posix -cgi -force-cgi-redirect cli
+&gt;&gt; apache2 ctype fastbuild ftp gd hash iconv mysql nls pcre pic
+&gt;&gt; reflection session simplexml soap sockets spl ssl sqlite
+&gt;&gt; tokenizer truetype xml xmlrpc xmlreader xmlwriter xsl zlib zip
+&gt;&gt; unicode imap snmp&quot; emerge -a php-5.1.4.ebuild
+
+&gt; Don't set all these USE flags on the command line.  Set the ones you
+&gt; want to be valid for your whole system in /etc/make.conf.  Set the
+&gt; ones that should be valid only for php in /etc/portage/package.use,
+&gt; by putting a line like 'dev-lang/php  zip' in that file.
+
+&gt; Further, you can't use the word &quot;ebuild&quot; in an emerge command like
+&gt; that.  Please show us the actual output of 'emerge -pv php'.
+
+&gt; Benno
+&gt; --
+&gt; gentoo-u ... @gentoo.org mailing list
+">
+
+--
+gentoo-u ... @gentoo.org mailing list
+</POST>
+<POST>
+<POSTER> Benno Schulenberg &lt;benno.schulenb...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T10:30:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Pablo Murillo wrote:
+&gt; I update de portage,
+">
+
+You did what exactly?  Did you run 'emerge --sync' or 'emerge -a portage'?
+
+<QUOTE PREVIOUSPOST="
+&gt; [ebuild  N    ] virtual/mysql-5.0
+&gt; [ebuild     U ] dev-lang/php-5.2.3-r3 [5.1.4]
+&gt; USE=&quot;-fastbuild* -filter% -ftp* -hash* -imap* -json% -ldap-sasl%
+&gt; -pic* -snmp* -sockets* -spell* -sqlite* -suhosin% -tokenizer*
+&gt; -xmlreader* -xmlrpc* -xmlwriter* -zip* -zip-external%&quot;
+&gt; [blocks B     ] mail-mta/ssmtp (is blocking mail-mta/qmail-1.03-r16)
+&gt; [blocks B     ] mail-mta/qmail (is blocking mail-mta/ssmtp-2.61-r2)
+">
+
+Put the single line 'dev-lang/php  fastbuild ftp hash imap pic snmp
+sockets spell sqlite tokenizer xmlreader xmlrpc xmlwriter zip -mysql'
+in your /etc/portage/package.use file.  Create the file if it does not
+exist, create the dir too if necessary.  The relevant parts are the
+&quot;sqlite&quot; USE flag and the &quot;-mysql&quot; one, which will prevent mysql from
+being pulled in, which will prevent ssmtp from being pulled in.
+
+You will probably want to add &quot;-mysql&quot; to the USE flag definitions in
+your /etc/make.conf.
+
+Benno
+
+PS: please do not top-post.  No matter what your mailer, please
+organize your messages in a sensible order.
+--
+gentoo-u ... @gentoo.org mailing list
+</POST>
+<POST>
+<POSTER> &quot;Pablo Murillo&quot; &lt;p...@rednetgroup.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T10:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Pablo Murillo wrote:
+&gt;&gt; I update de portage,
+
+&gt; You did what exactly?  Did you run 'emerge --sync' or 'emerge -a portage'?
+">
+
+emerge --sync
+
+SORRY!!!!
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; [ebuild  N    ] virtual/mysql-5.0
+&gt;&gt; [ebuild     U ] dev-lang/php-5.2.3-r3 [5.1.4]
+&gt;&gt; USE=&quot;-fastbuild* -filter% -ftp* -hash* -imap* -json% -ldap-sasl%
+&gt;&gt; -pic* -snmp* -sockets* -spell* -sqlite* -suhosin% -tokenizer*
+&gt;&gt; -xmlreader* -xmlrpc* -xmlwriter* -zip* -zip-external%&quot;
+&gt;&gt; [blocks B     ] mail-mta/ssmtp (is blocking mail-mta/qmail-1.03-r16)
+&gt;&gt; [blocks B     ] mail-mta/qmail (is blocking mail-mta/ssmtp-2.61-r2)
+
+&gt; Put the single line 'dev-lang/php  fastbuild ftp hash imap pic snmp
+&gt; sockets spell sqlite tokenizer xmlreader xmlrpc xmlwriter zip -mysql'
+&gt; in your /etc/portage/package.use file.  Create the file if it does not
+&gt; exist, create the dir too if necessary.  The relevant parts are the
+&gt; &quot;sqlite&quot; USE flag and the &quot;-mysql&quot; one, which will prevent mysql from
+&gt; being pulled in, which will prevent ssmtp from being pulled in.
+
+&gt; You will probably want to add &quot;-mysql&quot; to the USE flag definitions in
+&gt; your /etc/make.conf.
+">
+
+If I USE -mysql the PHP won't have support for mysql ?
+
+<QUOTE PREVIOUSPOST="
+&gt; Benno
+
+&gt; PS: please do not top-post.  No matter what your mailer, please
+&gt; organize your messages in a sensible order.
+">
+
+I wrote this way for years, but the common PC user don't understand :D
+
+<QUOTE PREVIOUSPOST="
+&gt; --
+&gt; gentoo-u ... @gentoo.org mailing list
+">
+
+--
+gentoo-u ... @gentoo.org mailing list
+</POST>
+<POST>
+<POSTER> Benno Schulenberg &lt;benno.schulenb...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-05T11:10:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Pablo Murillo wrote:
+&gt; If I USE -mysql the PHP won't have support for mysql ?
+">
+
+Precisely.  If sqlite is not enough and you need mysql, then yiou
+will have to uninstall qmail and install ssmtp instead.  Or file a
+bug in Gentoo's bugzilla against mysql, that it should be able to
+cope with qmail instead of ssmtp.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; PS: please do not top-post.  No matter what your mailer, please
+&gt; &gt; organize your messages in a sensible order.
+
+&gt; I wrote this way for years, but the common PC user don't
+&gt; understand :D
+">
+
+Yeah.  No excuse, though.  :)
+
+Oh, and please snip too.
+
+Benno
+--
+gentoo-u ... @gentoo.org mailing list
+</POST>
+<POST>
+<POSTER> Alan McKinnon &lt;a...@linuxholdings.co.za&gt; </POSTER>
+<POSTDATE> 2007-09-05T11:10:00 </POSTDATE>
+On Wednesday 05 September 2007, Pablo Murillo wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; now I'm worse :(
+
+&gt; I update de portage, and now I have a biger problem
+&gt; ---------------------------------------------------------------------
+&gt;------------ These are the packages that would be merged, in order:
+
+&gt; Calculating dependencies... done!
+&gt; [ebuild  N    ] dev-db/mysql-init-scripts-1.2
+&gt; [ebuild  N    ] mail-mta/ssmtp-2.61-r2  USE=&quot;ssl -ipv6 -mailwrapper
+&gt; -md5sum&quot; [ebuild     U ] dev-db/mysql-5.0.44 [4.1.21]
+&gt; USE=&quot;-max-idx-128%&quot; [ebuild  N    ] virtual/mysql-5.0
+&gt; [ebuild     U ] dev-lang/php-5.2.3-r3 [5.1.4]
+&gt; USE=&quot;-fastbuild* -filter% -ftp* -hash* -imap* -json% -ldap-sasl%
+&gt; -pic* -snmp* -sockets* -spell* -sqlite* -suhosin% -tokenizer*
+&gt; -xmlreader* -xmlrpc* -xmlwriter* -zip* -zip-external%&quot;
+&gt; [blocks B     ] mail-mta/ssmtp (is blocking mail-mta/qmail-1.03-r16)
+&gt; [blocks B     ] mail-mta/qmail (is blocking mail-mta/ssmtp-2.61-r2)
+&gt; ---------------------------------------------------------------------
+&gt;------------
+
+&gt; I don't want to REinstall qmail or ssmtp, everything is working fine
+&gt; What can I do ?
+">
+
+First, please don't top post. It makes your posts illegible as I can't
+tell in what order who said what. And probably stop using Outlook
+Express as well. That POS hasn't gotten around to figuring out yet that
+text mails go up to column 80 or so for a good reason. It's mangled
+your post by stripping out all the line breaks, making it doubly hard
+to read.
+
+Onto your output. emerge wants to re-install ssmtp (I can't tell why),
+but can't because it conflicts with qmail which you already have
+installed. That's what the last two lines mean:
+ssmtp won't install itself if qmail is already there,
+qmail is complaining and won't let emerge install ssmtp for the same
+reason.
+
+I suspect it's php wanting to pull in ssmtp, what I don't understand is
+why it wants to do that when qmail already provides virtual/mta.
+
+Please rerun the emerge above ith the -t option so we can see what's
+going on.
+
+alan
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; ----- Original Message -----
+&gt; From: &quot;Benno Schulenberg&quot; &lt;benno.schulenb ... @gmail.com&gt;
+&gt; To: &lt;gentoo-u ... @lists.gentoo.org&gt;
+&gt; Sent: Wednesday, September 05, 2007 9:29 AM
+&gt; Subject: Re: [gentoo-user] EMERGE USE PHP additional options problem
+
+&gt; &gt; Pablo Murillo wrote:
+&gt; &gt;&gt; USE=&quot; -X -gtk -gnome -kde -xpm -gpm -alsa -qt -java -ipv6 -berkdb
+&gt; &gt;&gt; -gdbm -pdo -pdo-external -posix -cgi -force-cgi-redirect cli
+&gt; &gt;&gt; apache2 ctype fastbuild ftp gd hash iconv mysql nls pcre pic
+&gt; &gt;&gt; reflection session simplexml soap sockets spl ssl sqlite
+&gt; &gt;&gt; tokenizer truetype xml xmlrpc xmlreader xmlwriter xsl zlib zip
+&gt; &gt;&gt; unicode imap snmp&quot; emerge -a php-5.1.4.ebuild
+
+&gt; &gt; Don't set all these USE flags on the command line.  Set the ones
+&gt; &gt; you want to be valid for your whole system in /etc/make.conf.  Set
+&gt; &gt; the ones that should be valid only for php in
+&gt; &gt; /etc/portage/package.use, by putting a line like 'dev-lang/php
+&gt; &gt; zip' in that file.
+
+&gt; &gt; Further, you can't use the word &quot;ebuild&quot; in an emerge command like
+&gt; &gt; that.  Please show us the actual output of 'emerge -pv php'.
+
+&gt; &gt; Benno
+&gt; &gt; --
+&gt; &gt; gentoo-u ... @gentoo.org mailing list
+">
+
+--
+Optimists say the glass is half full,
+Pessimists say the glass is half empty,
+Developers say wtf is the glass twice as big as it needs to be?
+
+Alan McKinnon
+alan at linuxholdings dot co dot za
++27 82, double three seven, one nine three five
+--
+gentoo-u ... @gentoo.org mailing list
+</POST>
+<POST>
+<POSTER> Dan Farrell &lt;d...@spore.ath.cx&gt; </POSTER>
+<POSTDATE> 2007-09-05T11:20:00 </POSTDATE>
+On Wed, 5 Sep 2007 16:50:25 +0200
+
+<QUOTE PREVIOUSPOST="
+Alan McKinnon &lt;a ... @linuxholdings.co.za&gt; wrote:
+&gt; User-Agent: KMail/1.9.7
+">
+
+this is not outlook express, it's kmail.
+--
+gentoo-u ... @gentoo.org mailing list
+</POST>
+<POST>
+<POSTER> Alan McKinnon &lt;a...@linuxholdings.co.za&gt; </POSTER>
+<POSTDATE> 2007-09-05T13:30:00 </POSTDATE>
+On Wednesday 05 September 2007, Dan Farrell wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Wed, 5 Sep 2007 16:50:25 +0200
+
+&gt; Alan McKinnon &lt;a ... @linuxholdings.co.za&gt; wrote:
+&gt; &gt; User-Agent: KMail/1.9.7
+
+&gt; this is not outlook express, it's kmail.
+">
+
+That's *my* X-Mailer you are quoting, not the GPs.
+
+His is
+X-Mailer: Microsoft Outlook Express 6.00.2900.3138
+from
+Message-ID: &lt;003d01c7efc3$6d739120$a601a8c0@killermovil&gt;
+
+alan
+
+--
+Optimists say the glass is half full,
+Pessimists say the glass is half empty,
+Developers say wtf is the glass twice as big as it needs to be?
+
+Alan McKinnon
+alan at linuxholdings dot co dot za
++27 82, double three seven, one nine three five
+--
+gentoo-u ... @gentoo.org mailing list
+</POST>
+<POST>
+<POSTER> Dan Farrell &lt;d...@spore.ath.cx&gt; </POSTER>
+<POSTDATE> 2007-09-05T14:00:00 </POSTDATE>
+On Wed, 5 Sep 2007 19:12:09 +0200
+
+<QUOTE PREVIOUSPOST="
+Alan McKinnon &lt;a ... @linuxholdings.co.za&gt; wrote:
+&gt; That's *my* X-Mailer you are quoting, not the GPs.
+">
+
+oh yeah, good point.  duh.   ; )
+--
+gentoo-u ... @gentoo.org mailing list
+</POST>
+<POST>
+<POSTER> kashani &lt;kashani-l...@badapple.net&gt; </POSTER>
+<POSTDATE> 2007-09-05T14:10:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Pablo Murillo wrote:
+&gt; If I USE -mysql the PHP won't have support for mysql ?
+">
+
+Ideally you want nice defaults in your /etc/make.conf that you would not
+being built into any package. Things like unicode ssl bzip2 apache2 and
+so on depending on your server. I have mysql in mine, but I pull it out
+per package for things like the name server where is does not need to be.
+
+I would then specify on a per package basis databases and one off things
+like fam, sasl, etc in your /etc/portage/package.use
+
+Here is part of mine.
+www01 ~ # cat /etc/portage/package.use
+# Added urandom to make Apache start faster
+dev-libs/apr            urandom
+# Specify no threads for Apache
+www-servers/apache      -threads mpm-prefork
+
+# Network Daemons
+net-dns/bind            -mysql
+net-mail/courier-imap   fam gdbm -berkdb
+dev-libs/cyrus-sasl     -berkdb -mysql authdaemond urandom
+www-servers/lighttpd    fam -mysql -ssl
+mail-mta/postfix        mysql ssl sasl vda
+
+# PHP
+dev-lang/php            -threads bcmath berkdb cli crypt ctype curl exif
+gd gdbm hash iconv imap mhash mysql mysqli ncurses nls pcre readline
+session simplexml snmp sockets spell spl ssl suhosin truetype xml xmlrpc
+zlib
+
+kashani
+--
+gentoo-u ... @gentoo.org mailing list
+</POST>
+</TEXT>
+</BODY>
+</DOC>

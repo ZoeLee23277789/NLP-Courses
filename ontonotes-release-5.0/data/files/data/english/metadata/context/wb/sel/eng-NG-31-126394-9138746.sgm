@@ -1,0 +1,434 @@
+<DOC>
+<DOCID> eng-NG-31-126394-9138746 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-05T18:49:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Require help learning how to decompose class into policies
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Stephen Torri &lt;sto...@torri.org&gt; </POSTER>
+<POSTDATE> 2007-09-05T18:49:00 </POSTDATE>
+Below is a class that is suppose to represent a segment of memory or a
+contents of a binary image (e.g. ELF executable). I have started to read
+Modern C++ Design and thought the best way to ensure I was understanding
+the chapter on policy classes was to attempt to apply them to my project.
+I understand the general concept of policies but I lack the knowledge and
+wisdom of how to identify them in an existing project. So I figured to get
+an existing class and start from there.
+
+Some notes about the code:
+
+- Tracing: The following statement is only activate if the ./configure
+script was run with --enable-debug. Otherwise its compiled out by
+the compiler. If debugging is enabled AND the trace level of the
+library was set to TraceLevel::DETAIL or higher then the message
+will appear.
+
+Trace::write_Trace ( TraceArea::DATA_CONTAINERS,
+TraceLevel::DETAIL,
+&quot;Entering Memory_Map::swap&quot; );
+
+- Assert: The following statement will perform either a throw an exception
+which performs a typical abort after finding a false expression,
+reporting where in the code the assert happened along with a descriptive message.
+Otherwise a developer can provide another exception which can take a different
+approach to terminating the program.
+
+Assert::bool_check ( size != 0, &quot;Size of memory map is zero.&quot; );
+
+My first thoughts where to make the Asserts into a policy. Second place could be the to_String
+function. One way of printing could be a indented string with spaces or another method writing the content
+of the class as a XML string. Any help is appreciated.
+
+Stephen
+
+----------------------
+HEADER
+----------------------
+
+#ifndef MEMORY_MAP_H_
+#define MEMORY_MAP_H_
+
+#include &lt;boost/shared_ptr.hpp&gt;
+#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+#include &lt;vector&gt;
+#include &lt;map&gt;
+#include &lt;boost/enable_shared_from_this.hpp&gt;
+#include &quot;Data_Types.h&quot;
+
+namespace libreverse { namespace data_container {
+
+class Memory_Map : public boost::enable_shared_from_this&lt;Memory_Map&gt;
+{
+public:
+
+/**
+* \brief Set up a blank memory map of a set size
+*
+* \param size Size of memory map to allocate
+*
+* \param base_address The memory address of the first byte
+*
+* \pre size has a value of 0 or more
+*
+* \pre base_address has a value of 0 or more
+*
+* \post Size of memory map has been set to the value of the
+* input variable 'size'
+*
+* \post Base addres of the memory map has been set to the
+* value of the input variable 'base_address' or the default
+* value of zero
+*/
+explicit Memory_Map ( boost::uint32_t size,
+boost::uint32_t base_address = 0 );
+
+/**
+* \brief Set up a memory map of a set size with the contents
+* of the input file stream.
+*
+* \param input_ref Input file stream where data is stored.
+*
+* \param base_address The memory address of the first byte
+*
+* \pre size has a value of 0 or more
+*
+* \pre base_address has a value of 0 or more
+*
+* \post Size of memory map has been set to the value of the
+* size of the input file stream.
+*
+* \post Base addres of the memory map has been set to the
+* value of the input variable 'base_address' or the default
+* value of zero
+*/
+explicit Memory_Map ( std::ifstream&amp; input_ref,
+boost::uint32_t base_address = 0 );
+
+/**
+* \brief Copy constructor
+*
+* \pre The input reference is a fully initialized Memory_Map
+*
+* \post The output Memory_Map is a deep copy of the input
+*/
+explicit Memory_Map ( Memory_Map const&amp; rhs );
+
+virtual ~Memory_Map();
+
+/**
+* \brief assignment operator
+*
+* This function handles copying the rhs reference even if the rhs
+* is a reference to this object.
+*
+* \pre The input reference is a fully initialized Memory_Map
+*
+* \post The output Memory_Map is a deep copy of the input
+*/
+Memory_Map&amp; operator= ( Memory_Map const&amp; rhs );
+
+/**
+* \brief assignment operator
+*
+* \pre The input reference is a fully initialized Memory_Map
+*
+* \post The output Memory_Map is a deep copy of the input
+*/
+void swap ( Memory_Map&amp; rhs );
+
+/**
+* \brief Adjust the pointer into the memory to the location
+* specified in by the address.
+*
+* \post The present position is set to the new location.
+*/
+boost::int8_t address_Seek ( boost::uint32_t address );
+
+/**
+* \brief Adjust the pointer into the memory to the location
+* specified in by the index.
+*
+* \post The present position is set to the new location.
+*/
+template &lt;typename Offset_Type&gt;
+boost::int8_t
+index_Seek ( Offset_Type offset )
+{
+if ( offset &gt; m_data.size() - 1 )
+{
+std::cerr &lt;&lt; &quot;The offset given, &quot; &lt;&lt; offset
+&lt;&lt; &quot; is invalid. Its pointing to a &quot;
+&lt;&lt; std::endl
+&lt;&lt; &quot;memory location outside of space &quot;
+&lt;&lt; &quot;allocated to&quot;
+&lt;&lt; std::endl
+&lt;&lt; &quot;this Memory Map. (&quot;
+&lt;&lt; m_data.size() &lt;&lt; &quot;)&quot;
+&lt;&lt; std::endl;
+
+return data_types::Memory_Map::OUT_OF_RANGE;
+}
+
+m_present_pos = offset;
+
+return data_types::Memory_Map::SUCCESS;
+}
+
+/**
+* \brief Read 'length' units of data from this Memory Map.
+*
+* The read data will be placed into the destination startin
+* at the beginning.
+*
+* \pre The destination pointer is initialized.
+*
+* \pre Read length is non-zero
+*
+* \post The present position is set to the new location.
+*/
+boost::int8_t read ( data_types::Memory_Map::pointer_t dest_addr_ptr,
+boost::uint32_t length );
+
+/**
+* \brief This copies from the src_ptr to the local Memory
+* Map. It is assumed that the local Memory Map has been
+* adjusted to the position where data will be store. It is
+* also assumed that the src_ptr has been adjusted to the
+* position where we will start reading data.
+*
+* \pre The destination pointer is initialized.
+*
+* \pre Read length is non-zero
+*
+* \post The present position is set to the new location.
+*/
+boost::int8_t copy ( data_types::Memory_Map::ptr_t src_ptr,
+boost::uint32_t length );
+
+/**
+* \brief This produces a new Memory Map containing a subset
+* of the parent map. It is assumed that the parent Memory Map
+* has been adjusted to the position where we will start
+* reading data.
+*
+* \pre Present Position of the pointer into the data will not
+* go past the boundary with the given length.
+*
+* \pre Length is non-zero
+*/
+std::pair &lt;data_types::Memory_Map::ptr_t, boost::int8_t&gt;
+subset ( boost::uint32_t length );
+
+data_types::Memory_Map::iterator begin();
+
+data_types::Memory_Map::const_iterator begin() const;
+
+data_types::Memory_Map::const_iterator end() const;
+
+boost::uint32_t get_Present_Position_Value (void) const;
+
+data_types::Memory_Map::const_iterator get_Present_Position (void) const;
+
+boost::uint32_t get_Present_Position_Address (void) const;
+
+boost::uint32_t get_Previous_Position_Value (void) const;
+
+data_types::Memory_Map::const_iterator get_Previous_Position (void) const;
+
+boost::uint32_t get_Previous_Position_Address (void) const;
+
+boost::uint32_t const size (void) const;
+
+std::string to_String (void) const;
+
+bool operator== ( Memory_Map&amp; rhs_ref ) const;
+
+bool allocate_Range ( boost::uint32_t address, boost::uint32_t size );
+
+private:
+
+Memory_Map();
+
+data_types::Memory_Map::Values_t m_data;
+
+boost::uint32_t m_present_pos; // Present index
+
+boost::uint32_t m_previous_pos; // Previous index
+
+boost::uint32_t m_base_address;
+
+};
+
+<QUOTE PREVIOUSPOST="
+} /* namespace data_types */
+} /* namespace libreverse */
+">
+
+#endif /* MEMORY_MAP_H_ */
+
+--------------------
+SOURCE
+---------------------
+#include &quot;Memory_Map.h&quot;
+#include &lt;sstream&gt;
+#include &lt;fstream&gt;
+#include &lt;boost/format.hpp&gt;
+#include &quot;libreverse/Trace.h&quot;
+#include &quot;libreverse/Assert.h&quot;
+
+using namespace libreverse::api;
+using namespace libreverse::assert;
+using namespace libreverse::trace;
+
+namespace libreverse { namespace data_container {
+
+template &lt; template&lt;class&gt; class CheckingPolicy &gt;
+Memory_Map::Memory_Map ()
+: m_data (),
+m_present_pos ( 0 ),
+m_previous_pos ( 0 ),
+m_base_address ( 0 )
+{
+Trace::write_Trace ( TraceArea::DATA_CONTAINERS,
+TraceLevel::DETAIL,
+&quot;Inside Memory_Map constructor&quot; );
+}
+
+Memory_Map::Memory_Map ( boost::uint32_t size,
+boost::uint32_t base_address )
+: m_data ( size, 0 ),
+m_present_pos ( 0 ),
+m_previous_pos ( 0 ),
+m_base_address ( base_address )
+{
+Trace::write_Trace ( TraceArea::DATA_CONTAINERS,
+...
+read more »
+</POST>
+<POST>
+<POSTER> James Kanze &lt;james.ka...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-06T04:35:00 </POSTDATE>
+On Sep 6, 12:49 am, Stephen Torri &lt;sto ... @torri.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Below is a class that is suppose to represent a segment of memory or a
+&gt; contents of a binary image (e.g. ELF executable). I have started to read
+&gt; Modern C++ Design and thought the best way to ensure I was understanding
+&gt; the chapter on policy classes was to attempt to apply them to my project.
+&gt; I understand the general concept of policies but I lack the knowledge and
+&gt; wisdom of how to identify them in an existing project. So I figured to get
+&gt; an existing class and start from there.
+">
+
+This sounds slightly backwards to me.  Policies are a tool: a
+means, and not a goal.  If you don't feel the need for them (and
+most application software won't), then all they do is add
+unnecessary complexity.  It's only when you end up with several
+classes which differ only in a few specific operations that you
+should start thinking about some sort of generic solution: the
+template method pattern, policies, or whatever.
+
+--
+James Kanze (GABI Software)             email:james.ka ... @gmail.com
+Conseils en informatique orientée objet/
+Beratung in objektorientierter Datenverarbeitung
+9 place Sémard, 78210 St.-Cyr-l'École, France, +33 (0)1 30 23 00 34
+</POST>
+<POST>
+<POSTER> Stephen Torri &lt;sto...@torri.org&gt; </POSTER>
+<POSTDATE> 2007-09-06T09:43:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Thu, 06 Sep 2007 08:35:23 +0000, James Kanze wrote:
+&gt; This sounds slightly backwards to me.  Policies are a tool: a means, and
+&gt; not a goal.  If you don't feel the need for them (and most application
+&gt; software won't), then all they do is add unnecessary complexity.  It's
+&gt; only when you end up with several classes which differ only in a few
+&gt; specific operations that you should start thinking about some sort of
+&gt; generic solution: the template method pattern, policies, or whatever.
+">
+
+I do not know if I need policies or not. I see the strength in using them but
+what I do not gather from Alexandrescu's book is when I should use them. He
+gives the advice that
+
+&quot;When you decompose a class in policies, it is very important to find an
+orthogonal decomposition. An orthogonal decomposition yields policies that
+are completely independent of each other. You can easily spot a nonorthogonal
+decomposition when various policies need to know about each other.&quot;
+
+I first do not understand what the word orthogonal decomposition means here.
+I do not understand how to think about this advice.
+</POST>
+<POST>
+<POSTER> James Kanze &lt;james.ka...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-07T04:12:00 </POSTDATE>
+On Sep 6, 3:43 pm, Stephen Torri &lt;sto ... @torri.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Thu, 06 Sep 2007 08:35:23 +0000, James Kanze wrote:
+&gt; &gt; This sounds slightly backwards to me.  Policies are a tool: a means, and
+&gt; &gt; not a goal.  If you don't feel the need for them (and most application
+&gt; &gt; software won't), then all they do is add unnecessary complexity.  It's
+&gt; &gt; only when you end up with several classes which differ only in a few
+&gt; &gt; specific operations that you should start thinking about some sort of
+&gt; &gt; generic solution: the template method pattern, policies, or whatever.
+&gt; I do not know if I need policies or not.
+">
+
+You almost never need policies unless you are writing very low
+level library code, and not that often then.  With a very few
+notable exceptions, policies are a solution in search of a
+problem.
+
+<QUOTE PREVIOUSPOST="
+&gt; I see the strength in
+&gt; using them but what I do not gather from Alexandrescu's book
+&gt; is when I should use them.
+">
+
+The answer is: almost never.
+
+<QUOTE PREVIOUSPOST="
+&gt; He gives the advice that
+&gt; &quot;When you decompose a class in policies, it is very important
+&gt; to find an orthogonal decomposition. An orthogonal
+&gt; decomposition yields policies that are completely independent
+&gt; of each other. You can easily spot a nonorthogonal
+&gt; decomposition when various policies need to know about each
+&gt; other.&quot;
+&gt; I first do not understand what the word orthogonal
+&gt; decomposition means here.
+">
+
+It's exactly what he says in the second sentence: orthogonal
+decomposition means that the separate parts are independant, and
+don't need to know about any of the other parts.  This is
+important anytime you start decomposing: policies, mixins, or at
+a higher level, subsystems.  With regards to policies: if the
+need for policies is not very frequent, the need for a single
+component to have several different policies is even rarer (and
+orthogonal decomposition only enters into account in those
+cases).
+
+If you're familiar with OO technology and design patterns:
+policies are basically the equivalent of the template method
+pattern or the strategy pattern (both of which are generally
+preferable to policies anywhere but at the lowest level); using
+multiple policies on a single component is basically the same as
+mixins.  And the use of the first two patterns if far more
+prevalent than the use of mixins (to the point that some
+so-called OO languages don't even allow mixins).
+
+--
+James Kanze (GABI Software)             email:james.ka ... @gmail.com
+Conseils en informatique orientée objet/
+Beratung in objektorientierter Datenverarbeitung
+9 place Sémard, 78210 St.-Cyr-l'École, France, +33 (0)1 30 23 00 34
+</POST>
+</TEXT>
+</BODY>
+</DOC>

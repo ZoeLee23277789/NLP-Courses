@@ -1,0 +1,567 @@
+<DOC>
+<DOCID> eng-NG-31-135587-9748074 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-11-08T21:50:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Why do a cast type structure to an array in this case?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> K-mart Cashier &lt;cdal...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-08T21:50:00 </POSTDATE>
+Code:
+
+#define BUFSIZE 1500
+
+char sendbuf[BUFSIZE];
+
+void send_v4(void)
+{
+int len;
+stuct icmp *icmp;
+
+icmp = (struct icmp *) sendbuf;
+icmp-&gt;icmptype = ICMP_ECHO;
+icmp-&gt;icmpcode = 0;
+
+/*rest of code*/
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+The question is why force a cast to the array sendbuf? Ie why not do
+something like
+Code:
+
+void send_v4(void)
+{
+int len;
+stuct icmp *icmp;
+
+icmp-&gt;icmptype = ICMP_ECHO;
+icmp-&gt;icmpcode = 0;
+
+/*rest of code*/
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+I'm just sort of curious because this type of coding move appears in
+ping and a lot of unix network printer code.
+</POST>
+<POST>
+<POSTER> Barry Margolin &lt;bar...@alum.mit.edu&gt; </POSTER>
+<POSTDATE> 2007-11-08T22:18:00 </POSTDATE>
+In article &lt;1194576604.969235.278 ... @y27g2000pre.googlegroups.com&gt;,
+K-mart Cashier &lt;cdal ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Code:
+
+&gt; #define BUFSIZE 1500
+
+&gt; char sendbuf[BUFSIZE];
+
+&gt; void send_v4(void)
+&gt; {
+&gt;      int len;
+&gt;      stuct icmp *icmp;
+
+&gt;      icmp = (struct icmp *) sendbuf;
+&gt;      icmp-&gt;icmptype = ICMP_ECHO;
+&gt;      icmp-&gt;icmpcode = 0;
+
+&gt;     /*rest of code*/
+&gt; }
+
+&gt; The question is why force a cast to the array sendbuf? Ie why not do
+&gt; something like
+&gt; Code:
+
+&gt; void send_v4(void)
+&gt; {
+&gt;      int len;
+&gt;      stuct icmp *icmp;
+
+&gt;      icmp-&gt;icmptype = ICMP_ECHO;
+&gt;      icmp-&gt;icmpcode = 0;
+
+&gt;     /*rest of code*/
+&gt; }
+
+&gt; I'm just sort of curious because this type of coding move appears in
+&gt; ping and a lot of unix network printer code.
+">
+
+In your version the icmp variable is uninitialized.  You can't use it
+until it points to some valid memory.  That's what sendbuf[] is in the
+original version.
+
+You could add the following to your version:
+
+icmp = malloc(BUFSIZE);
+/* rest of code */
+free(icmp);
+
+The difference is that this would require use of malloc() and free()
+every time your function is called, which can be pretty expensive if
+it's called often.  If the function is not used in multiple threads,
+it's more efficient to reuse the same sendbuf[] every time.
+
+Perhaps what you mean to ask was why you don't write:
+
+void send_v4(void)
+{
+int len;
+struct icmp icmp;
+
+icmp.icmptype = ICMP_ECHO;
+icmp.icmpcode = 0;
+
+/* rest of code */
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+The reason is that struct icmp only defines the ICMP *header*, not the
+entire packet.  If you want to put something in the data portion of the
+packet, you need to allocate a larger buffer.
+
+--
+Barry Margolin, bar ... @alum.mit.edu
+Arlington, MA
+*** PLEASE post questions in newsgroups, not directly to me ***
+*** PLEASE don't copy me on replies, I'll read them in the group ***
+</POST>
+<POST>
+<POSTER> Chad &lt;cdal...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-08T22:26:00 </POSTDATE>
+On Nov 8, 7:18 pm, Barry Margolin &lt;bar ... @alum.mit.edu&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In article &lt;1194576604.969235.278 ... @y27g2000pre.googlegroups.com&gt;,
+&gt;  K-mart Cashier &lt;cdal ... @gmail.com&gt; wrote:
+
+&gt; &gt; Code:
+
+&gt; &gt; #define BUFSIZE 1500
+
+&gt; &gt; char sendbuf[BUFSIZE];
+
+&gt; &gt; void send_v4(void)
+&gt; &gt; {
+&gt; &gt;      int len;
+&gt; &gt;      stuct icmp *icmp;
+
+&gt; &gt;      icmp = (struct icmp *) sendbuf;
+&gt; &gt;      icmp-&gt;icmptype = ICMP_ECHO;
+&gt; &gt;      icmp-&gt;icmpcode = 0;
+
+&gt; &gt;     /*rest of code*/
+&gt; &gt; }
+
+&gt; &gt; The question is why force a cast to the array sendbuf? Ie why not do
+&gt; &gt; something like
+&gt; &gt; Code:
+
+&gt; &gt; void send_v4(void)
+&gt; &gt; {
+&gt; &gt;      int len;
+&gt; &gt;      stuct icmp *icmp;
+
+&gt; &gt;      icmp-&gt;icmptype = ICMP_ECHO;
+&gt; &gt;      icmp-&gt;icmpcode = 0;
+
+&gt; &gt;     /*rest of code*/
+&gt; &gt; }
+
+&gt; &gt; I'm just sort of curious because this type of coding move appears in
+&gt; &gt; ping and a lot of unix network printer code.
+
+&gt; In your version the icmp variable is uninitialized.  You can't use it
+&gt; until it points to some valid memory.  That's what sendbuf[] is in the
+&gt; original version.
+
+&gt; You could add the following to your version:
+
+&gt;   icmp = malloc(BUFSIZE);
+&gt;   /* rest of code */
+&gt;   free(icmp);
+
+&gt; The difference is that this would require use of malloc() and free()
+&gt; every time your function is called, which can be pretty expensive if
+&gt; it's called often.  If the function is not used in multiple threads,
+&gt; it's more efficient to reuse the same sendbuf[] every time.
+
+&gt; Perhaps what you mean to ask was why you don't write:
+
+&gt; void send_v4(void)
+&gt; {
+&gt;     int len;
+&gt;     struct icmp icmp;
+
+&gt;     icmp.icmptype = ICMP_ECHO;
+&gt;     icmp.icmpcode = 0;
+
+&gt;     /* rest of code */
+
+&gt; }
+">
+
+Yes, that is what I meant to ask. My written communication skills sort
+of blow some days..
+
+<QUOTE PREVIOUSPOST="
+&gt; The reason is that struct icmp only defines the ICMP *header*, not the
+&gt; entire packet.  If you want to put something in the data portion of the
+&gt; packet, you need to allocate a larger buffer.
+">
+
+Okay, that makes sense. There are stll some programming techniques
+that elude me. However, I'll save those questions for another time.
+</POST>
+<POST>
+<POSTER> Jack Klein &lt;jackkl...@spamcop.net&gt; </POSTER>
+<POSTDATE> 2007-11-09T00:06:00 </POSTDATE>
+On Thu, 08 Nov 2007 18:50:04 -0800, K-mart Cashier &lt;cdal ... @gmail.com&gt;
+wrote in comp.programming:
+
+<QUOTE PREVIOUSPOST="
+&gt; Code:
+
+&gt; #define BUFSIZE 1500
+
+&gt; char sendbuf[BUFSIZE];
+
+&gt; void send_v4(void)
+&gt; {
+&gt;      int len;
+&gt;      stuct icmp *icmp;
+
+&gt;      icmp = (struct icmp *) sendbuf;
+&gt;      icmp-&gt;icmptype = ICMP_ECHO;
+&gt;      icmp-&gt;icmpcode = 0;
+
+&gt;     /*rest of code*/
+&gt; }
+
+&gt; The question is why force a cast to the array sendbuf?
+">
+
+[snip]
+
+It is written by programmers who think perceived efficiency is more
+important than portability.  The C language does not guarantee that an
+array of characters is properly aligned for a struct icmp.  And I
+don't believe POSIX does either, although I might be wrong about that.
+If any of the members of a struct icmp have a size greater than one
+byte, there is the possibility of generating a hardware fault on some
+architectures if the address is misaligned.
+
+Possible the programmer has verified that there are compiler
+guarantees for every processor and compiler that this code will ever
+be used on that the alignment of sendbuf will be correct, but I
+seriously doubt it.  I imagine the alignment issue was never
+considered, but so far it just happens to &quot;work&quot; on the platforms
+where it has been built.
+
+On the other hand, if the allocated the block just once, they would be
+guaranteed proper alignment, now and forever, even on processors and
+compilers that don't even exist today.
+
+--
+Jack Klein
+Home: http://JK-Technology.Com
+FAQs for
+comp.lang.c http://c-faq.com/
+comp.lang.c++ http://www.parashift.com/c++-faq-lite/
+alt.comp.lang.learn.c-c++
+http://www.club.cc.cmu.edu/~ajo/docs/FAQ-acllc.html
+</POST>
+<POST>
+<POSTER> Rainer Weikusat &lt;rweiku...@mssgmbh.com&gt; </POSTER>
+<POSTDATE> 2007-11-09T07:43:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jack Klein &lt;jackkl ... @spamcop.net&gt; writes:
+&gt; On Thu, 08 Nov 2007 18:50:04 -0800, K-mart Cashier &lt;cdal ... @gmail.com&gt;
+&gt; wrote in comp.programming:
+
+&gt;&gt; Code:
+
+&gt;&gt; #define BUFSIZE 1500
+
+&gt;&gt; char sendbuf[BUFSIZE];
+
+&gt;&gt; void send_v4(void)
+&gt;&gt; {
+&gt;&gt;      int len;
+&gt;&gt;      stuct icmp *icmp;
+
+&gt;&gt;      icmp = (struct icmp *) sendbuf;
+&gt;&gt;      icmp-&gt;icmptype = ICMP_ECHO;
+&gt;&gt;      icmp-&gt;icmpcode = 0;
+
+&gt;&gt;     /*rest of code*/
+&gt;&gt; }
+
+&gt;&gt; The question is why force a cast to the array sendbuf?
+
+&gt;    [snip]
+
+&gt; It is written by programmers who think perceived efficiency is more
+&gt; important than portability.
+">
+
+There is nothing in the code which would lend itself to this
+conclusion.
+
+<QUOTE PREVIOUSPOST="
+&gt; The C language does not guarantee that an array of characters is
+&gt; properly aligned for a struct icmp.
+">
+
+Insofar this is would be of concern, various more or less 'portable'
+solution would be possible, for instance
+
+union {
+struct icmp hdr;
+char buf[1500]
+}
+
+<QUOTE PREVIOUSPOST="
+&gt; Possible the programmer has verified that there are compiler
+&gt; guarantees for every processor and compiler that this code will ever
+&gt; be used on that the alignment of sendbuf will be correct,
+">
+
+Presumably, the programmer (either knowling or unknowlingy) is relying
+on the compiler insofar as to allocate objects in the program data
+segment on word boundaries.
+
+<QUOTE PREVIOUSPOST="
+&gt; I imagine the alignment issue was never considered, but so far it
+&gt; just happens to &quot;work&quot; on the platforms where it has been built.
+">
+
+In other words: The array is not actually misaligned on any 'supported
+platform' for this (unknown) piece of software. Porting the code to
+some unsupported platform may well involve ... actually changing it.
+
+<QUOTE PREVIOUSPOST="
+&gt; On the other hand, if the allocated the block just once, they would be
+&gt; guaranteed proper alignment, now and forever, even on processors and
+&gt; compilers that don't even exist today.
+">
+
+This would come at the expense of various other 'unpleasant side
+effect' of abusing the malloc-allocator for static one-time
+allocations. Eg Gnu malloc always aligns on 8 octet boundaries, no
+matter of the actual target platform needs that much or not, a single
+'static lifetime' allocation may tie down as much as a complete page
+of memory unavailable for other uses until the death of the programm
+(and the code may well be old enough for this to still be of concern
+even on then-common 'end user computing platforms') etc.
+
+As I have recently written in another posting: People writing programs
+with storage requirements which can be met by 'call malloc whenever you
+feel like it' and 'occasionally forget to call free' should not be
+using languages compiled to native machine code anymore. In other
+cases, trading measurable efficency for perceived portability is usually
+bad.
+</POST>
+<POST>
+<POSTER> Chad &lt;cdal...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-09T09:02:00 </POSTDATE>
+On Nov 9, 4:43 am, Rainer Weikusat &lt;rweiku ... @mssgmbh.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Jack Klein &lt;jackkl ... @spamcop.net&gt; writes:
+&gt; &gt; On Thu, 08 Nov 2007 18:50:04 -0800, K-mart Cashier &lt;cdal ... @gmail.com&gt;
+&gt; &gt; wrote in comp.programming:
+
+&gt; &gt;&gt; Code:
+
+&gt; &gt;&gt; #define BUFSIZE 1500
+
+&gt; &gt;&gt; char sendbuf[BUFSIZE];
+
+&gt; &gt;&gt; void send_v4(void)
+&gt; &gt;&gt; {
+&gt; &gt;&gt;      int len;
+&gt; &gt;&gt;      stuct icmp *icmp;
+
+&gt; &gt;&gt;      icmp = (struct icmp *) sendbuf;
+&gt; &gt;&gt;      icmp-&gt;icmptype = ICMP_ECHO;
+&gt; &gt;&gt;      icmp-&gt;icmpcode = 0;
+
+&gt; &gt;&gt;     /*rest of code*/
+&gt; &gt;&gt; }
+
+&gt; &gt;&gt; The question is why force a cast to the array sendbuf?
+
+&gt; &gt;    [snip]
+
+&gt; &gt; It is written by programmers who think perceived efficiency is more
+&gt; &gt; important than portability.
+
+&gt; There is nothing in the code which would lend itself to this
+&gt; conclusion.
+
+&gt; &gt; The C language does not guarantee that an array of characters is
+&gt; &gt; properly aligned for a struct icmp.
+
+&gt; Insofar this is would be of concern, various more or less 'portable'
+&gt; solution would be possible, for instance
+
+&gt;     union {
+&gt;           struct icmp hdr;
+&gt;           char buf[1500]
+&gt;     }
+">
+
+How can something like
+
+union {
+struct icmp hdr;
+char buf[1500]
+}
+
+be less portable?
+</POST>
+<POST>
+<POSTER> Richard Heathfield &lt;r...@see.sig.invalid&gt; </POSTER>
+<POSTDATE> 2007-11-09T09:07:00 </POSTDATE>
+Chad said:
+
+<QUOTE PREVIOUSPOST="
+&gt; How can something like
+
+&gt;  union {
+&gt;            struct icmp hdr;
+&gt;            char buf[1500]
+&gt;      }
+
+&gt; be less portable?
+">
+
+Er, because it doesn't compile? :-)
+
+--
+Richard Heathfield &lt; http://www.cpax.org.uk &gt;
+Email: - http://www . +rjh@
+Google users: &lt; http://www.cpax.org.uk/prg/writings/googly.php &gt;
+&quot;Usenet is a strange place&quot; - dmr 29 July 1999
+</POST>
+<POST>
+<POSTER> Rainer Weikusat &lt;rweiku...@mssgmbh.com&gt; </POSTER>
+<POSTDATE> 2007-11-09T10:43:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Chad &lt;cdal ... @gmail.com&gt; writes:
+&gt; On Nov 9, 4:43 am, Rainer Weikusat &lt;rweiku ... @mssgmbh.com&gt; wrote:
+">
+
+[...]
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Insofar this is would be of concern, various more or less 'portable'
+&gt;&gt; solution would be possible, for instance
+
+&gt;&gt;     union {
+&gt;&gt;           struct icmp hdr;
+&gt;&gt;           char buf[1500]
+&gt;&gt;     }
+
+&gt; How can something like
+
+&gt;  union {
+&gt;            struct icmp hdr;
+&gt;            char buf[1500]
+&gt;      }
+
+&gt; be less portable?
+">
+
+It is more or less 'portable' (presumingly, a Germanism, meaning
+'somewhat portable and somewhat nonportable'). The char buffer will be
+aligned as a struct icmp requires, but 6.5.16.1|3 of ISO-C says that:
+
+If the value being stored in an object is read from another
+object that overlaps in any way the storage of the first
+object, then the overlap shall be exact and the two objects
+shall have qualified or unqualified versions of a compatible
+type; otherwise, the behavior is undefined.
+
+So, this doesn't help much if &quot;possible limitations of an ISO-compliant
+C-implementation&quot; were an issue.
+</POST>
+<POST>
+<POSTER> Rainer Weikusat &lt;rweiku...@mssgmbh.com&gt; </POSTER>
+<POSTDATE> 2007-11-09T10:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Richard Heathfield &lt;r ... @see.sig.invalid&gt; writes:
+&gt; Chad said:
+
+&gt;&gt; How can something like
+
+&gt;&gt;  union {
+&gt;&gt;            struct icmp hdr;
+&gt;&gt;            char buf[1500]
+&gt;&gt;      }
+
+&gt;&gt; be less portable?
+
+&gt; Er, because it doesn't compile? :-)
+">
+
+This actually makes it highly portable, because it will compile
+nowhere.
+</POST>
+<POST>
+<POSTER> Logan Shaw &lt;lshaw-use...@austin.rr.com&gt; </POSTER>
+<POSTDATE> 2007-11-10T01:51:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Rainer Weikusat wrote:
+&gt; Chad &lt;cdal ... @gmail.com&gt; writes:
+&gt;&gt; On Nov 9, 4:43 am, Rainer Weikusat &lt;rweiku ... @mssgmbh.com&gt; wrote:
+
+&gt; [...]
+
+&gt;&gt;&gt; Insofar this is would be of concern, various more or less 'portable'
+&gt;&gt;&gt; solution would be possible,
+&gt;&gt; How can something like
+&gt;&gt;  union {
+&gt;&gt; be less portable?
+&gt; It is more or less 'portable' (presumingly, a Germanism, meaning
+&gt; 'somewhat portable and somewhat nonportable').
+">
+
+&quot;More or less&quot; is certainly, in English, an idiomatic phrase that
+means &quot;somewhat&quot; or &quot;to some extent&quot;.
+
+Whether it came from German is an interesting question.  No doubt
+English has been influenced by Germanic languages.  But from what
+I could quickly dig up, it seems that many languages have an analog
+to English &quot;more or less&quot;, not just German.  The best source I could
+find on the Internet was the &quot;Kernerman English Multilingual Dictionary&quot;
+section of this page:
+
+http://dictionary.reference.com/browse/more%20or%20less
+
+I'm not really a polyglot, but I could recognize or reasonably guess
+that at least the Danish, Dutch, French, German, Italian, Norwegian,
+Portuguese, Spanish, and Swedish as being, well, more or less direct
+literal analogs of the English phrase, all of them being of the form
+&quot;adverb conjunction adverb&quot; with the adverbs having opposite meaning.
+Since it is so widespread in such a variety of languages, I would
+guess it might be a fairly old phrase that might even predate a lot
+of the languages.  (But that's purely a guess.)
+
+- Logan
+</POST>
+</TEXT>
+</BODY>
+</DOC>

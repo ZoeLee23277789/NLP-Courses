@@ -1,0 +1,2582 @@
+<DOC>
+<DOCID> eng-NG-31-135595-9760176 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-11-17T14:52:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Why doesn't foreach return a value
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Mark Janssen &lt;mpc.jans...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-17T14:52:00 </POSTDATE>
+Is there any specific reason a call to foreach always returns {}? It
+would be useful if it returns the last result. I could have used this
+on occasion. For instance a bit of a crafted example:
+
+proc test {l} {
+foreach a $l {append b $a}
+return $b
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+fails in the case $l eq {}. It needs to be:
+
+proc test {l} {
+set b {}
+foreach a $l {append b $a}
+return $b
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+with foreach returning a value (or {} if the body doesn't execute)
+this would be:
+
+proc test {l} {
+foreach a $l {append _ $l}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+Mark
+</POST>
+<POST>
+<POSTER> Mark Janssen &lt;mpc.jans...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-11-17T15:53:00 </POSTDATE>
+On Nov 17, 8:52 pm, Mark Janssen &lt;mpc.jans ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Is there any specific reason a call to foreach always returns {}?
+">
+
+That should of course be:
+
+<QUOTE PREVIOUSPOST="
+&gt; proc test {l} {
+&gt;     foreach a $l {append _ $a}
+">
+
+Mark
+</POST>
+<POST>
+<POSTER> Fredderic &lt;my-name-h...@excite.com&gt; </POSTER>
+<POSTDATE> 2007-11-18T03:04:00 </POSTDATE>
+On Sat, 17 Nov 2007 11:52:37 -0800 (PST),
+
+<QUOTE PREVIOUSPOST="
+Mark Janssen &lt;mpc.jans ... @gmail.com&gt; wrote:
+&gt; Is there any specific reason a call to foreach always returns {}? It
+&gt; would be useful if it returns the last result.
+">
+
+It is an interesting point, though...  More of the control structures
+could easily return a value.  I'm not entirely certain how often it'd
+actually be useful, but it might be interesting.  Of more use, I think,
+would be if [break] and [continue] could return an argument.  Have them
+stash it away in the options dict so you can distinguish between an
+empty value and no value at all.
+
+An alternative that would be even more handy in the case of [foreach],
+though, would be to return any unused arguments.
+
+I suppose both of these options do muddy the readability of the
+command, though.  Control structures returning values does get a bit
+messy.
+
+Still.....  There have been far too many times I've ended up using
+[for] instead of the much neater [foreach], simply because I needed to
+know how many arguments were left after a [break].  (A counter works,
+too, but since you're doing that, the switch to [for] usually ends up
+better, imho.)
+
+Fredderic
+</POST>
+<POST>
+<POSTER> &quot;Rufus V. Smith&quot; &lt;nos...@nospam.com&gt; </POSTER>
+<POSTDATE> 2008-01-28T15:10:00 </POSTDATE>
+You are attempting to return a non-initialized variable as
+the body of the foreach command never is executed.
+
+I'm not a tcl expert, but what would this return, may I ask:
+
+proc test {l} {
+set itemcount 0
+foreach a $l {incr itemcount}
+return $itemcount
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+An empty list should return zero itemcount, it would return
+one in your scheme, wouldn't it?
+
+As would a single-element list.
+
+(never mind that you should use llength $l )
+
+Rufus
+
+<QUOTE PREVIOUSPOST="
+&quot;Mark Janssen&quot; &lt;mpc.jans ... @gmail.com&gt; wrote in message
+">
+
+news:8cb11668-0180-4297-a8b8-8a99889a3815@l1g2000hsa.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Is there any specific reason a call to foreach always returns {}? It
+&gt; would be useful if it returns the last result. I could have used this
+&gt; on occasion. For instance a bit of a crafted example:
+
+&gt; proc test {l} {
+&gt;    foreach a $l {append b $a}
+&gt;    return $b
+&gt; }
+
+&gt; fails in the case $l eq {}. It needs to be:
+
+&gt; proc test {l} {
+&gt;    set b {}
+&gt;    foreach a $l {append b $a}
+&gt;    return $b
+&gt; }
+
+&gt; with foreach returning a value (or {} if the body doesn't execute)
+&gt; this would be:
+
+&gt; proc test {l} {
+&gt;    foreach a $l {append _ $l}
+&gt; }
+
+&gt; Mark
+">
+</POST>
+<POST>
+<POSTER> &quot;Gerald W. Lester&quot; &lt;Gerald.Les...@cox.net&gt; </POSTER>
+<POSTDATE> 2008-01-30T09:02:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Fredderic wrote:
+&gt; On Sat, 17 Nov 2007 11:52:37 -0800 (PST),
+&gt; Mark Janssen &lt;mpc.jans ... @gmail.com&gt; wrote:
+
+&gt;&gt; Is there any specific reason a call to foreach always returns {}? It
+&gt;&gt; would be useful if it returns the last result.
+
+&gt; It is an interesting point, though...  More of the control structures
+&gt; could easily return a value.  I'm not entirely certain how often it'd
+&gt; actually be useful, but it might be interesting.  Of more use, I think,
+&gt; would be if [break] and [continue] could return an argument.  Have them
+&gt; stash it away in the options dict so you can distinguish between an
+&gt; empty value and no value at all.
+">
+
+You can effectively have a &quot;break&quot; or &quot;continue&quot; return a value, but doing:
+
+proc break {{value {}}} {
+return -code break -level 2 $value
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+proc continue {{value {}}} {
+return -code continue -level 2 $value
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+The catch command returns the status code and takes an optional argument to
+take the return value.  As in:
+set status [catch {break foo} bar]
+puts stdout &quot;Status = {$status}, return value = {$bar}&quot;
+
+--
++--------------------------------+---------------------------------------+
+| Gerald W. Lester                                                       |
+|&quot;The man who fights for his ideals is the man who is alive.&quot; - Cervantes|
++------------------------------------------------------------------------+
+</POST>
+<POST>
+<POSTER> Mark Janssen &lt;mpc.jans...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-30T10:19:00 </POSTDATE>
+On 28 jan, 21:10, &quot;Rufus V. Smith&quot; &lt;nos ... @nospam.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; You are attempting to return a non-initialized variable as
+&gt; the body of the foreach command never is executed.
+
+&gt; I'm not a tcl expert, but what would this return, may I ask:
+
+&gt; proc test {l} {
+&gt;    set itemcount 0
+&gt;    foreach a $l {incr itemcount}
+&gt;    return $itemcount
+
+&gt; }
+
+&gt; An empty list should return zero itemcount, it would return
+&gt; one in your scheme, wouldn't it?
+
+&gt; As would a single-element list.
+
+&gt; (never mind that you should use llength $l )
+
+&gt; Rufus
+">
+
+No this would not return 1, the body never gets executed if $l eq {}
+so $itemcount will still be 0. The result of the [foreach a $l {incr
+itemcount}] would be {} though (as it is now)
+
+Mark
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-30T11:06:00 </POSTDATE>
+The post title is misleading. In the typical Tcl:
+
+% set a [foreach b {e f g} {}]
+% puts $a
+
+%
+
+You see that a has a value, so the code [...] does return a value. But
+the larger question is not why it returns or doesn't return a value,
+but 'when' should it return it, and what value should it return?
+Foreach actually never 'goes away', so how could it return? So it
+really boils down to how it is called. Is it called as a function, or
+is is simply used in the current flow of code? If it is called as a
+function, it does return 'a value'. But, regardless of this, there is
+simply no other value it should 'return'. If there is, then you need
+to first identify what that value should be. I doubt you will find any
+logical support for anything in particular.
+
+The most obviously useful information would be some kind of metadata
+which documents what happened, mostly for the case of continuing, and
+maybe what state the loop was in upon exit. However, these metadata re
+not really part of a normal program (if they were, you could just add
+variables to record the information). They may aid debugging.
+
+There is an instrumented for/foreach/while in the new AOLserver code:
+
+http://aolserver.cvs.sourceforge.net/aolserver/aolserver/nsd/tclloop....
+
+This allows you to find all running loops and perform: &quot;list&quot;, &quot;info&quot;,
+&quot;pause&quot;, &quot;resume&quot;, &quot;cancel&quot;, &quot;eval&quot;, &quot;install&quot;. I assume this code was
+added to track down misbehaving loops and figure out why they are not
+working without needing to restart an entire process (plus you can't
+easily debug a loop error without live data).
+</POST>
+<POST>
+<POSTER> Darren New &lt;d...@san.rr.com&gt; </POSTER>
+<POSTDATE> 2008-01-30T11:47:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+tom.rmadilo wrote:
+&gt; Foreach actually never 'goes away', so how could it return?
+">
+
+Of course it returns, like every other command does. (Well, except
+infinite loops.) What do you mean &quot;goes away&quot;?
+
+<QUOTE PREVIOUSPOST="
+&gt; Is it called as a function, or is is simply used in the current flow of code?
+">
+
+It's called as a function, as is every other command in Tcl, including
+proc, while, if, and so on.
+
+<QUOTE PREVIOUSPOST="
+&gt; I doubt you will find any logical support for anything in particular.
+">
+
+Returning either the second argument or the final value of the first
+argument or the length of the second argument might all be useful. But
+these are all things that are trivial to get in other ways.
+
+If &quot;break&quot; was changed to take an argument, returning the value passed
+to break might be interesting. But again, I expect this can already be
+done with clever use of [return].
+
+<QUOTE PREVIOUSPOST="
+&gt; The most obviously useful information would be some kind of metadata
+&gt; which documents what happened, mostly for the case of continuing,
+">
+
+Continuing what? The loop runs until it exits, at which point you don't
+continue it.
+
+<QUOTE PREVIOUSPOST="
+&gt; maybe what state the loop was in upon exit.
+">
+
+What do you mean? What state do you not get when you exit?
+
+--
+Darren New / San Diego, CA, USA (PST)
+On what day did God create the body thetans?
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-30T12:32:00 </POSTDATE>
+On Jan 30, 8:47 am, Darren New &lt;d ... @san.rr.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; tom.rmadilo wrote:
+&gt; &gt; Foreach actually never 'goes away', so how could it return?
+
+&gt; Of course it returns, like every other command does. (Well, except
+&gt; infinite loops.) What do you mean &quot;goes away&quot;?
+">
+
+Call 'return' inside a loop and you will discover the difference
+between a function/proc and a foreach loop. Foreach doesn't 'go away',
+because the foreach body is executed in the current context.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Is it called as a function, or is is simply used in the current flow of code?
+
+&gt; It's called as a function, as is every other command in Tcl, including
+&gt; proc, while, if, and so on.
+">
+
+Yes, in Tcl, but this is a syntactic feature of the language. I'm
+talking about the purpose of the call. Is the purpose to return a
+value, or to perform some operation, or both? If you don't make these
+distinctions, but only compare the syntactic similarities, you will
+have difficulty accounting for other commands like [catch], [return -
+code return], [error], etc.
+
+In this case, if you store the result of the function call, I assume
+you want the value, otherwise you don't.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; I doubt you will find any logical support for anything in particular.
+
+&gt; Returning either the second argument or the final value of the first
+&gt; argument or the length of the second argument might all be useful. But
+&gt; these are all things that are trivial to get in other ways.
+">
+
+The final values are already available:
+
+% foreach a {b c d} {break}
+% puts $a
+b
+
+<QUOTE PREVIOUSPOST="
+&gt; If &quot;break&quot; was changed to take an argument, returning the value passed
+&gt; to break might be interesting. But again, I expect this can already be
+&gt; done with clever use of [return].
+">
+
+You don't usually [return] from a loop. (You can, but the [return] is
+applied to the context, not the loop boundary.
+
+The problem of building in some additional meta-data is that it would
+then be required to exist for every loop. How will this information be
+accessed? The commands [break] and [continue] are part of the control
+code, so you can do whatever you want before you call them. There is
+no 'logical' good thing to do here, there are many possible things. It
+also complicates code analysis, since the developer has to figure out
+'what' is being returned.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; The most obviously useful information would be some kind of metadata
+&gt; &gt; which documents what happened, mostly for the case of continuing,
+
+&gt; Continuing what? The loop runs until it exits, at which point you don't
+&gt; continue it.
+">
+
+[continue] at the next iteration of the loop by skipping everything
+following the [continue] command.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; maybe what state the loop was in upon exit.
+
+&gt; What do you mean? What state do you not get when you exit?
+">
+
+That is pretty much my point. If you break up a paragraph of my
+statements and ask a question for each one, you miss the larger point.
+There is not logical chunk of meta-data to track (like maybe exactly
+how many iterations were completed, which if any iterations used
+[continue], etc.) These are all useful in some situations, but not
+generally. Contrast this with [regexp], where the return is a boolean.
+It can also set matches if variable names are supplied. It isn't
+necessary to return a boolean to find out if you were successful, but
+it is obviously useful. There is nothing obviously useful with a
+return value for foreach/for/while loops. In general the intent of the
+code would be obscured by this type of thing, not even mentioning the
+ugliness of the code:
+
+set loop_result [foreach num $numbers {
+puts &quot;Num = $num&quot;
+
+<QUOTE PREVIOUSPOST="
+}]
+">
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-30T13:01:00 </POSTDATE>
+On Jan 30, 6:02 am, &quot;Gerald W. Lester&quot; &lt;Gerald.Les ... @cox.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; You can effectively have a &quot;break&quot; or &quot;continue&quot; return a value, but doing:
+
+&gt; proc break {{value {}}} {
+&gt;      return -code break -level 2 $value
+
+&gt; }
+
+&gt; proc continue {{value {}}} {
+&gt;      return -code continue -level 2 $value
+
+&gt; }
+">
+
+Of course the problem is what? You want [foreach] to return a value?
+No, wait, you want [break] and [continue] to set the return value of a
+[foreach] loop? What happens if [foreach] finishes without a [break]
+or [continue]?
+
+While we are at it, why not have [break] or [continue] return a value?
+That is what the above code does. And of course it doesn't work
+either:
+
+% foreach b {e f g} {break $b}
+invoked &quot;break&quot; outside of a loop
+
+Maybe just admit that although there are shared syntactic features,
+not all Tcl commands are the same. foreach/for/while are commands in
+Tcl, but they are just language features in most programming
+languages. This is purely syntax, they are logically the same in every
+programming language.
+
+This wish for [foreach] to return a value is really just a wish for a
+logically distinct looping feature which no programming language, not
+just Tcl, seems to support ... or maybe provide a reference, so the
+usefulness claim has some foundation.
+</POST>
+<POST>
+<POSTER> Mark Janssen &lt;mpc.jans...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-30T13:09:00 </POSTDATE>
+On Jan 30, 7:01 pm, &quot;tom.rmadilo&quot; &lt;tom.rmad ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 30, 6:02 am, &quot;Gerald W. Lester&quot; &lt;Gerald.Les ... @cox.net&gt; wrote:
+
+&gt; &gt; You can effectively have a &quot;break&quot; or &quot;continue&quot; return a value, but doing:
+
+&gt; &gt; proc break {{value {}}} {
+&gt; &gt;      return -code break -level 2 $value
+
+&gt; &gt; }
+
+&gt; &gt; proc continue {{value {}}} {
+&gt; &gt;      return -code continue -level 2 $value
+
+&gt; &gt; }
+
+&gt; Of course the problem is what? You want [foreach] to return a value?
+&gt; No, wait, you want [break] and [continue] to set the return value of a
+&gt; [foreach] loop? What happens if [foreach] finishes without a [break]
+&gt; or [continue]?
+
+&gt; While we are at it, why not have [break] or [continue] return a value?
+&gt; That is what the above code does. And of course it doesn't work
+&gt; either:
+
+&gt; % foreach b {e f g} {break $b}
+&gt; invoked &quot;break&quot; outside of a loop
+
+&gt; Maybe just admit that although there are shared syntactic features,
+&gt; not all Tcl commands are the same. foreach/for/while are commands in
+&gt; Tcl, but they are just language features in most programming
+&gt; languages. This is purely syntax, they are logically the same in every
+&gt; programming language.
+
+&gt; This wish for [foreach] to return a value is really just a wish for a
+&gt; logically distinct looping feature which no programming language, not
+&gt; just Tcl, seems to support ... or maybe provide a reference, so the
+&gt; usefulness claim has some foundation.
+">
+
+The fact that a foreach loop evaluates its body in the current context
+doesn't mean it cannot return anything. A foreach call does create a
+new callframe for instance (which can be seen by making an error in
+the body and examining errorInfo) So it is definitly there.
+
+Mark
+</POST>
+<POST>
+<POSTER> Donald G Porter &lt;d...@nist.gov&gt; </POSTER>
+<POSTDATE> 2008-01-30T13:12:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Gerald W. Lester wrote:
+&gt; proc break {{value {}}} {
+&gt;     return -code break -level 2 $value
+&gt; }
+
+&gt; proc continue {{value {}}} {
+&gt;     return -code continue -level 2 $value
+&gt; }
+">
+
+Um, those are wrong.  Drop the -level arguments.
+
+--
+| Don Porter          Mathematical and Computational Sciences Division |
+| donald.por ... @nist.gov             Information Technology Laboratory |
+| http://math.nist.gov/~DPorter/ NIST |
+|______________________________________________________________________|
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-30T13:26:00 </POSTDATE>
+On Jan 30, 10:09 am, Mark Janssen &lt;mpc.jans ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; The fact that a foreach loop evaluates its body in the current context
+&gt; doesn't mean it cannot return anything. A foreach call does create a
+&gt; new callframe for instance (which can be seen by making an error in
+&gt; the body and examining errorInfo) So it is definitly there.
+">
+
+Right, the fact that it returns the empty string, or that it has a
+callframe does not change the logical operation of the loop, just the
+implementation. Hopefully someone will present an example of when this
+would be useful to the exclusion of all other possible examples. It
+isn't the lack of potential things to return so much as the need to
+choose one and exclude the others.
+</POST>
+<POST>
+<POSTER> Mark Janssen &lt;mpc.jans...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-30T13:40:00 </POSTDATE>
+On Jan 30, 7:26 pm, &quot;tom.rmadilo&quot; &lt;tom.rmad ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 30, 10:09 am, Mark Janssen &lt;mpc.jans ... @gmail.com&gt; wrote:
+
+&gt; &gt; The fact that a foreach loop evaluates its body in the current context
+&gt; &gt; doesn't mean it cannot return anything. A foreach call does create a
+&gt; &gt; new callframe for instance (which can be seen by making an error in
+&gt; &gt; the body and examining errorInfo) So it is definitly there.
+
+&gt; Right, the fact that it returns the empty string, or that it has a
+&gt; callframe does not change the logical operation of the loop, just the
+&gt; implementation. Hopefully someone will present an example of when this
+&gt; would be useful to the exclusion of all other possible examples. It
+&gt; isn't the lack of potential things to return so much as the need to
+&gt; choose one and exclude the others.
+">
+
+I think this would be the big problem when implementing this. What do
+you return?
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-30T13:57:00 </POSTDATE>
+On Jan 30, 10:40 am, Mark Janssen &lt;mpc.jans ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 30, 7:26 pm, &quot;tom.rmadilo&quot; &lt;tom.rmad ... @gmail.com&gt; wrote:
+
+&gt; &gt; On Jan 30, 10:09 am, Mark Janssen &lt;mpc.jans ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; The fact that a foreach loop evaluates its body in the current context
+&gt; &gt; &gt; doesn't mean it cannot return anything. A foreach call does create a
+&gt; &gt; &gt; new callframe for instance (which can be seen by making an error in
+&gt; &gt; &gt; the body and examining errorInfo) So it is definitly there.
+
+&gt; &gt; Right, the fact that it returns the empty string, or that it has a
+&gt; &gt; callframe does not change the logical operation of the loop, just the
+&gt; &gt; implementation. Hopefully someone will present an example of when this
+&gt; &gt; would be useful to the exclusion of all other possible examples. It
+&gt; &gt; isn't the lack of potential things to return so much as the need to
+&gt; &gt; choose one and exclude the others.
+
+&gt; I think this would be the big problem when implementing this. What do
+&gt; you return?
+">
+
+One other observation is that there is a confusion here between the
+logical meaning and technical details like the internal implementation
+or the ability of Tcl to introspect this internal stuff:
+
+proc my_proc { vars } {
+foreach var $vars {
+upvar $var $var
+}
+...
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+If the foreach callframe were a logical callframe/level, you couldn't
+do the above. Many things would become difficult to understand, or
+even impossible to do, and would depend upon knowledge of internal
+details of a procedure.
+</POST>
+<POST>
+<POSTER> Mark Janssen &lt;mpc.jans...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-30T14:16:00 </POSTDATE>
+On Jan 30, 7:57 pm, &quot;tom.rmadilo&quot; &lt;tom.rmad ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 30, 10:40 am, Mark Janssen &lt;mpc.jans ... @gmail.com&gt; wrote:
+
+&gt; &gt; On Jan 30, 7:26 pm, &quot;tom.rmadilo&quot; &lt;tom.rmad ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; On Jan 30, 10:09 am, Mark Janssen &lt;mpc.jans ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; &gt; The fact that a foreach loop evaluates its body in the current context
+&gt; &gt; &gt; &gt; doesn't mean it cannot return anything. A foreach call does create a
+&gt; &gt; &gt; &gt; new callframe for instance (which can be seen by making an error in
+&gt; &gt; &gt; &gt; the body and examining errorInfo) So it is definitly there.
+
+&gt; &gt; &gt; Right, the fact that it returns the empty string, or that it has a
+&gt; &gt; &gt; callframe does not change the logical operation of the loop, just the
+&gt; &gt; &gt; implementation. Hopefully someone will present an example of when this
+&gt; &gt; &gt; would be useful to the exclusion of all other possible examples. It
+&gt; &gt; &gt; isn't the lack of potential things to return so much as the need to
+&gt; &gt; &gt; choose one and exclude the others.
+
+&gt; &gt; I think this would be the big problem when implementing this. What do
+&gt; &gt; you return?
+
+&gt; One other observation is that there is a confusion here between the
+&gt; logical meaning and technical details like the internal implementation
+&gt; or the ability of Tcl to introspect this internal stuff:
+
+&gt; proc my_proc { vars } {
+&gt;   foreach var $vars {
+&gt;     upvar $var $var
+&gt;   }
+&gt;   ...
+
+&gt; }
+
+&gt; If the foreach callframe were a logical callframe/level, you couldn't
+&gt; do the above. Many things would become difficult to understand, or
+&gt; even impossible to do, and would depend upon knowledge of internal
+&gt; details of a procedure.
+">
+
+The foreach frame *is* a logical level. Just one you cannot get at
+from the body as that is upleveled.
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-30T14:36:00 </POSTDATE>
+On Jan 30, 11:16 am, Mark Janssen &lt;mpc.jans ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 30, 7:57 pm, &quot;tom.rmadilo&quot; &lt;tom.rmad ... @gmail.com&gt; wrote:
+&gt; &gt; proc my_proc { vars } {
+&gt; &gt;   foreach var $vars {
+&gt; &gt;     upvar $var $var
+&gt; &gt;   }
+&gt; &gt;   ...
+
+&gt; &gt; }
+&gt; The foreach frame *is* a logical level. Just one you cannot get at
+&gt; from the body as that is upleveled.
+">
+
+When I look at the code above, I don't see any [uplevel]. Logical
+means the logical meaning of the code, not how something happens
+behind the scenes. If the loop was in C, you wouldn't talk about
+[uplevel]. It is not logically part of the idea of a loop. Levels are
+actual, they are physical. They either exist or they don't. But
+regardless of how things are done, the loop body is effectively
+executed in the context of the caller, not in some other space. If you
+were required to think of these details when using a loop, it wouldn't
+be fun.
+</POST>
+<POST>
+<POSTER> Mark Janssen &lt;mpc.jans...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-30T14:55:00 </POSTDATE>
+On Jan 30, 8:36 pm, &quot;tom.rmadilo&quot; &lt;tom.rmad ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 30, 11:16 am, Mark Janssen &lt;mpc.jans ... @gmail.com&gt; wrote:
+
+&gt; &gt; On Jan 30, 7:57 pm, &quot;tom.rmadilo&quot; &lt;tom.rmad ... @gmail.com&gt; wrote:
+&gt; &gt; &gt; proc my_proc { vars } {
+&gt; &gt; &gt;   foreach var $vars {
+&gt; &gt; &gt;     upvar $var $var
+&gt; &gt; &gt;   }
+&gt; &gt; &gt;   ...
+
+&gt; &gt; &gt; }
+&gt; &gt; The foreach frame *is* a logical level. Just one you cannot get at
+&gt; &gt; from the body as that is upleveled.
+
+&gt; When I look at the code above, I don't see any [uplevel]. Logical
+&gt; means the logical meaning of the code, not how something happens
+&gt; behind the scenes. If the loop was in C, you wouldn't talk about
+&gt; [uplevel]. It is not logically part of the idea of a loop. Levels are
+&gt; actual, they are physical. They either exist or they don't. But
+&gt; regardless of how things are done, the loop body is effectively
+&gt; executed in the context of the caller, not in some other space. If you
+&gt; were required to think of these details when using a loop, it wouldn't
+&gt; be fun.
+">
+
+Logically everything in Tcl is a command (also foreach). So for the
+body to be executed in the current scope it has to be upleveled. The
+fact that in C there is no context doesn't mean that in Tcl there
+isn't. In Tcl everything is a command. Control structures as in C
+simply don't exist (logically) it's just a command that does some
+stack level juggling. From basic principles one can deduce that there
+is an uplevel somewhere without looking behind the scenes.
+</POST>
+<POST>
+<POSTER> &quot;Gerald W. Lester&quot; &lt;Gerald.Les...@cox.net&gt; </POSTER>
+<POSTDATE> 2008-01-30T15:29:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+tom.rmadilo wrote:
+&gt; On Jan 30, 6:02 am, &quot;Gerald W. Lester&quot; &lt;Gerald.Les ... @cox.net&gt; wrote:
+&gt;&gt; You can effectively have a &quot;break&quot; or &quot;continue&quot; return a value, but doing:
+
+&gt;&gt; proc break {{value {}}} {
+&gt;&gt;      return -code break -level 2 $value
+
+&gt;&gt; }
+
+&gt;&gt; proc continue {{value {}}} {
+&gt;&gt;      return -code continue -level 2 $value
+
+&gt;&gt; }
+
+&gt; Of course the problem is what? You want [foreach] to return a value?
+&gt; No, wait, you want [break] and [continue] to set the return value of a
+&gt; [foreach] loop? What happens if [foreach] finishes without a [break]
+&gt; or [continue]?
+
+&gt; While we are at it, why not have [break] or [continue] return a value?
+&gt; That is what the above code does. And of course it doesn't work
+&gt; either:
+
+&gt; % foreach b {e f g} {break $b}
+&gt; invoked &quot;break&quot; outside of a loop
+
+&gt; Maybe just admit that although there are shared syntactic features,
+&gt; not all Tcl commands are the same.
+">
+
+No, all Tcl commands are the same.  I just made a typo.  The -level 2 should
+not have been in there.
+
+NOTE -- that will make the *break* command return a value, not the foreach
+command.
+
+<QUOTE PREVIOUSPOST="
+&gt; foreach/for/while are commands in
+&gt; Tcl, but they are just language features in most programming
+&gt; languages. This is purely syntax, they are logically the same in every
+&gt; programming language.
+
+&gt; This wish for [foreach] to return a value is really just a wish for a
+&gt; logically distinct looping feature which no programming language, not
+&gt; just Tcl, seems to support ... or maybe provide a reference, so the
+&gt; usefulness claim has some foundation.
+">
+
+--
++--------------------------------+---------------------------------------+
+| Gerald W. Lester                                                       |
+|&quot;The man who fights for his ideals is the man who is alive.&quot; - Cervantes|
++------------------------------------------------------------------------+
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-30T16:09:00 </POSTDATE>
+On Jan 30, 12:29 pm, &quot;Gerald W. Lester&quot; &lt;Gerald.Les ... @cox.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; tom.rmadilo wrote:
+&gt; &gt; Maybe just admit that although there are shared syntactic features,
+&gt; &gt; not all Tcl commands are the same.
+
+&gt; No, all Tcl commands are the same.  I just made a typo.  The -level 2 should
+&gt; not have been in there.
+">
+
+Right, they are all the same, we only need one command. There is a
+subject to this thread, something to do with return values for
+commands. Do you really think  that all commands are the same WRT
+return values? [foreach] returns a value, but it is meaningless.
+Choosing a meaningful one would be impossible.
+
+Likewise, modifying [break] or [continue] to return a value is
+completely pointless. What do you think is going to happen once it
+'returns a value'? Where in the heck is the value going to go?
+
+<QUOTE PREVIOUSPOST="
+&gt; NOTE -- that will make the *break* command return a value, not the foreach
+&gt; command.
+">
+
+I wonder if it really does return, even removing -level 2, or using -
+level 1 doesn't seem to do much:
+
+proc break {{value {}}} {
+return -code break $value
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+% foreach b {e f g} {puts [break $b]}
+% foreach b {e f g} {set a [break $b]}
+% puts $a
+can't read &quot;a&quot;: no such variable
+
+Also, what does [return] return?
+
+Yes all Tcl commands are the same, except those that aren't.
+</POST>
+<POST>
+<POSTER> Mark Janssen &lt;mpc.jans...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-30T16:19:00 </POSTDATE>
+On Jan 30, 10:09 pm, &quot;tom.rmadilo&quot; &lt;tom.rmad ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 30, 12:29 pm, &quot;Gerald W. Lester&quot; &lt;Gerald.Les ... @cox.net&gt; wrote:
+
+&gt; &gt; tom.rmadilo wrote:
+&gt; &gt; &gt; Maybe just admit that although there are shared syntactic features,
+&gt; &gt; &gt; not all Tcl commands are the same.
+
+&gt; &gt; No, all Tcl commands are the same.  I just made a typo.  The -level 2 should
+&gt; &gt; not have been in there.
+
+&gt; Right, they are all the same, we only need one command. There is a
+&gt; subject to this thread, something to do with return values for
+&gt; commands. Do you really think  that all commands are the same WRT
+&gt; return values? [foreach] returns a value, but it is meaningless.
+&gt; Choosing a meaningful one would be impossible.
+
+&gt; Likewise, modifying [break] or [continue] to return a value is
+&gt; completely pointless. What do you think is going to happen once it
+&gt; 'returns a value'? Where in the heck is the value going to go?
+
+&gt; &gt; NOTE -- that will make the *break* command return a value, not the foreach
+&gt; &gt; command.
+
+&gt; I wonder if it really does return, even removing -level 2, or using -
+&gt; level 1 doesn't seem to do much:
+
+&gt; proc break {{value {}}} {
+&gt;      return -code break $value}
+
+&gt; % foreach b {e f g} {puts [break $b]}
+&gt; % foreach b {e f g} {set a [break $b]}
+&gt; % puts $a
+&gt; can't read &quot;a&quot;: no such variable
+
+&gt; Also, what does [return] return?
+
+&gt; Yes all Tcl commands are the same, except those that aren't.
+">
+
+All Tcl commands are the same.
+
+can't read a is because you break out of the loop before a is set.
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-30T19:55:00 </POSTDATE>
+On Jan 30, 1:19 pm, Mark Janssen &lt;mpc.jans ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 30, 10:09 pm, &quot;tom.rmadilo&quot; &lt;tom.rmad ... @gmail.com&gt; wrote:
+&gt; &gt; Yes all Tcl commands are the same, except those that aren't.
+
+&gt; All Tcl commands are the same.
+">
+
+That statement is about as useful as me point out how useless it is.
+
+<QUOTE PREVIOUSPOST="
+&gt; can't read a is because you break out of the loop before a is set.
+">
+
+Well, my thesis here is that [break] and [continue] (and [foreach])
+are not the same as most other commands because they don't return
+meaningful values. In fact, [break] and [continue] don't return a
+value at all, and by 'return a value', what I mean is that they change
+or set a Tcl result.
+
+If everything goes okay for each of these commands (and other similar
+commands), the result is reset to an uninitialized state. The
+uninitialized state just happens to be the same as an empty string.
+Does that mean these commands return a value? No. Values have meaning.
+If these commands could return a meaningful empty string, then the
+fact that they could return a meaningless empty string would introduce
+serious problems. You could not rely on the return value to indicate
+anything, and that is exactly why nobody even asks this type of
+question.
+
+So all Tcl commands are not the same. Some return a meaningless empty
+string. This is very different from a real empty string.
+
+In addition, [break] and [continue] don't set or return a result. They
+will trigger an error if used outside of a loop, but this is very
+different from most Tcl commands. The options are 1. either [break] or
+[continue] are correctly called within a loop and there is an internal
+break/continue, or 2. they are somehow called outside a loop and some
+other code sets an error message. In no case do these commands return
+to the Tcl script level.
+</POST>
+<POST>
+<POSTER> Darren New &lt;d...@san.rr.com&gt; </POSTER>
+<POSTDATE> 2008-01-30T23:48:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+tom.rmadilo wrote:
+&gt; Well, my thesis here is that [break] and [continue] (and [foreach])
+&gt; are not the same as most other commands because they don't return
+&gt; meaningful values. In fact, [break] and [continue] don't return a
+&gt; value at all, and by 'return a value', what I mean is that they change
+&gt; or set a Tcl result.
+">
+
+foreach sets a Tcl result.
+
+% set a [foreach x {1 2 3} {set b [puts $x]}]
+
+It just sets an empty string as a result, as documented. Break returns a
+non-zero Tcl return code, but it sets a result also.
+
+% catch break z
+
+<QUOTE PREVIOUSPOST="
+&gt; So all Tcl commands are not the same. Some return a meaningless empty
+&gt; string. This is very different from a real empty string.
+">
+
+They're meaningless only because they're always the same. Hence, it's
+not useful to ask what they return. This is different from &quot;not
+returning a result.&quot;
+
+<QUOTE PREVIOUSPOST="
+&gt; In addition, [break] and [continue] don't set or return a result.
+">
+
+See above.
+
+<QUOTE PREVIOUSPOST="
+&gt; In no case do these commands return to the Tcl script level.
+">
+
+Sure they do. See above.
+
+I get the feeling you don't actually know how Tcl works inside. Are you
+familiar with the C level Tcl mechanisms for creating commands, invoking
+them, and returning from them?
+
+--
+Darren New / San Diego, CA, USA (PST)
+On what day did God create the body thetans?
+</POST>
+<POST>
+<POSTER> Darren New &lt;d...@san.rr.com&gt; </POSTER>
+<POSTDATE> 2008-01-31T00:04:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+tom.rmadilo wrote:
+&gt; On Jan 30, 8:47 am, Darren New &lt;d ... @san.rr.com&gt; wrote:
+&gt;&gt; tom.rmadilo wrote:
+&gt;&gt;&gt; Foreach actually never 'goes away', so how could it return?
+&gt;&gt; Of course it returns, like every other command does. (Well, except
+&gt;&gt; infinite loops.) What do you mean &quot;goes away&quot;?
+
+&gt; Call 'return' inside a loop and you will discover the difference
+&gt; between a function/proc and a foreach loop. Foreach doesn't 'go away',
+&gt; because the foreach body is executed in the current context.
+">
+
+I have no idea what you think &quot;go away&quot; means there. I know the
+difference between a proc and foreach. Call [break] inside a proc and
+the proc doesn't &quot;go away&quot; either. Call [error] and both the proc and
+the foreach it's in &quot;go away&quot;.
+
+So, no, I haven't any idea why you think the call to [foreach] doesn't
+return. Or maybe you're using the words in some odd context that's
+different from what other people mean.
+
+<QUOTE PREVIOUSPOST="
+&gt; Yes, in Tcl, but this is a syntactic feature of the language.
+">
+
+No, that's a fundamental part of the language. It's not like 'for' and
+'while' being different syntaxes for essentially the same thing in C.
+It's part of what makes Tcl powerful.
+
+<QUOTE PREVIOUSPOST="
+&gt; Is the purpose to return a
+&gt; value, or to perform some operation, or both?
+">
+
+Since foreach always returns the same value (modulo error cases), then
+the obvious answer is that it's to perform the looping operation. Some
+constructs loop, some return values, some do both.
+
+<QUOTE PREVIOUSPOST="
+&gt; If you don't make these
+&gt; distinctions, but only compare the syntactic similarities, you will
+&gt; have difficulty accounting for other commands like [catch], [return -
+&gt; code return], [error], etc.
+">
+
+I have no difficulty accounting for these commands, because I understand
+what they do.
+
+<QUOTE PREVIOUSPOST="
+&gt; In this case, if you store the result of the function call, I assume
+&gt; you want the value, otherwise you don't.
+">
+
+Well, yeah, that kind of goes without saying.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; I doubt you will find any logical support for anything in particular.
+&gt;&gt; Returning either the second argument or the final value of the first
+&gt;&gt; argument or the length of the second argument might all be useful. But
+&gt;&gt; these are all things that are trivial to get in other ways.
+
+&gt; The final values are already available:
+
+&gt; % foreach a {b c d} {break}
+&gt; % puts $a
+&gt; b
+">
+
+That's part of what makes it trivial to get that value in other ways.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; If &quot;break&quot; was changed to take an argument, returning the value passed
+&gt;&gt; to break might be interesting. But again, I expect this can already be
+&gt;&gt; done with clever use of [return].
+
+&gt; You don't usually [return] from a loop. (You can, but the [return] is
+&gt; applied to the context, not the loop boundary.
+">
+
+[return] is the same thing as [break] and [continue] and [error], except
+returning different values. You do know that, right?
+
+<QUOTE PREVIOUSPOST="
+&gt; The problem of building in some additional meta-data is that it would
+&gt; then be required to exist for every loop. How will this information be
+&gt; accessed?
+">
+
+I'd assume through the Tcl result string. That's kind of what returning
+a result entails.
+
+? The commands [break] and [continue] are part of the control
+
+<QUOTE PREVIOUSPOST="
+&gt; code, so you can do whatever you want before you call them.
+">
+
+I'm not real sure what this sentence means. [break] and [continue] are
+very straightforward commands. They're commands, not &quot;control code&quot;.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; The most obviously useful information would be some kind of metadata
+&gt;&gt;&gt; which documents what happened, mostly for the case of continuing,
+&gt;&gt; Continuing what? The loop runs until it exits, at which point you don't
+&gt;&gt; continue it.
+
+&gt; [continue] at the next iteration of the loop by skipping everything
+&gt; following the [continue] command.
+">
+
+Oh. Well, in any case, it's pretty easy to assign to a variable &quot;what
+happened&quot;, and then invoke [continue].
+
+<QUOTE PREVIOUSPOST="
+&gt; That is pretty much my point. If you break up a paragraph of my
+&gt; statements and ask a question for each one, you miss the larger point.
+&gt; There is not logical chunk of meta-data to track (like maybe exactly
+&gt; how many iterations were completed, which if any iterations used
+&gt; [continue], etc.) These are all useful in some situations, but not
+&gt; generally.
+">
+
+Sure. And it's all stuff that's probably more clear to track manually,
+given how [foreach] is usually used.
+
+Whether the loop ran off the end or exited via [break] is something
+that's often useful to me, actually. If I'm looking for something and
+find it and [break], not having to [set found 0] outside and [set found
+1] inside might be more clear.
+
+<QUOTE PREVIOUSPOST="
+&gt; not even mentioning the ugliness of the code:
+">
+
+I don't know...
+
+set found [foreach row $rows {
+if {$row == &quot;&quot;} break
+if {$row &lt; $smallest} break
+... do some processing on row ...
+if {$processedrow in $goodvalues} break
+puts &quot;$row isn't any good&quot;
+
+<QUOTE PREVIOUSPOST="
+}]
+">
+
+Seems no less straightforward than [catch]. Indeed, I'd vote for the
+return code that made foreach exit as the return value of foreach.
+
+--
+Darren New / San Diego, CA, USA (PST)
+On what day did God create the body thetans?
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-31T03:16:00 </POSTDATE>
+On Jan 30, 9:04 pm, Darren New &lt;d ... @san.rr.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; tom.rmadilo wrote:
+&gt; &gt; You don't usually [return] from a loop. (You can, but the [return] is
+&gt; &gt; applied to the context, not the loop boundary.
+
+&gt; [return] is the same thing as [break] and [continue] and [error], except
+&gt; returning different values. You do know that, right?
+">
+
+Where exactly do they return their values? [return], [break] and
+[continue] and [error] are similar. None of them return a value to the
+context in which they are called, or any other (although [return] and
+[error] are somewhat ambiguous at the Tcl level, they set a Tcl
+result, but the commands don't return a value). You do know the
+difference between returning a value at the C level and a Tcl command
+returning a value to the Tcl scripting level? Two different things.
+But [break] and [continue] don't even return to the Tcl scripting
+level. Maybe you don't distinguish between what a command can cause
+another chunk of code to return and the actual return value of the
+command itself? But I'm somewhat confused, where exactly would these
+commands return? Return, and do what exactly?  Like, oops, not
+supposed to be here, bye.
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-31T03:34:00 </POSTDATE>
+On Jan 30, 9:04 pm, Darren New &lt;d ... @san.rr.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; tom.rmadilo wrote:
+&gt; &gt; Call 'return' inside a loop and you will discover the difference
+&gt; &gt; between a function/proc and a foreach loop. Foreach doesn't 'go away',
+&gt; &gt; because the foreach body is executed in the current context.
+
+&gt; I have no idea what you think &quot;go away&quot; means there. I know the
+&gt; difference between a proc and foreach. Call [break] inside a proc and
+&gt; the proc doesn't &quot;go away&quot; either. Call [error] and both the proc and
+&gt; the foreach it's in &quot;go away&quot;.
+">
+
+You make a good point here. The boundaries of loops and stack levels/
+procs are not the same. Where exactly code will resume execution when
+interrupted by [break], [continue], [return] or [error] depends on
+more than just the command.
+
+By &quot;go away&quot;, I only mean that the current context &quot;calls&quot; a command.
+A typical proc body isn't executed in the context in which it is
+called, it &quot;goes away&quot;, and then &quot;returns&quot;.
+</POST>
+<POST>
+<POSTER> suchenwi &lt;richard.suchenwirth-bauersa...@siemens.com&gt; </POSTER>
+<POSTDATE> 2008-01-31T03:46:00 </POSTDATE>
+There is indeed one logical gotcha for the &quot;return value&quot; of break/
+continue:
+
+foreach i {1 2 3} {set a [break b]}
+
+The assignment to a will not take place, because the loop body is left
+before. So who will receive the &quot;b&quot; value? One could fantasize that it
+ends up as foreach's return value (and similarly for [for] and
+[while]):
+
+set status [foreach i {1 2 3} {if $x {break b}}]
+
+If x is non-zero, status would be &quot;b&quot;; else &quot;&quot; as usual.
+</POST>
+<POST>
+<POSTER> Fredderic &lt;my-name-h...@excite.com&gt; </POSTER>
+<POSTDATE> 2008-01-31T05:12:00 </POSTDATE>
+On Thu, 31 Jan 2008 00:46:39 -0800 (PST),
+
+<QUOTE PREVIOUSPOST="
+suchenwi &lt;richard.suchenwirth-bauersa ... @siemens.com&gt; wrote:
+&gt; There is indeed one logical gotcha for the &quot;return value&quot; of break/
+&gt; continue:
+&gt;     foreach i {1 2 3} {set a [break b]}
+&gt; The assignment to a will not take place, because the loop body is left
+&gt; before. So who will receive the &quot;b&quot; value? One could fantasize that it
+&gt; ends up as foreach's return value (and similarly for [for] and
+&gt; [while]):
+&gt;     set status [foreach i {1 2 3} {if $x {break b}}]
+&gt; If x is non-zero, status would be &quot;b&quot;; else &quot;&quot; as usual.
+">
+
+The key is that you're actually returning two distinct values.
+
+There's a &quot;return code&quot;, which is a simple numeric value passed back at
+the C level (with no actual real storage allocated, it's usually just
+left sitting in a register or on a standard location within every
+stack frame), with the usual values TCL_OK, TCL_ERROR, TCL_RETURN,
+TCL_BREAK, and TCL_CONTINUE.  When a [proc] finishes normally, it drops
+back a TCL_OK to the caller.  Other commands like [return], [break],
+and friends, drop back a different number.
+
+The &quot;result value&quot;, which can be any TCL value, is actually stored
+independently within the interpreter, and in fact, has special commands
+to set/get it at the C level.  This value is also modified by the likes
+of [return], but as shown, left untouched by the present [break] and
+[continue] functions.
+
+In brief, as I understand these things, this value is explicitly
+REMOVED by [foreach] under a &quot;return code&quot; of TCL_BREAK or
+TCL_CONTINUE.  Most (all?) other return codes (TCL_OK, TCL_ERROR,
+TCL_RETURN, and any other undefined return code) simply leave it
+untouched.  In the special case of TCL_ERROR, extra information is
+added to the ::errorInfo variable as well.  It could be the code
+invoked to evaluate the loop body, which dumps the interpreter result,
+but without looking at the TCL source (which my head isn't really
+sufficiently clear to be doing right now), I can't say for sure which.
+But considering [if] and [proc] retain the last value, I'd say it's
+[foreach] doing it itself.
+
+Basically, all this boils down to, is removing the explicit flushing of
+the interpreters result value for the TCL_BREAK and TCL_CONTINUE cases,
+and setting it in the [break] and [continue] commands themselveds.  Just
+let it flow on though, like [if] and [proc] do.  You could also just let
+it retain its present value in the case of the loop body completing
+naturally.  I'm not sure if any care needs to be applied around
+variable traces, I'm guessing they clean up after themselves and/or
+wouldn't be an issue anyhow.
+
+For [while] and [for], the deal would be exactly the same, except that
+one extra step is required to return the last iteration result.  You'd
+need to grab the result if the body completes naturally, and set it as
+the loops result value after failing the condition (which would have
+just set a new result value).  Though there is some case for keeping
+the condition result value instead (as opposed to [if] and (proposed)
+[foreach] which return the result of body evaluation).  So for those
+two, it'd probably be best to forget about fiddling with saving the
+body result, and just leave the interpreters result value as-is, just
+as with [foreach].  But that's a separate topic.
+
+Fredderic
+</POST>
+<POST>
+<POSTER> &quot;Donal K. Fellows&quot; &lt;donal.k.fell...@manchester.ac.uk&gt; </POSTER>
+<POSTDATE> 2008-01-31T10:14:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+tom.rmadilo wrote:
+&gt; Ummm, at the C level [break] returns TCL_BREAK. But it doesn't return
+&gt; to the script level.
+">
+
+It does if you use [catch] right. ;-)
+
+<QUOTE PREVIOUSPOST="
+&gt; It doesn't set a Tcl result.
+">
+
+It doesn't need to, since commands are guaranteed to be called with the
+interpreter's result set to an unshared empty object. If that's the
+result you want, you don't need to set anything.
+
+Donal.
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-31T10:59:00 </POSTDATE>
+On Jan 31, 7:14 am, &quot;Donal K. Fellows&quot;
+
+<QUOTE PREVIOUSPOST="
+&lt;donal.k.fell ... @manchester.ac.uk&gt; wrote:
+&gt; tom.rmadilo wrote:
+&gt; &gt; Ummm, at the C level [break] returns TCL_BREAK. But it doesn't return
+&gt; &gt; to the script level.
+
+&gt; It does if you use [catch] right. ;-)
+">
+
+No, [catch] returns to the Tcl script level, neither [break] nor
+[continue] ever return. [catch] essentially converts a return code
+into a Tcl result:
+
+L254    result = TclEvalObjEx(interp, objv[1], 0, iPtr-&gt;cmdFramePtr,
+1);
+L286    Tcl_SetObjResult(interp, Tcl_NewIntObj(result));
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; It doesn't set a Tcl result.
+
+&gt; It doesn't need to, since commands are guaranteed to be called with the
+&gt; interpreter's result set to an unshared empty object. If that's the
+&gt; result you want, you don't need to set anything.
+">
+
+It doesn't have to because it doesn't return to the Tcl level. I'll
+post the code for [foreach].
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-31T11:01:00 </POSTDATE>
+On Jan 31, 2:12 am, Fredderic &lt;my-name-h ... @excite.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; For [while] and [for], the deal would be exactly the same, except that
+&gt; one extra step is required to return the last iteration result.  You'd
+&gt; need to grab the result if the body completes naturally, and set it as
+&gt; the loops result value after failing the condition (which would have
+&gt; just set a new result value).  Though there is some case for keeping
+&gt; the condition result value instead (as opposed to [if] and (proposed)
+&gt; [foreach] which return the result of body evaluation).  So for those
+&gt; two, it'd probably be best to forget about fiddling with saving the
+&gt; body result, and just leave the interpreters result value as-is, just
+&gt; as with [foreach].  But that's a separate topic.
+">
+
+I think you're right, it would be easy to test, at least with
+[foreach]
+
+Starting at line 1811 of generic/tclCmdAH.c:
+
+result = TclEvalObjEx(interp, bodyPtr, 0, iPtr-&gt;cmdFramePtr, objc-1);
+if (result != TCL_OK) {
+if (result == TCL_CONTINUE) {
+result = TCL_OK;
+} else if (result == TCL_BREAK) {
+result = TCL_OK;
+break;
+} else if (result == TCL_ERROR) {
+Tcl_AppendObjToErrorInfo(interp, Tcl_ObjPrintf(
+&quot;\n    (\&quot;foreach\&quot; body line %d)&quot;,
+interp-&gt;errorLine));
+break;
+} else {
+break;
+}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+This executes the body code of foreach (in the parent frame) and
+either breaks or continues, after resetting the result code to TCL_OK.
+Once out of this loop (not shown), the next code nullifies the Tcl
+result:
+
+if (result == TCL_OK) {
+Tcl_ResetResult(interp);
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+But I think I made a mistake about one thing in a previous post. The
+loop code/frame/level doesn't cross the boundary of a proc. If you use
+a bare [break] or [continue], you get an error. But, if you use
+[return -code break/continue],
+you can get out of the current level and then out of the loop.
+</POST>
+<POST>
+<POSTER> Joe English &lt;jengl...@flightlab.com&gt; </POSTER>
+<POSTDATE> 2008-01-31T11:31:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+tom.rmadilo wrote:
+
+&gt; Well, my thesis here is that [break] and [continue] (and [foreach])
+&gt; are not the same as most other commands because they don't return
+&gt; meaningful values. In fact, [break] and [continue] don't return a
+&gt; value at all, and by 'return a value', what I mean is that they change
+&gt; or set a Tcl result.
+">
+
+Conceptually [*], evaluating anything in Tcl yields a 3-tuple
+(code, value, options), where the return code is a small integer
+(0 = ok = TCL_OK; 1 = error = TCL_ERROR, etc.), the return
+value is a string (what's usually thought of as the &quot;result&quot;),
+and the return options are a dictionary of extra qualifiers
+containing things like -errorcode and -errorinfo (for TCL_ERROR)
+or -returncode and -returnlevel (for TCL_RETURN).
+
+So for instance [string index &quot;abc&quot; 0] returns (ok, &quot;a&quot;, {}),
+and [expr {2+2}] returns (ok, &quot;4&quot;, {}).
+
+[while] and [foreach] are no different here.  They usually
+return (ok, &quot;&quot;, {}) but may also return (error, &quot;..message&quot;,
+{ -errorcode ... -errorinfo ... }) if evaluating the body
+raises an error; or (return, &quot;...&quot;, { ... }) if the body
+calls [return]; or something else entirely if the body
+produces a nonstandard return code.
+
+[break] and [continue] are only &quot;special&quot; in that they
+return (break, &quot;&quot;, {}) and (continue, &quot;&quot;, {}), respectively,
+while most &quot;normal&quot; commands usually return (ok, ..., {})
+or (error, ..., {...}).  But that's not really &quot;special&quot;
+or unusual; they're used for nonstandard control flow
+so naturally they return a nonstandard return code.
+
+Also note that [break] and [continue] *do* produce a return value --
+the empty string -- as can be seen with [catch { break } result].
+
+You can produce a nonempty return value with a TCL_BREAK
+return code as well: [return -code break &quot;Ouch! It broke&quot;].
+There's rarely a reason to do so, though, because none of the
+existing control constructs that pay attention to TCL_BREAK
+and TCL_CONTINUE return codes do anything with the return value.
+
+Note that _all_ Tcl operations produce such a 3-tuple:
+evaluating a script, invoking a command, and even variable
+substitutions -- when evaluating [puts &quot;$a$b$c&quot;], the
+&quot;$a&quot; substitution normally returns (ok, &quot;... value of 'a' ...&quot;, {}),
+or (error, &quot;can't read &quot;a&quot;: no such variable&quot;, { ... }).
+And if there's a read trace on &quot;a&quot;, it can return almost
+anything.
+
+<QUOTE PREVIOUSPOST="
+&gt; So all Tcl commands are not the same. Some return a meaningless empty
+&gt; string. This is very different from a real empty string.
+">
+
+The empty string is a 0-length sequence of characters.
+There is only one such sequence.  It is unique.  If you
+want to distinguish &quot;real&quot; empty strings from &quot;meaningless&quot;
+empty strings, you're off into the realm of metaphysics;
+have a good time while you're there.
+
+--Joe English
+
+[*] &quot;Conceptually&quot;: in Tcl 8.5 the return options are explicitly
+implemented as a real dictionary.  Prior to the TIP#90 reform
+the various extra bits were implemented as special-case fields
+in the Interp struct.
+</POST>
+<POST>
+<POSTER> Donald G Porter &lt;d...@nist.gov&gt; </POSTER>
+<POSTDATE> 2008-01-31T11:49:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Joe English wrote:
+&gt; [*] &quot;Conceptually&quot;: in Tcl 8.5 the return options are explicitly
+&gt; implemented as a real dictionary.
+">
+
+Just for those sticklers for details...
+
+Return options are returned explicitly as a dictionary through
+the public interfaces, Tcl_GetReturnOptions() and
+[catch $script $resultVar $optionsDictVar].  If you wish to imagine
+they are actualy stored as a dictionary somewhere to serve these
+interfaces, that mental model should not mislead you.
+
+The precise and exact truth about how they are implemented is none of
+the business of callers into Tcl's public API, and is not guaranteed to
+remain the same.
+
+--
+| Don Porter          Mathematical and Computational Sciences Division |
+| donald.por ... @nist.gov             Information Technology Laboratory |
+| http://math.nist.gov/~DPorter/ NIST |
+|______________________________________________________________________|
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-31T12:20:00 </POSTDATE>
+On Jan 31, 8:31 am, Joe English &lt;jengl ... @flightlab.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; tom.rmadilo wrote:
+
+&gt; &gt; Well, my thesis here is that [break] and [continue] (and [foreach])
+&gt; &gt; are not the same as most other commands because they don't return
+&gt; &gt; meaningful values. In fact, [break] and [continue] don't return a
+&gt; &gt; value at all, and by 'return a value', what I mean is that they change
+&gt; &gt; or set a Tcl result.
+
+&gt; Conceptually [*], evaluating anything in Tcl yields a 3-tuple
+&gt; (code, value, options), where the return code is a small integer
+&gt; (0 = ok = TCL_OK; 1 = error = TCL_ERROR, etc.), the return
+&gt; value is a string (what's usually thought of as the &quot;result&quot;),
+&gt; and the return options are a dictionary of extra qualifiers
+&gt; containing things like -errorcode and -errorinfo (for TCL_ERROR)
+&gt; or -returncode and -returnlevel (for TCL_RETURN).
+
+&gt; So for instance [string index &quot;abc&quot; 0] returns (ok, &quot;a&quot;, {}),
+&gt; and [expr {2+2}] returns (ok, &quot;4&quot;, {}).
+
+&gt; [while] and [foreach] are no different here.  They usually
+&gt; return (ok, &quot;&quot;, {}) but may also return (error, &quot;..message&quot;,
+&gt; { -errorcode ... -errorinfo ... }) if evaluating the body
+&gt; raises an error; or (return, &quot;...&quot;, { ... }) if the body
+&gt; calls [return]; or something else entirely if the body
+&gt; produces a nonstandard return code.
+
+&gt; [break] and [continue] are only &quot;special&quot; in that they
+&gt; return (break, &quot;&quot;, {}) and (continue, &quot;&quot;, {}), respectively,
+&gt; while most &quot;normal&quot; commands usually return (ok, ..., {})
+&gt; or (error, ..., {...}).  But that's not really &quot;special&quot;
+&gt; or unusual; they're used for nonstandard control flow
+&gt; so naturally they return a nonstandard return code.
+
+&gt; Also note that [break] and [continue] *do* produce a return value --
+&gt; the empty string -- as can be seen with [catch { break } result].
+
+&gt; You can produce a nonempty return value with a TCL_BREAK
+&gt; return code as well: [return -code break &quot;Ouch! It broke&quot;].
+&gt; There's rarely a reason to do so, though, because none of the
+&gt; existing control constructs that pay attention to TCL_BREAK
+&gt; and TCL_CONTINUE return codes do anything with the return value.
+
+&gt; Note that _all_ Tcl operations produce such a 3-tuple:
+&gt; evaluating a script, invoking a command, and even variable
+&gt; substitutions -- when evaluating [puts &quot;$a$b$c&quot;], the
+&gt; &quot;$a&quot; substitution normally returns (ok, &quot;... value of 'a' ...&quot;, {}),
+&gt; or (error, &quot;can't read &quot;a&quot;: no such variable&quot;, { ... }).
+&gt; And if there's a read trace on &quot;a&quot;, it can return almost
+&gt; anything.
+
+&gt; &gt; So all Tcl commands are not the same. Some return a meaningless empty
+&gt; &gt; string. This is very different from a real empty string.
+
+&gt; The empty string is a 0-length sequence of characters.
+&gt; There is only one such sequence.  It is unique.  If you
+&gt; want to distinguish &quot;real&quot; empty strings from &quot;meaningless&quot;
+&gt; empty strings, you're off into the realm of metaphysics;
+&gt; have a good time while you're there.
+">
+
+Let's just talk about what it means for a command to 'return'. At the
+Tcl script level, a command returns iff evaluation continues at the
+point it left off in the current context. [break] and [continue] don't
+do this. What they do is to cause other things to happen, maybe an
+error is generated, maybe a loop is broken or continued at the next
+iteration. [return] is the same. It may set the Tcl result, but it
+doesn't 'return', it causes something else to happen. So there are
+three types of commands, if you just consider return. Those which
+return a meaningful value [regexp], [expr], etc., those which return
+meaningless values [foreach], [upvar] maybe others, and those which
+don't return [break], [return], etc.
+</POST>
+<POST>
+<POSTER> Joe English &lt;jengl...@flightlab.com&gt; </POSTER>
+<POSTDATE> 2008-01-31T14:56:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+tom.rmadilo  wrote:
+&gt; [... snip ...]
+
+&gt; Let's just talk about what it means for a command to 'return'.
+">
+
+I just did.  Invoking a command returns a 3-tuple of
+(return code, return value, return options).  So
+does evaluating a script, and performing a variable
+substitution.
+
+<QUOTE PREVIOUSPOST="
+&gt; At the
+&gt; Tcl script level, a command returns iff evaluation continues at the
+&gt; point it left off in the current context.
+">
+
+OK, if you insist.
+
+<QUOTE PREVIOUSPOST="
+&gt; [break] and [continue] don't
+&gt; do this. What they do is to cause other things to happen, maybe an
+&gt; error is generated, maybe a loop is broken or continued at the next
+&gt; iteration. [return] is the same. It may set the Tcl result, but it
+&gt; doesn't 'return', it causes something else to happen. So there are
+&gt; three types of commands, if you just consider return. Those which
+&gt; return a meaningful value [regexp], [expr], etc., those which return
+&gt; meaningless values [foreach], [upvar] maybe others, and those which
+&gt; don't return [break], [return], etc.
+">
+
+If you insist on using the above definition, then yes,
+there's all sorts of mysterious voodoo and lots of
+special cases to consider.  I don't think that's a terribly
+useful way of looking at it, though, and it's certainly not
+what's actually going on under the hood.  But hey, whatever
+floats your boat.
+
+--JE
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-31T16:18:00 </POSTDATE>
+On Jan 31, 11:56 am, Joe English &lt;jengl ... @flightlab.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; tom.rmadilo  wrote:
+&gt; &gt; [... snip ...]
+
+&gt; &gt; Let's just talk about what it means for a command to 'return'.
+
+&gt; I just did.  Invoking a command returns a 3-tuple of
+&gt; (return code, return value, return options).  So
+&gt; does evaluating a script, and performing a variable
+&gt; substitution.
+
+&gt; &gt; At the
+&gt; &gt; Tcl script level, a command returns iff evaluation continues at the
+&gt; &gt; point it left off in the current context.
+
+&gt; OK, if you insist.
+
+&gt; &gt; [break] and [continue] don't
+&gt; &gt; do this. What they do is to cause other things to happen, maybe an
+&gt; &gt; error is generated, maybe a loop is broken or continued at the next
+&gt; &gt; iteration. [return] is the same. It may set the Tcl result, but it
+&gt; &gt; doesn't 'return', it causes something else to happen. So there are
+&gt; &gt; three types of commands, if you just consider return. Those which
+&gt; &gt; return a meaningful value [regexp], [expr], etc., those which return
+&gt; &gt; meaningless values [foreach], [upvar] maybe others, and those which
+&gt; &gt; don't return [break], [return], etc.
+
+&gt; If you insist on using the above definition, then yes,
+&gt; there's all sorts of mysterious voodoo and lots of
+&gt; special cases to consider.  I don't think that's a terribly
+&gt; useful way of looking at it, though, and it's certainly not
+&gt; what's actually going on under the hood.  But hey, whatever
+&gt; floats your boat.
+">
+
+Mysterious voodoo? What is mysterious about a command altering the
+point of execution by not returning? Isn't control flow a common
+feature of every programming language?
+</POST>
+<POST>
+<POSTER> Donald G Porter &lt;d...@nist.gov&gt; </POSTER>
+<POSTDATE> 2008-01-31T16:41:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+tom.rmadilo wrote:
+&gt; Mysterious voodoo? What is mysterious about a command altering the
+&gt; point of execution by not returning?
+">
+
+The mystery is why you insist on using language so radically differently
+from everyone else.
+
+When most people speak of a routine that doesn't return, they literally
+mean something like Tcl_Main() or Tcl_Exit() or [while 1 {}] which
+really do not return. These routines start, and never end; the program
+ends (or is killed) before they do.
+
+Why you use the same phrase to refer to commands that do in fact return,
+but return with a non-TCL_OK return code is the mystery.
+
+--
+| Don Porter          Mathematical and Computational Sciences Division |
+| donald.por ... @nist.gov             Information Technology Laboratory |
+| http://math.nist.gov/~DPorter/ NIST |
+|______________________________________________________________________|
+</POST>
+<POST>
+<POSTER> Donald Arseneau &lt;a...@triumf.ca&gt; </POSTER>
+<POSTDATE> 2008-01-31T16:47:00 </POSTDATE>
+On Jan 31, 1:18 pm, &quot;tom.rmadilo&quot; &lt;tom.rmad ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Mysterious voodoo? What is mysterious about a command altering the
+&gt; point of execution by not returning? Isn't control flow a common
+&gt; feature of every programming language?
+">
+
+No.  Not in Tcl.  What one might think of as syntactic flow-control
+structures are in fact ordinary commands.
+
+Donald Arseneau                         a ... @triumf.ca
+</POST>
+<POST>
+<POSTER> Darren New &lt;d...@san.rr.com&gt; </POSTER>
+<POSTDATE> 2008-01-31T23:17:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+tom.rmadilo wrote:
+&gt; Ummm, at the C level [break] returns TCL_BREAK. But it doesn't return
+&gt; to the script level.
+">
+
+It does. Otherwise, [foreach] and [while] couldn't catch it.
+
+&quot;Not return to the script level&quot; would be the equivalent of a C core
+dump, not an [error] throw.
+
+<QUOTE PREVIOUSPOST="
+&gt; It doesn't set a Tcl result.
+">
+
+It leaves it set at the default empty string, yes. &quot;Not change the
+default&quot; isn't the same as &quot;not return anything.&quot;
+
+<QUOTE PREVIOUSPOST="
+&gt; Once you set an error, you don't return to the normal line of execution.
+">
+
+Depends who calls it. It *does* return to the caller, then the
+
+<QUOTE PREVIOUSPOST="
+&gt; I don't see any setting of a result. If there is an error, it returns
+&gt; TCL_ERROR, which precludes returning to the Tcl script level. Outside
+&gt; of a loop command, TCL_BREAK causes an error. Inside a loop, it
+&gt; 'breaks'.
+">
+
+Both of which are returns to the Tcl script level with the return code
+something other than TCL_OK. Whoever invoked it is responsible for
+deciding whether to pass this up to the next level or not. [catch]
+decides not to. [foreach] decides to pass it up if it's TCL_ERROR and
+not if it's TCL_BREAK. [set] sees the break return code and returns with
+a break return code.
+
+They're all returns, and they all have values. They may cause &quot;unusual&quot;
+behavior in the caller, and they may not be useful except for the
+&quot;unusual&quot; behavior they cause in the caller, but saying they're somehow
+&quot;special&quot; isn't accurate.
+
+--
+Darren New / San Diego, CA, USA (PST)
+On what day did God create the body thetans?
+</POST>
+<POST>
+<POSTER> Darren New &lt;d...@san.rr.com&gt; </POSTER>
+<POSTDATE> 2008-01-31T23:22:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+tom.rmadilo wrote:
+&gt; No, [catch] returns to the Tcl script level, neither [break] nor
+&gt; [continue] ever return.
+">
+
+And where is [catch] running, other than the Tcl script level?
+
+And if you do
+catch {set x [lindex y [break]]}
+where do you think the call to [set] and [lindex] went?
+
+I think the bigger question is, &quot;what's your point?&quot;  *My* point is to
+keep you from confusing people who are reading this and *don't* know how
+it works internally. You're making it sound like some sort of magic, or
+some sort of strange ad-hoc language feature. It isn't.
+
+Every Tcl command returns an integer and (essentially) a string. If the
+integer is 0, it's considered a &quot;normal&quot; return. If it isn't, some
+commands do different things with that return code, while other commands
+simply return early and pass that non-zero return upwards to *their*
+caller.   It's really that simple. There's nothing magical about it. You
+can write routines like [break] yourself, you can write routines like
+[catch] yourself. You can return things other than TCL_OK, TCL_BREAK,
+TCL_RETURN... yourself.
+
+--
+Darren New / San Diego, CA, USA (PST)
+On what day did God create the body thetans?
+</POST>
+<POST>
+<POSTER> Darren New &lt;d...@san.rr.com&gt; </POSTER>
+<POSTDATE> 2008-01-31T23:28:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+tom.rmadilo wrote:
+&gt; Let's just talk about what it means for a command to 'return'. At the
+&gt; Tcl script level, a command returns iff evaluation continues at the
+&gt; point it left off in the current context.
+">
+
+That's a somewhat silly and useless way to look at it. The break *does*
+return to where it was called from. It's the *caller's* responsibility
+to look at the return code and decide to do something different.
+
+In any case, by this definition, *all* control structures don't &quot;return&quot;.
+
+while {$i &lt; 10}  {
+puts &quot;Yes&quot;
+incr i
+puts &quot;no&quot;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+puts &quot;maybe&quot;
+
+Which command causes that &quot;puts &quot;no&quot;&quot; to not return to the context it
+was called from? Certainly &quot;puts maybe&quot; should come after &quot;puts no&quot;.
+
+if {$i != 3} {
+puts yes
+
+<QUOTE PREVIOUSPOST="
+} else {
+puts no
+}
+">
+
+Here, we see the evaluation of $i != 3, followed by the evaluation of
+&quot;puts no&quot;, indicating that the &quot;if&quot; command doesn't &quot;return&quot;. Or maybe
+it's the &quot;$i != 3&quot; that &quot;doesn't return.&quot;
+
+<QUOTE PREVIOUSPOST="
+&gt; It may set the Tcl result, but it doesn't 'return', it causes something else to happen.
+">
+
+No, it *does* return. The *caller* does something different depending on
+the result.
+
+--
+Darren New / San Diego, CA, USA (PST)
+On what day did God create the body thetans?
+</POST>
+<POST>
+<POSTER> Darren New &lt;d...@san.rr.com&gt; </POSTER>
+<POSTDATE> 2008-01-31T23:33:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+tom.rmadilo wrote:
+&gt; On Jan 30, 9:04 pm, Darren New &lt;d ... @san.rr.com&gt; wrote:
+&gt;&gt; tom.rmadilo wrote:
+&gt;&gt;&gt; You don't usually [return] from a loop. (You can, but the [return] is
+&gt;&gt;&gt; applied to the context, not the loop boundary.
+&gt;&gt; [return] is the same thing as [break] and [continue] and [error], except
+&gt;&gt; returning different values. You do know that, right?
+
+&gt; Where exactly do they return their values?
+">
+
+To whomever called them. How do you think [catch] and [foreach] work to
+start with? Where do you think they *go*, if not to their caller?
+
+<QUOTE PREVIOUSPOST="
+&gt; None of them return a value to the context in which they are called,
+">
+
+This is factually incorrect.
+
+&gt; or any other (although [return] and
+
+<QUOTE PREVIOUSPOST="
+&gt; [error] are somewhat ambiguous at the Tcl level, they set a Tcl
+&gt; result, but the commands don't return a value).
+">
+
+This is factually incorrect.
+
+<QUOTE PREVIOUSPOST="
+&gt; You do know the
+&gt; difference between returning a value at the C level and a Tcl command
+&gt; returning a value to the Tcl scripting level? Two different things.
+">
+
+True, but irrelevant, since [break] and [continue] and all return values
+to the scripting level.
+
+<QUOTE PREVIOUSPOST="
+&gt; But [break] and [continue] don't even return to the Tcl scripting
+&gt; level.
+">
+
+To where do they return, then?  Almost invariably, my invocation of
+[continue] causes my script to keep running at the scripting level.
+
+How do you think [catch] works, if [error] doesn't return to the caller.
+
+Run the command
+catch error result
+and see what happens with the result variable. To where did error return?
+
+<QUOTE PREVIOUSPOST="
+&gt; Maybe you don't distinguish between what a command can cause
+&gt; another chunk of code to return and the actual return value of the
+&gt; command itself? But I'm somewhat confused, where exactly would these
+&gt; commands return?
+">
+
+To the caller.
+
+<QUOTE PREVIOUSPOST="
+&gt; Return, and do what exactly?
+">
+
+They don't do *anything* after they return. That's what &quot;return&quot; means.
+
+--
+Darren New / San Diego, CA, USA (PST)
+On what day did God create the body thetans?
+</POST>
+<POST>
+<POSTER> Fredderic &lt;my-name-h...@excite.com&gt; </POSTER>
+<POSTDATE> 2008-02-01T04:04:00 </POSTDATE>
+On Thu, 31 Jan 2008 13:18:08 -0800 (PST),
+
+<QUOTE PREVIOUSPOST="
+&quot;tom.rmadilo&quot; &lt;tom.rmad ... @gmail.com&gt; wrote:
+&gt; Mysterious voodoo? What is mysterious about a command altering the
+&gt; point of execution by not returning? Isn't control flow a common
+&gt; feature of every programming language?
+">
+
+Honestly, don't even bother any more.  So many people have said it so
+many ways, just admit you're wrong.
+
+But, in case you're STILL not convinced, how about this...  Since you're
+so good at understanding the internals of TCL, and quoting TCL source
+code to us (even better, it seems, than the very people who wrote it!),
+and since everyone has stated time and time again that [break] and
+[continue] DO return...
+
+How about you show us where in [break] or [continue] (not [foreach] or
+whatever else) it performs this magical non-return of yours.
+
+And then we can all sleep well, knowing we have been enlightened in the
+errors of our ways.
+
+Fredderic
+</POST>
+<POST>
+<POSTER> Fredderic &lt;my-name-h...@excite.com&gt; </POSTER>
+<POSTDATE> 2008-02-01T04:17:00 </POSTDATE>
+On Thu, 31 Jan 2008 08:01:33 -0800 (PST),
+
+<QUOTE PREVIOUSPOST="
+&quot;tom.rmadilo&quot; &lt;tom.rmad ... @gmail.com&gt; wrote:
+&gt; Starting at line 1811 of generic/tclCmdAH.c:
+[snip]
+&gt; This executes the body code of foreach (in the parent frame) and
+&gt; either breaks or continues, after resetting the result code to TCL_OK.
+&gt; Once out of this loop (not shown), the next code nullifies the Tcl
+&gt; result.
+&gt; But I think I made a mistake about one thing in a previous post. The
+&gt; loop code/frame/level doesn't cross the boundary of a proc. If you use
+&gt; a bare [break] or [continue], you get an error. But, if you use
+&gt; [return -code break/continue],
+&gt; you can get out of the current level and then out of the loop.
+">
+
+My, I think there might be hope yet.  ;)
+
+You should be able to see that it does indeed receive a value
+returned.  Now, if you trace that back to figure out where those
+TCL_BREAK and TCL_CONTINUE values came from, you'll figure it all out.
+
+The mistake you've made all through this thread, is that the proc isn't
+the only boundary to be aware of.  Individual commands have their own
+boundaries, none of which are violated.  Short of a setjump/longjump,
+there's really very few other options, and most of them are variants of
+the same theme, and very obviously non-regular returns.
+
+[return], [continue], or [break], all send a signal back indicating
+special action needs to be taken.  Each level in turn, then either
+handles that signal or passes it back.  This signal, which includes an
+&quot;all okay, go get the result&quot; variant, is &quot;returned&quot;.
+
+Fredderic
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-02-01T12:34:00 </POSTDATE>
+On Feb 1, 1:17 am, Fredderic &lt;my-name-h ... @excite.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; [return], [continue], or [break], all send a signal back indicating
+&gt; special action needs to be taken.  Each level in turn, then either
+&gt; handles that signal or passes it back.  This signal, which includes an
+&gt; &quot;all okay, go get the result&quot; variant, is &quot;returned&quot;.
+">
+
+Yes, more or less. Please forgive me for any disrespect I have shown
+anyone in discussing this topic, I'll try one more time to use the
+correct language.
+
+Every Tcl command is implemented as a C level function. For now, I'm
+not talking about Tcl procs, just the stuff implemented in C.
+
+Every C level implementation of a Tcl command (except the one for
+[exit], which doesn't return), returns a value,  'a standard Tcl
+completion code', a small integer value. 0 = TCL_OK, 1 = TCL_ERROR, 2
+= TCL_CONTINUE, 3 = TCL_BREAK 4 = TCL_RETURN. Greater than 4 are user
+defined.
+
+No C level implementation of a Tcl command returns any other value,
+but there can be side effects. Some, but not all, of these command
+implementations set, reset, append to or modify the Tcl interp's
+result.
+
+Is there any disagreement with this? Because if I got this wrong, my
+further reasoning can't be right.
+
+If this is correct, then, yes, every Tcl command is the same, and
+[exit] isn't really a useful counter example.
+
+But what use is there in talking about the internal return value of a
+command at the script level? What we want at the script level is the
+result of evaluation. This is what I thought I was talking about, and
+hopefully the result will be meaningful.
+
+The internal return value is not the interp result. The internal
+return values are the control flow mechanism in Tcl. They are used to
+indicate what to do next, internally. Any command which is executed
+and has a return value other than TCL_OK causes control flow changes.
+What changes occur is very specific to the context. But execution will
+not resume at the next command of the enclosing context. Execution
+doesn't resume, and the entire context is cleaned up. If this context
+was a [foreach] body, then when a [break] is executed, it return 3.
+This causes the entire context to be cleaned up. There is nothing to
+return to for [break]. This return value of 3 gets returned to the C
+implementation of the [foreach] command and this causes a C level
+break. If instead a [continue] was executed in the same context, what
+would happen is that the context would be destroyed and the return
+value of 2 transmitted up to the same [foreach] implementation. But in
+this case, the C implementation just starts the next iteration (if any
+are left), which eventually creates another context for the body and
+evaluates it. This is a different body context, one for each
+iteration.  Any exceptional return value in any evaluated script
+causes the same behavior: abort the script evaluation, clean up and
+return.
+
+That obviously precludes commands which return an exceptional value
+from 'returning' to the script from which they were invoked. But this
+language is, as pointed out, misleading. Maybe it is more accurate to
+say that Tcl evaluation does not return to the script if an
+exceptional condition is returned by any command found in that script.
+The script is destroyed, evaluation stops and control is returned to
+the enclosing context.
+</POST>
+<POST>
+<POSTER> Darren New &lt;d...@san.rr.com&gt; </POSTER>
+<POSTDATE> 2008-02-01T20:56:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+tom.rmadilo wrote:
+&gt; Maybe it is more accurate to
+&gt; say that Tcl evaluation does not return to the script if an
+&gt; exceptional condition is returned by any command found in that script.
+">
+
+No, it isn't.
+
+<QUOTE PREVIOUSPOST="
+&gt; The script is destroyed, evaluation stops and control is returned to
+&gt; the enclosing context.
+">
+
+No, it isn't.
+
+--
+Darren New / San Diego, CA, USA (PST)
+On what day did God create the body thetans?
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-02-02T22:47:00 </POSTDATE>
+On Feb 1, 5:56 pm, Darren New &lt;d ... @san.rr.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; tom.rmadilo wrote:
+&gt; &gt; Maybe it is more accurate to
+&gt; &gt; say that Tcl evaluation does not return to the script if an
+&gt; &gt; exceptional condition is returned by any command found in that script.
+
+&gt; No, it isn't.
+
+&gt; &gt; The script is destroyed, evaluation stops and control is returned to
+&gt; &gt; the enclosing context.
+
+&gt; No, it isn't.
+">
+
+I guess what you guys should do is submit a massive request to update
+the Tcl documentation, because the distinctions I have made appear to
+be present in every case:
+
+Some commands return a meaningful value:
+gets, if, regexp, etc.
+
+Some commands return a meaningless value:
+foreach, while, for
+
+Some commands don't return a value (they don't return to (but abort)
+the script where they were invoked, and maybe cause higher up scripts
+to abort as well, all without returning):
+break, continue, return, error
+
+Also, the documentation is as confused as I am about return codes,
+saying that they are used to control flow, and have nothing to do with
+the return value.
+
+But I'm sorry to report that the commands which don't return a value,
+according to the documentation, all use a similar phrase 'returns a
+code ... which causes' something to happen.
+
+The documentation is also annoyingly consistent about what script is
+aborted and where control is directed to continue.
+
+Very sad, I hope you guys can fix all those documentation errors.
+That, and all the code comments, must have been what confused me.
+Also, those bytecode substitutions, like totally skip over code when
+replacing break and continue. Probably the bytecode stuff is wrong,
+you can't just skip over all that important returning stuff.
+
+I can't wait to start using the return values of all of these
+commands, just as soon as you document how to get them. Then I can
+join the confederacy of dunces.
+</POST>
+<POST>
+<POSTER> Darren New &lt;d...@san.rr.com&gt; </POSTER>
+<POSTDATE> 2008-02-02T23:14:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+tom.rmadilo wrote:
+&gt; Some commands return a meaningful value:
+&gt; gets, if, regexp, etc.
+">
+
+Yep.
+
+<QUOTE PREVIOUSPOST="
+&gt; Some commands return a meaningless value:
+&gt; foreach, while, for
+">
+
+Yep.
+
+<QUOTE PREVIOUSPOST="
+&gt; Some commands don't return a value (they don't return to (but abort)
+&gt; the script where they were invoked, and maybe cause higher up scripts
+&gt; to abort as well, all without returning):
+&gt; break, continue, return, error
+">
+
+Sorry? [return] doesn't return a value?
+
+Anyway, all those routines return a value. What part of the
+documentation says they don't return a value or don't return at all?
+
+<QUOTE PREVIOUSPOST="
+&gt; Also, the documentation is as confused as I am about return codes,
+&gt; saying that they are used to control flow, and have nothing to do with
+&gt; the return value.
+">
+
+This is correct. Indeed, the fact that [break] returns an unusual return
+code is exactly why saying it doesn't return a value is incorrect. The
+return value that [break] returns has nothing to do with its return code
+that is used to control flow.
+
+<QUOTE PREVIOUSPOST="
+&gt; But I'm sorry to report that the commands which don't return a value,
+&gt; according to the documentation, all use a similar phrase 'returns a
+&gt; code ... which causes' something to happen.
+">
+
+Yeah? So? [break] &quot;returns TCL_BREAK, which causes a break exception to
+occur.&quot; Note that says nothing at all about flow of control. &quot;Break
+exceptions are also handled in a few other situations,&quot; in other words,
+the effect of [break] depends on the context in which it is invoked.
+
+<QUOTE PREVIOUSPOST="
+&gt; The documentation is also annoyingly consistent about what script is
+&gt; aborted and where control is directed to continue.
+">
+
+Yes. That's because it's up to the caller to handle it. [break] doesn't
+cause any change in control flow. It simply returns a TCL_BREAK.
+
+<QUOTE PREVIOUSPOST="
+&gt; Very sad, I hope you guys can fix all those documentation errors.
+">
+
+Were you to actually point out a documentation error, I'm sure the
+people here would be eager to fix it.
+
+<QUOTE PREVIOUSPOST="
+&gt; Probably the bytecode stuff is wrong,
+">
+
+&quot;Probably&quot;? If you have a bug report, then file it.
+
+<QUOTE PREVIOUSPOST="
+&gt; you can't just skip over all that important returning stuff.
+">
+
+&quot;Hi! I'm ignorant of how the system works, so I'll argue with those who
+*do* know until I'm blue, instead of asking what I should know!&quot;
+
+<QUOTE PREVIOUSPOST="
+&gt; I can't wait to start using the return values of all of these
+&gt; commands, just as soon as you document how to get them.
+">
+
+It's documented in the manual pages. And people have told you several
+times here. Try the [catch] command, for example.
+
+<QUOTE PREVIOUSPOST="
+&gt; Then I can join the confederacy of dunces.
+">
+
+(plonk*
+--
+Darren New / San Diego, CA, USA (PST)
+On what day did God create the body thetans?
+</POST>
+<POST>
+<POSTER> &quot;tom.rmadilo&quot; &lt;tom.rmad...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-02-03T02:20:00 </POSTDATE>
+On Feb 2, 8:14 pm, Darren New &lt;d ... @san.rr.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; tom.rmadilo wrote:
+&gt; &gt; I can't wait to start using the return values of all of these
+&gt; &gt; commands, just as soon as you document how to get them.
+
+&gt; It's documented in the manual pages. And people have told you several
+&gt; times here. Try the [catch] command, for example.
+">
+
+Did I ever say that [catch] doesn't return a value? No! Catch:
+
+&quot;will return a non-zero integer value corresponding to the exceptional
+return code returned by evaluation of script.&quot;
+
+I didn't expect you to appreciate the difference, but since you
+plonk'ed me, I guess you will never see this message, right?
+
+You can use the following three words to distinguish between the
+commands: 'value'. If a command manpage mentions returning a 'value',
+then it is a copy of the current Tcl interp result. 'code'. If the
+command manpage mentions the return code of the command, it likely is
+a control command. Note that these manpages never mention that the
+command returns a value, or that it simply 'returns'. 'causes'.
+Commands which 'cause' something to happen are control commands. Some
+commands can cause things to happen, and still return a value. What
+you will never find is the Tcl documentation saying that a command
+'returns' to some other place than the script from which it was
+called. Not that it 'returns' a value, although that is obvious.
+Commands which don't return cannot return a value. They can 'cause'
+the interp result of another command to be a particular value. They
+can 'cause' the return code of another command to be a particular
+value. But they do not return, and they don't return a value.
+
+It would be so easy to prove me wrong, just scan the manpages and
+point me and everyone else to it. That will be the one manpage which
+is correct according to your theory.
+
+The one thing that seemed to set off a few seasoned developers was the
+concept of return. What does it mean for a command to return? The
+answer is the same regardless of programming language, or natural
+language. Return means that after you go somewhere, you come back to
+the place you left. Maybe use a dictionary, or any programming
+language documentation. Hey, why not use the Tcl documentation? Here
+are some examples of what it means for a command to 'return':
+
+vwait:
+
+Once varName has been set, the vwait command will return as soon as
+the event handler that modified varName completes.
+
+after:
+
+The command sleeps for ms milliseconds and then returns.
+
+after ms ?script script script ...?
+In this form the command returns immediately.
+
+fcopy:
+
+The -command argument makes fcopy work in the background. In this case
+it returns immediately and the callback is invoked later when the copy
+completes.
+
+Please find a single example in the Tcl documentation which uses
+'returns' to indicate that a command returns a value into some other
+context, not the one in which it was called.
+
+Note that the documentation never says that [break] returns a value.
+According to you, this might be a misleading omission. If the
+documentation said that [break] returned a value, according to you, it
+would be correct. Please submit a bug report, so future developers
+will not be confused. I would also suggest that the short description
+for [break] be changed, because 'Abort looping command' doesn't
+suggest returning to the loop, hell, it doesn't even suggest returning
+to the loop command!
+
+How a command could return anywhere else than to the place from which
+it was called is beyond me. There is no precedent in natural language
+or programming language to suggest that something could return to
+somewhere it didn't leave from. Just moronic use of language. Please
+don't limit yourself to Tcl, find any natural language or programming
+language which allows something to return to a place it has never been
+to. There are words like 'unwind', 'abort', 'exit', 'terminate',
+'break' which convey the idea of leaving and not returning. How
+exactly 'abort looping' could be twisted into 'returning to the loop'
+is Orwellian Newspeak.
+
+Instead of trying to understand the meaning of a command returning,
+you and others are substituting the obvious fact that every command
+has a completion code. But every subcommand also has a completion
+code, as does every script. Every internal operation, such as
+substitution, obtaining memory, checking the number of arguments, etc.
+can return a non-zero completion code. And this causes a lot of
+unwinding. In fact, only if a command returns TCL_OK can we know that
+the command has done what we expected it to do. This is why, this is
+the exact reason why _any_ exceptional return code causes
+'termination', 'abort', whatever. The command did not complete, or
+maybe the command did complete. The command, or the script completed,
+but there are other commands in the script which should not be
+executed because their execution would change the interp result. So,
+the script uses [break] to make sure that the interp result remains
+exactly as it is at the moment [break] is called. [break] preserves
+the current interp result, it doesn't produce one of its own. [Break]
+preserves the interp result by setting the return code to TCL_BREAK.
+At no point does [break] modify the interp result _and_ set the return
+code to TCL_BREAK.
+
+So the Orwellian Newspeak is that [break] returns a value. In fact, it
+preserves the interp result (by returning an exception code), other
+commands may expose this interp result, but they couldn't do that if
+[break] set a new interp result. It simply doesn't happen.
+</POST>
+<POST>
+<POSTER> Fredderic &lt;my-name-h...@excite.com&gt; </POSTER>
+<POSTDATE> 2008-02-03T03:25:00 </POSTDATE>
+On Sat, 2 Feb 2008 19:47:13 -0800 (PST),
+
+<QUOTE PREVIOUSPOST="
+&quot;tom.rmadilo&quot; &lt;tom.rmad ... @gmail.com&gt; wrote:
+&gt; On Feb 1, 5:56 pm, Darren New &lt;d ... @san.rr.com&gt; wrote:
+&gt;&gt; tom.rmadilo wrote:
+&gt;&gt;&gt; Maybe it is more accurate to
+&gt;&gt;&gt; say that Tcl evaluation does not return to the script if an
+&gt;&gt;&gt; exceptional condition is returned by any command found in that
+&gt;&gt;&gt; script.
+&gt;&gt; No, it isn't.
+&gt;&gt;&gt; The script is destroyed, evaluation stops and control is returned
+&gt;&gt;&gt; to the enclosing context.
+&gt;&gt; No, it isn't.
+&gt; I guess what you guys should do is submit a massive request to update
+&gt; the Tcl documentation, because the distinctions I have made appear to
+&gt; be present in every case:
+&gt; Some commands return a meaningful value:
+&gt; gets, if, regexp, etc.
+">
+
+They return a NON-EMPTY value.
+
+<QUOTE PREVIOUSPOST="
+&gt; Some commands return a meaningless value:
+&gt; foreach, while, for
+">
+
+They return an EMPTY value.
+
+If they returned an uninitialised string pointer, which might be
+pointing into some random spot in program memory, or worse, maybe into
+some random stop in memory that'll fault when you try to read it, then
+THAT would be a meaningless value.  But empty vs. non-empty is still
+perfectly valid, and hence potentially useful.
+
+As a case in point, [proc] returns an empty value, which by your
+definition, is meaningless.  Yet this type of construct works, and I use
+it myself on occasion as a way of wrapping an initialisation script
+being executed at global scope so that it doesn't leave useless global
+or namespaced variables hanging around (another use was demonstrated in
+my posts about my [keyed] convenience construct):
+
+[proc &quot;&quot; {args} {
+foreach arg $args {
+... do something with $arg ...
+}
+}] arg1 arg2 arg3 ,,,
+
+Notice that it's creating a proc with an empty (but still meaningful)
+name, and then executing it as a quick &quot;lets process this stuff within
+a [proc] context&quot; one-shot command thing.  The [proc] returns an empty
+string, which is re-interpreted (being substituted into the first word
+of the command) as the name of a command, that we happen to have just
+finished creating.  Note that the empty result value is very different
+from, say, a C void return value that is a special case entity.
+
+Further, [foreach] and co. often occur right at the end of a proc, for
+which reason I was a little hesitant to suggest letting the inner loops
+return value carry through as the default return value.  Some people
+rely on [foreach] (and friends) returning an empty value, to also make
+their proc return an empty value.  Although, moving into 8.5 where we
+have a decent [return] command, I think that's a practise we need to
+try and get away from.
+
+But, the short of it is that these values are only &quot;meaningless&quot; if you
+choose to think of them that way.  And that's entirely your problem.
+
+<QUOTE PREVIOUSPOST="
+&gt; Some commands don't return a value (they don't return to (but abort)
+&gt; the script where they were invoked, and maybe cause higher up scripts
+&gt; to abort as well, all without returning):
+&gt;    break, continue, return, error
+">
+
+But that's a fallasy which we've been pounding on for ages.  Two of them
+return real values, and the other two return empty ones, along with a
+flow-control signal. If you invoke them through [catch], you'll get
+that return value and flow-control signal just like normal.  In
+standard code the flow-control signal is handled automatically, to
+guide the how and why of that return value (which may itself be
+considered irrelevant and generally ignored, and so is set to be
+empty mostly symbolically), unless caught and handled differently, but
+it's still being returned.  And it's still as valid a value as any
+other.  You could initialise variables with the return value of
+[break], by way of a statement like this:
+catch {break} initialise-me
+So how can you possibly say it doesn't return a value, or does return a
+meaningless value.  It DOES return an EMPTY value.  And how can you say
+that's not returning to the script where it was invoked?  That's
+returning exactly to where it was invoked.
+
+What you need to be thinking, instead, is that the script from where it
+was invoked it automatically re-throwing the return value, in the case
+where it's not one that's expected (which for regular code is exactly
+TCL_OK).
+
+foreach arg $args {
+if { $arg eq &quot;foo&quot; } {
+break
+}
+}
+
+Here you have three levels of code.
+
+[foreach] is invoking {if {$arg eq &quot;foo&quot;} break}.  It does this by
+handing off the script to an evaluator function.
+
+The evaluation breaks the script into commands, and executes each one
+in turn.  After each command, it checks the return code, and continues
+on to the next one only if it's TCL_OK.  If it's anything else (in this
+case, potentially TCL_BREAK), then it handles it differently.
+
+[if] does the same.  It invokes the expression evaluator to handle the
+expression, and the script evaluator to handle the body (in this case
+just the command [break]).  In both cases it checks the return code
+first, to see if it has to do anything special, and only then bothers
+to look at the actual return value.  And in both cases the evaluators
+themselves check return codes of anything they hand off to be performed
+by something else.
+
+So between the [foreach] command and the [break] command, something
+like this happens...  (I'm ignoring TCL_ERROR, for example)
+
+- a script evaluator running the [foreach] command
+- the [foreach] command is running through a list of values (or two)
+- another script evaluator is spawned by [forwach] to handle the body
+- the [if] command is being executed by that last script evaluator
+- it has spawned an expression evaluator to test the conditional
+- the expression evaluator returned true, and TCL_OK for flow control
+- [if], happy with that, then spawned another script evaluator
+- that script evaluator executes the [break] command
+- [break] returns TCL_BREAK, leaving the default blank result value
+- the evaluator (from if) wants only TCL_OK, so re-throws the TCL_BREAK
+- [if] simply passes back what it was given by its script evaluator
+- the next evaluator (from foreach) does exactly the same as the last
+- [foreach] now receives the TCL_BREAK with an empty result value.
+- it knows how to handle TCL_BREAK; stop and return TCL_OK
+- the outermost script evaluator receives TCL_OK, and continues on
+
+As a point of interest, [catch {break} var] looks basically like this:
+
+- a script evaluator running the [catch] command
+- [catch] spawns another script evaluator to run the command
+- the new script evaluator executes the [break] command
+- [break] returns TCL_BREAK, leaving the default blank result value
+- the evaluator (from if) wants only TCL_OK, so re-throws the TCL_BREAK
+- [catch] handles everything;
+- stashes the result value (empty) in &quot;var&quot; (was given here)
+- would have set the options dictionary if it were asked to
+- converts the TCL_BREAK code into an integer value
+- returns the integer value with the return code TCL_OK
+- the starting script evaluator continues on
+
+It's a little more complicated than that, since this [catch] is
+probably a value being tested or assigned to a variable.  But the
+routine is basically the same;
+
+- split the command into distinct words
+- if a word includes a nested command
+- invoke a script evaluator to evaluate that command
+- check for TCL_OK, and re-throw anything we don't like
+- if it's TCL_OK, substitute the result value back in our place
+
+So at every point, both inside and outside of script evaluators, the
+return code is being checked, and generally if it's anything other then
+TCL_OK (0), the script evaluator stops what it's doing and throws it
+back, ditching the rest of the script fragment.  Otherwise, it just
+moves onto the next command (if there is one), returning the last
+result value with a TCL_OK return code if that was the last one.
+
+And then whatever invoked the script evaluator itself will check the
+return code, which will be TCL_OK unless it was re-throwing something
+it didn't like, and either acts on it itself (be it TCL_OK, or
+TCL_BREAK in a [foreach]), or just re-throws it, often straight back to
+another script evaluator.
+
+Now, having written all that, if I hear once more you saying that
+[break] and [continue] don't return anything, there's a VERY good
+chance that I'll be killfile'ing you.  ;)
+
+<QUOTE PREVIOUSPOST="
+&gt; Also, the documentation is as confused as I am about return codes,
+&gt; saying that they are used to control flow, and have nothing to do with
+&gt; the return value.
+">
+
+No.  That is absolutely correct.  Return codes, being the ones literally
+returned from functions at the C level, do indeed have nothing to do
+with the return value, which is stored independently within the
+interpreter.
+
+<QUOTE PREVIOUSPOST="
+&gt; But I'm sorry to report that the commands which don't return a value,
+&gt; according to the documentation, all use a similar phrase 'returns a
+&gt; code ... which causes' something to happen.
+">
+
+Conceptually, the return code and the response value are considered as
+a single return value unit, for the simple reason that you never have
+one without the other.
+
+It's impossible not to return a code.  There is exactly one type of
+function in C which returns, literally, nothing.  And it returns void.
+In the TCL code, ALL script-level commands, and the evaluators used to
+invoke them, return an integer return code, which in all but a couple
+very exceptional cases, MUST be checked and if not handled, re-thrown.
+The very top-most level will then in turn translate anything other than
+a simple TCL_OK return code into an error and quit.  This translation
+may or may not make use of the interpreters result value, which like
+the return code, ALWAYS exists, though as DKF pointed out, it gets set
+to an empty value before any tcl-level command is evaluated (presumably
+from within the script evaluator prior to dispatching each command).
+
+<QUOTE PREVIOUSPOST="
+&gt; The documentation is also annoyingly consistent about what script is
+&gt; aborted and where control is directed to continue.
+">
+
+Well, I hope I've cleared some of that up for you.  TCL_OK generally
+continues on to the next command in a ...
+read more »
+</POST>
+</TEXT>
+</BODY>
+</DOC>

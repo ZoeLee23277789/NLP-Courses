@@ -1,0 +1,1091 @@
+<DOC>
+<DOCID> eng-NG-31-135588-8596870 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-10T12:59:00 </DATETIME>
+<BODY>
+<HEADLINE>
+CL Implementations and Tail-Call Elimination
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Pillsy &lt;pillsb...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-10T12:59:00 </POSTDATE>
+Every once in a while, a newbie comes along working through a problem
+where they use recursion to do iteration, and usually one of the first
+things anyone suggests is that they switch over to using DOLIST or
+LOOP or something. In and of itself, this is perfectly good advice,
+but one of the reasons always cited (and I cite it too) is that you
+can't rely on an ANS Common Lisp implementation to eliminate tail
+calls, the way you can rely on a Scheme implementation to do that.
+
+However, it looks to me like CL implementations really usually will do
+that sort of elimination, at least with the right set of declarations.
+So I'm sort of wondering which common Common Lisps don't do that. I
+blithely rely on it since SBCL does it, and I want to know whether
+this is a mildly bad habit or a really bad habit, at least from a
+portability standpoint.
+
+Cheers,
+Pillsy
+</POST>
+<POST>
+<POSTER> fortunatus &lt;daniel.elia...@excite.com&gt; </POSTER>
+<POSTDATE> 2007-09-10T14:01:00 </POSTDATE>
+For an example, I can contribute my experience that GCL will not
+optimize tail recursion when interpreting a function, but if that
+function is compiled, then tail recursion is optimized out.
+
+(I must be the only dude using GCL anymore...)
+
+I'd also point out that other language's processors are also free to
+optimize tail recursion.  In particular, GCC will do it if a C
+function is tail recursive and the
+
+-foptimize-sibling-calls
+
+option is given.
+</POST>
+<POST>
+<POSTER> pineapple.l...@yahoo.com </POSTER>
+<POSTDATE> 2007-09-10T15:30:00 </POSTDATE>
+In vast general, it is almost never worth chucking a recursive
+solution to a problem just because your compiler or interpreter does
+not do tail call optimization.  Recursive solutions are perfectly
+valid and good, and if you can think of a good recursive solution to a
+problem that makes sense to you and is more easily understood or more
+quickly written or whatever, then by all means do it.
+
+You will never notice that your compiler is not doing tail call
+optimization unless your recursive problem causes so much nesting that
+it blows the stack.  NEVER.  Furthermore, if you really believe that
+you should not do recursion because your compiler doesn't tail-
+recurse, you might want to go into your library and rewrite quicksort,
+mergesort, and many others routines, because they all use recursion.
+Yes, even on your non-tail call optimizing system (to those who have
+one).
+
+I know a guy that will go out and spend hundreds of dollars on a new
+update to an application that he already owns simply because the new
+version utilizes his dual core more effectively than his single-
+threaded program.  Ah, I see, when he presses the return key, his
+prompt comes back in a trillionth of a second instead of a billionth
+of a second.  Like he can tell either way, especially when he's
+talking on the phone and watching TV and his prompt sits there idle
+for minutes at a time without getting used anyway.
+
+Don't listen to all these people who say to replace recursion with
+explicit loops or whatever.  Most of them are obviously idiots.
+However, if you have a valid reason for doing so (you are blowing your
+stack) - by all means eliminate the recursion, or get a tail-call
+optimizing compiler.
+
+Regards.
+</POST>
+<POST>
+<POSTER> Rainer Joswig &lt;jos...@lisp.de&gt; </POSTER>
+<POSTDATE> 2007-09-10T16:58:00 </POSTDATE>
+In article &lt;1189443577.971590.65 ... @o80g2000hse.googlegroups.com&gt;,
+
+<QUOTE PREVIOUSPOST="
+Pillsy &lt;pillsb ... @gmail.com&gt; wrote:
+&gt; Every once in a while, a newbie comes along working through a problem
+&gt; where they use recursion to do iteration, and usually one of the first
+&gt; things anyone suggests is that they switch over to using DOLIST or
+&gt; LOOP or something. In and of itself, this is perfectly good advice,
+&gt; but one of the reasons always cited (and I cite it too) is that you
+&gt; can't rely on an ANS Common Lisp implementation to eliminate tail
+&gt; calls, the way you can rely on a Scheme implementation to do that.
+
+&gt; However, it looks to me like CL implementations really usually will do
+&gt; that sort of elimination, at least with the right set of declarations.
+&gt; So I'm sort of wondering which common Common Lisps don't do that. I
+&gt; blithely rely on it since SBCL does it, and I want to know whether
+&gt; this is a mildly bad habit or a really bad habit, at least from a
+&gt; portability standpoint.
+
+&gt; Cheers,
+&gt; Pillsy
+">
+
+* it forces you to compile your code in some obscure ways,
+which will not only affect the 'tail' call, but other
+things as well. You might even end up compiling your
+source code to unsafe code - something which I would
+like to avoid as much as possible. Most of the time
+you at least get less debug infos.
+
+* The mechanism to say that you want optimize tail calls
+is different between implementations.
+
+* Tail call optimization is not specified in Common Lisp.
+It is unclear how it should cooperate with the
+rest of the language.
+
+* Consult the manual of your favorite Common Lisp
+implementations and compare the various
+limitations they list for tail call optimizations.
+
+* Compiler and Interpreter might do it differently.
+Most of the time the Interpreter will not
+provide tail call elimination.
+
+* Debugging gets harder.
+
+* Profiling gets harder.
+
+For example:
+
+(defvar *foo* 3)
+
+(defun bar ()
+(print *foo*))
+
+(defun baz ()
+(let ((*foo* 4))
+(bar)))
+
+the call to bar might look to be in tail call position.
+But is it? What's with the special variable binding?
+
+Then:
+
+What's with DYNAMIC-EXTENT?
+
+How about CATCH?
+
+Handlers and Restarts?
+
+See the LispWorks restrictions:
+
+http://www.lispworks.com/documentation/lw50/LWUG/html/lwuser-98.htm
+
+--
+http://lispm.dyndns.org
+</POST>
+<POST>
+<POSTER> Christopher Browne &lt;cbbro...@ca.afilias.info&gt; </POSTER>
+<POSTDATE> 2007-09-10T17:08:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Pillsy &lt;pillsb ... @gmail.com&gt; writes:
+&gt; Every once in a while, a newbie comes along working through a problem
+&gt; where they use recursion to do iteration, and usually one of the first
+&gt; things anyone suggests is that they switch over to using DOLIST or
+&gt; LOOP or something. In and of itself, this is perfectly good advice,
+&gt; but one of the reasons always cited (and I cite it too) is that you
+&gt; can't rely on an ANS Common Lisp implementation to eliminate tail
+&gt; calls, the way you can rely on a Scheme implementation to do that.
+
+&gt; However, it looks to me like CL implementations really usually will do
+&gt; that sort of elimination, at least with the right set of declarations.
+&gt; So I'm sort of wondering which common Common Lisps don't do that. I
+&gt; blithely rely on it since SBCL does it, and I want to know whether
+&gt; this is a mildly bad habit or a really bad habit, at least from a
+&gt; portability standpoint.
+">
+
+Struggling to force the elimination of recursion seems to be the cause
+of all sorts of evils...
+
+It smacks most particularly of &quot;premature optimization,&quot; which is
+woefully wasteful.
+
+If someone is *so* focused on the need to eliminate recursion, then
+perhaps they should consider using Scheme, where there are certain
+guarantees about tail recursion handling.
+
+The right answer tends to *really* be to try to write the most
+readable code, first, and work on tuning it only if it seems
+worthwhile to &quot;fix&quot; the problem.
+
+Usually, novices have so many other problems with their code (whatever
+the language) that tuning it should be the last thing on their
+minds...
+--
+(reverse (concatenate 'string &quot;gro.mca&quot; &quot;@&quot; &quot;enworbbc&quot;))
+http://linuxdatabases.info/info/spreadsheets.html
+Artificial intelligence,  like fusion power,  has been ten  years away
+for the last 30 years.  -- Conrad Stack
+</POST>
+<POST>
+<POSTER> Barry Margolin &lt;bar...@alum.mit.edu&gt; </POSTER>
+<POSTDATE> 2007-09-10T19:34:00 </POSTDATE>
+In article &lt;1189452657.767455.215 ... @50g2000hsm.googlegroups.com&gt;,
+
+<QUOTE PREVIOUSPOST="
+pineapple.l ... @yahoo.com wrote:
+&gt; You will never notice that your compiler is not doing tail call
+&gt; optimization unless your recursive problem causes so much nesting that
+&gt; it blows the stack.  NEVER.  Furthermore, if you really believe that
+&gt; you should not do recursion because your compiler doesn't tail-
+&gt; recurse, you might want to go into your library and rewrite quicksort,
+&gt; mergesort, and many others routines, because they all use recursion.
+&gt; Yes, even on your non-tail call optimizing system (to those who have
+&gt; one).
+">
+
+Most of these algorithms aren't tail-recursive, anyway, so tail-call
+elimination wouldn't make a difference.
+
+It should also be noted that most of the common recursive algorithms
+have depth that grows as log N.  Where you're more likely to run into a
+problem is if your recursion level is O(n), e.g. stepping through a list
+recursively.
+
+IMHO, the most natural expression of the algorithm will often be fine.
+For linear stepping through a list, the iteration operators (DOLIST,
+MAPxxx, LOOP) will usually fit well and be most readable.  For
+processing recursive data structures, such as trees, a recursive
+algorithm will work well.
+
+--
+Barry Margolin, bar ... @alum.mit.edu
+Arlington, MA
+*** PLEASE post questions in newsgroups, not directly to me ***
+*** PLEASE don't copy me on replies, I'll read them in the group ***
+</POST>
+<POST>
+<POSTER> Scott Burson &lt;FSet....@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-10T21:09:00 </POSTDATE>
+On Sep 10, 9:59 am, Pillsy &lt;pillsb ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; However, it looks to me like CL implementations really usually will do
+&gt; that sort of elimination, at least with the right set of declarations.
+&gt; So I'm sort of wondering which common Common Lisps don't do that. I
+&gt; blithely rely on it since SBCL does it, and I want to know whether
+&gt; this is a mildly bad habit or a really bad habit, at least from a
+&gt; portability standpoint.
+">
+
+I'm reasonably certain that Allegro does tail call optimization only
+on calls to local functions (those defined with FLET or LABELS).  I
+don't know if there's any way to get it to do so on calls to global
+functions.
+
+-- Scott
+</POST>
+<POST>
+<POSTER> Duane Rettig &lt;du...@franz.com&gt; </POSTER>
+<POSTDATE> 2007-09-11T04:45:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Scott Burson &lt;FSet. ... @gmail.com&gt; writes:
+&gt; On Sep 10, 9:59 am, Pillsy &lt;pillsb ... @gmail.com&gt; wrote:
+&gt;&gt; However, it looks to me like CL implementations really usually will do
+&gt;&gt; that sort of elimination, at least with the right set of declarations.
+&gt;&gt; So I'm sort of wondering which common Common Lisps don't do that. I
+&gt;&gt; blithely rely on it since SBCL does it, and I want to know whether
+&gt;&gt; this is a mildly bad habit or a really bad habit, at least from a
+&gt;&gt; portability standpoint.
+
+&gt; I'm reasonably certain that Allegro does tail call optimization only
+&gt; on calls to local functions (those defined with FLET or LABELS).  I
+&gt; don't know if there's any way to get it to do so on calls to global
+&gt; functions.
+">
+
+How certain are you?
+
+http://www.franz.com/support/documentation/8.1/doc/compiling.htm#tail...
+
+--
+Duane Rettig    du ... @franz.com    Franz Inc. http://www.franz.com/
+555 12th St., Suite 1450 http://www.555citycenter.com/
+Oakland, Ca. 94607        Phone: (510) 452-2000; Fax: (510) 452-0182
+</POST>
+<POST>
+<POSTER> Pascal Costanza &lt;p...@p-cos.net&gt; </POSTER>
+<POSTDATE> 2007-09-11T05:20:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Pillsy wrote:
+&gt; Every once in a while, a newbie comes along working through a problem
+&gt; where they use recursion to do iteration, and usually one of the first
+&gt; things anyone suggests is that they switch over to using DOLIST or
+&gt; LOOP or something. In and of itself, this is perfectly good advice,
+&gt; but one of the reasons always cited (and I cite it too) is that you
+&gt; can't rely on an ANS Common Lisp implementation to eliminate tail
+&gt; calls, the way you can rely on a Scheme implementation to do that.
+
+&gt; However, it looks to me like CL implementations really usually will do
+&gt; that sort of elimination, at least with the right set of declarations.
+">
+
+It's a pity that ANSI Common Lisp doesn't define a more straightforward
+way to declare that you need tail call merging. It is true that most
+algorithms which are expressed recursively can as well be expressed with
+iteration constructs, and are probably easier to understand that way, or
+don't benefit from tail call merging because they are inherently recursive.
+
+However, this misses a programming style where a state machine can be
+expressed in terms of sets of mutually recursive functions. For example,
+I am just exploring the implementation of 3-Lisp, and it relies on such
+an implementation approach. On top of that, the core is (equivalent to)
+a read-eval-print-loop, that is essentially a non-terminating loop. For
+that, it is essential that such a set of mutually recursive functions
+doesn't grow the stack. I can imagine that there are other kinds of
+programs which could benefit from such a programming style.
+
+It's unfortunate that there is no straightforward way to support such a
+programming style in an otherwise excellent multi-paradigm language.
+
+I guess, one wouldn't have to go as far as in Scheme, where &quot;proper&quot;
+tail recursion is a strict requirement. But a declaration, such as
+(declare (optimize tail-calls)) that is known across several CL
+implementations would already be very helpful. If implementations are
+still free to decide not to implement tail call merging, _but_ issue a
+warning or an error when they see such a declaration, it would be much
+easier to quickly determine whether some code is easy to port or not.
+One could have different levels, like (declare (optimize (tail-calls
+3))) could be as strong as Scheme's proper tail recursion while anything
+below 3 just means that the compiler should optimize, but is free to try
+less hard. (declare (optimize (tail-calls 0))) would then supposedly
+mean that the compiler should not merge tail calls.
+
+This is, of course, just a sketch, the devil is in the details. But
+maybe someone is willing to work on a proposal, for example for a CDR
+document? It's probably a good idea to investigate what the major CL
+implementations have in common in this regard, and then try to come up
+with a unified interface for that...
+
+Pascal
+
+--
+My website: http://p-cos.net
+Common Lisp Document Repository: http://cdr.eurolisp.org
+Closer to MOP &amp; ContextL: http://common-lisp.net/project/closer/
+</POST>
+<POST>
+<POSTER> Duane Rettig &lt;du...@franz.com&gt; </POSTER>
+<POSTDATE> 2007-09-11T13:45:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Pascal Costanza &lt;p ... @p-cos.net&gt; writes:
+&gt; Pillsy wrote:
+&gt;&gt; Every once in a while, a newbie comes along working through a problem
+&gt;&gt; where they use recursion to do iteration, and usually one of the first
+&gt;&gt; things anyone suggests is that they switch over to using DOLIST or
+&gt;&gt; LOOP or something. In and of itself, this is perfectly good advice,
+&gt;&gt; but one of the reasons always cited (and I cite it too) is that you
+&gt;&gt; can't rely on an ANS Common Lisp implementation to eliminate tail
+&gt;&gt; calls, the way you can rely on a Scheme implementation to do that.
+&gt;&gt; However, it looks to me like CL implementations really usually will
+&gt;&gt; do
+&gt;&gt; that sort of elimination, at least with the right set of declarations.
+
+&gt; It's a pity that ANSI Common Lisp doesn't define a more
+&gt; straightforward way to declare that you need tail call merging.
+">
+
+That's because tail merging is not straightforward.  There are
+tradeoffs involved, and they are usually associated with the
+programming styles under which different programmers like to operate.
+In fact, given any random group of Common Lispers, you'll find that
+tail-merging can generate a lot of heated debate - on one hand, there
+is the stack-space-efficiency issue, where the implementation wants to
+use the system's stack space(s) but they are limited resources.  On
+another hand there are those who would rather see debugability, and
+when frames are taken off of the stack due to tail-merging, it is a
+lot harder to see the path from one function to its apparent (but
+indirect) progeny.  On a third hand, there is the conversation that is
+usually dominated when Schemers are involved about &quot;proper&quot; tail
+recursion (which I think is more properly called &quot;space efficient tail
+calling&quot;) - this issue (of whether this style is right or wrong, or
+needed or unnecessary) tends to dominate conversations sometimes, but
+that tends to leave the more subtle &quot;stack-space vs debuggable frames&quot;
+conversation on the back burner.  And at Franz, where we had most of
+these conversations amongst ourselves (not agreeing, by the way, but
+agreeing to disagree and to try to support as much of the range of
+stances as possible), we noted that the conversation even changes when
+discussing &quot;self&quot; calls vs calls to other functions - people's
+priorities tend to change even with those distinctions, and we provide
+different default behavior for each of those cases.
+
+<QUOTE PREVIOUSPOST="
+&gt;  It is
+&gt; true that most algorithms which are expressed recursively can as well
+&gt; be expressed with iteration constructs, and are probably easier to
+&gt; understand that way, or don't benefit from tail call merging because
+&gt; they are inherently recursive.
+
+&gt; However, this misses a programming style where a state machine can be
+&gt; expressed in terms of sets of mutually recursive functions. For
+&gt; example, I am just exploring the implementation of 3-Lisp, and it
+&gt; relies on such an implementation approach. On top of that, the core is
+&gt; (equivalent to) a read-eval-print-loop, that is essentially a
+&gt; non-terminating loop. For that, it is essential that such a set of
+&gt; mutually recursive functions doesn't grow the stack. I can imagine
+&gt; that there are other kinds of programs which could benefit from such a
+&gt; programming style.
+
+&gt; It's unfortunate that there is no straightforward way to support such
+&gt; a programming style in an otherwise excellent multi-paradigm language.
+">
+
+Such a programming style would have to allow for the multi-paradigms
+in all directions in order to be effective, including the ones I've
+mentioned above - are CLers also willing to discuss the possibility of
+defining CPS (which is usually implied when the &quot;space-efficient tail
+call&quot; is discussed)?
+
+<QUOTE PREVIOUSPOST="
+&gt; I guess, one wouldn't have to go as far as in Scheme, where &quot;proper&quot;
+&gt; tail recursion is a strict requirement.
+">
+
+Why not?  If we are going to have such a multi-paradigm feature,
+shouldn't it truly be multi-paradigm?
+
+<QUOTE PREVIOUSPOST="
+&gt; But a declaration, such as
+&gt; (declare (optimize tail-calls)) that is known across several CL
+&gt; implementations would already be very helpful.
+">
+
+I think this is too simplistic.  For one thing, I have a problem with
+the &quot;optimize&quot; aspect of it.  Let me explain:  When you say
+(declare (optimize speed)) it is saying (declare (optimize (speed 3)))
+which really means &quot;I care about speed&quot;.  It is also obvious that you
+want faster, not slower (though even that could depend on your point
+of view [1]).  The same goes with the other standard optimize
+settings: safety, space, and compilation-speed - it is pretty obvious
+which way you want to go with these which would make the resultant
+code &quot;optimal&quot; in that direction.  But an &quot;optimal&quot; tail-call?   No, a
+tail call is a tail-call, whether it is implemented as a jump or a
+jump-and-link.   It is part of its nature, and what defines it.  So
+how do we &quot;optimize&quot; it?  We don't - we optimize aspects of its
+implementation instead.  I would be more open to (though still not
+enthusiastic about) optimization qualities named &quot;tail-jump&quot; or
+&quot;tail-merge&quot;, because at least those imply a direction.
+
+If implementations are
+
+<QUOTE PREVIOUSPOST="
+&gt; still free to decide not to implement tail call merging, _but_ issue a
+&gt; warning or an error when they see such a declaration, it would be much
+&gt; easier to quickly determine whether some code is easy to port or
+&gt; not.
+">
+
+This is not consistent with the philosophy of Common Lisp, which, with
+very few exceptions, allows declarations to be ignored.  Obviously, an
+implementation that ignores all declarations is not very valuable, but
+neither is an implementation that spits out so much warning
+information that important information is lost.
+
+One could have different levels, like (declare (optimize
+
+<QUOTE PREVIOUSPOST="
+&gt; (tail-calls 3))) could be as strong as Scheme's proper tail recursion
+&gt; while anything below 3 just means that the compiler should optimize,
+&gt; but is free to try less hard. (declare (optimize (tail-calls 0)))
+&gt; would then supposedly mean that the compiler should not merge tail
+&gt; calls.
+
+&gt; This is, of course, just a sketch, the devil is in the details. But
+&gt; maybe someone is willing to work on a proposal, for example for a CDR
+&gt; document? It's probably a good idea to investigate what the major CL
+&gt; implementations have in common in this regard, and then try to come up
+&gt; with a unified interface for that...
+">
+
+To start with Allegro CL, as I stated elsewhere in this thread, a good
+starting point is here:
+
+http://www.franz.com/support/documentation/8.1/doc/compiling.htm#tail...
+
+[1] In my area we have a cable company which is advertising high-speed
+internet over cable, and their commercials show a turtle and his wife
+singing the praises of their nice, _slow_, unhurried DSL line; they
+even try to get as far away physically from their hub as possible, so
+the male turtle is out in the back yard trying to see if he can get
+just a little bit more slowness out of his DSL...
+
+--
+Duane Rettig    du ... @franz.com    Franz Inc. http://www.franz.com/
+555 12th St., Suite 1450 http://www.555citycenter.com/
+Oakland, Ca. 94607        Phone: (510) 452-2000; Fax: (510) 452-0182
+</POST>
+<POST>
+<POSTER> Scott Burson &lt;FSet....@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-11T17:04:00 </POSTDATE>
+On Sep 11, 1:45 am, Duane Rettig &lt;du ... @franz.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; http://www.franz.com/support/documentation/8.1/doc/compiling.htm#tail ...
+">
+
+Huh.  You want me to RTFM before I post :)
+
+I'm glad to see this, though I still would be inclined to discourage
+the OP from depending on it, since he/she seems to care about
+portability.
+
+-- Scott
+</POST>
+<POST>
+<POSTER> Scott Burson &lt;FSet....@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-11T17:17:00 </POSTDATE>
+On Sep 11, 10:45 am, Duane Rettig &lt;du ... @franz.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; That's because tail merging is not straightforward.  There are
+&gt; tradeoffs involved, and they are usually associated with the
+&gt; programming styles under which different programmers like to operate.
+">
+
+What I've always wanted, and have never seen implemented, is for calls
+to non-self global functions _not_ to be tail-merged by default, but
+to have a declaration that lets me specify sets of global functions
+calls between which will be tail-merged.  This preserves debuggability
+in the normal case, while still allowing me to write something like an
+FSA using global functions.  (The same could be done for local
+functions defined within a single LABELS, though I'm already used to
+calls between those being tail-merged.)
+
+In my experience this would handle the vast majority of the real-life
+use cases in which tail calls are needed, without damaging
+debuggability of the rest of one's application.
+
+-- Scott
+</POST>
+<POST>
+<POSTER> &quot;John Thingstad&quot; &lt;john.things...@chello.no&gt; </POSTER>
+<POSTDATE> 2007-09-11T18:11:00 </POSTDATE>
+På Tue, 11 Sep 2007 23:17:39 +0200, skrev Scott Burson
+&lt;FSet. ... @gmail.com&gt;:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 11, 10:45 am, Duane Rettig &lt;du ... @franz.com&gt; wrote:
+
+&gt;&gt; That's because tail merging is not straightforward.  There are
+&gt;&gt; tradeoffs involved, and they are usually associated with the
+&gt;&gt; programming styles under which different programmers like to operate.
+
+&gt; What I've always wanted, and have never seen implemented, is for calls
+&gt; to non-self global functions _not_ to be tail-merged by default, but
+&gt; to have a declaration that lets me specify sets of global functions
+&gt; calls between which will be tail-merged.  This preserves debuggability
+&gt; in the normal case, while still allowing me to write something like an
+&gt; FSA using global functions.  (The same could be done for local
+&gt; functions defined within a single LABELS, though I'm already used to
+&gt; calls between those being tail-merged.)
+
+&gt; In my experience this would handle the vast majority of the real-life
+&gt; use cases in which tail calls are needed, without damaging
+&gt; debuggability of the rest of one's application.
+
+&gt; -- Scott
+">
+
+I second that.
+(declaim tail-merge func1 func2 ...)
+or something like that would be nice.
+It is also similar to the way in-lining is handled.
+A interpreter would probably choose to ignore this while a compiler would
+use it.
+Thus debuggabillity is preserved and it is separated from the optimize
+clauses which I feel confuse the issue.
+How many times do I see questions like &quot;How do I enable tail recursion?&quot;
+Setting debug &lt; 3 works on my compiler (and I think most) but it hardly
+seems obvious or easy to look up.
+</POST>
+<POST>
+<POSTER> &quot;John Thingstad&quot; &lt;john.things...@chello.no&gt; </POSTER>
+<POSTDATE> 2007-09-11T18:25:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; I second that.
+&gt; (declaim tail-merge func1 func2 ...)
+&gt; or something like that would be nice.
+&gt; It is also similar to the way in-lining is handled.
+&gt; A interpreter would probably choose to ignore this while a compiler
+&gt; would use it.
+&gt; Thus debuggabillity is preserved and it is separated from the optimize
+&gt; clauses which I feel confuse the issue.
+&gt; How many times do I see questions like &quot;How do I enable tail recursion?&quot;
+&gt; Setting debug &lt; 3 works on my compiler (and I think most) but it hardly
+&gt; seems obvious or easy to look up.
+">
+
+To elaborate a bit further. It would work on compile-file. compile-file is
+then careful to fmakunbound the functions before tail merging to avoid
+confusion. For many functions the first function would be the entry point.
+For a single function a (declare tail-merge) could be used and handled by
+compile as well.
+</POST>
+<POST>
+<POSTER> r...@rpw3.org (Rob Warnock) </POSTER>
+<POSTDATE> 2007-09-11T21:57:00 </POSTDATE>
+Duane Rettig  &lt;du ... @franz.com&gt; wrote:
++---------------
+| In fact, given any random group of Common Lispers, you'll find that
+| tail-merging can generate a lot of heated debate - on one hand, there
+| is the stack-space-efficiency issue, where the implementation wants to
+| use the system's stack space(s) but they are limited resources.  On
+| another hand there are those who would rather see debugability, and
+| when frames are taken off of the stack due to tail-merging, it is a
+| lot harder to see the path from one function to its apparent (but
+| indirect) progeny.  On a third hand, there is the conversation that is
+| usually dominated when Schemers are involved about &quot;proper&quot; tail
+| recursion (which I think is more properly called &quot;space efficient tail
+| calling&quot;) - this issue (of whether this style is right or wrong, or
+| needed or unnecessary) tends to dominate conversations sometimes, but
+| that tends to leave the more subtle &quot;stack-space vs debuggable frames&quot;
+| conversation on the back burner.
+...
+| &gt; It's unfortunate that there is no straightforward way to support such
+| &gt; a programming style in an otherwise excellent multi-paradigm language.
+|
+| Such a programming style would have to allow for the multi-paradigms
+| in all directions in order to be effective, including the ones I've
+| mentioned above - are CLers also willing to discuss the possibility of
+| defining CPS (which is usually implied when the &quot;space-efficient tail
+| call&quot; is discussed)?
++---------------
+
+I am, although, as I done in my own code sometimes, a little
+bit of CL macrology can make your CPS-conversion *appear* to be
+more like the conventional tail-call optimization, using the same
+&quot;trampoline/loop&quot; style often used to compile &quot;true&quot; Scheme-like
+tail calls into non-tail-guaranteed languages such as C. This
+implies the moral equivalent of John Thingstad's earlier suggestion
+about a DECLAIM TAIL-MERGE func1 func2 ...), that is, a group of
+functions have to know they're using the same tail-call mechanism,
+and have to make all tail calls using a specific macro, but given
+that minimal requirement the code ends up looking fairly natural.
+Here's a quick sketch of one version:
+
+(defmacro tail-call (form)
+`(locally (declare (special *current-tail-marker*))
+(setf (car *current-tail-marker*)
+(lambda () ,form))
+*current-tail-marker*))
+
+(defmacro with-tail-calls-enabled (&amp;body forms)
+`(let ((*current-tail-marker* (list (lambda () (progn ,@forms)))))
+(declare (special *current-tail-marker*))
+(tail-call-trampoline-loop *current-tail-marker*)))
+
+(defun tail-call-trampoline-loop (marker)
+(declare (special *current-tail-marker*))
+(loop while (eq marker *current-tail-marker*)
+do (setf marker (funcall (car marker)))
+finally (return marker)))
+
+Trivial examples:
+
+&gt; (with-tail-calls-enabled (+ 17 5))
+
+22
+&gt; (with-tail-calls-enabled (tail-call (* 5 12)))
+
+60
+&gt; (labels ((fact/accum (x accum)
+(if (plusp x)
+(tail-call (fact/accum (1- x) (* x accum)))
+accum)))
+(with-tail-calls-enabled
+(fact/accum 50 1)))
+
+30414093201713378043612608166064768844377641568960512000000000000
+&gt; (defun odds (x accum)
+(format t &quot;odds: ~d~%&quot; x)
+(tail-call (evens (1- x) (1+ accum))))
+
+ODDS
+&gt; (defun evens (x accum)
+(format t &quot;evens: ~d~%&quot; x)
+(cond
+((not (plusp x))
+(1+ accum))
+((oddp x)
+(tail-call (odds x (1+ accum))))
+(t
+(tail-call (evens (/ x 2) (1+ accum))))))
+
+EVENS
+&gt; (with-tail-calls-enabled (evens 37 0))
+evens: 37
+odds: 37
+evens: 36
+evens: 18
+evens: 9
+odds: 9
+evens: 8
+evens: 4
+evens: 2
+evens: 1
+odds: 1
+evens: 0
+12
+&gt; (with-tail-calls-enabled (evens 238764523837653235834 0))
+evens: 238764523837653235834
+evens: 119382261918826617917
+odds: 119382261918826617917
+evens: 119382261918826617916
+evens: 59691130959413308958
+...[trimmed for brevity]...
+odds: 25
+evens: 24
+evens: 12
+evens: 6
+evens: 3
+odds: 3
+evens: 2
+evens: 1
+odds: 1
+evens: 0
+146
+&gt;
+
+Exercise for the reader: Tweak the above to handle
+multiple values in the final non-tail-call return. [Easy.]
+
+Exercise for the reader#2: Minimize the consing of
+the multiple values version. [Somewhat harder.]
+
+-Rob
+
+-----
+Rob Warnock                     &lt;r ... @rpw3.org&gt;
+627 26th Avenue                 &lt;URL: http://rpw3.org/ &gt;
+San Mateo, CA 94403             (650)572-2607
+</POST>
+<POST>
+<POSTER> Pascal Costanza &lt;p...@p-cos.net&gt; </POSTER>
+<POSTDATE> 2007-09-12T08:37:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Duane Rettig wrote:
+&gt; Pascal Costanza &lt;p ... @p-cos.net&gt; writes:
+
+&gt;&gt; Pillsy wrote:
+&gt;&gt;&gt; Every once in a while, a newbie comes along working through a problem
+&gt;&gt;&gt; where they use recursion to do iteration, and usually one of the first
+&gt;&gt;&gt; things anyone suggests is that they switch over to using DOLIST or
+&gt;&gt;&gt; LOOP or something. In and of itself, this is perfectly good advice,
+&gt;&gt;&gt; but one of the reasons always cited (and I cite it too) is that you
+&gt;&gt;&gt; can't rely on an ANS Common Lisp implementation to eliminate tail
+&gt;&gt;&gt; calls, the way you can rely on a Scheme implementation to do that.
+&gt;&gt;&gt; However, it looks to me like CL implementations really usually will
+&gt;&gt;&gt; do
+&gt;&gt;&gt; that sort of elimination, at least with the right set of declarations.
+&gt;&gt; It's a pity that ANSI Common Lisp doesn't define a more
+&gt;&gt; straightforward way to declare that you need tail call merging.
+
+&gt; That's because tail merging is not straightforward.
+">
+
+I didn't want to create the impression that it is straightforward to
+provide such a declaration. Sorry if I did so.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; It's unfortunate that there is no straightforward way to support such
+&gt;&gt; a programming style in an otherwise excellent multi-paradigm language.
+
+&gt; Such a programming style would have to allow for the multi-paradigms
+&gt; in all directions in order to be effective, including the ones I've
+&gt; mentioned above - are CLers also willing to discuss the possibility of
+&gt; defining CPS (which is usually implied when the &quot;space-efficient tail
+&gt; call&quot; is discussed)?
+">
+
+I am not clear why are asking this. My response would be: Why not? But I
+may be missing something.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; I guess, one wouldn't have to go as far as in Scheme, where &quot;proper&quot;
+&gt;&gt; tail recursion is a strict requirement.
+
+&gt; Why not?  If we are going to have such a multi-paradigm feature,
+&gt; shouldn't it truly be multi-paradigm?
+">
+
+In Scheme, proper tail recursion is a strict requirement. If an
+implementation of Scheme allows you to switch it off (for example to be
+able to record more runtime debugging information), it's not an
+implementation of Scheme anymore in the strict sense.
+
+I wouldn't want that.
+
+Support for proper tail recursion as an option would be good though (if
+the details can be sorted out, which is hard).
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; But a declaration, such as
+&gt;&gt; (declare (optimize tail-calls)) that is known across several CL
+&gt;&gt; implementations would already be very helpful.
+
+&gt; I think this is too simplistic.  For one thing, I have a problem with
+&gt; the &quot;optimize&quot; aspect of it.
+">
+
+OK, you have a point there.
+
+Maybe have an agreed-upon symbol for *features*, which would allow you
+to say something like:
+
+(eval-when (:compile-toplevel)
+(assert (member :proper-tail-recursion *features*)))
+
+[Still too simplistic, but you get the idea.]
+
+Pascal
+
+--
+My website: http://p-cos.net
+Common Lisp Document Repository: http://cdr.eurolisp.org
+Closer to MOP &amp; ContextL: http://common-lisp.net/project/closer/
+</POST>
+<POST>
+<POSTER> szergling &lt;senatorZergl...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-13T11:51:00 </POSTDATE>
+On Sep 12, 1:57 pm, r ... @rpw3.org (Rob Warnock) wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;     (defmacro tail-call (form)
+&gt;       `(locally (declare (special *current-tail-marker*))
+&gt;          (setf (car *current-tail-marker*)
+&gt;                (lambda () ,form))
+&gt;          *current-tail-marker*))
+
+&gt;     (defmacro with-tail-calls-enabled (&amp;body forms)
+&gt;       `(let ((*current-tail-marker* (list (lambda () (progn ,@forms)))))
+&gt;          (declare (special *current-tail-marker*))
+&gt;          (tail-call-trampoline-loop *current-tail-marker*)))
+
+&gt;     (defun tail-call-trampoline-loop (marker)
+&gt;       (declare (special *current-tail-marker*))
+&gt;       (loop while (eq marker *current-tail-marker*)
+&gt;          do (setf marker (funcall (car marker)))
+&gt;          finally (return marker)))
+">
+
+I cannot quite understand these, but they are really good!!!
+I got quite excited because they almost solve some problems
+I had a while ago, but not quite yet...
+
+I find the (eq marker *current-tail-marker*) thing quite
+confusing, so to understand it, I've rewritten a more
+readable version. Have I missed anything subtle?
+(*tail-call-marker* was renamed to *tail-call*). I thought
+this way is much clearer. I also tried to record any
+tail-calls for debugging purposes: tail-calls and
+stack-frame debugging are orthogonal issues!  Afterall,
+nobody complains about goto not leaving a trail behind, do
+they?
+
+(defvar *tail-call* nil)
+(defvar *tail-call-optimised* (gensym &quot;TAIL-CALL-OPTIMISED&quot;)
+&quot;If a user accidentally runs a tail-call outside of with-tail-calls-
+enabled,
+they'll see this symbol (and be able to guess what went wrong).&quot;)
+(defvar *call-stack* (list)
+&quot;Call history for debugging.&quot;)
+
+(defmacro tail-call ((&amp;rest debug) &amp;body body)
+`(progn
+(setf *tail-call*
+(cons (list ,@debug) (lambda () ,@body)))
+*tail-call-optimised*))
+
+(defmacro with-tail-calls-enabled (&amp;body body)
+`(progn
+(tail-call ('tail-calls-enabled)
+,@body)
+(trampoline)))
+
+(defun trampoline ()
+(setf *call-stack* (list))
+(loop for (debug . f) = *tail-call*
+for result = (progn (push debug *call-stack*)
+(funcall f))
+while (eq result *tail-call-optimised*)
+finally
+(setf *tail-call* nil)
+(return result)))
+
+<QUOTE PREVIOUSPOST="
+&gt;     &gt; (labels ((fact/accum (x accum)
+&gt;                  (if (plusp x)
+&gt;                    (tail-call (fact/accum (1- x) (* x accum)))
+&gt;                    accum)))
+&gt;         (with-tail-calls-enabled
+&gt;           (fact/accum 50 1)))
+">
+
+Example of how the debugging info above can be used:
+
+(labels ((fact/accum (x accum)
+(if (plusp x)
+(tail-call ('fact/accum x accum)
+(fact/accum (1- x) (* x accum)))
+accum)))
+(with-tail-calls-enabled
+(fact/accum 50 1)))
+
+This (with improvements) is similar to a stack trace.
+
+<QUOTE PREVIOUSPOST="
+&gt; Exercise for the reader: Tweak the above to handle
+&gt; multiple values in the final non-tail-call return. [Easy.]
+">
+
+multiple-value-list?
+
+<QUOTE PREVIOUSPOST="
+&gt; Exercise for the reader#2: Minimize the consing of
+&gt; the multiple values version. [Somewhat harder.]
+">
+
+Not possible? You'll need to know in advance if a function
+returns multiple values, so you can switch to
+multiple-values-list. I've thought a bit, and cannot come up
+with any ideas (ok, sleep time). Any hints?
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; -----
+&gt; Rob Warnock                     &lt;r ... @rpw3.org&gt;
+&gt; 627 26th Avenue                 &lt;URL: http://rpw3.org/ &gt;
+&gt; San Mateo, CA 94403             (650)572-2607
+">
+</POST>
+<POST>
+<POSTER> r...@rpw3.org (Rob Warnock) </POSTER>
+<POSTDATE> 2007-09-14T00:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+szergling  &lt;senatorZergl ... @gmail.com&gt; wrote:
+">
+
++---------------
+| r ... @rpw3.org (Rob Warnock) wrote:
+| &gt;     (defmacro tail-call (form)
+| &gt;       `(locally (declare (special *current-tail-marker*))
+| &gt;          (setf (car *current-tail-marker*)
+| &gt;                (lambda () ,form))
+| &gt;          *current-tail-marker*))
+| &gt;
+| &gt;     (defmacro with-tail-calls-enabled (&amp;body forms)
+| &gt;       `(let ((*current-tail-marker* (list (lambda () (progn ,@forms)))))
+| &gt;          (declare (special *current-tail-marker*))
+| &gt;          (tail-call-trampoline-loop *current-tail-marker*)))
+| &gt;
+| &gt;     (defun tail-call-trampoline-loop (marker)
+| &gt;       (declare (special *current-tail-marker*))
+| &gt;       (loop while (eq marker *current-tail-marker*)
+| &gt;          do (setf marker (funcall (car marker)))
+| &gt;          finally (return marker)))
+|
+| I cannot quite understand these, but they are really good!!!
+...
+| I find the (eq marker *current-tail-marker*) thing quite
+| confusing, so to understand it, I've rewritten a more
+| readable version. Have I missed anything subtle?
++---------------
+
+Well, yes, one thing. My method allows for multiple tail-calling
+contexts to be dynamically active at the same time, yet *not* sharing
+the same value for *CURRENT-TAIL-MARKER*, while still being able to
+share common subroutines and chains of tail-calling functions. The
+innermost TAIL-CALL-TRAMPOLINE-LOOP will only keep going while *its*
+specific value of *CURRENT-TAIL-MARKER* is returned to it. Any other
+return value -- including a marker from some outer context -- is just
+treated as a value to be returned from the WITH-TAIL-CALLS-ENABLED block.
+
+Not shown in my previous example, but supported by the above structure,
+is the ability for an inner procedure to make a tail call directly
+into an outer TAIL-CALL-TRAMPOLINE-LOOP context, provided that the
+marker value he returns is returned up through the dynamic call chain
+to the instance of TAIL-CALL-TRAMPOLINE-LOOP with the matching marker.
+Something like this [not tested, not even examined too closely for typos,
+but the intent sholud be clear]:
+
+(defun foo (args...)
+...blah, blah, blah...
+(tail-call (bar args...)))
+
+(defun bar (args...)
+(let ((*outer-marker* *current-tail-marker*))
+(declare (special *outer-marker* *current-tail-marker*))
+(with-tail-calls-enabled  ; NOTE: Binds new *CURRENT-TAIL-MARKER*
+...blah, blah, blah...
+(tail-call (baz args...)))))
+
+(defun baz (args...)
+(cond
+(event1 (tail-call (gorp args...)))
+(event2 (tail-call (quux args...)))
+(event4 (tail-call (bletch args...)))
+(t (tail-call (apply #'baz (modify-somehow args...))))))
+
+(defun bletch (args...)
+(declare (special *outer-marker*))
+(if ...some-condition...
+(tail-call (gorp args...))                    ; Call #1
+(let ((*current-tail-marker* *outer-marker*))
+(tail-call (quux args...)))))               ; Call #2
+
+(print
+(with-tail-calls-enabled
+...blah, blah, blah...
+(tail-call (foo args...))))
+
+FOO gets called in the tail-call context established by the top-level
+block, and in turn calls BAR. BAR establishes an inner tail-call context,
+and call BAZ. As long as all of BAZ, GORP, QUUZ, &amp; BLETCH keep tail-
+calling each other [which BLETCH will do if if SOME-CONDITION is true,
+noted as &quot;Call #1&quot; above]], the inner context will be used. If any of
+them returns a non-marker, that value will propagate upwards and become
+the value of the top-level WITH-TAIL-CALLS-ENABLED, and get PRINTed.
+
+But if BLETCH is called with SOME-CONDITION false, it will tail-call
+QUXX in the TAIL-CALL-TRAMPOLINE-LOOP context that was set up by the
+top-level call to WITH-TAIL-CALLS-ENABLED, which might do something else.
+
+Why is this important? I'm not sure it really is, except that
+(1) it seemed to be so to me at the time, and (2) it provides
+hooks that might be useful when working with threads [that is,
+allowing saving &amp; restoring of tall-calling contexts].
+
++---------------
+| (*tail-call-marker* was renamed to *tail-call*).
+| I thought this way is much clearer.
++---------------
+
+Unh? Not to me.
+
++---------------
+| I also tried to record any tail-calls for debugging purposes:
+| tail-calls and stack-frame debugging are orthogonal issues!
++---------------
+
+Actually, they're quite closely related, and you can see from
+reading the history of discussion of tail calls in CL.
+
++---------------
+| Afterall, nobody complains about goto not leaving a trail
+| behind, do they?
++---------------
+
+Uh... Yes, if it blows up the system. How does your TRAMPOLINE
+behave after the trillionth tail call? [Such as with a state
+machine that uses tail calls for state transitions and runs
+continuously for months at a time...]  Oops! It doesn't, since
+the debugging variable *CALL-STACK* would have long since eaten
+up all the memory in the system.
+
+The whole point of tail calls is to the get *semantics* of a chain
+of GOTOs [which don't push things on stacks] while being able to
+write the code *as if* subroutines were being called. That's why
+one of Steele's papers was called &quot;Lambda: The Ultimate GOTO&quot;.
+
+-Rob
+
+-----
+Rob Warnock                     &lt;r ... @rpw3.org&gt;
+627 26th Avenue                 &lt;URL: http://rpw3.org/ &gt;
+San Mateo, CA 94403             (650)572-2607
+</POST>
+</TEXT>
+</BODY>
+</DOC>

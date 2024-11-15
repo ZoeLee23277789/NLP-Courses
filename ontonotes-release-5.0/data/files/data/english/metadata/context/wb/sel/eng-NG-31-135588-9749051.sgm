@@ -1,0 +1,215 @@
+<DOC>
+<DOCID> eng-NG-31-135588-9749051 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-09T21:34:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Elisp Lesson: Creating a Custome HTML Link Function
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Xah Lee &lt;x...@xahlee.org&gt; </POSTER>
+<POSTDATE> 2007-10-09T21:34:00 </POSTDATE>
+Elisp Lesson: Creating a Custome HTML Link Function
+
+Xah Lee, 2007-10-09
+
+(A HTML version of this article, with links and coloration, is at
+http://xahlee.org/emacs/elisp_make_link.html
+)
+
+This page shows a example of writing a emacs lisp function that
+creates a customized HTML link. If you don't know elisp, first take a
+gander at Emacs Lisp Basics.
+
+------------------------------------
+The Problem
+
+I have 2 math projects on my website: A Visual Dictionary of Special
+Plane Curves, and Surface Gallery. These are dictionary-like sites,
+with close to two hundred pages, each page corresponding to a entry.
+In each entry, for example the parabola page, there are many cross-
+links to other entries.
+
+In writing these pages, i need to create these cross-links. One easy
+way is of course to write a program that process these HTML files so
+that all words that has a entry becomes a link. This approach has the
+problem of creating too many redundant links in one paragraph. This
+method can be refined by creating link only for the first mention in a
+paragraph or page. But in my case, i want to manually create these
+links instead for a few reasons. One reason is that my site is based
+on plain HTML+CSS and occational Javascript. It is not a dynamic site
+based on dynamically generated content. So, the scripting approach for
+creating cross-links does not have its usual advantages. But also,
+with manual link creation, i have better control on when there will be
+a link and how that linked word shall be. (for example, depending on
+the context, a link to the Conic Sections may have the link word in
+lower case, or some variations such as just “conics” or “projection of
+a circle”. )
+
+In emacs's html mode, a user can of course call the command html-href-
+anchor (Ctrl+c Ctrl+c h) to insert a link. To insert a link, you press
+a button to invoke the command, then type the local path, then type
+the link word. However, this is difficult to use. For example, if i'm
+working on the parabola page, and i want to create a local link to
+paraboloid, the relative path would be “../../surface/paraboloid/
+paraboloid.html”. This would be too many characters to type. But also,
+even if the emacs prompt provides me with a directory navigation to
+choose my file, it is still cumbersome process.
+
+It would be easier, if i just type “paraboloid”, and press a button,
+and emacs automatically checks a few pre-defined directories to locate
+that file, and create the link for me (using relative path to the
+current file). Since i need to insert such links to hundreds other
+words, spontaneously, as i edit those pages, such a function would
+speed up my work tremendously. In this page, i show how this function
+is written.
+
+------------------------------------
+Solution
+
+Here's the solution:
+
+(defun link-curve ()
+&quot;Make the word under cursor into a local link.\n
+For Example, if you cursor is on the word “parabola” and
+it will become
+&lt;a href=\&quot;../Parabola_dir/parabola.html\&quot;&gt;parabola↗&lt;/a&gt;\n
+
+The path may change depending on the current file.
+Here are some examples of possible result:
+&lt;a href=\&quot;../Parabola_dir/parabola.html\&quot;&gt;parabola&lt;/a&gt;
+&lt;a href=\&quot;../../SpecialPlaneCurves_dir/Parabola_dir/parabola.html
+\&quot;&gt;parabola&lt;/a&gt;.
+
+If the word is “ellipsoid”, here are possible returns:
+&lt;a href=\&quot;../ellipsoid/ellipsoid.html\&quot;&gt;ellipsoid&lt;/a&gt;
+&lt;a href=\&quot;../../surface/ellipsoid/ellipsoid.html\&quot;&gt;ellipsoid&lt;/a&gt;
+
+If not valid file is found, a error is reported and nothing is
+changed.
+If a region is active, use the region as the lookup word,
+while changing spaces to underscore.&quot;
+(interactive)
+(let (myword testPaths foundq rpath linkWord resultStr)
+(setq myword
+(if (and transient-mark-mode mark-active)
+(buffer-substring-no-properties (region-beginning)
+(region-end))
+(thing-at-point 'word)
+))
+
+;; the paths to test
+(setq testPaths
+(list
+(concat &quot;../&quot; (upcase-initials myword) &quot;_dir/&quot; myword
+&quot;.html&quot;)
+(concat &quot;../../SpecialPlaneCurves_dir/&quot; (upcase-initials
+myword) &quot;_dir/&quot; myword &quot;.html&quot;)
+(concat &quot;../&quot; myword &quot;/&quot; myword &quot;.html&quot;)
+(concat &quot;../../surface/&quot; myword &quot;/&quot; myword &quot;.html&quot;)
+))
+
+;; loop thru the list until a file is found
+(setq foundq nil)
+(while (and (not foundq) (&gt; (length testPaths) 0))
+(setq rpath (pop testPaths))
+(if
+(file-exists-p rpath)
+(progn
+(setq resultStr (concat &quot;&lt;a href=\&quot;&quot; rpath &quot;\&quot;&gt;&quot; myword &quot;&lt;/
+a&gt;&quot;))
+(setq foundq t))))
+
+(if (not foundq)
+(progn (beep) (message &quot;No file found matching the name: %s&quot;
+myword))
+(if (and transient-mark-mode mark-active)
+(progn (delete-region (region-beginning) (region-end))
+(insert resultStr))
+(progn (backward-word) (kill-word 1)
+(insert resultStr))))))
+
+The basic procedure is like this:
+
+1. Grab the current word the cursor is on
+2. Use that word to construct a list of paths to search for the
+file, if found, construct the html link string
+3. If found, delete current word and insert the result string.
+Else, print not found message.
+
+In the following, we give some explanation to the code.
+
+(setq myword
+(if (and transient-mark-mode mark-active)
+(buffer-substring-no-properties (region-beginning)
+(region-end))
+(thing-at-point 'word)
+))
+
+The above code grabs the current word and put it into the var
+“myword”. It uses the the very useful function “thing-at-point”. The
+code is a bit complex because the function will take the current
+selection instead if it is active.
+
+;; the paths to test
+(setq testPaths
+(list
+(concat &quot;../&quot; (upcase-initials myword) &quot;_dir/&quot; myword
+&quot;.html&quot;)
+(concat &quot;../../SpecialPlaneCurves_dir/&quot; (upcase-initials
+myword) &quot;_dir/&quot; myword &quot;.html&quot;)
+(concat &quot;../&quot; myword &quot;/&quot; myword &quot;.html&quot;)
+(concat &quot;../../surface/&quot; myword &quot;/&quot; myword &quot;.html&quot;)
+))
+
+In the above code, we construct the possible paths to check. On my
+website, the “visual dictionary of plane curves” project is located at
+“ http://xahlee.org/SpecialPlaneCurves_dir/” and the “surfaces gallery”
+is located at “ http://xahlee.org/surface/” . A link may be made to
+within the same project or to the other project, so essentially emacs
+has to check a few directories in the current project or in the other
+project.
+
+;; loop thru the list until a file is found
+(setq foundq nil)
+(while (and (not foundq) (&gt; (length testPaths) 0))
+(setq rpath (pop testPaths))
+(if
+(file-exists-p rpath)
+(progn
+(setq resultStr (concat &quot;&lt;a href=\&quot;&quot; rpath &quot;\&quot;&gt;&quot; myword &quot;&lt;/
+a&gt;&quot;))
+(setq foundq t))))
+
+In the above code, it loops thru the paths to check. Once the file is
+found, it construct the link string “resultStr” and sets the boolean
+var “foundq”.
+
+This is done by “popping” each element of testPaths list in each
+iteration, then use “file-exists-p” to check.
+
+Here's the last section of the code:
+
+(if (not foundq)
+(progn (beep) (message &quot;No file found matching the name: %s&quot;
+myword))
+(if (and transient-mark-mode mark-active)
+(progn (delete-region (region-beginning) (region-end))
+(insert resultStr))
+(progn (backward-word) (kill-word 1)
+(insert resultStr))))
+
+In this code, if no path is found, it beeps and prints a message.
+Else, it deletes the current word or region, then insert the
+constructed string.
+
+Emacs is beautiful!
+
+Xah
+x ... @xahlee.org
+∑ http://xahlee.org/
+</POST>
+</TEXT>
+</BODY>
+</DOC>

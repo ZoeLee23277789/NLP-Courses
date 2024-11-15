@@ -1,0 +1,136 @@
+<DOC>
+<DOCID> eng-NG-31-135456-8592938 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-30T09:38:00 </DATETIME>
+<BODY>
+<HEADLINE>
+kernel question
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> koeh...@eisner.nospam.encompasserve.org (Bob Koehler) </POSTER>
+<POSTDATE> 2007-08-30T09:38:00 </POSTDATE>
+Maybe someone who knows the kernel better than I can explain this one.
+I've been wondering about it for years.
+
+It's my understanding that $GETJPI posts an AST to the target
+process to get information.  I assume that it doesn't do anything
+special if the target process happens to be the current process.
+
+If so, then when the target process is the current process how is
+it that the current process can run user mode code in the main
+thread prior to return of the requested data?  I thought the scheduler
+would honor the request for the AST in the current process and then the
+kernel would copy the data to the user's buffer before returning to user
+mode.  Doesn't the AST code pre-empt the main thread?  Or is there a
+delay somehow between AST completion and return to the kernel to copy
+out the data?
+
+I've seen this happen since VMS 3.0, where that results in the
+returned data being blank until an appropriate wait is done for
+the selected event flag.  We updated from VMS 2.5 and saw this
+in a program where the programmer put in a comment that he didn't
+care about the warning that $GETJPI would become asynchronous because
+the main thread wouldn't get to execute anyhow.  But it did execute
+and choked on seeing zeros where the data was to be returned.  The
+fix, of course, was to use the then new $GETJPIW and curse the
+programmer for thinking he new better than DEC on how VMS would
+work in his future.
+
+But I've never seen anything in the internals manual or when reading
+the fiche that helped me understand the mechanism by which this
+happens.
+</POST>
+<POST>
+<POSTER> IanMiller &lt;g...@uk2.net&gt; </POSTER>
+<POSTDATE> 2007-08-30T10:30:00 </POSTDATE>
+Looking at the listings it appears that getting data from the current
+process is dealt as a special case. I have not read all of it to see
+if it it possible for this to be asynchronous rather that just copying
+the data from the relevant data structure (which I expect is
+synchronous).
+</POST>
+<POST>
+<POSTER> IanMiller &lt;g...@uk2.net&gt; </POSTER>
+<POSTDATE> 2007-08-30T10:39:00 </POSTDATE>
+further reading indicates that for some items (e.g rights lists) or
+under certain conditions the special kernel AST mechanism is always
+used even for the current process.
+</POST>
+<POST>
+<POSTER> koeh...@eisner.nospam.encompasserve.org (Bob Koehler) </POSTER>
+<POSTDATE> 2007-08-30T13:28:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+In article &lt;1188484215.394805.167 ... @r29g2000hsg.googlegroups.com&gt;,  IanMiller &lt;g ... @uk2.net&gt; writes:
+&gt; Looking at the listings it appears that getting data from the current
+&gt; process is dealt as a special case. I have not read all of it to see
+&gt; if it it possible for this to be asynchronous rather that just copying
+&gt; the data from the relevant data structure (which I expect is
+&gt; synchronous).
+">
+
+Curiouser and curiouser.  Thanks for taking the time.
+</POST>
+<POST>
+<POSTER> koeh...@eisner.nospam.encompasserve.org (Bob Koehler) </POSTER>
+<POSTDATE> 2007-08-30T13:30:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+In article &lt;1188484771.067327.27 ... @19g2000hsx.googlegroups.com&gt;,  IanMiller &lt;g ... @uk2.net&gt; writes:
+&gt; further reading indicates that for some items (e.g rights lists) or
+&gt; under certain conditions the special kernel AST mechanism is always
+&gt; used even for the current process.
+">
+
+I don't recall what the code was looking for, possibly the username,
+but since the rightslist didn't exist in VMS 2 when the code was
+written I'm fairly sure it wasn't intended to look there.
+
+On the other hand, if it was looking for the UIC I supposed the
+rightslist might be consulted for the corresponding string even
+if the binary UIC was wanted.
+</POST>
+<POST>
+<POSTER> &quot;dpm_goo...@myths.com&quot; &lt;dpm_goo...@myths.com&gt; </POSTER>
+<POSTDATE> 2007-08-30T15:22:00 </POSTDATE>
+On Aug 30, 9:38 am, koeh ... @eisner.nospam.encompasserve.org (Bob
+
+<QUOTE PREVIOUSPOST="
+Koehler) wrote:
+&gt;    It's my understanding that $GETJPI posts an AST
+&gt;    to the target process to get information.
+">
+
+This is true for *some* items.  Bear in mind that what the
+general user thinks of as &quot;process information&quot; is kept in
+no less than four different structures (PCB, PHD, JIB, CTL).
+My code (which looks at each process every few minutes)
+separates the JPI items into four different categories:
+&quot;frozen&quot; (data which never changes)
+&quot;cold&quot;   (data which seldom changes)
+&quot;warm&quot;   (unable to obtain if process is outswapped)
+&quot;hot&quot;    (relatively cheap to obtain)
+to prevent the AST you mention from being triggered unless
+one or more of those items is actually needed.
+
+<QUOTE PREVIOUSPOST="
+&gt;    I assume that it doesn't do anything
+&gt;    special if the target process happens to be the current process.
+&gt;    If so, then when the target process is the current process how is
+&gt;    it that the current process can run user mode code in the main
+&gt;    thread prior to return of the requested data?  I thought the scheduler
+&gt;    would honor the request for the AST in the current process and then the
+&gt;    kernel would copy the data to the user's buffer before returning to user
+&gt;    mode.  Doesn't the AST code pre-empt the main thread?  Or is there a
+&gt;    delay somehow between AST completion and return to the kernel to copy
+&gt;    out the data?
+">
+
+Gah.  I used to know this.  I'll look through my notes
+when I get home, and post if I find anything useful.
+
+ok
+dpm
+</POST>
+</TEXT>
+</BODY>
+</DOC>

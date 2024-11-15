@@ -1,0 +1,726 @@
+<DOC>
+<DOCID> eng-NG-31-135294-9651696 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2008-01-02T13:14:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Pylons in production
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Matt Haggard &lt;haggar...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-02T13:14:00 </POSTDATE>
+I'm (in the process of) using pylons in a production environment and
+still have a few questions:
+
+1) Do I really have to restart the server every time I make a change
+(controller/model)?  I can foresee making many changes and some which
+require immediate attention, but restarting the server in the middle
+of the day would not be an option.  So, do I have to make changes at
+night?  Is there no way for the server to adopt the changes without
+killing all connections?
+
+2) The system will be composed of multiple apps... (perhaps as many as
+20 or more) so would it be better (if I need to restart after every
+change) to have all the apps served by their own servers?  I mean, is
+it better to have 20 instances of the paster server if uptime is such
+a priority?
+
+3) In serving several apps (thanks to Ian Bicking for the help to get
+that going!) like this:
+[composite:main]
+use = egg:Paste#urlmap
+/ = config:home_app/development.ini
+/app2 = config:app2/development.ini
+...
+
+how do I make app2 aware that all of his urls are based off of /app2?
+well... actually, it is already aware of that.  I'm really asking: Is
+there a way for app2 to know that the home directory is just
+plain / ?  This comes up because I use a shared repository for images
+and when I reference images from app2 with src=&quot;images/something.jpg&quot;
+it looks for the image at the url http://127.0.0.1:5000/app2/images/something.jpg
+instead of http://127.0.0.1:5000/images/something.jpg .  Also, I'd like
+for app2 to be able to link back to / without explicitly hard-coding
+that url (I can see in the future bumping everything up a directory...
+making / into /section and /app2 into /section/app2)
+
+Am I just going about this the wrong way?
+
+I appreciate any help you could give me...
+
+Matt Haggard
+</POST>
+<POST>
+<POSTER> Matt Haggard &lt;haggar...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-02T13:42:00 </POSTDATE>
+huh... it seems like it is finding the image after all (Question 3)...
+weird
+
+On Jan 2, 11:14 am, Matt Haggard &lt;haggar ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I'm (in the process of) using pylons in a production environment and
+&gt; still have a few questions:
+
+&gt; 1) Do I really have to restart the server every time I make a change
+&gt; (controller/model)?  I can foresee making many changes and some which
+&gt; require immediate attention, but restarting the server in the middle
+&gt; of the day would not be an option.  So, do I have to make changes at
+&gt; night?  Is there no way for the server to adopt the changes without
+&gt; killing all connections?
+
+&gt; 2) The system will be composed of multiple apps... (perhaps as many as
+&gt; 20 or more) so would it be better (if I need to restart after every
+&gt; change) to have all the apps served by their own servers?  I mean, is
+&gt; it better to have 20 instances of the paster server if uptime is such
+&gt; a priority?
+
+&gt; 3) In serving several apps (thanks to Ian Bicking for the help to get
+&gt; that going!) like this:
+&gt; [composite:main]
+&gt; use = egg:Paste#urlmap
+&gt; / = config:home_app/development.ini
+&gt; /app2 = config:app2/development.ini
+&gt; ...
+
+&gt; how do I make app2 aware that all of his urls are based off of /app2?
+&gt; well... actually, it is already aware of that.  I'm really asking: Is
+&gt; there a way for app2 to know that the home directory is just
+&gt; plain / ?  This comes up because I use a shared repository for images
+&gt; and when I reference images from app2 with src=&quot;images/something.jpg&quot;
+&gt; it looks for the image at the url http://127.0.0.1:5000/app2/images/something.jpg
+&gt; instead of http://127.0.0.1:5000/images/something.jpg .  Also, I'd like
+&gt; for app2 to be able to link back to / without explicitly hard-coding
+&gt; that url (I can see in the future bumping everything up a directory...
+&gt; making / into /section and /app2 into /section/app2)
+
+&gt; Am I just going about this the wrong way?
+
+&gt; I appreciate any help you could give me...
+
+&gt; Matt Haggard
+">
+</POST>
+<POST>
+<POSTER> Ian Bicking &lt;i...@colorstudy.com&gt; </POSTER>
+<POSTDATE> 2008-01-02T13:50:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Matt Haggard wrote:
+&gt; I'm (in the process of) using pylons in a production environment and
+&gt; still have a few questions:
+
+&gt; 1) Do I really have to restart the server every time I make a change
+&gt; (controller/model)?  I can foresee making many changes and some which
+&gt; require immediate attention, but restarting the server in the middle
+&gt; of the day would not be an option.  So, do I have to make changes at
+&gt; night?  Is there no way for the server to adopt the changes without
+&gt; killing all connections?
+">
+
+When restarting any connections in-progress will be completed, and new
+connections will be rejected.  If you are using a frontend like Apache
+that has something to retry connections, no actual requests will fail
+during a restart.
+
+<QUOTE PREVIOUSPOST="
+&gt; 2) The system will be composed of multiple apps... (perhaps as many as
+&gt; 20 or more) so would it be better (if I need to restart after every
+&gt; change) to have all the apps served by their own servers?  I mean, is
+&gt; it better to have 20 instances of the paster server if uptime is such
+&gt; a priority?
+">
+
+You might want those apps separate to make them more maintainable (e.g.,
+avoid breaking app A when you upgrade app B).  I'd try to get a setup
+where restarts don't lose any connections, then for uptime it's not an
+issue.
+
+If you want to test how it's working, probably you could fire up
+something like ab (the apache benchmark app) and see if everything works
+right when you restart your app during the run.
+
+--
+Ian Bicking : i ... @colorstudy.com : http://blog.ianbicking.org
+</POST>
+<POST>
+<POSTER> Matt Haggard &lt;haggar...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-02T13:54:00 </POSTDATE>
+Thanks!
+
+I have a follow-up on question 3:  Is there a way for the separate
+apps to be aware of the urls of the other apps?  Or for the server to
+provide a list of the apps/urls to each app through the config?
+
+On Jan 2, 11:50 am, Ian Bicking &lt;i ... @colorstudy.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Matt Haggard wrote:
+&gt; &gt; I'm (in the process of) using pylons in a production environment and
+&gt; &gt; still have a few questions:
+
+&gt; &gt; 1) Do I really have to restart the server every time I make a change
+&gt; &gt; (controller/model)?  I can foresee making many changes and some which
+&gt; &gt; require immediate attention, but restarting the server in the middle
+&gt; &gt; of the day would not be an option.  So, do I have to make changes at
+&gt; &gt; night?  Is there no way for the server to adopt the changes without
+&gt; &gt; killing all connections?
+
+&gt; When restarting any connections in-progress will be completed, and new
+&gt; connections will be rejected.  If you are using a frontend like Apache
+&gt; that has something to retry connections, no actual requests will fail
+&gt; during a restart.
+
+&gt; &gt; 2) The system will be composed of multiple apps... (perhaps as many as
+&gt; &gt; 20 or more) so would it be better (if I need to restart after every
+&gt; &gt; change) to have all the apps served by their own servers?  I mean, is
+&gt; &gt; it better to have 20 instances of the paster server if uptime is such
+&gt; &gt; a priority?
+
+&gt; You might want those apps separate to make them more maintainable (e.g.,
+&gt; avoid breaking app A when you upgrade app B).  I'd try to get a setup
+&gt; where restarts don't lose any connections, then for uptime it's not an
+&gt; issue.
+
+&gt; If you want to test how it's working, probably you could fire up
+&gt; something like ab (the apache benchmark app) and see if everything works
+&gt; right when you restart your app during the run.
+
+&gt; --
+&gt; Ian Bicking : i ... @colorstudy.com : http://blog.ianbicking.org
+">
+</POST>
+<POST>
+<POSTER> Ian Bicking &lt;i...@colorstudy.com&gt; </POSTER>
+<POSTDATE> 2008-01-02T13:57:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Matt Haggard wrote:
+&gt; Thanks!
+
+&gt; I have a follow-up on question 3:  Is there a way for the separate
+&gt; apps to be aware of the urls of the other apps?  Or for the server to
+&gt; provide a list of the apps/urls to each app through the config?
+">
+
+No, you'll just have to tell each app about where the other app is.
+
+--
+Ian Bicking : i ... @colorstudy.com : http://blog.ianbicking.org
+</POST>
+<POST>
+<POSTER> Graham Dumpleton &lt;Graham.Dumple...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-02T22:47:00 </POSTDATE>
+On Jan 3, 5:14 am, Matt Haggard &lt;haggar ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I'm (in the process of) using pylons in a production environment and
+&gt; still have a few questions:
+
+&gt; 1) Do I really have to restart the server every time I make a change
+&gt; (controller/model)?  I can foresee making many changes and some which
+&gt; require immediate attention, but restarting the server in the middle
+&gt; of the day would not be an option.  So, do I have to make changes at
+&gt; night?  Is there no way for the server to adopt the changes without
+&gt; killing all connections?
+
+&gt; 2) The system will be composed of multiple apps... (perhaps as many as
+&gt; 20 or more) so would it be better (if I need to restart after every
+&gt; change) to have all the apps served by their own servers?  I mean, is
+&gt; it better to have 20 instances of the paster server if uptime is such
+&gt; a priority?
+
+&gt; 3) In serving several apps (thanks to Ian Bicking for the help to get
+&gt; that going!) like this:
+&gt; [composite:main]
+&gt; use = egg:Paste#urlmap
+&gt; / = config:home_app/development.ini
+&gt; /app2 = config:app2/development.ini
+&gt; ...
+
+&gt; how do I make app2 aware that all of his urls are based off of /app2?
+&gt; well... actually, it is already aware of that.  I'm really asking: Is
+&gt; there a way for app2 to know that the home directory is just
+&gt; plain / ?  This comes up because I use a shared repository for images
+&gt; and when I reference images from app2 with src=&quot;images/something.jpg&quot;
+&gt; it looks for the image at the url http://127.0.0.1:5000/app2/images/something.jpg
+&gt; instead of http://127.0.0.1:5000/images/something.jpg .  Also, I'd like
+&gt; for app2 to be able to link back to / without explicitly hard-coding
+&gt; that url (I can see in the future bumping everything up a directory...
+&gt; making / into /section and /app2 into /section/app2)
+
+&gt; Am I just going about this the wrong way?
+">
+
+Many Pylons folks have an aversion to mod_wsgi and will refuse to use
+it on religious grounds without even trying it, but the problems you
+are trying to solve are exactly the sort of the things that mod_wsgi
+is really good for. This is because mod_wsgi handles both the restart
+case as well as the problem of splitting up a monolithic application
+to run across multiple distinct processes. The steps required to do
+this are relative easy and don't require having to setup lots of
+distinct server instances each with a supervisor system as Apache/
+mod_wsgi will handle that all for you automatically.
+
+Starting with separation of applications into distinct processes to
+allow them to be individually restart, one would take your composite
+application and create separate .ini files for each application. One
+would just then mount them as separate WSGI applications. For example:
+
+WSGIScriptAlias /app2 /some/path/app2.wsgi
+WSGIScriptAlias / /some/path/home_app.wsgi
+
+Leave it like that and all you have done is separated the applications
+so that they run within distinct sub interpreters in the same
+processes. Add daemon processes to the mix though and you can delegate
+each to run in a separate process and/or processes.
+
+WSGIDaemonProcess app2 threads=25
+WSGIScriptAlias /app2 /some/path/app2.wsgi
+&lt;Location /app2&gt;
+WSGIProcessGroup app2
+WSGIReloadMechanism Process
+&lt;/Location&gt;
+
+WSGIDaemonProcess home_app threads=25
+WSGIScriptAlias / /some/path/home_app.wsgi
+&lt;Location /&gt;
+WSGIProcessGroup home_app
+WSGIReloadMechanism Process
+&lt;/Location&gt;
+
+Each application now runs in a separate process with 25 threads.
+Having enabled process reload mechanism available with mod_wsgi 2.0,
+to restart an application all you need to do is touch (ie., change
+modification time) of the WSGI script file for that application and it
+wll be automatically restarted prior to next request it receives. The
+restart of that application doesn't affect other applications not
+require Apache as a whole to be restarted.
+
+The contents of those WSGI script files is pretty trivial and just
+setup the WSGI application entry point.
+
+import os, sys
+sys.path.append('/usr/local/pylons/home_app')
+
+from paste.deploy import loadapp
+
+application = loadapp('config:/usr/local/pylons/home_app/
+development.ini')
+
+Although relatively easy to setup, it should do pretty well what you
+want.
+
+Graham
+</POST>
+<POST>
+<POSTER> Matt Haggard &lt;haggar...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-03T14:14:00 </POSTDATE>
+Thank you Graham, I'll look into mod_wsgi -- that looks very
+promising.
+
+I have another follow-up question about multiple-app design -- and
+I'll give the whole story so it makes sense where I'm coming from:
+
+Currently, we have one big database with many tables, then a mess of
+pages that do various functions (I think this is pretty typical of
+many websites).  We're moving to a MVC approach because it seems to
+make more sense (routes/orm/etc).  Now I'm having trouble deciding
+what to split into separate apps, what to split into controllers, how
+to share models/templates/static files between the apps.
+
+I've just gotten to the point that I have (working) common directories
+for templates, template filters, models and static files.  But upon
+reaching that point, I step back and wonder, &quot;Does it make more sense
+to combine these apps into a single app with several controllers? Am I
+completely misusing the Pylons model?&quot;
+
+For instance...
+1) Every app will require authentication - which is based on the users
+table in the (common) database... and I import user.py (from the
+common model dir) for that purpose.
+
+2) Every app will use the same db.  That means that I can't run (or
+can I?) an app by itself, because it requires a db that resides up a
+level.
+
+I guess my question boils down to (at least in part): Should an app be
+a standalone app?
+
+Thanks,
+
+Matt Haggard
+
+On Jan 2, 8:47 pm, Graham Dumpleton &lt;Graham.Dumple ... @gmail.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 3, 5:14 am, Matt Haggard &lt;haggar ... @gmail.com&gt; wrote:
+
+&gt; &gt; I'm (in the process of) using pylons in a production environment and
+&gt; &gt; still have a few questions:
+
+&gt; &gt; 1) Do I really have to restart the server every time I make a change
+&gt; &gt; (controller/model)?  I can foresee making many changes and some which
+&gt; &gt; require immediate attention, but restarting the server in the middle
+&gt; &gt; of the day would not be an option.  So, do I have to make changes at
+&gt; &gt; night?  Is there no way for the server to adopt the changes without
+&gt; &gt; killing all connections?
+
+&gt; &gt; 2) The system will be composed of multiple apps... (perhaps as many as
+&gt; &gt; 20 or more) so would it be better (if I need to restart after every
+&gt; &gt; change) to have all the apps served by their own servers?  I mean, is
+&gt; &gt; it better to have 20 instances of the paster server if uptime is such
+&gt; &gt; a priority?
+
+&gt; &gt; 3) In serving several apps (thanks to Ian Bicking for the help to get
+&gt; &gt; that going!) like this:
+&gt; &gt; [composite:main]
+&gt; &gt; use = egg:Paste#urlmap
+&gt; &gt; / = config:home_app/development.ini
+&gt; &gt; /app2 = config:app2/development.ini
+&gt; &gt; ...
+
+&gt; &gt; how do I make app2 aware that all of his urls are based off of /app2?
+&gt; &gt; well... actually, it is already aware of that.  I'm really asking: Is
+&gt; &gt; there a way for app2 to know that the home directory is just
+&gt; &gt; plain / ?  This comes up because I use a shared repository for images
+&gt; &gt; and when I reference images from app2 with src=&quot;images/something.jpg&quot;
+&gt; &gt; it looks for the image at the url http://127.0.0.1:5000/app2/images/something.jpg
+&gt; &gt; instead of http://127.0.0.1:5000/images/something.jpg .  Also, I'd like
+&gt; &gt; for app2 to be able to link back to / without explicitly hard-coding
+&gt; &gt; that url (I can see in the future bumping everything up a directory...
+&gt; &gt; making / into /section and /app2 into /section/app2)
+
+&gt; &gt; Am I just going about this the wrong way?
+
+&gt; Many Pylons folks have an aversion to mod_wsgi and will refuse to use
+&gt; it on religious grounds without even trying it, but the problems you
+&gt; are trying to solve are exactly the sort of the things that mod_wsgi
+&gt; is really good for. This is because mod_wsgi handles both the restart
+&gt; case as well as the problem of splitting up a monolithic application
+&gt; to run across multiple distinct processes. The steps required to do
+&gt; this are relative easy and don't require having to setup lots of
+&gt; distinct server instances each with a supervisor system as Apache/
+&gt; mod_wsgi will handle that all for you automatically.
+
+&gt; Starting with separation of applications into distinct processes to
+&gt; allow them to be individually restart, one would take your composite
+&gt; application and create separate .ini files for each application. One
+&gt; would just then mount them as separate WSGI applications. For example:
+
+&gt;   WSGIScriptAlias /app2 /some/path/app2.wsgi
+&gt;   WSGIScriptAlias / /some/path/home_app.wsgi
+
+&gt; Leave it like that and all you have done is separated the applications
+&gt; so that they run within distinct sub interpreters in the same
+&gt; processes. Add daemon processes to the mix though and you can delegate
+&gt; each to run in a separate process and/or processes.
+
+&gt;   WSGIDaemonProcess app2 threads=25
+&gt;   WSGIScriptAlias /app2 /some/path/app2.wsgi
+&gt;   &lt;Location /app2&gt;
+&gt;   WSGIProcessGroup app2
+&gt;   WSGIReloadMechanism Process
+&gt;   &lt;/Location&gt;
+
+&gt;   WSGIDaemonProcess home_app threads=25
+&gt;   WSGIScriptAlias / /some/path/home_app.wsgi
+&gt;   &lt;Location /&gt;
+&gt;   WSGIProcessGroup home_app
+&gt;   WSGIReloadMechanism Process
+&gt;   &lt;/Location&gt;
+
+&gt; Each application now runs in a separate process with 25 threads.
+&gt; Having enabled process reload mechanism available with mod_wsgi 2.0,
+&gt; to restart an application all you need to do is touch (ie., change
+&gt; modification time) of the WSGI script file for that application and it
+&gt; wll be automatically restarted prior to next request it receives. The
+&gt; restart of that application doesn't affect other applications not
+&gt; require Apache as a whole to be restarted.
+
+&gt; The contents of those WSGI script files is pretty trivial and just
+&gt; setup the WSGI application entry point.
+
+&gt;   import os, sys
+&gt;   sys.path.append('/usr/local/pylons/home_app')
+
+&gt;   from paste.deploy import loadapp
+
+&gt;   application = loadapp('config:/usr/local/pylons/home_app/
+&gt; development.ini')
+
+&gt; Although relatively easy to setup, it should do pretty well what you
+&gt; want.
+
+&gt; Graham
+">
+</POST>
+<POST>
+<POSTER> Graham Dumpleton &lt;Graham.Dumple...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-03T18:12:00 </POSTDATE>
+On Jan 4, 6:14 am, Matt Haggard &lt;haggar ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Thank you Graham, I'll look into mod_wsgi -- that looks very
+&gt; promising.
+
+&gt; I have another follow-up question about multiple-app design -- and
+&gt; I'll give the whole story so it makes sense where I'm coming from:
+
+&gt; Currently, we have one big database with many tables, then a mess of
+&gt; pages that do various functions (I think this is pretty typical of
+&gt; many websites).  We're moving to a MVC approach because it seems to
+&gt; make more sense (routes/orm/etc).  Now I'm having trouble deciding
+&gt; what to split into separate apps, what to split into controllers, how
+&gt; to share models/templates/static files between the apps.
+
+&gt; I've just gotten to the point that I have (working) common directories
+&gt; for templates, template filters, models and static files.  But upon
+&gt; reaching that point, I step back and wonder, &quot;Does it make more sense
+&gt; to combine these apps into a single app with several controllers? Am I
+&gt; completely misusing the Pylons model?&quot;
+
+&gt; For instance...
+&gt; 1) Every app will require authentication - which is based on the users
+&gt; table in the (common) database... and I import user.py (from the
+&gt; common model dir) for that purpose.
+
+&gt; 2) Every app will use the same db.  That means that I can't run (or
+&gt; can I?) an app by itself, because it requires a db that resides up a
+&gt; level.
+
+&gt; I guess my question boils down to (at least in part): Should an app be
+&gt; a standalone app?
+">
+
+If you want process separation for parts of your application but don't
+quite know if they should be split into actual separate applications,
+mod_wsgi still allows you to delegate just parts of an application to
+distinct daemon processes without breaking apart the code for the
+application. For example, you might have:
+
+WSGIScriptAlias / /some/path/thewholeapplication.py
+
+which maps to single .ini file for Pylons which may or may not use
+composition to binding multiple applications together.
+
+Using WSGIDaemonProcess/WSGIProcessGroup/Location directives as shown
+previously, you can arbitrarily delegate certain URL or subsets of
+URLs to different processes.
+
+For example, irrespective of application lines, imagine that you had
+certain URLs which did a lot of PDF file generation on the fly using
+reportlab and because of what was being done it would take up lots of
+memory whereas other parts of the application don't. You could
+delegate just those URLs to be handled in their own daemon process and
+then set a low number of maximum requests for that process so that it
+is recycled on a regular basis to reclaim memory. You could also set
+an inactivity timeout so that it is recycled if no requests received
+for a period. Thus:
+
+# Run main Pylons application in Apache child process for best
+performance.
+# The default configuration results in that happening so nothing to
+do except
+# mount the application on root.
+
+WSGIScriptAlias / /some/path/thewholeapplication.py
+
+# Create a daemon process for memory hungry PDF generation code.
+
+WSGIDaemonProcess memory-hungry-pdfs threads=5 maximum-requests=50
+inactivity-timeout=30
+
+# Delegate the memory hungry PDF URLs to the daemon process.
+
+&lt;Location /memory/hungry/urls/root&gt;
+WSGIProcessGroup memory-hungry-pdfs
+&lt;/Location&gt;
+
+Thus, rather than all processes being used for your main application
+being bloated out by the memory hungry parts of an application, you
+can isolate that stuff an keep overall memory down.
+
+The only issue in respect of your original goals about code reloading
+is that because there aren't separate application script files you
+can't just touch a script file for a specific application and have it
+be restarted. In the example above I put the main part of the
+application in the Apache child processes anyway, which ould required
+a full Apache restart to reload main part of application. To force
+reloading of memory hungry URL process, then you need to work out the
+pid and send it a SIGINT. The pid would be identified from Apache
+error log messages provided that LogLevel set to info.
+
+Reason pid is found in that way is that it still shows as 'httpd'
+process and so if all running as Apache user you can tell it is the
+daemon process from 'ps'. One feature of daemon processes is that one
+can make process run as distinct user. This would allow it to be
+easily identified in ps output, but more importantly you could run
+different parts of your application code as different users as well if
+they have special access requirements.
+
+Anyway, few more ideas for you there. :-)
+
+Graham
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 2, 8:47 pm, Graham Dumpleton &lt;Graham.Dumple ... @gmail.com&gt;
+&gt; wrote:
+
+&gt; &gt; On Jan 3, 5:14 am, Matt Haggard &lt;haggar ... @gmail.com&gt; wrote:
+
+&gt; &gt; &gt; I'm (in the process of) using pylons in a production environment and
+&gt; &gt; &gt; still have a few questions:
+
+&gt; &gt; &gt; 1) Do I really have to restart the server every time I make a change
+&gt; &gt; &gt; (controller/model)?  I can foresee making many changes and some which
+&gt; &gt; &gt; require immediate attention, but restarting the server in the middle
+&gt; &gt; &gt; of the day would not be an option.  So, do I have to make changes at
+&gt; &gt; &gt; night?  Is there no way for the server to adopt the changes without
+&gt; &gt; &gt; killing all connections?
+
+&gt; &gt; &gt; 2) The system will be composed of multiple apps... (perhaps as many as
+&gt; &gt; &gt; 20 or more) so would it be better (if I need to restart after every
+&gt; &gt; &gt; change) to have all the apps served by their own servers?  I mean, is
+&gt; &gt; &gt; it better to have 20 instances of the paster server if uptime is such
+&gt; &gt; &gt; a priority?
+
+&gt; &gt; &gt; 3) In serving several apps (thanks to Ian Bicking for the help to get
+&gt; &gt; &gt; that going!) like this:
+&gt; &gt; &gt; [composite:main]
+&gt; &gt; &gt; use = egg:Paste#urlmap
+&gt; &gt; &gt; / = config:home_app/development.ini
+&gt; &gt; &gt; /app2 = config:app2/development.ini
+&gt; &gt; &gt; ...
+
+&gt; &gt; &gt; how do I make app2 aware that all of his urls are based off of /app2?
+&gt; &gt; &gt; well... actually, it is already aware of that.  I'm really asking: Is
+&gt; &gt; &gt; there a way for app2 to know that the home directory is just
+&gt; &gt; &gt; plain / ?  This comes up because I use a shared repository for images
+&gt; &gt; &gt; and when I reference images from app2 with src=&quot;images/something.jpg&quot;
+&gt; &gt; &gt; it looks for the image at the url http://127.0.0.1:5000/app2/images/something.jpg
+&gt; &gt; &gt; instead of http://127.0.0.1:5000/images/something.jpg .  Also, I'd like
+&gt; &gt; &gt; for app2 to be able to link back to / without explicitly hard-coding
+&gt; &gt; &gt; that url (I can see in the future bumping everything up a directory...
+&gt; &gt; &gt; making / into /section and /app2 into /section/app2)
+
+&gt; &gt; &gt; Am I just going about this the wrong way?
+
+&gt; &gt; Many Pylons folks have an aversion to mod_wsgi and will refuse to use
+&gt; &gt; it on religious grounds without even trying it, but the problems you
+&gt; &gt; are trying to solve are exactly the sort of the things that mod_wsgi
+&gt; &gt; is really good for. This is because mod_wsgi handles both the restart
+&gt; &gt; case as well as the problem of splitting up a monolithic application
+&gt; &gt; to run across multiple distinct processes. The steps required to do
+&gt; &gt; this are relative easy and don't require having to setup lots of
+&gt; &gt; distinct server instances each with a supervisor system as Apache/
+&gt; &gt; mod_wsgi will handle that all for you automatically.
+
+&gt; &gt; Starting with separation of applications into distinct processes to
+&gt; &gt; allow them to be individually restart, one would take your composite
+&gt; &gt; application and create separate .ini files for each application. One
+&gt; &gt; would just then mount them as separate WSGI applications. For example:
+
+&gt; &gt;   WSGIScriptAlias /app2 /some/path/app2.wsgi
+&gt; &gt;   WSGIScriptAlias / /some/path/home_app.wsgi
+
+&gt; &gt; Leave it like that and all you have done is separated the applications
+&gt; &gt; so that they run within distinct sub interpreters in the same
+&gt; &gt; processes. Add daemon processes to the mix though and you can delegate
+&gt; &gt; each to run in a separate process and/or processes.
+
+&gt; &gt;   WSGIDaemonProcess app2 threads=25
+&gt; &gt;   WSGIScriptAlias /app2 /some/path/app2.wsgi
+&gt; &gt;   &lt;Location /app2&gt;
+&gt; &gt;   WSGIProcessGroup app2
+&gt; &gt;   WSGIReloadMechanism Process
+&gt; &gt;   &lt;/Location&gt;
+
+&gt; &gt;   WSGIDaemonProcess home_app threads=25
+&gt; &gt;   WSGIScriptAlias / /some/path/home_app.wsgi
+&gt; &gt;   &lt;Location /&gt;
+&gt; &gt;   WSGIProcessGroup home_app
+&gt; &gt;   WSGIReloadMechanism Process
+&gt; &gt;   &lt;/Location&gt;
+
+&gt; &gt; Each application now runs in a separate process with 25 threads.
+&gt; &gt; Having enabled process reload mechanism available with mod_wsgi 2.0,
+&gt; &gt; to restart an application all you need to do is touch (ie., change
+&gt; &gt; modification time) of the WSGI script file for that application and it
+&gt; &gt; wll be automatically restarted prior to next request it receives. The
+&gt; &gt; restart of that application doesn't affect other applications not
+&gt; &gt; require Apache as a whole to be restarted.
+
+&gt; &gt; The contents of those WSGI script files is pretty trivial and just
+&gt; &gt; setup the WSGI application entry point.
+
+&gt; &gt;   import os, sys
+&gt; &gt;   sys.path.append('/usr/local/pylons/home_app')
+
+&gt; &gt;   from paste.deploy import loadapp
+
+&gt; &gt;   application = loadapp('config:/usr/local/pylons/home_app/
+&gt; &gt; development.ini')
+
+&gt; &gt; Although relatively easy to setup, it should do pretty well what you
+&gt; &gt; want.
+
+&gt; &gt; Graham
+">
+</POST>
+<POST>
+<POSTER> Localhost &lt;daniel.pron...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-08T14:24:00 </POSTDATE>
+Hello,
+
+I would like to reply to this post from my situation.
+
+On Jan 2, 12:50 pm, Ian Bicking &lt;i ... @colorstudy.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Matt Haggard wrote:
+&gt; &gt; I'm (in the process of) using pylons in a production environment and
+&gt; &gt; still have a few questions:
+
+&gt; &gt; 1) Do I really have to restart the server every time I make a change
+&gt; &gt; (controller/model)?  I can foresee making many changes and some which
+&gt; &gt; require immediate attention, but restarting the server in the middle
+&gt; &gt; of the day would not be an option.  So, do I have to make changes at
+&gt; &gt; night?  Is there no way for the server to adopt the changes without
+&gt; &gt; killing all connections?
+
+&gt; When restarting any connections in-progress will be completed, and new
+&gt; connections will be rejected.  If you are using a frontend like Apache
+&gt; that has something to retry connections, no actual requests will fail
+&gt; during a restart.
+">
+
+In my situation, Apache is not an option I am able to utilize with
+Pylons as the current infrastructure caters more to being a Microsoft
+shop (of which I am fortunate using Python is even an option!).  I
+believe I'm left with either one of two options:
+1) A Python wrapper around paster that could perform the 'retry
+connections' (as I see this as a possible concern point for
+application users); or
+2) Use IIS, which as I've found from prior posts, seems far more
+problematic with numerous issues that still need to be worked out
+(i.e. no reload option, must function as a Virtual Directory and for
+some reason does not correctly work with AuthKit -- another show-
+stopper).
+
+What I find very troubling about Pylons on Windows -- though I'm not
+sure if its Windows in particular or paster as well is even when the
+the source code does not change and simply some changes are done on a
+web form, after clicking the submit button for the form sometimes
+returns a 'Page Cannot Be Displayed' message when it should actually
+be showing the requested page as it does exist -- though the update
+seems to have occurred from the form.  As far as I can see, this seems
+to be part of the same issue with the 'retry connections'.  Thanks.
+</POST>
+</TEXT>
+</BODY>
+</DOC>

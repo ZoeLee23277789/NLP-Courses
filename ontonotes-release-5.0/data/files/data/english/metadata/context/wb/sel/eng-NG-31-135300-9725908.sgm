@@ -1,0 +1,83 @@
+<DOC>
+<DOCID> eng-NG-31-135300-9725908 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-12-22T13:59:00 </DATETIME>
+<BODY>
+<HEADLINE>
+hard crash when restarting cherrypy
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> gregjor &lt;greg...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-12-22T13:59:00 </POSTDATE>
+I have a long-running server proxied behind Apache. Environment is
+SuSE Linux 10, Python 2.4.3, CherryPy 3.0.2. I started to see a
+problem a couple of weeks ago where the server would fail to auto-
+reload, CherryPy would crash with the error below, and I'd have to
+reboot the Linux server:
+
+Exception in thread CPHTTPServer Thread-1:
+Traceback (most recent call last):
+File &quot;/usr/lib/python2.4/threading.py&quot;, line 442, in __bootstrap
+self.run()
+File &quot;/usr/lib/python2.4/threading.py&quot;, line 422, in run
+self.__target(*self.__args, **self.__kwargs)
+File &quot;/usr/local/lib/python2.4/site-packages/cherrypy/_cpserver.py&quot;,
+line 126, in _start_http_thread
+httpserver.start()
+File
+&quot;/usr/local/lib/python2.4/site-packages/cherrypy/wsgiserver/
+__init__.py&quot;,
+line 851, in start
+raise socket.error, msg
+error: (98, 'Address already in use')
+
+I disabled auto-reload and upgraded from CherryPy 3.0.1 to 3.0.2, but
+now when I try to restart the server by hand I get the same thing, and
+the only way to get CherryPy to restart is to reboot the server.
+
+This just started happening in the last couple of weeks, and I haven't
+changed the OS or Python distros, so it must be something in my own
+code causing this. Looking back over the changes I've made recently a
+couple of things arouse suspicion:
+
+1. The server code has a couple of timer threads that run every few
+minutes to do cleanup tasks. Those have been there for a while but I
+did tweak one of them recently. I have code in CherryPy's shutdown
+task list to stop those threads. None of those threads have any
+sockets open directly but the server does maintain a pool of open
+PostgreSQL connections and one of the shutdown tasks is to close all
+open connections.
+
+2. The server use subprocess.Popen to execute xmllint. It always waits
+for the xmllint process to finish. We were doing this for a long time
+in a way that appeared to be blocking the CherryPy server:
+
+proc = subprocess.Popen('xmllint', ...)
+result = proc.communicate(...)
+
+I recently changed that so it would give time to other CherryPy
+threads, since xmllint can take a long time if the XML file is big:
+
+proc = subprocess.Popen('xmllint', ...)
+while proc.poll() == None:
+time.sleep(0.5)
+result = proc.resultcode
+
+Since I can't always get the server to crash or hang -- it seems
+related to how long the server has been running -- my tests reverting
+some of these changes back haven't shed much light on the problem.
+
+I hoping someone else has seen this, or can at least tell me that
+using subprocess.Popen or running other threads with the threading
+module or whatever else I may be doing is a likely source of this kind
+of problem. Having to restart the Linux box to update the server code
+is not going to work for us long-term.
+
+Thanks!
+
+Greg Jorgensen
+</POST>
+</TEXT>
+</BODY>
+</DOC>

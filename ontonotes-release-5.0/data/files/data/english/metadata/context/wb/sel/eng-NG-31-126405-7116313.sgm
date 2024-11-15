@@ -1,0 +1,156 @@
+<DOC>
+<DOCID> eng-NG-31-126405-7116313 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-03-17T16:39:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Path mtu discovery
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> andrei.bogomo...@gmail.com </POSTER>
+<POSTDATE> 2007-03-17T16:39:00 </POSTDATE>
+I use tracepath to probe pmtu to some host:
+
+#tracepath belmag.vpn.clink.ru
+1:  luna                                                         0.124ms pmtu 1500
+1:  msk-ar-9-vl110.masterhost.ru (217.16.18.3)             0.750ms
+2:  ge000-263.RT502-001.msk.retn.net (81.222.8.57)       asymm  4
+1.096ms
+3:  MSK15-Gi11.175.transtelecom.net (217.150.45.138)     asymm 12
+58.718ms
+4:  YuzhUralTTK-gw.transtelecom.net (217.150.39.149)     asymm 15
+90.892ms
+5:  gw-SvyazTelecom-magn.suttk.ru (62.165.50.130)        asymm 15
+90.179ms
+6:  gw-stknet.svtk.ru (194.242.120.254)                  asymm 14
+91.413ms
+7:  distcore-tline.svtk.ru (194.242.120.189)             asymm 14
+91.504ms
+8:  rzv-tline.svtk.ru (194.242.120.245)                  asymm 14
+91.644ms
+9:  194.242.123.226 (194.242.123.226)                    asymm 15
+93.340ms
+10:  194.242.123.226 (194.242.123.226)                    asymm 15
+92.888ms pmtu 1492
+11:  194.42.113.64.clink.ru (194.42.113.64)               asymm 16
+178.320ms reached
+Resume: pmtu 1492 hops 11 back 16
+
+mtu on hop #10 is 1492. If I rerun tracepath, starting mtu to the host
+should be 1492, but it is 1500 again:
+
+luna:~# tracepath belmag.vpn.clink.ru
+1:  luna                                                                 0.137ms pmtu 1500
+1:  msk-ar-9-vl110.masterhost.ru (217.16.18.3)             0.735ms
+2:  ge000-263.RT502-001.msk.retn.net (81.222.8.57)       asymm  4
+1.078ms
+3:  MSK15-Gi11.175.transtelecom.net (217.150.45.138)     asymm 12
+58.638ms
+4:  YuzhUralTTK-gw.transtelecom.net (217.150.39.149)     asymm 15
+91.413ms
+5:  gw-SvyazTelecom-magn.suttk.ru (62.165.50.130)        asymm 15
+90.845ms
+6:  gw-stknet.svtk.ru (194.242.120.254)                  asymm 14
+91.378ms
+7:  distcore-tline.svtk.ru (194.242.120.189)             asymm 14
+91.320ms
+8:  rzv-tline.svtk.ru (194.242.120.245)                  asymm 14
+91.770ms
+9:  194.242.123.226 (194.242.123.226)                    asymm 15
+93.676ms
+10:  194.242.123.226 (194.242.123.226)                    asymm 15
+94.496ms pmtu 1492
+11:  194.42.113.64.clink.ru (194.42.113.64)               asymm 16
+161.152ms reached
+Resume: pmtu 1492 hops 11 back 16
+
+So mtu is not saved. Why?
+</POST>
+<POST>
+<POSTER> ibupro...@painkiller.example.tld (Moe Trin) </POSTER>
+<POSTDATE> 2007-03-18T16:27:00 </POSTDATE>
+On 17 Mar 2007, in the Usenet newsgroup comp.os.linux.networking, in article
+<1174163947.397011.186 ... @o5g2000hsb.googlegroups.com>,
+
+<QUOTE PREVIOUSPOST="
+andrei.bogomo ... @gmail.com wrote:
+>I use tracepath to probe pmtu to some host:
+">
+
+OK  that's a user application.
+
+<QUOTE PREVIOUSPOST="
+>mtu on hop #10 is 1492. If I rerun tracepath, starting mtu to the host
+>should be 1492, but it is 1500 again:
+">
+
+Ummm, no.   'tracepath' provides data about a path. It has no means to
+change the routing setup on the computer, and thus will always start with
+what-ever is the default for this computer interface.
+
+You may want to read RFC1191 which is the reference on PMTU, as well as
+RFC1435 and RFC2923.
+
+1191 Path MTU discovery. J.C. Mogul, S.E. Deering. November 1990.
+(Format: TXT=47936 bytes) (Obsoletes RFC1063) (Status: DRAFT
+STANDARD)
+
+1435 IESG Advice from Experience with Path MTU Discovery. S. Knowles.
+March 1993. (Format: TXT=2708 bytes) (Status: INFORMATIONAL)
+
+2923 TCP Problems with Path MTU Discovery. K. Lahey. September 2000.
+(Format: TXT=30976 bytes) (Status: INFORMATIONAL)
+
+A key is in the Abstract paragraph of 1191, which reads
+
+This memo describes a technique for dynamically discovering the
+maximum transmission unit (MTU) of an arbitrary internet path.  It
+specifies a small change to the way routers generate one type of ICMP
+message.  For a path that passes through a router that has not been
+so changed, this technique might not discover the correct Path MTU,
+but it will always choose a Path MTU as accurate as, and in many
+cases more accurate than, the Path MTU that would be chosen by
+current practice.
+
+First sentence - "dynamically discovering". For most networking setups,
+the PMTU is discovered on a connection basis, and is only used while
+that specific connection exists (example - fetching a web page, or a
+file from a FTP server). The next time you connect to the same host, you
+will again run a PMTUD, because the route may have changed.
+
+<QUOTE PREVIOUSPOST="
+>So mtu is not saved. Why?
+">
+
+1.  PMTU is dynamic, and may change over time.
+2.  tracepath is a _user_ application, and has no control over the network
+setup on your computer.  Thus, even if tracepath remembered the PMTU,
+this would have no effect on any _other_ application, never mind the
+kernel's routing table.
+
+Old guy
+</POST>
+<POST>
+<POSTER> andrei.bogomo...@gmail.com </POSTER>
+<POSTDATE> 2007-03-19T02:58:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+> >So mtu is not saved. Why?
+
+> 1.  PMTU is dynamic, and may change over time.
+> 2.  tracepath is a _user_ application, and has no control over the network
+>     setup on your computer.  Thus, even if tracepath remembered the PMTU,
+>     this would have no effect on any _other_ application, never mind the
+>     kernel's routing table.
+
+>         Old guy
+">
+
+1. Discovered mtu is saved in memory for 10 minutes. This time the mtu
+is constant, not dynamic. But in my situation, mtu is not saved by OS.
+2. tracepath shows us pmtu along some ip-route-path. MTU is remembered
+not by tracepath, but by OS. tracepath asks OS to discover mtu.
+</POST>
+</TEXT>
+</BODY>
+</DOC>

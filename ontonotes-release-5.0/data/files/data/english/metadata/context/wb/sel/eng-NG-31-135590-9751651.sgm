@@ -1,0 +1,3584 @@
+<DOC>
+<DOCID> eng-NG-31-135590-9751651 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-09-25T22:09:00 </DATETIME>
+<BODY>
+<HEADLINE>
+When is a function not a function?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> David Mark &lt;dmark.cins...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-25T22:09:00 </POSTDATE>
+I've got a collection of functions that accept a function or object
+(paired with a method name) as a callback.
+
+For the longest time I have relied on this test.
+
+(typeof cb == 'function')
+
+This should work as well, but I am not sure how well it degrades in
+older browsers.  I think there are issues with functions created in
+another context (eg frame) as well.
+
+(cb instanceof Function)
+
+Then I came across this.
+
+(!!fn &amp;&amp; typeof fn != &quot;string&quot; &amp;&amp; !fn.nodeName &amp;&amp; fn.constructor !=
+Array &amp;&amp; /function/i.test( fn + &quot;&quot; ))
+
+I'm sure it is wrong as it is from jQuery, but it makes me wonder if
+there are bugs in older browsers that will mislead my test.
+
+As an aside, I was looking at the jQuery source as some browser
+sniffer I was arguing with on a blog cited it as part of an &quot;everybody
+is doing it&quot; argument.  I had glanced at it previously and dismissed
+it based on its resemblance to Prototype.  Upon closer inspection, it
+makes Prototype look inspired.  Suffice to say that anybody who
+recommends it hasn't read the code.  It's a horror show.
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-26T00:43:00 </POSTDATE>
+On Sep 25, 7:09 pm, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I've got a collection of functions that accept a function or object
+&gt; (paired with a method name) as a callback.
+
+&gt; For the longest time I have relied on this test.
+
+&gt; (typeof cb == 'function')
+
+&gt; This should work as well, but I am not sure how well it degrades in
+&gt; older browsers.  I think there are issues with functions created in
+&gt; another context (eg frame) as well.
+
+&gt; (cb instanceof Function)
+
+&gt; Then I came across this.
+
+&gt; (!!fn &amp;&amp; typeof fn != &quot;string&quot; &amp;&amp; !fn.nodeName &amp;&amp; fn.constructor !=
+&gt; Array &amp;&amp; /function/i.test( fn + &quot;&quot; ))
+
+&gt; I'm sure it is wrong as it is from jQuery, but it makes me wonder if
+&gt; there are bugs in older browsers that will mislead my test.
+">
+
+I don't like to assume incorrect because it is in jQuery. I am
+surprised if they are testing in older browsers. The hip libraries
+don't seem to do that.
+
+<QUOTE PREVIOUSPOST="
+&gt; As an aside, I was looking at the jQuery source as some browser
+&gt; sniffer I was arguing with on a blog cited it as part of an &quot;everybody
+&gt; is doing it&quot; argument.  I had glanced at it previously and dismissed
+&gt; it based on its resemblance to Prototype.  Upon closer inspection, it
+&gt; makes Prototype look inspired.  Suffice to say that anybody who
+&gt; recommends it hasn't read the code.  It's a horror show.
+">
+
+In a talk at Google, John Resig, jQuery founder, said something like
+&quot;after fighting with browser bugs long enough an experienced
+JavaScript program just uses navigator.userAgent.&quot; At least that is
+how I understood his talk. He does say many really good things. You
+can watch the video.
+
+http://ejohn.org/blog/building-a-javascript-library/
+
+I left a comment on that blog page about sniffing and he never did
+really respond. Perhaps that future blog post to which he refers later
+in the comments is still in the works. I'm interested to read it.
+
+Tricky one: How do you feature test opacity support?
+
+Peter
+</POST>
+<POST>
+<POSTER> &quot;Richard Cornford&quot; &lt;Rich...@litotes.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2007-09-26T04:29:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+David Mark wrote:
+&gt; I've got a collection of functions that accept a function
+&gt; or object (paired with a method name) as a callback.
+
+&gt; For the longest time I have relied on this test.
+
+&gt; (typeof cb == 'function')
+
+&gt; This should work as well, but I am not sure how well it
+&gt; degrades in older browsers.
+">
+
+The typeof operator is consistent when its subjects are not host
+objects, and has been around since JavaScript 1.1, so well pre-dating
+the 4th generation browsers.
+
+<QUOTE PREVIOUSPOST="
+&gt; I think there are issues with functions created in
+&gt; another context (eg frame) as well.
+
+&gt; (cb instanceof Function)
+">
+
+Yes, the a Function constructor exists for each frame and each has
+unique identity. That is also true of the Array constructor.
+
+<QUOTE PREVIOUSPOST="
+&gt; Then I came across this.
+
+&gt; (!!fn &amp;&amp; typeof fn != &quot;string&quot; &amp;&amp; !fn.nodeName &amp;&amp;
+&gt; fn.constructor != Array &amp;&amp; /function/i.test( fn + &quot;&quot; ))
+
+&gt; I'm sure it is wrong
+">
+
+That would depend on what you considered correct. It looks like the
+subject of the test is expected to be any of a javascript function
+(unwisely tested), a siring primitive, a  DOM element and Array or a
+value with falseness. Getting into a position where it is necessary to
+make such a test betrays very poor code design.
+
+There are no circumstances under which a function object would result
+in - typeof fn != 'string' - being true or its having a - nodeName -
+property or a constructor property that was a reference to the frame's
+Array constructor (unless they had been explicitly added).
+
+<QUOTE PREVIOUSPOST="
+&gt; as it is from jQuery, but it makes me wonder if
+&gt; there are bugs in older browsers that will mislead
+&gt; my test.
+">
+
+What makes you think that jQuery, or any of its like, was written with
+any interest in, or knowledge of, 'older browsers'?
+
+<QUOTE PREVIOUSPOST="
+&gt; As an aside, I was looking at the jQuery source as some
+&gt; browser sniffer I was arguing with on a blog cited it as
+&gt; part of an &quot;everybody is doing it&quot; argument.
+">
+
+If that was a valid argument we would not have seen the virtual
+disappearance of people using - eval - to reference object properties
+with constructed dot notation property accessors. There was a time when
+&quot;everybody&quot; was doing that, but most have now learnt better.
+
+<QUOTE PREVIOUSPOST="
+&gt; I had glanced at it previously and dismissed
+&gt; it based on its resemblance to Prototype.  Upon closer
+&gt; inspection, it makes Prototype look inspired.  Suffice
+&gt; to say that anybody who recommends it hasn't read the
+&gt; code.  It's a horror show.
+">
+
+The code above speaks of poor design, but at least it is ECMA 262
+conforming, so that is one up on Prototype.js.
+
+Richard.
+</POST>
+<POST>
+<POSTER> David Mark &lt;dmark.cins...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-26T15:45:00 </POSTDATE>
+On Sep 26, 12:43 am, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 25, 7:09 pm, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+
+&gt; &gt; I've got a collection of functions that accept a function or object
+&gt; &gt; (paired with a method name) as a callback.
+
+&gt; &gt; For the longest time I have relied on this test.
+
+&gt; &gt; (typeof cb == 'function')
+
+&gt; &gt; This should work as well, but I am not sure how well it degrades in
+&gt; &gt; older browsers.  I think there are issues with functions created in
+&gt; &gt; another context (eg frame) as well.
+
+&gt; &gt; (cb instanceof Function)
+
+&gt; &gt; Then I came across this.
+
+&gt; &gt; (!!fn &amp;&amp; typeof fn != &quot;string&quot; &amp;&amp; !fn.nodeName &amp;&amp; fn.constructor !=
+&gt; &gt; Array &amp;&amp; /function/i.test( fn + &quot;&quot; ))
+
+&gt; &gt; I'm sure it is wrong as it is from jQuery, but it makes me wonder if
+&gt; &gt; there are bugs in older browsers that will mislead my test.
+
+&gt; I don't like to assume incorrect because it is in jQuery. I am
+&gt; surprised if they are testing in older browsers. The hip libraries
+&gt; don't seem to do that.
+">
+
+Hip?  I don't know how to apply that to a lump of JavaScript code.  If
+you are referring to Prototype, jQuery and the like, then crap would
+be more appropriate.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; As an aside, I was looking at the jQuery source as some browser
+&gt; &gt; sniffer I was arguing with on a blog cited it as part of an &quot;everybody
+&gt; &gt; is doing it&quot; argument.  I had glanced at it previously and dismissed
+&gt; &gt; it based on its resemblance to Prototype.  Upon closer inspection, it
+&gt; &gt; makes Prototype look inspired.  Suffice to say that anybody who
+&gt; &gt; recommends it hasn't read the code.  It's a horror show.
+
+&gt; In a talk at Google, John Resig, jQuery founder, said something like
+">
+
+The blind leading the blind.
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;after fighting with browser bugs long enough an experienced
+&gt; JavaScript program just uses navigator.userAgent.&quot; At least that is
+">
+
+Or they realize that they are fighting their own poor designs.
+
+<QUOTE PREVIOUSPOST="
+&gt; how I understood his talk. He does say many really good things. You
+&gt; can watch the video.
+">
+
+After reading his code and comments, I am completely uninterested in
+anything he has to say on the subject of browser scripting.
+
+<QUOTE PREVIOUSPOST="
+&gt; http://ejohn.org/blog/building-a-javascript-library/
+
+&gt; I left a comment on that blog page about sniffing and he never did
+&gt; really respond. Perhaps that future blog
+">
+
+He has responded with a lousy JavaScript library full of browser
+sniffing, not to mention wide gaps in logic.
+
+post to which he refers later
+
+<QUOTE PREVIOUSPOST="
+&gt; in the comments is still in the works. I'm interested to read it.
+
+&gt; Tricky one: How do you feature test opacity support?
+">
+
+Put this in the head of your document.  Then test for &quot;setOpacity.&quot;
+
+var global = this;
+var setOpacity = (function() {
+var i, l, html;
+var doc = global.document;
+var opacityStyles = ['opacity', 'MozOpacity', 'KhtmlOpacity'];
+
+if (doc) { html = (doc.getElementsByTagName)?
+doc.getElementsByTagName('html'):doc.documentElement; }
+if (html &amp;&amp; html[0] &amp;&amp; html[0].style) {
+if (typeof html[0].style.filter != 'undefined') {
+return function(el, o) {
+var f;
+if (el.filters) {
+if (el.currentStyle &amp;&amp; !el.currentStyle.hasLayout)
+{ el.style.zoom = 1; }
+f = el.filters.alpha;
+if (typeof(f) != 'undefined') {
+if (o == 1) {
+f.enabled = false;
+}
+else {
+f.enabled = true;
+f.opacity = o * 100;
+}
+}
+else {
+if (el.style &amp;&amp; typeof(el.style.filter) != 'undefined')
+{ el.style.filter += &quot;alpha(opacity=&quot; + (o * 100) + &quot;)&quot;; }
+}
+}
+}
+}
+i = 0;
+l = opacityStyles.length;
+while (i &lt; l) {
+if (typeof(html[0].style[opacityStyles[i]]) == 'string') {
+return (function(s) { return function(el, o) { el.style[s] =
+o; }; })(opacityStyles[i]);
+}
+i++;
+}
+}
+
+<QUOTE PREVIOUSPOST="
+})();
+">
+
+I just tested it in IE7, Opera 9, the latest Netscape and Mozilla
+versions and the Windows Safari Beta.  The original code it is based
+on (from around 2003) has been tested on hundreds of agents.
+
+Now how does the &quot;hip&quot; jQuery lib handle this?  Browser sniffing of
+course.  Some people never learn.
+</POST>
+<POST>
+<POSTER> David Mark &lt;dmark.cins...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-26T16:02:00 </POSTDATE>
+On Sep 26, 4:29 am, &quot;Richard Cornford&quot; &lt;Rich ... @litotes.demon.co.uk&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; David Mark wrote:
+&gt; &gt; I've got a collection of functions that accept a function
+&gt; &gt; or object (paired with a method name) as a callback.
+
+&gt; &gt; For the longest time I have relied on this test.
+
+&gt; &gt; (typeof cb == 'function')
+
+&gt; &gt; This should work as well, but I am not sure how well it
+&gt; &gt; degrades in older browsers.
+
+&gt; The typeof operator is consistent when its subjects are not host
+&gt; objects, and has been around since JavaScript 1.1, so well pre-dating
+&gt; the 4th generation browsers.
+
+&gt; &gt; I think there are issues with functions created in
+&gt; &gt; another context (eg frame) as well.
+
+&gt; &gt; (cb instanceof Function)
+
+&gt; Yes, the a Function constructor exists for each frame and each has
+&gt; unique identity. That is also true of the Array constructor.
+
+&gt; &gt; Then I came across this.
+
+&gt; &gt; (!!fn &amp;&amp; typeof fn != &quot;string&quot; &amp;&amp; !fn.nodeName &amp;&amp;
+&gt; &gt; fn.constructor != Array &amp;&amp; /function/i.test( fn + &quot;&quot; ))
+
+&gt; &gt; I'm sure it is wrong
+
+&gt; That would depend on what you considered correct. It looks like the
+&gt; subject of the test is expected to be any of a javascript function
+&gt; (unwisely tested), a siring primitive, a  DOM element and Array or a
+&gt; value with falseness. Getting into a position where it is necessary to
+&gt; make such a test betrays very poor code design.
+">
+
+That's right.  It is a very odd design.  I just wondered about the
+strange function-related testing.
+
+<QUOTE PREVIOUSPOST="
+&gt; There are no circumstances under which a function object would result
+&gt; in - typeof fn != 'string' - being true or its having a - nodeName -
+&gt; property or a constructor property that was a reference to the frame's
+&gt; Array constructor (unless they had been explicitly added).
+">
+
+Makes sense to me.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; as it is from jQuery, but it makes me wonder if
+&gt; &gt; there are bugs in older browsers that will mislead
+&gt; &gt; my test.
+
+&gt; What makes you think that jQuery, or any of its like, was written with
+&gt; any interest in, or knowledge of, 'older browsers'?
+">
+
+Good point.  All of that userAgent string comparison nonsense is
+apparently necessary to make their code work in a handful of newer
+browsers.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; As an aside, I was looking at the jQuery source as some
+&gt; &gt; browser sniffer I was arguing with on a blog cited it as
+&gt; &gt; part of an &quot;everybody is doing it&quot; argument.
+
+&gt; If that was a valid argument we would not have seen the virtual
+&gt; disappearance of people using - eval - to reference object properties
+&gt; with constructed dot notation property accessors. There was a time when
+&gt; &quot;everybody&quot; was doing that, but most have now learnt better.
+">
+
+I know it isn't a valid argument.  The guy who posed it isn't a valid
+programmer (or debater.)  I won't mention any names, but he is
+actually considered a JS expert by the uninformed and misled masses.
+An unfortunate consequence of this is there are a lot of sites out
+there using his bungled code.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; I had glanced at it previously and dismissed
+&gt; &gt; it based on its resemblance to Prototype.  Upon closer
+&gt; &gt; inspection, it makes Prototype look inspired.  Suffice
+&gt; &gt; to say that anybody who recommends it hasn't read the
+&gt; &gt; code.  It's a horror show.
+
+&gt; The code above speaks of poor design, but at least it is ECMA 262
+&gt; conforming, so that is one up on Prototype.js.
+">
+
+jQuery uses dollar sign variables, which I don't think are allowed
+under the specification.
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-26T17:22:00 </POSTDATE>
+On Sep 26, 1:02 pm, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; jQuery uses dollar sign variables, which I don't think are allowed
+&gt; under the specification.
+">
+
+Dollar signs are allowed. See sec 7.6. The spec then says &quot;The dollar
+sign is intended for use only in mechanically generated code.&quot;
+
+After reading all the uproar about dollar signs in variables or even
+one character dollar sign variable, I think it would have been better
+if they had left this statement of intention out of the spec. A dollar
+sign can or cannot be in an identifier. If it can then it is up to the
+programmer to decide how to use it. If I was writing JavaScript to
+last 100 years and knew JavaScript would be backwards compatible with
+the exception of new keywords, I would probably start all my
+identifiers with a dollar sign (eg. $foo, $bar) to avoid clashes with
+new keywords.
+
+Peter
+</POST>
+<POST>
+<POSTER> David Mark &lt;dmark.cins...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-26T17:36:00 </POSTDATE>
+On Sep 26, 5:22 pm, Peter Michaux &lt;petermich ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 26, 1:02 pm, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+
+&gt; &gt; jQuery uses dollar sign variables, which I don't think are allowed
+&gt; &gt; under the specification.
+
+&gt; Dollar signs are allowed. See sec 7.6. The spec then says &quot;The dollar
+&gt; sign is intended for use only in mechanically generated code.&quot;
+">
+
+I understand that, but I don't think the authors of these libraries
+are robots.
+
+<QUOTE PREVIOUSPOST="
+&gt; After reading all the uproar about dollar signs in variables or even
+&gt; one character dollar sign variable, I think it would have been better
+&gt; if they had left this statement of intention out of the spec. A dollar
+&gt; sign can or cannot be in an identifier. If it can then it is up to the
+&gt; programmer to decide how to use it. If I was writing JavaScript to
+&gt; last 100 years and knew JavaScript would be backwards compatible with
+&gt; the exception of new keywords, I would probably start all my
+&gt; identifiers with a dollar sign (eg. $foo, $bar) to avoid clashes with
+&gt; new keywords.
+">
+
+The biggest problem I have is naming functions &quot;$&quot; or &quot;$$&quot; or anything
+like that.  If you minify your production code then the only argument
+for these is to reduce the total number of keystrokes required to
+write a script.  Apparently these people have never heard of macros.
+</POST>
+<POST>
+<POSTER> Thomas &#39;PointedEars&#39; Lahn &lt;PointedE...@web.de&gt; </POSTER>
+<POSTDATE> 2007-09-26T17:40:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Peter Michaux wrote:
+&gt; On Sep 26, 1:02 pm, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+&gt;&gt; jQuery uses dollar sign variables, which I don't think are allowed
+&gt;&gt; under the specification.
+
+&gt; Dollar signs are allowed. See sec 7.6. The spec then says &quot;The dollar
+&gt; sign is intended for use only in mechanically generated code.&quot;
+">
+
+Which is exactly why jQuery should not.
+
+<QUOTE PREVIOUSPOST="
+&gt; After reading all the uproar about dollar signs in variables or even
+&gt; one character dollar sign variable, I think it would have been better
+&gt; if they had left this statement of intention out of the spec. A dollar
+&gt; sign can or cannot be in an identifier.
+">
+
+This subsection addresses only identifiers.  You missed the point completely.
+
+PointedEars
+--
+realism:    HTML 4.01 Strict
+evangelism: XHTML 1.0 Strict
+madness:    XHTML 1.1 as application/xhtml+xml
+-- Bjoern Hoehrmann
+</POST>
+<POST>
+<POSTER> &quot;Richard Cornford&quot; &lt;Rich...@litotes.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2007-09-26T19:38:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Peter Michaux wrote:
+&gt; On Sep 26, 1:02 pm, David Mark wrote:
+
+&gt;&gt; jQuery uses dollar sign variables, which I don't think are
+&gt;&gt; allowed under the specification.
+
+&gt; Dollar signs are allowed. See sec 7.6. The spec then says
+&gt; &quot;The dollar sign is intended for use only in mechanically
+&gt; generated code.&quot;
+">
+
+The same is true for Java (indeed it appears that the idea of making
+provision for a conventional form to exist for machine generated code
+was inspired by the similar convention in Java). You never see Java
+programmers using $ symbols in their code, even though not doing so is
+no more than a convention. A Java programmer who disregarded that
+convention would be derided, but unfortunately a sufficiently large
+proportion of javascript 'programmers' are unprofessional (in every
+sense of the world) that these faults can seem tolerable.
+
+<QUOTE PREVIOUSPOST="
+&gt; After reading all the uproar about dollar signs in variables
+&gt; or even one character dollar sign variable, I think it would
+&gt; have been better if they had left this statement of intention
+&gt; out of the spec.
+">
+
+In that case it would have been better to leave the $ symbol out of the
+set of acceptable characters for an Identifier.
+
+<QUOTE PREVIOUSPOST="
+&gt; A dollar sign can or cannot be in an identifier.
+">
+
+Just as it can in Java.
+
+<QUOTE PREVIOUSPOST="
+&gt; If it can then it is up to the programmer to decide how
+&gt; to use it.
+">
+
+Just as it is for Java programmers, but they have more understanding of
+their specification, and more appreciation for the value of conventions
+in programming.
+
+Ultimately Identifiers provide programmers an opportunity to convey
+meaning. The ability to employ words is sufficient for that task, and
+letters and some sort of word separator are sufficient for that task.
+Conventions can be applied on top of that. For example Hungarian
+notation to suggest type in addition to purpose, or camel case to avoid
+having to use an explicit word separator, or initial upper case for
+'class' names.
+
+The use of the $ symbol does not contribute towards meaning; indeed it
+is about the most obscure thing that can appear in an Identifier. And
+given that it would not be surprising if the only reason for its
+inclusion were to facilitate the specification's stated convention.
+
+<QUOTE PREVIOUSPOST="
+&gt; If I was writing JavaScript to last 100 years and knew
+&gt; JavaScript would be backwards compatible with the exception
+&gt; of new keywords, I would probably start all my identifiers
+&gt; with a dollar sign (eg. $foo, $bar) to avoid clashes with
+&gt; new keywords.
+">
+
+Doesn't that imply that given a sufficiently long period of time a
+programming language will grow an infinite number of keywords? That
+seems very unlikely, and quite impractical, as a programmer is unlikely
+to be able to learn to use more than a limited set of keywords.
+
+In addition, if a language may grow keywords couldn't it also grow
+operators. The $ symbol is already an operator in some languages, so
+couldn't those usages migrate into javascript under the same
+circumstances?
+
+Richard.
+</POST>
+<POST>
+<POSTER> David Mark &lt;dmark.cins...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-26T19:52:00 </POSTDATE>
+Oops.  Went to put this in my own lib and noticed I introduced a silly
+mistake when I added the check for documentElement.  This check is
+probably not needed as browsers that predate getElementsByTagName
+aren't likely to have a documentElement, but you never know.
+
+Also added another fallback for ancient browsers that support
+document.all (eg IE4.)
+
+var global = this;
+var setOpacity = (function() {
+var i, l, html;
+var doc = global.document;
+var opacityStyles = ['opacity', 'MozOpacity', 'KhtmlOpacity'];
+
+if (doc) {
+html = (doc.getElementsByTagName)?doc.getElementsByTagName('html')
+[0]:doc.documentElement;
+if (!html &amp;&amp; doc.all &amp;&amp; doc.all[0]) {
+html = (doc.all[0].tagName == '!')?doc.all[0]:doc.all[1];
+}
+}
+if (html &amp;&amp; html.style) {
+if (typeof html.style.filter != 'undefined') {
+return function(el, o) {
+var f;
+if (el.filters) {
+if (el.currentStyle &amp;&amp; !el.currentStyle.hasLayout)
+{ el.style.zoom = 1; }
+f = el.filters.alpha;
+if (typeof(f) != 'undefined') {
+if (o == 1) {
+f.enabled = false;
+}
+else {
+f.enabled = true;
+f.opacity = o * 100;
+}
+}
+else {
+if (el.style &amp;&amp; typeof(el.style.filter) != 'undefined')
+{ el.style.filter += &quot;alpha(opacity=&quot; + (o * 100) + &quot;)&quot;; }
+}
+}
+};
+}
+i = 0;
+l = opacityStyles.length;
+while (i &lt; l) {
+if (typeof(html.style[opacityStyles[i]]) == 'string') {
+return (function(s) { return function(el, o) { el.style[s] =
+o; }; })(opacityStyles[i]);
+}
+i++;
+}
+}
+
+<QUOTE PREVIOUSPOST="
+})();
+">
+</POST>
+<POST>
+<POSTER> David Mark &lt;dmark.cins...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-26T19:53:00 </POSTDATE>
+On Sep 26, 7:52 pm, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Oops.  Went to put this in my own lib and noticed I introduced a silly
+&gt; mistake when I added the check for documentElement.  This check is
+&gt; probably not needed as browsers that predate getElementsByTagName
+&gt; aren't likely to have a documentElement, but you never know.
+
+&gt; Also added another fallback for ancient browsers that support
+&gt; document.all (eg IE4.)
+
+&gt; var global = this;
+&gt; var setOpacity = (function() {
+&gt;         var i, l, html;
+&gt;         var doc = global.document;
+&gt;         var opacityStyles = ['opacity', 'MozOpacity', 'KhtmlOpacity'];
+
+&gt;         if (doc) {
+&gt;                 html = (doc.getElementsByTagName)?doc.getElementsByTagName('html')
+&gt; [0]:doc.documentElement;
+&gt;                 if (!html &amp;&amp; doc.all &amp;&amp; doc.all[0]) {
+">
+
+Correction:
+
+html = (doc.all[0].tagName == '!')?doc.all[1]:doc.all[0];
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-26T19:58:00 </POSTDATE>
+On Sep 26, 4:38 pm, &quot;Richard Cornford&quot; &lt;Rich ... @litotes.demon.co.uk&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Peter Michaux wrote:
+&gt; &gt; If I was writing JavaScript to last 100 years and knew
+&gt; &gt; JavaScript would be backwards compatible with the exception
+&gt; &gt; of new keywords, I would probably start all my identifiers
+&gt; &gt; with a dollar sign (eg. $foo, $bar) to avoid clashes with
+&gt; &gt; new keywords.
+
+&gt; Doesn't that imply that given a sufficiently long period of time a
+&gt; programming language will grow an infinite number of keywords?
+">
+
+I don't think I implied that. By using $ at the start of every one of
+my identifiers, I'm protected from that one new keyword that clashes.
+If I remember correctly, Perl and PHP have made this type of
+protection a strict part of the language so that new keywords can be
+added without breaking working code.
+
+<QUOTE PREVIOUSPOST="
+&gt; That
+&gt; seems very unlikely, and quite impractical, as a programmer is unlikely
+&gt; to be able to learn to use more than a limited set of keywords.
+
+&gt; In addition, if a language may grow keywords couldn't it also grow
+&gt; operators. The $ symbol is already an operator in some languages, so
+&gt; couldn't those usages migrate into javascript under the same
+&gt; circumstances?
+">
+
+If dollar sign becomes an operator in JavaScript then the spec for
+allowed identifiers would need to change so that $ is only internal in
+an identifier of three or more characters...or something like that.
+
+Peter
+</POST>
+<POST>
+<POSTER> Thomas &#39;PointedEars&#39; Lahn &lt;PointedE...@web.de&gt; </POSTER>
+<POSTDATE> 2007-09-26T20:00:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Peter Michaux wrote:
+&gt; [...] &quot;Richard Cornford&quot; [...] wrote:
+&gt;&gt; Peter Michaux wrote:
+&gt;&gt;&gt; If I was writing JavaScript to last 100 years and knew
+&gt;&gt;&gt; JavaScript would be backwards compatible with the exception
+&gt;&gt;&gt; of new keywords, I would probably start all my identifiers
+&gt;&gt;&gt; with a dollar sign (eg. $foo, $bar) to avoid clashes with
+&gt;&gt;&gt; new keywords.
+&gt;&gt; Doesn't that imply that given a sufficiently long period of time a
+&gt;&gt; programming language will grow an infinite number of keywords?
+
+&gt; I don't think I implied that. By using $ at the start of every one of
+&gt; my identifiers, I'm protected from that one new keyword that clashes.
+">
+
+Generally, you are not.  There are built-in properties that begin with `$'.
+Hence &quot;machine-generated&quot;.
+
+PointedEars
+--
+realism:    HTML 4.01 Strict
+evangelism: XHTML 1.0 Strict
+madness:    XHTML 1.1 as application/xhtml+xml
+-- Bjoern Hoehrmann
+</POST>
+<POST>
+<POSTER> Randy Webb &lt;HikksNotAtH...@aol.com&gt; </POSTER>
+<POSTDATE> 2007-09-26T20:21:00 </POSTDATE>
+Thomas 'PointedEars' Lahn said the following on 9/26/2007 5:40 PM:
+
+<QUOTE PREVIOUSPOST="
+&gt; Peter Michaux wrote:
+&gt;&gt; On Sep 26, 1:02 pm, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+&gt;&gt;&gt; jQuery uses dollar sign variables, which I don't think are allowed
+&gt;&gt;&gt; under the specification.
+&gt;&gt; Dollar signs are allowed. See sec 7.6. The spec then says &quot;The dollar
+&gt;&gt; sign is intended for use only in mechanically generated code.&quot;
+
+&gt; Which is exactly why jQuery should not.
+">
+
+But there is no reason why it *can not* other than people's pedantic
+desires to whine about it. Had it been S that was used instead, people
+would shut up about it and move on. Except that if it had been S instead
+of $ then people would be whining about how the name wasn't an
+indication of what it did.
+
+--
+Randy
+Chance Favors The Prepared Mind
+comp.lang.javascript FAQ - http://jibbering.com/faq/index.html
+Javascript Best Practices - http://www.JavascriptToolbox.com/bestpractices/
+</POST>
+<POST>
+<POSTER> &quot;Richard Cornford&quot; &lt;Rich...@litotes.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2007-09-26T20:39:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Randy Webb wrote:
+&gt; Thomas 'PointedEars' Lahn wrote:
+&gt;&gt; Peter Michaux wrote:
+&gt;&gt;&gt; On Sep 26, 1:02 pm, David Mark wrote:
+&gt;&gt;&gt;&gt; jQuery uses dollar sign variables, which I don't think
+&gt;&gt;&gt;&gt; are allowed under the specification.
+&gt;&gt;&gt; Dollar signs are allowed. See sec 7.6. The spec then says
+&gt;&gt;&gt; &quot;The dollar sign is intended for use only in mechanically
+&gt;&gt;&gt; generated code.&quot;
+
+&gt;&gt; Which is exactly why jQuery should not.
+
+&gt; But there is no reason why it *can not* other than people's
+&gt; pedantic desires to whine about it.
+">
+
+Or to take the same professional attitude toward javascript programming
+as any other language deserves.
+
+<QUOTE PREVIOUSPOST="
+&gt; Had it been S that was
+&gt; used instead, people would shut up about it and move on.
+&gt; Except that if it had been S instead  of $ then people
+&gt; would be whining about how the name wasn't an indication of what it
+&gt; did.
+">
+
+Yes they would, and with good reason. Its inherent obscurity is an
+excellent reason for not using - S - as the name of some important
+function. Using - $ - is making the same mistake, except worse because
+the people who started this seem to have done so because - $ - is an
+operator in the language that they preferred to javascript, so in
+addition to not conveying any meaning in itself (beyond the conventional
+meaning, which would be misleading in this case) it is suggesting a
+relationship that the functions using the name do not satisfy.
+
+Generally, the place for one letter Identifiers is as local variable
+names in functions that are sufficiently small that their declarations
+and all of their uses can be simultaneously surveyed. And maybe not even
+then.
+
+Richard.
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-26T20:54:00 </POSTDATE>
+On Sep 26, 5:39 pm, &quot;Richard Cornford&quot; &lt;Rich ... @litotes.demon.co.uk&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Generally, the place for one letter Identifiers is as local variable
+&gt; names in functions that are sufficiently small that their declarations
+&gt; and all of their uses can be simultaneously surveyed. And maybe not even
+&gt; then.
+">
+
+I find it's odd that the Prototype folks like very short API
+identifiers but use very long local variable names inside Prototype.
+
+Peter
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-26T21:07:00 </POSTDATE>
+On Sep 26, 4:38 pm, &quot;Richard Cornford&quot; &lt;Rich ... @litotes.demon.co.uk&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Peter Michaux wrote:
+&gt; &gt; On Sep 26, 1:02 pm, David Mark wrote:
+
+&gt; &gt;&gt; jQuery uses dollar sign variables, which I don't think are
+&gt; &gt;&gt; allowed under the specification.
+
+&gt; &gt; Dollar signs are allowed. See sec 7.6. The spec then says
+&gt; &gt; &quot;The dollar sign is intended for use only in mechanically
+&gt; &gt; generated code.&quot;
+
+&gt; The same is true for Java (indeed it appears that the idea of making
+&gt; provision for a conventional form to exist for machine generated code
+&gt; was inspired by the similar convention in Java). You never see Java
+&gt; programmers using $ symbols in their code, even though not doing so is
+&gt; no more than a convention. A Java programmer who disregarded that
+&gt; convention would be derided, but unfortunately a sufficiently large
+&gt; proportion of javascript 'programmers' are unprofessional (in every
+&gt; sense of the world) that these faults can seem tolerable.
+
+&gt; &gt; After reading all the uproar about dollar signs in variables
+&gt; &gt; or even one character dollar sign variable, I think it would
+&gt; &gt; have been better if they had left this statement of intention
+&gt; &gt; out of the spec.
+
+&gt; In that case it would have been better to leave the $ symbol out of the
+&gt; set of acceptable characters for an Identifier.
+
+&gt; &gt; A dollar sign can or cannot be in an identifier.
+
+&gt; Just as it can in Java.
+
+&gt; &gt; If it can then it is up to the programmer to decide how
+&gt; &gt; to use it.
+
+&gt; Just as it is for Java programmers, but they have more understanding of
+&gt; their specification, and more appreciation for the value of conventions
+&gt; in programming.
+">
+
+So Java programmers are all instances of the same class?
+
+Peter
+</POST>
+<POST>
+<POSTER> Randy Webb &lt;HikksNotAtH...@aol.com&gt; </POSTER>
+<POSTDATE> 2007-09-26T23:28:00 </POSTDATE>
+Richard Cornford said the following on 9/26/2007 8:39 PM:
+
+<QUOTE PREVIOUSPOST="
+&gt; Randy Webb wrote:
+&gt;&gt; Thomas 'PointedEars' Lahn wrote:
+&gt;&gt;&gt; Peter Michaux wrote:
+&gt;&gt;&gt;&gt; On Sep 26, 1:02 pm, David Mark wrote:
+&gt;&gt;&gt;&gt;&gt; jQuery uses dollar sign variables, which I don't think
+&gt;&gt;&gt;&gt;&gt; are allowed under the specification.
+&gt;&gt;&gt;&gt; Dollar signs are allowed. See sec 7.6. The spec then says
+&gt;&gt;&gt;&gt; &quot;The dollar sign is intended for use only in mechanically
+&gt;&gt;&gt;&gt; generated code.&quot;
+
+&gt;&gt;&gt; Which is exactly why jQuery should not.
+
+&gt;&gt; But there is no reason why it *can not* other than people's
+&gt;&gt; pedantic desires to whine about it.
+
+&gt; Or to take the same professional attitude toward javascript programming
+&gt; as any other language deserves.
+">
+
+The &quot;Same professional attitude&quot;, according to who? And, why did the
+argument change from &quot;Because some ECMA.. says so&quot; to a &quot;professional
+attitude&quot;? And, your statement implies that anybody that doesn't follow
+ECMA - to the letter - isn't a &quot;professional&quot; and that is total hogwash.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Had it been S that was
+&gt;&gt; used instead, people would shut up about it and move on.
+&gt;&gt; Except that if it had been S instead  of $ then people
+&gt;&gt; would be whining about how the name wasn't an indication of what it did.
+
+&gt; Yes they would, and with good reason.
+">
+
+Then why have I never seen the argument &quot;You shouldn't use $ because it
+doesn't indicate what the function does&quot; but you see hundreds - if not
+thousands - of posts about &quot;You shouldn't do that because some obscure
+paragraph in a theoretical document says you shouldn't&quot;?
+
+--
+Randy
+Chance Favors The Prepared Mind
+comp.lang.javascript FAQ - http://jibbering.com/faq/index.html
+Javascript Best Practices - http://www.JavascriptToolbox.com/bestpractices/
+</POST>
+<POST>
+<POSTER> David Mark &lt;dmark.cins...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-26T23:42:00 </POSTDATE>
+On Sep 26, 11:28 pm, Randy Webb &lt;HikksNotAtH ... @aol.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Richard Cornford said the following on 9/26/2007 8:39 PM:
+
+&gt; &gt; Randy Webb wrote:
+&gt; &gt;&gt; Thomas 'PointedEars' Lahn wrote:
+&gt; &gt;&gt;&gt; Peter Michaux wrote:
+&gt; &gt;&gt;&gt;&gt; On Sep 26, 1:02 pm, David Mark wrote:
+&gt; &gt;&gt;&gt;&gt;&gt; jQuery uses dollar sign variables, which I don't think
+&gt; &gt;&gt;&gt;&gt;&gt; are allowed under the specification.
+&gt; &gt;&gt;&gt;&gt; Dollar signs are allowed. See sec 7.6. The spec then says
+&gt; &gt;&gt;&gt;&gt; &quot;The dollar sign is intended for use only in mechanically
+&gt; &gt;&gt;&gt;&gt; generated code.&quot;
+
+&gt; &gt;&gt;&gt; Which is exactly why jQuery should not.
+
+&gt; &gt;&gt; But there is no reason why it *can not* other than people's
+&gt; &gt;&gt; pedantic desires to whine about it.
+
+&gt; &gt; Or to take the same professional attitude toward javascript programming
+&gt; &gt; as any other language deserves.
+
+&gt; The &quot;Same professional attitude&quot;, according to who? And, why did the
+&gt; argument change from &quot;Because some ECMA.. says so&quot; to a &quot;professional
+&gt; attitude&quot;? And, your statement implies that anybody that doesn't follow
+&gt; ECMA - to the letter - isn't a &quot;professional&quot; and that is total hogwash.
+
+&gt; &gt;&gt; Had it been S that was
+&gt; &gt;&gt; used instead, people would shut up about it and move on.
+&gt; &gt;&gt; Except that if it had been S instead  of $ then people
+&gt; &gt;&gt; would be whining about how the name wasn't an indication of what it did.
+
+&gt; &gt; Yes they would, and with good reason.
+
+&gt; Then why have I never seen the argument &quot;You shouldn't use $ because it
+&gt; doesn't indicate what the function does&quot; but you see hundreds -
+">
+
+[snip]
+
+That's what I meant when I said my biggest problem with it is naming
+functions &quot;$&quot; or &quot;$$&quot; or anything like that.  There's no way to
+discern what the functions do without digging them up.  Regardless of
+the technical merits, it's a stupid idea.
+</POST>
+<POST>
+<POSTER> Randy Webb &lt;HikksNotAtH...@aol.com&gt; </POSTER>
+<POSTDATE> 2007-09-27T02:17:00 </POSTDATE>
+David Mark said the following on 9/26/2007 11:42 PM:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sep 26, 11:28 pm, Randy Webb &lt;HikksNotAtH ... @aol.com&gt; wrote:
+&gt;&gt; Richard Cornford said the following on 9/26/2007 8:39 PM:
+
+&gt;&gt;&gt; Randy Webb wrote:
+&gt;&gt;&gt;&gt; Thomas 'PointedEars' Lahn wrote:
+&gt;&gt;&gt;&gt;&gt; Peter Michaux wrote:
+&gt;&gt;&gt;&gt;&gt;&gt; On Sep 26, 1:02 pm, David Mark wrote:
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; jQuery uses dollar sign variables, which I don't think
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; are allowed under the specification.
+&gt;&gt;&gt;&gt;&gt;&gt; Dollar signs are allowed. See sec 7.6. The spec then says
+&gt;&gt;&gt;&gt;&gt;&gt; &quot;The dollar sign is intended for use only in mechanically
+&gt;&gt;&gt;&gt;&gt;&gt; generated code.&quot;
+&gt;&gt;&gt;&gt;&gt; Which is exactly why jQuery should not.
+&gt;&gt;&gt;&gt; But there is no reason why it *can not* other than people's
+&gt;&gt;&gt;&gt; pedantic desires to whine about it.
+&gt;&gt;&gt; Or to take the same professional attitude toward javascript programming
+&gt;&gt;&gt; as any other language deserves.
+&gt;&gt; The &quot;Same professional attitude&quot;, according to who? And, why did the
+&gt;&gt; argument change from &quot;Because some ECMA.. says so&quot; to a &quot;professional
+&gt;&gt; attitude&quot;? And, your statement implies that anybody that doesn't follow
+&gt;&gt; ECMA - to the letter - isn't a &quot;professional&quot; and that is total hogwash.
+
+&gt;&gt;&gt;&gt; Had it been S that was
+&gt;&gt;&gt;&gt; used instead, people would shut up about it and move on.
+&gt;&gt;&gt;&gt; Except that if it had been S instead  of $ then people
+&gt;&gt;&gt;&gt; would be whining about how the name wasn't an indication of what it did.
+&gt;&gt;&gt; Yes they would, and with good reason.
+&gt;&gt; Then why have I never seen the argument &quot;You shouldn't use $ because it
+&gt;&gt; doesn't indicate what the function does&quot; but you see hundreds -
+
+&gt; [snip]
+
+&gt; That's what I meant when I said my biggest problem with it is naming
+&gt; functions &quot;$&quot; or &quot;$$&quot; or anything like that.  There's no way to
+&gt; discern what the functions do without digging them up.  Regardless of
+&gt; the technical merits, it's a stupid idea.
+">
+
+Have you perused the function names in the FAQ and the notes page
+associated with it? I didn't write the names, only inherited them. What
+does StrU do? No cheating and looking, just guess what it does. (It is
+in 4.6 though).
+
+--
+Randy
+Chance Favors The Prepared Mind
+comp.lang.javascript FAQ - http://jibbering.com/faq/index.html
+Javascript Best Practices - http://www.JavascriptToolbox.com/bestpractices/
+</POST>
+<POST>
+<POSTER> Douglas Crockford &lt;nos...@sbcglobal.net&gt; </POSTER>
+<POSTDATE> 2007-09-27T10:14:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Randy Webb wrote:
+&gt; Then why have I never seen the argument &quot;You shouldn't use $ because it
+&gt; doesn't indicate what the function does&quot; but you see hundreds - if not
+&gt; thousands - of posts about &quot;You shouldn't do that because some obscure
+&gt; paragraph in a theoretical document says you shouldn't&quot;?
+">
+
+The ECMAScript Programming Language Standard is the formal standard for the
+language. The standard gives clear advice on the intention of $ in identifier
+names.
+</POST>
+<POST>
+<POSTER> Peter Michaux &lt;petermich...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-27T11:54:00 </POSTDATE>
+On Sep 27, 7:14 am, Douglas Crockford &lt;nos ... @sbcglobal.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Randy Webb wrote:
+&gt; &gt; Then why have I never seen the argument &quot;You shouldn't use $ because it
+&gt; &gt; doesn't indicate what the function does&quot; but you see hundreds - if not
+&gt; &gt; thousands - of posts about &quot;You shouldn't do that because some obscure
+&gt; &gt; paragraph in a theoretical document says you shouldn't&quot;?
+
+&gt; The ECMAScript Programming Language Standard is the formal standard for the
+&gt; language. The standard gives clear advice on the intention of $ in identifier
+&gt; names.
+">
+
+Shouldn't a standard just say what the language can and cannot do?
+Imagine the C or Scheme specification suggesting use of indenting and
+parens/braces. &quot;Herding cats&quot; comes to mind. Suggesting conventions in
+a standard is likely to fail with at least some developers. Those
+developers haven't left the standard and so should not be derided. I
+think conventions are for the community to develop and adopt if they
+suit a particular development project.
+
+Peter
+</POST>
+<POST>
+<POSTER> David Mark &lt;dmark.cins...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-27T13:06:00 </POSTDATE>
+On Sep 27, 2:17 am, Randy Webb &lt;HikksNotAtH ... @aol.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; David Mark said the following on 9/26/2007 11:42 PM:
+
+&gt; &gt; On Sep 26, 11:28 pm, Randy Webb &lt;HikksNotAtH ... @aol.com&gt; wrote:
+&gt; &gt;&gt; Richard Cornford said the following on 9/26/2007 8:39 PM:
+
+&gt; &gt;&gt;&gt; Randy Webb wrote:
+&gt; &gt;&gt;&gt;&gt; Thomas 'PointedEars' Lahn wrote:
+&gt; &gt;&gt;&gt;&gt;&gt; Peter Michaux wrote:
+&gt; &gt;&gt;&gt;&gt;&gt;&gt; On Sep 26, 1:02 pm, David Mark wrote:
+&gt; &gt;&gt;&gt;&gt;&gt;&gt;&gt; jQuery uses dollar sign variables, which I don't think
+&gt; &gt;&gt;&gt;&gt;&gt;&gt;&gt; are allowed under the specification.
+&gt; &gt;&gt;&gt;&gt;&gt;&gt; Dollar signs are allowed. See sec 7.6. The spec then says
+&gt; &gt;&gt;&gt;&gt;&gt;&gt; &quot;The dollar sign is intended for use only in mechanically
+&gt; &gt;&gt;&gt;&gt;&gt;&gt; generated code.&quot;
+&gt; &gt;&gt;&gt;&gt;&gt; Which is exactly why jQuery should not.
+&gt; &gt;&gt;&gt;&gt; But there is no reason why it *can not* other than people's
+&gt; &gt;&gt;&gt;&gt; pedantic desires to whine about it.
+&gt; &gt;&gt;&gt; Or to take the same professional attitude toward javascript programming
+&gt; &gt;&gt;&gt; as any other language deserves.
+&gt; &gt;&gt; The &quot;Same professional attitude&quot;, according to who? And, why did the
+&gt; &gt;&gt; argument change from &quot;Because some ECMA.. says so&quot; to a &quot;professional
+&gt; &gt;&gt; attitude&quot;? And, your statement implies that anybody that doesn't follow
+&gt; &gt;&gt; ECMA - to the letter - isn't a &quot;professional&quot; and that is total hogwash.
+
+&gt; &gt;&gt;&gt;&gt; Had it been S that was
+&gt; &gt;&gt;&gt;&gt; used instead, people would shut up about it and move on.
+&gt; &gt;&gt;&gt;&gt; Except that if it had been S instead  of $ then people
+&gt; &gt;&gt;&gt;&gt; would be whining about how the name wasn't an indication of what it did.
+&gt; &gt;&gt;&gt; Yes they would, and with good reason.
+&gt; &gt;&gt; Then why have I never seen the argument &quot;You shouldn't use $ because it
+&gt; &gt;&gt; doesn't indicate what the function does&quot; but you see hundreds -
+
+&gt; &gt; [snip]
+
+&gt; &gt; That's what I meant when I said my biggest problem with it is naming
+&gt; &gt; functions &quot;$&quot; or &quot;$$&quot; or anything like that.  There's no way to
+&gt; &gt; discern what the functions do without digging them up.  Regardless of
+&gt; &gt; the technical merits, it's a stupid idea.
+
+&gt; Have you perused the function names in the FAQ and the notes page
+&gt; associated with it? I didn't write the names, only inherited them. What
+&gt; does StrU do? No cheating and looking, just guess what it does. (It is
+&gt; in 4.6 though).
+">
+
+I have no idea what StrU does.  Clearly it needs a better name.  A
+guess?  It converts an unsigned integer to a string.
+</POST>
+<POST>
+<POSTER> Randy Webb &lt;HikksNotAtH...@aol.com&gt; </POSTER>
+<POSTDATE> 2007-09-27T14:39:00 </POSTDATE>
+Douglas Crockford said the following on 9/27/2007 10:14 AM:
+
+<QUOTE PREVIOUSPOST="
+&gt; Randy Webb wrote:
+&gt;&gt; Then why have I never seen the argument &quot;You shouldn't use $ because
+&gt;&gt; it doesn't indicate what the function does&quot; but you see hundreds - if
+&gt;&gt; not thousands - of posts about &quot;You shouldn't do that because some
+&gt;&gt; obscure paragraph in a theoretical document says you shouldn't&quot;?
+
+&gt; The ECMAScript Programming Language Standard is the formal standard for
+&gt; the language.
+">
+
+The only problem with that is that it was written after the fact to try
+to describe what was already in place.
+
+<QUOTE PREVIOUSPOST="
+&gt; The standard gives clear advice on the intention of $ in identifier names.
+">
+
+Does it also give clear advice on how to name other identifiers? Whoever
+decided to put $ in there and nothing else screwed it up.
+
+--
+Randy
+Chance Favors The Prepared Mind
+comp.lang.javascript FAQ - http://jibbering.com/faq/index.html
+Javascript Best Practices - http://www.JavascriptToolbox.com/bestpractices/
+</POST>
+<POST>
+<POSTER> John G Harris &lt;j...@nospam.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2007-09-27T15:37:00 </POSTDATE>
+On Wed, 26 Sep 2007 at 20:21:44, in comp.lang.javascript, Randy Webb
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;Thomas 'PointedEars' Lahn said the following on 9/26/2007 5:40 PM:
+&gt;&gt; Peter Michaux wrote:
+&gt;&gt;&gt; On Sep 26, 1:02 pm, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+&gt;&gt;&gt;&gt; jQuery uses dollar sign variables, which I don't think are allowed
+&gt;&gt;&gt;&gt; under the specification.
+&gt;&gt;&gt; Dollar signs are allowed. See sec 7.6. The spec then says &quot;The dollar
+&gt;&gt;&gt; sign is intended for use only in mechanically generated code.&quot;
+&gt;&gt;  Which is exactly why jQuery should not.
+
+&gt;But there is no reason why it *can not* other than people's pedantic
+&gt;desires to whine about it. Had it been S that was used instead, people
+&gt;would shut up about it and move on. Except that if it had been S
+&gt;instead of $ then people would be whining about how the name wasn't an
+&gt;indication of what it did.
+">
+
+But it's already happened :
+
+Thou shalt not start a global name with &quot;MM_&quot;.
+
+Because otherwise there will come a day when you get an obscure bug that
+will drive you crazy.
+
+There's a similar rule in C++ about names starting with leading
+underlines. The difference is that the rule has been biting people for
+years, so competent programmers don't dismiss it as pedantic standards
+mania.
+
+John
+--
+John Harris
+</POST>
+<POST>
+<POSTER> Randy Webb &lt;HikksNotAtH...@aol.com&gt; </POSTER>
+<POSTDATE> 2007-09-27T16:31:00 </POSTDATE>
+John G Harris said the following on 9/27/2007 3:37 PM:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Wed, 26 Sep 2007 at 20:21:44, in comp.lang.javascript, Randy Webb
+&gt; wrote:
+&gt;&gt; Thomas 'PointedEars' Lahn said the following on 9/26/2007 5:40 PM:
+&gt;&gt;&gt; Peter Michaux wrote:
+&gt;&gt;&gt;&gt; On Sep 26, 1:02 pm, David Mark &lt;dmark.cins ... @gmail.com&gt; wrote:
+&gt;&gt;&gt;&gt;&gt; jQuery uses dollar sign variables, which I don't think are allowed
+&gt;&gt;&gt;&gt;&gt; under the specification.
+&gt;&gt;&gt;&gt; Dollar signs are allowed. See sec 7.6. The spec then says &quot;The dollar
+&gt;&gt;&gt;&gt; sign is intended for use only in mechanically generated code.&quot;
+&gt;&gt;&gt;  Which is exactly why jQuery should not.
+&gt;&gt; But there is no reason why it *can not* other than people's pedantic
+&gt;&gt; desires to whine about it. Had it been S that was used instead, people
+&gt;&gt; would shut up about it and move on. Except that if it had been S
+&gt;&gt; instead of $ then people would be whining about how the name wasn't an
+&gt;&gt; indication of what it did.
+
+&gt; But it's already happened :
+
+&gt;   Thou shalt not start a global name with &quot;MM_&quot;.
+">
+
+Or __, ever heard of __doPostBack and the others? All of which are
+naming clashes.
+
+<QUOTE PREVIOUSPOST="
+&gt; Because otherwise there will come a day when you get an obscure bug that
+&gt; will drive you crazy.
+">
+
+That is true with any prefix though. Not just $ or MM or __
+
+<QUOTE PREVIOUSPOST="
+&gt; There's a similar rule in C++ about names starting with leading
+&gt; underlines. The difference is that the rule has been biting people for
+&gt; years, so competent programmers don't dismiss it as pedantic standards
+&gt; mania.
+">
+
+Nice to know that about C++ but I don't see the relationship between C++
+and/or Java (that Richard brought into it).
+
+--
+Randy
+Chance Favors The Prepared Mind
+comp.lang.javascript FAQ - http://jibbering.com/faq/index.html
+Javascript Best Practices - http://www.JavascriptToolbox.com/bestpractices/
+</POST>
+<POST>
+<POSTER> &quot;Richard Cornford&quot; &lt;Rich...@litotes.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2007-09-30T16:36:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Peter Michaux wrote:
+&gt; On Sep 27, 7:14 am, Douglas Crockford wrote:
+&gt;&gt; Randy Webb wrote:
+&gt;&gt;&gt; Then why have I never seen the argument &quot;You shouldn't use $
+&gt;&gt;&gt; because it doesn't indicate what the function does&quot; but you
+&gt;&gt;&gt; see hundreds - if not thousands - of posts about &quot;You
+&gt;&gt;&gt; shouldn't do that because some obscure paragraph in a
+&gt;&gt;&gt; theoretical document says you shouldn't&quot;?
+
+&gt;&gt; The ECMAScript Programming Language Standard is the formal
+&gt;&gt; standard for the language. The standard gives clear advice
+&gt;&gt; on the intention of $ in identifier names.
+
+&gt; Shouldn't a standard just say what the language can and
+&gt; cannot do?
+">
+
+Failing to state that would result in a poor standard. It would be
+unrealistic to expect a standard to never do any more.
+
+<QUOTE PREVIOUSPOST="
+&gt; Imagine the C or Scheme specification suggesting use of
+&gt; indenting and parens/braces. &quot;Herding cats&quot; comes to mind.
+">
+
+If such a convention was proposed in their respective specification you
+may well find programmers of those languages indenting their code.
+
+<QUOTE PREVIOUSPOST="
+&gt; Suggesting conventions in a standard is likely to fail
+&gt; with at least some developers.
+">
+
+Everything is likely to fail with at least some 'developers', but that
+may say more about those 'developers' than anything else.
+
+<QUOTE PREVIOUSPOST="
+&gt; Those developers haven't left the standard and so should
+&gt; not be derided.
+">
+
+In our case those developers have 'left the standard' and should be
+derided. There is no question about what the standard says.
+
+<QUOTE PREVIOUSPOST="
+&gt; I think conventions are for the community to develop and
+&gt; adopt if they suit a particular development project.
+">
+
+You are not understanding that there are things that cannot be expressed
+in the grammar or syntax of a language but may still be seen as
+important to the creators of those languages. The way you deal with that
+is to include a clear statement of intent in the language's
+specification, so that programmers can avoid taking actions that would
+undermine that intention. That was a completely successful strategy with
+Java, but unfortunately in javascript too many individuals who don't
+have a clue about what they are doing are allowed to have too much
+influence.
+
+Richard.
+</POST>
+<POST>
+<POSTER> &quot;Richard Cornford&quot; &lt;Rich...@litotes.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2007-09-30T16:36:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Randy Webb wrote:
+&gt; Richard Cornford said the following on 9/26/2007 8:39 PM:
+&gt;&gt; Randy Webb wrote:
+&gt;&gt;&gt; Thomas 'PointedEars' Lahn wrote:
+&gt;&gt;&gt;&gt; Peter Michaux wrote:
+&gt;&gt;&gt;&gt;&gt; On Sep 26, 1:02 pm, David Mark wrote:
+&gt;&gt;&gt;&gt;&gt;&gt; jQuery uses dollar sign variables, which I don't think
+&gt;&gt;&gt;&gt;&gt;&gt; are allowed under the specification.
+&gt;&gt;&gt;&gt;&gt; Dollar signs are allowed. See sec 7.6. The spec then says
+&gt;&gt;&gt;&gt;&gt; &quot;The dollar sign is intended for use only in mechanically
+&gt;&gt;&gt;&gt;&gt; generated code.&quot;
+
+&gt;&gt;&gt;&gt; Which is exactly why jQuery should not.
+
+&gt;&gt;&gt; But there is no reason why it *can not* other than people's
+&gt;&gt;&gt; pedantic desires to whine about it.
+
+&gt;&gt; Or to take the same professional attitude toward javascript
+&gt;&gt; programming as any other language deserves.
+
+&gt; The &quot;Same professional attitude&quot;, according to who?
+">
+
+Apparently according to professionals using every other language with a
+similar specification defined convention.
+
+<QUOTE PREVIOUSPOST="
+&gt; And, why did the argument change from &quot;Because some
+&gt; ECMA.. says so&quot; to a &quot;professional attitude&quot;?
+">
+
+That is not a change. It remains the case that Java programmers do not
+break the similar convention that appears in their language
+specification, and do not even see a reason for debating that choice.
+
+<QUOTE PREVIOUSPOST="
+&gt; And, your statement implies that anybody that doesn't
+&gt; follow ECMA - to the letter - isn't a &quot;professional&quot; and
+&gt; that is total hogwash.
+">
+
+In the sense that ECMA 262 can be 'followed to the letter' by a
+programmer then not doing so would be unprofessional. For any individual
+programming javascript there is not a great deal in that document that
+can be taken as constituting instructions to do, or not do, anything.
+Mostly the document just states how javascript can be expected to
+behave.
+
+An example of where ECMA 262 may be taken as providing instructions for
+the programmer might be where it states that any attempt to call the -
+eval - function indirectly may result in an EvalError, at the discretion
+of the implementation. The implication of that statement is that unless
+someone is writing for a know set of implementations/versions (where
+EvalErrors have been observed not to be thrown) or an implementation
+that makes an explicit statement that no such error ever will be thrown,
+then authoring with the assumption that no EvalError will ever be thrown
+when calling - eval - indirectly (now or in future implementation
+versions) would be an obvious mistake and so unprofessional.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; Had it been S that was used instead, people would shut
+&gt;&gt;&gt; up about it and move on. Except that if it had been S
+&gt;&gt;&gt; instead  of $ then people would be whining about how the
+&gt;&gt;&gt; name wasn't an indication of what it did.
+
+&gt;&gt; Yes they would, and with good reason.
+
+&gt; Then why have I never seen the argument &quot;You shouldn't use $
+&gt; because it doesn't indicate what the function does&quot; but you
+&gt; see hundreds - if not thousands - of posts about &quot;You shouldn't
+&gt; do that because some obscure paragraph in a theoretical document
+&gt; says you shouldn't&quot;?
+">
+
+If you haven't seen that argument it is because you have not been paying
+attention. I have made that point on numerous occasions, and if you go
+back to the very first time we discussed this subject you will find that
+it was Lasse Reichstein Nielsen's primary reson for rejecting the use of
+the - $ - symbol in javascript.
+
+Richard.
+</POST>
+<POST>
+<POSTER> Randy Webb &lt;HikksNotAtH...@aol.com&gt; </POSTER>
+<POSTDATE> 2007-10-03T12:59:00 </POSTDATE>
+Richard Cornford said the following on 9/30/2007 4:36 PM:
+
+<QUOTE PREVIOUSPOST="
+&gt; Randy Webb wrote:
+&gt;&gt; Richard Cornford said the following on 9/26/2007 8:39 PM:
+&gt;&gt;&gt; Randy Webb wrote:
+&gt;&gt;&gt;&gt; Thomas 'PointedEars' Lahn wrote:
+&gt;&gt;&gt;&gt;&gt; Peter Michaux wrote:
+&gt;&gt;&gt;&gt;&gt;&gt; On Sep 26, 1:02 pm, David Mark wrote:
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; jQuery uses dollar sign variables, which I don't think
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; are allowed under the specification.
+&gt;&gt;&gt;&gt;&gt;&gt; Dollar signs are allowed. See sec 7.6. The spec then says
+&gt;&gt;&gt;&gt;&gt;&gt; &quot;The dollar sign is intended for use only in mechanically
+&gt;&gt;&gt;&gt;&gt;&gt; generated code.&quot;
+
+&gt;&gt;&gt;&gt;&gt; Which is exactly why jQuery should not.
+
+&gt;&gt;&gt;&gt; But there is no reason why it *can not* other than people's
+&gt;&gt;&gt;&gt; pedantic desires to whine about it.
+
+&gt;&gt;&gt; Or to take the same professional attitude toward javascript
+&gt;&gt;&gt; programming as any other language deserves.
+
+&gt;&gt; The &quot;Same professional attitude&quot;, according to who?
+
+&gt; Apparently according to professionals using every other language with a
+&gt; similar specification defined convention.
+">
+
+Does that convention extend to function names beginning with uppercase
+letters? You should know where that is headed.
+
+&lt;snip&gt;
+
+I snipped the rest of it because I don't care to have this drawn out
+conversation again. It has been had in the past and people can search it
+out and make up there own minds.
+
+Either way, with regards to $. The only place in ECMAScript that I can
+find that it refers to $ is this:
+
+Section 7.6 Identifiers:
+&lt;quote&gt;
+This standard specifies one departure from the grammar given in the
+Unicode standard: The dollar sign ($) and the underscore (_) are
+permitted anywhere in an identifier. The dollar sign is intended for use
+only in mechanically generated code.
+&lt;/quote&gt;
+
+It doesn't say &quot;limited&quot; or &quot;required&quot;. It simply says &quot;This is what it
+is *intended* for&quot;. I doubt very seriously that 99% of what is done with
+scripting was it's &quot;intended use&quot;.
+
+Either way, it doesn't matter what ECMA had to say about it, people are
+still going to use it until some UA comes out that breaks it. And no
+amount of discussing it in comp.lang.javascript will ever change that.
+
+--
+Randy
+Chance Favors The Prepared Mind
+comp.lang.javascript FAQ - http://jibbering.com/faq/index.html
+Javascript Best Practices - http://www.JavascriptToolbox.com/bestpractices/
+</POST>
+<POST>
+<POSTER> &quot;dhtmlkitc...@gmail.com&quot; &lt;dhtmlkitc...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-05T05:13:00 </POSTDATE>
+On Oct 3, 9:59 am, Randy Webb &lt;HikksNotAtH ... @aol.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Richard Cornford said the following on 9/30/2007 4:36 PM:
+
+&gt; &gt; Randy Webb wrote:
+&gt; &gt;&gt; Richard Cornford said the following on 9/26/2007 8:39 PM:
+&gt; &gt;&gt;&gt; Randy Webb wrote:
+&gt; &gt;&gt;&gt;&gt; Thomas 'PointedEars' Lahn wrote:
+&gt; &gt;&gt;&gt;&gt;&gt; Peter Michaux wrote:
+&gt; &gt;&gt;&gt;&gt;&gt;&gt; On Sep 26, 1:02 pm, David Mark wrote:
+&gt; &gt;&gt;&gt;&gt;&gt;&gt;&gt; jQuery uses dollar sign variables, which I don't think
+&gt; &gt;&gt;&gt;&gt;&gt;&gt;&gt; are allowed under the specification.
+&gt; &gt;&gt;&gt;&gt;&gt;&gt; Dollar signs are allowed. See sec 7.6. The spec then says
+&gt; &gt;&gt;&gt;&gt;&gt;&gt; &quot;The dollar sign is intended for use only in mechanically
+&gt; &gt;&gt;&gt;&gt;&gt;&gt; generated code.&quot;
+
+&gt; &gt;&gt;&gt;&gt;&gt; Which is exactly why jQuery should not.
+
+&gt; &gt;&gt;&gt;&gt; But there is no reason why it *can not* other than people's
+&gt; &gt;&gt;&gt;&gt; pedantic desires to whine about it.
+
+&gt; &gt;&gt;&gt; Or to take the same professional attitude toward javascript
+&gt; &gt;&gt;&gt; programming as any other language deserves.
+
+&gt; &gt;&gt; The &quot;Same professional attitude&quot;, according to who?
+
+&gt; &gt; Apparently according to professionals using every other language with a
+&gt; &gt; similar specification defined convention.
+
+&gt; Does that convention extend to function names beginning with uppercase
+&gt; letters? You should know where that is headed.
+
+&gt; &lt;snip&gt;
+
+&gt; I snipped the rest of it because I don't care to have this drawn out
+&gt; conversation again. It has been had in the past and people can search it
+&gt; out and make up there own minds.
+
+&gt; Either way, with regards to $. The only place in ECMAScript that I can
+&gt; find that it refers to $ is this:
+
+&gt; Section 7.6 Identifiers:
+&gt; &lt;quote&gt;
+&gt; This standard specifies one departure from the grammar given in the
+&gt; Unicode standard: The dollar sign ($) and the underscore (_) are
+&gt; permitted anywhere in an identifier. The dollar sign is intended for use
+&gt; only in mechanically generated code.
+&gt; &lt;/quote&gt;
+
+&gt; It doesn't say &quot;limited&quot; or &quot;required&quot;. It simply says &quot;This is what it
+&gt; is *intended* for&quot;. I doubt very seriously that 99% of what is done with
+&gt; scripting was it's &quot;intended use&quot;.
+
+&gt; Either way, it doesn't matter what ECMA had to say about it, people are
+&gt; still going to use it until some UA comes out that breaks it. And no
+&gt; amount of discussing it in comp.lang.javascript will ever change that.
+">
+
+Things that might seem not to matter:
+{OOA&amp;D, Testing, Variable names, comments, code formatting
+conventions, process}
+
+These things are just not that appealing to people, generally. This is
+especially true for presentation layer development. Why not look at
+what toolkit vendors do? They're the rock stars, right?
+
+Yahoo still employs code freezes, status reports, and last time I was
+there, my manager would not let me check ANY tests into CVS (they
+still don't use SVN). They were calling this Scrum.
+
+Little things like &quot;don't use post-increment operator&quot; are easy for
+people to grasp. Free advice that comes with cookies and refreshments.
+Serotonin levels go up with the increased blood sugar, jokes are told,
+examples are shown (with much hand waving), and people are happy while
+not working.
+
+I do wonder though: Why $? I would like to know, out of curiosity, why
+did jQuery use $? There is a reason the variable was used; I just
+don't know what it is.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; --
+&gt; Randy
+&gt; Chance Favors The Prepared Mind
+&gt; comp.lang.javascript FAQ - http://jibbering.com/faq/index.html
+&gt; Javascript Best Practices - http://www.JavascriptToolbox.com/bestpractices/
+">
+</POST>
+<POST>
+<POSTER> The Natural Philosopher &lt;a...@b.c&gt; </POSTER>
+<POSTDATE> 2007-10-05T06:04:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+dhtmlkitc ... @gmail.com wrote:
+&gt; On Oct 3, 9:59 am, Randy Webb &lt;HikksNotAtH ... @aol.com&gt; wrote:
+&gt;&gt; Richard Cornford said the following on 9/30/2007 4:36 PM:
+
+&gt;&gt;&gt; Randy Webb wrote:
+&gt;&gt; It doesn't say &quot;limited&quot; or &quot;required&quot;. It simply says &quot;This is what it
+&gt;&gt; is *intended* for&quot;. I doubt very seriously that 99% of what is done with
+&gt;&gt; scripting was it's &quot;intended use&quot;.
+
+&gt;&gt; Either way, it doesn't matter what ECMA had to say about it, people are
+&gt;&gt; still going to use it until some UA comes out that breaks it. And no
+&gt;&gt; amount of discussing it in comp.lang.javascript will ever change that.
+
+&gt; Things that might seem not to matter:
+&gt; {OOA&amp;D, Testing, Variable names, comments, code formatting
+&gt; conventions, process}
+
+&gt; These things are just not that appealing to people, generally. This is
+&gt; especially true for presentation layer development. Why not look at
+&gt; what toolkit vendors do? They're the rock stars, right?
+
+&gt; Yahoo still employs code freezes, status reports, and last time I was
+&gt; there, my manager would not let me check ANY tests into CVS (they
+&gt; still don't use SVN). They were calling this Scrum.
+
+&gt; Little things like &quot;don't use post-increment operator&quot; are easy for
+&gt; people to grasp. Free advice that comes with cookies and refreshments.
+&gt; Serotonin levels go up with the increased blood sugar, jokes are told,
+&gt; examples are shown (with much hand waving), and people are happy while
+&gt; not working.
+
+&gt; I do wonder though: Why $? I would like to know, out of curiosity, why
+&gt; did jQuery use $? There is a reason the variable was used; I just
+&gt; don't know what it is.
+">
+
+I would say ha about 90% of &quot;standards&quot; s not so much 'best practice' as
+just plain simple 'do it this ways so that people coming upon you
+unexpectedly will know what's going on'
+
+E.g. we all drive on one side of the road, but which side is open to debate.
+
+Standards are there mostly for people working together, to enforce a
+common style, so everybody knows how things should be done.
+
+Its a mark of the petty jobsworth to elect such standards into moral Laws.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; --
+&gt;&gt; Randy
+&gt;&gt; Chance Favors The Prepared Mind
+&gt;&gt; comp.lang.javascript FAQ - http://jibbering.com/faq/index.html
+&gt;&gt; Javascript Best Practices - http://www.JavascriptToolbox.com/bestpractices/
+">
+</POST>
+<POST>
+<POSTER> Thomas &#39;PointedEars&#39; Lahn &lt;PointedE...@web.de&gt; </POSTER>
+<POSTDATE> 2007-10-05T09:14:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+dhtmlkitc ... @gmail.com wrote:
+&gt; I do wonder though: Why $? I would like to know, out of curiosity, why
+&gt; did jQuery use $? There is a reason the variable was used; I just
+&gt; don't know what it is.
+">
+
+Cluelessness.  (That was easy.)
+
+PointedEars
+--
+&quot;Use any version of Microsoft Frontpage to create your site. (This won't
+prevent people from viewing your source, but no one will want to steal it.)&quot;
+-- from &lt; http://www.vortex-webdesign.com/help/hidesource.htm &gt;
+</POST>
+<POST>
+<POSTER> Randy Webb &lt;HikksNotAtH...@aol.com&gt; </POSTER>
+<POSTDATE> 2007-10-05T19:03:00 </POSTDATE>
+Thomas 'PointedEars' Lahn said the following on 10/5/2007 9:14 AM:
+
+<QUOTE PREVIOUSPOST="
+&gt; dhtmlkitc ... @gmail.com wrote:
+&gt;&gt; I do wonder though: Why $? I would like to know, out of curiosity, why
+&gt;&gt; did jQuery use $? There is a reason the variable was used; I just
+&gt;&gt; don't know what it is.
+
+&gt; Cluelessness.  (That was easy.)
+">
+
+And it is debatable who is the one possessing the &quot;Cluelessness&quot;.
+
+Why it was used is trivial to figure out.
+
+P.S. YSCIB
+
+--
+Randy
+Chance Favors The Prepared Mind
+comp.lang.javascript FAQ - http://jibbering.com/faq/index.html
+Javascript Best Practices - http://www.JavascriptToolbox.com/bestpractices/
+</POST>
+<POST>
+<POSTER> Thomas &#39;PointedEars&#39; Lahn &lt;PointedE...@web.de&gt; </POSTER>
+<POSTDATE> 2007-10-05T19:37:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Randy Webb wrote:
+&gt; Thomas 'PointedEars' Lahn said the following on 10/5/2007 9:14 AM:
+&gt;&gt; dhtmlkitc ... @gmail.com wrote:
+&gt;&gt;&gt; I do wonder though: Why $? I would like to know, out of curiosity, why
+&gt;&gt;&gt; did jQuery use $? There is a reason the variable was used; I just
+&gt;&gt;&gt; don't know what it is.
+&gt;&gt; Cluelessness.  (That was easy.)
+
+&gt; And it is debatable who is the one possessing the &quot;Cluelessness&quot;.
+">
+
+Not understood.
+
+<QUOTE PREVIOUSPOST="
+&gt; Why it was used is trivial to figure out.
+">
+
+Then you can tell it for sure, yes?
+
+<QUOTE PREVIOUSPOST="
+&gt; P.S. YSCIB
+">
+
+-v
+
+PointedEars
+--
+var bugRiddenCrashPronePieceOfJunk = (
+navigator.userAgent.indexOf('MSIE 5') != -1
+&amp;&amp; navigator.userAgent.indexOf('Mac') != -1
+)  // Plone, register_function.js:16
+</POST>
+<POST>
+<POSTER> Randy Webb &lt;HikksNotAtH...@aol.com&gt; </POSTER>
+<POSTDATE> 2007-10-06T01:19:00 </POSTDATE>
+Thomas 'PointedEars' Lahn said the following on 10/5/2007 7:37 PM:
+
+<QUOTE PREVIOUSPOST="
+&gt; Randy Webb wrote:
+&gt;&gt; Thomas 'PointedEars' Lahn said the following on 10/5/2007 9:14 AM:
+&gt;&gt;&gt; dhtmlkitc ... @gmail.com wrote:
+&gt;&gt;&gt;&gt; I do wonder though: Why $? I would like to know, out of curiosity, why
+&gt;&gt;&gt;&gt; did jQuery use $? There is a reason the variable was used; I just
+&gt;&gt;&gt;&gt; don't know what it is.
+&gt;&gt;&gt; Cluelessness.  (That was easy.)
+&gt;&gt; And it is debatable who is the one possessing the &quot;Cluelessness&quot;.
+
+&gt; Not understood.
+">
+
+Try enabling the spell checker in Thunderbird. It might shed some light
+on it.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Why it was used is trivial to figure out.
+
+&gt; Then you can tell it for sure, yes?
+">
+
+Sure I can. It was chosen because of the uniqueness of it and the lack
+of use of it on the web. What better way to pick a simple single
+character identifier than one that wasn't in use?
+
+--
+Randy
+Chance Favors The Prepared Mind
+comp.lang.javascript FAQ - http://jibbering.com/faq/index.html
+Javascript Best Practices - http://www.JavascriptToolbox.com/bestpractices/
+</POST>
+<POST>
+<POSTER> Thomas &#39;PointedEars&#39; Lahn &lt;PointedE...@web.de&gt; </POSTER>
+<POSTDATE> 2007-10-06T07:53:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Randy Webb wrote:
+&gt; Thomas 'PointedEars' Lahn said the following on 10/5/2007 7:37 PM:
+&gt;&gt; Randy Webb wrote:
+&gt;&gt;&gt; Thomas 'PointedEars' Lahn said the following on 10/5/2007 9:14 AM:
+&gt;&gt;&gt;&gt; dhtmlkitc ... @gmail.com wrote:
+&gt;&gt;&gt;&gt;&gt; I do wonder though: Why $? I would like to know, out of curiosity, why
+&gt;&gt;&gt;&gt;&gt; did jQuery use $? There is a reason the variable was used; I just
+&gt;&gt;&gt;&gt;&gt; don't know what it is.
+&gt;&gt;&gt;&gt; Cluelessness.  (That was easy.)
+&gt;&gt;&gt; And it is debatable who is the one possessing the &quot;Cluelessness&quot;.
+&gt;&gt; Not understood.
+
+&gt; Try enabling the spell checker in Thunderbird. It might shed some light
+&gt; on it.
+">
+
+It merely shows that you don't know the word and that it isn't in the
+default dictionary of Thunderbird's spell checker.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; Why it was used is trivial to figure out.
+&gt;&gt; Then you can tell it for sure, yes?
+
+&gt; Sure I can.
+">
+
+You can *not*, you are not the author.
+
+<QUOTE PREVIOUSPOST="
+&gt; It was chosen because of the uniqueness of it and the lack
+&gt; of use of it on the web.
+">
+
+Logical fallacy: wishful thinking.  You can know neither whether or not it
+was used on the Web at the time the library was conceived, nor can you know
+that supposed uniqueness or supposed no-use at the time was the reason for
+choosing it.
+
+<QUOTE PREVIOUSPOST="
+&gt; What better way to pick a simple single character identifier than one
+&gt; that wasn't in use?
+">
+
+Logical fallacy: non sequitur.
+
+PointedEars
+--
+Prototype.js was written by people who don't know javascript for people
+who don't know javascript. People who don't know javascript are not
+the best source of advice on designing systems that use javascript.
+-- Richard Cornford, cljs, &lt;f806at$ail$1$8300d ... @news.demon.co.uk&gt;
+</POST>
+<POST>
+<POSTER> Randy Webb &lt;HikksNotAtH...@aol.com&gt; </POSTER>
+<POSTDATE> 2007-10-06T15:22:00 </POSTDATE>
+Thomas 'PointedEars' Lahn said the following on 10/6/2007 7:53 AM:
+
+<QUOTE PREVIOUSPOST="
+&gt; Randy Webb wrote:
+&gt;&gt; Thomas 'PointedEars' Lahn said the following on 10/5/2007 7:37 PM:
+&gt;&gt;&gt; Randy Webb wrote:
+&gt;&gt;&gt;&gt; Thomas 'PointedEars' Lahn said the following on 10/5/2007 9:14 AM:
+&gt;&gt;&gt;&gt;&gt; dhtmlkitc ... @gmail.com wrote:
+&gt;&gt;&gt;&gt;&gt;&gt; I do wonder though: Why $? I would like to know, out of curiosity, why
+&gt;&gt;&gt;&gt;&gt;&gt; did jQuery use $? There is a reason the variable was used; I just
+&gt;&gt;&gt;&gt;&gt;&gt; don't know what it is.
+&gt;&gt;&gt;&gt;&gt; Cluelessness.  (That was easy.)
+&gt;&gt;&gt;&gt; And it is debatable who is the one possessing the &quot;Cluelessness&quot;.
+&gt;&gt;&gt; Not understood.
+&gt;&gt; Try enabling the spell checker in Thunderbird. It might shed some light
+&gt;&gt; on it.
+
+&gt; It merely shows that you don't know the word and that it isn't in the
+&gt; default dictionary of Thunderbird's spell checker.
+">
+
+&lt;eyeroll&gt; You still don't get it. I didn't expect you to though.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt;&gt; Why it was used is trivial to figure out.
+&gt;&gt;&gt; Then you can tell it for sure, yes?
+&gt;&gt; Sure I can.
+
+&gt; You can *not*, you are not the author.
+">
+
+You need to get out into the real world more often Thomas.
+
+--
+Randy
+Chance Favors The Prepared Mind
+comp.lang.javascript FAQ - http://jibbering.com/faq/index.html
+Javascript Best Practices - http://www.JavascriptToolbox.com/bestpractices/
+</POST>
+<POST>
+<POSTER> &quot;dhtmlkitc...@gmail.com&quot; &lt;dhtmlkitc...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-13T02:30:00 </POSTDATE>
+On Sep 26, 1:29 am, &quot;Richard Cornford&quot; &lt;Rich ... @litotes.demon.co.uk&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; David Mark wrote:
+&gt; &gt; I've got a collection of functions that accept a function
+&gt; &gt; or object (paired with a method name) as a callback.
+
+&gt; &gt; For the longest time I have relied on this test.
+
+&gt; &gt; (typeof cb == 'function')
+
+&gt; &gt; This should work as well, but I am not sure how well it
+&gt; &gt; degrades in older browsers.
+
+&gt; The typeof operator is consistent when its subjects are not host
+&gt; objects, and has been around since JavaScript 1.1, so well pre-dating
+&gt; the 4th generation browsers.
+
+&gt; &gt; I think there are issues with functions created in
+&gt; &gt; another context (eg frame) as well.
+
+&gt; &gt; (cb instanceof Function)
+
+&gt; Yes, the a Function constructor exists for each frame and each has
+&gt; unique identity. That is also true of the Array constructor.
+
+&gt; &gt; Then I came across this.
+
+&gt; &gt; (!!fn &amp;&amp; typeof fn != &quot;string&quot; &amp;&amp; !fn.nodeName &amp;&amp;
+&gt; &gt; fn.constructor != Array &amp;&amp; /function/i.test( fn + &quot;&quot; ))
+
+&gt; &gt; I'm sure it is wrong
+
+&gt; That would depend on what you considered correct. It looks like the
+&gt; subject of the test is expected to be any of a javascript function
+&gt; (unwisely tested), a siring primitive, a  DOM element and Array or a
+&gt; value with falseness. Getting into a position where it is necessary to
+&gt; make such a test betrays very poor code design.
+">
+
+I think you meant &quot;portrays&quot; not &quot;betrays&quot;. Am I right?
+
+That analysis would be right if they'd used ||, but they used &amp;&amp;.
+
+I provided analysis of the problem on my site. The problem is that
+this function returns true for objects (of any type) that contain
+&quot;function&quot; in the toString result.
+(!!fn )....................falses are out.
+(typeof fn != &quot;string&quot;)....string values are out
+(!fn.nodeName).............things with a truthy nodeName are out.
+(fn.constructor != Array)..Arrays in same frame are out.
+(/function/i.test( fn + &quot;&quot; ).anything else left can get through, it
+just has to say &quot;function&quot;.
+
+It's not safe, but it's indicative of the problem of typechecking in
+js.
+
+Dojo has similar stuff. They claim that some built-in functions don't
+return &quot;function&quot; for typeof. I have been unable to prove that
+statement true.
+
+http://dhtmlkitchen.com/?category=/JavaScript/&amp;date;=2007/10/10/&amp;entry...;
+
+<QUOTE PREVIOUSPOST="
+&gt; There are no circumstances under which a function object would result
+&gt; in - typeof fn != 'string' - being true
+">
+
+No. typeof fn != 'string' should *always* be true.
+
+or its having a - nodeName -
+
+<QUOTE PREVIOUSPOST="
+&gt; property or a constructor property that was a reference to the frame's
+&gt; Array constructor (unless they had been explicitly added).
+">
+
+You're confused by thinking ||. The function uses &amp;&amp;
+
+Anyway, typechecking is an issue and this post made me think about
+that, which led to the blog entry.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; as it is from jQuery, but it makes me wonder if
+&gt; &gt; there are bugs in older browsers that will mislead
+&gt; &gt; my test.
+
+&gt; What makes you think that jQuery, or any of its like, was written with
+&gt; any interest in, or knowledge of, 'older browsers'?
+
+&gt; &gt; As an aside, I was looking at the jQuery source as some
+&gt; &gt; browser sniffer I was arguing with on a blog cited it as
+&gt; &gt; part of an &quot;everybody is doing it&quot; argument.
+
+&gt; If that was a valid argument we would not have seen the virtual
+&gt; disappearance of people using - eval - to reference object properties
+&gt; with constructed dot notation property accessors. There was a time when
+&gt; &quot;everybody&quot; was doing that, but most have now learnt better.
+
+&gt; &gt; I had glanced at it previously and dismissed
+&gt; &gt; it based on its resemblance to Prototype.  Upon closer
+&gt; &gt; inspection, it makes Prototype look inspired.  Suffice
+&gt; &gt; to say that anybody who recommends it hasn't read the
+&gt; &gt; code.  It's a horror show.
+">
+
+You know, it might not be very good code, but I think John might be
+creative. He's interested in these things, so improvement is
+inevitable.
+
+<QUOTE PREVIOUSPOST="
+&gt; The code above speaks of poor design, but at least it is ECMA 262
+&gt; conforming, so that is one up on Prototype.js.
+">
+
+What is not conforming in Prototype? I haven't done a thorough
+analysis on it.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; Richard.
+">
+</POST>
+<POST>
+<POSTER> Thomas &#39;PointedEars&#39; Lahn &lt;PointedE...@web.de&gt; </POSTER>
+<POSTDATE> 2007-10-13T05:41:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+dhtmlkitc ... @gmail.com wrote:
+&gt; On Sep 26, 1:29 am, &quot;Richard Cornford&quot; &lt;Rich ... @litotes.demon.co.uk&gt;
+&gt; wrote:
+&gt;&gt; David Mark wrote:
+&gt;&gt;&gt; Then I came across this.
+&gt;&gt;&gt; (!!fn &amp;&amp; typeof fn != &quot;string&quot; &amp;&amp; !fn.nodeName &amp;&amp;
+&gt;&gt;&gt; fn.constructor != Array &amp;&amp; /function/i.test( fn + &quot;&quot; ))
+&gt;&gt;&gt; I'm sure it is wrong
+&gt;&gt; That would depend on what you considered correct. It looks like the
+&gt;&gt; subject of the test is expected to be any of a javascript function
+&gt;&gt; (unwisely tested), a siring primitive, a  DOM element and Array or a
+&gt;&gt; value with falseness. Getting into a position where it is necessary to
+&gt;&gt; make such a test betrays very poor code design.
+
+&gt; I think you meant &quot;portrays&quot; not &quot;betrays&quot;. Am I right?
+
+&gt; That analysis would be right if they'd used ||, but they used &amp;&amp;.
+
+&gt; I provided analysis of the problem on my site. The problem is that
+&gt; this function returns true for objects (of any type) that contain
+&gt; &quot;function&quot; in the toString result.
+&gt; (!!fn )....................falses are out.
+">
+
+(fn) is equivalent there.
+
+<QUOTE PREVIOUSPOST="
+&gt; (typeof fn != &quot;string&quot;)....string values are out
+&gt; (!fn.nodeName).............things with a truthy nodeName are out.
+&gt; (fn.constructor != Array)..Arrays in same frame are out.
+&gt; (/function/i.test( fn + &quot;&quot; ).anything else left can get through, it
+&gt; just has to say &quot;function&quot;.
+
+&gt; It's not safe, but it's indicative of the problem of typechecking in
+&gt; js.
+">
+
+No, it is indicative of the bad quality of the calling script, and
+ultimately of the bad quality of the called script.  As Richard said,
+one should never get into a position where a test of that form would
+be necessary.
+
+The code comes from jQuery (1.2.1):
+
+// This may seem like some crazy code, but trust me when I say that this
+// is the only cross-browser way to do this. --John
+isFunction: function( fn ) {
+return !!fn &amp;&amp; typeof fn != &quot;string&quot; &amp;&amp; !fn.nodeName &amp;&amp;
+fn.constructor != Array &amp;&amp; /function/i.test( fn + &quot;&quot; );
+}
+
+jQuery claims to support IE 6.0+, FF 1.5+, Safari 2.0+, Opera 9.0+ (and
+calls that &quot;cross-browser&quot; -- OMG).  But, if
+
+/function/i.test(fn + &quot;&quot;)
+
+would return `true', it is highly unlikely that
+
+typeof fn
+
+would yield &quot;string&quot;, so the test
+
+typeof fn != &quot;string&quot;
+
+is unnecessary.  Unless, of course, someone who lacks the minimum clue
+assumes that strings could be called and so could ever be subject to
+isFunction().
+
+Furthermore, if
+
+/function/i.test(fn + &quot;&quot;)
+
+would return `true', how could it be that
+
+fn.constructor != Array
+
+could not yield `true' and therefore that test would be unnecessary as well?
+There is yet a script engine to be named that does not type-convert an array
+object to string in the form &quot;element1,element2,element3&quot;.  Unless, of
+course, someone who lacks a minimum clue assumes that Array objects having
+references to callable objects as elements could be called as well and so
+could ever be subject to isFunction() in which case the former test would
+return `true' (as the string representation of such an Array object could be
+&quot;...,function ...() {....},...&quot;).
+
+Needless to say that RegExp.prototype.test() already type-converts its
+argument to string (see ECMAScript Ed. 3, 15.10.6.3) and so the forced
+conversion by concatenation is unnecessary.
+
+And a Function object, being a native object, certainly could have a
+user-defined property `nodeName' and still could be called.  So that test
+makes no sense as well.
+
+So far methods of built-in objects have always yielded typeof &quot;function&quot;,
+only methods of host objects in the MSHTML DOM have yielded typeof &quot;object&quot;.
+
+Therefore,
+
+if (/\b(function|object)\b/i.test(typeof fn) &amp;&amp; fn)
+{
+// ...
+}
+
+should satisfy all the reasonable cases in which isFunction() could be called:
+
+- False-values could only yield `object', as `null' does, but they would not
+type-convert to `true';
+
+- typeof fn == &quot;string&quot; is already excluded (unless one assumes the
+improbable case that `typeof' would yield &quot;string function&quot; and the like);
+
+- fn.constructor != Array could only yield `true' because typeof &quot;function&quot;
+would apply;
+
+- /function/i.test( fn + &quot;&quot; ) could only yield `true' because typeof
+&quot;function&quot; or &quot;object&quot; would apply.
+
+And none of the obscure testing in jQuery is explained as to why it was done
+(i.e. for what script engine and DOM); we have only the word of &quot;John&quot; that
+it would be &quot;the only cross-browser way to do this.&quot;
+
+BTW: jQuery-1.2.1.js is served for download from Google Code with
+Content-Type: text/x-c.  OMG.
+
+PointedEars
+--
+Anyone who slaps a 'this page is best viewed with Browser X' label on
+a Web page appears to be yearning for the bad old days, before the Web,
+when you had very little chance of reading a document written on another
+computer, another word processor, or another network. -- Tim Berners-Lee
+</POST>
+<POST>
+<POSTER> &quot;dhtmlkitc...@gmail.com&quot; &lt;dhtmlkitc...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-13T20:17:00 </POSTDATE>
+On Oct 13, 2:41 am, Thomas 'PointedEars' Lahn &lt;PointedE ... @web.de&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; dhtmlkitc ... @gmail.com wrote:
+&gt; &gt; On Sep 26, 1:29 am, &quot;Richard Cornford&quot; &lt;Rich ... @litotes.demon.co.uk&gt;
+&gt; &gt; wrote:
+&gt; &gt;&gt; David Mark wrote:
+&gt; &gt;&gt;&gt; Then I came across this.
+&gt; &gt;&gt;&gt; (!!fn &amp;&amp; typeof fn != &quot;string&quot; &amp;&amp; !fn.nodeName &amp;&amp;
+&gt; &gt;&gt;&gt; fn.constructor != Array &amp;&amp; /function/i.test( fn + &quot;&quot; ))
+&gt; &gt;&gt;&gt; I'm sure it is wrong
+&gt; &gt;&gt; That would depend on what you considered correct. It looks like the
+&gt; &gt;&gt; subject of the test is expected to be any of a javascriptfunction
+&gt; &gt;&gt; (unwisely tested), a siring primitive, a  DOM element and Array or a
+&gt; &gt;&gt; value with falseness. Getting into a position where it is necessary to
+&gt; &gt;&gt; make such a test betrays very poor code design.
+
+&gt; &gt; I think you meant &quot;portrays&quot;not&quot;betrays&quot;. Am I right?
+
+&gt; &gt; That analysis would be right if they'd used ||, but they used &amp;&amp;.
+
+&gt; &gt; I provided analysis of the problem on my site. The problem is that
+&gt; &gt; thisfunctionreturns true for objects (of any type) that contain
+&gt; &gt; &quot;function&quot; in the toString result.
+&gt; &gt; (!!fn )....................falses are out.
+
+&gt; (fn) is equivalent there.
+
+&gt; &gt; (typeof fn != &quot;string&quot;)....string values are out
+&gt; &gt; (!fn.nodeName).............things with a truthy nodeName are out.
+&gt; &gt; (fn.constructor != Array)..Arrays in same frame are out.
+&gt; &gt; (/function/i.test( fn + &quot;&quot; ).anything else left can get through, it
+&gt; &gt; just has to say &quot;function&quot;.
+
+&gt; &gt; It'snotsafe, but it's indicative of the problem of typechecking in
+&gt; &gt; js.
+
+&gt; No, it is indicative of the bad quality of the calling script, and
+&gt; ultimately of the bad quality of the called script.  As Richard said,
+&gt; one should never get into a position where a test of that form would
+&gt; be necessary.
+">
+
+how can you know if it's a function?
+
+typeof fn? nope, not in safari.
+
+document.links, document.getElementsByTagName(&quot;blah&quot;)
+
+Safari thinks they implement call, which is what typeof checks for.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; The code comes from jQuery (1.2.1):
+
+&gt;   // This may seem like some crazy code, but trust me when I say that this
+&gt;   // is the only cross-browser way to do this. --John
+&gt;   isFunction:function( fn ) {
+&gt;     return !!fn &amp;&amp; typeof fn != &quot;string&quot; &amp;&amp; !fn.nodeName &amp;&amp;
+&gt;       fn.constructor != Array &amp;&amp; /function/i.test( fn + &quot;&quot; );
+&gt;   }
+
+&gt; jQuery claims to support IE 6.0+, FF 1.5+, Safari 2.0+, Opera 9.0+ (and
+&gt; calls that &quot;cross-browser&quot; -- OMG).  But, if
+
+&gt;   /function/i.test(fn + &quot;&quot;)
+
+&gt; would return `true', it is highly unlikely that
+
+&gt;   typeof fn
+
+&gt; would yield &quot;string&quot;, so the test
+
+&gt;   typeof fn != &quot;string&quot;
+
+&gt; is unnecessary.  Unless, of course, someone who lacks the minimum clue
+&gt; assumes that strings could be called and so could ever be subject to
+&gt; isFunction().
+">
+
+No, it excludes strings.
+
+&quot;function&quot; + &quot;&quot; would return true. This clause prevents that.
+
+<QUOTE PREVIOUSPOST="
+&gt; Furthermore, if
+
+&gt;   /function/i.test(fn + &quot;&quot;)
+
+&gt; would return `true', how could it be that
+
+&gt;   fn.constructor != Array
+">
+
+var a = Array{function bork(){});
+
+<QUOTE PREVIOUSPOST="
+&gt; couldnotyield `true' and therefore that test would be unnecessary as well?
+">
+
+No.
+
+<QUOTE PREVIOUSPOST="
+&gt; There is yet a script engine to be named that doesnottype-convert an array
+&gt; object to string in the form &quot;element1,element2,element3&quot;.  Unless, of
+&gt; course, someone who lacks a minimum clue assumes that Array objects having
+&gt; references to callable objects as elements could be called as well and so
+&gt; could ever be subject to isFunction() in which case the former test would
+&gt; return `true' (as the string representation of such an Array object could be
+&gt; &quot;...,function...() {....},...&quot;).
+">
+
+Yes.
+
+<QUOTE PREVIOUSPOST="
+&gt; Needless to say that RegExp.prototype.test() already type-converts its
+&gt; argument to string (see ECMAScript Ed. 3, 15.10.6.3) and so the forced
+&gt; conversion by concatenation is unnecessary.
+">
+
+That's true, but being explicit is a good thing.
+
+<QUOTE PREVIOUSPOST="
+&gt; And aFunctionobject, being a native object, certainly could have a
+&gt; user-defined property `nodeName' and still could be called.  So that test
+&gt; makes no sense as well.
+">
+
+Right, so could any of the four examples on my site.
+
+<QUOTE PREVIOUSPOST="
+&gt; So far methods of built-in objects have always yielded typeof &quot;function&quot;,
+&gt; only methods of host objects in the MSHTML DOM have yielded typeof &quot;object&quot;.
+
+&gt; Therefore,
+
+&gt;   if (/\b(function|object)\b/i.test(typeof fn) &amp;&amp; fn)
+&gt;   {
+&gt;     // ...
+&gt;   }
+
+&gt; should satisfy all the reasonable cases in which isFunction() could be called:
+">
+
+Relying on toString is bad duck typing. It quacks but dosn't walk.
+It's the same thinking that went into the jQuery and Dojo code.
+
+<QUOTE PREVIOUSPOST="
+&gt; - False-values could only yield `object', as `null' does, but they wouldnot
+&gt;   type-convert to `true';
+
+&gt; - typeof fn == &quot;string&quot; is already excluded (unless one assumes the
+&gt;   improbable case that `typeof' would yield &quot;stringfunction&quot; and the like);
+">
+
+new String()
+{toString:function(){return 'function';}}
+
+a = Function();
+a.toString = &quot;widget&quot;;
+
+<QUOTE PREVIOUSPOST="
+&gt; - fn.constructor != Array could only yield `true' because typeof &quot;function&quot;
+&gt;   would apply;
+">
+
+frames.
+
+<QUOTE PREVIOUSPOST="
+&gt; - /function/i.test( fn + &quot;&quot; ) could only yield `true' because typeof
+&gt;   &quot;function&quot; or &quot;object&quot; would apply.
+
+&gt; And none of the obscure testing in jQuery is explained as to why it was done
+&gt; (i.e. for what script engine and DOM); we have only the word of &quot;John&quot; that
+&gt; it would be &quot;the only cross-browser way to do this.&quot;
+">
+
+RIght. No detail, no tests.
+
+Dojo and YUI at least has comments. Unfortunately, a lot of the the
+time, the comments are contradictory.
+
+The Dojo example I posted on my site. isAlien is weird. I think
+they're trying to test Host objects, but the comment says built-in,
+and the code tests the input for a string value of [native code]/i,
+which could be anything.
+
+String values do not imply an object's type. Relying on toString is
+not safe.
+
+Garrett
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; PointedEars
+&gt; --
+">
+</POST>
+<POST>
+<POSTER> &quot;Richard Cornford&quot; &lt;Rich...@litotes.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2007-10-13T22:01:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Randy Webb wrote:
+&gt; Richard Cornford said the following on 9/30/2007 4:36 PM:
+&gt;&gt; Randy Webb wrote:
+&gt;&gt;&gt; Richard Cornford said the following on 9/26/2007 8:39 PM:
+&gt;&gt;&gt;&gt; Randy Webb wrote:
+&gt;&gt;&gt;&gt;&gt; Thomas 'PointedEars' Lahn wrote:
+&gt;&gt;&gt;&gt;&gt;&gt; Peter Michaux wrote:
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; On Sep 26, 1:02 pm, David Mark wrote:
+&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; jQuery uses dollar sign variables, which I don't think
+&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; are allowed under the specification.
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; Dollar signs are allowed. See sec 7.6. The spec then says
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; &quot;The dollar sign is intended for use only in mechanically
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; generated code.&quot;
+
+&gt;&gt;&gt;&gt;&gt;&gt; Which is exactly why jQuery should not.
+
+&gt;&gt;&gt;&gt;&gt; But there is no reason why it *can not* other than people's
+&gt;&gt;&gt;&gt;&gt; pedantic desires to whine about it.
+
+&gt;&gt;&gt;&gt; Or to take the same professional attitude toward javascript
+&gt;&gt;&gt;&gt; programming as any other language deserves.
+
+&gt;&gt;&gt; The &quot;Same professional attitude&quot;, according to who?
+
+&gt;&gt; Apparently according to professionals using every other language
+&gt;&gt; with a similar specification defined convention.
+
+&gt; Does that convention extend to function names beginning with
+&gt; uppercase letters?
+">
+
+The specification has nothing to say on the subject of the
+capitalisation of Identifiers. Conventions relating to that subject are
+left to the individual programmer (or their employers) to choose. The
+convention of capitalising 'class' names is adopted from Java, and can
+be very helpful if you are writing anything OO, but other capitalisation
+conventions have been proposed (even if they haven't really caught on).
+
+<QUOTE PREVIOUSPOST="
+&gt; You should know where that is headed.
+">
+
+No, but I can guess.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &lt;snip&gt;
+&gt; I snipped the rest of it because I don't care to have this drawn
+&gt; out conversation again. It has been had in the past and people can
+&gt; search it out and make up there own minds.
+
+&gt; Either way, with regards to $. The only place in ECMAScript that
+&gt; I can find that it refers to $ is this:
+
+&gt; Section 7.6 Identifiers:
+&gt; &lt;quote&gt;
+&gt; This standard specifies one departure from the grammar given in
+&gt; the Unicode standard: The dollar sign ($) and the underscore (_)
+&gt; are permitted anywhere in an identifier. The dollar sign is
+&gt; intended for use only in mechanically generated code.
+&gt; &lt;/quote&gt;
+
+&gt; It doesn't say &quot;limited&quot; or &quot;required&quot;.
+">
+
+It is not possible for it to say limited or required. The syntax for an
+Identifier has to be correct regardless of whether the code was machine
+generated or not.
+
+<QUOTE PREVIOUSPOST="
+&gt; It simply says &quot;This is what it is *intended* for&quot;.
+">
+
+Yes, and that answers the question of why a character has been included
+in the set of characters permissible in an Identifier when that
+character contributes nothing to the task of identifying.
+
+<QUOTE PREVIOUSPOST="
+&gt; I doubt very seriously that 99% of
+&gt; what is done with scripting was it's &quot;intended use&quot;.
+">
+
+If computer programming languages have an intended use then it should be
+to be used to program computers.
+
+<QUOTE PREVIOUSPOST="
+&gt; Either way, it doesn't matter what ECMA had to say about it,
+">
+
+It does matter.
+
+<QUOTE PREVIOUSPOST="
+&gt; people are still going to use it
+">
+
+You mean use it incorrectly. Using $ symbols in machine generated
+identifiers could not be subject to any criticism.
+
+<QUOTE PREVIOUSPOST="
+&gt; until some UA comes out that breaks it.
+">
+
+A UA could not break it without the end result not being ECMAScript
+compatible. The browsers have no way of knowing whether the code they
+get is machine generated or not and have no reason to care. This is
+entirely a question for programmers, like most conventions. It just
+happens to be a convention proposed at the point of defining the
+language rather than something arising in the use of the language (such
+as indenting styles and capitalisation conventions).
+
+<QUOTE PREVIOUSPOST="
+&gt; And no amount of discussing it in comp.lang.javascript
+&gt; will ever change that.
+">
+
+I wouldn't necessarily bet on that. A good few years of heavily
+criticising the use of - eval - for evaluating dot notation property
+accessors (and explaining/discussing the alternatives) has seen that
+practice almost disappear (and certainly disappear from anything
+professionally authored). It may be that a sufficiently robust attitude
+taken towards this bad practice for sufficiently long will see it go the
+same way as the worst examples of - eval - abuse. Things in the wider
+world do change under the influence of our discussions, albeit slowly.
+
+Richard.
+</POST>
+<POST>
+<POSTER> &quot;Richard Cornford&quot; &lt;Rich...@litotes.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2007-10-13T22:01:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&lt;dhtmlkitc ... @gmail.com&gt; wrote:
+&gt; On Sep 26, 1:29 am, Richard Cornford wrote:
+&lt;snip&gt;
+&gt;&gt; &gt; Then I came across this.
+
+&gt;&gt; &gt; (!!fn &amp;&amp; typeof fn != &quot;string&quot; &amp;&amp; !fn.nodeName &amp;&amp;
+&gt;&gt; &gt; fn.constructor != Array &amp;&amp; /function/i.test( fn + &quot;&quot; ))
+
+&gt;&gt; &gt; I'm sure it is wrong
+
+&gt;&gt; That would depend on what you considered correct. It looks
+&gt;&gt; like the subject of the test is expected to be any of a
+&gt;&gt; javascript function (unwisely tested), a siring primitive,
+&gt;&gt; a  DOM element and Array or a value with falseness. Getting
+&gt;&gt; into a position where it is necessary to make such a test
+&gt;&gt; betrays very poor code design.
+
+&gt; I think you meant &quot;portrays&quot; not &quot;betrays&quot;. Am I right?
+">
+
+No, &quot;betrays&quot; says exactly what I intended to say.
+
+<QUOTE PREVIOUSPOST="
+&gt; That analysis would be right if they'd used ||, but they
+&gt; used &amp;&amp;.
+">
+
+No, that analysis is correct because it uses &amp;&amp;.
+
+<QUOTE PREVIOUSPOST="
+&gt; I provided analysis of the problem on my site.
+">
+
+That is not what I would call it. It is a pity that you choose to
+publish such things without first having them checked by someone who
+knows this subject.
+
+<QUOTE PREVIOUSPOST="
+&gt; The problem is that this function returns true for
+&gt; objects (of any type) that contain
+&gt; &quot;function&quot; in the toString result.
+">
+
+It also may return false for object that are functions. The author is
+clearly unsure about what it is that is being tested for, and so has no
+criteria for identifying an effective test for that (if one exists).
+
+<QUOTE PREVIOUSPOST="
+&gt; (!!fn )....................falses are out.
+">
+
+A pointless test if the subject is not expected to potentially be a
+value that has falseness.
+
+<QUOTE PREVIOUSPOST="
+&gt; (typeof fn != &quot;string&quot;)....string values are out
+">
+
+A pointless test if the subject is not expected to potentially be a
+string primitive.
+
+<QUOTE PREVIOUSPOST="
+&gt; (!fn.nodeName).............things with a truthy nodeName are out.
+">
+
+A pointless test if the subject is not expected to potentially be an
+object with a true nodeName property. An expected characteristic of DOM
+elements.
+
+<QUOTE PREVIOUSPOST="
+&gt; (fn.constructor != Array)..Arrays in same frame are out.
+">
+
+A pointless test if the subject is not expected to potentially be an
+Array.
+
+<QUOTE PREVIOUSPOST="
+&gt; (/function/i.test( fn + &quot;&quot; ).anything else left can get
+&gt; through, it just has to say &quot;function&quot;.
+">
+
+So in what sense is my &quot;analysis&quot; not correct?  &quot;It looks like the
+subject of the test is expected to be any of a javascript function
+(unwisely tested), a siring primitive, a DOM element and Array or a
+value with falseness&quot;.
+
+<QUOTE PREVIOUSPOST="
+&gt; It's not safe, but it's indicative of the problem of
+&gt; typechecking in js.
+
+&gt; Dojo has similar stuff.
+">
+
+The dojo version of isFunction is nearly as bad as it will also return
+true for non-callable objects. Again the authors appear to be uncertain
+of what it is they are testing for.
+
+<QUOTE PREVIOUSPOST="
+&gt; They claim that some built-in functions don't
+&gt; return &quot;function&quot; for typeof.
+">
+
+They can claim anything they like, but if it were a true statement they
+could state the environment in which this was the case and show a test
+case that proves the point (or shows where their misconceptions lie).
+Without that, and judging their competence by the code in dojo, I would
+not trust them to have made an accurate analysis.
+
+<QUOTE PREVIOUSPOST="
+&gt; I have been unable to prove that
+&gt; statement true.
+">
+
+&lt;snip&gt;
+
+You should not need to. The person making the claim is the one
+responsible for demonstrating it.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; There are no circumstances under which a function object would result
+&gt;&gt; in - typeof fn != 'string' - being true
+
+&gt; No. typeof fn != 'string' should *always* be true.
+">
+
+Yes, it looks like I omitted a &quot;not&quot; between &quot;being&quot; and &quot;true&quot;. One of
+the consequences of rushing to get it posted before going to work on a
+week day.
+
+<QUOTE PREVIOUSPOST="
+&gt; or its having a - nodeName -
+&gt;&gt; property or a constructor property that was a reference to the
+&gt;&gt; frame's
+&gt;&gt; Array constructor (unless they had been explicitly added).
+
+&gt; You're confused by thinking ||. The function uses &amp;&amp;
+">
+
+No I am not. To get a true result with the logical AND operation test
+every individual sub-expression needs to evaluate to true.
+
+<QUOTE PREVIOUSPOST="
+&gt; Anyway, typechecking is an issue
+">
+
+Not really. Once you get used to properly employing a loosely typed
+language it rapidly becomes a non-issue, and such testing is relegated
+to the feature testing role alone. Hence my assertion that the test
+betrays poor design. Before someone has the experience to cope with
+loose typing they will be struggling to identify the types of things
+from a position of being totally in the dark. This results in such
+testing functions being passed almost anything at all, and so having to
+jump through hoops applying tests that really should never be necessary.
+
+&lt;snip&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; I had glanced at it previously and dismissed
+&gt;&gt;&gt; it based on its resemblance to Prototype.  Upon closer
+&gt;&gt;&gt; inspection, it makes Prototype look inspired.  Suffice
+&gt;&gt;&gt; to say that anybody who recommends it hasn't read the
+&gt;&gt;&gt; code.  It's a horror show.
+
+&gt; You know, it might not be very good code, but I think John
+&gt; might be creative.
+">
+
+Being &quot;creative&quot;, of itself, is of little significance. Masses of
+dubiously code and all of those half-ass hacks were 'created' by
+someone.
+
+To be usefully creative it is necessary to first formulate a clear
+notion of what it is that is to be achieved. It is evidence of this
+clarity of comprehension that is absent from the testing code. Hence my
+assertion that the test betrays poor design. Before someone has the
+experience to cope with loose typing they will be struggling to identify
+the types of things from a position of being totally in the dark. This
+results in such testing functions being passed almost anything at all,
+and so having to jump through hoops applying tests that really should
+never be necessary.
+
+<QUOTE PREVIOUSPOST="
+&gt; He's interested in these things, so improvement is
+&gt; inevitable.
+">
+
+That may be likely, but not inevitable. It appears that becoming
+satisfied with what you have done can seriously inhibit an ability to
+improve.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; The code above speaks of poor design, but at least it is
+&gt;&gt; ECMA 262 conforming, so that is one up on Prototype.js.
+
+&gt; What is not conforming in Prototype?
+">
+
+&lt;snip&gt;
+
+ECMS 262 provides an EvalError that is to be thrown when the - eval -
+function is called indirectly (in any way other than as - eval(
+seomthing ); - ). It then gives implementations the option of not
+throwing that exception. ECMAScript conforming code has no choice but
+assume the worst case (that the exception will be thrown), while
+Prototype.js makes the assumption that no implications will (ever) throw
+that exception. Thus it sacrifices ECMAScript compatibility (and so all
+hope of its ever being cross-browser) and ends up being dependent upon a
+limited set of known (current) implications where the exception can be
+observed not to be thrown.
+
+Richard.
+</POST>
+<POST>
+<POSTER> &quot;Richard Cornford&quot; &lt;Rich...@litotes.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2007-10-13T22:28:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&lt;dhtmlkitc ... @gmail.com&gt; wrote:
+&gt; On Oct 13, 2:41 am, Thomas 'PointedEars' Lahn wrote:
+&gt;&gt; dhtmlkitc ... @gmail.com wrote:
+&lt;snip&gt;
+&gt;&gt;&gt; It'snotsafe, but it's indicative of the problem of typechecking in
+&gt;&gt;&gt; js.
+
+&gt;&gt; No, it is indicative of the bad quality of the calling script, and
+&gt;&gt; ultimately of the bad quality of the called script.  As Richard said,
+&gt;&gt; one should never get into a position where a test of that form would
+&gt;&gt; be necessary.
+
+&gt; how can you know if it's a function?
+">
+
+First define what you mean by &quot;a function&quot;.
+
+<QUOTE PREVIOUSPOST="
+&gt; typeof fn? nope, not in safari.
+">
+
+Are you certain? Is it really the case that objects that return
+'function' from a typeof operation cannot be called? Or are you just not
+expecting them to be callable? Have you actually tried calling the
+objects that safari asserts are functions?
+
+<QUOTE PREVIOUSPOST="
+&gt; document.links, document.getElementsByTagName(&quot;blah&quot;)
+
+&gt; Safari thinks they implement call, which is what typeof
+&gt; checks for.
+">
+
+&lt;snip&gt;
+
+One of the consequences of using imprecise terminology is that when you
+say &quot;call&quot; nobody knows whether you mean [[Call]] or
+Function,.prototype.call. It is the implementing of the internal
+[[Call]] method that typeof should be interested in, though not
+necessarily for host objects. NodeLists and HTMLCollection interface
+implementing objects would be host obejcts.
+
+Richard.
+</POST>
+<POST>
+<POSTER> Randy Webb &lt;HikksNotAtH...@aol.com&gt; </POSTER>
+<POSTDATE> 2007-10-13T23:10:00 </POSTDATE>
+Richard Cornford said the following on 10/13/2007 10:28 PM:
+
+<QUOTE PREVIOUSPOST="
+&gt; &lt;dhtmlkitc ... @gmail.com&gt; wrote:
+&gt;&gt; On Oct 13, 2:41 am, Thomas 'PointedEars' Lahn wrote:
+&gt;&gt;&gt; dhtmlkitc ... @gmail.com wrote:
+&gt; &lt;snip&gt;
+&gt;&gt;&gt;&gt; It'snotsafe, but it's indicative of the problem of typechecking in
+&gt;&gt;&gt;&gt; js.
+
+&gt;&gt;&gt; No, it is indicative of the bad quality of the calling script, and
+&gt;&gt;&gt; ultimately of the bad quality of the called script.  As Richard said,
+&gt;&gt;&gt; one should never get into a position where a test of that form would
+&gt;&gt;&gt; be necessary.
+
+&gt;&gt; how can you know if it's a function?
+
+&gt; First define what you mean by &quot;a function&quot;.
+
+&gt;&gt; typeof fn? nope, not in safari.
+
+&gt; Are you certain? Is it really the case that objects that return
+&gt; 'function' from a typeof operation cannot be called? Or are you just not
+&gt; expecting them to be callable? Have you actually tried calling the
+&gt; objects that safari asserts are functions?
+">
+
+Can I ask you to first define what you mean by &quot;called&quot; or &quot;callable&quot;?
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; document.links, document.getElementsByTagName(&quot;blah&quot;)
+
+&gt;&gt; Safari thinks they implement call, which is what typeof
+&gt;&gt; checks for.
+&gt; &lt;snip&gt;
+
+&gt; One of the consequences of using imprecise terminology is that when you
+&gt; say &quot;call&quot; nobody knows whether you mean [[Call]] or
+&gt; Function,.prototype.call. It is the implementing of the internal
+&gt; [[Call]] method that typeof should be interested in, though not
+&gt; necessarily for host objects. NodeLists and HTMLCollection interface
+&gt; implementing objects would be host obejcts.
+">
+
+So document.images should be a Host Object? Safari3/Win reports
+typeof(document.images) as 'function'. All other Windows based browsers
+I have report it as 'object'.
+
+--
+Randy
+Chance Favors The Prepared Mind
+comp.lang.javascript FAQ - http://jibbering.com/faq/index.html
+Javascript Best Practices - http://www.JavascriptToolbox.com/bestpractices/
+</POST>
+<POST>
+<POSTER> &quot;dhtmlkitc...@gmail.com&quot; &lt;dhtmlkitc...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-13T23:58:00 </POSTDATE>
+On Oct 13, 7:01 pm, &quot;Richard Cornford&quot; &lt;Rich ... @litotes.demon.co.uk&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &lt;dhtmlkitc ... @gmail.com&gt; wrote:
+&gt; &gt; On Sep 26, 1:29 am, Richard Cornford wrote:
+&gt; &lt;snip&gt;
+&gt; &gt;&gt; &gt; Then I came across this.
+
+&gt; &gt;&gt; &gt; (!!fn &amp;&amp; typeof fn != &quot;string&quot; &amp;&amp; !fn.nodeName &amp;&amp;
+&gt; &gt;&gt; &gt; fn.constructor != Array &amp;&amp; /function/i.test( fn + &quot;&quot; ))
+
+&gt; &gt;&gt; &gt; I'm sure it is wrong
+
+&gt; &gt;&gt; That would depend on what you considered correct. It looks
+&gt; &gt;&gt; like the subject of the test is expected to be any of a
+&gt; &gt;&gt; javascript function (unwisely tested), a siring primitive,
+&gt; &gt;&gt; a  DOM element and Array or a value with falseness. Getting
+&gt; &gt;&gt; into a position where it is necessary to make such a test
+&gt; &gt;&gt; betrays very poor code design.
+
+&gt; &gt; I think you meant &quot;portrays&quot; not &quot;betrays&quot;. Am I right?
+
+&gt; No, &quot;betrays&quot; says exactly what I intended to say.
+
+&gt; &gt; That analysis would be right if they'd used ||, but they
+&gt; &gt; used &amp;&amp;.
+
+&gt; No, that analysis is correct because it uses &amp;&amp;.
+
+&gt; &gt; I provided analysis of the problem on my site.
+
+&gt; That is not what I would call it. It is a pity that you choose to
+&gt; publish such things without first having them checked by someone who
+&gt; knows this subject.
+">
+
+There you go again.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; The problem is that this function returns true for
+&gt; &gt; objects (of any type) that contain
+&gt; &gt; &quot;function&quot; in the toString result.
+
+&gt; It also may return false for object that are functions. The author is
+&gt; clearly unsure about what it is that is being tested for, and so has no
+&gt; criteria for identifying an effective test for that (if one exists).
+
+&gt; &gt; (!!fn )....................falses are out.
+
+&gt; A pointless test if the subject is not expected to potentially be a
+&gt; value that has falseness.
+
+&gt; &gt; (typeof fn != &quot;string&quot;)....string values are out
+
+&gt; A pointless test if the subject is not expected to potentially be a
+&gt; string primitive.
+
+&gt; &gt; (!fn.nodeName).............things with a truthy nodeName are out.
+
+&gt; A pointless test if the subject is not expected to potentially be an
+&gt; object with a true nodeName property. An expected characteristic of DOM
+&gt; elements.
+
+&gt; &gt; (fn.constructor != Array)..Arrays in same frame are out.
+
+&gt; A pointless test if the subject is not expected to potentially be an
+&gt; Array.
+
+&gt; &gt; (/function/i.test( fn + &quot;&quot; ).anything else left can get
+&gt; &gt; through, it just has to say &quot;function&quot;.
+
+&gt; So in what sense is my &quot;analysis&quot; not correct?  &quot;It looks like the
+&gt; subject of the test is expected to be any of a javascript function
+&gt; (unwisely tested), a siring primitive, a DOM element and Array or a
+&gt; value with falseness&quot;.
+">
+
+The subject is expected NOT to be any of those things.
+
+The point of each test is to exclude these things. Just maybe, there's
+some type of node that says it's a &quot;function&quot; to typeof. It's actually
+likely in Safari; Safari thinks document.images is a function, which
+it is Not!
+
+Now I should clear up a bit of confusion you posted on the webkit bug:
+
+Take an object that is an instance of an NodeList.
+
+That object's constructor implements NodeList. The object itself is an
+object. The fact that it is callable is a bug, copied from MSIE, who
+made document.all, et c. a function, e.g. document.all(0). Mozilla
+copied this. It is retarded, IMO.
+
+javascript:alert(Function.prototype.call.call(document.links,document,
+1))
+
+Not really useful. OR good design.
+
+An instance of a NodeList is NOT the object that implements NodeList.
+The object that implement's NodeList is the instance's constructor.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; It's not safe, but it's indicative of the problem of
+&gt; &gt; typechecking in js.
+
+&gt; &gt; Dojo has similar stuff.
+
+&gt; The dojo version of isFunction is nearly as bad as it will also return
+&gt; true for non-callable objects.
+">
+
+What objects are those? Only ones that incorrectly report &quot;function&quot;
+for typeof, I hope.
+
+What I prefer about the dojo function is at least it is less
+inclusive. It filters out with the typeof operator.
+
+document.links instanceof Function; // false in Safari.
+
+Again the authors appear to be uncertain
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; of what it is they are testing for.
+
+&gt; &gt; They claim that some built-in functions don't
+&gt; &gt; return &quot;function&quot; for typeof.
+
+&gt; They can claim anything they like, but if it were a true statement they
+&gt; could state the environment in which this was the case and show a test
+&gt; case that proves the point (or shows where their misconceptions lie).
+&gt; Without that, and judging their competence by the code in dojo, I would
+&gt; not trust them to have made an accurate analysis.
+
+&gt; &gt; I have been unable to prove that
+&gt; &gt; statement true.
+
+&gt; &lt;snip&gt;
+
+&gt; You should not need to. The person making the claim is the one
+&gt; responsible for demonstrating it.
+
+&gt; &gt;&gt; There are no circumstances under which a function object would result
+&gt; &gt;&gt; in - typeof fn != 'string' - being true
+
+&gt; &gt; No. typeof fn != 'string' should *always* be true.
+
+&gt; Yes, it looks like I omitted a &quot;not&quot; between &quot;being&quot; and &quot;true&quot;. One of
+&gt; the consequences of rushing to get it posted before going to work on a
+&gt; week day.
+
+&gt; &gt; or its having a - nodeName -
+&gt; &gt;&gt; property or a constructor property that was a reference to the
+&gt; &gt;&gt; frame's
+&gt; &gt;&gt; Array constructor (unless they had been explicitly added).
+
+&gt; &gt; You're confused by thinking ||. The function uses &amp;&amp;
+
+&gt; No I am not. To get a true result with the logical AND operation test
+&gt; every individual sub-expression needs to evaluate to true.
+">
+
+That's what I'm saying. If jQuery's isFunction gets a falsish value, a
+string value, et c, that value is excluded. It's &quot;none of&quot;, not &quot;any
+of&quot;. You're wrong.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Anyway, typechecking is an issue
+
+&gt; Not really. Once you get used to properly employing a loosely typed
+&gt; language it rapidly becomes a non-issue, and such testing is relegated
+&gt; to the feature testing role alone. Hence my assertion that the test
+&gt; betrays poor design. Before someone has the experience to cope with
+&gt; loose typing they will be struggling to identify the types of things
+&gt; from a position of being totally in the dark. This results in such
+&gt; testing functions being passed almost anything at all, and so having to
+&gt; jump through hoops applying tests that really should never be necessary.
+">
+
+http://www.m-w.com/dictionary/betray
+
+I'm pretty sure you meant &quot;betrays good design,&quot; as that's the gist of
+what you're saying.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; &lt;snip&gt;
+
+&gt; &gt;&gt;&gt; I had glanced at it previously and dismissed
+&gt; &gt;&gt;&gt; it based on its resemblance to Prototype.  Upon closer
+&gt; &gt;&gt;&gt; inspection, it makes Prototype look inspired.  Suffice
+&gt; &gt;&gt;&gt; to say that anybody who recommends it hasn't read the
+&gt; &gt;&gt;&gt; code.  It's a horror show.
+
+&gt; &gt; You know, it might not be very good code, but I think John
+&gt; &gt; might be creative.
+
+&gt; Being &quot;creative&quot;, of itself, is of little significance. Masses of
+&gt; dubiously code and all of those half-ass hacks were 'created' by
+&gt; someone.
+
+&gt; To be usefully creative it is necessary to first formulate a clear
+&gt; notion of what it is that is to be achieved. It is evidence of this
+&gt; clarity of comprehension that is absent from the testing code. Hence my
+&gt; assertion that the test betrays poor design. Before someone has the
+&gt; experience to cope with loose typing they will be struggling to identify
+&gt; the types of things from a position of being totally in the dark. This
+&gt; results in such testing functions being passed almost anything at all,
+&gt; and so having to jump through hoops applying tests that really should
+&gt; never be necessary.
+">
+
+When I use others' code, I want it to fail right away if I use it
+wrong. Now it might have been my fault for passing in an undefined,
+but hey, I'm human and I lose my keys, I've put shit in the washer
+that shouldn't go there, (phone, et c).
+
+When others use my code it should fail fast and report the error
+properly.
+
+Now if some library had a function that takes a callback, that would
+be when you want to know &quot;is the callback a function?&quot;
+
+function doStuff( errorHandler ) {
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+When will errorHandler be invoked? Maybe never, right? Or maybe it
+will be invoked some time after deployment, maybe even after I'm gone
+from the job. Wow, that would suck.
+
+Wouldn't it make sense to check the errorHandler 'thing' and make sure
+it's actually a function first?
+
+function doStuff( errorHandler ) {
+if(typeof errorHandler != &quot;function&quot;) &quot;
+var err = new Error(&quot;hey stoopid...&quot;);
+log(err);
+throw err;
+...
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+}
+&gt; &gt; He's interested in these things, so improvement is
+&gt; &gt; inevitable.
+
+&gt; That may be likely, but not inevitable. It appears that becoming
+&gt; satisfied with what you have done can seriously inhibit an ability to
+&gt; improve.
+
+&gt; &gt;&gt; The code above speaks of poor design, but at least it is
+&gt; &gt;&gt; ECMA 262 conforming, so that is one up on Prototype.js.
+
+&gt; &gt; What is not conforming in Prototype?
+
+&gt; &lt;snip&gt;
+
+&gt; ECMS 262 provides an EvalError that is to be thrown when the - eval -
+&gt; function is called indirectly (in any way other than as - eval(
+&gt; seomthing ); - ). It then gives implementations the option of not
+&gt; throwing that exception. ECMAScript conforming code has no choice but
+&gt; assume the worst case (that the exception will be thrown), while
+&gt; Prototype.js makes the assumption that no implications will (ever) throw
+&gt; that exception. Thus it sacrifices ECMAScript compatibility (and so all
+&gt; hope of its ever being cross-browser) and ends up being dependent upon a
+&gt; limited set of known (current) implications where the exception can be
+&gt; observed not to be thrown.
+">
+
+OK.
+
+Garrett
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; Richard.
+">
+</POST>
+<POST>
+<POSTER> David Mark &lt;dmark.cins...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-14T01:06:00 </POSTDATE>
+On Oct 13, 10:28 pm, &quot;Richard Cornford&quot; &lt;Rich ... @litotes.demon.co.uk&gt;
+wrote:
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt; Are you certain? Is it really the case that objects that return
+&gt; 'function' from a typeof operation cannot be called? Or are you just not
+&gt; expecting them to be callable? Have you actually tried calling the
+&gt; objects that safari asserts are functions?
+">
+
+The objects that Safari claims are functions are indeed callable.
+They have the internal [[Call]] method, but do not implement
+Function.prototype.call.
+
+Here are two test functions that are similar to the function I
+referred to in the original post.  One is ambiguous in what it expects
+and one is not.
+
+// Ambiguous version
+// cb parameter can be a Function or other type of Object (explicitly
+excluding a null object)
+// method must be a string and is required if cb is not a Function
+
+function executeCB1(cb, arg, method) {
+if (typeof cb == 'function') { // disambiguation
+return cb(arg);
+}
+else {
+if (typeof cb[method] == 'function') { // validation
+return cb[method](arg);
+}
+}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+// Unambiguous version
+// cb must be a Function
+// context is optional
+
+function executeCB2(cb, arg, context) {
+if (typeof cb == 'function') { // validation
+if (typeof context == 'undefined') {
+return cb(arg);
+}
+else {
+if (typeof cb.call == 'function') { // validation
+return cb.call(context, arg);
+}
+}
+}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+function callbackFunction(a) {
+return a;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+function CallbackObject(b) {
+this.callback = function(b) { return b; };
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+var co = new CallbackObject;
+
+alert(executeCB1(callbackFunction, 'test function'));
+alert(executeCB1(co, 'test object', 'callback'));
+
+alert(executeCB2(callbackFunction, 'test function'));
+alert(executeCB2(co.callback, 'test object', co));
+
+alert(executeCB1(document.images, 'testimg'));
+alert(executeCB2(document.images, 'testimg'));
+alert(executeCB2(document.images, 'testimg', co));
+
+The expected results were returned by all but Windows Safari Beta:
+
+test function
+test object
+test function
+test object
+undefined
+undefined
+undefined
+
+Safari returns:
+
+test function
+test object
+test function
+test object
+[Object HTMLImageElement]
+[Object HTMLImageElement]
+undefined
+
+So the validation is enough to prevent errors, but not enough to
+maintain consistent results for the test cases.  The pattern is clear
+though.
+
+function isFunction(f) {
+return (typeof f == 'function' &amp;&amp; typeof f.call == 'function');
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+function executeCB1(cb, arg, method) {
+if (isFunction(cb)) { // disambiguation
+return cb(arg);
+}
+else {
+if (isFunction(cb[method])) { // validation
+return cb[method](arg);
+}
+}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+function executeCB2(cb, arg, context) {
+if (isFunction(cb)) { // validation
+if (typeof context == 'undefined') {
+return cb(arg);
+}
+else {
+if (isFunction(cb.call)) { // validation
+return cb.call(context, arg);
+}
+}
+}
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+The revised versions bring Windows Safari (and the like) into line.
+</POST>
+<POST>
+<POSTER> David Mark &lt;dmark.cins...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-14T02:03:00 </POSTDATE>
+On Oct 13, 11:58 pm, &quot;dhtmlkitc ... @gmail.com&quot; &lt;dhtmlkitc ... @gmail.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; The subject is expected NOT to be any of those things.
+
+&gt; The point of each test is to exclude these things. Just maybe, there's
+&gt; some type of node that says it's a &quot;function&quot; to typeof. It's actually
+&gt; likely in Safari; Safari thinks document.images is a function, which
+&gt; it is Not!
+">
+
+Technically, it is not a Function, but it does implement an internal
+[[Call]] method, so it is a function.
+
+<QUOTE PREVIOUSPOST="
+&gt; Now I should clear up a bit of confusion you posted on the webkit bug:
+
+&gt; Take an object that is an instance of an NodeList.
+
+&gt; That object's constructor implements NodeList. The object itself is an
+&gt; object. The fact that it is callable is a bug, copied from MSIE, who
+&gt; made document.all, et c. a function, e.g. document.all(0). Mozilla
+&gt; copied this. It is retarded, IMO.
+">
+
+Microsoft?  Retarded?  Who knew?  Of course, Mozilla (and Opera)
+didn't need to copy this behavior.
+
+<QUOTE PREVIOUSPOST="
+&gt; javascript:alert(Function.prototype.call.call(document.links,document,
+&gt; 1))
+
+&gt; Not really useful. OR good design.
+">
+
+Agreed.
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt; That's what I'm saying. If jQuery's isFunction gets a falsish value, a
+&gt; string value, et c, that value is excluded. It's &quot;none of&quot;, not &quot;any
+&gt; of&quot;. You're wrong.
+">
+
+I think Richard was saying that the confused logic in this low-level
+function is indicative of higher-level problems in the design.  For
+example, a higher-level function designed to receive an array of DOM
+elements and/or functions, which in turn passes them to the isFunction
+function to determine which are which.
+
+[snip]
+
+<QUOTE PREVIOUSPOST="
+&gt; When I use others' code, I want it to fail right away if I use it
+&gt; wrong. Now it might have been my fault for passing in an undefined,
+&gt; but hey, I'm human and I lose my keys, I've put shit in the washer
+&gt; that shouldn't go there, (phone, et c).
+">
+
+That is a matter of exception handling.  Whether it fails silently or
+loudly, the logic in the isFunction function is confused, the author's
+&quot;trust me&quot; comment is of little comfort and the two combined would
+seem to indicate a design flaw in the library.  Even if that is not
+the case, the library is trash as it requires useragent sniffing just
+to support a handful of modern browsers.
+</POST>
+<POST>
+<POSTER> Thomas &#39;PointedEars&#39; Lahn &lt;PointedE...@web.de&gt; </POSTER>
+<POSTDATE> 2007-10-14T04:24:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+dhtmlkitc ... @gmail.com wrote:
+&gt; On Oct 13, 2:41 am, Thomas 'PointedEars' Lahn &lt;PointedE ... @web.de&gt;
+&gt; wrote:
+&gt;&gt; The code comes from jQuery (1.2.1):
+
+&gt;&gt;   // This may seem like some crazy code, but trust me when I say that this
+&gt;&gt;   // is the only cross-browser way to do this. --John
+&gt;&gt;   isFunction:function( fn ) {
+&gt;&gt;     return !!fn &amp;&amp; typeof fn != &quot;string&quot; &amp;&amp; !fn.nodeName &amp;&amp;
+&gt;&gt;       fn.constructor != Array &amp;&amp; /function/i.test( fn + &quot;&quot; );
+&gt;&gt;   }
+
+&gt;&gt; jQuery claims to support IE 6.0+, FF 1.5+, Safari 2.0+, Opera 9.0+ (and
+&gt;&gt; calls that &quot;cross-browser&quot; -- OMG).  But, if
+
+&gt;&gt;   /function/i.test(fn + &quot;&quot;)
+
+&gt;&gt; would return `true', it is highly unlikely that
+
+&gt;&gt;   typeof fn
+
+&gt;&gt; would yield &quot;string&quot;, so the test
+
+&gt;&gt;   typeof fn != &quot;string&quot;
+
+&gt;&gt; is unnecessary.  Unless, of course, someone who lacks the minimum clue
+&gt;&gt; assumes that strings could be called and so could ever be subject to
+&gt;&gt; isFunction().
+
+&gt; No, it excludes strings.
+">
+
+Which is unnecessary, as strings could never be called, and so should never
+be subject to the isFunction() test method.
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;function&quot; + &quot;&quot; would return true. This clause prevents that.
+">
+
+But can you name a case where a callable object would evaluate as a string
+containing &quot;function&quot; without type conversion?
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Furthermore, if
+
+&gt;&gt;   /function/i.test(fn + &quot;&quot;)
+
+&gt;&gt; would return `true', how could it be that
+
+&gt;&gt;   fn.constructor != Array
+
+&gt; var a = Array{function bork(){});
+">
+
+But that assumes that `a' could be called which it cannot be.  Hence it
+should not be subject to an isFunction() test.  An array is not a function.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; couldnotyield `true'
+">
+
+Again, I did not write it that way.  Please stop using broken software.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; and therefore that test would be unnecessary as well?
+&gt; No.
+">
+
+Yes.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Needless to say that RegExp.prototype.test() already type-converts its
+&gt;&gt; argument to string (see ECMAScript Ed. 3, 15.10.6.3) and so the forced
+&gt;&gt; conversion by concatenation is unnecessary.
+
+&gt; That's true, but being explicit is a good thing.
+">
+
+Being explicit would be
+
+/.../.test(String(...))
+
+But that would be nonsense as well, as it would decrease efficiency.
+Because if the specification algorithm is followed, type conversion
+to String would happen *twice* in both cases: first due to the source
+code and the second time as step 1 of RegExp.prototype.exec().
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; And aFunctionobject, being a native object, certainly could have a
+&gt;&gt; user-defined property `nodeName' and still could be called.  So that
+&gt;&gt; test makes no sense as well.
+
+&gt; Right, so could any of the four examples on my site.
+">
+
+I didn't care about your (Web?) site and I have no intention to do so.  If
+you have arguments to present, please do it here.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; - False-values could only yield `object', as `null' does, but they wouldnot
+&gt;&gt;   type-convert to `true';
+
+&gt;&gt; - typeof fn == &quot;string&quot; is already excluded (unless one assumes the
+&gt;&gt;   improbable case that `typeof' would yield &quot;stringfunction&quot; and the like);
+
+&gt; new String()
+&gt; {toString:function(){return 'function';}}
+">
+
+This is assuming that a String object could be called and so should/could
+ever be subject to isFunction().
+
+<QUOTE PREVIOUSPOST="
+&gt; a = Function();
+&gt; a.toString = &quot;widget&quot;;
+">
+
+What should this accomplish?  Overwriting the toString() method with a
+string value renders type conversion to string non-functional.  And even
+if you meant
+
+a = Function();
+a.toString = function() { return &quot;widget&quot;; };
+
+`typeof a' still would yield &quot;function&quot;.  The flaw in the described
+algorithm is that it does not use `typeof' first.  Because if it did,
+many tests would not be necessary and the algorithm as a whole would
+be less obscure and less error-prone.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; - fn.constructor != Array could only yield `true' because typeof &quot;function&quot;
+&gt;&gt;   would apply;
+
+&gt; frames.
+">
+
+I don't see any argument here.
+
+<QUOTE PREVIOUSPOST="
+&gt; String values do not imply an object's type. Relying on toString is
+&gt; not safe.
+">
+
+Exactly.
+
+PointedEars
+</POST>
+<POST>
+<POSTER> Thomas &#39;PointedEars&#39; Lahn &lt;PointedE...@web.de&gt; </POSTER>
+<POSTDATE> 2007-10-14T04:33:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Randy Webb wrote:
+&gt; So document.images should be a Host Object?
+">
+
+A host object, yes.  It has always referred to one.
+
+<QUOTE PREVIOUSPOST="
+&gt; Safari3/Win reports typeof(document.images) as 'function'. All other
+&gt; Windows based browsers I have report it as 'object'.
+">
+
+And have you tested whether or not it can be called?
+
+But again, you have been testing with a *beta version* (and, even more, the
+beta version of *the first version for that platform and operating system
+ever*), so any test results you got do not qualify for a argument regarding
+software design.
+
+It can be taken under serious consideration from the moment on the release
+version shows the same result.
+
+PointedEars
+--
+Anyone who slaps a 'this page is best viewed with Browser X' label on
+a Web page appears to be yearning for the bad old days, before the Web,
+when you had very little chance of reading a document written on another
+computer, another word processor, or another network. -- Tim Berners-Lee
+</POST>
+<POST>
+<POSTER> &quot;Richard Cornford&quot; &lt;Rich...@litotes.demon.co.uk&gt; </POSTER>
+<POSTDATE> 2007-10-14T11:18:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Randy Webb wrote:
+&gt; Richard Cornford said the following on 10/13/2007 10:28 PM:
+&gt;&gt; &lt;dhtmlkitc ... @gmail.com&gt; wrote:
+&gt;&gt;&gt; On Oct 13, 2:41 am, Thomas 'PointedEars' Lahn wrote:
+&gt;&gt;&gt;&gt; dhtmlkitc ... @gmail.com wrote:
+&gt;&gt; &lt;snip&gt;
+&gt;&gt;&gt;&gt;&gt; It'snotsafe, but it's indicative of the problem of
+&gt;&gt;&gt;&gt;&gt; typechecking in js.
+
+&gt;&gt;&gt;&gt; No, it is indicative of the bad quality of the calling script,
+&gt;&gt;&gt;&gt; and ultimately of the bad quality of the called script.  As
+&gt;&gt;&gt;&gt; Richard said, one should never get into a position where a
+&gt;&gt;&gt;&gt; test of that form would be necessary.
+
+&gt;&gt;&gt; how can you know if it's a function?
+
+&gt;&gt; First define what you mean by &quot;a function&quot;.
+
+&gt;&gt;&gt; typeof fn? nope, not in safari.
+
+&gt;&gt; Are you certain? Is it really the case that objects that
+&gt;&gt; return 'function' from a typeof operation cannot be
+&gt;&gt; called? Or are you just not expecting them to be callable?
+&gt;&gt; Have you actually tried calling the objects that safari
+&gt;&gt; asserts are functions?
+
+&gt; Can I ask you to first define what you mean by &quot;called&quot;
+&gt; or &quot;callable&quot;?
+">
+
+No more than sticking an ArgumentsList after a reference to the object
+(the 'call operator', with or without arguments). That is what I would
+consider calling an object, and to be callable that abject should not
+throw an exception as a direct result of its being called (though it may
+still throw an exception in response to its arguments'' values, as that
+would be behaviour passed the point of calling it and so unrelated to
+its callability).
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; document.links, document.getElementsByTagName(&quot;blah&quot;)
+
+&gt;&gt;&gt; Safari thinks they implement call, which is what typeof
+&gt;&gt;&gt; checks for.
+&gt;&gt; &lt;snip&gt;
+
+&gt;&gt; One of the consequences of using imprecise terminology is that
+&gt;&gt; when you say &quot;call&quot; nobody knows whether you mean [[Call]] or
+&gt;&gt; Function,.prototype.call. It is the implementing of the internal
+&gt;&gt; [[Call]] method that typeof should be interested in, though not
+&gt;&gt; necessarily for host objects. NodeLists and HTMLCollection
+&gt;&gt; interface implementing objects would be host obejcts.
+
+&gt; So document.images should be a Host Object?
+">
+
+It must be a host object, as it is provided by the host's object model.
+
+<QUOTE PREVIOUSPOST="
+&gt; Safari3/Win reports typeof(document.images) as 'function'.
+">
+
+Apparently.
+
+<QUOTE PREVIOUSPOST="
+&gt; All other Windows based browsers I have report it as 'object'.
+">
+
+Maybe, but that is neither necessarily true of windows based browsers
+nor historically common on Mac browsers. Even Mac IE 5 would report
+'function' in this context, and on Windows you only have to go back a
+few Opera versions to see the same there.
+
+(Incidentally, I will be replying to your e-mail soonish, but I will
+have to do some research first so probably not for a day or two.)
+
+Richard.
+</POST>
+</TEXT>
+</BODY>
+</DOC>

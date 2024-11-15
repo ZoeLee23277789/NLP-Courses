@@ -1,0 +1,291 @@
+<DOC>
+<DOCID> eng-NG-31-134522-9621649 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2008-01-23T23:49:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Fixing the java brand?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Reinier Zwitserloot &lt;reini...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-23T23:49:00 </POSTDATE>
+I wrote an earlier post concluding that the java brand is in peril and
+that brands are very very hard to 'fix', however, I didn't really
+offer any solutions because I didn't have any.
+
+I think I do now:
+
+The only feature that java7 really needs to turn the branding issue
+around, is software transactional memory. It' a big job, but the
+fallout is almost immediate. To wit:
+
+1. java, the language, will finally have a really cool thing that
+almost no other language has - a thing that the people who 'hate' java
+really care about. It's fortunately also a thing that really helps
+java's position in its home market: Server side software. STM is miles
+easier to write, and for sufficiently large projects actually scales
+much better, than 'synchronized'. Language-level support for STM is
+much more java-esque compared to e.g. fork/join, which is a brilliant
+framework, but very closure-heavy. There's a reason Neal uses fork/
+join in traditional java vs. fork/join in java+BGGA as main argument
+for why BGGA needs to be added.
+2. it proves that java can be ahead of the curve on programming
+language issues, instead of running hopelessly behind everyone else.
+3. the JVM, which is already a fairly strong brand, gets an
+absolutely -massive- influx of power and will give the JVM versions of
+popular languages, such as jython and ruby, a serious and practical
+leg up versus the plain C competition - /only/ the JVM-based versions
+can practically offer it in the short term. The timing is marvelous.
+Many JVM versions of other languages are nearing maturity, the
+popularity of e.g. rails is just now being seriously tempered by
+performance concerns, the number of cores on modern servers is just
+now exploding, and STM research is far enough along.
+
+I'm quite convinced 'this is it' so to speak, but even if this isn't
+all that I think it's cracked up to be, I'm positive the 'answer' lies
+in covering new ground and not trying to play catchup with the
+competition.
+</POST>
+<POST>
+<POSTER> &quot;Kirk Pepperdine&quot; &lt;kirk.pepperd...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-24T02:26:00 </POSTDATE>
+On Jan 24, 2008 5:49 AM, Reinier Zwitserloot &lt;reini ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I wrote an earlier post concluding that the java brand is in peril and
+&gt; that brands are very very hard to 'fix', however, I didn't really
+&gt; offer any solutions because I didn't have any.
+
+&gt; I think I do now:
+
+&gt; The only feature that java7 really needs to turn the branding issue
+&gt; around, is software transactional memory.
+">
+
+Interesting idea. I think that transactional memory will be the next big hit
+in computing. However, the things that you need to do in software to create
+transactional memory IMHO will not make it cost effective. IOWs, the current
+non-transactional memory model with escape analysis and lock elision will
+overall be a much less expensive solution. Part of this guess is based on
+current findings that say, most critical sections are only accessed by a
+single thread.
+
+There is also another thought at work here. Although we are protecting code,
+what we really want to do is protect data. And once again we can see that in
+the rare case (in most applications) where there maybe two threads in the
+critical section, chances are good that they will not touch the same piece
+of data. Think of multiple threads writing to a HashMap and think of why
+ConcurrentHashMap is a win in most cases (at worse it is not a loss). So
+this would seem to be a good argument for STM. However software STM will
+necessarily include either locking or some use of CAS with complex logic to
+manage the results of the CAS operation, both of which are more expensive
+than just getting rid of the lock altogether.
+
+What I'm eluding to here is that what we want programmers to be able to
+write thread safe code with minimal regard to performance concerns due to
+locking models. IOWs, let programmers drop in locks where they think they
+need to. Lets have compilation based on run time profiling to determine if a
+lock can safely be removed. My guess is lock elimination will beat STM in
+the vast majority of the cases and lose in a small minority of cases.
+
+Better yet, you can get and Azul box. It has hardware assist for Java that
+includes transaction memory. So they don't try to get rid of locks they just
+let'm all go. What they have observed is that the TM rollbacks are rare
+events. Having this in hardware means that it is pretty much free. I've just
+started reading about Rock, Sun's implementation of TM this week. There are
+quite a few papers and presentations available from the Sun research site.
+There is also an STM simulation that I've not downloaded yet that is
+available for you to tinker with.
+
+I guess I should quote that this is all based on some obervations and then
+making a guess. So to quote a recent Kode Vicious article, &quot;take a freaking
+measurement&quot; ;-)
+
+It is good to see that  the war on hard pessimistic locks is well
+underway!!!!
+
+--
+Kind regards,
+Kirk Pepperdine
+
+http://www.kodewerk.com
+http://www.javaperformancetuning.com
+http// www.cretesoft.com
+</POST>
+<POST>
+<POSTER> Reinier Zwitserloot &lt;reini...@gmail.com&gt; </POSTER>
+<POSTDATE> 2008-01-24T10:11:00 </POSTDATE>
+manually taking  care of locking because it is faster is a virtual
+exact analogy to letting programmers manually take care of
+deconstructing their objects  because it is faster. For these reasons:
+
+1. In most code bases now, and for the vast majority in the future, GC/
+Locking specifics have no measurable impact on performance. It just
+isn't important enough to bother the programmer with.
+
+2. Taking two separate pieces of existing code, both of them
+'correct' (bug free), trying to mix them up will usually break manual
+GC/STM. By automating it, you vastly improve the scalability (in the
+sense of writing large projects, not in the sense of making it handle
+lots of users) of writing code.
+
+3. With some creativity and a lot of research, automatic GC is often
+faster than even an expert's manual GC work, partly because the
+automation means it can be optimized for local architecture, but
+mostly because of smart tricks that are non-trivial to implement
+manually for each occurrence of needing to clean up an object's heap
+space.
+
+I did not use GC/STM on purpose for item #3 because so far its still a
+bit of an educated guess. However, I do, really, believe, that
+continuing STM research will eventually result in STM-based locking
+beating the absolute pants off of most manual locking efforts. After
+all, STM-based locking is optimistic. For most locking situations, the
+locks are there to actually guard maybe 0.01% of events. This is what
+makes writing locking code such a drag: Usually buggy code doesn't
+actually bug, it only bugs if there's a relatively rare and only
+reasonably easily measured during simulated heavy load confluence of
+events that causes one thread to fiddle with an object at the same
+time that another thread does it. With locking you always lock just to
+guard against that 0.01% of events. With STM, you don't do any
+guarding, you just ensure at the end that the bits of memory that the
+code played with have not been changed by something else right in the
+middle.
+
+Consider also the parallel of overhead. GC has a lot more overhead in
+the sense of needing an actual garbage collector. STM has a lot of
+overhead in that every single line of code needs to do logistics on
+which bits of memory it has been touching, so that atomic{} bits of
+code know they need to nix the journal and start over.
+
+People have taken measurements, fortunately. I suggest you watch Simon
+Peyton-Jones' talk on STM in haskell, which you can find on google
+video. The basic gist of it is this, from slowest to fastest:
+
+slow: quick-fixed highly concurrent code; basically anytime a
+synchronization issue is perceived, synchronized() tags are thrown in
+over a large scope of code to 'fix' it. It works and it scales in the
+sense of large code bases, but it doesn't scale at all in the sense of
+adding multiple cores.
+
+fastest: carefully locked code, with tons of synchronized statements
+and many many locking objects, each lock carefully engineered to lock
+only when it needs to, code moved around so the locks can be engaged
+for short periods of time, and where possible, locks are eliminated
+altogether and replaced by volatile variables. This code is very fast
+and scales very well with multiple cores, but it absolutely does not
+scale for development; trying to fix bugs or add features to such a
+code base is very very difficult, trying to test it to ascertain that
+all that painstaking locking code is 'correct' is virtually
+impossible, and transplanting one snippet of code to another place
+will require you to redo all the locking research for that snippet.
+
+somewhere in the middle: STM. I therefore claim STM wins in the area
+of java branding. Java is not under fire from those who write complex
+and very speed sensitive server side code. These people either use
+java, or if they are really -really- sensitive, such as e.g. the
+google search engine, they use raw C and manually optimize it. It IS
+under fire from the other end, the 'agile development' guys, the
+people who consider java not nearly a high-enough-level programming
+language anymore. The whole 'the more the machine does for me, the
+better!' schtick that has for example been giving Ruby on Rails so
+many wings these past few years is just now getting a reality check,
+and this reality check is primarily  based on how ruby (and even
+python with its global interpreter lock issue) really don't scale too
+well to multiple cores. And they have no idea how to fix it. STM will
+absolutely fix it in an acceptable fashion for those languages. They
+want their code to scale well, they don't feel the need to squeeze
+every last drop of performance out of it.
+
+STM is that perfect middle ground. It scales very well in development
+effort, and it scales 'well enough' in cores and handling load.
+
+Of course, STM is very very difficult. It works well in haskell mostly
+because side-effects are sequestered into its own little obscure
+corner of the language (monads), and one of the largest problems of
+practical STM implementations is that STM requires code to roll itself
+back as if it never ran. This is automatable for memory accesses, but
+its kinda hard to undo a System.out.println. Effectively any java code
+that is guarded with STM needs to have zero side effects, and right
+now java code doesn't know if what it does has side effects; it is not
+possible, at runtime or write/compiler time, for the JVM or for javac
+to know that a certain code snippet had no side effects. (Side effects
+are writing or reading from any stream, including console, disk, and
+the network, mostly. You can't undo those on a whim!). An initial
+implementation may simply start out claiming that you should only put
+side-effect free code in the blocks or things just go horribly wrong.
+Later a find bugs addition will help you find places where you break
+this rule, and at some point later on some genius will figure out a
+way for the JVM to actually know when streams are messed with, and
+will raise some sort of exception or error, or better yet, a compiler
+problem.
+
+On Jan 24, 8:26 am, &quot;Kirk Pepperdine&quot; &lt;kirk.pepperd ... @gmail.com&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Jan 24, 2008 5:49 AM, Reinier Zwitserloot &lt;reini ... @gmail.com&gt; wrote:
+
+&gt; &gt; I wrote an earlier post concluding that the java brand is in peril and
+&gt; &gt; that brands are very very hard to 'fix', however, I didn't really
+&gt; &gt; offer any solutions because I didn't have any.
+
+&gt; &gt; I think I do now:
+
+&gt; &gt; The only feature that java7 really needs to turn the branding issue
+&gt; &gt; around, is software transactional memory.
+
+&gt; Interesting idea. I think that transactional memory will be the next big hit
+&gt; in computing. However, the things that you need to do in software to create
+&gt; transactional memory IMHO will not make it cost effective. IOWs, the current
+&gt; non-transactional memory model with escape analysis and lock elision will
+&gt; overall be a much less expensive solution. Part of this guess is based on
+&gt; current findings that say, most critical sections are only accessed by a
+&gt; single thread.
+
+&gt; There is also another thought at work here. Although we are protecting code,
+&gt; what we really want to do is protect data. And once again we can see that in
+&gt; the rare case (in most applications) where there maybe two threads in the
+&gt; critical section, chances are good that they will not touch the same piece
+&gt; of data. Think of multiple threads writing to a HashMap and think of why
+&gt; ConcurrentHashMap is a win in most cases (at worse it is not a loss). So
+&gt; this would seem to be a good argument for STM. However software STM will
+&gt; necessarily include either locking or some use of CAS with complex logic to
+&gt; manage the results of the CAS operation, both of which are more expensive
+&gt; than just getting rid of the lock altogether.
+
+&gt; What I'm eluding to here is that what we want programmers to be able to
+&gt; write thread safe code with minimal regard to performance concerns due to
+&gt; locking models. IOWs, let programmers drop in locks where they think they
+&gt; need to. Lets have compilation based on run time profiling to determine if a
+&gt; lock can safely be removed. My guess is lock elimination will beat STM in
+&gt; the vast majority of the cases and lose in a small minority of cases.
+
+&gt; Better yet, you can get and Azul box. It has hardware assist for Java that
+&gt; includes transaction memory. So they don't try to get rid of locks they just
+&gt; let'm all go. What they have observed is that the TM rollbacks are rare
+&gt; events. Having this in hardware means that it is pretty much free. I've just
+&gt; started reading about Rock, Sun's implementation of TM this week. There are
+&gt; quite a few papers and presentations available from the Sun research site.
+&gt; There is also an STM simulation that I've not downloaded yet that is
+&gt; available for you to tinker with.
+
+&gt; I guess I should quote that this is all based on some obervations and then
+&gt; making a guess. So to quote a recent Kode Vicious article, &quot;take a freaking
+&gt; measurement&quot; ;-)
+
+&gt; It is good to see that  the war on hard pessimistic locks is well
+&gt; underway!!!!
+
+&gt; --
+&gt; Kind regards,
+&gt; Kirk Pepperdine
+
+&gt; http://www.kodewerk.comhttp://www.javaperformancetuning.com
+&gt; http// www.cretesoft.com
+">
+</POST>
+</TEXT>
+</BODY>
+</DOC>

@@ -1,0 +1,234 @@
+<DOC>
+<DOCID> eng-NG-31-126424-8212993 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-19T13:03:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Why does every update fires a select first?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Jigar Gosar &lt;rails-mailing-l...@andreas-s.net&gt; </POSTER>
+<POSTDATE> 2007-08-19T13:03:00 </POSTDATE>
+In console:
+-----------
+List.update(1, :updated_at=&gt;Time.now)
+
+In log file:
+------------
+SELECT * FROM lists WHERE (lists.`id` = 1)
+SQL (0.000000)  BEGIN
+List Update (0.000000)  UPDATE lists SET `created_at` = '2007-08-10
+23:15:36', `desc` = NULL, `public` = 0, `user_id` = NULL, `updated_at` =
+'2007-08-19 22:28:21', `name` = 'qwe' WHERE `id` = 1
+SQL (0.031000)  COMMIT
+
+Why does every update fires a select first?
+This seems very inefficient. Is there a work around? is this an accepted
+fact in the rails community? For every write there will be at least one
+read, how come this is the default behaviour. Should i just accept this
+as a expense of using rails?
+
+Any help is appreciated.
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> Perry Smith &lt;rails-mailing-l...@andreas-s.net&gt; </POSTER>
+<POSTDATE> 2007-08-19T17:42:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jigar Gosar wrote:
+&gt; In console:
+&gt; -----------
+&gt; List.update(1, :updated_at=&gt;Time.now)
+
+&gt; In log file:
+&gt; ------------
+&gt; SELECT * FROM lists WHERE (lists.`id` = 1)
+&gt; SQL (0.000000)  BEGIN
+&gt; List Update (0.000000)  UPDATE lists SET `created_at` = '2007-08-10
+&gt; 23:15:36', `desc` = NULL, `public` = 0, `user_id` = NULL, `updated_at` =
+&gt; '2007-08-19 22:28:21', `name` = 'qwe' WHERE `id` = 1
+&gt; SQL (0.031000)  COMMIT
+
+&gt; Why does every update fires a select first?
+&gt; This seems very inefficient. Is there a work around? is this an accepted
+&gt; fact in the rails community? For every write there will be at least one
+&gt; read, how come this is the default behaviour. Should i just accept this
+&gt; as a expense of using rails?
+
+&gt; Any help is appreciated.
+">
+
+Interesting.  The deeper and deeper I get into Rails, the less and less
+it does -- it seems.  Still, its better than what I could do on my own.
+
+My guess is that it is not &quot;accepted&quot;.  There is a constant stream of
+improvements.
+
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> Rich C &lt;conejo2...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-19T17:58:00 </POSTDATE>
+Took a look at the docs, this is the accepted behaviour:
+
+Finds the record from the passed id, instantly saves it with the
+passed attributes (if the validation permits it), and returns it. If
+the save fails under validations, the unsaved object is still
+returned.
+
+So it does quite a bit for you: finds the record, runs the model
+validations, saves it if validations pass, or gives original record if
+validations failed. In this context 'update' doesn't mean 'update the
+database record' it really means 'update the model object and make
+sure it is valid'. To do this it must hydrate the object.
+
+Rich C.
+</POST>
+<POST>
+<POSTER> Jigar Gosar &lt;rails-mailing-l...@andreas-s.net&gt; </POSTER>
+<POSTDATE> 2007-08-19T23:27:00 </POSTDATE>
+I understand that it is acceptable as far as the docs are concerned. But
+do we really need this behaviour all the time? is it required to fetch
+all the data, when performing validations? and how many times we need
+the record we updated back?
+
+Doesn't this seem, inefficient? I wish this post would get attention of
+DHH.
+
+<QUOTE PREVIOUSPOST="
+Rich C wrote:
+&gt; Took a look at the docs, this is the accepted behaviour:
+
+&gt;      Finds the record from the passed id, instantly saves it with the
+&gt; passed attributes (if the validation permits it), and returns it. If
+&gt; the save fails under validations, the unsaved object is still
+&gt; returned.
+
+&gt; So it does quite a bit for you: finds the record, runs the model
+&gt; validations, saves it if validations pass, or gives original record if
+&gt; validations failed. In this context 'update' doesn't mean 'update the
+&gt; database record' it really means 'update the model object and make
+&gt; sure it is valid'. To do this it must hydrate the object.
+
+&gt; Rich C.
+">
+
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> John Miller &lt;rails-mailing-l...@andreas-s.net&gt; </POSTER>
+<POSTDATE> 2007-08-20T00:03:00 </POSTDATE>
+There is a documented workaround for this.  update_attribute does not
+load the record and DOES NOT DO VALIDATION.  I humbly believe this is
+errent behavior, but I have lost this fight too many times to try again.
+(I'm not as good looking as DHH)
+
+From the docs --
+
+ubdate_attribute:
+
+Updates a single attribute and saves the record. This is especially
+useful for boolean flags on existing records. Note: This method is
+overwritten by the Validation module that‘ll make sure that updates made
+with this method doesn‘t get subjected to validation checks. Hence,
+attributes can be updated even if the full object isn‘t valid.
+
+<QUOTE PREVIOUSPOST="
+Jigar Gosar wrote:
+&gt; I understand that it is acceptable as far as the docs are concerned. But
+&gt; do we really need this behaviour all the time? is it required to fetch
+&gt; all the data, when performing validations? and how many times we need
+&gt; the record we updated back?
+
+&gt; Doesn't this seem, inefficient? I wish this post would get attention of
+&gt; DHH.
+
+&gt; Rich C wrote:
+&gt;&gt; Took a look at the docs, this is the accepted behaviour:
+
+&gt;&gt;      Finds the record from the passed id, instantly saves it with the
+&gt;&gt; passed attributes (if the validation permits it), and returns it. If
+&gt;&gt; the save fails under validations, the unsaved object is still
+&gt;&gt; returned.
+
+&gt;&gt; So it does quite a bit for you: finds the record, runs the model
+&gt;&gt; validations, saves it if validations pass, or gives original record if
+&gt;&gt; validations failed. In this context 'update' doesn't mean 'update the
+&gt;&gt; database record' it really means 'update the model object and make
+&gt;&gt; sure it is valid'. To do this it must hydrate the object.
+
+&gt;&gt; Rich C.
+">
+
+--
+Posted via http://www.ruby-forum.com/ .
+</POST>
+<POST>
+<POSTER> &quot;Brian Hogan&quot; &lt;bpho...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-20T00:33:00 </POSTDATE>
+This issue comes up a lot.  First of all, retrieving the record before
+update is important to avoid race conditions (see optimistic locking and
+LOCK VERSION).
+
+You could issue the SQL statement yourself...
+
+List.connection.execute &quot;update lists set updated_at = #{Time.now.to_s
+(:db)}'
+
+I prefer to let Rails handle it for me so I can take advantage of
+lock_version.
+
+On 8/19/07, John Miller &lt;rails-mailing-l ... @andreas-s.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; There is a documented workaround for this.  update_attribute does not
+&gt; load the record and DOES NOT DO VALIDATION.  I humbly believe this is
+&gt; errent behavior, but I have lost this fight too many times to try again.
+&gt; (I'm not as good looking as DHH)
+
+&gt; From the docs --
+
+&gt; ubdate_attribute:
+
+&gt; Updates a single attribute and saves the record. This is especially
+&gt; useful for boolean flags on existing records. Note: This method is
+&gt; overwritten by the Validation module that'll make sure that updates made
+&gt; with this method doesn't get subjected to validation checks. Hence,
+&gt; attributes can be updated even if the full object isn't valid.
+
+&gt; Jigar Gosar wrote:
+&gt; &gt; I understand that it is acceptable as far as the docs are concerned. But
+&gt; &gt; do we really need this behaviour all the time? is it required to fetch
+&gt; &gt; all the data, when performing validations? and how many times we need
+&gt; &gt; the record we updated back?
+
+&gt; &gt; Doesn't this seem, inefficient? I wish this post would get attention of
+&gt; &gt; DHH.
+
+&gt; &gt; Rich C wrote:
+&gt; &gt;&gt; Took a look at the docs, this is the accepted behaviour:
+
+&gt; &gt;&gt;      Finds the record from the passed id, instantly saves it with the
+&gt; &gt;&gt; passed attributes (if the validation permits it), and returns it. If
+&gt; &gt;&gt; the save fails under validations, the unsaved object is still
+&gt; &gt;&gt; returned.
+
+&gt; &gt;&gt; So it does quite a bit for you: finds the record, runs the model
+&gt; &gt;&gt; validations, saves it if validations pass, or gives original record if
+&gt; &gt;&gt; validations failed. In this context 'update' doesn't mean 'update the
+&gt; &gt;&gt; database record' it really means 'update the model object and make
+&gt; &gt;&gt; sure it is valid'. To do this it must hydrate the object.
+
+&gt; &gt;&gt; Rich C.
+
+&gt; --
+&gt; Posted via http://www.ruby-forum.com/ .
+">
+</POST>
+</TEXT>
+</BODY>
+</DOC>

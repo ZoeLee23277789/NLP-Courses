@@ -1,0 +1,688 @@
+<DOC>
+<DOCID> eng-NG-31-126414-8209787 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-07-09T12:16:00 </DATETIME>
+<BODY>
+<HEADLINE>
+chroot(8) FreeBSD, No such file or directory
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> &quot;Helmut Schneider&quot; &lt;jumpe...@gmx.de&gt; </POSTER>
+<POSTDATE> 2007-07-09T12:16:00 </POSTDATE>
+Hi,
+
+I have two boxes, FreeBSD6.2 and OpenBSD4.1. Does chroot differ on both
+systems?
+
+[root@mx1 ~]# uname -rs
+OpenBSD 4.1
+[root@mx1 ~]# ls -la /var/amavisd/usr/bin/id
+-rwxr-x---  1 root  amavisd  10308 Jul  9 17:50 /var/amavisd/usr/bin/id
+[root@mx1 ~]# chroot -u amavisd /var/amavisd/ /usr/bin/id
+uid=3000(amavisd) gid=3000(amavisd) groups=3000(amavisd)
+[root@mx1 ~]#
+
+[root@BSDHelmut ~]# uname -rs
+FreeBSD 6.2-RELEASE-p5
+[root@BSDHelmut ~]# ls -la /var/amavis/usr/bin/id
+-rwxr-x---  1 root  vscan  8212 Jul  9 17:51 /var/amavis/usr/bin/id
+[root@BSDHelmut ~]# chroot -u vscan /var/amavis/ /usr/bin/id
+chroot: /usr/bin/id: No such file or directory
+[root@BSDHelmut ~]# chroot /var/amavis/ /usr/bin/id
+uid=0(root) gid=0(wheel) groups=0(wheel), 5(operator)
+[root@BSDHelmut ~]#
+
+What did I miss/forget?
+
+ktrace says:
+
+[...]
+20137 chroot   RET   read 4096/0x1000
+20137 chroot   CALL  close(0x3)
+20137 chroot   RET   close 0
+20137 chroot   CALL  chdir(0xbfbfed60)
+20137 chroot   NAMI  &quot;/var/amavis/&quot;
+20137 chroot   RET   chdir 0
+20137 chroot   CALL  chroot(0x8048d48)
+20137 chroot   NAMI  &quot;.&quot;
+20137 chroot   RET   chroot 0
+20137 chroot   CALL  setuid(0x6e)
+20137 chroot   RET   setuid 0
+20137 chroot   CALL  execve(0xbfbfed6d,0xbfbfec7c,0xbfbfec84)
+20137 chroot   NAMI  &quot;/usr/bin/id&quot;
+20137 chroot   RET   execve -1 errno 13 Permission denied
+20137 chroot   CALL  stat(0xbfbfed6d,0xbfbfe6f0)
+20137 chroot   NAMI  &quot;/usr/bin/id&quot;
+20137 chroot   RET   stat -1 errno 13 Permission denied
+20137 chroot   CALL  write(0x2,0xbfbfe540,0x8)
+20137 chroot   GIO   fd 2 wrote 8 bytes
+&quot;chroot: &quot;
+20137 chroot   RET   write 8
+20137 chroot   CALL  write(0x2,0xbfbfe560,0xb)
+20137 chroot   GIO   fd 2 wrote 11 bytes
+&quot;/usr/bin/id&quot;
+20137 chroot   RET   write 11/0xb
+20137 chroot   CALL  write(0x2,0x2813ba64,0x2)
+20137 chroot   GIO   fd 2 wrote 2 bytes
+&quot;: &quot;
+20137 chroot   RET   write 2
+20137 chroot   CALL  write(0x2,0xbfbfe540,0x1a)
+20137 chroot   GIO   fd 2 wrote 26 bytes
+&quot;No such file or directory
+&quot;
+20137 chroot   RET   write 26/0x1a
+20137 chroot   CALL  exit(0x1)
+
+Thanks, Helmut
+
+--
+Please do not feed my mailbox, Swen still does his job well
+</POST>
+<POST>
+<POSTER> patpro ~ Patrick Proniewski &lt;pat...@boleskine.patpro.net&gt; </POSTER>
+<POSTDATE> 2007-07-09T13:23:00 </POSTDATE>
+In article &lt;5ff5aqF3bj2v ... @mid.individual.net&gt;,
+&quot;Helmut Schneider&quot; &lt;jumpe ... @gmx.de&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi,
+
+&gt; I have two boxes, FreeBSD6.2 and OpenBSD4.1. Does chroot differ on both
+&gt; systems?
+
+&gt; [root@mx1 ~]# uname -rs
+&gt; OpenBSD 4.1
+&gt; [root@mx1 ~]# ls -la /var/amavisd/usr/bin/id
+&gt; -rwxr-x---  1 root  amavisd  10308 Jul  9 17:50 /var/amavisd/usr/bin/id
+&gt; [root@mx1 ~]# chroot -u amavisd /var/amavisd/ /usr/bin/id
+&gt; uid=3000(amavisd) gid=3000(amavisd) groups=3000(amavisd)
+&gt; [root@mx1 ~]#
+
+&gt; [root@BSDHelmut ~]# uname -rs
+&gt; FreeBSD 6.2-RELEASE-p5
+&gt; [root@BSDHelmut ~]# ls -la /var/amavis/usr/bin/id
+&gt; -rwxr-x---  1 root  vscan  8212 Jul  9 17:51 /var/amavis/usr/bin/id
+&gt; [root@BSDHelmut ~]# chroot -u vscan /var/amavis/ /usr/bin/id
+&gt; chroot: /usr/bin/id: No such file or directory
+&gt; [root@BSDHelmut ~]# chroot /var/amavis/ /usr/bin/id
+&gt; uid=0(root) gid=0(wheel) groups=0(wheel), 5(operator)
+&gt; [root@BSDHelmut ~]#
+
+&gt; What did I miss/forget?
+">
+
+id is a dynamic executable :
+
+$ ldd `which id`
+/usr/bin/id:
+libbsm.so.1 =&gt; /usr/lib/libbsm.so.1 (0x2807b000)
+libc.so.6 =&gt; /lib/libc.so.6 (0x2808a000)
+
+try using /rescue/id :
+
+$ ldd /rescue/id
+ldd: /rescue/id: not a dynamic executable
+
+by the way, when I try to use a chrooted /usr/bin/id, it returns :
+
+ELF interpreter /libexec/ld-elf.so.1 not found
+Abort trap: 6
+
+hope it helps,
+
+patpro
+
+--
+http://www.patpro.net/
+</POST>
+<POST>
+<POSTER> &quot;Helmut Schneider&quot; &lt;jumpe...@gmx.de&gt; </POSTER>
+<POSTDATE> 2007-07-09T13:50:00 </POSTDATE>
+patpro ~ Patrick Proniewski &lt;pat ... @boleskine.patpro.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In article &lt;5ff5aqF3bj2v ... @mid.individual.net&gt;,
+&gt; &quot;Helmut Schneider&quot; &lt;jumpe ... @gmx.de&gt; wrote:
+&gt;&gt; Hi,
+&gt;&gt; I have two boxes, FreeBSD6.2 and OpenBSD4.1. Does chroot differ on both
+&gt;&gt; systems?
+&gt;&gt; [root@mx1 ~]# uname -rs
+&gt;&gt; OpenBSD 4.1
+&gt;&gt; [root@mx1 ~]# ls -la /var/amavisd/usr/bin/id
+&gt;&gt; -rwxr-x---  1 root  amavisd  10308 Jul  9 17:50 /var/amavisd/usr/bin/id
+&gt;&gt; [root@mx1 ~]# chroot -u amavisd /var/amavisd/ /usr/bin/id
+&gt;&gt; uid=3000(amavisd) gid=3000(amavisd) groups=3000(amavisd)
+&gt;&gt; [root@mx1 ~]#
+&gt;&gt; [root@BSDHelmut ~]# uname -rs
+&gt;&gt; FreeBSD 6.2-RELEASE-p5
+&gt;&gt; [root@BSDHelmut ~]# ls -la /var/amavis/usr/bin/id
+&gt;&gt; -rwxr-x---  1 root  vscan  8212 Jul  9 17:51 /var/amavis/usr/bin/id
+&gt;&gt; [root@BSDHelmut ~]# chroot -u vscan /var/amavis/ /usr/bin/id
+&gt;&gt; chroot: /usr/bin/id: No such file or directory
+&gt;&gt; [root@BSDHelmut ~]# chroot /var/amavis/ /usr/bin/id
+&gt;&gt; uid=0(root) gid=0(wheel) groups=0(wheel), 5(operator)
+&gt;&gt; [root@BSDHelmut ~]#
+&gt;&gt; What did I miss/forget?
+&gt; id is a dynamic executable :
+&gt; $ ldd `which id`
+&gt; /usr/bin/id:
+&gt; libbsm.so.1 =&gt; /usr/lib/libbsm.so.1 (0x2807b000)
+&gt; libc.so.6 =&gt; /lib/libc.so.6 (0x2808a000)
+&gt; try using /rescue/id :
+&gt; $ ldd /rescue/id
+&gt; ldd: /rescue/id: not a dynamic executable
+&gt; by the way, when I try to use a chrooted /usr/bin/id, it returns :
+&gt; ELF interpreter /libexec/ld-elf.so.1 not found
+&gt; Abort trap: 6
+">
+
+mkdir $CHROOT/libexec $CHROOT/usr/lib $CHROOT/lib
+cp -p /usr/lib/libbsm.so.1 $CHROOT/usr/lib/libbsm.so.1
+cp -p /lib/libc.so.6 $CHROOT/lib/libc.so.6
+cp -p /libexec/ld-elf.so.1 $CHROOT/libexec/ld-elf.so.1
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; [root@BSDHelmut ~]# chroot /var/amavis/ /usr/bin/id
+&gt;&gt; uid=0(root) gid=0(wheel) groups=0(wheel), 5(operator)
+&gt;&gt; [root@BSDHelmut ~]#
+">
+
+So any additional libraries should already reside within the chroot'ed area.
+
+Anyway:
+
+[root@BSDHelmut ~]# cp /rescue/id /var/amavis/bin/
+[root@BSDHelmut ~]# chmod g+x /var/amavis/bin/id
+[root@BSDHelmut ~]# ls -la /var/amavis/bin/id
+-rwxr-x---  1 root  vscan  3324376 Jul  9 19:41 /var/amavis/bin/id
+[root@BSDHelmut ~]# chroot -u vscan /var/amavis/ /bin/id
+chroot: /bin/id: No such file or directory
+[root@BSDHelmut ~]# file /var/amavis/bin/id
+/var/amavis/bin/id: ELF 32-bit LSB executable, Intel 80386, version 1
+(FreeBSD), statically linked, stripped
+[root@BSDHelmut ~]#
+
+BTW, not sure if it is of interest:
+
+[root@BSDHelmut ~]# chroot -u vscan /var/amavis/ /bin/id
+chroot: /bin/id: No such file or directory
+[root@BSDHelmut ~]# chroot -g vscan /var/amavis/ /bin/id
+uid=0(root) gid=0(wheel) egid=110(vscan) groups=110(vscan), 0(wheel),
+5(operator)
+[root@BSDHelmut ~]# chroot -u vscan -g vscan /var/amavis/ /bin/id
+uid=110(vscan) gid=110(vscan) groups=110(vscan), 0(wheel), 5(operator)
+[root@BSDHelmut ~]#
+</POST>
+<POST>
+<POSTER> &quot;Helmut Schneider&quot; &lt;jumpe...@gmx.de&gt; </POSTER>
+<POSTDATE> 2007-07-09T13:58:00 </POSTDATE>
+patpro ~ Patrick Proniewski &lt;pat ... @boleskine.patpro.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In article &lt;5ff5aqF3bj2v ... @mid.individual.net&gt;,
+&gt; &quot;Helmut Schneider&quot; &lt;jumpe ... @gmx.de&gt; wrote:
+&gt;&gt; Hi,
+&gt;&gt; I have two boxes, FreeBSD6.2 and OpenBSD4.1. Does chroot differ on both
+&gt;&gt; systems?
+&gt;&gt; [root@mx1 ~]# uname -rs
+&gt;&gt; OpenBSD 4.1
+&gt;&gt; [root@mx1 ~]# ls -la /var/amavisd/usr/bin/id
+&gt;&gt; -rwxr-x---  1 root  amavisd  10308 Jul  9 17:50 /var/amavisd/usr/bin/id
+&gt;&gt; [root@mx1 ~]# chroot -u amavisd /var/amavisd/ /usr/bin/id
+&gt;&gt; uid=3000(amavisd) gid=3000(amavisd) groups=3000(amavisd)
+&gt;&gt; [root@mx1 ~]#
+&gt;&gt; [root@BSDHelmut ~]# uname -rs
+&gt;&gt; FreeBSD 6.2-RELEASE-p5
+&gt;&gt; [root@BSDHelmut ~]# ls -la /var/amavis/usr/bin/id
+&gt;&gt; -rwxr-x---  1 root  vscan  8212 Jul  9 17:51 /var/amavis/usr/bin/id
+&gt;&gt; [root@BSDHelmut ~]# chroot -u vscan /var/amavis/ /usr/bin/id
+&gt;&gt; chroot: /usr/bin/id: No such file or directory
+&gt;&gt; [root@BSDHelmut ~]# chroot /var/amavis/ /usr/bin/id
+&gt;&gt; uid=0(root) gid=0(wheel) groups=0(wheel), 5(operator)
+&gt;&gt; [root@BSDHelmut ~]#
+&gt;&gt; What did I miss/forget?
+&gt; id is a dynamic executable :
+&gt; $ ldd `which id`
+&gt; /usr/bin/id:
+&gt; libbsm.so.1 =&gt; /usr/lib/libbsm.so.1 (0x2807b000)
+&gt; libc.so.6 =&gt; /lib/libc.so.6 (0x2808a000)
+&gt; try using /rescue/id :
+&gt; $ ldd /rescue/id
+&gt; ldd: /rescue/id: not a dynamic executable
+&gt; by the way, when I try to use a chrooted /usr/bin/id, it returns :
+&gt; ELF interpreter /libexec/ld-elf.so.1 not found
+&gt; Abort trap: 6
+">
+
+mkdir $CHROOT/libexec $CHROOT/usr/lib $CHROOT/lib
+cp -p /usr/lib/libbsm.so.1 $CHROOT/usr/lib/libbsm.so.1
+cp -p /lib/libc.so.6 $CHROOT/lib/libc.so.6
+cp -p /libexec/ld-elf.so.1 $CHROOT/libexec/ld-elf.so.1
+
+Anyway:
+
+[root@BSDHelmut ~]# cp /rescue/id /var/amavis/bin/
+[root@BSDHelmut ~]# chmod g+x /var/amavis/bin/id
+[root@BSDHelmut ~]# ls -la /var/amavis/bin/id
+-rwxr-x---  1 root  vscan  3324376 Jul  9 19:41 /var/amavis/bin/id
+[root@BSDHelmut ~]# chroot -u vscan /var/amavis/ /bin/id
+chroot: /bin/id: No such file or directory
+[root@BSDHelmut ~]# file /var/amavis/bin/id
+/var/amavis/bin/id: ELF 32-bit LSB executable, Intel 80386, version 1
+(FreeBSD), statically linked, stripped
+[root@BSDHelmut ~]#
+
+But what I found out:
+
+[root@BSDHelmut ~]# chroot -u vscan /var/amavis/ /usr/bin/id
+chroot: /bin/id: No such file or directory
+[root@BSDHelmut ~]# chroot -g vscan /var/amavis/ //sr/bin/id
+uid=0(root) gid=0(wheel) egid=110(vscan) groups=110(vscan), 0(wheel),
+5(operator)
+[root@BSDHelmut ~]# chroot -u vscan -g vscan /var/amavis/ /usr/bin/id
+uid=110(vscan) gid=110(vscan) groups=110(vscan), 0(wheel), 5(operator)
+[root@BSDHelmut ~]#
+
+[root@BSDHelmut ~]# jail -u vscan /var/amavis/ bsdhelmutTest 192.168.0.1
+/usr/bin/id
+uid=110(vscan) gid=110(vscan) groups=110(vscan), 0(wheel)
+[root@BSDHelmut ~]# file /var/amavis/usr/bin/id
+/var/amavis/usr/bin/id: ELF 32-bit LSB executable, Intel 80386, version 1
+(FreeBSD), dynamically linked (uses shared libs), stripped
+[root@BSDHelmut ~]#
+</POST>
+<POST>
+<POSTER> p...@hedeland.org (Per Hedeland) </POSTER>
+<POSTDATE> 2007-07-09T17:24:00 </POSTDATE>
+In article &lt;5ff5aqF3bj2v ... @mid.individual.net&gt; &quot;Helmut Schneider&quot;
+
+<QUOTE PREVIOUSPOST="
+&lt;jumpe ... @gmx.de&gt; writes:
+
+&gt;I have two boxes, FreeBSD6.2 and OpenBSD4.1. Does chroot differ on both
+&gt;systems?
+">
+
+Probably not (much).
+
+<QUOTE PREVIOUSPOST="
+&gt; 20137 chroot   CALL  execve(0xbfbfed6d,0xbfbfec7c,0xbfbfec84)
+&gt; 20137 chroot   NAMI  &quot;/usr/bin/id&quot;
+&gt; 20137 chroot   RET   execve -1 errno 13 Permission denied
+&gt; 20137 chroot   CALL  stat(0xbfbfed6d,0xbfbfe6f0)
+&gt; 20137 chroot   NAMI  &quot;/usr/bin/id&quot;
+&gt; 20137 chroot   RET   stat -1 errno 13 Permission denied
+">
+
+This is the interesting part - not just the execve(), but even the
+stat() fails with &quot;Permission denied&quot;. Since you can stat() a file even
+if you have no access permissions at all for it, this tells us that the
+problem isn't with the permissions of &quot;id&quot; itself. Now go and read about
+[EACCESS] in the stat(2) man page.:-)
+
+--Per Hedeland
+p ... @hedeland.org
+</POST>
+<POST>
+<POSTER> &quot;Helmut Schneider&quot; &lt;jumpe...@gmx.de&gt; </POSTER>
+<POSTDATE> 2007-07-10T04:17:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Per Hedeland &lt;p ... @hedeland.org&gt; wrote:
+&gt; In article &lt;5ff5aqF3bj2v ... @mid.individual.net&gt; &quot;Helmut Schneider&quot;
+&gt; &lt;jumpe ... @gmx.de&gt; writes:
+&gt;&gt;I have two boxes, FreeBSD6.2 and OpenBSD4.1. Does chroot differ on both
+&gt;&gt;systems?
+&gt;&gt; 20137 chroot   CALL  execve(0xbfbfed6d,0xbfbfec7c,0xbfbfec84)
+&gt;&gt; 20137 chroot   NAMI  &quot;/usr/bin/id&quot;
+&gt;&gt; 20137 chroot   RET   execve -1 errno 13 Permission denied
+&gt;&gt; 20137 chroot   CALL  stat(0xbfbfed6d,0xbfbfe6f0)
+&gt;&gt; 20137 chroot   NAMI  &quot;/usr/bin/id&quot;
+&gt;&gt; 20137 chroot   RET   stat -1 errno 13 Permission denied
+&gt; This is the interesting part - not just the execve(), but even the
+&gt; stat() fails with &quot;Permission denied&quot;. Since you can stat() a file even
+&gt; if you have no access permissions at all for it, this tells us that the
+&gt; problem isn't with the permissions of &quot;id&quot; itself. Now go and read about
+&gt; [EACCESS] in the stat(2) man page.:-)
+">
+
+You mean: &quot;Read, write, or execute permission of the named file is not re-
+quired, but all directories listed in the path name leading to the file
+must be searchable.&quot;?
+
+So either the user must own all directories below the jail (including the
+jail) or others need read permissions to the same directories?! Noone wants
+that the account which should work in jail owns the root of the jail.
+
+<QUOTE PREVIOUSPOST="
+&gt; Probably not (much).
+">
+
+OpenBSD does not need that, it works fine when the jailed account has access
+to the files and directories using its group membership.
+
+Thanks, Helmut
+
+--
+Please do not feed my mailbox, Swen still does his job well
+</POST>
+<POST>
+<POSTER> patpro ~ Patrick Proniewski &lt;pat...@boleskine.patpro.net&gt; </POSTER>
+<POSTDATE> 2007-07-10T05:05:00 </POSTDATE>
+In article &lt;5fgtkhF3bhi9 ... @mid.individual.net&gt;,
+&quot;Helmut Schneider&quot; &lt;jumpe ... @gmx.de&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Per Hedeland &lt;p ... @hedeland.org&gt; wrote:
+&gt; &gt; In article &lt;5ff5aqF3bj2v ... @mid.individual.net&gt; &quot;Helmut Schneider&quot;
+&gt; &gt; &lt;jumpe ... @gmx.de&gt; writes:
+&gt; &gt;&gt;I have two boxes, FreeBSD6.2 and OpenBSD4.1. Does chroot differ on both
+&gt; &gt;&gt;systems?
+&gt; &gt;&gt; 20137 chroot   CALL  execve(0xbfbfed6d,0xbfbfec7c,0xbfbfec84)
+&gt; &gt;&gt; 20137 chroot   NAMI  &quot;/usr/bin/id&quot;
+&gt; &gt;&gt; 20137 chroot   RET   execve -1 errno 13 Permission denied
+&gt; &gt;&gt; 20137 chroot   CALL  stat(0xbfbfed6d,0xbfbfe6f0)
+&gt; &gt;&gt; 20137 chroot   NAMI  &quot;/usr/bin/id&quot;
+&gt; &gt;&gt; 20137 chroot   RET   stat -1 errno 13 Permission denied
+&gt; &gt; This is the interesting part - not just the execve(), but even the
+&gt; &gt; stat() fails with &quot;Permission denied&quot;. Since you can stat() a file even
+&gt; &gt; if you have no access permissions at all for it, this tells us that the
+&gt; &gt; problem isn't with the permissions of &quot;id&quot; itself. Now go and read about
+&gt; &gt; [EACCESS] in the stat(2) man page.:-)
+
+&gt; You mean: &quot;Read, write, or execute permission of the named file is not re-
+&gt;      quired, but all directories listed in the path name leading to the file
+&gt;      must be searchable.&quot;?
+
+&gt; So either the user must own all directories below the jail (including the
+&gt; jail) or others need read permissions to the same directories?! Noone wants
+&gt; that the account which should work in jail owns the root of the jail.
+">
+
+as far as I understand the quote of the stat(2) man page, you only need
++x perm for the user along the path to your id(1).
+
+patpro
+
+--
+http://www.patpro.net/
+</POST>
+<POST>
+<POSTER> &quot;Helmut Schneider&quot; &lt;jumpe...@gmx.de&gt; </POSTER>
+<POSTDATE> 2007-07-10T05:40:00 </POSTDATE>
+patpro ~ Patrick Proniewski &lt;pat ... @boleskine.patpro.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In article &lt;5fgtkhF3bhi9 ... @mid.individual.net&gt;,
+&gt; &quot;Helmut Schneider&quot; &lt;jumpe ... @gmx.de&gt; wrote:
+&gt;&gt; Per Hedeland &lt;p ... @hedeland.org&gt; wrote:
+&gt;&gt;&gt; In article &lt;5ff5aqF3bj2v ... @mid.individual.net&gt; &quot;Helmut Schneider&quot;
+&gt;&gt;&gt; &lt;jumpe ... @gmx.de&gt; writes:
+&gt;&gt;&gt; &gt;&gt;I have two boxes, FreeBSD6.2 and OpenBSD4.1. Does chroot differ
+&gt;&gt;&gt;&gt; on both systems?
+&gt;&gt;&gt;&gt; 20137 chroot   CALL  execve(0xbfbfed6d,0xbfbfec7c,0xbfbfec84)
+&gt;&gt;&gt;&gt; 20137 chroot   NAMI  &quot;/usr/bin/id&quot;
+&gt;&gt;&gt;&gt; 20137 chroot   RET   execve -1 errno 13 Permission denied
+&gt;&gt;&gt;&gt; 20137 chroot   CALL  stat(0xbfbfed6d,0xbfbfe6f0)
+&gt;&gt;&gt;&gt; 20137 chroot   NAMI  &quot;/usr/bin/id&quot;
+&gt;&gt;&gt;&gt; 20137 chroot   RET   stat -1 errno 13 Permission denied
+&gt;&gt;&gt; This is the interesting part - not just the execve(), but even the
+&gt;&gt;&gt; stat() fails with &quot;Permission denied&quot;. Since you can stat() a file even
+&gt;&gt;&gt; if you have no access permissions at all for it, this tells us that the
+&gt;&gt;&gt; problem isn't with the permissions of &quot;id&quot; itself. Now go and read about
+&gt;&gt;&gt; [EACCESS] in the stat(2) man page.:-)
+&gt;&gt; You mean: &quot;Read, write, or execute permission of the named file is not
+&gt;&gt; re- quired, but all directories listed in the path name leading to the
+&gt;&gt; file must be searchable.&quot;?
+&gt;&gt; So either the user must own all directories below the jail (including
+&gt;&gt; the  jail) or others need read permissions to the same directories?!
+&gt;&gt; Noone wants  that the account which should work in jail owns the root
+&gt;&gt; of the jail.
+&gt; as far as I understand the quote of the stat(2) man page, you only need
+&gt; +x perm for the user along the path to your id(1).
+">
+
+Maybe, but the user has to own all directories along the path.
+
+Anyway, I start id using chroot -u vscan -g vscan which works fine without
+modifying ownership which is OK.
+
+--
+Please do not feed my mailbox, Swen still does his job well
+</POST>
+<POST>
+<POSTER> p...@hedeland.org (Per Hedeland) </POSTER>
+<POSTDATE> 2007-07-10T08:44:00 </POSTDATE>
+In article &lt;5fgtkhF3bhi9 ... @mid.individual.net&gt; &quot;Helmut Schneider&quot;
+
+<QUOTE PREVIOUSPOST="
+&lt;jumpe ... @gmx.de&gt; writes:
+&gt;Per Hedeland &lt;p ... @hedeland.org&gt; wrote:
+&gt;&gt; This is the interesting part - not just the execve(), but even the
+&gt;&gt; stat() fails with &quot;Permission denied&quot;. Since you can stat() a file even
+&gt;&gt; if you have no access permissions at all for it, this tells us that the
+&gt;&gt; problem isn't with the permissions of &quot;id&quot; itself. Now go and read about
+&gt;&gt; [EACCESS] in the stat(2) man page.:-)
+
+&gt;You mean: &quot;Read, write, or execute permission of the named file is not re-
+&gt;     quired, but all directories listed in the path name leading to the file
+&gt;     must be searchable.&quot;?
+">
+
+Yes.
+
+<QUOTE PREVIOUSPOST="
+&gt;So either the user must own all directories below the jail (including the
+&gt;jail) or others need read permissions to the same directories?!
+">
+
+No. The user needs &quot;search&quot; permission on all components. Depending on
+uid and gid(s) of the user and of the directories, this means, for each
+directory, &quot;x&quot; permisson for
+
+- &quot;user&quot; if the user owns the directory, or
+
+- &quot;group&quot; if the user doesn't own the directory but has the directory's
+group in his group list, or
+
+-  &quot;other&quot; otherwise.
+
+If you look at your FreeBSD installation, or in fact at any Unix system,
+you'll find that /, /usr, and /usr/bin invariably have all &quot;x&quot;
+permissions set, and normally are owned by root. Your jail should just
+be set up the same, unless you have some strong reason to do it
+differently *and* understand what you're doing.
+
+<QUOTE PREVIOUSPOST="
+&gt; Noone wants
+&gt;that the account which should work in jail owns the root of the jail.
+">
+
+And there is absolutely no need for that.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Probably not (much).
+
+&gt;OpenBSD does not need that, it works fine when the jailed account has access
+&gt;to the files and directories using its group membership.
+">
+
+This has nothing to do with jail beyond the greater possibility of
+screwing things up when you set up a jail compared to when you do your
+OS installation - it's basic Unix access control semantics. OpenBSD (of
+course) has exactly the same entry in the stat(2) man page:
+
+[EACCES]      Search permission is denied for a component of the path
+prefix.
+
+This is required for *all* file access on Unix, the special thing with
+stat() is just that you don't need any permission for the file itself
+(i.e. one thing less to screw up) - e.g. FreeBSD open(2):
+
+[EACCES]           Search permission is denied for a component of the
+path prefix.
+
+[EACCES]           The required permissions (for reading and/or writing)
+are denied for the given flags.
+
+--Per Hedeland
+p ... @hedeland.org
+</POST>
+<POST>
+<POSTER> &quot;Helmut Schneider&quot; &lt;jumpe...@gmx.de&gt; </POSTER>
+<POSTDATE> 2007-07-10T09:39:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Per Hedeland &lt;p ... @hedeland.org&gt; wrote:
+&gt; In article &lt;5fgtkhF3bhi9 ... @mid.individual.net&gt; &quot;Helmut Schneider&quot;
+&gt; &lt;jumpe ... @gmx.de&gt; writes:
+&gt;&gt;Per Hedeland &lt;p ... @hedeland.org&gt; wrote:
+&gt;&gt;&gt; This is the interesting part - not just the execve(), but even the
+&gt;&gt;&gt; stat() fails with &quot;Permission denied&quot;. Since you can stat() a file even
+&gt;&gt;&gt; if you have no access permissions at all for it, this tells us that the
+&gt;&gt;&gt; problem isn't with the permissions of &quot;id&quot; itself. Now go and read about
+&gt;&gt;&gt; [EACCESS] in the stat(2) man page.:-)
+&gt;&gt;You mean: &quot;Read, write, or execute permission of the named file is not re-
+&gt;&gt; quired, but all directories listed in the path name leading to the file
+&gt;&gt; must be searchable.&quot;?
+&gt; Yes.
+&gt;&gt;So either the user must own all directories below the jail (including the
+&gt;&gt;jail) or others need read permissions to the same directories?!
+&gt; No. The user needs &quot;search&quot; permission on all components. Depending on
+&gt; uid and gid(s) of the user and of the directories, this means, for each
+&gt; directory, &quot;x&quot; permisson for
+&gt; - &quot;user&quot; if the user owns the directory, or
+&gt; - &quot;group&quot; if the user doesn't own the directory but has the directory's
+&gt; group in his group list, or
+&gt; -  &quot;other&quot; otherwise.
+[...]
+&gt; This has nothing to do with jail beyond the greater possibility of
+&gt; screwing things up when you set up a jail compared to when you do your
+&gt; OS installation - it's basic Unix access control semantics. OpenBSD (of
+&gt; course) has exactly the same entry in the stat(2) man page:
+">
+
+I you have OpenBSD and FreeBSD, try this:
+
+## OpenBSD Code ##
+mkdir /home/amavis
+mkdir -p /home/amavis/usr/bin/
+mkdir -p /home/amavis/usr/lib/
+mkdir -p /home/amavis/usr/libexec/
+mkdir -p /home/amavis/etc
+cp /usr/bin/id /home/amavis/usr/bin/
+cp /usr/lib/libc.so.40.3 /home/amavis/usr/lib/
+cp /usr/libexec/ld.so /home/amavis/usr/libexec/
+cp /etc/pwd.db /home/amavis/etc/
+find /home/amavis -print0 | xargs -0 chown root:amavisd
+find /home/amavis -print0 | xargs -0 chmod 550
+chroot -u amavisd /home/amavis/ /usr/bin/id
+## Code ##
+
+Result:
+[root@mx1 ~]# chroot -u amavisd /home/amavis/ /usr/bin/id
+uid=3000(amavisd) gid=3000 groups=3000
+[root@mx1 ~]# uname -rs
+OpenBSD 4.1
+[root@mx1 ~]#
+
+## FreeBSD Code ##
+mkdir /home/amavis
+mkdir -p /home/amavis/usr/bin/
+mkdir -p /home/amavis/usr/lib/
+mkdir -p /home/amavis/lib/
+mkdir -p /home/amavis/libexec/
+mkdir -p /home/amavis/etc
+cp /usr/bin/id /home/amavis/usr/bin/
+cp /usr/lib/libbsm.so.1 /home/amavis/usr/lib/
+cp /lib/libc.so.6 /home/amavis/lib/
+cp /libexec/ld-elf.so.1 /home/amavis/libexec
+cp /etc/pwd.db /home/amavis/etc/
+find /home/amavis -print0 | xargs -0 chown root:vscan
+find /home/amavis -print0 | xargs -0 chmod 550
+chroot -u vscan /home/amavis/ /usr/bin/id
+chroot -u vscan -g vscan /home/amavis/ /usr/bin/id
+## Code ##
+
+Result:
+[root@BSDHelmut ~]# chroot -u vscan /home/amavis/ /usr/bin/id
+chroot: /usr/bin/id: No such file or directory
+[root@BSDHelmut ~]# chroot -u vscan -g vscan /home/amavis/ /usr/bin/id
+uid=110(vscan) gid=110 groups=110, 0, 5
+[root@BSDHelmut ~]# uname -rs
+FreeBSD 6.2-RELEASE-p5
+[root@BSDHelmut ~]#
+
+So there must be a difference between both systems.
+
+--
+Please do not feed my mailbox, Swen still does his job well
+</POST>
+<POST>
+<POSTER> ma...@drugs.dv.isc.org (Mark Andrews) </POSTER>
+<POSTDATE> 2007-07-10T11:03:00 </POSTDATE>
+OpenBSD calls initgroups() which sets the groups based
+on the user unless -g is set.
+
+if (ngids != 0) {
+if (setgid(gidlist[0]) != 0)
+err(1, &quot;setgid&quot;);
+if (setgroups(ngids, gidlist) != 0)
+err(1, &quot;setgroups&quot;);
+} else if (pwd != NULL) {
+if (setgid(pwd-&gt;pw_gid) != 0)
+err(1, &quot;setgid&quot;);
+if (initgroups(user, pwd-&gt;pw_gid) == -1)
+err(1, &quot;initgroups&quot;);
+}
+
+FreeBSD just does what it was explicitly told to do.
+
+if (gids &amp;&amp; setgroups(gids, gidlist) == -1)
+err(1, &quot;setgroups&quot;);
+if (group &amp;&amp; setgid(gid) == -1)
+err(1, &quot;setgid&quot;);
+if (user &amp;&amp; setuid(uid) == -1)
+err(1, &quot;setuid&quot;);
+
+The relevent man pages explain this.
+
+Personally I think OpenBSD's behaviour is more intuitive.
+
+Mark
+</POST>
+<POST>
+<POSTER> &quot;Helmut Schneider&quot; &lt;jumpe...@gmx.de&gt; </POSTER>
+<POSTDATE> 2007-07-10T13:26:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Mark Andrews &lt;ma ... @drugs.dv.isc.org&gt; wrote:
+&gt; OpenBSD calls initgroups() which sets the groups based
+&gt; on the user unless -g is set.
+&gt; if (ngids != 0) {
+&gt; if (setgid(gidlist[0]) != 0)
+&gt; err(1, &quot;setgid&quot;);
+&gt; if (setgroups(ngids, gidlist) != 0)
+&gt; err(1, &quot;setgroups&quot;);
+&gt; } else if (pwd != NULL) {
+&gt; if (setgid(pwd-&gt;pw_gid) != 0)
+&gt; err(1, &quot;setgid&quot;);
+&gt; if (initgroups(user, pwd-&gt;pw_gid) == -1)
+&gt; err(1, &quot;initgroups&quot;);
+&gt; }
+&gt; FreeBSD just does what it was explicitly told to do.
+&gt; if (gids &amp;&amp; setgroups(gids, gidlist) == -1)
+&gt; err(1, &quot;setgroups&quot;);
+&gt; if (group &amp;&amp; setgid(gid) == -1)
+&gt; err(1, &quot;setgid&quot;);
+&gt; if (user &amp;&amp; setuid(uid) == -1)
+&gt; err(1, &quot;setuid&quot;);
+&gt; The relevent man pages explain this.
+&gt; Personally I think OpenBSD's behaviour is more intuitive.
+">
+
+Thanks for clarifying this.
+
+Helmut
+</POST>
+</TEXT>
+</BODY>
+</DOC>

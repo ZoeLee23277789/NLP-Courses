@@ -1,0 +1,2380 @@
+<DOC>
+<DOCID> eng-NG-31-139681-8649630 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-08-28T05:44:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Object-oriented roguelike design
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Al-Khwarizmi &lt;kom...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-28T05:44:00 </POSTDATE>
+OK, so I'm not going to say that I'm starting to code a roguelike,
+because that would probably amount to generating vaporware. But let's
+say that I'm starting to code some Java classes that could be used to
+make a roguelike.
+
+At the moment I have started with the display wrapper and dungeon
+generation code, but soon I'll want to start with the actual world
+model, i.e., the classes representing items, monsters and all these
+things we love from roguelikes. I would like the design to scale, so
+it would be useful and maintainable for something of the size of
+Nethack or ADOM. A few design alternatives have come to my mind, and
+they all seem to have their strong points and their drawbacks, so I
+would like some opinions on them.
+
+1. The trivial approach: each different item or monster in the game
+(for example, a greater demon) is represented by a (Java) class.
+Conditions and states such as blind, poisoned (for monsters) or
+cursed, rotten (for items) are represented as attributes or flags.
+This approach is the first that comes to mind but it seems quite
+unmaintainable, since root classes would have lots of attributes and
+behaviours, and would grow big in terms of complexity and SLOC.
+
+2. The pattern-oriented approach: each different item or monster in
+the game (for example, a greater demon) is represented by a (Java)
+class. Trivial modifiers (such as +1 attack modifiers for a weapon)
+can be represented as attributes, but conditions affecting behaviour
+(blind, poisoned, cursed, rusty) are represented by classes, following
+the Decorator design pattern. So if someone blind wants to read a
+scroll, the reading action goes through all his decorators until a
+BlindDecorator pops up and says: &quot;hey, you can't read, you're blind!&quot;.
+This seems to allow for better encapsulation and makes essential
+classes simpler. A possible drawback is that it makes hard to
+represent specific interactions of conditions and states with
+particular objects (e.g., in a certain roguelike most food is less
+nutritious when cursed, but there is a particular food item which is
+more nutritious when cursed, representing that with decorators seems
+quite hard without nasty hacks). A second drawback is that everything
+is hard-coded and there would be lots of small classes (for example,
+hundreds of monster classes) holding information that would go better
+in a data file.
+
+3. The data-driven approach: after reading the RogueBasin a bit, I
+think this is the name you give to the design where you don't have
+classes for each particular monster or item kind, but simply Monster
+and Item classes which are then parametrized by reading a data file
+(correct me if I'm wrong). For example, the data file would have a
+line for a rat with its HP, armor value, to-hit bonus, etc. and the
+information that its attack can cause sickness. This is the second
+approach that came to my mind. The obvious advantage is that you don't
+end up with hundreds of classes and you can edit monsters and items
+fast and safely. Also, you can combine it either with the attributes
+in 1 or with the decorators in 2 (which would give us approaches 3.1
+and 3.2). However, the problem of this model is that, by not allowing
+particular monsters and items to have specific code (since they are
+represented as data only), it doesn't seem to scale well for the
+enormous amount of particular cases and interactions you can find in
+roguelikes. For example, suppose that there is a kind of monster
+called gog that explodes when killed. Under this approach, it seems
+that the data file should have something like ExplodeWhenKilled=true,
+even if there is only a single monster which explodes when killed and
+that property doesn't make sense in all the other monsters. And what
+is worst, there must be some code somewhere to determine what happens
+when a mob explodes when killed, and wherever it is, it will be
+detached from the definition of a gog and probably surrounded by other
+unrelated methods.
+
+4. The scripted approach: same as approach 3, but allow the monsters
+to have scripting code attached in the data file. So a gog would have
+something like: onDie() { &lt;code for an explosion&gt; }. This seems to
+solve the problem I mentioned with approach 3 because it allows to
+define the characteristics of monsters with uncommon properties as
+code near the monster definitions and without littering the kernel
+classes, while allowing more standard monsters to be defined simply
+with data. The obvious drawback is that we add lots of complexity: a
+second language, an API (or two), and all the common pitfalls of
+scripting languages (spending hours hunting for a typo, etc.).
+&quot;Entities should not be multiplied beyond necessity&quot;, as Occam said -
+but is it really necessary in this case? Also, this design seems
+relatively hard to maintain because it's hard to draw the line between
+data and scripting. You can end up taking lots of decisions like
+&quot;should I have a flag/decorator for monsters that attack with poison,
+or handle this by scripting?&quot; and maybe taking the wrong decision
+sometimes.
+
+For those who have experience developing roguelikes, which alternative
+do you think is the best? If you used decorators, how would you solve
+the problem of specific interactions? If you used scripting, where
+would you draw the line between scripted functionality and core
+functionality? Is there another alternative that I haven't thought of
+and which is much better than these ones?
+</POST>
+<POST>
+<POSTER> Krice &lt;pau...@mbnet.fi&gt; </POSTER>
+<POSTDATE> 2007-08-28T06:52:00 </POSTDATE>
+On 28 elo, 12:44, Al-Khwarizmi &lt;kom ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; For those who have experience developing roguelikes, which alternative
+&gt; do you think is the best?
+">
+
+None of them. I'm using something like this:
+-centralized object database containing static object data
+-base class for objects
+-derived object classes (monster, item, fountain, etc.)
+
+It's an interesting design issue how much functionality you
+want to put in the base class. It can make life easier, but
+also make the base class over complex. Of course the normal
+way of deriving is good guideline (base class doesn't have
+a functionality of derived object) when you design the
+class structure.
+
+When talking about the complexity and interactions there
+are two ways to implement them: deep engine level support
+for atomic actions OR more traditional special case
+handling (which I think is quite easy with good virtual
+class structure). My approach is something between those,
+because pure atomic engine is much slower and harder
+to implement than quick special case hacking.
+
+One thing to remember is that when a roguelike has only
+one way save file (you can load it once) then there is
+actually not that much dynamic &quot;triggered once&quot; -data to
+be stored and lots of things can be determined in real time.
+Less dynamic data is better and I guess it's easy to make
+data dynamic when in case it could be static or derived
+from static data using verbose member function functionality.
+</POST>
+<POST>
+<POSTER> Gamer_2k4 &lt;gamer...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-28T10:08:00 </POSTDATE>
+On Aug 28, 5:52 am, Krice &lt;pau ... @mbnet.fi&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 28 elo, 12:44, Al-Khwarizmi &lt;kom ... @gmail.com&gt; wrote:
+
+&gt; &gt; For those who have experience developing roguelikes, which alternative
+&gt; &gt; do you think is the best?
+
+&gt; None of them. I'm using something like this:
+&gt; -centralized object database containing static object data
+&gt; -base class for objects
+&gt; -derived object classes (monster, item, fountain, etc.)
+">
+
+I think this is what Gearhead does.  It works, but it's very obvious.
+(WALL take 50 damage.  WALL is destroyed!)  My approach is #3.
+
+I think that monsters and items are inherently different enough to
+require different base classes (though wielding a monster would open
+up some interesting possibilities).  On the other hand, different
+monsters SHOULD react differently to certain events and situations.
+This can be accomplished without scripting, though.  You can use
+inheritance or, in Java, interfaces.  An array of Monster objects
+would also accept Goblin objects, assuming they were inherited from
+the Monster class.
+
+This is given me an idea for a 7DRL. =D
+
+--
+Gamer_2k4
+</POST>
+<POST>
+<POSTER> Al-Khwarizmi &lt;kom...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-28T11:51:00 </POSTDATE>
+Well, actually monsters and items have some things in common. For
+example they are displayable in a map, they will probably have some
+description or at least a name, they can be seen... so a common base
+class can make sense. Anyway, I don't think that is really a very
+important design decision, if you don't use a base class you can
+always have monsters and items implement Displayable, Viewable, etc.
+afterwards and it won't have a large impact.
+
+I am more worried about the lower part of the hierarchy, i.e., whether
+to stop deriving subclasses at Item and Monster or continue down from
+there (creating subclasses Goblin, Orc, Kobold, etc.) This seems a
+capital decision, since once one of the possible paths has been taken,
+there is no way back.
+
+Even if interactions can be successfully implemented with a good fine-
+grained class design... I don't know, maybe it's just because I come
+from a different background, but I don't feel comfortable with the
+idea of a &quot;monsters&quot; package with hundreds of small classes (in
+roguelikes like Nethack or ADOM there are hundreds of different
+monsters). In other fields, having hundreds of small classes in the
+same package would probably be considered a bloated design. Is it
+considered a safe design choice in the world of roguelikes? Are there
+successful roguelikes applying this principle?
+</POST>
+<POST>
+<POSTER> Kenneth &#39;Bessarion&#39; Boyd &lt;zaim...@zaimoni.com&gt; </POSTER>
+<POSTDATE> 2007-08-28T18:54:00 </POSTDATE>
+On 2007-08-28 11:44:34,  Al-Khwarizmi &lt;kom ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; OK, so I'm not going to say that I'm starting to code a roguelike,
+&gt; because that would probably amount to generating vaporware. But let's
+&gt; say that I'm starting to code some Java classes that could be used to
+&gt; make a roguelike.
+
+&gt; At the moment I have started with the display wrapper and dungeon
+&gt; generation code, but soon I'll want to start with the actual world
+&gt; model, i.e., the classes representing items, monsters and all these
+&gt; things we love from roguelikes. I would like the design to scale, so
+&gt; it would be useful and maintainable for something of the size of
+&gt; Nethack or ADOM. A few design alternatives have come to my mind, and
+&gt; they all seem to have their strong points and their drawbacks, so I
+&gt; would like some opinions on them.
+
+&gt; 1. The trivial approach: each different item or monster in the game
+&gt; (for example, a greater demon) is represented by a (Java) class.
+&gt; Conditions and states such as blind, poisoned (for monsters) or
+&gt; cursed, rotten (for items) are represented as attributes or flags.
+&gt; This approach is the first that comes to mind but it seems quite
+&gt; unmaintainable, since root classes would have lots of attributes and
+&gt; behaviours, and would grow big in terms of complexity and SLOC.
+">
+
+No external configurability.  Other than that, it's &quot;sort of tenable&quot; (use an
+abstract base class for each of PC/monster and items, with the concrete classes
+as described above).
+
+I tried this for one of my vaporwares; it ended up being refactored out of this
+paradigm to #3.
+
+<QUOTE PREVIOUSPOST="
+&gt; 2. The pattern-oriented approach: ....
+">
+
+I've never seen even a prototype of this in action.
+
+<QUOTE PREVIOUSPOST="
+&gt; 3. The data-driven approach: after reading the RogueBasin a bit, I
+&gt; think this is the name you give to the design where you don't have
+&gt; classes for each particular monster or item kind, but simply Monster
+&gt; and Item classes which are then parametrized by reading a data file
+&gt; (correct me if I'm wrong). ....
+">
+
+This is what is done in the *bands.  It works much better in practice than a
+priori.
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; 4. The scripted approach: same as approach 3, but allow the monsters
+&gt; to have scripting code attached in the data file. ....
+">
+</POST>
+<POST>
+<POSTER> Radomir &#39;The Sheep&#39; Dopieralski &lt;n...@sheep.art.pl&gt; </POSTER>
+<POSTDATE> 2007-08-28T19:21:00 </POSTDATE>
+At Tue, 28 Aug 2007 09:44:34 -0000,
+
+<QUOTE PREVIOUSPOST="
+Al-Khwarizmi wrote:
+&gt; For example, suppose that there is a kind of monster
+&gt; called gog that explodes when killed. Under this approach, it seems
+&gt; that the data file should have something like ExplodeWhenKilled=true,
+&gt; even if there is only a single monster which explodes when killed and
+&gt; that property doesn't make sense in all the other monsters.
+">
+
+OnKill = ExplodeEffect(radius=3, damage=2k6)
+
+:D
+
+<QUOTE PREVIOUSPOST="
+&gt; For those who have experience developing roguelikes, which alternative
+&gt; do you think is the best?
+">
+
+None.
+
+You listed several extremes which show some general ideas well, but they
+are extremes -- not useful in practice. In reality you are going to be
+using bits and pieces of all these techniques, depending on your
+particular needs and on features of the language you are using.
+
+Note that the division to &quot;data&quot; and &quot;code&quot; is completely artifical, and
+it's up to you to place the border between them so that it's the most
+comfortable for you. The trick is to make the lements that repeat often
+easily reusable, while keeping the complexity low. The comparison might
+be a little stretched, but I think it's similar to the
+content/presentation problem:
+&lt; http://www.w3.org/2001/tag/doc/contentPresentation-26.html &gt;
+
+Only here you have content, presentation and behavior. You can cut it into
+slices like that (e.g. following the MVC approach), or choose an
+orthogonal division, and put content, presentation and behavior related to
+a particular &quot;object&quot; in one place. Then again, the architecture will
+depend greatly on how you divide it into &quot;objects&quot;.
+
+Them there is the implementation layer -- depending on how you decide to
+slice your game, you now need to bend these slices into whatever
+techniques your language allows: exploit the features it offers and write
+your own features (including even own language layer) where it is lacking.
+
+One is clear: you can't possibly decide on that before you actually know
+how the game is going to &quot;look like&quot; inside, what data is going to be
+stored, which part of it are going to be mutable and how often, how the
+data is going to be accessed and what do I really want to make.
+
+&quot;Universal roguelike engines&quot; exist already and are called &quot;programming
+languages&quot;.
+
+--
+Radomir `The Sheep' Dopieralski &lt; http://sheep.art.pl &gt;
+()  ascii ribbon campaign - against html e-mail
+/\  &lt; www.asciiribbon.org &gt; - against proprietary attachments
+</POST>
+<POST>
+<POSTER> Daniel Gee &lt;zef...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-28T19:25:00 </POSTDATE>
+Well I first started roguelikes in java by doing a java implementation
+of Rogue itself (still working on parts of it, I hate writing dungeon
+generation code). I looked at the outside and built a structure to
+model that, instead of copying internals. I ended up with a scripted
+style of design. This comes out in the AI for monsters more than
+anything. The AbstractMonster class defines some default behavior for
+things like &quot;can I see the player?&quot; and &quot;melee attack&quot; and such, and
+so any AI that has special conditions (like dragons, that sometimes
+breath fire) can use those same utility methods easily.
+
+Additionally, for items, there are Enums for the type based data (like
+a mace's damage) and then every item the player gets is a wrapper that
+remembers an enum as well as any instance data. Scrolls don't have any
+instance data, swords have a bonus to keep track of, and so on.
+
+So, I think that scripting is great. Polymorphism lets you change a
+part of a script (like a psychic monster who can always see the
+player; just returning &quot;true&quot; for some method instead of making
+checks) on the individual monster level without having to have special
+cases be visible to the world. The down side has already been
+mentioned, you end up with a whole lot of class files inside some
+&quot;monsters&quot; and &quot;items&quot; package and things like that; not very pretty
+in a class browser.
+</POST>
+<POST>
+<POSTER> star.pub...@gmail.com </POSTER>
+<POSTDATE> 2007-08-29T00:17:00 </POSTDATE>
+On Aug 28, 10:08 am, Gamer_2k4 &lt;gamer ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I think that monsters and items are inherently different enough to
+&gt; require different base classes (though wielding a monster would open
+&gt; up some interesting possibilities).  On the other hand, different
+&gt; monsters SHOULD react differently to certain events and situations.
+&gt; This can be accomplished without scripting, though.  You can use
+&gt; inheritance or, in Java, interfaces.  An array of Monster objects
+&gt; would also accept Goblin objects, assuming they were inherited from
+&gt; the Monster class.
+">
+
+This isn't really on topic because my brain is totally fried from
+overtime right now and higer design is beyond me, but, dude, I keep
+being shocked by the realization that in most programming (languages)
+you actually have to think about what can go in your containers and
+design your polymorphism in part to determine that. I've had my head
+in python (and nothing else but a little WOW and TOME lua) so long
+that the concept of a list (or whatever container) being able to only
+hold one kind or one set of kinds of things is just . . . wow.
+
+Not meaning to crap on other ways of doing things, just more a &quot;Oh
+right, they do it like that back in Idaho. Duh.&quot;
+
+<QUOTE PREVIOUSPOST="
+&gt; This is given me an idea for a 7DRL. =D
+">
+
+Ye scare me :)
+
+--
+Lani inherits from Weaver, Angel
+</POST>
+<POST>
+<POSTER> Krice &lt;pau...@mbnet.fi&gt; </POSTER>
+<POSTDATE> 2007-08-29T02:56:00 </POSTDATE>
+On 28 elo, 18:51, Al-Khwarizmi &lt;kom ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In other fields, having hundreds of small classes in the
+&gt; same package would probably be considered a bloated design.
+">
+
+Yes.
+
+<QUOTE PREVIOUSPOST="
+&gt; Is it considered a safe design choice in the world of roguelikes?
+">
+
+It's a design all right, but I can't actually imagine how
+it would work in practice. Maybe this could be something to
+try in a 7DRL:)
+
+<QUOTE PREVIOUSPOST="
+&gt; Are there successful roguelikes applying this principle?
+">
+
+I know none.
+</POST>
+<POST>
+<POSTER> g...@mail.ru (Timofei Shatrov) </POSTER>
+<POSTDATE> 2007-08-29T06:20:00 </POSTDATE>
+On Tue, 28 Aug 2007 23:56:37 -0700, Krice &lt;pau ... @mbnet.fi&gt; tried to confuse
+everyone with this message:
+
+<QUOTE PREVIOUSPOST="
+&gt;On 28 elo, 18:51, Al-Khwarizmi &lt;kom ... @gmail.com&gt; wrote:
+&gt;&gt; In other fields, having hundreds of small classes in the
+&gt;&gt; same package would probably be considered a bloated design.
+
+&gt;Yes.
+
+&gt;&gt; Is it considered a safe design choice in the world of roguelikes?
+
+&gt;It's a design all right, but I can't actually imagine how
+&gt;it would work in practice. Maybe this could be something to
+&gt;try in a 7DRL:)
+">
+
+Been there, done that. The Sewer Massacre is an example of &quot;everything
+is a class&quot; approach (and so are my other games).
+
+--
+|Don't believe this - you're not worthless              ,gr---------.ru
+|It's us against millions and we can't take them all... |  ue     il   |
+|But we can take them on!                               |     @ma      |
+|                       (A Wilhelm Scream - The Rip)    |______________|
+</POST>
+<POST>
+<POSTER> Krice &lt;pau...@mbnet.fi&gt; </POSTER>
+<POSTDATE> 2007-08-29T07:59:00 </POSTDATE>
+On 29 elo, 13:20, g ... @mail.ru (Timofei Shatrov) wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Been there, done that. The Sewer Massacre is an example of &quot;everything
+&gt; is a class&quot; approach (and so are my other games).
+">
+
+How complex Sewer Massacre is? Is the source available?
+</POST>
+<POST>
+<POSTER> Al-Khwarizmi &lt;kom...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-29T08:37:00 </POSTDATE>
+On Aug 29, 1:59 pm, Krice &lt;pau ... @mbnet.fi&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 29 elo, 13:20, g ... @mail.ru (Timofei Shatrov) wrote:
+
+&gt; &gt; Been there, done that. The Sewer Massacre is an example of &quot;everything
+&gt; &gt; is a class&quot; approach (and so are my other games).
+
+&gt; How complex Sewer Massacre is? Is the source available?
+">
+
+I have just looked at it, the source is available at:
+http://common-lisp.net/project/lifp/sewers.htm
+
+<QUOTE PREVIOUSPOST="
+&gt;From what I have seen, I like the dungeon generation. The dungeons are
+">
+
+really nice, reminding me of ADOM's which are the nicest dungeons I
+have seen IMHO. It's a pity that I don't know Common LISP, so probably
+understanding the generation code would take me more time than
+thinking how to improve mine.
+</POST>
+<POST>
+<POSTER> Gerry Quinn &lt;ger...@indigo.ie&gt; </POSTER>
+<POSTDATE> 2007-08-29T09:43:00 </POSTDATE>
+In article &lt;1188361021.316796.76 ... @r34g2000hsd.googlegroups.com&gt;,
+star.pub ... @gmail.com says...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Aug 28, 10:08 am, Gamer_2k4 &lt;gamer ... @gmail.com&gt; wrote:
+&gt; &gt; I think that monsters and items are inherently different enough to
+&gt; &gt; require different base classes (though wielding a monster would open
+&gt; &gt; up some interesting possibilities).  On the other hand, different
+&gt; &gt; monsters SHOULD react differently to certain events and situations.
+&gt; &gt; This can be accomplished without scripting, though.  You can use
+&gt; &gt; inheritance or, in Java, interfaces.  An array of Monster objects
+&gt; &gt; would also accept Goblin objects, assuming they were inherited from
+&gt; &gt; the Monster class.
+">
+
+In C++ it wouldn't, although a list could be made to take either.  An
+array can take only objects of the same kind (assuming you don't cast
+them).
+
+<QUOTE PREVIOUSPOST="
+&gt; This isn't really on topic because my brain is totally fried from
+&gt; overtime right now and higer design is beyond me, but, dude, I keep
+&gt; being shocked by the realization that in most programming (languages)
+&gt; you actually have to think about what can go in your containers and
+&gt; design your polymorphism in part to determine that. I've had my head
+&gt; in python (and nothing else but a little WOW and TOME lua) so long
+&gt; that the concept of a list (or whatever container) being able to only
+&gt; hold one kind or one set of kinds of things is just . . . wow.
+
+&gt; Not meaning to crap on other ways of doing things, just more a &quot;Oh
+&gt; right, they do it like that back in Idaho. Duh.&quot;
+">
+
+Whereas others might say it's nice to know what sort of things a list
+might be a list of!
+
+Obviously one could emulate the Python method by making lists of void
+pointers, which might point at anything...
+
+Or in C++, make a class called Listable, which is a base class for
+everything.
+
+- Gerry Quinn
+</POST>
+<POST>
+<POSTER> Gerry Quinn &lt;ger...@indigo.ie&gt; </POSTER>
+<POSTDATE> 2007-08-29T10:08:00 </POSTDATE>
+In article &lt;1188294274.220221.174 ... @19g2000hsx.googlegroups.com&gt;,
+kom ... @gmail.com says...
+
+<QUOTE PREVIOUSPOST="
+&gt; 3. The data-driven approach: after reading the RogueBasin a bit, I
+&gt; think this is the name you give to the design where you don't have
+&gt; classes for each particular monster or item kind, but simply Monster
+&gt; and Item classes which are then parametrized by reading a data file
+&gt; (correct me if I'm wrong). For example, the data file would have a
+&gt; line for a rat with its HP, armor value, to-hit bonus, etc. and the
+&gt; information that its attack can cause sickness. This is the second
+&gt; approach that came to my mind.
+[--]
+&gt; For example, suppose that there is a kind of monster
+&gt; called gog that explodes when killed. Under this approach, it seems
+&gt; that the data file should have something like ExplodeWhenKilled=true,
+&gt; even if there is only a single monster which explodes when killed and
+&gt; that property doesn't make sense in all the other monsters. And what
+&gt; is worst, there must be some code somewhere to determine what happens
+&gt; when a mob explodes when killed, and wherever it is, it will be
+&gt; detached from the definition of a gog and probably surrounded by other
+&gt; unrelated methods.
+
+&gt; For those who have experience developing roguelikes, which alternative
+&gt; do you think is the best? If you used decorators, how would you solve
+&gt; the problem of specific interactions? If you used scripting, where
+&gt; would you draw the line between scripted functionality and core
+&gt; functionality? Is there another alternative that I haven't thought of
+&gt; and which is much better than these ones?
+">
+
+I suspect 3 is the most common approach, and works pretty well.  If
+you're unsure, it may be the safest way to go.
+
+In my game Lair, I have a 'Monster' class which takes some standard
+attributes such as hit points etc.  It also has a list containing an
+arbitrary number of 'Conditions' which can be either permanent or
+temporary, and can include pretty much anything - e.g. being currently
+poisoned, having a permanent aura of acid damage, or activating a
+special AI module when deciding what to do.
+
+It's really pretty flexible, and if the game design is well thought
+out, you don't need to write all that many special functions, and it
+isn't hard to chase each one down when you need to look at it, or at
+what has it.  (Even when the code ends up spread somewhat inelegantly
+among several classes, which is all too likely to be the case...)
+
+Exploding when killed sounds like a fun property that you wouldn't want
+to restrict to just one monster anyway.  I don't have it in my game,
+but it would work quite well there!  I like monster properties that can
+be used tactically.  To implement it I would create a new condition
+enum value CT_EXPLODEONDEATH (others might prefer to use different
+classes based on Condition, but the effect is the same), which would be
+applied at creation to all Gogs, and cause a suitable Spell to be cast
+when the monster dies.
+
+- Gerry Quinn
+--
+Lair of the Demon Ape
+http://indigo.ie/~gerryq/lair/lair.htm
+</POST>
+<POST>
+<POSTER> g...@mail.ru (Timofei Shatrov) </POSTER>
+<POSTDATE> 2007-08-29T10:29:00 </POSTDATE>
+On Wed, 29 Aug 2007 12:37:58 -0000, Al-Khwarizmi &lt;kom ... @gmail.com&gt; tried to
+confuse everyone with this message:
+
+<QUOTE PREVIOUSPOST="
+&gt;On Aug 29, 1:59 pm, Krice &lt;pau ... @mbnet.fi&gt; wrote:
+&gt;&gt; On 29 elo, 13:20, g ... @mail.ru (Timofei Shatrov) wrote:
+
+&gt;&gt; &gt; Been there, done that. The Sewer Massacre is an example of &quot;everything
+&gt;&gt; &gt; is a class&quot; approach (and so are my other games).
+
+&gt;&gt; How complex Sewer Massacre is? Is the source available?
+">
+
+Well, it's not very complex (there are about 15 different monsters), but I
+*think* it's scalable.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;From what I have seen, I like the dungeon generation. The dungeons are
+&gt;really nice, reminding me of ADOM's which are the nicest dungeons I
+&gt;have seen IMHO. It's a pity that I don't know Common LISP, so probably
+&gt;understanding the generation code would take me more time than
+&gt;thinking how to improve mine.
+">
+
+Yeah, I like this generator too. It's not as complicated as in ADOM, but it also
+seems to lack any &quot;glitches&quot;. The algorithm is rather simple, when digging I
+keep track of whether the tile is diggable in horizontal or vertical direction
+or both. Initially all tiles are diggable in all directions. When a tonnel (for
+example) is dug the tiles on its side become diggable only in perpendicular
+direction. The corners of rooms or tonnels are not diggable in either direction.
+Tonnel can only be dug if it's compatible with what's already there, otherwise
+some other path is chosen randomly.
+
+--
+|Don't believe this - you're not worthless              ,gr---------.ru
+|It's us against millions and we can't take them all... |  ue     il   |
+|But we can take them on!                               |     @ma      |
+|                       (A Wilhelm Scream - The Rip)    |______________|
+</POST>
+<POST>
+<POSTER> David O&#39;Toole &lt;d...@gnu.org&gt; </POSTER>
+<POSTDATE> 2007-08-29T10:56:00 </POSTDATE>
+Hi folks. I have a few comments on the object-oriented
+issue. Hopefully it doesn't turn into a long personal essay :-)
+
+Ok, it is turning into a long personal essay anyway. I have
+wanted to make games all my life. My dad worked at Digital Equipment
+Corporation and so we had fairly powerful computers at home since my
+early childhood. Command-line interfaces, no graphics (it's no wonder
+I am addicted to Linux and Emacs today :-)
+
+I played Zork a lot, and an ancient roguelike called &quot;DND&quot;. I've never
+quite been able to find a copy of it, because there seem to be several
+different old games by that name. DND was my first exposure to
+roguelikes.
+
+The system supported greyscale animations with a wide variety of
+nonalphabetic characters. There was no &quot;animation program&quot;---instead
+we entered all the VT100 control codes by hand, and built animations
+character by character. It was laborious and there was no
+way to fix mistakes (you couldn't easily open these files in a
+text editor) but when played back to the terminal, our giant robot
+wars came to life onscreen. My brother and I created hundreds and
+hundreds of these battles (complete with dialogue balloons and a sort
+of plot), and they're all lost now.
+
+I wrote a few text-adventure games in BASIC, and really got into the
+idea of making my own games. (I also loved the movie Tron, whose main
+character is a video-game designer.) Later on I got into the Ultima
+series (especially VI and VII) and became obsessed with creating my
+own tile-based game engine, and a revolutionary fantasy RPG with vast
+worlds to explore where you could bake dough into bread, cut down
+trees, build bridges out of wood, and so on.
+
+I banged my head against the wall throughout the 1990's---I had fast
+tile-display engines and all kinds of interesting little demos and
+design documents and drawings. I designed my own pixel font on graph
+paper. I hunted down every Richard Garriott interview I could find, so
+that I could figure out how the Master created his toys. I did
+everything but actually create a working game until very recently.
+
+One reason was that I had no formal CS education (just programmers for
+parents, which does count for a lot though.) I fixed this by getting
+my CS degree in 2001 and then spending a little time in graduate
+school. I even went to work in the video game industry (at Irrational
+Games) for a couple years so I could learn how the business works.
+
+But I believe now that the main reason for my failure is that I had
+decided to use C++. The view of object-orientation found in C++ (and
+therefore Java) is just not well-suited to modeling the complex game
+world of a roguelike. This sucks because:
+
+- Simulations are exactly what OO is supposedly good for (one of
+the earliest OO languages was called &quot;Simula.&quot;)
+
+- It is the only view of object-orientation that most developers are
+exposed to.
+
+- Developers use C++ anyway and then invent a &quot;scripting language&quot;
+that usually looks and thinks just like C++ (but interpreted)
+without seeing this as a sign they've chosen the wrong language to
+begin with. Even worse, the scripting language may be designed in
+an ad-hoc manner, and the game's scripts later become difficult to
+read and change.
+
+- Or they use C and the codebase devolves into a seething mass of
+flags like IS_WALKABLE and hard-coded enums like MONSTER_TYPE and
+many, many special cases.
+
+But WHY does C++ suck so much for roguelikes?
+
+I think it boils down to the following: roguelikes require many
+different object types whose behaviors and attributes will vary as a
+result of MANY external factors. Curses, damage/destruction,
+transmogrification, inscription, moon phases/weather, enchantment,
+mutations, combining objects to make new ones, leveling up, being
+turned into a sentient eggplant, the whims of the game's pantheon of
+gods, poisoning, ambient temperature---the list goes on and on. This
+is what roguelikes are ABOUT and why they are so hard to write.
+
+Unfortunately in C++ you are encouraged to use compile-time
+inheritance in order to make objects' behaviors vary. Because
+inheritance makes everything depend on how your base classes are
+designed and coded, you have to make most of your important decisions
+up front---before you populate your codebase with hundreds or even
+thousands of different object types whose definitions will depend on
+those of your base classes. (Perhaps you've heard the comment
+&quot;inheritance breaks encapsulation.&quot;) Making these decisions up front
+is burdensome, error-prone, and worst of all it is the EXACT
+OPPOSITE of the &quot;emergent&quot; gameplay we are all looking for. In my
+view, the mismatch between roguelikes and C/C++ could not be more
+glaring. But this took me years to grasp.
+
+Furthermore, there are many cases where the ever-changing
+relationships between different objects' behaviors and properties
+can't be adequately represented by compile-time inheritance. You can
+get a bit further by using complicated inheritance tricks (aka &quot;Design
+Patterns&quot;) but otherwise you are basically screwed from the
+get-go. You can build your own language and interpreter for the game,
+but unless the scripting language is very simple it's a huge amount of
+work---usually not very enjoyable work. It sucks to be designing a
+scripting language and coding its interpreter, when you really want to
+be making pixel art or inventing different kinds of magic spells and
+traps and monsters. Fatigue and despair set in. You move on to
+something else and wonder why you cannot write a roguelike. What a
+gloomy picture.
+
+The coding phase is where I always got stuck---I could never find a
+clean class structure that supported all the play activities I
+wanted. So I had a blizzard of working support libraries, class diagrams,
+mostly empty .h files that were constantly changing, little
+move-a-guy-around-the-map demos, and no game. I eventually stopped
+programming, out of sheer disappointment. Does this sound familiar to
+anyone here?
+
+Then a few years ago I learned Lisp, and slowly realized that
+everything I knew about programming was wrong. Armed with my new
+knowledge (and copious free time as a result of having quit my games
+industry job) I decided to return at long last to my attempts at
+game-making. Say what you want about Lisp---but just three weeks later
+I had a working graphical roguelike engine with dynamic lighting and
+shadows, alpha transparency, basic AI, pathfinding, drivable vehicles,
+fractal terrain, simple dungeon generation, containers, menus,
+AND an interactive editor for objects and maps. It works on Linux,
+Windows, and the Mac with no source code changes.
+
+(You can see the screenshots of the prototype at
+http://dto.freeshell.org/notebook/RogueLike.html )
+
+The development diary is on my blog ( http://dto.freeshell.org/blog )
+
+To make this work, I designed an object system in which there are no
+classes. Instead it is based on &quot;prototypes&quot; much like the language
+Self. To make a new object type, you &quot;clone&quot; a prototype. The new
+object inherits its methods and data values from the prototype. But
+the similarities to C++ end there:
+
+- An object can replace or redefine its methods at any time, even
+constructing new methods when neccessary.
+
+- You can add new data and new methods whenever you want, and even
+change which prototype an existing object inherits behaviors from.
+
+- Object interactions are governed by message passing. So a proxy
+object (say, a spaceship) receives a damage event, modifies the
+damage amount based on the ship's armor or whatever, and then
+passes on a modified message (say, inflicting a percentage of the
+original damage) onto the player or monster inside the
+ship. Similarly, damage to a player can be forwarded on to objects
+in his/her inventory. Sequences of messages can be recorded and
+played back.
+
+- You can group objects loosely into discrete categories such as
+&quot;obstacle&quot; or &quot;opaque&quot; or &quot;container&quot;. Unlike with classes, an
+object may be in more than one category (or it may change
+categories). This is a little bit like &quot;interfaces&quot; or mixins, but
+probably a bit more flexible.
+
+- Lisp is the language traditionally used for complex artificial
+intelligence projects. I think this will have a big impact on the
+way the game plays, because there is so much Lisp AI code out there
+to study.
+
+I won't go on about it, I would rather just wow you all when it's
+ready to play. :-) Also, the engine is free/open-source, so that
+others can save time by writing games for the platform (instead of
+coding their own engine.)
+
+This is a cautionary tale. My point is not to get people to run out
+and learn Lisp---maybe another language would suit you better---but I
+REALLY want people to take a step back and think about the
+damage that C++ may be doing to your brain.
+
+<QUOTE PREVIOUSPOST="
+Craig &lt;craig.stic ... @gmail.com&gt; writes:
+&gt; I'm working on a #4 idea and it actually is suprisingly simple
+&gt; contrary to what most people think.  The &quot;should I have a flag/
+&gt; decorator for monsters that attack with poison or handle this by
+&gt; scripting?&quot; usually means that you're design isn't flexible enough.
+
+&gt; I break it down into a fairly low-level approach however, which makes
+&gt; OOP programmers nervous.  There are no tiles, actors, items, etc -
+&gt; only &quot;game objects&quot; which supply interfaces that can be invoked by
+&gt; other objects. Interfaces are numbered and structured like CPU-
+&gt; interrupts, so interface 0 could be invoked when damage is recieved,
+&gt; while interface 1 could be invoked when an object bumps into another
+&gt; object. The purpose of these interfaces is determined by your scripts
+&gt; and is done so easily that you can create two very different games
+&gt; using the same engine - without all that messy customized code in your
+&gt; executable.
+
+&gt; The downside is that your script needs to be compiled into an assembly-
+&gt; like intermediate language, which usually requires more hardware
+&gt; knowledge than most folk here have shown. I don't mean that in a bad
+">
+
+...
+read more »
+</POST>
+<POST>
+<POSTER> Gerry Quinn &lt;ger...@indigo.ie&gt; </POSTER>
+<POSTDATE> 2007-08-29T11:48:00 </POSTDATE>
+In article &lt;m3k5re4cfs.fsf ... @gnu.org&gt;, d ... @gnu.org says...
+
+<QUOTE PREVIOUSPOST="
+&gt; But I believe now that the main reason for my failure is that I had
+&gt; decided to use C++. The view of object-orientation found in C++ (and
+&gt; therefore Java) is just not well-suited to modeling the complex game
+&gt; world of a roguelike. This sucks because:
+">
+
+I think that is a misunderstanding of what object orientation is about.
+C++ is not &quot;world simulation language&quot;.  The sort of objects it deals
+best with are not in-game objects but windows, buttons, level
+generators etc.; abstract and often fairly permanent objects that pass
+messages around to keep the game running.
+
+If you want to create a &quot;world simulation language&quot; you will have to
+build something more complex, and C++ is perfectly good for that too.
+Some people take that approach, and create 'actors' which represent in-
+game objects or monsters, and have the sort of interaction they
+require.
+
+I agree that deriving Goblin Raider from Goblin which in turn derives
+from Monster is probably a bad idea, though the difficulties are by no
+means insurmountable.  But because C++ can be used inappropriately is
+no reason to say that it is per se inappropriate.
+
+<QUOTE PREVIOUSPOST="
+&gt; But WHY does C++ suck so much for roguelikes?
+
+&gt; I think it boils down to the following: roguelikes require many
+&gt; different object types whose behaviors and attributes will vary as a
+&gt; result of MANY external factors. Curses, damage/destruction,
+&gt; transmogrification, inscription, moon phases/weather, enchantment,
+&gt; mutations, combining objects to make new ones, leveling up, being
+&gt; turned into a sentient eggplant, the whims of the game's pantheon of
+&gt; gods, poisoning, ambient temperature---the list goes on and on. This
+&gt; is what roguelikes are ABOUT and why they are so hard to write.
+">
+
+Not all roguelikes are about that, but anyway there are patterns that
+you can readily use to implement these things.
+
+<QUOTE PREVIOUSPOST="
+&gt; Unfortunately in C++ you are encouraged to use compile-time
+&gt; inheritance in order to make objects' behaviors vary.
+">
+
+No, you are given that option!
+
+<QUOTE PREVIOUSPOST="
+&gt; Because
+&gt; inheritance makes everything depend on how your base classes are
+&gt; designed and coded, you have to make most of your important decisions
+&gt; up front---before you populate your codebase with hundreds or even
+&gt; thousands of different object types whose definitions will depend on
+&gt; those of your base classes.
+">
+
+Most people don't take this approach, IMO - they use a data-driven
+approach, for example a monster class that can be decorated with
+whatever properties are required.
+
+<QUOTE PREVIOUSPOST="
+&gt; (Perhaps you've heard the comment
+&gt; &quot;inheritance breaks encapsulation.&quot;) Making these decisions up front
+&gt; is burdensome, error-prone, and worst of all it is the EXACT
+&gt; OPPOSITE of the &quot;emergent&quot; gameplay we are all looking for. In my
+&gt; view, the mismatch between roguelikes and C/C++ could not be more
+&gt; glaring. But this took me years to grasp.
+">
+
+Emergent gameplay != emergent runtime behaviour of program.
+
+<QUOTE PREVIOUSPOST="
+&gt; Furthermore, there are many cases where the ever-changing
+&gt; relationships between different objects' behaviors and properties
+&gt; can't be adequately represented by compile-time inheritance. You can
+&gt; get a bit further by using complicated inheritance tricks (aka &quot;Design
+&gt; Patterns&quot;) but otherwise you are basically screwed from the
+&gt; get-go. You can build your own language and interpreter for the game,
+&gt; but unless the scripting language is very simple it's a huge amount of
+&gt; work---usually not very enjoyable work. It sucks to be designing a
+&gt; scripting language and coding its interpreter, when you really want to
+&gt; be making pixel art or inventing different kinds of magic spells and
+&gt; traps and monsters. Fatigue and despair set in. You move on to
+&gt; something else and wonder why you cannot write a roguelike. What a
+&gt; gloomy picture.
+">
+
+You start again with a better design.
+
+<QUOTE PREVIOUSPOST="
+&gt; The coding phase is where I always got stuck---I could never find a
+&gt; clean class structure that supported all the play activities I
+&gt; wanted. So I had a blizzard of working support libraries, class diagrams,
+&gt; mostly empty .h files that were constantly changing, little
+&gt; move-a-guy-around-the-map demos, and no game. I eventually stopped
+&gt; programming, out of sheer disappointment. Does this sound familiar to
+&gt; anyone here?
+">
+
+I suspect some people do fall into this trap.  The secret is to accept
+that the design does not have to be perfect in order to get the job
+done.  You can always refactor.
+
+The other mistake was to mistake C++ for World Simulation Language.
+
+<QUOTE PREVIOUSPOST="
+&gt; Then a few years ago I learned Lisp, and slowly realized that
+&gt; everything I knew about programming was wrong. Armed with my new
+&gt; knowledge (and copious free time as a result of having quit my games
+&gt; industry job) I decided to return at long last to my attempts at
+&gt; game-making. Say what you want about Lisp---but just three weeks later
+&gt; I had a working graphical roguelike engine with dynamic lighting and
+&gt; shadows, alpha transparency, basic AI, pathfinding, drivable vehicles,
+&gt; fractal terrain, simple dungeon generation, containers, menus,
+&gt; AND an interactive editor for objects and maps. It works on Linux,
+&gt; Windows, and the Mac with no source code changes.
+">
+
+Well, it looks like Lisp is the language for you.  I'll stick with
+clunky old C++...
+
+<QUOTE PREVIOUSPOST="
+&gt; To make this work, I designed an object system in which there are no
+&gt; classes. Instead it is based on &quot;prototypes&quot; much like the language
+&gt; Self. To make a new object type, you &quot;clone&quot; a prototype. The new
+&gt; object inherits its methods and data values from the prototype. But
+&gt; the similarities to C++ end there:
+
+&gt;  - An object can replace or redefine its methods at any time, even
+&gt;    constructing new methods when neccessary.
+
+&gt;  - You can add new data and new methods whenever you want, and even
+&gt;    change which prototype an existing object inherits behaviors from.
+
+&gt;  - Object interactions are governed by message passing. So a proxy
+&gt;    object (say, a spaceship) receives a damage event, modifies the
+&gt;    damage amount based on the ship's armor or whatever, and then
+&gt;    passes on a modified message (say, inflicting a percentage of the
+&gt;    original damage) onto the player or monster inside the
+&gt;    ship. Similarly, damage to a player can be forwarded on to objects
+&gt;    in his/her inventory. Sequences of messages can be recorded and
+&gt;    played back.
+
+&gt;  - You can group objects loosely into discrete categories such as
+&gt;    &quot;obstacle&quot; or &quot;opaque&quot; or &quot;container&quot;. Unlike with classes, an
+&gt;    object may be in more than one category (or it may change
+&gt;    categories). This is a little bit like &quot;interfaces&quot; or mixins, but
+&gt;    probably a bit more flexible.
+">
+
+You could make this system in C++ too.  (Technically objects would not
+change methods, but they could acquire or lose modifiers.)
+
+<QUOTE PREVIOUSPOST="
+&gt;  - Lisp is the language traditionally used for complex artificial
+&gt;    intelligence projects. I think this will have a big impact on the
+&gt;    way the game plays, because there is so much Lisp AI code out there
+&gt;    to study.
+">
+
+Hmm, given that AI has not so far been very successful, I'm not sure
+that is much of an advantage.  The belief that AI will emerge from a
+sufficiently complex system of recursive algorithms is an old one which
+I do not share.
+
+<QUOTE PREVIOUSPOST="
+&gt; I won't go on about it, I would rather just wow you all when it's
+&gt; ready to play. :-) Also, the engine is free/open-source, so that
+&gt; others can save time by writing games for the platform (instead of
+&gt; coding their own engine.)
+
+&gt; This is a cautionary tale. My point is not to get people to run out
+&gt; and learn Lisp---maybe another language would suit you better---but I
+&gt; REALLY want people to take a step back and think about the
+&gt; damage that C++ may be doing to your brain.
+">
+
+Each to his own, I guess.
+
+- Gerry Quinn
+</POST>
+<POST>
+<POSTER> David O&#39;Toole &lt;d...@gnu.org&gt; </POSTER>
+<POSTDATE> 2007-08-29T14:54:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Gerry Quinn &lt;ger ... @indigo.ie&gt; writes:
+&gt; I think that is a misunderstanding of what object orientation is about.
+&gt; C++ is not &quot;world simulation language&quot;.  The sort of objects it deals
+&gt; best with are not in-game objects but windows, buttons, level
+&gt; generators etc.; abstract and often fairly permanent objects that pass
+&gt; messages around to keep the game running.
+&gt; If you want to create a &quot;world simulation language&quot; you will have to
+&gt; build something more complex, and C++ is perfectly good for that
+&gt; too.
+">
+
+If C++ is not a world-simulation language, then why are you using it
+to write a world-simulation?
+
+I thought the whole point of object orientation was to model the
+entities and relationships of the problem domain with objects, instead
+of with traditional procedures and data. The problem domain of
+roguelikes does not consist of windows and buttons; those are entities
+in the problem domain of GUIs. But you openly state that &quot;the sort of
+objects [C++] deals with best are not in-game objects&quot; like swords and
+scrolls and floating evil eyes. Doesn't that mean that C++ is the
+wrong tool for the job?
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Unfortunately in C++ you are encouraged to use compile-time
+&gt;&gt; inheritance in order to make objects' behaviors vary.
+
+&gt; No, you are given that option!
+">
+
+What are the options that don't involve inheritance? Raw function
+pointers? Templates?
+
+<QUOTE PREVIOUSPOST="
+&gt; Emergent gameplay != emergent runtime behaviour of program.
+">
+
+The gameplay is entirely structured by the runtime behavior of the
+program. If the program doesn't lend itself to emergent behaviour, how
+can the game?
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; traps and monsters. Fatigue and despair set in. You move on to
+&gt;&gt; something else and wonder why you cannot write a roguelike. What a
+&gt;&gt; gloomy picture.
+
+&gt; You start again with a better design.
+">
+
+Yes, I did that twenty times with C++ and got nowhere, but only needed
+to do it once with Lisp. Starting with a better *language* completely
+changes the design vocabulary---usually to one more appropriate to the
+problem.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;  - Lisp is the language traditionally used for complex artificial
+&gt;&gt;    intelligence projects. I think this will have a big impact on the
+&gt;&gt;    way the game plays, because there is so much Lisp AI code out there
+&gt;&gt;    to study.
+
+&gt; Hmm, given that AI has not so far been very successful, I'm not sure
+&gt; that is much of an advantage.  The belief that AI will emerge from a
+&gt; sufficiently complex system of recursive algorithms is an old one which
+&gt; I do not share.
+">
+
+My point was that Lisp is considered good for implementing artificial
+intelligence, and that furthermore there is a lot of Lisp AI code to
+learn from. I'm talking about the kind of AI that we already have for
+games. The old belief you are talking about has nothing to do with my
+argument (or me.)
+
+--
+David O'Toole
+d ... @gnu.org
+http://dto.freeshell.org/notebook/
+</POST>
+<POST>
+<POSTER> Krice &lt;pau...@mbnet.fi&gt; </POSTER>
+<POSTDATE> 2007-08-29T16:12:00 </POSTDATE>
+On Aug 29, 5:56 pm, David O'Toole &lt;d ... @gnu.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; But I believe now that the main reason for my failure is
+&gt; that I had decided to use C++.
+">
+
+No, the reason was that you suck.
+
+<QUOTE PREVIOUSPOST="
+&gt; The view of object-orientation found in C++ (and
+&gt; therefore Java) is just not well-suited to modeling the
+&gt; complex game world of a roguelike.
+">
+
+I'm not going to the &quot;arguments&quot; you had, just want to
+wake you up and remind that C++ has been used in
+almost all modern commercial games, some of them
+more complex and bigger than roguelikes. You think it
+was an accident that C++ became the most common
+and most productive language which replaced C
+everywhere else than in some living-in-the-past
+roguelike projects? Think again.
+</POST>
+<POST>
+<POSTER> David O&#39;Toole &lt;d...@gnu.org&gt; </POSTER>
+<POSTDATE> 2007-08-29T16:49:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Krice &lt;pau ... @mbnet.fi&gt; writes:
+&gt; I'm not going to the &quot;arguments&quot; you had, just want to
+&gt; wake you up and remind that C++ has been used in
+&gt; almost all modern commercial games, some of them
+&gt; more complex and bigger than roguelikes.
+">
+
+Yes, and most of the modern commercial games really suck.
+
+--
+David O'Toole
+d ... @gnu.org
+http://dto.freeshell.org/notebook/
+</POST>
+<POST>
+<POSTER> David O&#39;Toole &lt;d...@gnu.org&gt; </POSTER>
+<POSTDATE> 2007-08-29T17:16:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Krice &lt;pau ... @mbnet.fi&gt; writes:
+&gt; You think it was an accident that C++ became the most common and
+&gt; most productive language which replaced C everywhere else than in
+&gt; some living-in-the-past roguelike projects? Think again.
+">
+
+Actually I said nothing about why everybody uses C++. I said that C++
+is not the best match for roguelike development and I described the
+specific technical reasons why I think so. Do you have an argument
+besides than &quot;popularity=quality&quot; ?
+
+There are many reasons (technical, social, political) why C++ is so
+ubiquitous. It's what everyone was teaching in school, it's what
+microsoft used for everything, etc etc etc. (I was employed by my CS
+department and worked closely with the professors. All they could talk
+about it how awful it was trying to teach computer science properly
+with C++ (which they had to teach, so that the graduates could get
+hired right out of school.)
+
+The market penetration of a language is just not a reliable indicator
+of its superiority.
+
+<QUOTE PREVIOUSPOST="
+&gt; No, the reason was that you suck.
+">
+
+No, C++ people suck at responding to criticism (with arguments,
+anyway.) There is always that easily-provoked sense of insecurity.
+
+--
+David O'Toole
+d ... @gnu.org
+http://dto.freeshell.org/notebook/
+</POST>
+<POST>
+<POSTER> Krice &lt;pau...@mbnet.fi&gt; </POSTER>
+<POSTDATE> 2007-08-29T17:47:00 </POSTDATE>
+On Aug 29, 11:49 pm, David O'Toole &lt;d ... @gnu.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Yes, and most of the modern commercial games really suck.
+">
+
+No, you suck.
+</POST>
+<POST>
+<POSTER> Krice &lt;pau...@mbnet.fi&gt; </POSTER>
+<POSTDATE> 2007-08-29T17:48:00 </POSTDATE>
+On Aug 30, 12:16 am, David O'Toole &lt;d ... @gnu.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; I said that C++
+&gt; is not the best match for roguelike development
+">
+
+Actually it is, you just don't know why, because you
+don't have a clue.
+</POST>
+<POST>
+<POSTER> David O&#39;Toole &lt;d...@gnu.org&gt; </POSTER>
+<POSTDATE> 2007-08-29T18:14:00 </POSTDATE>
+This thread has attracted plenty of discussion and disagreement, but
+apparently only one (1) dickhead.
+
+By USENET standards that is a big success.
+
+<QUOTE PREVIOUSPOST="
+Krice &lt;pau ... @mbnet.fi&gt; writes:
+&gt; On Aug 30, 12:16 am, David O'Toole &lt;d ... @gnu.org&gt; wrote:
+&gt;&gt; I said that C++
+&gt;&gt; is not the best match for roguelike development
+
+&gt; Actually it is, you just don't know why, because you
+&gt; don't have a clue.
+">
+
+--
+David O'Toole
+d ... @gnu.org
+http://dto.freeshell.org/notebook/
+</POST>
+<POST>
+<POSTER> David Damerell &lt;damer...@chiark.greenend.org.uk&gt; </POSTER>
+<POSTDATE> 2007-08-29T18:34:00 </POSTDATE>
+Quoting  Krice  &lt;pau ... @mbnet.fi&gt;:
+
+<QUOTE PREVIOUSPOST="
+&gt;On Aug 30, 12:16 am, David O'Toole &lt;d ... @gnu.org&gt; wrote:
+&gt;&gt;I said that C++ is not the best match for roguelike development
+&gt;Actually it is,
+">
+
+So, what have you released recently that was written in it?
+
+Nothing?
+
+Really. Well, I can be equally productive in FORTRAN, C, Lisp, INTERCAL,
+assembly, ...
+
+More productive, in fact; it'll take me a lot less time to produce
+nothing and I won't spend so much time talking about pure sweet
+vapourware.
+--
+David Damerell &lt;damer ... @chiark.greenend.org.uk&gt; Kill the tomato!
+Today is First Sunday, August - a weekend.
+</POST>
+<POST>
+<POSTER> Jeff Lait &lt;torespondisfut...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-29T19:26:00 </POSTDATE>
+On Aug 29, 11:48 am, Gerry Quinn &lt;ger ... @indigo.ie&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; In article &lt;m3k5re4cfs.fsf ... @gnu.org&gt;, d ... @gnu.org says...
+
+&gt; I agree that deriving Goblin Raider from Goblin which in turn derives
+&gt; from Monster is probably a bad idea, though the difficulties are by no
+&gt; means insurmountable.  But because C++ can be used inappropriately is
+&gt; no reason to say that it is per se inappropriate.
+">
+
+Exactly.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Because
+&gt; &gt; inheritance makes everything depend on how your base classes are
+&gt; &gt; designed and coded, you have to make most of your important decisions
+&gt; &gt; up front---before you populate your codebase with hundreds or even
+&gt; &gt; thousands of different object types whose definitions will depend on
+&gt; &gt; those of your base classes.
+
+&gt; Most people don't take this approach, IMO - they use a data-driven
+&gt; approach, for example a monster class that can be decorated with
+&gt; whatever properties are required.
+">
+
+Precisely. C++ can be effectively used in a data-driven roguelike
+design.  The obvious approach to inheritance
+(longsword::sword::weapon::item) breaks quickly for the reasons
+described.  But that just means a different approach should be used.
+
+My experience writing roguelikes in C++ hasn't made me regret the
+language choice at all. Most importantly, I am confident that the
+quality of my vision hasn't been compromised by language
+restrictions.  (By hardware restrictions is a different issue,
+however :&gt;)
+--
+Jeff Lait
+(POWDER: http://www.zincland.com/powder )
+</POST>
+<POST>
+<POSTER> Jeff Lait &lt;torespondisfut...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-29T19:44:00 </POSTDATE>
+On Aug 29, 5:16 pm, David O'Toole &lt;d ... @gnu.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Krice &lt;pau ... @mbnet.fi&gt; writes:
+&gt; &gt; No, the reason was that you suck.
+
+&gt; No, C++ people suck at responding to criticism (with arguments,
+&gt; anyway.) There is always that easily-provoked sense of insecurity.
+">
+
+The problem is that your criticism is that C++ didn't work for *you*.
+This is a very important thing for you to learn as you can now write a
+roguelike using the correct language.  However, I think it wrong to
+presume that your ideal language choice will apply to others who might
+think in a different way then you do.
+
+C++, IMHO, has its own optimal programming mode that really shouldn't
+be listed as OOP.
+
+It is a tragedy you hadn't been introduced to Lisp earlier.  I've
+heard an estimate that 10% of programmers are &quot;functional&quot; thinkers -
+they thrive in the Lisp type worlds.  This does seem to describe
+yourself.  The problem is that another 80% will be baffled by Lisp and
+consider it a waste of time to learn and demand it stricken from CS
+curricula.
+--
+Jeff Lait
+(POWDER: http://www.zincland.com/powder )
+</POST>
+<POST>
+<POSTER> Jeff Lait &lt;torespondisfut...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-29T20:05:00 </POSTDATE>
+On Aug 28, 5:44 am, Al-Khwarizmi &lt;kom ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; A few design alternatives have come to my mind, and
+&gt; they all seem to have their strong points and their drawbacks, so I
+&gt; would like some opinions on them.
+">
+
+A sure sign you should mix between all of them :&gt;
+
+<QUOTE PREVIOUSPOST="
+&gt; 3. The data-driven approach: after reading the RogueBasin a bit, I
+&gt; think this is the name you give to the design where you don't have
+&gt; classes for each particular monster or item kind, but simply Monster
+&gt; and Item classes which are then parametrized by reading a data file
+&gt; (correct me if I'm wrong). For example, the data file would have a
+&gt; line for a rat with its HP, armor value, to-hit bonus, etc. and the
+&gt; information that its attack can cause sickness. This is the second
+&gt; approach that came to my mind. The obvious advantage is that you don't
+&gt; end up with hundreds of classes and you can edit monsters and items
+&gt; fast and safely. Also, you can combine it either with the attributes
+&gt; in 1 or with the decorators in 2 (which would give us approaches 3.1
+&gt; and 3.2).
+">
+
+This is what I would strongly recommend.  It encourages external data
+files, which are very useful.  (Data entry, I claim, is the hardest
+part of roguelike design!) It is also quick to get the simple
+roguelike done.
+
+<QUOTE PREVIOUSPOST="
+&gt; However, the problem of this model is that, by not allowing
+&gt; particular monsters and items to have specific code (since they are
+&gt; represented as data only), it doesn't seem to scale well for the
+&gt; enormous amount of particular cases and interactions you can find in
+&gt; roguelikes.
+">
+
+Monster data can be references to other types of data.
+
+ATTACK BITE
+{
+damage 3d6
+verb &quot;bite&quot;
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+MOB RAT
+{
+name &quot;rat&quot;
+attack BITE
+
+<QUOTE PREVIOUSPOST="
+}
+&gt; For example, suppose that there is a kind of monster
+&gt; called gog that explodes when killed. Under this approach, it seems
+&gt; that the data file should have something like ExplodeWhenKilled=true,
+&gt; even if there is only a single monster which explodes when killed and
+&gt; that property doesn't make sense in all the other monsters.
+">
+
+Well, that property *does* make sense.  They don't explode when
+killed, after all :&gt;  Note it is imperative a data file system has
+easy defaults so you only have to edit the one gog monster.
+
+DEFINE MOB
+{
+cst name &quot;unnamed&quot;
+enum attack ATTACK NONE
+bool explodewhenkilled false
+
+<QUOTE PREVIOUSPOST="
+}
+">
+
+MOB GOG
+{
+name &quot;gog&quot;
+attack NONE
+explodewhenkilled true
+
+<QUOTE PREVIOUSPOST="
+}
+&gt; And what
+&gt; is worst, there must be some code somewhere to determine what happens
+&gt; when a mob explodes when killed, and wherever it is, it will be
+&gt; detached from the definition of a gog and probably surrounded by other
+&gt; unrelated methods.
+">
+
+But it should be!  Exploding on death isn't at all intrinsic to
+&quot;gog&quot;.  It is a function that properly belongs factored into some
+collection of special effects.
+
+<QUOTE PREVIOUSPOST="
+&gt; 4. The scripted approach: same as approach 3, but allow the monsters
+&gt; to have scripting code attached in the data file. So a gog would have
+&gt; something like: onDie() { &lt;code for an explosion&gt; }. This seems to
+&gt; solve the problem I mentioned with approach 3 because it allows to
+&gt; define the characteristics of monsters with uncommon properties as
+&gt; code near the monster definitions and without littering the kernel
+&gt; classes, while allowing more standard monsters to be defined simply
+&gt; with data.
+">
+
+I consider the moving of explodeondeath into gog's definition to be a
+problem with the scripting approach.  It encourages copy and paste
+coding.  Soon you have 20 different monsters all applying poison
+damage via a duplicated script.  Sure, you can avoid this with
+discipline, but I prefer to engineer things so I do the right thing by
+default.
+
+I also think it is wrong to see this as &quot;littering&quot; the kernel.  This
+isn't an OS or roguelike engine.  It is a game.  It is best to litter
+the kernel so you can see first hand how convoluted your methods are
+getting.  If it gets too hairy - start factoring.  If the hairiness
+was hidden in different scripts, it is hard to see the interactions.
+
+One feature I like with POWDER is that all damage calculation goes
+through a single method, receiveDamage.  This handles all the special
+cases of weapon bonuses, silver damage, etc.  It means if I add a new
+behaviour, I know where to put it.  And, if I happen to alreaady have
+such a behaviour, I'll find it.  After so many years working on it, I
+don't know all the details anymore.
+
+<QUOTE PREVIOUSPOST="
+&gt; For those who have experience developing roguelikes, which alternative
+&gt; do you think is the best?
+">
+
+Data driven.  Include in your data language:
+1) References to other data blocks
+2) Defaults
+3) Definition of data types, ie what fiels are allowed (letting you
+find typos)
+4) List data types.  (Such as a list of attacks, list of spells,
+intrinsics, etc)
+
+#3 is where I usually grow annoyed with more free form languages like
+Python.  One can, with some work, support it in those languages,
+however, and I would encourage it.
+--
+Jeff Lait
+(POWDER: http://www.zincland.com/powder )
+</POST>
+<POST>
+<POSTER> Slash &lt;java.ko...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-30T00:17:00 </POSTDATE>
+On Aug 28, 4:44 am, Al-Khwarizmi &lt;kom ... @gmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; OK, so I'm not going to say that I'm starting to code a roguelike,
+&gt; because that would probably amount to generating vaporware. But let's
+&gt; say that I'm starting to code some Java classes that could be used to
+&gt; make a roguelike.
+">
+
+Yesh!
+
+<QUOTE PREVIOUSPOST="
+&gt; At the moment I have started with the display wrapper and dungeon
+&gt; generation code, but soon I'll want to start with the actual world
+&gt; model, i.e., the classes representing items, monsters and all these
+&gt; things we love from roguelikes. I would like the design to scale, so
+&gt; it would be useful and maintainable for something of the size of
+&gt; Nethack or ADOM. A few design alternatives have come to my mind, and
+&gt; they all seem to have their strong points and their drawbacks, so I
+&gt; would like some opinions on them.
+
+&gt; 1. The trivial approach: each different item or monster in the game
+&gt; (for example, a greater demon) is represented by a (Java) class.
+&gt; Conditions and states such as blind, poisoned (for monsters) or
+&gt; cursed, rotten (for items) are represented as attributes or flags.
+&gt; This approach is the first that comes to mind but it seems quite
+&gt; unmaintainable, since root classes would have lots of attributes and
+&gt; behaviours, and would grow big in terms of complexity and SLOC.
+">
+
+Wow,...
+
+I dont think its needed, you will end up with hundreds of very similar
+classes, I dont see any advantage comparing this with using behaviour
+objects for your entities.
+
+<QUOTE PREVIOUSPOST="
+&gt; 2. The pattern-oriented approach: each different item or monster in
+&gt; the game (for example, a greater demon) is represented by a (Java)
+&gt; class. Trivial modifiers (such as +1 attack modifiers for a weapon)
+&gt; can be represented as attributes, but conditions affecting behaviour
+">
+
+SNIP
+
+<QUOTE PREVIOUSPOST="
+&gt; is hard-coded and there would be lots of small classes (for example,
+&gt; hundreds of monster classes) holding information that would go better
+&gt; in a data file.
+">
+
+Overkill :)
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; 3. The data-driven approach: after reading the RogueBasin a bit, I
+&gt; think this is the name you give to the design where you don't have
+&gt; classes for each particular monster or item kind, but simply Monster
+&gt; and Item classes which are then parametrized by reading a data file
+&gt; (correct me if I'm wrong). For example, the data file would have a
+&gt; line for a rat with its HP, armor value, to-hit bonus, etc. and the
+&gt; information that its attack can cause sickness. This is the second
+&gt; approach that came to my mind. The obvious advantage is that you don't
+&gt; end up with hundreds of classes and you can edit monsters and items
+&gt; fast and safely. Also, you can combine it either with the attributes
+&gt; in 1 or with the decorators in 2 (which would give us approaches 3.1
+&gt; and 3.2). However, the problem of this model is that, by not allowing
+&gt; particular monsters and items to have specific code (since they are
+&gt; represented as data only), it doesn't seem to scale well for the
+&gt; enormous amount of particular cases and interactions you can find in
+&gt; roguelikes. For example, suppose that there is a kind of monster
+&gt; called gog that explodes when killed. Under this approach, it seems
+&gt; that the data file should have something like ExplodeWhenKilled=true,
+&gt; even if there is only a single monster which explodes when killed and
+&gt; that property doesn't make sense in all the other monsters. And what
+&gt; is worst, there must be some code somewhere to determine what happens
+&gt; when a mob explodes when killed, and wherever it is, it will be
+&gt; detached from the definition of a gog and probably surrounded by other
+&gt; unrelated methods.
+">
+
+This is the best if you really want to make a content full game.
+Special interaction such as what you describe can be fixed with your
+3.2 approach or be contained inside the Actions code (each action
+controls what could happen with the different cases)
+
+<QUOTE PREVIOUSPOST="
+- Hide quoted text - - Show quoted text -
+">
+
+<QUOTE PREVIOUSPOST="
+&gt; 4. The scripted approach: same as approach 3, but allow the monsters
+&gt; to have scripting code attached in the data file. So a gog would have
+&gt; something like: onDie() { &lt;code for an explosion&gt; }. This seems to
+&gt; solve the problem I mentioned with approach 3 because it allows to
+&gt; define the characteristics of monsters with uncommon properties as
+&gt; code near the monster definitions and without littering the kernel
+&gt; classes, while allowing more standard monsters to be defined simply
+&gt; with data. The obvious drawback is that we add lots of complexity: a
+&gt; second language, an API (or two), and all the common pitfalls of
+&gt; scripting languages (spending hours hunting for a typo, etc.).
+&gt; &quot;Entities should not be multiplied beyond necessity&quot;, as Occam said -
+&gt; but is it really necessary in this case? Also, this design seems
+&gt; relatively hard to maintain because it's hard to draw the line between
+&gt; data and scripting. You can end up taking lots of decisions like
+&gt; &quot;should I have a flag/decorator for monsters that attack with poison,
+&gt; or handle this by scripting?&quot; and maybe taking the wrong decision
+&gt; sometimes.
+">
+
+You can however, do scripting with your same programming language, in
+this case, java (this of course requires compilation, and thus goes
+against one of the main attractions of scripting, but in the other
+hand saves you from the obvious limitations and additional
+requirements)
+
+<QUOTE PREVIOUSPOST="
+&gt; For those who have experience developing roguelikes, which alternative
+&gt; do you think is the best? If you used decorators, how would you solve
+&gt; the problem of specific interactions? If you used scripting, where
+&gt; would you draw the line between scripted functionality and core
+&gt; functionality? Is there another alternative that I haven't thought of
+&gt; and which is much better than these ones?
+">
+
+Basically from my roguelike development experience (and I use java
+too), I only use inheritance when there is a clear behavioural
+difference between the super and subclass. I find interfaces much more
+useful, not so much in the game world domain but for software and
+infrastructure related stuff, like defining clear bounds between the
+different layers (System Interface, User Interface, Engine, Game,
+Data). Everything else ingame is better handled in a flat, data-driven
+approach. entity specific behaviour (monsters, special weapons) is
+defined by composition as specialized ActionSelector or Effect
+entities
+
+In my games I have
+
+Actor
+Monster
+Player
+Item
+SmartFeature
+MapCell
+Feature
+
+All of them are contained inside a World or Level
+
+--
+Slash
+www.santiagoz.com/web
+</POST>
+<POST>
+<POSTER> Keith H Duggar &lt;dug...@alum.mit.edu&gt; </POSTER>
+<POSTDATE> 2007-08-30T00:57:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+David O'Toole wrote:
+&gt; Krice wrote:
+
+&gt; &gt; No, the reason was that you suck.
+
+&gt; No, C++ people suck at responding to criticism (with arguments,
+&gt; anyway.) There is always that easily-provoked sense of insecurity.
+">
+
+I'm probably not what you consider a &quot;C++ person&quot; because I
+don't think it's the GFTE and I use, have used, and respect
+many languages. That said, I would probably respond, purely
+for intellectual exchange /with arguments/ had you actually
+presented some arguments of your own. Instead you presented
+a charming story that read like a recruiting drive from one
+of the Lisp or Scheme newsgroups.
+
+So do you actually have any arguments backed by comparative
+code examples? Something concrete not vague?
+
+KHD
+
+PS. I enjoyed your story (as a story and little more). But,
+your statement above was off the wall hence my challenge to
+provide concrete examples. Or did you let Krice get to you?
+</POST>
+<POST>
+<POSTER> David O&#39;Toole &lt;d...@gnu.org&gt; </POSTER>
+<POSTDATE> 2007-08-30T04:40:00 </POSTDATE>
+Keith H Duggar &lt;dug ... @alum.mit.edu&gt; writes:
+
+<QUOTE PREVIOUSPOST="
+&gt; That said, I would probably respond, purely for intellectual
+&gt; exchange /with arguments/ had you actually presented some arguments
+&gt; of your own. Instead you presented a charming story that read like a
+&gt; recruiting drive from one of the Lisp or Scheme newsgroups.
+">
+
+I guess the personal angle distracted from the long section which did
+have arguments in it (see quoted section below.) But I admit I was
+writing casually and did not provide a side-by-side comparison.
+
+I may post a more fleshed-out version of this.
+
+<QUOTE PREVIOUSPOST="
+&gt; I think it boils down to the following: roguelikes require many
+&gt; different object types whose behaviors and attributes will vary as a
+&gt; result of MANY external factors. Curses, damage/destruction,
+&gt; transmogrification, inscription, moon phases/weather, enchantment,
+&gt; mutations, combining objects to make new ones, leveling up, being
+&gt; turned into a sentient eggplant, the whims of the game's pantheon of
+&gt; gods, poisoning, ambient temperature---the list goes on and on. This
+&gt; is what roguelikes are ABOUT and why they are so hard to write.
+&gt; Unfortunately in C++ you are encouraged to use compile-time
+&gt; inheritance in order to make objects' behaviors vary. Because
+&gt; inheritance makes everything depend on how your base classes are
+&gt; designed and coded, you have to make most of your important decisions
+&gt; up front---before you populate your codebase with hundreds or even
+&gt; thousands of different object types whose definitions will depend on
+&gt; those of your base classes. (Perhaps you've heard the comment
+&gt; &quot;inheritance breaks encapsulation.&quot;) Making these decisions up front
+&gt; is burdensome, error-prone, and worst of all it is the EXACT
+&gt; OPPOSITE of the &quot;emergent&quot; gameplay we are all looking for. In my
+&gt; view, the mismatch between roguelikes and C/C++ could not be more
+&gt; glaring. But this took me years to grasp.
+&gt; Furthermore, there are many cases where the ever-changing
+&gt; relationships between different objects' behaviors and properties
+&gt; can't be adequately represented by compile-time inheritance. You can
+&gt; get a bit further by using complicated inheritance tricks (aka &quot;Design
+&gt; Patterns&quot;) but otherwise you are basically screwed from the
+&gt; get-go. You can build your own language and interpreter for the game,
+&gt; but unless the scripting language is very simple it's a huge amount of
+&gt; work---usually not very enjoyable work. It sucks to be designing a
+&gt; scripting language and coding its interpreter, when you really want to
+&gt; be making pixel art or inventing different kinds of magic spells and
+&gt; traps and monsters.
+">
+
+--
+David O'Toole
+d ... @gnu.org
+http://dto.freeshell.org/notebook/
+</POST>
+<POST>
+<POSTER> Al-Khwarizmi &lt;kom...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-30T06:21:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; But it should be!  Exploding on death isn't at all intrinsic to
+&gt; &quot;gog&quot;.  It is a function that properly belongs factored into some
+&gt; collection of special effects.
+&gt; (...)
+&gt; I consider the moving of explodeondeath into gog's definition to be a
+&gt; problem with the scripting approach.  It encourages copy and paste
+&gt; coding.  Soon you have 20 different monsters all applying poison
+&gt; damage via a duplicated script.  Sure, you can avoid this with
+&gt; discipline, but I prefer to engineer things so I do the right thing by
+&gt; default.
+">
+
+That makes sense. I think I was underestimating #3 because my thinking
+was too monster-oriented. When I play a roguelike, what I see is the
+monsters, so I was thinking: &quot;let's create a design to describe
+monsters&quot;, and this is very complex. But it seems that it's better to
+think of monsters as walking bags of features, and then center the
+design on describing these features. This seems to simplify the
+design... probably it will give way to classes with lots of features,
+or to packages with lots of small feature clases, but well... I guess
+that's what roguelikes are all about.
+
+Right now I'm for doing a mix containing large amounts of #3.
+
+<QUOTE PREVIOUSPOST="
+&gt; Data driven.  Include in your data language:
+&gt; 1) References to other data blocks
+&gt; 2) Defaults
+&gt; 3) Definition of data types, ie what fiels are allowed (letting you
+&gt; find typos)
+&gt; 4) List data types.  (Such as a list of attacks, list of spells,
+&gt; intrinsics, etc)
+
+&gt; #3 is where I usually grow annoyed with more free form languages like
+&gt; Python.  One can, with some work, support it in those languages,
+&gt; however, and I would encourage it.
+&gt; --
+&gt; Jeff Lait
+&gt; (POWDER: http://www.zincland.com/powder )
+">
+
+Thanks, I'll take your suggestions into account.
+</POST>
+<POST>
+<POSTER> &quot;Simon Richard Clarkstone&quot; &lt;ca...@decide.which&gt; </POSTER>
+<POSTDATE> 2007-08-30T11:37:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Timofei Shatrov&quot; &lt;g ... @mail.ru&gt; wrote in message
+">
+
+news:46d54801.18269510@news.readfreenews.net ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Tue, 28 Aug 2007 23:56:37 -0700, Krice &lt;pau ... @mbnet.fi&gt; tried to
+&gt; confuse
+&gt; everyone with this message:
+
+&gt;&gt;On 28 elo, 18:51, Al-Khwarizmi &lt;kom ... @gmail.com&gt; wrote:
+&gt;&gt;&gt; In other fields, having hundreds of small classes in the
+&gt;&gt;&gt; same package would probably be considered a bloated design.
+
+&gt;&gt;Yes.
+
+&gt;&gt;&gt; Is it considered a safe design choice in the world of roguelikes?
+
+&gt;&gt;It's a design all right, but I can't actually imagine how
+&gt;&gt;it would work in practice. Maybe this could be something to
+&gt;&gt;try in a 7DRL:)
+
+&gt; Been there, done that. The Sewer Massacre is an example of &quot;everything
+&gt; is a class&quot; approach (and so are my other games).
+">
+
+You can do things like that much more sensibly in LISP that in
+&quot;conventional&quot; OO languages.  Instead of needing a whole file for each
+class, you use macros to make the monster class definitions as short as the
+Nethack monster definitions are (with the methods being seperate).
+
+--
+Simon Richard Clarkstone:
+s?m?n_cl?rkst ... @yahoo.co.uk/s?m?n.cl?rkst ... @hotmail.com
+&quot;August 9 - I just made my signature file. Its only 6 pages long.
+I will have to work on it some more.&quot; -- _Diary of an AOL User_
+</POST>
+<POST>
+<POSTER> Al-Khwarizmi &lt;kom...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-08-30T12:55:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; Yeah, I like this generator too. It's not as complicated as in ADOM, but it also
+&gt; seems to lack any &quot;glitches&quot;. The algorithm is rather simple, when digging I
+&gt; keep track of whether the tile is diggable in horizontal or vertical direction
+&gt; or both. Initially all tiles are diggable in all directions. When a tonnel (for
+&gt; example) is dug the tiles on its side become diggable only in perpendicular
+&gt; direction. The corners of rooms or tonnels are not diggable in either direction.
+&gt; Tonnel can only be dug if it's compatible with what's already there, otherwise
+&gt; some other path is chosen randomly.
+">
+
+Thanks for the info. I have a more or less complete generation code,
+it creates nice, irregularly-placed rooms and connects them with
+corridors OK, including quite nicely twisty corridors sometimes. But
+the part about not creating corridors that overlap uglily is not yet
+done. I was thinking about how to do it without running into lots of
+tedious special cases... the idea of marking the tiles as
+&quot;horizontally undiggable&quot; and/or &quot;vertically undiggable&quot; seems just
+what I was looking for.
+</POST>
+<POST>
+<POSTER> Krice &lt;pau...@mbnet.fi&gt; </POSTER>
+<POSTDATE> 2007-08-30T16:25:00 </POSTDATE>
+On Aug 29, 5:56 pm, David O'Toole &lt;d ... @gnu.org&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;  - Developers use C++ anyway and then invent a &quot;scripting language&quot;
+">
+
+I don't use scripting.
+
+<QUOTE PREVIOUSPOST="
+&gt; Because inheritance makes everything depend on how your
+&gt; base classes are designed and coded
+">
+
+What this is supposed to mean? The derived class is
+its own class.
+
+<QUOTE PREVIOUSPOST="
+&gt; most of your important decisions up front---before you
+&gt; populate your codebase with hundreds or even thousands
+&gt; of different object types whose definitions will depend on
+&gt; those of your base classes.
+">
+
+Remember that you don't need to derive everything. It's
+one of the beginner mistakes.
+
+<QUOTE PREVIOUSPOST="
+&gt; Furthermore, there are many cases where the ever-changing
+&gt; relationships between different objects' behaviors and properties
+&gt; can't be adequately represented by compile-time inheritance.
+">
+
+I don't know what you tried to do but I can tell it
+was wrong all the time.
+
+<QUOTE PREVIOUSPOST="
+&gt; It sucks to be designing a scripting language and coding
+&gt; its interpreter
+">
+
+You don't need scripting language at all to write a
+game.
+
+<QUOTE PREVIOUSPOST="
+&gt; The coding phase is where I always got stuck---I could never
+&gt; find a clean class structure that supported all the play
+&gt; activities I wanted.
+">
+
+Maybe Lisp has a kind of &quot;dumb-protection&quot; mechanism
+for programmers who try to do something dumb and Lisp
+let's you do that safely. That must explain why you
+managed to do something in Lisp that failed in C++.
+</POST>
+<POST>
+<POSTER> Radomir &#39;The Sheep&#39; Dopieralski &lt;n...@sheep.art.pl&gt; </POSTER>
+<POSTDATE> 2007-08-30T17:29:00 </POSTDATE>
+At Thu, 30 Aug 2007 16:37:15 +0100,
+Simon Richard Clarkstone wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;Timofei Shatrov&quot; &lt;g ... @mail.ru&gt; wrote in message
+&gt; news:46d54801.18269510@news.readfreenews.net ...
+&gt;&gt; Been there, done that. The Sewer Massacre is an example of &quot;everything
+&gt;&gt; is a class&quot; approach (and so are my other games).
+&gt; You can do things like that much more sensibly in LISP that in
+&gt; &quot;conventional&quot; OO languages.  Instead of needing a whole file for each
+&gt; class, you use macros to make the monster class definitions as short as the
+&gt; Nethack monster definitions are (with the methods being seperate).
+">
+
+So the design depends on how good a file manager you have?
+
+--
+Radomir `The Sheep' Dopieralski &lt; http://sheep.art.pl &gt;
+()  ascii ribbon campaign - against html e-mail
+/\  &lt; www.asciiribbon.org &gt; - against proprietary attachments
+</POST>
+<POST>
+<POSTER> Radomir &#39;The Sheep&#39; Dopieralski &lt;n...@sheep.art.pl&gt; </POSTER>
+<POSTDATE> 2007-08-30T17:31:00 </POSTDATE>
+At Thu, 30 Aug 2007 13:25:14 -0700,
+
+<QUOTE PREVIOUSPOST="
+Krice wrote:
+&gt; Maybe Lisp has a kind of &quot;dumb-protection&quot; mechanism
+&gt; for programmers who try to do something dumb and Lisp
+&gt; let's you do that safely. That must explain why you
+&gt; managed to do something in Lisp that failed in C++.
+">
+
+Out of curiosity, have you ever tried Lisp Krice?
+
+--
+Radomir `The Sheep' Dopieralski &lt; http://sheep.art.pl &gt;
+()  ascii ribbon campaign - against html e-mail
+/\  &lt; www.asciiribbon.org &gt; - against proprietary attachments
+</POST>
+<POST>
+<POSTER> Krice &lt;pau...@mbnet.fi&gt; </POSTER>
+<POSTDATE> 2007-08-31T02:23:00 </POSTDATE>
+On 31 elo, 00:31, Radomir 'The Sheep' Dopieralski &lt;n ... @sheep.art.pl&gt;
+wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Out of curiosity, have you ever tried Lisp Krice?
+">
+
+No, but I remember that the syntax was from outer space.
+</POST>
+<POST>
+<POSTER> g...@mail.ru (Timofei Shatrov) </POSTER>
+<POSTDATE> 2007-08-31T04:25:00 </POSTDATE>
+On Thu, 30 Aug 2007 23:23:36 -0700, Krice &lt;pau ... @mbnet.fi&gt; tried to confuse
+everyone with this message:
+
+<QUOTE PREVIOUSPOST="
+&gt;On 31 elo, 00:31, Radomir 'The Sheep' Dopieralski &lt;n ... @sheep.art.pl&gt;
+&gt;wrote:
+&gt;&gt; Out of curiosity, have you ever tried Lisp Krice?
+
+&gt;No, but I remember that the syntax was from outer space.
+">
+
+Too orderly? ;)
+
+--
+|Don't believe this - you're not worthless              ,gr---------.ru
+|It's us against millions and we can't take them all... |  ue     il   |
+|But we can take them on!                               |     @ma      |
+|                       (A Wilhelm Scream - The Rip)    |______________|
+</POST>
+<POST>
+<POSTER> Alex-chin &lt;Alex.KC...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-09-03T08:00:00 </POSTDATE>
+Hello all!
+
+I think languages like LISP and Prolog is very usefull for RL.
+It's solve Many problem with represent complex objects(entity),
+complex actions in complex word.
+Programming on Hi Level language I don`t think about:
+
+1. control memory
+2. atom and string processing
+3. solve mashine
+
+Many game stop on stage: I know C now and stop game - start billing,
+banking and so on.
+Developing the architecture, framework, object model is big
+problem.... in C.
+But next stage: balansing, story, quest system is very interest  in
+LISP  becase one is more flexible.
+And I start my game shortly in 2 stage.
+
+The taget enveroment may be C or C++. Translate it to C and all right!
+LISP is very usefull.
+
+Alex.
+
+More games - more lang.
+</POST>
+<POST>
+<POSTER> Radomir &#39;The Sheep&#39; Dopieralski &lt;n...@sheep.art.pl&gt; </POSTER>
+<POSTDATE> 2007-09-03T12:21:00 </POSTDATE>
+At Mon, 03 Sep 2007 12:00:22 -0000,
+
+<QUOTE PREVIOUSPOST="
+Alex-chin wrote:
+&gt; I think languages like LISP and Prolog is very usefull for RL.
+&gt; It's solve Many problem with represent complex objects(entity),
+&gt; complex actions in complex word.
+">
+
+I think they would be very useful as a *part* of your game. Indeed, they
+are very convenient for modelling complex objects and they relationships.
+However, it soon turns aout that the objects and relationships are not
+really that complex, at least at the beginning, and that things like
+saving your game, displaying the map on the screen, displaying various
+information and events for the player and generally handling the user
+interface are a substantial problem -- at least at the beginning.
+
+<QUOTE PREVIOUSPOST="
+&gt; Programming on Hi Level language I don`t think about:
+&gt;   1. control memory
+&gt;   2. atom and string processing
+&gt;   3. solve mashine
+">
+
+Inded, hi-level languages are nice because of that, but Prolog and Lisp
+do much more than just abstracting a few things -- they make you think
+about your problems in a completely different way. This can be a good
+thing, if that completely different way fits your particular task better.
+
+<QUOTE PREVIOUSPOST="
+&gt; Many game stop on stage: I know C now and stop game - start billing,
+&gt; banking and so on.
+">
+
+Most roguelikes are not only open/free, but also continue development
+despite (or even because of) becoming popular.
+
+<QUOTE PREVIOUSPOST="
+&gt; Developing the architecture, framework, object model is big
+&gt; problem.... in C.
+&gt; But next stage: balansing, story, quest system is very interest  in
+&gt; LISP  becase one is more flexible.
+&gt; And I start my game shortly in 2 stage.
+">
+
+Sure, if there is a framework that matches the way you think, your design
+and your model of the game, then by all means go for it. But I don't think
+that Lisp or Prolog are particularly well tuned for a roguelike game -- or
+in fact for any kind of an interactive application. The modelling of
+internals, complicated (are they really so complicated?) relations, etc.
+become simple, but such a simple thing as displaying a message and waiting
+for user input before continuing processing becomes a hard task.
+
+<QUOTE PREVIOUSPOST="
+&gt; The taget enveroment may be C or C++. Translate it to C and all right!
+">
+
+I'm afreaid that because of a completely different approach that these
+languages have to computing, you can't trivially just rewrite them to C.
+You would have to basically write your own interpreter/virtual machine
+for the language in question.
+
+Unless you limit yourself to only using constructs available in C in your
+Lisp code, but then it becomes a very poor and difficult language.
+
+<QUOTE PREVIOUSPOST="
+&gt; LISP is very usefull.
+">
+
+No doubt. And I'm sure it's also useful as a tool helping you design and
+test roguelike games. But writing one entirely in Lisp is a challenge.
+
+--
+Radomir `The Sheep' Dopieralski &lt; http://sheep.art.pl &gt;
+()  ascii ribbon campaign - against html e-mail
+/\  &lt; www.asciiribbon.org &gt; - against proprietary attachments
+</POST>
+<POST>
+<POSTER> Norbert Melzer &lt;norbert.mel...@gmx.net&gt; </POSTER>
+<POSTDATE> 2007-09-03T13:44:00 </POSTDATE>
+Am Thu, 30 Aug 2007 23:23:36 -0700 schrieb Krice:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 31 elo, 00:31, Radomir 'The Sheep' Dopieralski &lt;n ... @sheep.art.pl&gt;
+&gt; wrote:
+&gt;&gt; Out of curiosity, have you ever tried Lisp Krice?
+
+&gt; No, but I remember that the syntax was from outer space.
+">
+
+Thats why it is called &quot;Lots of Irritating Superfluous Parentheses&quot;...
+
+SCNR
+Norbert
+</POST>
+<POST>
+<POSTER> g...@mail.ru (Timofei Shatrov) </POSTER>
+<POSTDATE> 2007-09-03T15:30:00 </POSTDATE>
+On Mon, 3 Sep 2007 19:44:24 +0200, Norbert Melzer &lt;norbert.mel ... @gmx.net&gt; tried
+to confuse everyone with this message:
+
+<QUOTE PREVIOUSPOST="
+&gt;Am Thu, 30 Aug 2007 23:23:36 -0700 schrieb Krice:
+
+&gt;&gt; On 31 elo, 00:31, Radomir 'The Sheep' Dopieralski &lt;n ... @sheep.art.pl&gt;
+&gt;&gt; wrote:
+&gt;&gt;&gt; Out of curiosity, have you ever tried Lisp Krice?
+
+&gt;&gt; No, but I remember that the syntax was from outer space.
+
+&gt;Thats why it is called &quot;Lots of Irritating Superfluous Parentheses&quot;...
+">
+
+As opposed to &quot;Lots of Irritating Superfluous Parentheses, Curly Braces,
+Commas, Angle Brackets, Semicolons, And Other Weird Stuff&quot; that is C++.
+
+--
+|Don't believe this - you're not worthless              ,gr---------.ru
+|It's us against millions and we can't take them all... |  ue     il   |
+|But we can take them on!                               |     @ma      |
+|                       (A Wilhelm Scream - The Rip)    |______________|
+</POST>
+<POST>
+<POSTER> Norbert Melzer &lt;norbert.mel...@gmx.net&gt; </POSTER>
+<POSTDATE> 2007-09-03T15:37:00 </POSTDATE>
+Am Mon, 03 Sep 2007 19:30:06 GMT schrieb Timofei Shatrov:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Mon, 3 Sep 2007 19:44:24 +0200, Norbert Melzer &lt;norbert.mel ... @gmx.net&gt; tried
+&gt; to confuse everyone with this message:
+
+&gt;&gt;Am Thu, 30 Aug 2007 23:23:36 -0700 schrieb Krice:
+
+&gt;&gt;&gt; On 31 elo, 00:31, Radomir 'The Sheep' Dopieralski &lt;n ... @sheep.art.pl&gt;
+&gt;&gt;&gt; wrote:
+&gt;&gt;&gt;&gt; Out of curiosity, have you ever tried Lisp Krice?
+
+&gt;&gt;&gt; No, but I remember that the syntax was from outer space.
+
+&gt;&gt;Thats why it is called &quot;Lots of Irritating Superfluous Parentheses&quot;...
+
+&gt; As opposed to &quot;Lots of Irritating Superfluous Parentheses, Curly Braces,
+&gt; Commas, Angle Brackets, Semicolons, And Other Weird Stuff&quot; that is C++.
+">
+
+Hey... Im working with C++ (and yes, I hate that stuff), and now I found a
+good interactive lisp tut. Who knows, maybe I change language.
+
+But... Even if I hate the curly braces and so on stuff of c++... In C++ I
+can say 10+10, and not the ugly (+ 10 10) thingy in LISP... Hope you
+understand what I mean, dont know how to explain in english. But I think
+thats just a question of time...
+
+MfG
+Norbert
+</POST>
+<POST>
+<POSTER> Ray Dillinger &lt;b...@sonic.net&gt; </POSTER>
+<POSTDATE> 2007-09-03T18:45:00 </POSTDATE>
+Radomir 'The Sheep' Dopieralski wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; At Mon, 03 Sep 2007 12:00:22 -0000,
+&gt;  Alex-chin wrote:
+&gt;&gt;The taget enveroment may be C or C++. Translate it to C and all right!
+&gt; I'm afreaid that because of a completely different approach that these
+&gt; languages have to computing, you can't trivially just rewrite them to C.
+&gt; You would have to basically write your own interpreter/virtual machine
+&gt; for the language in question.
+">
+
+Sigh.  I wish people who don't know much about Lisp would quit
+spreading such FUD about it, really.  Things that were true of
+ancient Lisps a long time ago (interpreted-only, can't be
+compiled, stops the world for GC, can't be translated to C, etc)
+are still being bandied about as gospel truth by those who just
+haven't been getting any updates for about THIRTY FREAKIN' YEARS!!!
+
+Seriously: you've got information (probably from gossip by
+ignorant people who heard it in gossip from other ignorant
+people) that's probably older than YOU are.
+
+Come on out from under that rock and let me tell you about the
+modern world.  Compiler technology caught up with Lisp semantics
+decades ago. The currently most popular Lisp dialect (Common
+Lisp) has a standard which states that any conforming
+implementation must have a compiler.  Code written in Lisp
+usually runs way faster than code written in interpreted
+languages like Perl and Java.  Garbage collectors have
+incremental and threaded modes now and don't cause annoying
+pauses anymore. And translating Lisp to C is the normal mode
+of operation for a lot of Lisp compilers.
+
+It's popular as a target language because it lets you take
+advantage of the C system libraries, makes your compiler a lot
+more portable (to any system already supporting a C compiler)
+and you get the benefit of all the bit-groveling optimization
+work that has already gone into C compilers.
+
+As a few examples, I present a tour of the web....
+
+ECL: has a command line environment, also compiles to C.
+http://packages.debian.org/unstable/devel/ecl
+
+Corman Lisp: includes a C header parser allowing lisp
+programs to link to functions written in C (or assembly).
+http://www.cormanlisp.com/index.html
+
+Eclipse: Common Lisp implementation, compiles to C,
+includes C library containing all lisp datatypes and
+facilities for calling Lisp functions from C programs.
+(hmmm.... link is busted. Need to find a new one.)
+
+GCL: Gnu Common Lisp, possibly the single most used Common
+Lisp environment in the world - compiles to C in ordinary
+use.  GCC is invoked in the background in order to produce
+standalone executables. I want to emphasize, this is its
+normal mode of operation, not some bag-on-the-side that
+fails to support the whole language.
+http://www.gnu.org/software/gcl/
+
+Thin Lisp: a Common Lisp implementation that compiles to
+&quot;very efficient&quot; C code.  Runs faster than the code generated
+by GCL, but takes longer (about an order of magnitude longer)
+to compile.
+http://www.cliki.net/ThinLisp
+
+CLiCC: A lisp-to-c translator.  Still working on standards
+compliance but it's already highly useful.
+http://www.informatik.uni-kiel.de/~wg/clicc.html
+
+Or if your favorite lisp dialect happens to be scheme....
+
+Chicken is one of the major Scheme implementations.  Like
+GCL, it compiles to C as its normal mode of operation.
+http://savannah.nongnu.org/projects/chicken/
+
+Bigloo - another of the major scheme implementations.
+Supports calls from C to scheme, from Scheme to C, compiles
+scheme modules to native x386 code callable from C (and generates
+C headers for linking them), or compiles scheme code to C, as
+you like.  Also does similar dances with the Java runtime, if
+you'd prefer that.
+http://www-sop.inria.fr/mimosa/fp/Bigloo/
+
+Gambit: another scheme implementation.  Compiles scheme
+programs to either native machine code or C.
+http://www.iro.umontreal.ca/~gambit/wiki/index.php/Main_Page
+
+Stalin: the pet project of a compiler researcher, Stalin is
+one of the most highly optimizing compilers ever built.  But
+if you want to forego the &quot;grind&quot; of its back end, it will
+stop the process and emit C code instead.  This code usually
+outperforms handwritten C code by a considerable margin, but
+still doesn't run as fast as if you had let Stalin go ahead
+and produce the machine code. (of course, the problem with
+Stalin is that if you turn on all the optimizations, you can
+get overnight compile times on programs of 15kloc or less...)
+http://en.wikipedia.org/wiki/Stalin_(Scheme_implementation )
+http://cobweb.ecn.purdue.edu/%7Eqobi/software.html
+
+Bear
+</POST>
+<POST>
+<POSTER> Ed Jensen &lt;ejen...@visi.com&gt; </POSTER>
+<POSTDATE> 2007-09-03T21:29:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Ray Dillinger &lt;b ... @sonic.net&gt; wrote:
+&gt; Code written in Lisp
+&gt; usually runs way faster than code written in interpreted
+&gt; languages like Perl and Java.
+">
+
+Whoa, hold on there.  For someone admonishing someone else for
+spreading FUD, you're spreading plenty of your own!
+
+By far the most common and popular JVM around uses the HotSpot JIT
+compiler, which compiles Java bytecode on the fly to native machine
+code.
+
+It might interpret some code the first few times it executes it, but
+once HotSpot recognizes code is getting executed repeatedly, it
+compiles it to native machine code.
+
+I guess that makes HotSpot a hybrid system (both interpreted and
+compiled), but for the most part, when you're running Java programs,
+you're running native code, not interpreted code.
+</POST>
+<POST>
+<POSTER> Ed Jensen &lt;ejen...@visi.com&gt; </POSTER>
+<POSTDATE> 2007-09-03T21:36:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Timofei Shatrov &lt;g ... @mail.ru&gt; wrote:
+&gt; As opposed to &quot;Lots of Irritating Superfluous Parentheses, Curly Braces,
+&gt; Commas, Angle Brackets, Semicolons, And Other Weird Stuff&quot; that is C++.
+">
+
+As someone who has some degree of vision problems, I can assure you
+Lisp, and its heavy use of parentheses, is a somewhat &quot;hostile&quot;
+language, from a source code perspective.  It's very hard for me to
+read it.
+
+I very much dislike C++, but the visual representation of C++ code is
+far more readable for people like me, compared to Lisp source code.
+Lisp source code and its parentheses tend to blend into an unreadable
+blob.
+
+Admittedly, I'm probably in the minority (with some odd vision
+problems).  But at the same time, Lispers shouldn't be throwing stones
+at C++ers, nor should C++ers be throwing stones at Lispers.
+
+Yuck on both languages, if you ask me.  :)
+</POST>
+<POST>
+<POSTER> Ray Dillinger &lt;b...@sonic.net&gt; </POSTER>
+<POSTDATE> 2007-09-03T21:48:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Ed Jensen wrote:
+&gt; Ray Dillinger &lt;b ... @sonic.net&gt; wrote:
+
+&gt;&gt;Code written in Lisp
+&gt;&gt;usually runs way faster than code written in interpreted
+&gt;&gt;languages like Perl and Java.
+
+&gt; Whoa, hold on there.  For someone admonishing someone else for
+&gt; spreading FUD, you're spreading plenty of your own!
+
+&gt; By far the most common and popular JVM around uses the HotSpot JIT
+&gt; compiler, which compiles Java bytecode on the fly to native machine
+&gt; code.
+">
+
+Hmm, just checked, and you're right, Java has gotten faster.
+But the fastest available java implementation, on the benchmark
+specs at language-shootout is still only about even with SBCL,
+so pick the one you like best, I guess.
+
+Bear
+</POST>
+<POST>
+<POSTER> Keith H Duggar &lt;dug...@alum.mit.edu&gt; </POSTER>
+<POSTDATE> 2007-09-03T22:29:00 </POSTDATE>
+On Sep 3, 9:36?| pm, Ed Jensen &lt;ejen ... @visi.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Timofei Shatrov &lt;g ... @mail.ru&gt; wrote:
+&gt; &gt; As opposed to &quot;Lots of Irritating Superfluous Parentheses, Curly Braces,
+&gt; &gt; Commas, Angle Brackets, Semicolons, And Other Weird Stuff&quot; that is C++.
+
+&gt; As someone who has some degree of vision problems, I can assure you
+&gt; Lisp, and its heavy use of parentheses, is a somewhat &quot;hostile&quot;
+&gt; language, from a source code perspective. It's very hard for me to
+&gt; read it.
+
+&gt; I very much dislike C++, but the visual representation of C++ code is
+&gt; far more readable for people like me, compared to Lisp source code.
+&gt; Lisp source code and its parentheses tend to blend into an unreadable
+&gt; blob.
+">
+
+May I ask what you think of Python syntax? Have you ever
+written or read XSL and if so did you find the redundant
+closing tags helpful? What about Postscript or Forth? In
+essence I would very much like you to expand on which if
+any languages you find most readable and which syntactic
+features you think help make them more readable.
+
+Thanks.
+
+KHD
+</POST>
+</TEXT>
+</BODY>
+</DOC>

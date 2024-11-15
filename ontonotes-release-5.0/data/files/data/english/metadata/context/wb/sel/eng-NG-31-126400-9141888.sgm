@@ -1,0 +1,345 @@
+<DOC>
+<DOCID> eng-NG-31-126400-9141888 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-20T14:04:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Building GLDv3 driver on Solaris 10
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> Miroslav Zubcic &lt;n...@big-other.com&gt; </POSTER>
+<POSTDATE> 2007-10-20T14:04:00 </POSTDATE>
+Since I have lost any hope that nge driver will ever be fixed on Solaris
+10, and I want to upgrade to u4 which has kernel which can't read old
+nge driver from u2 (last working one on my machine ID: pci147b,1c1b), I
+have decided to try open source driver &quot;nfo&quot; from here:
+http://homepage2.nifty.com/mrym3/taiyodo/eng/
+
+I can build it with GLDv3 by linking Makefile.config_gld3 to
+Makefile.config and putting mac.h and mac_ether.h from
+cvs.opensolaris.org I get final binary, but I can't load it because of
+some missing symbols:
+
+(root!hegel:nfo-2.4.4)# modload amd64/nfo
+can't load module: No such file or directory
+
+dmesg:
+
+Oct 20 19:46:32 hegel genunix: [ID 819705 kern.notice]
+/export/build/nfo-2.4.4/amd64/nfo: undefined symbol
+Oct 20 19:46:32 hegel genunix: [ID 826211 kern.notice]  'mac_free'
+Oct 20 19:46:32 hegel genunix: [ID 819705 kern.notice]
+/export/build/nfo-2.4.4/amd64/nfo: undefined symbol
+Oct 20 19:46:32 hegel genunix: [ID 826211 kern.notice]  'mac_alloc'
+Oct 20 19:46:32 hegel genunix: [ID 472681 kern.notice] WARNING:
+mod_load: cannot load module 'nfo'
+
+Notice: amd64/nfo module _is_ linked with misc/mac and drv/ip according
+to ldd and final output from linker.
+
+Any hints? Do I need different version of mac.h, or maybe some preload
+for missing symbols? I'm thinking: how the heck are other GLDv3 drivers
+on Solaris 10 working? - bge, e1000, rge ...
+
+BTW, I know everything about unstable API and binary changes, so please,
+don't patronize me. I want to be able to shoot myself in the foot, in
+traditional UNIX way.
+
+P.S. I can build nfo in GLDv2 mode, plumb it after messing with prtconf
+and /etc/driver_aliases but then I can't plumb vlan #2 interface, and I
+really *need* 802.1Q capability which is present only in GLDv3.
+
+--
+Miroslav
+</POST>
+<POST>
+<POSTER> lahuman9 &lt;lahum...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-21T17:43:00 </POSTDATE>
+On Oct 20, 2:04 pm, Miroslav Zubcic &lt;n ... @big-other.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; Since I have lost any hope that nge driver will ever be fixed on Solaris
+&gt; 10, and I want to upgrade to u4 which has kernel which can't read old
+&gt; nge driver from u2 (last working one on my machine ID: pci147b,1c1b), I
+&gt; have decided to try open source driver &quot;nfo&quot; from here: http://homepage2.nifty.com/mrym3/taiyodo/eng/
+
+&gt; I can build it with GLDv3 by linking Makefile.config_gld3 to
+&gt; Makefile.config and putting mac.h and mac_ether.h from
+&gt; cvs.opensolaris.org I get final binary, but I can't load it because of
+&gt; some missing symbols:
+
+&gt; (root!hegel:nfo-2.4.4)# modload amd64/nfo
+&gt; can't load module: No such file or directory
+
+&gt; dmesg:
+
+&gt; Oct 20 19:46:32 hegel genunix: [ID 819705 kern.notice]
+&gt; /export/build/nfo-2.4.4/amd64/nfo: undefined symbol
+&gt; Oct 20 19:46:32 hegel genunix: [ID 826211 kern.notice]  'mac_free'
+&gt; Oct 20 19:46:32 hegel genunix: [ID 819705 kern.notice]
+&gt; /export/build/nfo-2.4.4/amd64/nfo: undefined symbol
+&gt; Oct 20 19:46:32 hegel genunix: [ID 826211 kern.notice]  'mac_alloc'
+&gt; Oct 20 19:46:32 hegel genunix: [ID 472681 kern.notice] WARNING:
+&gt; mod_load: cannot load module 'nfo'
+
+&gt; Notice: amd64/nfo module _is_ linked with misc/mac and drv/ip according
+&gt; to ldd and final output from linker.
+
+&gt; Any hints? Do I need different version of mac.h, or maybe some preload
+&gt; for missing symbols? I'm thinking: how the heck are other GLDv3 drivers
+&gt; on Solaris 10 working? - bge, e1000, rge ...
+
+&gt; BTW, I know everything about unstable API and binary changes, so please,
+&gt; don't patronize me. I want to be able to shoot myself in the foot, in
+&gt; traditional UNIX way.
+
+&gt; P.S. I can build nfo in GLDv2 mode, plumb it after messing with prtconf
+&gt; and /etc/driver_aliases but then I can't plumb vlan #2 interface, and I
+&gt; really *need* 802.1Q capability which is present only in GLDv3.
+
+&gt; --
+&gt;         Miroslav
+">
+
+I'm not sure of the capabilities of the nge card is, but from what I
+understand, there has to be hardware support for multiple mac
+addresses in the card for GLDv3 features to work without some sort of
+middleware between the driver and the device.  This is the reason why
+ce (and other older) drivers are not GLDv3 (yet).
+</POST>
+<POST>
+<POSTER> James Carlson &lt;james.d.carl...@sun.com&gt; </POSTER>
+<POSTDATE> 2007-10-22T17:16:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Miroslav Zubcic &lt;n ... @big-other.com&gt; writes:
+&gt; I can build it with GLDv3 by linking Makefile.config_gld3 to
+&gt; Makefile.config and putting mac.h and mac_ether.h from
+&gt; cvs.opensolaris.org I get final binary, but I can't load it because of
+&gt; some missing symbols:
+">
+
+GLDv3 isn't (yet) a public interface, and it changes frequently.  Any
+driver that's using it and that is _not_ integrated into the ON
+consolidation in Solaris or OpenSolaris is just living on borrowed
+time.  Beware.
+
+It's not possible to take header files from OpenSolaris and use them
+to compile a working module for Solaris 10.  The two are different.
+Contact the author of that driver if you need an S10 version.
+
+<QUOTE PREVIOUSPOST="
+&gt; Notice: amd64/nfo module _is_ linked with misc/mac and drv/ip according
+&gt; to ldd and final output from linker.
+">
+
+Right; those symbols changed between S10 and Nevada.  OpenSolaris is
+not the same as S10.
+
+<QUOTE PREVIOUSPOST="
+&gt; Any hints? Do I need different version of mac.h, or maybe some preload
+&gt; for missing symbols? I'm thinking: how the heck are other GLDv3 drivers
+&gt; on Solaris 10 working? - bge, e1000, rge ...
+">
+
+All of the working ones are integrated in the ON consolidation and are
+thus updated, built, and shipped at the same time, so that the
+instabilities in the rapidly-changing, non-public GLDv3 interface do
+not affect them.
+
+<QUOTE PREVIOUSPOST="
+&gt; BTW, I know everything about unstable API and binary changes, so please,
+&gt; don't patronize me. I want to be able to shoot myself in the foot, in
+&gt; traditional UNIX way.
+">
+
+It looks like you've gotten what you wanted ... missing symbols are
+just part of that bargain.
+
+--
+James Carlson, Solaris Networking              &lt;james.d.carl ... @sun.com&gt;
+Sun Microsystems / 35 Network Drive        71.232W   Vox +1 781 442 2084
+MS UBUR02-212 / Burlington MA 01803-2757   42.496N   Fax +1 781 442 1677
+</POST>
+<POST>
+<POSTER> Miroslav Zubcic &lt;n...@big-other.com&gt; </POSTER>
+<POSTDATE> 2007-10-23T05:25:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+James Carlson wrote:
+&gt; GLDv3 isn't (yet) a public interface, and it changes frequently.  Any
+&gt; driver that's using it and that is _not_ integrated into the ON
+&gt; consolidation in Solaris or OpenSolaris is just living on borrowed
+&gt; time.  Beware.
+">
+
+Yes I'm fully aware of this, I have read discussions (including yours) on
+opensolaris online forums or lists about this issue before I posted my
+question.
+
+<QUOTE PREVIOUSPOST="
+&gt; It's not possible to take header files from OpenSolaris and use them
+&gt; to compile a working module for Solaris 10.  The two are different.
+&gt; Contact the author of that driver if you need an S10 version.
+">
+
+... will try. Having &quot;-DSOLARIS10&quot; CPP flag in Makefile.config_gld3 looks
+promising to me.
+
+<QUOTE PREVIOUSPOST="
+&gt; All of the working ones are integrated in the ON consolidation and are
+&gt; thus updated, built, and shipped at the same time, so that the
+&gt; instabilities in the rapidly-changing, non-public GLDv3 interface do
+&gt; not affect them.
+">
+
+Ok, my last option is to buy ethernet card which can be driven by one of
+this drivers.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; BTW, I know everything about unstable API and binary changes, so please,
+&gt;&gt; don't patronize me. I want to be able to shoot myself in the foot, in
+&gt;&gt; traditional UNIX way.
+&gt; It looks like you've gotten what you wanted ... missing symbols are
+&gt; just part of that bargain.
+">
+
+I don't agree that compiling a kernel module and unsucessful modinsert are
+shoot in the foot, but just a small test and play with alternative driver.
+Loss of data or stronger kernel panic, silent coruption, memory leak or
+poor performance over time - this is what I assume in term 'shoot myself
+in the foot'.
+
+No hard feelings, but much stronger shoot in the foot (and other, more
+vital parts of the body) is applying some of the official Solaris 10 patches.
+
+For example, this morning I have patched test machine in lab which has
+Solaris 10 u3 with configuration mirrored from my production firewall.
+Last time test machine was patched 6 months ago. After reboot, there was
+no firewall and NAT alive. Manual action discovered that my ipmp + ipf
+configuration is now incompatible with new 127111-01 kernel:
+
+(root!lada:ipf)# /usr/sbin/ndd -set /dev/pfil qif_ipmp_set
+ipmp0=e1000g0,e1000g1
+open of /dev/pfil failed: No such file or directory
+
+(root!lada:ipf)# ls -l /dev/pfil
+lrwxrwxrwx   1 root     root          29 sij 20  2006 /dev/pfil -&gt;
+../devices/pseudo/pfil@0:pfil
+(root!lada:ipf)# ls -l /devices/pseudo/pfil@0:pfil
+/devices/pseudo/pfil@0:pfil: No such file or directory
+
+Having test machine for update and upgrade experiments is a good idea when
+one has Solaris 10.
+
+Additionaly, I have discovered that devfsadm(1m) man page does not
+describe devfsadm's '-C' option behaviour in correct way:
+
+-C                      Cleanup  mode.  Prompt  devfsadm  to
+cleanup dangling /dev links that are
+not  normally  removed.  If  the  -c
+option  is  also used, devfsadm only
+cleans up for  the  listed  devices'
+classes.
+
+(root!lada:ipf)# devfsadm -C
+(root!lada:ipf)# file /dev/pfil
+/dev/pfil:      symbolic link to ../devices/pseudo/pfil@0:pfil
+
+--
+Miroslav
+</POST>
+<POST>
+<POSTER> Miroslav Zubcic &lt;n...@big-other.com&gt; </POSTER>
+<POSTDATE> 2007-10-23T05:46:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Miroslav Zubcic wrote:
+&gt; (root!lada:ipf)# /usr/sbin/ndd -set /dev/pfil qif_ipmp_set
+&gt; ipmp0=e1000g0,e1000g1
+&gt; open of /dev/pfil failed: No such file or directory
+">
+
+Fixed it. I have found some discussion about this on mail.opensolaris.org:
+http://mail.opensolaris.org/pipermail/opensolaris-arc/2007-April/0016...
+
+Looks like ipmp_hook_emulation /dev/ip flag is substitute for /dev/pfil's
+qif_ipmp_set on kernels older than 2-3 months.
+
+Looks like Solaris 10 is pretty much on Linux kernel development model
+truck lately? :-)
+
+--
+Miroslav
+</POST>
+<POST>
+<POSTER> Miroslav Zubcic &lt;n...@big-other.com&gt; </POSTER>
+<POSTDATE> 2007-10-23T06:02:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Miroslav Zubcic wrote:
+&gt; Fixed it. I have found some discussion about this on mail.opensolaris.org:
+&gt; http://mail.opensolaris.org/pipermail/opensolaris-arc/2007-April/0016...
+">
+
+Uh ah, I was in hurry. My apologies James. This was _your_ proposal to
+make this ipmp+ipf automatic and default behaviour in u4. Unfortunately
+for us users, it was not your side the one which won the battle over this
+issue.
+
+Maybe legacy /dev/pfil should have been contents of README file which
+prints in syslog warning and changes if one tries to read/write to it with
+userland tools like ndd and ipf/ipnat.
+
+--
+Miroslav
+</POST>
+<POST>
+<POSTER> James Carlson &lt;james.d.carl...@sun.com&gt; </POSTER>
+<POSTDATE> 2007-10-23T08:25:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Miroslav Zubcic &lt;n ... @big-other.com&gt; writes:
+&gt; Miroslav Zubcic wrote:
+
+&gt; &gt; Fixed it. I have found some discussion about this on mail.opensolaris.org:
+&gt; &gt; http://mail.opensolaris.org/pipermail/opensolaris-arc/2007-April/0016...
+
+&gt; Uh ah, I was in hurry. My apologies James. This was _your_ proposal to
+&gt; make this ipmp+ipf automatic and default behaviour in u4. Unfortunately
+&gt; for us users, it was not your side the one which won the battle over this
+&gt; issue.
+">
+
+Yes.  The project team's answer was that the ipfilter &quot;glue&quot; code
+didn't support the features needed to make this work right, the
+alternative was to break stateless users, and that the whole
+qif_ipmp_set thing was undocumented anyway.
+
+http://mail.opensolaris.org/pipermail/opensolaris-arc/2007-April/0016...
+
+For what it's worth, the ARC is a review team, not a design team.
+This means that we offer comments on projects, and we sometimes think
+hard about whether to let something by without objection, but we don't
+really have the opportunity to do it over and we're not necessarily
+the experts in any particular area under review.  Some project teams
+are willing and able to explore alternatives, and others are not, so
+the results don't always please everyone.
+
+One of the results of opening up the process is that you can now see
+how it works (in open mailing lists and archives) and can even
+participate in those reviews if you want.
+
+<QUOTE PREVIOUSPOST="
+&gt; Maybe legacy /dev/pfil should have been contents of README file which
+&gt; prints in syslog warning and changes if one tries to read/write to it with
+&gt; userland tools like ndd and ipf/ipnat.
+">
+
+There should be sufficient README information with the patch.  If
+there isn't, then I'd probably call that a bug.
+
+--
+James Carlson, Solaris Networking              &lt;james.d.carl ... @sun.com&gt;
+Sun Microsystems / 35 Network Drive        71.232W   Vox +1 781 442 2084
+MS UBUR02-212 / Burlington MA 01803-2757   42.496N   Fax +1 781 442 1677
+</POST>
+</TEXT>
+</BODY>
+</DOC>

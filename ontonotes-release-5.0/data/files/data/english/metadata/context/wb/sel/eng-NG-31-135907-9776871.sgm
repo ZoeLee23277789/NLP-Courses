@@ -1,0 +1,520 @@
+<DOC>
+<DOCID> eng-NG-31-135907-9776871 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2008-01-15T08:11:00 </DATETIME>
+<BODY>
+<HEADLINE>
+How to re-route the output msg to a CL-variable?
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> marsias &lt;attik...@attiki-aedak.gr&gt; </POSTER>
+<POSTDATE> 2008-01-15T08:11:00 </POSTDATE>
+Hello.
+
+Maybe is this a stupid question for someone.
+
+But i am new to as400 /programing,please forgive.
+
+My question is:
+
+1.I have a screen with a &amp;MSG variable. I wont to re-route in a CL the
+output message from command CHKOBJ to this CL variable, how can i do
+this?
+2. I wont to use the cmd CHKOBJ to ALLUSR librarys on my System.But
+the cmd don't allows the Library parameter *ALLUSR. How can i do this
+instead in a CL?
+
+thanks.
+</POST>
+<POST>
+<POSTER> Karl Hanson &lt;kchan...@youess.ibm.com&gt; </POSTER>
+<POSTDATE> 2008-01-15T09:19:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+marsias wrote:
+&gt; Hello.
+
+&gt; Maybe is this a stupid question for someone.
+
+&gt; But i am new to as400 /programing,please forgive.
+
+&gt; My question is:
+
+&gt; 1.I have a screen with a &amp;MSG variable. I wont to re-route in a CL the
+&gt; output message from command CHKOBJ to this CL variable, how can i do
+&gt; this?
+&gt; 2. I wont to use the cmd CHKOBJ to ALLUSR librarys on my System.But
+&gt; the cmd don't allows the Library parameter *ALLUSR. How can i do this
+&gt; instead in a CL?
+">
+
+For 1, the MSG (and possibly SECLVL) parm of RCVMSG command should work.
+
+For 2, CHKOBJ is intended to check a single object, whereas *ALLUSR
+implies a set of objects that qualify, in (possibly) different
+libraries. You could use *ALLUSR in the OBJ parm of DSPOBJD command,
+along with OUTFILE to create an object list. Then use DCLF/OVRDBF/RCVF
+to read the data from the outfile, and run CHKOBJ for each object in the
+list. Google found this similar example:
+www.warpspeed.com.au/cgi-bin/inf2html.cmd?..%5Chtml%5Cbook%5CIBMVACPP...
+
+--
+Karl Hanson
+</POST>
+<POST>
+<POSTER> &quot;walker.l2&quot; &lt;walker...@ukonline.co.uk&gt; </POSTER>
+<POSTDATE> 2008-01-15T09:31:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; 2. I wont to use the cmd CHKOBJ to ALLUSR librarys on my System.But
+&gt; the cmd don't allows the Library parameter *ALLUSR. How can i do this
+&gt; instead in a CL?
+">
+
+Depending on exactly what you wanted to use CHKOBJ for, one of the
+following APIs might well be of use: QUSROBJD, QUSLOBJ, QGYOLOBJ
+</POST>
+<POST>
+<POSTER> CRPence &lt;crpe...@vnet.ibm.com&gt; </POSTER>
+<POSTDATE> 2008-01-15T19:07:00 </POSTDATE>
+In a CLP, issue DSPOBJD OBJ(*ALLUSR/ObjName) OUTPUT(*OUTFILE), then
+RCVF from that output file to get the first object with the specified
+name, then issue the request:
+CHKOBJ &amp;ODLBNM/&amp;ODOBNM &amp;ODOBTP MBR(&amp;MbrName) AUT(&amp;Aut)
+
+If the request is specific to a database or DDM file [with a named
+member], there are SQL Catalog VIEWs which might assist, to enable
+lookup with a SQL query instead.  The VIEW objects are in the libraries
+QSYS2 and SYSIBM; review DSPFD of those SQL VIEW to see what they return.
+
+Alternatively... QUSLOBJ API could be used to create an effective
+Find Object function, for example a FNDOBJ command, which after finding
+the first occurrence in *ALLUSR could then additionally [or transfer
+control to] perform the additional intended work of CHKOBJ when an
+object is found.  To avoid the *USRSPC for the API, a much more
+complicated way [and more difficult still for OBJTYPE(*FILE)
+MBR(MbrName)] the MATCTX from QSYSINC/MIH could limit the results to the
+first object found, by limiting the space size provided to that
+function; but the space for the libraries could not be similarly limited.
+
+Regards, Chuck
+--
+All comments provided &quot;as is&quot; with no warranties of any kind
+whatsoever and may not represent positions, strategies, nor views of my
+employer
+
+<QUOTE PREVIOUSPOST="
+marsias wrote:
+&gt; &lt;&lt;SNIP&gt;&gt;
+
+&gt; 2. I want to use the cmd CHKOBJ to *ALLUSR librarys on my System. But
+&gt; the cmd don't allows the Library parameter *ALLUSR. How can i do this
+&gt; instead in a CL?
+">
+</POST>
+<POST>
+<POSTER> marsias &lt;attik...@attiki-aedak.gr&gt; </POSTER>
+<POSTDATE> 2008-01-17T02:51:00 </POSTDATE>
+Hello.
+
+Thanks, for the answers.
+
+I have wrote this PGM(part):
+
+DCLF FILE(QSYS/QADSPOBJ)
+DSPOBJD OBJ(*ALLUSR/&amp;OBJECTNAME) OBJTYPE(*ALL) +
+OUTPUT(*OUTFILE) OUTFILE(QTEMP/DSPOBJD)
+MONMSG CPF2123 EXEC(DO)
+CHGVAR VAR(&amp;ODLBNM) VALUE(' ')
+RETURN
+ENDDO
+OVRDBF QADSPOBJ TOFILE(QTEMP/DSPOBJD)
+READ: RCVF
+MONMSG CPF0864 EXEC(RETURN)
+ENDPGM
+
+works very fine  and display the information in a screen for 1 OBJECT.
+
+BUT HOW CAN I SEARCH IF THERE ARE MANY OBJECTS WITH THE SAME NAME ?
+
+ANY IDEAS?
+
+THANKS.
+</POST>
+<POST>
+<POSTER> CRPence &lt;crpe...@vnet.ibm.com&gt; </POSTER>
+<POSTDATE> 2008-01-17T06:07:00 </POSTDATE>
+How to search or how to determine if there are more than one?  To
+&quot;search&quot; would presumably be accomplished by including the RCVF request
+in a loop until CPF0864 or DoFor From(1) To(&amp;RtnCount).  To &quot;determine&quot;
+the count, then perhaps the following modifications to the program
+[effectively just the RtvMbrD command] in text and code snippet below:
+
+AFaIK the CHGVAR is unnecessary; it can not be the parameter, because
+as both a parameter and a variable from a *FILE, the value will be reset
+to blanks.  Also CPF0864 should not transpire, so best not to monitor,
+such that CPA0701 would occur to inquire of the abnormal condition if it
+were to occur.
+Specify something like OUTMBR(NAMELIST *REPLACE) on the DSPOBJD;
+probably best to explicitly specify all other parameters on the command
+as well.
+Use RTVMBRD FILE(QTEMP/DSPOBJD) MBR(NAMELIST *SAME)
+NBRCURRCD(&amp;NBRRCD) prior to the OVRDBF or after the RCVF to get the
+number of objects found by the DSPOBJD request.
+
+&lt;code&gt;
+Pgm (&amp;ObjectName &amp;RtnLibrary &amp;RtnCount)
+DCLPRCOPT  SUBRSTACK(20) /* Prefer limit of 1 */
+DclF FILE(QSYS/QADSPOBJ) OPNID(*NONE) ALWVARLEN(*NO) +
+ALWNULL(*NO) ALWGRAPHIC(*NO) DCLBINFLD(*INT)
+dcl &amp;ObjectName *char 10
+dcl &amp;RtnLibrary *char 10
+dcl &amp;RtnCount   *dec (10 0)
+dcl &amp;msgkey     *char  4 '    '
+/* Note: QTEMP/DSPOBJD.NAMELIST as literal names */
+monmsg CPF0000 exec(goto ReSignal)
+Main:
+QSYS/DSPOBJD OBJ(*ALLUSR/&amp;ObjectName) OBJTYPE(*ALL) +
+DETAIL(*BASIC) ASPDEV(*) OUTPUT(*OUTFILE) +
+OUTFILE(QTEMP/DSPOBJD) OUTMBR(NAMELIST *REPLACE)
+MONMSG CPF2123 Exec(Do)
+callsubr resnd_msg
+EndDo
+QSYS/RTVMBRD FILE(QTEMP/DSPOBJD) MBR(NAMELIST *SAME) +
+NBRCURRCD(&amp;RtnCount)
+QSYS/OVRDBF QADSPOBJ TOFILE(QTEMP/DSPOBJD) MBR(NAMELIST)
+Read:
+RCVF DEV(*FILE) OPNID(*NONE)
+CHGVAR &amp;RtnLibrary &amp;ODLBNM
+Return
+MainEnd:
+ReSignal:
+callsubr resnd_msg /* recursion if error in ReSnd_Msg */
+ReSnd_Msg: subr resnd_msg
+rcvmsg msgq(*pgmq) pgmq(*same (*)) msgtype(*excp) +
+msgkey(*none) wait(0) rmv(*no) keyvar(&amp;msgkey)
+call QSYS/QMHRSNEM (&amp;msgkey x'0000000800000000')
+endsubr
+&lt;/code&gt;
+
+Regards, Chuck
+--
+All comments provided &quot;as is&quot; with no warranties of any kind
+whatsoever and may not represent positions, strategies, nor views of my
+employer
+
+<QUOTE PREVIOUSPOST="
+marsias wrote:
+&gt; I have wrote this PGM(part):
+
+&gt;  DCLF FILE(QSYS/QADSPOBJ)
+&gt;  DSPOBJD OBJ(*ALLUSR/&amp;OBJECTNAME) OBJTYPE(*ALL) +
+&gt;    OUTPUT(*OUTFILE) OUTFILE(QTEMP/DSPOBJD)
+&gt;    MONMSG CPF2123 EXEC(DO)
+&gt;    CHGVAR VAR(&amp;ODLBNM) VALUE(' ')
+&gt;    RETURN
+&gt;    ENDDO
+&gt;    OVRDBF QADSPOBJ TOFILE(QTEMP/DSPOBJD)
+&gt;    READ: RCVF
+&gt;   MONMSG CPF0864 EXEC(RETURN)
+&gt;  ENDPGM
+
+&gt; works very fine and display the information in a screen for 1 OBJECT.
+
+&gt; BUT HOW CAN I SEARCH IF THERE ARE MANY OBJECTS WITH THE SAME NAME ?
+
+&gt; ANY IDEAS?
+">
+</POST>
+<POST>
+<POSTER> Jonathan Ball &lt;jonb...@whitehouse.not&gt; </POSTER>
+<POSTDATE> 2008-01-17T15:41:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+marsias wrote:
+&gt; Hello.
+
+&gt; Thanks, for the answers.
+
+&gt; I have wrote this PGM(part):
+
+&gt;  DCLF FILE(QSYS/QADSPOBJ)
+&gt;  DSPOBJD OBJ(*ALLUSR/&amp;OBJECTNAME) OBJTYPE(*ALL) +
+&gt;    OUTPUT(*OUTFILE) OUTFILE(QTEMP/DSPOBJD)
+&gt;    MONMSG CPF2123 EXEC(DO)
+&gt;    CHGVAR VAR(&amp;ODLBNM) VALUE(' ')
+&gt;    RETURN
+&gt;    ENDDO
+&gt;    OVRDBF QADSPOBJ TOFILE(QTEMP/DSPOBJD)
+&gt;    READ: RCVF
+&gt;   MONMSG CPF0864 EXEC(RETURN)
+&gt;  ENDPGM
+
+&gt; works very fine  and display the information in a screen for 1 OBJECT.
+
+&gt; BUT HOW CAN I SEARCH IF THERE ARE MANY OBJECTS WITH THE SAME NAME ?
+
+&gt; ANY IDEAS?
+
+&gt; THANKS.
+">
+
+There are a couple of ways to go about this.  One is to
+do more or less what you did in your CL program, but to
+do it in an SQLRPGLE program instead; that program can
+then be used in a stored procedure, returning a result
+set to an iSeries Navigator SQL script window when you
+call the procedure:
+
+call mylib.myobjproc ('&lt;objname&gt;','&lt;objtype&gt;')
+
+For example:
+
+call mylib.myobjproc ('CUSTMAST','*FILE')
+
+The result set window would show you all occurrences of
+the file CUSTMAST, probably along with the library.
+
+Now that I've got more familiar with APIs, I often use
+those in RPGLE programs that underlie table functions.
+You could create an RPGLE program that called one of
+the object APIs, then create a table function that you
+could call like this:
+
+select * from
+table(mylib.objfunc('CUSTMAST','*FILE')) o
+
+That would yield a result window much like the earlier
+stored procedure example, except that you can use this
+table function in a broader SQL statement that, for
+example, could join to some other tables.
+
+Finally, for some fairly narrow uses like the CHKOBJ
+command, I have created a user-defined function built
+around the 'system' exported procedure from the QC2SYS
+service program.  This procedure in effect calls
+QCMDEXC under the covers, and returns a 0 if the
+command succeeds, or a 1 if it fails.  I have created a
+function DOCMD that specifies EXTERNAL NAME
+'QSYS/QC2SYS(system)'.  If I want to search all RPG
+source files on the system to find which, if any,
+contain a particular source member, I'll first do
+DSPOBJD *ALL/QRPGSRC (and QRPGLESRC) into an output
+file; then, I'll run a statement like this:
+
+select odlbnm, odobnm
+from qtemp.myrpgobjs
+where mylib.docmd('chkobj ' || rtrim(odlbnm) ||
+'/' ||
+rtrim(odobnm) || ' *file
+mbr(thembr)')
+= 0
+</POST>
+<POST>
+<POSTER> Karl Hanson &lt;kchan...@youess.ibm.com&gt; </POSTER>
+<POSTDATE> 2008-01-17T16:29:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jonathan Ball wrote:
+&gt; marsias wrote:
+&gt;&gt; Hello.
+
+&gt;&gt; Thanks, for the answers.
+
+&gt;&gt; I have wrote this PGM(part):
+
+&gt;&gt;  DCLF FILE(QSYS/QADSPOBJ)
+&gt;&gt;  DSPOBJD OBJ(*ALLUSR/&amp;OBJECTNAME) OBJTYPE(*ALL) +
+&gt;&gt;    OUTPUT(*OUTFILE) OUTFILE(QTEMP/DSPOBJD)
+&gt;&gt;    MONMSG CPF2123 EXEC(DO)
+&gt;&gt;    CHGVAR VAR(&amp;ODLBNM) VALUE(' ')
+&gt;&gt;    RETURN
+&gt;&gt;    ENDDO
+&gt;&gt;    OVRDBF QADSPOBJ TOFILE(QTEMP/DSPOBJD)
+&gt;&gt;    READ: RCVF
+&gt;&gt;   MONMSG CPF0864 EXEC(RETURN)
+&gt;&gt;  ENDPGM
+
+&gt;&gt; works very fine  and display the information in a screen for 1 OBJECT.
+
+&gt;&gt; BUT HOW CAN I SEARCH IF THERE ARE MANY OBJECTS WITH THE SAME NAME ?
+
+&gt;&gt; ANY IDEAS?
+
+&gt;&gt; THANKS.
+
+&gt; There are a couple of ways to go about this.  One is to do more or less
+&gt; what you did in your CL program, but to do it in an SQLRPGLE program
+&gt; instead; that program can then be used in a stored procedure, returning
+&gt; a result set to an iSeries Navigator SQL script window when you call the
+&gt; procedure:
+
+&gt;    call mylib.myobjproc ('&lt;objname&gt;','&lt;objtype&gt;')
+
+&gt; For example:
+
+&gt;    call mylib.myobjproc ('CUSTMAST','*FILE')
+">
+
+&lt;snip&gt;
+
+Note that external SQL procedures, UDFs, and UDTFs, can also be
+implemented in CL (or other languages) by using the LANGUAGE clause when
+registering the routine via CREATE PROCEDURE or CREATE FUNCTION.
+
+http://publib.boulder.ibm.com/infocenter/iseries/v5r4/index.jsp?topic...
+http://www.redbooks.ibm.com/abstracts/sg246503.html?Open
+
+--
+Karl Hanson
+</POST>
+<POST>
+<POSTER> Jonathan Ball &lt;jonb...@whitehouse.not&gt; </POSTER>
+<POSTDATE> 2008-01-17T17:01:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Karl Hanson wrote:
+&gt; Jonathan Ball wrote:
+&gt;&gt; marsias wrote:
+&gt;&gt;&gt; Hello.
+
+&gt;&gt;&gt; Thanks, for the answers.
+
+&gt;&gt;&gt; I have wrote this PGM(part):
+
+&gt;&gt;&gt;  DCLF FILE(QSYS/QADSPOBJ)
+&gt;&gt;&gt;  DSPOBJD OBJ(*ALLUSR/&amp;OBJECTNAME) OBJTYPE(*ALL) +
+&gt;&gt;&gt;    OUTPUT(*OUTFILE) OUTFILE(QTEMP/DSPOBJD)
+&gt;&gt;&gt;    MONMSG CPF2123 EXEC(DO)
+&gt;&gt;&gt;    CHGVAR VAR(&amp;ODLBNM) VALUE(' ')
+&gt;&gt;&gt;    RETURN
+&gt;&gt;&gt;    ENDDO
+&gt;&gt;&gt;    OVRDBF QADSPOBJ TOFILE(QTEMP/DSPOBJD)
+&gt;&gt;&gt;    READ: RCVF
+&gt;&gt;&gt;   MONMSG CPF0864 EXEC(RETURN)
+&gt;&gt;&gt;  ENDPGM
+
+&gt;&gt;&gt; works very fine  and display the information in a screen for 1 OBJECT.
+
+&gt;&gt;&gt; BUT HOW CAN I SEARCH IF THERE ARE MANY OBJECTS WITH THE SAME NAME ?
+
+&gt;&gt;&gt; ANY IDEAS?
+
+&gt;&gt;&gt; THANKS.
+
+&gt;&gt; There are a couple of ways to go about this.  One is to do more or
+&gt;&gt; less what you did in your CL program, but to do it in an SQLRPGLE
+&gt;&gt; program instead; that program can then be used in a stored procedure,
+&gt;&gt; returning a result set to an iSeries Navigator SQL script window when
+&gt;&gt; you call the procedure:
+
+&gt;&gt;    call mylib.myobjproc ('&lt;objname&gt;','&lt;objtype&gt;')
+
+&gt;&gt; For example:
+
+&gt;&gt;    call mylib.myobjproc ('CUSTMAST','*FILE')
+
+&gt;    &lt;snip&gt;
+
+&gt; Note that external SQL procedures, UDFs, and UDTFs, can also be
+&gt; implemented in CL (or other languages) by using the LANGUAGE clause when
+&gt; registering the routine via CREATE PROCEDURE or CREATE FUNCTION.
+
+&gt; http://publib.boulder.ibm.com/infocenter/iseries/v5r4/index.jsp?topic...
+
+&gt; http://www.redbooks.ibm.com/abstracts/sg246503.html?Open
+">
+
+You could call the object APIs from a CL program, so
+you could implement my table function with a CLP or
+CLLE program.  However, unless something has changed at
+V5R4 (we're still on V5R3), you can't code SQL
+statements in CL, so you couldn't declare and open a
+cursor and return a result set to the caller.
+</POST>
+<POST>
+<POSTER> Karl Hanson &lt;kchan...@youess.ibm.com&gt; </POSTER>
+<POSTDATE> 2008-01-17T17:54:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Jonathan Ball wrote:
+&gt; Karl Hanson wrote:
+&gt;&gt; Jonathan Ball wrote:
+&gt;&gt;&gt; marsias wrote:
+&gt;&gt;&gt;&gt; Hello.
+
+&gt;&gt;&gt;&gt; Thanks, for the answers.
+
+&gt;&gt;&gt;&gt; I have wrote this PGM(part):
+
+&gt;&gt;&gt;&gt;  DCLF FILE(QSYS/QADSPOBJ)
+&gt;&gt;&gt;&gt;  DSPOBJD OBJ(*ALLUSR/&amp;OBJECTNAME) OBJTYPE(*ALL) +
+&gt;&gt;&gt;&gt;    OUTPUT(*OUTFILE) OUTFILE(QTEMP/DSPOBJD)
+&gt;&gt;&gt;&gt;    MONMSG CPF2123 EXEC(DO)
+&gt;&gt;&gt;&gt;    CHGVAR VAR(&amp;ODLBNM) VALUE(' ')
+&gt;&gt;&gt;&gt;    RETURN
+&gt;&gt;&gt;&gt;    ENDDO
+&gt;&gt;&gt;&gt;    OVRDBF QADSPOBJ TOFILE(QTEMP/DSPOBJD)
+&gt;&gt;&gt;&gt;    READ: RCVF
+&gt;&gt;&gt;&gt;   MONMSG CPF0864 EXEC(RETURN)
+&gt;&gt;&gt;&gt;  ENDPGM
+
+&gt;&gt;&gt;&gt; works very fine  and display the information in a screen for 1 OBJECT.
+
+&gt;&gt;&gt;&gt; BUT HOW CAN I SEARCH IF THERE ARE MANY OBJECTS WITH THE SAME NAME ?
+
+&gt;&gt;&gt;&gt; ANY IDEAS?
+
+&gt;&gt;&gt;&gt; THANKS.
+
+&gt;&gt;&gt; There are a couple of ways to go about this.  One is to do more or
+&gt;&gt;&gt; less what you did in your CL program, but to do it in an SQLRPGLE
+&gt;&gt;&gt; program instead; that program can then be used in a stored procedure,
+&gt;&gt;&gt; returning a result set to an iSeries Navigator SQL script window when
+&gt;&gt;&gt; you call the procedure:
+
+&gt;&gt;&gt;    call mylib.myobjproc ('&lt;objname&gt;','&lt;objtype&gt;')
+
+&gt;&gt;&gt; For example:
+
+&gt;&gt;&gt;    call mylib.myobjproc ('CUSTMAST','*FILE')
+
+&gt;&gt;    &lt;snip&gt;
+
+&gt;&gt; Note that external SQL procedures, UDFs, and UDTFs, can also be
+&gt;&gt; implemented in CL (or other languages) by using the LANGUAGE clause
+&gt;&gt; when registering the routine via CREATE PROCEDURE or CREATE FUNCTION.
+
+&gt;&gt; http://publib.boulder.ibm.com/infocenter/iseries/v5r4/index.jsp?topic...
+
+&gt;&gt; http://www.redbooks.ibm.com/abstracts/sg246503.html?Open
+
+&gt; You could call the object APIs from a CL program, so you could implement
+&gt; my table function with a CLP or CLLE program.  However, unless something
+&gt; has changed at V5R4 (we're still on V5R3), you can't code SQL statements
+&gt; in CL, so you couldn't declare and open a cursor and return a result set
+&gt; to the caller.
+">
+
+Yes, SQL statements can't be embedded in CL. However I believe a table
+function could be implemented with techniques like those suggested for
+the OP's question.. ie use DSPOBJD with *ALLUSR to populate a temp file,
+then use RCVF to retrieve info from the temp file. At least in theory
+this could be done w/o any SQL cursor or result set. However data to be
+returned by the table function might need to be cached (eg in the SQL
+&quot;scratchpad&quot; area) between the various (first/open/fetch/close/final)
+calls to the function/program (all speculation on my part - I've not
+tried writing a CL UDTF).
+
+From &quot;UDF Concepts&quot; in the Infocenter:
+A table function can be used to apply SQL language processing
+power to data that is not DB2 data, or to convert such data
+into a DB2 table. It  can, for example, take a file and convert
+it to a table, sample data  from the World Wide Web and
+tabularize it, or access a Lotus Notes® database and return
+information about mail messages, such as the date, sender, and
+the text of the message.
+
+http://publib.boulder.ibm.com/infocenter/iseries/v5r4/index.jsp?topic...
+
+--
+Karl Hanson
+</POST>
+</TEXT>
+</BODY>
+</DOC>

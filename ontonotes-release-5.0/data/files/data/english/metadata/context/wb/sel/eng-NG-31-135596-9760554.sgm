@@ -1,0 +1,1581 @@
+<DOC>
+<DOCID> eng-NG-31-135596-9760554 </DOCID>
+<DOCTYPE SOURCE="usenet"> USENET TEXT </DOCTYPE>
+<DATETIME> 2007-10-14T03:15:00 </DATETIME>
+<BODY>
+<HEADLINE>
+Design of uC/OS (uCOS-II) kernel
+</HEADLINE>
+<TEXT>
+<POST>
+<POSTER> karthikbalaguru &lt;karthikbalagur...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-14T03:15:00 </POSTDATE>
+Hi,
+
+I got an interesting information from internet and i have some queries
+based on it as it is really strange/unbeleivable .
+
+&quot; In a preemptive priority based RTOS, priority inversion problem is
+among the major sources of deadline violations. Priority inheritance
+protocol is one of the approaches to reduce priority inversion.
+Unfortunately, RTOS like uC/OS can't support priority inheritance
+protocol since it does not allow kernel to have multiple tasks at the
+same priority. &quot;
+
+Is it true that uC/OS does not support multiple tasks of same
+priority ?
+Any specific reason for such a design of uC/OS kernel ?
+
+Thx in advans,
+Karthik Balaguru
+</POST>
+<POST>
+<POSTER> Paul Keinanen &lt;keina...@sci.fi&gt; </POSTER>
+<POSTDATE> 2007-10-14T06:11:00 </POSTDATE>
+On Sun, 14 Oct 2007 00:15:09 -0700, karthikbalaguru
+
+<QUOTE PREVIOUSPOST="
+&lt;karthikbalagur ... @gmail.com&gt; wrote:
+&gt;Hi,
+
+&gt;I got an interesting information from internet and i have some queries
+&gt;based on it as it is really strange/unbeleivable .
+
+&gt;&quot; In a preemptive priority based RTOS, priority inversion problem is
+&gt;among the major sources of deadline violations.
+">
+
+Priority inversions are usually a result of indiscriminate resource
+locking. By designing the data structures and how they are accessed
+from different tasks in a proper way, the risk for priority inversions
+can be eliminated or at least minimized. Minimize the need for locking
+e.g. by using a server task for each resource (serial line, in-memory
+data base etc.) or use atomic updates etc.
+
+<QUOTE PREVIOUSPOST="
+&gt;Priority inheritance
+&gt;protocol is one of the approaches to reduce priority inversion.
+">
+
+Better yet, design the application so that it can not have priority
+inversion problems.
+
+<QUOTE PREVIOUSPOST="
+&gt;Unfortunately, RTOS like uC/OS can't support priority inheritance
+&gt;protocol since it does not allow kernel to have multiple tasks at the
+&gt;same priority. &quot;
+
+&gt;Is it true that uC/OS does not support multiple tasks of same
+&gt;priority ?
+&gt;Any specific reason for such a design of uC/OS kernel ?
+">
+
+When you have two or more tasks at the same priority level, you
+usually would have to run some kind of round robin scheduling between
+these.
+
+In many simple kernels, the priority levels are fixed (e.g. the order
+in which they were created at compile or startup time), so the task
+list is always scanned in the same order with a strict sequence and
+there is no way to boost temporarily the priority of a single task (as
+needed by some priority avoidance protocols).
+
+Some priority inversion avoidance system might be useful in large
+systems with libraries form multiple vendors in which you have no
+control what internal resources each library is locking, but in small
+systems using some very simple RT kernels, I really do not see any
+need for any priority inversion avoidance protocol.
+
+Paul
+</POST>
+<POST>
+<POSTER> subbu &lt;c.a.subraman...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-14T06:53:00 </POSTDATE>
+On Oct 14, 3:11 pm, Paul Keinanen &lt;keina ... @sci.fi&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sun, 14 Oct 2007 00:15:09 -0700, karthikbalaguru
+
+&gt; &lt;karthikbalagur ... @gmail.com&gt; wrote:
+&gt; &gt;Hi,
+
+&gt; &gt;I got an interesting information from internet and i have some queries
+&gt; &gt;based on it as it is really strange/unbeleivable .
+
+&gt; &gt;&quot; In a preemptive priority based RTOS, priority inversion problem is
+&gt; &gt;among the major sources of deadline violations.
+
+&gt; Priority inversions are usually a result of indiscriminate resource
+&gt; locking. By designing the data structures and how they are accessed
+&gt; from different tasks in a proper way, the risk for priority inversions
+&gt; can be eliminated or at least minimized. Minimize the need for locking
+&gt; e.g. by using a server task for each resource (serial line, in-memory
+&gt; data base etc.) or use atomic updates etc.
+
+&gt; &gt;Priority inheritance
+&gt; &gt;protocol is one of the approaches to reduce priority inversion.
+
+&gt; Better yet, design the application so that it can not have priority
+&gt; inversion problems.
+
+&gt; &gt;Unfortunately, RTOS like uC/OS can't support priority inheritance
+&gt; &gt;protocol since it does not allow kernel to have multiple tasks at the
+&gt; &gt;same priority. &quot;
+
+&gt; &gt;Is it true that uC/OS does not support multiple tasks of same
+&gt; &gt;priority ?
+&gt; &gt;Any specific reason for such a design of uC/OS kernel ?
+
+&gt; When you have two or more tasks at the same priority level, you
+&gt; usually would have to run some kind of round robin scheduling between
+&gt; these.
+
+&gt; In many simple kernels, the priority levels are fixed (e.g. the order
+&gt; in which they were created at compile or startup time), so the task
+&gt; list is always scanned in the same order with a strict sequence and
+&gt; there is no way to boost temporarily the priority of a single task (as
+&gt; needed by some priority avoidance protocols).
+
+&gt; Some priority inversion avoidance system might be useful in large
+&gt; systems with libraries form multiple vendors in which you have no
+&gt; control what internal resources each library is locking, but in small
+&gt; systems using some very simple RT kernels, I really do not see any
+&gt; need for any priority inversion avoidance protocol.
+
+&gt; Paul
+">
+
+Hi,
+I agree to Paul's thought on avoiding the Priority Inversion
+altogether. Of course &quot;Prevention is better than Cure&quot; they say.
+However, if you want to get a feel of the Priority Inheritance
+Protocol and see how it works, try the highest locker  priority
+Protocol. This would give you a sense of how Priority inheritance
+Protocol avoids Priority Inversion. In Highest locker priority
+Protocol Once a task takes a semaphore it runs at the highest priority
+(something that you could implement in uCos-II). I have tried it
+myself as a student.
+</POST>
+<POST>
+<POSTER> &quot;Vladimir Vassilevsky&quot; &lt;antispam_bo...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-14T09:42:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;karthikbalaguru&quot; &lt;karthikbalagur ... @gmail.com&gt; wrote in message
+">
+
+news:1192346109.142121.40350@y27g2000pre.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; Hi,
+
+&gt; I got an interesting information from internet and i have some queries
+&gt; based on it as it is really strange/unbeleivable .
+
+&gt; &quot; In a preemptive priority based RTOS, priority inversion problem is
+&gt; among the major sources of deadline violations. Priority inheritance
+&gt; protocol is one of the approaches to reduce priority inversion.
+&gt; Unfortunately, RTOS like uC/OS can't support priority inheritance
+&gt; protocol since it does not allow kernel to have multiple tasks at the
+&gt; same priority. &quot;
+
+&gt; Is it true that uC/OS does not support multiple tasks of same
+&gt; priority ?
+&gt; Any specific reason for such a design of uC/OS kernel ?
+">
+
+Mucos is a toy. It is not a real OS, but a bare minimum. For that reason it
+is lacking many useful services.
+The mucos core is basically the multi level interrupt controller implemented
+in the software. Each thread is assigned to the fixed priority level; this
+concept simplifies a lot of things. However one can implement the priority
+elevation mechanism in mucos by hand. This is possible but slow and
+cumbersome.
+
+Vladimir Vassilevsky
+DSP and Mixed Signal Consultant
+www.abvolt.com
+</POST>
+<POST>
+<POSTER> Chris Hills &lt;ch...@phaedsys.org&gt; </POSTER>
+<POSTDATE> 2007-10-14T10:45:00 </POSTDATE>
+In message &lt;x1pQi.58414$Um6.30 ... @newssvr12.news.prodigy.net&gt;, Vladimir
+Vassilevsky &lt;antispam_bo ... @hotmail.com&gt; writes
+
+<QUOTE PREVIOUSPOST="
+&gt;&quot;karthikbalaguru&quot; &lt;karthikbalagur ... @gmail.com&gt; wrote in message
+&gt; news:1192346109.142121.40350@y27g2000pre.googlegroups.com ...
+&gt;&gt; Hi,
+
+&gt;&gt; I got an interesting information from internet and i have some queries
+&gt;&gt; based on it as it is really strange/unbeleivable .
+
+&gt;&gt; &quot; In a preemptive priority based RTOS, priority inversion problem is
+&gt;&gt; among the major sources of deadline violations. Priority inheritance
+&gt;&gt; protocol is one of the approaches to reduce priority inversion.
+&gt;&gt; Unfortunately, RTOS like uC/OS can't support priority inheritance
+&gt;&gt; protocol since it does not allow kernel to have multiple tasks at the
+&gt;&gt; same priority. &quot;
+
+&gt;&gt; Is it true that uC/OS does not support multiple tasks of same
+&gt;&gt; priority ?
+&gt;&gt; Any specific reason for such a design of uC/OS kernel ?
+
+&gt;Mucos is a toy.
+">
+
+Certainly not.
+
+<QUOTE PREVIOUSPOST="
+&gt; It is not a real OS, but a bare minimum.
+">
+
+It IS a real OS.  Though as you point out  a minimal one. At the other
+end you have things like Vista which many of us would say has many many
+things not really needed by an OS.
+
+--
+\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+\/\/\/\/\ Chris Hills  Staffs  England     /\/\/\/\/
+/\/\/ ch ... @phaedsys.org www.phaedsys.org \/\/\
+\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+</POST>
+<POST>
+<POSTER> &quot;FreeRTOS.org&quot; &lt;noe...@address.com&gt; </POSTER>
+<POSTDATE> 2007-10-14T11:56:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; &quot; In a preemptive priority based RTOS, priority inversion problem is
+&gt; among the major sources of deadline violations. Priority inheritance
+&gt; protocol is one of the approaches to reduce priority inversion.
+">
+
+As others have already said, the best way to avoid priority inheritance is
+to not design it into your system in the first place.  Having said that:
+
+<QUOTE PREVIOUSPOST="
+&gt; Unfortunately, RTOS like uC/OS can't support priority inheritance
+&gt; protocol since it does not allow kernel to have multiple tasks at the
+&gt; same priority. &quot;
+">
+
+As far as I know, this statement is just plain wrong.  I don't know whether
+uC/OS does or does not support priority inheritance, but I don't see why
+only having one task at each priority would prevent its use, with some care.
+
+<QUOTE PREVIOUSPOST="
+&gt; Is it true that uC/OS does not support multiple tasks of same
+&gt; priority ?
+">
+
+Yes it is true.  Again, you are asking questions the answer to which you can
+find out for yourself by reading the documentation.
+
+--
+Regards,
+Richard.
+
++ http://www.FreeRTOS.org
+13 official architecture ports, 1000 downloads per week.
+
++ http://www.SafeRTOS.com
+Certified by TÜV as meeting the requirements for safety related systems.
+</POST>
+<POST>
+<POSTER> karthikbalaguru &lt;karthikbalagur...@gmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-14T12:14:00 </POSTDATE>
+On Oct 14, 8:56 pm, &quot;FreeRTOS.org&quot; &lt;noe ... @address.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; &quot; In a preemptive priority based RTOS, priority inversion problem is
+&gt; &gt; among the major sources of deadline violations. Priority inheritance
+&gt; &gt; protocol is one of the approaches to reduce priority inversion.
+
+&gt; As others have already said, the best way to avoid priority inheritance is
+&gt; to not design it into your system in the first place.  Having said that:
+
+&gt; &gt; Unfortunately, RTOS like uC/OS can't support priority inheritance
+&gt; &gt; protocol since it does not allow kernel to have multiple tasks at the
+&gt; &gt; same priority. &quot;
+
+&gt; As far as I know, this statement is just plain wrong.
+">
+
+How can you call that as wrong ?
+
+I think, that is True :(
+
+Kindly refer the Abstract present in the below link that has those
+lines -
+http://csdl2.computer.org/persagen/DLAbsToc.jsp?resourcePath=/dl/proc...
+
+I think, It must be True :( !!
+
+Also,
+I Continued to explore some information based on this and i got some
+info -
+The below was got from this link -&gt; http://archive.chipcenter.com/circuitcellar/november99/c119r15.htm
+&quot; Also, earlier I mentioned that some RTOS vendors chose to ignore
+priority inversion while others implement priority inheritance
+algorithms to solve the problem. If you want more detailed information
+about the subject, here is an excellent paper to read:
+Sha, L., Rajkumar, R. and Sathaye, S.: Priority Inheritance Protocols:
+An Approach to Real-Time Synchronization. IEEE Transactions on
+Computers, Vol. 39(9). pp.1175-1185. &quot;
+
+<QUOTE PREVIOUSPOST="
+&gt; I don't know whether
+&gt; uC/OS does or does not support priority inheritance, but I don't see why
+&gt; only having one task at each priority would prevent its use, with some care.
+
+&gt; &gt; Is it true that uC/OS does not support multiple tasks of same
+&gt; &gt; priority ?
+
+&gt; Yes it is true.  Again, you are asking questions the answer to which you can
+&gt; find out for yourself by reading the documentation.
+">
+
+It has not been explicitly mentioned and hence i have approached the
+groups for help .
+It states that it supports Mututal exclusion semaphores (to reduce
+priority inversions)  :):)
+I think, it is not possible as uCos does not appear to be a Real RTOS.
+It does not come under High End or even Mid Range RTOS.
+It is coming under Low End RTOS.
+
+Any other reasons / info ?
+
+Karthik Balaguru
+</POST>
+<POST>
+<POSTER> Grant Edwards &lt;gra...@visi.com&gt; </POSTER>
+<POSTDATE> 2007-10-14T12:21:00 </POSTDATE>
+On 2007-10-14, Paul Keinanen &lt;keina ... @sci.fi&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;Is it true that uC/OS does not support multiple tasks of same
+&gt;&gt;priority?
+">
+
+Yes.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;Any specific reason for such a design of uC/OS kernel?
+
+&gt; When you have two or more tasks at the same priority level,
+&gt; you usually would have to run some kind of round robin
+&gt; scheduling between these.
+">
+
+That's often what is done, but it's not really required. You
+can just pick one of the tasks and run it until it blocks.
+
+<QUOTE PREVIOUSPOST="
+&gt; In many simple kernels, the priority levels are fixed (e.g.
+&gt; the order in which they were created at compile or startup
+&gt; time), so the task list is always scanned in the same order
+&gt; with a strict sequence and there is no way to boost
+&gt; temporarily the priority of a single task (as needed by some
+&gt; priority avoidance protocols).
+">
+
+uC/OS-II uses a bitmap scheduler.  Each task is represented as
+a single bit in a set of bits.  When a task is runnable the bit
+is set.  The highest priority task is then simply the one
+corresponding to the most significant bit in the set.  This
+mechanism is very fast and compact.  However, it also means it
+isn't possible to have two tasks at the same priority.  There's
+no technical reason why a task's priority can't be temporarily
+boosted when using a bitmap scheduler, it just can't be boosted
+to a priority level that's already in use.
+
+<QUOTE PREVIOUSPOST="
+&gt; Some priority inversion avoidance system might be useful in
+&gt; large systems with libraries form multiple vendors in which
+&gt; you have no control what internal resources each library is
+&gt; locking, but in small systems using some very simple RT
+&gt; kernels, I really do not see any need for any priority
+&gt; inversion avoidance protocol.
+">
+
+Agreed.
+
+--
+Grant Edwards                   grante             Yow!  I'd like MY data-base
+at               JULIENNED and stir-fried!
+visi.com
+</POST>
+<POST>
+<POSTER> Grant Edwards &lt;gra...@visi.com&gt; </POSTER>
+<POSTDATE> 2007-10-14T12:24:00 </POSTDATE>
+On 2007-10-14, Vladimir Vassilevsky &lt;antispam_bo ... @hotmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;karthikbalaguru&quot; &lt;karthikbalagur ... @gmail.com&gt; wrote in message
+&gt; news:1192346109.142121.40350@y27g2000pre.googlegroups.com ...
+&gt;&gt; Hi,
+
+&gt;&gt; I got an interesting information from internet and i have some queries
+&gt;&gt; based on it as it is really strange/unbeleivable .
+
+&gt;&gt; &quot; In a preemptive priority based RTOS, priority inversion problem is
+&gt;&gt; among the major sources of deadline violations. Priority inheritance
+&gt;&gt; protocol is one of the approaches to reduce priority inversion.
+&gt;&gt; Unfortunately, RTOS like uC/OS can't support priority inheritance
+&gt;&gt; protocol since it does not allow kernel to have multiple tasks at the
+&gt;&gt; same priority. &quot;
+
+&gt;&gt; Is it true that uC/OS does not support multiple tasks of same
+&gt;&gt; priority ?
+&gt;&gt; Any specific reason for such a design of uC/OS kernel ?
+
+&gt; Mucos is a toy.
+">
+
+I call bullshit.  It's a small, minimal RTOS.
+
+<QUOTE PREVIOUSPOST="
+&gt; It is not a real OS, but a bare minimum.
+">
+
+If a bare minimum is all that's needed, only fool buys useless
+extras.
+
+<QUOTE PREVIOUSPOST="
+&gt; For that reason it is lacking many useful services.
+">
+
+That depends on your definition of &quot;useful&quot;.  On my most recent
+project, I only found one feature that I would have liked to
+have had (binary semaphores), so I spend 10 minutes and added
+them.  OTOH, try using VxWorks or the like with 48K of code
+space.
+
+<QUOTE PREVIOUSPOST="
+&gt; The mucos core is basically the multi level interrupt
+&gt; controller implemented in the software. Each thread is
+&gt; assigned to the fixed priority level;
+">
+
+Nonsense.
+
+<QUOTE PREVIOUSPOST="
+&gt; this concept simplifies a lot of things. However one can
+&gt; implement the priority elevation mechanism in mucos by hand.
+&gt; This is possible but slow and cumbersome.
+">
+
+--
+Grant Edwards                   grante             Yow!  Awright, which one of
+at               you hid my PENIS ENVY?
+visi.com
+</POST>
+<POST>
+<POSTER> Grant Edwards &lt;gra...@visi.com&gt; </POSTER>
+<POSTDATE> 2007-10-14T12:28:00 </POSTDATE>
+On 2007-10-14, FreeRTOS.org &lt;noe ... @address.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Unfortunately, RTOS like uC/OS can't support priority
+&gt;&gt; inheritance protocol since it does not allow kernel to have
+&gt;&gt; multiple tasks at the same priority. &quot;
+
+&gt; As far as I know, this statement is just plain wrong.  I don't
+&gt; know whether uC/OS does or does not support priority
+&gt; inheritance, but I don't see why only having one task at each
+&gt; priority would prevent its use, with some care.
+">
+
+You would have to leave priority gaps between all of the user
+tasks so that there are empty priority slots into which you can
+elevate tasks temporarily.  Other than that, I don't see why it
+couldn't be done.  OTOH, uC/OS is typically used on fairly
+small projects where priority inversion can be avoided by
+design rather than worked-around at run-time.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; Is it true that uC/OS does not support multiple tasks of same
+&gt;&gt; priority ?
+
+&gt; Yes it is true.  Again, you are asking questions the answer to
+&gt; which you can find out for yourself by reading the
+&gt; documentation.
+">
+
+Isn't that what Usenet is all about? :)
+
+--
+Grant Edwards                   grante             Yow!  LOOK!!! I'm WALKING
+at               in my SLEEP again!!
+visi.com
+</POST>
+<POST>
+<POSTER> &quot;FreeRTOS.org&quot; &lt;noe...@address.com&gt; </POSTER>
+<POSTDATE> 2007-10-14T12:39:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&gt; You would have to leave priority gaps between all of the user
+&gt; tasks so that there are empty priority slots into which you can
+&gt; elevate tasks temporarily.
+">
+
+That would be one way for sure.  I think there could be others too.  Just
+thinking off the top of my head.....maybe temporarily swapping the
+priorities of the two offending tasks, then swapping them back when the
+inversion has been rectified?  This would prevent the need to leave holes.
+I'm sure there are also more fancy ways, maybe temporarily removing a task
+so another task can take its priority, then bringing it back when the
+inversion has been rectified, etc.
+
+<QUOTE PREVIOUSPOST="
+&gt; Other than that, I don't see why it
+&gt; couldn't be done.  OTOH, uC/OS is typically used on fairly
+&gt; small projects where priority inversion can be avoided by
+&gt; design rather than worked-around at run-time.
+">
+
+Agreed.  Contrary to many texts, priority inheritance does not fix priority
+inversion - it is only useful to minimise its effect - and only then on the
+assumption that your tasks are designed with this minimisation in mind.
+Therefore you should not rely on it in your design.  If you have priority
+inversion then it is indicative of there (possibly) being something wrong in
+your design.
+
+--
+Regards,
+Richard.
+
++ http://www.FreeRTOS.org
+13 official architecture ports, 1000 downloads per week.
+
++ http://www.SafeRTOS.com
+Certified by TÜV as meeting the requirements for safety related systems.
+</POST>
+<POST>
+<POSTER> &quot;FreeRTOS.org&quot; &lt;noe...@address.com&gt; </POSTER>
+<POSTDATE> 2007-10-14T12:43:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;karthikbalaguru&quot; &lt;karthikbalagur ... @gmail.com&gt; wrote in message
+">
+
+news:1192378446.342351.304270@i38g2000prf.googlegroups.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Oct 14, 8:56 pm, &quot;FreeRTOS.org&quot; &lt;noe ... @address.com&gt; wrote:
+&gt;&gt; &gt; &quot; In a preemptive priority based RTOS, priority inversion problem is
+&gt;&gt; &gt; among the major sources of deadline violations. Priority inheritance
+&gt;&gt; &gt; protocol is one of the approaches to reduce priority inversion.
+
+&gt;&gt; As others have already said, the best way to avoid priority inheritance
+&gt;&gt; is
+&gt;&gt; to not design it into your system in the first place.  Having said that:
+
+&gt;&gt; &gt; Unfortunately, RTOS like uC/OS can't support priority inheritance
+&gt;&gt; &gt; protocol since it does not allow kernel to have multiple tasks at the
+&gt;&gt; &gt; same priority. &quot;
+
+&gt;&gt; As far as I know, this statement is just plain wrong.
+
+&gt; How can you call that as wrong ?
+">
+
+See my reply to Grant Edwards.
+
+<QUOTE PREVIOUSPOST="
+&gt; I think, that is True :(
+">
+
+Why did you ask the question then?
+
+<QUOTE PREVIOUSPOST="
+&gt; Kindly refer the Abstract present in the below link that has those
+&gt; lines -
+&gt; http://csdl2.computer.org/persagen/DLAbsToc.jsp?resourcePath=/dl/proc...
+
+&gt; I think, It must be True :( !!
+">
+
+Ah - &quot;I read it on the internet, therefore it must be true&quot;.  One of the
+newspapers in the UK once famously had a headline stating &quot;Freddie Starr ate
+my hamster&quot;.  Weird thing was, it turned out not to be true.
+http://en.wikipedia.org/wiki/Freddie_Starr
+
+--
+Regards,
+Richard.
+
++ http://www.FreeRTOS.org
+13 official architecture ports, 1000 downloads per week.
+
++ http://www.SafeRTOS.com
+Certified by TÜV as meeting the requirements for safety related systems.
+</POST>
+<POST>
+<POSTER> Guy Macon &lt;http://www.guymacon.com/&gt; </POSTER>
+<POSTDATE> 2007-10-14T12:44:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Grant Edwards wrote:
+
+&gt;FreeRTOS.org &lt;noe ... @address.com&gt; wrote:
+
+&gt;&gt; Yes it is true.  Again, you are asking questions the answer to
+&gt;&gt; which you can find out for yourself by reading the
+&gt;&gt; documentation.
+
+&gt;Isn't that what Usenet is all about? :)
+">
+
+&quot;Usenet: wisdom in homeopathic doses.&quot;
+-Paul Martin
+
+--
+Guy Macon
+&lt; http://www.guymacon.com/ &gt;
+</POST>
+<POST>
+<POSTER> Tim Wescott &lt;t...@seemywebsite.com&gt; </POSTER>
+<POSTDATE> 2007-10-14T13:45:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+On Sun, 14 Oct 2007 00:15:09 -0700, karthikbalaguru wrote:
+&gt; Hi,
+
+&gt; I got an interesting information from internet and i have some queries
+&gt; based on it as it is really strange/unbeleivable .
+
+&gt; &quot; In a preemptive priority based RTOS, priority inversion problem is
+&gt; among the major sources of deadline violations. Priority inheritance
+&gt; protocol is one of the approaches to reduce priority inversion.
+&gt; Unfortunately, RTOS like uC/OS can't support priority inheritance
+&gt; protocol since it does not allow kernel to have multiple tasks at the
+&gt; same priority. &quot;
+
+&gt; Is it true that uC/OS does not support multiple tasks of same
+&gt; priority ?
+&gt; Any specific reason for such a design of uC/OS kernel ?
+">
+
+Originally it was designed so that the task ID _was_ the priority; this
+makes the OS design much simpler, because the kernel doesn't need to check
+for priority, it just needs to go through it's list in a for loop on the
+task ID.
+
+Later versions allow you to change a task's priority, but I don't know if
+the priorities still need to be unique.  I vaguely remember reading or
+hearing that you can still implement a form of priority inheritance
+(search for it), but as has been noted you can also just design your
+software so that it's not an issue.
+
+I have _never_ written code that makes two separate tasks pend on one
+resource -- I've always written a server task for that resource, and
+avoided the whole resource locking/priority inversion issue.
+
+--
+Tim Wescott
+Control systems and communications consulting
+http://www.wescottdesign.com
+
+Need to learn how to apply control theory in your embedded system?
+&quot;Applied Control Theory for Embedded Systems&quot; by Tim Wescott
+Elsevier/Newnes, http://www.wescottdesign.com/actfes/actfes.html
+</POST>
+<POST>
+<POSTER> Vladimir Vassilevsky &lt;antispam_bo...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-14T14:48:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Chris Hills wrote:
+&gt;&gt; Mucos is a toy.
+
+&gt; Certainly not.
+">
+
+I looked at mucos at one time, and it seemed to be insufficient. To me,
+the whole point of using an OS is that the OS core takes care of many
+different things. Mucos does not have much to offer.
+Mucos's main idea is not really an OS, but a big interrupt controller
+implemented in the software. This approach is very simple and efficient
+although it has many limitations.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; It is not a real OS, but a bare minimum.
+
+&gt; It IS a real OS.  Though as you point out  a minimal one. At the other
+&gt; end you have things like Vista which many of us would say has many many
+&gt; things not really needed by an OS.
+">
+
+Ok, here are the things that I routinely use which mucos doesn't provide:
+
+1. Multiple waiting.
+2. Hardware abstraction layer concept. Drivers.
+3. Priority elevation mechanism.
+4. Timer based scheduling for non-realtime tasks.
+5. Multicore scheduling.
+6. Mucos has the peculiar API in C. I prefer simpler object oriented API
+in C++.
+7. Mucos is not abstracted from compiler and hardware.
+8. Memory protection and virtual memory.
+
+So, I would like something smaller then the already mentioned Vista, but
+bigger then mucos. Since not much is available in this category, we
+developed our own RTOS. So far so good.
+
+Vladimir Vassilevsky
+DSP and Mixed Signal Design Consultant
+http://www.abvolt.com
+</POST>
+<POST>
+<POSTER> Vladimir Vassilevsky &lt;antispam_bo...@hotmail.com&gt; </POSTER>
+<POSTDATE> 2007-10-14T15:07:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Tim Wescott wrote:
+
+&gt; I have _never_ written code that makes two separate tasks pend on one
+&gt; resource -- I've always written a server task for that resource, and
+&gt; avoided the whole resource locking/priority inversion issue.
+">
+
+Client/server is a pretty heavy weight solution which has many problems,
+too.
+
+So you have to maintain a list of the requests to the server with the
+priorities for each request. And the server has to parse this list to
+fetch the request with the current highest priority. The access to the
+list has to be atomic; thus there should be a mutex protecting the list.
+How do you avoid the priority inversion regarding that mutex? Is it done
+by the OS core function? (hello mucos).
+What if the list of the requests is overflown?
+
+Vladimir Vassilevsky
+DSP and Mixed Signal Design Consultant
+http://www.abvolt.com
+</POST>
+<POST>
+<POSTER> Grant Edwards &lt;gra...@visi.com&gt; </POSTER>
+<POSTDATE> 2007-10-14T16:13:00 </POSTDATE>
+On 2007-10-14, Vladimir Vassilevsky &lt;antispam_bo ... @hotmail.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; Mucos is a toy.
+
+&gt;&gt; Certainly not.
+
+&gt; I looked at mucos at one time, and it seemed to be
+&gt; insufficient.
+">
+
+It is quite sufficient for the intended uses.
+
+<QUOTE PREVIOUSPOST="
+&gt; To me, the whole point of using an OS is that the OS core
+&gt; takes care of many different things. Mucos does not have much
+&gt; to offer. Mucos's main idea is not really an OS, but a big
+&gt; interrupt controller implemented in the software.
+">
+
+It is not a &quot;big interrupt controller implemented in software&quot;
+-- whatever that's supposed to mean. It's a small multitasking
+kernel with a bitmapped scheduler, timers, semaphores, etc.
+uC/OS doesn't even attempt to deal with interrupt controller
+functionality.
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt;&gt; It is not a real OS, but a bare minimum.
+
+&gt;&gt; It IS a real OS.  Though as you point out a minimal one. At
+&gt;&gt; the other end you have things like Vista which many of us
+&gt;&gt; would say has many many things not really needed by an OS.
+
+&gt; Ok, here are the things that I routinely use which mucos
+&gt; doesn't provide:
+
+&gt; 1. Multiple waiting.
+&gt; 2. Hardware abstraction layer concept. Drivers.
+&gt; 3. Priority elevation mechanism.
+&gt; 4. Timer based scheduling for non-realtime tasks.
+&gt; 5. Multicore scheduling.
+&gt; 6. Mucos has the peculiar API in C. I prefer simpler object oriented API in C++.
+&gt; 7. Mucos is not abstracted from compiler and hardware.
+&gt; 8. Memory protection and virtual memory.
+">
+
+That's fine, but I _don't_ use or need those features.  I don't
+have the rom space, the ram space, or the CPU cycles required
+for those features.
+
+<QUOTE PREVIOUSPOST="
+&gt; So, I would like something smaller then the already mentioned
+&gt; Vista, but bigger then mucos.
+">
+
+Then pick something smaller than Vista and larger than uC/OS.
+Pick vxWorks, or eCos, or any number of other RTOSes that meet
+your requirements.  You've no reason for posting ignorant and
+derogatory things about a fine product just becase it doesn't
+meet your requirements.   uC/OS wasn't intended to meet
+requirements like yours -- and that's a good thing, because
+then it wouldn't meet the requirements of the customers who use
+it.
+
+<QUOTE PREVIOUSPOST="
+&gt; Since not much is available in this category, we developed our
+&gt; own RTOS. So far so good.
+">
+
+Good for you.  Why the need to disparage the work of others?
+There are other people in the world beside you, with project
+needs that differ from yours.
+
+--
+Grant Edwards                   grante             Yow!  Oh, I get it!! &quot;The
+at               BEACH goes on,&quot; huh,
+visi.com            SONNY??
+</POST>
+<POST>
+<POSTER> Stephen Fuld &lt;S.F...@PleaseRemove.att.net&gt; </POSTER>
+<POSTDATE> 2007-10-14T16:24:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+Vladimir Vassilevsky wrote:
+
+&gt; Chris Hills wrote:
+
+&gt;&gt;&gt; Mucos is a toy.
+
+&gt;&gt; Certainly not.
+
+&gt; I looked at mucos at one time, and it seemed to be insufficient. To me,
+&gt; the whole point of using an OS is that the OS core takes care of many
+&gt; different things. Mucos does not have much to offer.
+&gt; Mucos's main idea is not really an OS, but a big interrupt controller
+&gt; implemented in the software. This approach is very simple and efficient
+&gt; although it has many limitations.
+
+&gt;&gt;&gt; It is not a real OS, but a bare minimum.
+
+&gt;&gt; It IS a real OS.  Though as you point out  a minimal one. At the other
+&gt;&gt; end you have things like Vista which many of us would say has many
+&gt;&gt; many things not really needed by an OS.
+
+&gt; Ok, here are the things that I routinely use which mucos doesn't provide:
+
+&gt; 1. Multiple waiting.
+&gt; 2. Hardware abstraction layer concept. Drivers.
+&gt; 3. Priority elevation mechanism.
+&gt; 4. Timer based scheduling for non-realtime tasks.
+&gt; 5. Multicore scheduling.
+&gt; 6. Mucos has the peculiar API in C. I prefer simpler object oriented API
+&gt; in C++.
+&gt; 7. Mucos is not abstracted from compiler and hardware.
+&gt; 8. Memory protection and virtual memory.
+
+&gt; So, I would like something smaller then the already mentioned Vista, but
+&gt; bigger then mucos.
+">
+
+There are lots of alternatives, however most of them are designed for
+embedded systems where cost is a major factor and thus don't support
+multi-core scheduling (the systems they run on are typically not
+multi-core).  However, Linux provides most of what you want and there
+are several approaches to providing &quot;real time&quot; functionality in it.
+That might meet all of your listed requirements except the object
+oriented API, but you could write suitable wrappers for the interfaces
+you need.
+
+<QUOTE PREVIOUSPOST="
+&gt; Since not much is available in this category, we
+&gt; developed our own RTOS. So far so good.
+">
+
+OK, but this is rarely a good alternative in the long run.  Maintenance
+costs and conversions costs if you change processor architecture tend to
+swamp the cost of a commercial RTOS.
+
+--
+- Stephen Fuld
+(e-mail address disguised to prevent spam)
+</POST>
+<POST>
+<POSTER> Jack Klein &lt;jackkl...@spamcop.net&gt; </POSTER>
+<POSTDATE> 2007-10-14T23:09:00 </POSTDATE>
+On Sun, 14 Oct 2007 16:28:08 -0000, Grant Edwards &lt;gra ... @visi.com&gt;
+wrote in comp.arch.embedded:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2007-10-14, FreeRTOS.org &lt;noe ... @address.com&gt; wrote:
+
+&gt; &gt;&gt; Unfortunately, RTOS like uC/OS can't support priority
+&gt; &gt;&gt; inheritance protocol since it does not allow kernel to have
+&gt; &gt;&gt; multiple tasks at the same priority. &quot;
+
+&gt; &gt; As far as I know, this statement is just plain wrong.  I don't
+&gt; &gt; know whether uC/OS does or does not support priority
+&gt; &gt; inheritance, but I don't see why only having one task at each
+&gt; &gt; priority would prevent its use, with some care.
+
+&gt; You would have to leave priority gaps between all of the user
+&gt; tasks so that there are empty priority slots into which you can
+&gt; elevate tasks temporarily.  Other than that, I don't see why it
+&gt; couldn't be done.  OTOH, uC/OS is typically used on fairly
+&gt; small projects where priority inversion can be avoided by
+&gt; design rather than worked-around at run-time.
+">
+
+I have no idea why you think, quite incorrectly, that you have to
+leave priority gaps between all tasks to implement priority
+inheritance.  I certainly never did, and I have priority inheritance
+in a pre-emptive multitasking RTOS working just fine without them.
+
+Have you ever implemented an RTOS?  If you have, and think you know of
+some problem I have missed, I'd like to hear about it.  Obviously,
+despite working in the field for years, some of my products are going
+to suddenly start missing their deadlines due to priority inversion
+any time now.
+
+The harder one to avoid, if you allow tasks to acquire more than one
+locking object at the same time, is priority deadlock.  If you can run
+an RTOS that disallows this, priority inheritance is a snap, and with
+no empty slots needed.  The low-level details are quite simple.
+
+--
+Jack Klein
+Home: http://JK-Technology.Com
+FAQs for
+comp.lang.c http://c-faq.com/
+comp.lang.c++ http://www.parashift.com/c++-faq-lite/
+alt.comp.lang.learn.c-c++
+http://www.club.cc.cmu.edu/~ajo/docs/FAQ-acllc.html
+</POST>
+<POST>
+<POSTER> Jack Klein &lt;jackkl...@spamcop.net&gt; </POSTER>
+<POSTDATE> 2007-10-14T23:21:00 </POSTDATE>
+On Sun, 14 Oct 2007 16:39:47 GMT, &quot;FreeRTOS.org&quot; &lt;noe ... @address.com&gt;
+wrote in comp.arch.embedded:
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; You would have to leave priority gaps between all of the user
+&gt; &gt; tasks so that there are empty priority slots into which you can
+&gt; &gt; elevate tasks temporarily.
+
+&gt; That would be one way for sure.  I think there could be others too.  Just
+&gt; thinking off the top of my head.....maybe temporarily swapping the
+&gt; priorities of the two offending tasks, then swapping them back when the
+&gt; inversion has been rectified?  This would prevent the need to leave holes.
+&gt; I'm sure there are also more fancy ways, maybe temporarily removing a task
+&gt; so another task can take its priority, then bringing it back when the
+&gt; inversion has been rectified, etc.
+">
+
+If you want to talk about the mechanics, it is not too difficult
+without leaving any gaps.  In the task control block for each task,
+you have two entries for priority, &quot;real&quot; priority (whether it is
+fixed or you allow priorities to be changed at run-time) and &quot;current&quot;
+priority.
+
+&quot;current&quot; priority is ordinarily the same value as the &quot;real&quot;
+priority.  That only changes when a task possessing a locking object,
+such as a mutex, is pre-empted one or more times by higher priority
+tasks, until one of the pre-empters tries to acquire the same mutex.
+
+At that time, the lower priority task possessing the mutex has its
+&quot;current&quot; priority set to that of the new higher priority requester.
+Since the requester is blocked, pending on the mutex, it does not
+appear on the ready task list, so it does not contend with the
+elevated possessor on that list, which is all that matters to the
+scheduler.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Other than that, I don't see why it
+&gt; &gt; couldn't be done.  OTOH, uC/OS is typically used on fairly
+&gt; &gt; small projects where priority inversion can be avoided by
+&gt; &gt; design rather than worked-around at run-time.
+">
+
+I am absolutely positive that all priority inversions could be avoided
+in the design phase for any possible system.  Having a server task for
+each shared resource is one method.  What I am not sure of, and in
+fact I seriously doubt, that all systems could meet all their timing
+deadlines in all circumstances with such a design.
+
+<QUOTE PREVIOUSPOST="
+&gt; Agreed.  Contrary to many texts, priority inheritance does not fix priority
+&gt; inversion - it is only useful to minimise its effect - and only then on the
+&gt; assumption that your tasks are designed with this minimisation in mind.
+&gt; Therefore you should not rely on it in your design.  If you have priority
+&gt; inversion then it is indicative of there (possibly) being something wrong in
+&gt; your design.
+">
+
+I agree that any text that says priority inheritance &quot;fixes&quot; priority
+inversion is just plain wrong, and agree that the best one can do is
+to minimize its effect.  And I also agree that the degree of
+minimization an RTOS can provide is limited by the design of the
+tasks.  As in all other aspects of real time code, the programmers of
+tasks that might use a mutex or other locking mechanism must know what
+they are doing, and the code must be inspected by competent reviewers.
+
+--
+Jack Klein
+Home: http://JK-Technology.Com
+FAQs for
+comp.lang.c http://c-faq.com/
+comp.lang.c++ http://www.parashift.com/c++-faq-lite/
+alt.comp.lang.learn.c-c++
+http://www.club.cc.cmu.edu/~ajo/docs/FAQ-acllc.html
+</POST>
+<POST>
+<POSTER> Jack Klein &lt;jackkl...@spamcop.net&gt; </POSTER>
+<POSTDATE> 2007-10-14T23:27:00 </POSTDATE>
+On Sun, 14 Oct 2007 16:21:14 -0000, Grant Edwards &lt;gra ... @visi.com&gt;
+wrote in comp.arch.embedded:
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2007-10-14, Paul Keinanen &lt;keina ... @sci.fi&gt; wrote:
+
+&gt; &gt;&gt;Is it true that uC/OS does not support multiple tasks of same
+&gt; &gt;&gt;priority?
+
+&gt; Yes.
+
+&gt; &gt;&gt;Any specific reason for such a design of uC/OS kernel?
+
+&gt; &gt; When you have two or more tasks at the same priority level,
+&gt; &gt; you usually would have to run some kind of round robin
+&gt; &gt; scheduling between these.
+
+&gt; That's often what is done, but it's not really required. You
+&gt; can just pick one of the tasks and run it until it blocks.
+
+&gt; &gt; In many simple kernels, the priority levels are fixed (e.g.
+&gt; &gt; the order in which they were created at compile or startup
+&gt; &gt; time), so the task list is always scanned in the same order
+&gt; &gt; with a strict sequence and there is no way to boost
+&gt; &gt; temporarily the priority of a single task (as needed by some
+&gt; &gt; priority avoidance protocols).
+
+&gt; uC/OS-II uses a bitmap scheduler.  Each task is represented as
+&gt; a single bit in a set of bits.  When a task is runnable the bit
+&gt; is set.  The highest priority task is then simply the one
+&gt; corresponding to the most significant bit in the set.  This
+&gt; mechanism is very fast and compact.  However, it also means it
+&gt; isn't possible to have two tasks at the same priority.  There's
+&gt; no technical reason why a task's priority can't be temporarily
+&gt; boosted when using a bitmap scheduler, it just can't be boosted
+&gt; to a priority level that's already in use.
+">
+
+It is quite possible to use a bitmap scheduler and allow priority
+inheritance.  I know, I've done it.  It's quite simple.  Here is a
+typical scenario:
+
+1.  Low priority task L acquires a mutex.
+
+2.  High priority task H preempts L (with possible other intermediate
+preemptions in between), and tries to acquire the same mutex.  Task H
+is now blocked, and task L is promoted to the priority of task H.
+Since task H is now not ready, its bit in the ready bitmap is not
+needed.  It can refer to task L, no problem.
+
+There's other bookkeeping involved, but it's really not difficult.
+
+<QUOTE PREVIOUSPOST="
+&gt; &gt; Some priority inversion avoidance system might be useful in
+&gt; &gt; large systems with libraries form multiple vendors in which
+&gt; &gt; you have no control what internal resources each library is
+&gt; &gt; locking, but in small systems using some very simple RT
+&gt; &gt; kernels, I really do not see any need for any priority
+&gt; &gt; inversion avoidance protocol.
+
+&gt; Agreed.
+">
+
+--
+Jack Klein
+Home: http://JK-Technology.Com
+FAQs for
+comp.lang.c http://c-faq.com/
+comp.lang.c++ http://www.parashift.com/c++-faq-lite/
+alt.comp.lang.learn.c-c++
+http://www.club.cc.cmu.edu/~ajo/docs/FAQ-acllc.html
+</POST>
+<POST>
+<POSTER> Paul Keinanen &lt;keina...@sci.fi&gt; </POSTER>
+<POSTDATE> 2007-10-15T02:09:00 </POSTDATE>
+On Sun, 14 Oct 2007 19:07:42 GMT, Vladimir Vassilevsky
+
+<QUOTE PREVIOUSPOST="
+&lt;antispam_bo ... @hotmail.com&gt; wrote:
+
+&gt;Tim Wescott wrote:
+
+&gt;&gt; I have _never_ written code that makes two separate tasks pend on one
+&gt;&gt; resource -- I've always written a server task for that resource, and
+&gt;&gt; avoided the whole resource locking/priority inversion issue.
+
+&gt;Client/server is a pretty heavy weight solution which has many problems,
+&gt;too.
+
+&gt;So you have to maintain a list of the requests to the server with the
+&gt;priorities for each request. And the server has to parse this list to
+&gt;fetch the request with the current highest priority. The access to the
+&gt;list has to be atomic; thus there should be a mutex protecting the list.
+&gt;How do you avoid the priority inversion regarding that mutex? Is it done
+&gt;  by the OS core function? (hello mucos).
+">
+
+In simple architectures, the task switch time does not have to be much
+more than the interrupt handling time (which also saves and restores
+the context), only some extra time is required to switch the stack
+pointer from one task to an other.
+
+If the server transaction times are short, why bother with any
+priority queuing mechanism ? Just build a FIFO in front of the server
+process. The FIFO should not need any mutex, if the insertion and
+extraction is coded correctly.
+
+If you need request handling with priority and you have only one
+task/prioirity and they are blocked until the request is served, just
+create a single element &quot;queue&quot; for each priority level and let the
+server task scan those &quot;queues&quot; in priority order. With a low number
+of priority levels and a single 32 bit word as the queue element
+(which could either contain a value or an address to a descriptor
+block, I have used even values for descriptor addresses and odd values
+for numeric function code values :-), the memory consumption would not
+be large compared to a FIFO and associated bookkeeping.
+
+<QUOTE PREVIOUSPOST="
+&gt;What if the list of the requests is overflown?
+">
+
+In general, this would be design flaw. The server process should run
+on a higher priority compared to the requesters.
+
+A queue size larger than the number of tasks that might issue
+requests, should be sufficient as long as these tasks are blocked,
+until their request is served.
+
+Anyway, either return an error code or put the requesting task to
+sleep until the next clock tick and try again.
+
+Paul
+</POST>
+<POST>
+<POSTER> Grant Edwards &lt;gra...@visi.com&gt; </POSTER>
+<POSTDATE> 2007-10-15T10:28:00 </POSTDATE>
+On 2007-10-15, Jack Klein &lt;jackkl ... @spamcop.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sun, 14 Oct 2007 16:28:08 -0000, Grant Edwards &lt;gra ... @visi.com&gt;
+&gt; wrote in comp.arch.embedded:
+
+&gt;&gt; On 2007-10-14, FreeRTOS.org &lt;noe ... @address.com&gt; wrote:
+
+&gt;&gt; &gt;&gt; Unfortunately, RTOS like uC/OS can't support priority
+&gt;&gt; &gt;&gt; inheritance protocol since it does not allow kernel to have
+&gt;&gt; &gt;&gt; multiple tasks at the same priority. &quot;
+
+&gt;&gt; &gt; As far as I know, this statement is just plain wrong.  I don't
+&gt;&gt; &gt; know whether uC/OS does or does not support priority
+&gt;&gt; &gt; inheritance, but I don't see why only having one task at each
+&gt;&gt; &gt; priority would prevent its use, with some care.
+
+&gt;&gt; You would have to leave priority gaps between all of the user
+&gt;&gt; tasks so that there are empty priority slots into which you can
+&gt;&gt; elevate tasks temporarily.  Other than that, I don't see why it
+&gt;&gt; couldn't be done.  OTOH, uC/OS is typically used on fairly
+&gt;&gt; small projects where priority inversion can be avoided by
+&gt;&gt; design rather than worked-around at run-time.
+
+&gt; I have no idea why you think, quite incorrectly, that you have to
+&gt; leave priority gaps between all tasks to implement priority
+&gt; inheritance.
+">
+
+Since you can't have two tasks with the same priority, you
+either have to leave or temporarily create an unused priority
+level for the lower priority task to &quot;inherit&quot;.  It can't be
+temporarily raised to the same priority as the higher-priority
+task from whom it is to inherit.
+
+<QUOTE PREVIOUSPOST="
+&gt; I certainly never did, and I have priority inheritance in a
+&gt; pre-emptive multitasking RTOS working just fine without them.
+
+&gt; Have you ever implemented an RTOS?
+">
+
+Yes.
+
+<QUOTE PREVIOUSPOST="
+&gt; If you have, and think you know of some problem I have missed,
+&gt; I'd like to hear about it.  Obviously, despite working in the
+&gt; field for years, some of my products are going to suddenly
+&gt; start missing their deadlines due to priority inversion any
+&gt; time now.
+">
+
+If you've got tasks at priority 5,6,7 and 6 blocks on a
+resource held by a task at priority 8, what do you do?
+
+<QUOTE PREVIOUSPOST="
+&gt; The harder one to avoid, if you allow tasks to acquire more
+&gt; than one locking object at the same time, is priority
+&gt; deadlock.  If you can run an RTOS that disallows this,
+&gt; priority inheritance is a snap, and with no empty slots
+&gt; needed.  The low-level details are quite simple.
+">
+
+--
+Grant Edwards                   grante             Yow! I feel ... JUGULAR ...
+at
+visi.com
+</POST>
+<POST>
+<POSTER> Grant Edwards &lt;gra...@visi.com&gt; </POSTER>
+<POSTDATE> 2007-10-15T10:35:00 </POSTDATE>
+On 2007-10-15, Jack Klein &lt;jackkl ... @spamcop.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sun, 14 Oct 2007 16:39:47 GMT, &quot;FreeRTOS.org&quot; &lt;noe ... @address.com&gt;
+&gt; wrote in comp.arch.embedded:
+
+&gt;&gt;&gt; You would have to leave priority gaps between all of the user
+&gt;&gt;&gt; tasks so that there are empty priority slots into which you can
+&gt;&gt;&gt; elevate tasks temporarily.
+
+&gt;&gt; That would be one way for sure.  I think there could be others
+&gt;&gt; too.  Just thinking off the top of my head.....maybe
+&gt;&gt; temporarily swapping the priorities of the two offending
+&gt;&gt; tasks, then swapping them back when the inversion has been
+&gt;&gt; rectified?  This would prevent the need to leave holes.  I'm
+&gt;&gt; sure there are also more fancy ways, maybe temporarily
+&gt;&gt; removing a task so another task can take its priority, then
+&gt;&gt; bringing it back when the inversion has been rectified, etc.
+
+&gt; If you want to talk about the mechanics, it is not too
+&gt; difficult without leaving any gaps.  In the task control block
+&gt; for each task, you have two entries for priority, &quot;real&quot;
+&gt; priority (whether it is fixed or you allow priorities to be
+&gt; changed at run-time) and &quot;current&quot; priority.
+">
+
+No, you can't do that with uC/OS-II.  The tasks priority is
+determined by the position of a single bit in an fixed, ordered
+set of bits.  What you're desribing would require completely
+re-writing the uC/OS-II scheduler.
+
+<QUOTE PREVIOUSPOST="
+&gt; &quot;current&quot; priority is ordinarily the same value as the &quot;real&quot;
+&gt; priority.  That only changes when a task possessing a locking
+&gt; object, such as a mutex, is pre-empted one or more times by
+&gt; higher priority tasks, until one of the pre-empters tries to
+&gt; acquire the same mutex.
+
+&gt; At that time, the lower priority task possessing the mutex has
+&gt; its &quot;current&quot; priority set to that of the new higher priority
+&gt; requester. Since the requester is blocked, pending on the
+&gt; mutex, it does not appear on the ready task list, so it does
+&gt; not contend with the elevated possessor on that list, which is
+&gt; all that matters to the scheduler.
+">
+
+That would work, except it's just not possible given the design
+of uC/OS-II (which is what we were discussing).  uC/OS-II
+doesn't have a ready list -- it uses a bitmap scheduler.  It
+doesn't have a priority field in the task control block,
+priorities are determined by the position of the task's bit
+within the bitmap.  Swapping the priority of two tasks would be
+feasible (which is just a convenient way of temporarily
+creating a gap in the used priorities).
+
+--
+Grant Edwards                   grante             Yow! I'm a fuschia bowling
+at               ball somewhere in Brittany
+visi.com
+</POST>
+<POST>
+<POSTER> Grant Edwards &lt;gra...@visi.com&gt; </POSTER>
+<POSTDATE> 2007-10-15T10:37:00 </POSTDATE>
+On 2007-10-15, Jack Klein &lt;jackkl ... @spamcop.net&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; uC/OS-II uses a bitmap scheduler.  Each task is represented as
+&gt;&gt; a single bit in a set of bits.  When a task is runnable the bit
+&gt;&gt; is set.  The highest priority task is then simply the one
+&gt;&gt; corresponding to the most significant bit in the set.  This
+&gt;&gt; mechanism is very fast and compact.  However, it also means it
+&gt;&gt; isn't possible to have two tasks at the same priority.  There's
+&gt;&gt; no technical reason why a task's priority can't be temporarily
+&gt;&gt; boosted when using a bitmap scheduler, it just can't be boosted
+&gt;&gt; to a priority level that's already in use.
+
+&gt; It is quite possible to use a bitmap scheduler and allow priority
+&gt; inheritance.  I know, I've done it.  It's quite simple.  Here is a
+&gt; typical scenario:
+
+&gt; 1.  Low priority task L acquires a mutex.
+
+&gt; 2.  High priority task H preempts L (with possible other intermediate
+&gt; preemptions in between), and tries to acquire the same mutex.  Task H
+&gt; is now blocked, and task L is promoted to the priority of task H.
+&gt; Since task H is now not ready, its bit in the ready bitmap is not
+&gt; needed.  It can refer to task L, no problem.
+">
+
+Yes.  Temporarily creating a gap in the priorities by
+&quot;removing&quot; H from the bitmap would work.  My original statement
+should have been that you have to leave _or_create_ a gap in
+priorities.
+
+--
+Grant Edwards                   grante             Yow! An air of FRENCH FRIES
+at               permeates my nostrils!!
+visi.com
+</POST>
+<POST>
+<POSTER> &quot;Not Really Me&quot; &lt;sc...@validatedQWERTYsoftware.XYZZY.com&gt; </POSTER>
+<POSTDATE> 2007-10-16T17:38:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Grant Edwards&quot; &lt;gra ... @visi.com&gt; wrote in message
+">
+
+news:13h6u7jo2livf3d@corp.supernews.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2007-10-15, Jack Klein &lt;jackkl ... @spamcop.net&gt; wrote:
+">
+
+SNIP
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; If you have, and think you know of some problem I have missed,
+&gt;&gt; I'd like to hear about it.  Obviously, despite working in the
+&gt;&gt; field for years, some of my products are going to suddenly
+&gt;&gt; start missing their deadlines due to priority inversion any
+&gt;&gt; time now.
+
+&gt; If you've got tasks at priority 5,6,7 and 6 blocks on a
+&gt; resource held by a task at priority 8, what do you do?
+">
+
+You use the uCOS mutex facility and set the PIP (Priority Inheritance
+Priority) higher than any other task, i.e., 4 or less.  This will prevent
+blocking by causing the pend from task 6 to temporarily raise the priority
+to the PIP (4 or less).  The pend forces a call to the scheduler to make
+task 4 (original 8) run.  When done the priority is returned to 8 and 6 goes
+merrily on its way.
+
+Scott
+</POST>
+<POST>
+<POSTER> Grant Edwards &lt;gra...@visi.com&gt; </POSTER>
+<POSTDATE> 2007-10-16T18:10:00 </POSTDATE>
+On 2007-10-16, Not Really Me &lt;sc ... @validatedQWERTYsoftware.XYZZY.com&gt; wrote:
+
+<QUOTE PREVIOUSPOST="
+&gt;&gt; If you've got tasks at priority 5,6,7 and 6 blocks on a
+&gt;&gt; resource held by a task at priority 8, what do you do?
+
+&gt; You use the uCOS mutex facility and set the PIP (Priority
+&gt; Inheritance Priority) higher than any other task, i.e., 4 or
+&gt; less.
+">
+
+That results in a different type of priority inversion.
+If task 5 is ready, it should be running, but instead the task
+which &quot;inhereted&quot; priority from task 6 is running.
+
+<QUOTE PREVIOUSPOST="
+&gt; This will prevent blocking by causing the pend from task 6 to
+&gt; temporarily raise the priority to the PIP (4 or less).  The
+&gt; pend forces a call to the scheduler to make task 4 (original
+&gt; 8) run.  When done the priority is returned to 8 and 6 goes
+&gt; merrily on its way.
+">
+
+Except that while it's running at priority 4, it preempts the
+task at priority 5, which it should not do, since it is
+&quot;supposed&quot; to be running at priority 6.  If you leave gaps
+between tasks or temporarily swap 6 and 8, you don't have that
+problem.
+
+IOW you end up with two lower priority tasks which are vying
+for a resource being elevated above a task that should have
+been higher than both of them.
+
+--
+Grant Edwards                   grante             Yow! This PORCUPINE knows
+at               his ZIPCODE ... And he has
+visi.com            &quot;VISA&quot;!!
+</POST>
+<POST>
+<POSTER> &quot;Mindspring Newsgroups&quot; &lt;no...@nowhere.com&gt; </POSTER>
+<POSTDATE> 2007-10-16T20:11:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Paul Keinanen&quot; &lt;keina ... @sci.fi&gt; wrote in message
+">
+
+news:oav5h3tr858c12vbci9f1f28i6m20knr2g@4ax.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On Sun, 14 Oct 2007 19:07:42 GMT, Vladimir Vassilevsky
+&gt; &lt;antispam_bo ... @hotmail.com&gt; wrote:
+
+&gt;&gt;Tim Wescott wrote:
+
+&gt;&gt;&gt; I have _never_ written code that makes two separate tasks pend on one
+&gt;&gt;&gt; resource -- I've always written a server task for that resource, and
+&gt;&gt;&gt; avoided the whole resource locking/priority inversion issue.
+
+&gt;&gt;Client/server is a pretty heavy weight solution which has many problems,
+&gt;&gt;too.
+
+&gt;&gt;So you have to maintain a list of the requests to the server with the
+&gt;&gt;priorities for each request. And the server has to parse this list to
+&gt;&gt;fetch the request with the current highest priority. The access to the
+&gt;&gt;list has to be atomic; thus there should be a mutex protecting the list.
+&gt;&gt;How do you avoid the priority inversion regarding that mutex? Is it done
+&gt;&gt;  by the OS core function? (hello mucos).
+
+&gt; In simple architectures, the task switch time does not have to be much
+&gt; more than the interrupt handling time (which also saves and restores
+&gt; the context), only some extra time is required to switch the stack
+&gt; pointer from one task to an other.
+
+&gt; If the server transaction times are short, why bother with any
+&gt; priority queuing mechanism ? Just build a FIFO in front of the server
+&gt; process. The FIFO should not need any mutex, if the insertion and
+&gt; extraction is coded correctly.
+
+&gt; If you need request handling with priority and you have only one
+&gt; task/prioirity and they are blocked until the request is served, just
+&gt; create a single element &quot;queue&quot; for each priority level and let the
+&gt; server task scan those &quot;queues&quot; in priority order. With a low number
+&gt; of priority levels and a single 32 bit word as the queue element
+&gt; (which could either contain a value or an address to a descriptor
+&gt; block, I have used even values for descriptor addresses and odd values
+&gt; for numeric function code values :-), the memory consumption would not
+&gt; be large compared to a FIFO and associated bookkeeping.
+
+&gt;&gt;What if the list of the requests is overflown?
+
+&gt; In general, this would be design flaw. The server process should run
+&gt; on a higher priority compared to the requesters.
+
+&gt; A queue size larger than the number of tasks that might issue
+&gt; requests, should be sufficient as long as these tasks are blocked,
+&gt; until their request is served.
+
+&gt; Anyway, either return an error code or put the requesting task to
+&gt; sleep until the next clock tick and try again.
+
+&gt; Paul
+">
+
+Question to Tim: Is your &quot;server task&quot; approach similar to, or different
+from, the approach Paul is suggesting?
+
+I've been using FreeRTOS and have taken an approach very similar to what
+Paul describes with FIFOs. The servicing of the FIFOs is done by a task that
+I could easily call a &quot;server task&quot; (i.e. what Tim is suggesting).
+
+In my case, I have a shared request queue that has one entry per requesting
+task. Each task has a single entry, task-specific, completion queue. I use
+some simple rules:
+
+- a task may have only a single pending request at any time
+
+- every request produces a corresponding completion
+
+- a task must consume the completion (or block waiting for it) for a pending
+request before it can queue another request (as a result there is always
+room in the completion queue when a request is pending)
+
+- requests are serviced in order of receipt (note that prioritizing requests
+invites starvation) ... i.e. Paul's FIFO???
+
+So I have multiple tasks that make requests and a task that processes
+requests from the queue.... i.e. Tim's service task???
+
+I hope this makes sense (it seems to work great). In some cases I have added
+a lock queue so that a requesting task can secure exclusive access of a
+resource (i.e. issue a sequence of uniterrupted operations). Obviously,
+locks need to be minimized both in time and frequency.
+
+TC
+</POST>
+<POST>
+<POSTER> J de Boyne Pollard &lt;j.deboynepoll...@tesco.net&gt; </POSTER>
+<POSTDATE> 2007-10-17T06:30:00 </POSTDATE>
+VV&gt; Mucos is a toy.
+
+CH&gt; Certainly not.
+
+VV&gt; It is not a real OS, but a bare minimum. [...]
+
+CH&gt; It IS a real OS.  [...]
+
+VV&gt; Ok, here are the things that I routinely use which mucos doesn't
+provide:
+VV&gt;
+VV&gt; 1. Multiple waiting.
+VV&gt; 2. Hardware abstraction layer concept. Drivers.
+VV&gt; 3. Priority elevation mechanism.
+VV&gt; 4. Timer based scheduling for non-realtime tasks.
+VV&gt; 5. Multicore scheduling.
+VV&gt; 6. Mucos has the peculiar API in C. I prefer simpler object
+VV&gt; oriented API in C++.
+VV&gt; 7. Mucos is not abstracted from compiler and hardware.
+VV&gt; 8. Memory protection and virtual memory.
+
+I find it amusing to note that MS-DOS, PC-DOS, DR-DOS, Sinclair QDOS,
+OS/2 Warp, OS/2 Warp SMP, Minix, version 6 Unix, HP/UX version 7, and
+SunOS/4.x BSD don't qualify as &quot;real&quot; operating systems by your
+definition.
+</POST>
+<POST>
+<POSTER> &quot;Not Really Me&quot; &lt;sc...@validatedQWERTYsoftware.XYZZY.com&gt; </POSTER>
+<POSTDATE> 2007-10-18T10:54:00 </POSTDATE>
+<QUOTE PREVIOUSPOST="
+&quot;Grant Edwards&quot; &lt;gra ... @visi.com&gt; wrote in message
+">
+
+news:13hadmtro10g160@corp.supernews.com ...
+
+<QUOTE PREVIOUSPOST="
+&gt; On 2007-10-16, Not Really Me &lt;sc ... @validatedQWERTYsoftware.XYZZY.com&gt;
+&gt; wrote:
+
+&gt;&gt;&gt; If you've got tasks at priority 5,6,7 and 6 blocks on a
+&gt;&gt;&gt; resource held by a task at priority 8, what do you do?
+
+&gt;&gt; You use the uCOS mutex facility and set the PIP (Priority
+&gt;&gt; Inheritance Priority) higher than any other task, i.e., 4 or
+&gt;&gt; less.
+
+&gt; That results in a different type of priority inversion.
+&gt; If task 5 is ready, it should be running, but instead the task
+&gt; which &quot;inhereted&quot; priority from task 6 is running.
+
+&gt;&gt; This will prevent blocking by causing the pend from task 6 to
+&gt;&gt; temporarily raise the priority to the PIP (4 or less).  The
+&gt;&gt; pend forces a call to the scheduler to make task 4 (original
+&gt;&gt; 8) run.  When done the priority is returned to 8 and 6 goes
+&gt;&gt; merrily on its way.
+
+&gt; Except that while it's running at priority 4, it preempts the
+&gt; task at priority 5, which it should not do, since it is
+&gt; &quot;supposed&quot; to be running at priority 6.  If you leave gaps
+&gt; between tasks or temporarily swap 6 and 8, you don't have that
+&gt; problem.
+
+&gt; IOW you end up with two lower priority tasks which are vying
+&gt; for a resource being elevated above a task that should have
+&gt; been higher than both of them.
+">
+
+Agreed.  This must be taken into account at design time.  I can certainly
+imagine times when it causes additional problems, but it does provide a
+solution to a common priority inversion problem.  Not perfect, but generally
+useable.
+
+Scott
+</POST>
+</TEXT>
+</BODY>
+</DOC>
