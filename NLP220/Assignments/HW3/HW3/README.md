@@ -20,8 +20,13 @@ After running Optuna, the best hyperparameters found were:
 - `Optimized_HistGradientBoosting_Results.txt`: Generated file containing model evaluation reports on validation and test sets.
 
 ## Usage
-
+### Additional code
+- BERT.ipynb: Use BERT to train the model (running for a long time)
+- OPTUNA.ipynb: Find the best hyperparameters
 ### Prerequisites
 Install the required libraries:
 ```bash
 pip install -r requirements.txt
+
+
+
