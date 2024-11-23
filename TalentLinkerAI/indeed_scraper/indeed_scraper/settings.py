@@ -1,3 +1,47 @@
+# # Scrapy settings for indeed_scraper project
+
+# BOT_NAME = "indeed_scraper"
+
+# SPIDER_MODULES = ["indeed_scraper.spiders"]
+# NEWSPIDER_MODULE = "indeed_scraper.spiders"
+
+# USER_AGENT = 'Zoe/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36'
+# DOWNLOAD_DELAY = 5
+# AUTOTHROTTLE_ENABLED = True
+# AUTOTHROTTLE_START_DELAY = 5
+# AUTOTHROTTLE_MAX_DELAY = 60
+# RANDOMIZE_DOWNLOAD_DELAY = True  # 啟用隨機延遲
+
+# PROXY = "http://scraperapi:21e877d5890d9ebf3a536f91af61d983@proxy-server.scraperapi.com:8001"
+
+
+# DOWNLOADER_MIDDLEWARES = {
+#     'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 1,
+#     'rotating_proxies.middlewares.RotatingProxyMiddleware': 610,
+#     'rotating_proxies.middlewares.BanDetectionMiddleware': 620,
+# }
+
+# ROTATING_PROXY_LIST = [
+#     "http://user:password@proxy1:port",
+#     "http://user:password@proxy2:port",
+#     "http://user:password@proxy3:port",
+# ]
+
+
+
+# ROBOTSTXT_OBEY = False
+# COOKIES_ENABLED = True
+# REQUEST_FINGERPRINTER_IMPLEMENTATION = "2.7"
+# TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
+# FEED_EXPORT_ENCODING = "utf-8"
+# DEFAULT_REQUEST_HEADERS = {
+#     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0",
+#     "Accept-Language": "en-US,en;q=0.9",
+#     "Accept-Encoding": "gzip, deflate, br",
+#     "Connection": "keep-alive",
+#     "Referer": "https://www.google.com/",
+# }
+
 # Scrapy settings for indeed_scraper project
 
 BOT_NAME = "indeed_scraper"
@@ -5,30 +49,32 @@ BOT_NAME = "indeed_scraper"
 SPIDER_MODULES = ["indeed_scraper.spiders"]
 NEWSPIDER_MODULE = "indeed_scraper.spiders"
 
-USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36'
-DOWNLOAD_DELAY = 5
+# 使用真實的用戶代理來模擬瀏覽器
+USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0'
+
+# 防止被檢測為爬蟲
+DOWNLOAD_DELAY = 2
 AUTOTHROTTLE_ENABLED = True
-AUTOTHROTTLE_START_DELAY = 5
-AUTOTHROTTLE_MAX_DELAY = 60
+AUTOTHROTTLE_START_DELAY = 2
+AUTOTHROTTLE_MAX_DELAY = 10
+RANDOMIZE_DOWNLOAD_DELAY = True
 
-PROXY = "http://scraperapi:21e877d5890d9ebf3a536f91af61d983@proxy-server.scraperapi.com:8001"
-
-
+# Selenium Middleware 設置
 DOWNLOADER_MIDDLEWARES = {
-    'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 1,
-    'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
-    'scrapy_user_agents.middlewares.RandomUserAgentMiddleware': 400,
+    "scrapy_selenium.SeleniumMiddleware": 800,
 }
 
-# Optional: Uncomment if needed for additional headers
-# DEFAULT_REQUEST_HEADERS = {
-#     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-#     'Accept-Language': 'en',
-#     'Referer': 'https://www.google.com/'
-# }
+# Selenium 驅動配置
+SELENIUM_DRIVER_NAME = "chrome"
+SELENIUM_DRIVER_EXECUTABLE_PATH = r"C:\Program Files\Google\Chrome\Application\chromedriver.exe"  # 修改為你的 ChromeDriver 路徑
+SELENIUM_DRIVER_ARGUMENTS = ["--headless", "--no-sandbox", "--disable-gpu"]  # 無頭模式運行
 
-ROBOTSTXT_OBEY = True
-
-REQUEST_FINGERPRINTER_IMPLEMENTATION = "2.7"
-TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
+ROBOTSTXT_OBEY = False
+COOKIES_ENABLED = False
 FEED_EXPORT_ENCODING = "utf-8"
+
+DEFAULT_REQUEST_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Referer": "https://www.google.com/",
+}
